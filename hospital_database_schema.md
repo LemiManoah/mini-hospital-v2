@@ -46,21 +46,26 @@ Core demographic information. Uses UUID for cross-system integration.
 ```php
 Schema::create('patients', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->string('medical_record_number', 50)->unique()->comment('Hospital MRN');
-    $table->string('national_id', 50)->nullable()->unique()->index();
+    $table->string('patient_number', 50)->unique()->comment('Hospital MRN');
     $table->string('first_name', 100);
     $table->string('last_name', 100);
     $table->string('middle_name', 100)->nullable();
-    $table->date('date_of_birth');
-    $table->enum('gender', ['male', 'female', 'other', 'unknown']);
+    $table->date('date_of_birth')->nullable();
+    $table->integer('age')->nullable();
+    $table->enum('age_units', ['year', 'month', 'day'])->nullable();
+    $table->string('gender', 10);
     $table->string('email', 255)->nullable()->unique();
     $table->string('phone_number', 20)->index();
     $table->string('alternative_phone', 20)->nullable();
-    $table->string('emergency_contact_name', 100)->nullable();
-    $table->string('emergency_contact_phone', 20)->nullable();
-    $table->enum('blood_group', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown'])->nullable();
+    $table->string('next_of_kin_name', 100)->nullable();
+    $table->string('next_of_kin_phone', 20)->nullable();
+    $table->string('next_of_kin_relationship', 50)->nullable();
+    $table->string('marital_status', 50)->nullable();
+    $table->string('occupation', 100)->nullable();
+    $table->string('religion', 50)->nullable();
+    $table->foreignUuid('nationality')->nullable()->constrained('countries')->nullOnDelete();
+    $table->string('blood_group', 10)->nullable();  
     $table->boolean('is_organ_donor')->default(false);
-    $table->text('special_notes')->nullable()->comment('Accessibility needs, VIP status, etc.');
 
     // Audit & Soft Delete
     $table->timestamps();
@@ -70,8 +75,37 @@ Schema::create('patients', function (Blueprint $table) {
 
     // Indexes
     $table->index(['last_name', 'first_name']);
+    $table->index('patient_number');
+    $table->index('phone_number');
     $table->index('date_of_birth');
     $table->index('created_at');
+});
+```
+
+#### countries
+
+```php
+Schema::create('countries', function (Blueprint $table) {
+    $table->uuid('id')->primary();
+    $table->string('country_name', 100)->unique();
+    $table->string('country_code', 10)->unique();
+    $table->string('dial_code', 10);
+    $table->string('currency', 10);
+    $table->string('currency_symbol', 10);
+    $table->timestamps();
+});
+```
+
+#### Addresses
+
+```php
+Schema::create('addresses', function (Blueprint $table) {
+    $table->uuid('id')->primary();
+    $table->string('city', 100)->index();
+    $table->string('district', 100)->nullable()->index();
+    $table->string('state', 100)->nullable();
+    $table->foreignUuid('country')->nullable()->constrained('countries')->nullOnDelete();
+    $table->timestamps();
 });
 ```
 
@@ -82,21 +116,22 @@ Supports multiple addresses with temporal validity (patients move).
 Schema::create('patient_addresses', function (Blueprint $table) {
     $table->uuid('id')->primary();
     $table->foreignUuid('patient_id')->constrained()->onDelete('cascade');
-    $table->enum('type', ['home', 'work', 'temporary', 'billing'])->default('home');
-    $table->string('address_line_1', 255);
-    $table->string('address_line_2', 255)->nullable();
-    $table->string('city', 100)->index();
-    $table->string('district', 100)->nullable()->index();
-    $table->string('state', 100)->nullable();
-    $table->string('postal_code', 20)->nullable()->index();
-    $table->string('country', 100)->default('Unknown');
-    $table->boolean('is_primary')->default(false);
-    $table->date('valid_from')->default(now());
-    $table->date('valid_to')->nullable();
-    $table->timestamps();
+    $table->foreignUuid('address_id')->constrained()->onDelete('cascade');
 
-    $table->index(['patient_id', 'is_primary']);
-    $table->index('valid_from');
+    $table->index(['patient_id', 'address_id']);
+});
+```
+
+#### staff_addresses
+Supports multiple addresses
+
+```php
+Schema::create('staff_addresses', function (Blueprint $table) {
+    $table->uuid('id')->primary();
+    $table->foreignUuid('staff_id')->constrained()->onDelete('cascade');
+    $table->foreignUuid('address_id')->constrained()->onDelete('cascade');
+
+    $table->index(['staff_id', 'address_id']);
 });
 ```
 
@@ -200,11 +235,7 @@ Schema::create('staff', function (Blueprint $table) {
     $table->string('password_hash'); // bcrypt
     $table->rememberToken();
     $table->foreignUuid('department_id')->nullable()->constrained();
-    $table->enum('role', [
-        'super_admin', 'admin', 'doctor', 'nurse', 'lab_tech', 
-        'radiologist', 'pharmacist', 'receptionist', 'billing_officer',
-        'medical_officer', 'consultant', 'surgeon', 'anesthetist'
-    ]);
+    $table->string('role', 100);
     $table->string('license_number', 100)->nullable()->unique();
     $table->string('specialty', 100)->nullable();
     $table->date('hire_date');
