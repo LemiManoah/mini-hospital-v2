@@ -19,7 +19,7 @@
 
 ## Overview
 
-This schema follows **Laravel 10+** conventions with:
+This schema follows **Laravel 12+** conventions with:
 - **UUID Primary Keys** for distributed system compatibility
 - **Soft Deletes** for regulatory compliance (HIPAA)
 - **Audit Trails** on all clinical tables
@@ -34,9 +34,88 @@ This schema follows **Laravel 10+** conventions with:
 - Foreign keys: `{$table}_id` (e.g., `patient_id`)
 - Timestamp fields: `created_at`, `updated_at`, `deleted_at`
 
+### Multi-tenant Architecture Notes
+- **Global Scopes**: The application should use Laravel Global Scopes (e.g., `TenantScope` and `BranchScope`) on all eloquent models to automatically append `where tenant_id = ?` to every query, preventing cross-tenant data leaks.
+- **Compound Unique Constraints**: Entities that traditionally have globally unique identifiers (MRNs, invoice numbers, employee numbers, test codes) use compound unique constraints (`tenant_id`, `identifier`) to allow multiple independent physical hospitals/tenants to use the same internal ID sequences without conflict.
+
 ---
 
+
 ## Core Modules
+
+### Tenant & Branch Management
+
+#### tenants
+Represents the overarching hospital group or organization.
+
+```php
+Schema::create('tenants', function (Blueprint $table) {
+    $table->uuid('id')->primary();
+    $table->string('name', 100)->unique();
+    $table->string('domain', 100)->unique()->nullable()->comment('For custom subdomains');
+    $table->boolean('has_branches')->default(false);
+    $table->string('logo')->nullable()->default(null);
+    $table->string('stamp')->nullable()->default(null);
+    $table->foreignIdFor(SubscriptionPackage::class);
+    $table->enum('status', GeneralStatus::class)->default(GeneralStatus::ACTIVE);
+    $table->foreignUuid('country')->nullable()->constrained('countries')->nullOnDelete();
+    $table->foreignUuid('address')->nullable()->constrained('addresses')->nullOnDelete();
+    $table->timestamps();
+    $table->softDeletes();
+    $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+    $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
+});
+```
+
+
+### SubscriptionPackage
+Subscription package options for all clients
+``` php
+     Schema::create('subscription_packages', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique()->default(null);
+                $table->integer('users')->unique()->default(1);
+                $table->string('price')->nullable()->default(0);
+                $table->enum('status', GeneralStatus::class)->default(GeneralStatus::ACTIVE);
+                $table->timestamps();
+            });
+            SubscriptionPackage::create(['name' => 'Starter Package', 'users' => '2', 'price'=>'2000000']);
+            SubscriptionPackage::create(['name' => 'Standard Package', 'users' => '4', 'price'=>'2000000']);
+            SubscriptionPackage::create(['name' => 'Platinum Package', 'users' => '6', 'price'=>'2000000']);
+            SubscriptionPackage::create(['name' => 'Professional Package', 'users' => '8', 'price'=>'2000000']);
+            SubscriptionPackage::create(['name' => 'Advanced Package', 'users' => '10', 'price'=>'2000000']);
+            SubscriptionPackage::create(['name' => 'Ultimate Package', 'users' => '12', 'price'=>'2000000']);
+            SubscriptionPackage::create(['name' => 'Extreme Package', 'users' => '20', 'price'=>'2000000']);
+    }
+```
+
+#### facility branches
+Represents physical locations/facilities belonging to a tenant.
+
+```php
+Schema::create('facility_branches', function (Blueprint $table) {
+    $table->uuid('id')->primary();
+    $table->string('name')->nullable()->default(null)->index();
+    $table->foreignUuid('address_id')->constrained('addresses')->nullOnDelete();
+    $table->string('main_contact')->nullable()->default(null)->index();
+    $table->string('other_contact')->nullable()->default(null);
+    $table->string('email')->nullable()->default(null)->index();
+    $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
+    $table->foreignUuid('currency_id')->constrained('currencies')->onDelete('cascade');
+    $table->enum('status', GeneralStatus::class)->default(GeneralStatus::ACTIVE);
+    $table->boolean('is_main_branch')->default(false);
+    $table->boolean('has_store')->default(false);
+    $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+    $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
+    $table->softDeletes();
+    $table->timestamps();
+
+    $table->unique(['tenant_id', 'branch_code']);
+    $table->index(['tenant_id', 'is_active']);
+});
+```
+
+---
 
 ### Patient Management
 
@@ -46,7 +125,8 @@ Core demographic information. Uses UUID for cross-system integration.
 ```php
 Schema::create('patients', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->string('patient_number', 50)->unique()->comment('Hospital MRN');
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->string('patient_number', 50)->comment('Hospital MRN');
     $table->string('first_name', 100);
     $table->string('last_name', 100);
     $table->string('middle_name', 100)->nullable();
@@ -60,10 +140,11 @@ Schema::create('patients', function (Blueprint $table) {
     $table->string('next_of_kin_name', 100)->nullable();
     $table->string('next_of_kin_phone', 20)->nullable();
     $table->string('next_of_kin_relationship', 50)->nullable();
+    $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
     $table->string('marital_status', 50)->nullable();
     $table->string('occupation', 100)->nullable();
     $table->string('religion', 50)->nullable();
-    $table->foreignUuid('nationality')->nullable()->constrained('countries')->nullOnDelete();
+    $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
     $table->string('blood_group', 10)->nullable();  
     $table->boolean('is_organ_donor')->default(false);
 
@@ -75,6 +156,7 @@ Schema::create('patients', function (Blueprint $table) {
 
     // Indexes
     $table->index(['last_name', 'first_name']);
+    $table->unique(['tenant_id', 'patient_number']);
     $table->index('patient_number');
     $table->index('phone_number');
     $table->index('date_of_birth');
@@ -104,36 +186,14 @@ Schema::create('addresses', function (Blueprint $table) {
     $table->string('city', 100)->index();
     $table->string('district', 100)->nullable()->index();
     $table->string('state', 100)->nullable();
-    $table->foreignUuid('country')->nullable()->constrained('countries')->nullOnDelete();
+    $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
+    $table->softDeletes();
+    $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+    $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
     $table->timestamps();
 });
 ```
 
-#### patient_addresses
-Supports multiple addresses with temporal validity (patients move).
-
-```php
-Schema::create('patient_addresses', function (Blueprint $table) {
-    $table->uuid('id')->primary();
-    $table->foreignUuid('patient_id')->constrained()->onDelete('cascade');
-    $table->foreignUuid('address_id')->constrained()->onDelete('cascade');
-
-    $table->index(['patient_id', 'address_id']);
-});
-```
-
-#### staff_addresses
-Supports multiple addresses
-
-```php
-Schema::create('staff_addresses', function (Blueprint $table) {
-    $table->uuid('id')->primary();
-    $table->foreignUuid('staff_id')->constrained()->onDelete('cascade');
-    $table->foreignUuid('address_id')->constrained()->onDelete('cascade');
-
-    $table->index(['staff_id', 'address_id']);
-});
-```
 
 #### allergens
 
@@ -143,6 +203,9 @@ Schema::create('allergens', function (Blueprint $table) {
     $table->string('name', 100)->index();
     $table->text('description')->nullable();
     $table->enum('type', [AllergyType::class]);
+    $table->softDeletes();
+    $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+    $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
     $table->timestamps();
 
     $table->index('name');
@@ -163,6 +226,9 @@ Schema::create('patient_allergies', function (Blueprint $table) {
     $table->enum('reaction', [AllergyReaction::class]);
     $table->text('notes')->nullable();
     $table->boolean('is_active')->default(true);
+    $table->softDeletes();
+    $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+    $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
     $table->timestamps();
 
     $table->index(['patient_id', 'allergen_id']);
@@ -184,8 +250,43 @@ Schema::create('past_medical_histories', function (Blueprint $table) {
     $table->boolean('is_ongoing')->default(true);
     $table->text('treatment_notes')->nullable();
     $table->string('surgeon_physician', 100)->nullable();
+    $table->softDeletes();
+    $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+    $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
     $table->timestamps();
 });
+```
+
+#### currencies
+``` php
+     Schema::create('currencies', function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->index();
+                $table->string('name');
+                $table->string('symbol');
+                $table->boolean('modifiable')->default(true);
+                $table->timestamps();
+            });
+            Currency::create(['name'=>'Botswana Pula', 'code'=>'BWP', 'modifiable'=>false, 'symbol'=>'P']);
+            Currency::create(['name'=>'CFA Francs', 'code'=>'XOF', 'modifiable'=>false, 'symbol'=>'CFA']);
+            Currency::create(['name'=>'Egyptian Pounds', 'code'=>'EGP', 'modifiable'=>false, 'symbol'=>'e£']);
+            Currency::create(['name'=>'Ghana Cedi', 'code'=>'GHS', 'modifiable'=>false, 'symbol'=>'GH¢']);
+            Currency::create(['name'=>'Kenyan Shillings', 'code'=>'KES', 'modifiable'=>false, 'symbol'=>'KSh']);
+            Currency::create(['name'=>'Malawian Kwachas', 'code'=>'MWK', 'modifiable'=>false, 'symbol'=>'MK']);
+            Currency::create(['name'=>'Mauritian Rupees', 'code'=>'MUR', 'modifiable'=>false, 'symbol'=>'₨']);
+            Currency::create(['name'=>'Moroccan Dirhams', 'code'=>'MAD', 'modifiable'=>false, 'symbol'=>'MAD']);
+            Currency::create(['name'=>'Namibian Dollars', 'code'=>'NAD', 'modifiable'=>false, 'symbol'=>'N$']);
+            Currency::create(['name'=>'Nigerian Nairas', 'code'=>'NGN', 'modifiable'=>false, 'symbol'=>'₦']);
+            Currency::create(['name'=>'Rwandan Francs', 'code'=>'RWF', 'modifiable'=>false, 'symbol'=>'R₣']);
+            Currency::create(['name'=>'South African Rands', 'code'=>'ZAR', 'modifiable'=>false, 'symbol'=>'R']);
+            Currency::create(['name'=>'Tanzanian Shillings', 'code'=>'TZS', 'modifiable'=>false, 'symbol'=>'TSh']);
+            Currency::create(['name'=>'Tunisian Dinars', 'code'=>'TND', 'modifiable'=>false, 'symbol'=>'د.ت']);
+            Currency::create(['name'=>'Ugandan Shillings', 'code'=>'UGX', 'modifiable'=>false, 'symbol'=>'USh']);
+            Currency::create(['name'=>'Zambian Kwacha', 'code'=>'ZMW', 'modifiable'=>false, 'symbol'=>'ZK']);
+            Currency::create(['name'=>'Zimbabwean RTGS', 'code'=>'ZWL', 'modifiable'=>false, 'symbol'=>'$']);
+            Currency::create(['name'=>'United States Dollars', 'code'=>'USD', 'modifiable'=>false, 'symbol'=>'$']);
+            Currency::create(['name'=>'South Sudan Dollars', 'code'=>'SSD', 'modifiable'=>false, 'symbol'=>'£']);
+        }
 ```
 
 ---
@@ -198,15 +299,17 @@ Healthcare providers and administrative staff.
 ```php
 Schema::create('staff', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->string('employee_number', 50)->unique();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->string('employee_number', 50);
     $table->string('first_name', 100);
     $table->string('last_name', 100);
-    $table->string('email', 255)->unique();
+    $table->string('email', 255);
     $table->string('phone', 20)->nullable();
     $table->string('password_hash'); // bcrypt
+    $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
     $table->rememberToken();
     $table->foreignUuid('department_id')->nullable()->constrained();
-    $table->string('role', 100);
+    // note: roles and permissions are handled via spatie/laravel-permission
     $table->string('license_number', 100)->nullable()->unique();
     $table->string('specialty', 100)->nullable();
     $table->date('hire_date');
@@ -217,8 +320,23 @@ Schema::create('staff', function (Blueprint $table) {
     $table->timestamps();
     $table->softDeletes();
 
-    $table->index(['role', 'is_active']);
+    $table->unique(['tenant_id', 'employee_number']);
+    $table->unique(['tenant_id', 'email']);
+    $table->index('is_active');
     $table->index('department_id');
+});
+```
+
+#### staff_branches
+Pivot table to handle floating staff members across branches.
+
+```php
+Schema::create('staff_branches', function (Blueprint $table) {
+    $table->foreignUuid('staff_id')->constrained()->onDelete('cascade');
+    $table->foreignUuid('branch_id')->constrained()->onDelete('cascade');
+    $table->boolean('is_primary_location')->default(false);
+    
+    $table->primary(['staff_id', 'branch_id']);
 });
 ```
 
@@ -228,7 +346,8 @@ Hospital departments and units.
 ```php
 Schema::create('departments', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->string('department_code', 20)->unique();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->string('department_code', 20);
     $table->string('department_name', 100);
     $table->string('location', 100)->nullable();
     $table->foreignUuid('head_of_department_id')->nullable()->constrained('staff')->nullOnDelete();
@@ -236,6 +355,8 @@ Schema::create('departments', function (Blueprint $table) {
     $table->boolean('is_active')->default(true);
     $table->json('contact_info')->nullable();
     $table->timestamps();
+    
+    $table->unique(['tenant_id', 'department_code']);
 });
 ```
 
@@ -245,7 +366,9 @@ Outpatient clinics within departments.
 ```php
 Schema::create('clinics', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->string('clinic_code', 20)->unique();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
+    $table->string('clinic_code', 20);
     $table->string('clinic_name', 100);
     $table->foreignUuid('department_id')->constrained();
     $table->string('location', 100)->nullable();
@@ -254,6 +377,8 @@ Schema::create('clinics', function (Blueprint $table) {
     $table->boolean('accepts_walk_ins')->default(true);
     $table->boolean('is_active')->default(true);
     $table->timestamps();
+
+    $table->unique(['tenant_id', 'clinic_code']);
 });
 ```
 
@@ -279,19 +404,24 @@ Schema::create('audit_logs', function (Blueprint $table) {
 });
 ```
 
-#### system_configurations
+#### system_settings
 Application settings and constants.
 
 ```php
-Schema::create('system_configurations', function (Blueprint $table) {
-    $table->string('key', 100)->primary();
-    $table->text('value');
-    $table->string('type', 20)->default('string'); // string, integer, boolean, json
-    $table->string('description', 255)->nullable();
-    $table->foreignUuid('last_modified_by')->nullable()->constrained('staff');
+Schema::create('general_settings', function (Blueprint $table) {
+    $table->id();
+    $table->foreignIdFor(Facility::class);
+    $table->enum('service_and_price',['bill','bill_services','bill_service_price'])->default('bill_service_price');
+    $table->enum('report_after_payment',['Yes','No'])->default('No');
+    $table->enum('pay_before_doctor',['No','Yes'])->default('No');
+    $table->enum('diagnosis_type',['ICD','Entry'])->default('ICD');
+    $table->enum('skip_sample_picking',['Yes','No'])->default('No');
+    $table->enum('skip_result_review',['Yes','No'])->default('Yes');
+    $table->enum('notification_channel',['sms','whatsapp','both','none'])->default('sms');
     $table->timestamps();
 });
 ```
+
 
 ---
 
@@ -303,6 +433,8 @@ Doctor clinic schedules.
 ```php
 Schema::create('schedules', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
     $table->foreignUuid('doctor_id')->constrained('staff');
     $table->foreignUuid('clinic_id')->constrained();
     $table->enum('day_of_week', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
@@ -326,6 +458,8 @@ Patient appointments with queue management.
 ```php
 Schema::create('appointments', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
     $table->foreignUuid('patient_id')->constrained();
     $table->foreignUuid('doctor_id')->constrained('staff');
     $table->foreignUuid('clinic_id')->constrained();
@@ -361,7 +495,9 @@ The central encounter record. All clinical activities link here.
 ```php
 Schema::create('patient_visits', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->string('visit_number', 50)->unique(); // ENC-YYYYMMDD-XXXX
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
+    $table->string('visit_number', 50); // ENC-YYYYMMDD-XXXX
     $table->foreignUuid('patient_id')->constrained();
     $table->date('visit_date');
     $table->time('visit_time');
@@ -384,6 +520,7 @@ Schema::create('patient_visits', function (Blueprint $table) {
     $table->timestamps();
     $table->softDeletes();
 
+    $table->unique(['tenant_id', 'visit_number']);
     $table->index(['patient_id', 'visit_date']);
     $table->index('visit_number');
     $table->index('is_emergency');
@@ -396,6 +533,8 @@ Emergency and outpatient triage assessment.
 ```php
 Schema::create('triage_records', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
     $table->foreignUuid('visit_id')->constrained()->unique(); // One triage per visit
     $table->foreignUuid('nurse_id')->constrained('staff');
     $table->timestamp('triage_datetime')->useCurrent();
@@ -466,6 +605,8 @@ Clinical encounter documentation (SOAP format).
 ```php
 Schema::create('consultations', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
     $table->foreignUuid('visit_id')->constrained()->unique();
     $table->foreignUuid('doctor_id')->constrained('staff');
     $table->timestamp('started_at')->useCurrent();
@@ -509,7 +650,8 @@ Master list of available tests.
 ```php
 Schema::create('lab_test_catalogs', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->string('test_code', 20)->unique();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->string('test_code', 20);
     $table->string('test_name', 200);
     $table->string('category', 50)->index(); // Hematology, Chemistry, Microbiology
     $table->string('sub_category', 50)->nullable();
@@ -524,6 +666,8 @@ Schema::create('lab_test_catalogs', function (Blueprint $table) {
     $table->json('reference_ranges')->nullable(); // Age/sex specific ranges
     $table->boolean('is_active')->default(true);
     $table->timestamps();
+
+    $table->unique(['tenant_id', 'test_code']);
 });
 ```
 
@@ -533,6 +677,8 @@ Test orders from clinicians.
 ```php
 Schema::create('lab_requests', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
     $table->foreignUuid('visit_id')->constrained();
     $table->foreignUuid('consultation_id')->nullable()->constrained();
     $table->foreignUuid('requested_by')->constrained('staff');
@@ -724,9 +870,10 @@ Drug formulary management.
 ```php
 Schema::create('medication_catalogs', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
     $table->string('generic_name', 200)->index();
     $table->string('brand_name', 200)->nullable();
-    $table->string('drug_code', 50)->unique();
+    $table->string('drug_code', 50);
     $table->enum('category', ['tablet', 'capsule', 'injection', 'syrup', 'ointment', 'inhaler', 'infusion', 'other']);
     $table->string('dosage_form', 50);
     $table->string('strength', 50); // e.g., "500mg"
@@ -740,6 +887,8 @@ Schema::create('medication_catalogs', function (Blueprint $table) {
     $table->text('side_effects')->nullable();
     $table->boolean('is_active')->default(true);
     $table->timestamps();
+
+    $table->unique(['tenant_id', 'drug_code']);
 });
 ```
 
@@ -814,9 +963,11 @@ Hospital admissions with bed tracking.
 ```php
 Schema::create('ipd_admissions', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
     $table->foreignUuid('patient_id')->constrained();
     $table->foreignUuid('visit_id')->constrained();
-    $table->string('admission_number', 50)->unique(); // ADM-YYYYMMDD-XXXX
+    $table->string('admission_number', 50); // ADM-YYYYMMDD-XXXX
     $table->timestamp('admission_datetime');
     $table->foreignUuid('admitting_doctor_id')->constrained('staff');
     $table->foreignUuid('bed_id')->constrained();
@@ -835,6 +986,7 @@ Schema::create('ipd_admissions', function (Blueprint $table) {
     $table->date('follow_up_date')->nullable();
     $table->timestamps();
 
+    $table->unique(['tenant_id', 'admission_number']);
     $table->index('admission_number');
     $table->index(['status', 'admission_datetime']);
 });
@@ -846,6 +998,8 @@ Bed management within wards.
 ```php
 Schema::create('beds', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
     $table->foreignUuid('ward_id')->constrained();
     $table->string('bed_number', 20);
     $table->enum('type', ['standard', 'electric', 'icu', 'isolation', 'bariatric', 'pediatric'])->default('standard');
@@ -866,7 +1020,9 @@ Hospital wards/units.
 ```php
 Schema::create('wards', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->string('ward_code', 20)->unique();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
+    $table->string('ward_code', 20);
     $table->string('ward_name', 100);
     $table->enum('type', ['general', 'shared', 'private', 'iccu', 'nicu', 'picu', 'maternity', 'surgery']);
     $table->foreignUuid('department_id')->constrained();
@@ -875,6 +1031,8 @@ Schema::create('wards', function (Blueprint $table) {
     $table->enum('gender', ['male', 'female', 'mixed'])->default('mixed');
     $table->boolean('is_active')->default(true);
     $table->timestamps();
+
+    $table->unique(['tenant_id', 'ward_code']);
 });
 ```
 
@@ -934,7 +1092,8 @@ Standardized pricing catalog.
 ```php
 Schema::create('charge_masters', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->string('item_code', 50)->unique();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->string('item_code', 50);
     $table->string('description', 255);
     $table->enum('category', [
         'consultation', 'procedure', 'lab_test', 'imaging', 
@@ -954,6 +1113,7 @@ Schema::create('charge_masters', function (Blueprint $table) {
     $table->boolean('is_active')->default(true);
     $table->timestamps();
 
+    $table->unique(['tenant_id', 'item_code']);
     $table->index(['category', 'is_active']);
     $table->index('effective_from');
 });
@@ -989,8 +1149,10 @@ Consolidated billing headers.
 ```php
 Schema::create('visit_billings', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
     $table->foreignUuid('visit_id')->constrained()->unique();
-    $table->string('invoice_number', 50)->nullable()->unique();
+    $table->string('invoice_number', 50)->nullable();
     $table->decimal('sub_total', 12, 2)->default(0.00);
     $table->decimal('discount_total', 12, 2)->default(0.00);
     $table->decimal('tax_total', 12, 2)->default(0.00);
@@ -1011,6 +1173,7 @@ Schema::create('visit_billings', function (Blueprint $table) {
     $table->foreignUuid('finalized_by')->nullable()->constrained('staff');
     $table->timestamps();
 
+    $table->unique(['tenant_id', 'invoice_number']);
     $table->index('invoice_number');
     $table->index('status');
 });
@@ -1022,6 +1185,8 @@ Payment transactions.
 ```php
 Schema::create('payments', function (Blueprint $table) {
     $table->uuid('id')->primary();
+    $table->foreignUuid('tenant_id')->constrained();
+    $table->foreignUuid('branch_id')->constrained();
     $table->foreignUuid('billing_id')->constrained('visit_billings');
     $table->enum('method', ['cash', 'card', 'bank_transfer', 'cheque', 'mobile_money', 'insurance', 'waiver']);
     $table->decimal('amount', 12, 2);
