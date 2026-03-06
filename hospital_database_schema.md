@@ -135,47 +135,21 @@ Schema::create('staff_addresses', function (Blueprint $table) {
 });
 ```
 
-#### patient_contacts
-Multiple contact methods per patient (phone, email, WhatsApp).
+#### allergens
 
 ```php
-Schema::create('patient_contacts', function (Blueprint $table) {
+Schema::create('allergens', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->foreignUuid('patient_id')->constrained()->onDelete('cascade');
-    $table->enum('type', ['mobile', 'landline', 'email', 'whatsapp', 'next_of_kin']);
-    $table->string('value', 255);
-    $table->boolean('is_primary')->default(false);
-    $table->boolean('is_verified')->default(false);
-    $table->string('relationship', 50)->nullable()->comment('For next_of_kin: spouse, parent, etc.');
+    $table->string('name', 100)->index();
+    $table->text('description')->nullable();
+    $table->enum('type', [AllergyType::class]);
     $table->timestamps();
 
-    $table->unique(['patient_id', 'type', 'value']); // Prevent duplicates
+    $table->index('name');
+    $table->index('type');
 });
 ```
 
-#### patient_insurances
-Insurance coverage tracking with validity periods.
-
-```php
-Schema::create('patient_insurances', function (Blueprint $table) {
-    $table->uuid('id')->primary();
-    $table->foreignUuid('patient_id')->constrained()->onDelete('cascade');
-    $table->string('provider_name', 100);
-    $table->string('policy_number', 100);
-    $table->string('member_id', 100);
-    $table->string('group_number', 100)->nullable();
-    $table->date('valid_from');
-    $table->date('valid_to')->nullable();
-    $table->boolean('is_primary')->default(false);
-    $table->decimal('coverage_percentage', 5, 2)->default(100.00);
-    $table->decimal('max_coverage_amount', 12, 2)->nullable();
-    $table->json('covered_services')->nullable(); // Array of service codes
-    $table->timestamps();
-
-    $table->index(['patient_id', 'is_primary']);
-    $table->index('valid_to');
-});
-```
 
 #### patient_allergies
 Comprehensive allergy profile with reactions.
@@ -184,17 +158,14 @@ Comprehensive allergy profile with reactions.
 Schema::create('patient_allergies', function (Blueprint $table) {
     $table->uuid('id')->primary();
     $table->foreignUuid('patient_id')->constrained()->onDelete('cascade');
-    $table->string('allergen', 100)->index();
-    $table->enum('type', ['medication', 'food', 'environmental', 'latex', 'contrast']);
-    $table->enum('severity', ['mild', 'moderate', 'severe', 'life_threatening']);
-    $table->string('reaction', 255)->comment('e.g., Rash, Anaphylaxis');
-    $table->date('onset_date')->nullable();
+    $table->foreignUuid('allergen_id')->constrained('allergens')->onDelete('cascade');
+    $table->enum('severity', [AllergySeverity::class]);
+    $table->enum('reaction', [AllergyReaction::class]);
     $table->text('notes')->nullable();
     $table->boolean('is_active')->default(true);
-    $table->foreignUuid('reported_by')->nullable()->constrained('staff');
     $table->timestamps();
 
-    $table->index(['patient_id', 'type']);
+    $table->index(['patient_id', 'allergen_id']);
     $table->index('severity');
 });
 ```
