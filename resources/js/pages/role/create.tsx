@@ -1,16 +1,19 @@
-import { FormEvent } from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
+import RoleController from '@/actions/App/Http/Controllers/RoleController';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import InputError from '@/components/input-error';
+import { Form, Head, Link } from '@inertiajs/react';
+import { LoaderCircle, Shield, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Roles', href: '/roles' },
-    { title: 'Create Role', href: '/roles/create' },
+    { title: 'Roles', href: RoleController.index.url() },
+    { title: 'Create Role', href: RoleController.create.url() },
 ];
 
 interface Props {
@@ -18,104 +21,145 @@ interface Props {
 }
 
 export default function RoleCreate({ permissionGroups }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
-        name: '',
-        permissions: [] as string[],
-    });
+    const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
     const handlePermissionToggle = (permissionName: string, checked: boolean) => {
         if (checked) {
-            setData('permissions', [...data.permissions, permissionName]);
+            setSelectedPermissions(prev => [...prev, permissionName]);
         } else {
-            setData('permissions', data.permissions.filter(p => p !== permissionName));
+            setSelectedPermissions(prev => prev.filter(p => p !== permissionName));
         }
     };
 
     const handleGroupToggle = (groupPerms: any[], checked: boolean) => {
         const groupPermNames = groupPerms.map(p => p.name);
         if (checked) {
-            // Add all group permissions that aren't already selected
-            const newPerms = [...new Set([...data.permissions, ...groupPermNames])];
-            setData('permissions', newPerms);
+            setSelectedPermissions(prev => [...new Set([...prev, ...groupPermNames])]);
         } else {
-            // Remove all group permissions
-            setData('permissions', data.permissions.filter(p => !groupPermNames.includes(p)));
+            setSelectedPermissions(prev => prev.filter(p => !groupPermNames.includes(p)));
         }
     };
 
     const isGroupFullySelected = (groupPerms: any[]) => {
-        return groupPerms.length > 0 && groupPerms.every(p => data.permissions.includes(p.name));
-    };
-
-    const submit = (e: FormEvent) => {
-        e.preventDefault();
-        post('/roles');
+        return groupPerms.length > 0 && groupPerms.every(p => selectedPermissions.includes(p.name));
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Role" />
-            <div className="p-4 sm:p-8 max-w-5xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200 mb-6">Create New Role</h2>
-                    
-                    <form onSubmit={submit} className="space-y-8">
-                        <div>
-                            <Label htmlFor="name">Role Name</Label>
-                            <Input
-                                id="name"
-                                value={data.name}
-                                onChange={e => setData('name', e.target.value)}
-                                className="mt-1 block w-full md:w-1/2"
-                                required
-                            />
-                            <InputError message={errors.name} className="mt-2" />
-                            {errors.permissions && <InputError message={errors.permissions} className="mt-2 text-sm text-red-600 dark:text-red-400" />}
-                        </div>
+            <div className="p-4 sm:p-8 max-w-5xl mx-auto space-y-6">
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 italic">
+                        Create New Role
+                    </h2>
+                    <p className="text-muted-foreground">
+                        Define a new role and assign specific permissions to it.
+                    </p>
+                </div>
 
-                        <div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Permissions</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {Object.entries(permissionGroups).map(([group, perms]) => (
-                                    <div key={group} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                        <div className="flex items-center space-x-2 mb-4 pb-2 border-b border-gray-100 dark:border-gray-800">
-                                            <Checkbox 
-                                                id={`group-${group}`}
-                                                checked={isGroupFullySelected(perms)}
-                                                onCheckedChange={(c) => handleGroupToggle(perms, c as boolean)}
-                                            />
-                                            <Label htmlFor={`group-${group}`} className="font-bold capitalize text-base cursor-pointer">
-                                                {group.replace('_', ' ')}
-                                            </Label>
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
+                    <Form
+                        {...RoleController.store.form()}
+                        onSuccess={() => toast.success('Role created successfully.')}
+                        className="p-6 space-y-8"
+                    >
+                        {({ processing, errors }) => (
+                            <>
+                                <div className="grid gap-6">
+                                    <div className="grid gap-2 max-w-md">
+                                        <Label htmlFor="name" className="text-sm font-semibold">
+                                            Role Name
+                                        </Label>
+                                        <Input
+                                            id="name"
+                                            name="name"
+                                            placeholder="e.g. Manager, Editor"
+                                            autoFocus
+                                            required
+                                        />
+                                        <InputError message={errors.name} />
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                                            <Shield className="h-5 w-5 text-indigo-500" />
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                                Permissions
+                                            </h3>
                                         </div>
-                                        <div className="space-y-3">
-                                            {perms.map(permission => (
-                                                <div key={permission.id} className="flex items-center space-x-2 px-2">
-                                                    <Checkbox 
-                                                        id={`perm-${permission.id}`}
-                                                        checked={data.permissions.includes(permission.name)}
-                                                        onCheckedChange={(c) => handlePermissionToggle(permission.name, c as boolean)}
-                                                    />
-                                                    <Label htmlFor={`perm-${permission.id}`} className="font-normal cursor-pointer text-sm">
-                                                        {permission.name}
-                                                    </Label>
+                                        
+                                        {errors.permissions && (
+                                            <InputError message={errors.permissions} />
+                                        )}
+
+                                        {/* Hidden inputs to send permissions array */}
+                                        {selectedPermissions.map(permission => (
+                                            <input 
+                                                key={permission} 
+                                                type="hidden" 
+                                                name="permissions[]" 
+                                                value={permission} 
+                                            />
+                                        ))}
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
+                                            {Object.entries(permissionGroups).map(([group, perms]) => (
+                                                <div 
+                                                    key={group} 
+                                                    className="flex flex-col border border-zinc-200 dark:border-zinc-800 rounded-lg bg-zinc-50/30 dark:bg-zinc-900/30"
+                                                >
+                                                    <div className="p-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                                                        <Label 
+                                                            htmlFor={`group-${group}`} 
+                                                            className="font-bold capitalize text-sm cursor-pointer flex items-center gap-2"
+                                                        >
+                                                            {group.replace('_', ' ')}
+                                                        </Label>
+                                                        <Checkbox 
+                                                            id={`group-${group}`}
+                                                            checked={isGroupFullySelected(perms)}
+                                                            onCheckedChange={(c) => handleGroupToggle(perms, c as boolean)}
+                                                        />
+                                                    </div>
+                                                    <div className="p-3 space-y-2 flex-grow">
+                                                        {perms.map(permission => (
+                                                            <div key={permission.id} className="flex items-center justify-between gap-2 px-1">
+                                                                <Label 
+                                                                    htmlFor={`perm-${permission.id}`} 
+                                                                    className="font-normal cursor-pointer text-xs text-zinc-600 dark:text-zinc-400"
+                                                                >
+                                                                    {permission.name}
+                                                                </Label>
+                                                                <Checkbox 
+                                                                    id={`perm-${permission.id}`}
+                                                                    checked={selectedPermissions.includes(permission.name)}
+                                                                    onCheckedChange={(c) => handlePermissionToggle(permission.name, c as boolean)}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
+                                </div>
 
-                        <div className="flex items-center justify-end gap-4 border-t border-gray-200 dark:border-gray-700 pt-6">
-                            <Button variant="outline" type="button" asChild>
-                                <Link href="/roles">Cancel</Link>
-                            </Button>
-                            <Button type="submit" disabled={processing}>
-                                Create Role
-                            </Button>
-                        </div>
-                    </form>
+                                <div className="flex items-center justify-end gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                                    <Button variant="ghost" type="button" asChild>
+                                        <Link href={RoleController.index.url()}>Cancel</Link>
+                                    </Button>
+                                    <Button type="submit" disabled={processing} className="min-w-[120px]">
+                                        {processing ? (
+                                            <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
+                                        ) : (
+                                            <ShieldCheck className="h-4 w-4 mr-2" />
+                                        )}
+                                        Create Role
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </Form>
                 </div>
             </div>
         </AppLayout>

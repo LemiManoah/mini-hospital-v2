@@ -9,6 +9,7 @@ use App\Actions\DeleteRole;
 use App\Actions\UpdateRole;
 use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
+use App\Http\Requests\DeleteRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,7 @@ final readonly class RoleController
     public function create(): Response
     {
         // Group permissions by their prefix (e.g., 'patients', 'visits')
-        $permissions = Permission::all()->groupBy(function ($permission) {
+        $permissions = Permission::all()->groupBy(function (Permission $permission): string {
             return explode('.', $permission->name)[0];
         });
 
@@ -39,11 +40,11 @@ final readonly class RoleController
 
     public function store(StoreRoleRequest $request, CreateRole $action): RedirectResponse
     {
-        /** @var array<string, mixed> $attributes */
-        $attributes = $request->safe()->except('permissions');
-        $permissions = $request->input('permissions', []);
+        $validated = $request->validated();
+        $permissions = $validated['permissions'] ?? [];
+        unset($validated['permissions']);
 
-        $action->handle($attributes, $permissions);
+        $action->handle($validated, $permissions);
 
         return to_route('roles.index')->with('success', 'Role created successfully.');
     }
@@ -53,7 +54,7 @@ final readonly class RoleController
         $role->load('permissions');
         
         // Group permissions by their prefix (e.g., 'patients', 'visits')
-        $permissions = Permission::all()->groupBy(function ($permission) {
+        $permissions = Permission::all()->groupBy(function (Permission $permission): string {
             return explode('.', $permission->name)[0];
         });
 
@@ -65,16 +66,16 @@ final readonly class RoleController
 
     public function update(UpdateRoleRequest $request, Role $role, UpdateRole $action): RedirectResponse
     {
-        /** @var array<string, mixed> $attributes */
-        $attributes = $request->safe()->except('permissions');
-        $permissions = $request->input('permissions', []);
+        $validated = $request->validated();
+        $permissions = $validated['permissions'] ?? [];
+        unset($validated['permissions']);
 
-        $action->handle($role, $attributes, $permissions);
+        $action->handle($role, $validated, $permissions);
 
         return to_route('roles.index')->with('success', 'Role updated successfully.');
     }
 
-    public function destroy(Role $role, DeleteRole $action): RedirectResponse
+    public function destroy(DeleteRoleRequest $request, Role $role, DeleteRole $action): RedirectResponse
     {
         $action->handle($role);
 

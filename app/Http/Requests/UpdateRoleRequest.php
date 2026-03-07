@@ -30,4 +30,12 @@ final class UpdateRoleRequest extends FormRequest
             'permissions.*' => ['string', Rule::exists('permissions', 'name')],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'name.unique' => 'The role name must be unique.',
+            'permissions.*.exists' => 'One or more selected permissions do not exist.',
+        ];
+    }
 }
