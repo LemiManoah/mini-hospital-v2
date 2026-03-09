@@ -13,16 +13,30 @@ use App\Http\Requests\DeleteRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final readonly class RoleController
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $roles = Role::with('permissions')->get();
+        $search = trim((string) $request->query('search', ''));
+
+        $roles = Role::query()
+            ->with('permissions')
+            ->when(
+                $search !== '',
+                static fn($query) => $query->where('name', 'like', "%{$search}%")
+            )
+            ->paginate(5)
+            ->withQueryString();
+
         return Inertia::render('role/index', [
             'roles' => $roles,
+            'filters' => [
+                'search' => $search,
+            ],
         ]);
     }
 
@@ -52,7 +66,7 @@ final readonly class RoleController
     public function edit(Role $role): Response
     {
         $role->load('permissions');
-        
+
         // Group permissions by their prefix (e.g., 'patients', 'visits')
         $permissions = Permission::all()->groupBy(function (Permission $permission): string {
             return explode('.', $permission->name)[0];

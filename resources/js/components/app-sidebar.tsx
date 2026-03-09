@@ -12,9 +12,14 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as indexRoles } from '@/routes/roles';
+import { index as indexAllergens } from '@/routes/allergens';
+import { index as indexAddresses } from '@/routes/addresses';
+import { index as indexCurrencies } from '@/routes/currencies';
+import { index as indexSubscriptionPackages } from '@/routes/subscription-packages';
+
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Shield } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Shield, Coins, Package, MapPin, FlaskConical } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -24,9 +29,29 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Roles & Permissions',
+        title: 'Roles Management',
         href: indexRoles(),
         icon: Shield,
+    },
+    {
+        title: 'Currencies',
+        href: indexCurrencies(),
+        icon: Coins,
+    },
+    {
+        title: 'Subscription Packages',
+        href: indexSubscriptionPackages(),
+        icon: Package,
+    },
+    {
+        title: 'Allergens',
+        href: indexAllergens(),
+        icon: FlaskConical,
+    },
+    {
+        title: 'Addresses',
+        href: indexAddresses(),
+        icon: MapPin,
     }
 ];
 

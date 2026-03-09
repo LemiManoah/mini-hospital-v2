@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\AllergyType;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * @property-read string $id
+ * @property-read string $name
+ * @property-read string|null $description
+ * @property-read AllergyType $type
+ * @property-read string|null $created_by
+ * @property-read string|null $updated_by
+ * @property-read \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Support\Carbon $created_at
+ * @property-read \Illuminate\Support\Carbon $updated_at
+ */
+final class Allergen extends Model
+{
+    /** @use HasFactory<\Database\Factories\AllergenFactory> */
+    use HasFactory;
+    use HasUuids;
+    use SoftDeletes;
+
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'description',
+        'type',
+        'created_by',
+        'updated_by',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    public function casts(): array
+    {
+        return [
+            'id' => 'string',
+            'name' => 'string',
+            'description' => 'string',
+            'type' => AllergyType::class,
+            'created_by' => 'string',
+            'updated_by' => 'string',
+            'deleted_at' => 'datetime',
+        ];
+    }
+}

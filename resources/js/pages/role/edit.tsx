@@ -5,27 +5,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import { formatIdentifierLabel, formatPermissionLabel } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
+import { type RoleEditPageProps } from '@/types/role';
 import { Form, Head, Link } from '@inertiajs/react';
 import { LoaderCircle, Shield, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-interface Role {
-    id: string;
-    name: string;
-    permissions: any[];
-}
-
-interface Props {
-    role: Role;
-    permissionGroups: Record<string, any[]>;
-}
-
-export default function RoleEdit({ role, permissionGroups }: Props) {
+export default function RoleEdit({ role, permissionGroups }: RoleEditPageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Roles', href: RoleController.index.url() },
-        { title: `Edit ${role.name}`, href: RoleController.edit.url({ role }) },
+        { title: `Edit ${formatIdentifierLabel(role.name)}`, href: RoleController.edit.url({ role }) },
     ];
 
     const [selectedPermissions, setSelectedPermissions] = useState<string[]>(
@@ -55,11 +46,11 @@ export default function RoleEdit({ role, permissionGroups }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Edit Role: ${role.name}`} />
+            <Head title={`Edit Role: ${formatIdentifierLabel(role.name)}`} />
             <div className="p-4 sm:p-8 max-w-5xl mx-auto space-y-6">
                 <div className="flex flex-col gap-1">
                     <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 italic">
-                        Edit Role: {role.name}
+                        Edit Role: {formatIdentifierLabel(role.name)}
                     </h2>
                     <p className="text-muted-foreground">
                         Modify role name and adjust assigned permissions.
@@ -128,7 +119,7 @@ export default function RoleEdit({ role, permissionGroups }: Props) {
                                                             htmlFor={`group-${group}`} 
                                                             className="font-bold capitalize text-sm cursor-pointer flex items-center gap-2"
                                                         >
-                                                            {group.replace('_', ' ')}
+                                                            {formatIdentifierLabel(group)}
                                                         </Label>
                                                         <Checkbox 
                                                             id={`group-${group}`}
@@ -143,7 +134,7 @@ export default function RoleEdit({ role, permissionGroups }: Props) {
                                                                     htmlFor={`perm-${permission.id}`} 
                                                                     className="font-normal cursor-pointer text-xs text-zinc-600 dark:text-zinc-400"
                                                                 >
-                                                                    {permission.name}
+                                                                    {formatPermissionLabel(permission.name)}
                                                                 </Label>
                                                                 <Checkbox 
                                                                     id={`perm-${permission.id}`}

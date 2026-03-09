@@ -21,6 +21,12 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
     // Roles & Permissions...
     Route::resource('roles', RoleController::class)->except(['show']);
+
+    // Phase 1 Foundation...
+    Route::resource('allergens', \App\Http\Controllers\AllergenController::class)->except(['show']);
+    Route::resource('addresses', \App\Http\Controllers\AddressController::class)->except(['show']);
+    Route::resource('currencies', \App\Http\Controllers\CurrencyController::class)->except(['show']);
+    Route::resource('subscription-packages', \App\Http\Controllers\SubscriptionPackageController::class)->except(['show']);
 });
 
 Route::middleware('auth')->group(function (): void {

@@ -5,7 +5,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import { formatIdentifierLabel, formatPermissionLabel } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
+import { type RoleCreatePageProps } from '@/types/role';
 import { Form, Head, Link } from '@inertiajs/react';
 import { LoaderCircle, Shield, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
@@ -16,11 +18,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Create Role', href: RoleController.create.url() },
 ];
 
-interface Props {
-    permissionGroups: Record<string, any[]>;
-}
-
-export default function RoleCreate({ permissionGroups }: Props) {
+export default function RoleCreate({ permissionGroups }: RoleCreatePageProps) {
     const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
     const handlePermissionToggle = (permissionName: string, checked: boolean) => {
@@ -113,7 +111,7 @@ export default function RoleCreate({ permissionGroups }: Props) {
                                                             htmlFor={`group-${group}`} 
                                                             className="font-bold capitalize text-sm cursor-pointer flex items-center gap-2"
                                                         >
-                                                            {group.replace('_', ' ')}
+                                                            {formatIdentifierLabel(group)}
                                                         </Label>
                                                         <Checkbox 
                                                             id={`group-${group}`}
@@ -128,7 +126,7 @@ export default function RoleCreate({ permissionGroups }: Props) {
                                                                     htmlFor={`perm-${permission.id}`} 
                                                                     className="font-normal cursor-pointer text-xs text-zinc-600 dark:text-zinc-400"
                                                                 >
-                                                                    {permission.name}
+                                                                    {formatPermissionLabel(permission.name)}
                                                                 </Label>
                                                                 <Checkbox 
                                                                     id={`perm-${permission.id}`}
