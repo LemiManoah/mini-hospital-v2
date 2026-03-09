@@ -12,6 +12,7 @@ use App\Http\Requests\UpdateAddressRequest;
 use App\Http\Requests\DeleteAddressRequest;
 use App\Models\Address;
 use App\Models\Country;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,7 +28,7 @@ final readonly class AddressController
             ->with('country')
             ->when(
                 $search !== '',
-                static fn($query) => $query->where('city', 'like', "%{$search}%")
+                static fn(Builder $query) => $query->where('city', 'like', "%{$search}%")
                     ->orWhere('district', 'like', "%{$search}%")
                     ->orWhere('state', 'like', "%{$search}%")
             )

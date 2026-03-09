@@ -11,6 +11,7 @@ use App\Http\Requests\StoreCurrencyRequest;
 use App\Http\Requests\UpdateCurrencyRequest;
 use App\Http\Requests\DeleteCurrencyRequest;
 use App\Models\Currency;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,7 +26,7 @@ final readonly class CurrencyController
         $currencies = Currency::query()
             ->when(
                 $search !== '',
-                static fn($query) => $query->where('name', 'like', "%{$search}%")
+                static fn(Builder $query) => $query->where('name', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%")
             )
             ->latest()

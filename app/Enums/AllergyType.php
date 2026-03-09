@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 /**
@@ -15,7 +17,7 @@ enum AllergyType: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::MEDICATION => 'Medication',
             self::FOOD => 'Food',
             self::ENVIRONMENTAL => 'Environmental',
@@ -26,7 +28,7 @@ enum AllergyType: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::MEDICATION => 'red',
             self::FOOD => 'orange',
             self::ENVIRONMENTAL => 'green',

@@ -11,6 +11,7 @@ use App\Http\Requests\StoreSubscriptionPackageRequest;
 use App\Http\Requests\UpdateSubscriptionPackageRequest;
 use App\Http\Requests\DeleteSubscriptionPackageRequest;
 use App\Models\SubscriptionPackage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,7 +26,7 @@ final readonly class SubscriptionPackageController
         $packages = SubscriptionPackage::query()
             ->when(
                 $search !== '',
-                static fn($query) => $query->where('name', 'like', "%{$search}%")
+                static fn(Builder $query) => $query->where('name', 'like', "%{$search}%")
             )
             ->latest()
             ->paginate(10)

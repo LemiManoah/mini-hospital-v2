@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 /**
@@ -18,7 +20,7 @@ enum AppointmentStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::SCHEDULED => 'Scheduled',
             self::CONFIRMED => 'Confirmed',
             self::CANCELLED => 'Cancelled',
@@ -32,7 +34,7 @@ enum AppointmentStatus: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::SCHEDULED, self::RESCHEDULED => 'gray',
             self::CONFIRMED, self::CHECKED_IN => 'blue',
             self::IN_PROGRESS => 'yellow',
@@ -40,7 +42,7 @@ enum AppointmentStatus: string
             self::CANCELLED, self::NO_SHOW => 'red',
         };
     }
-    
+
     public function isFinalized(): bool
     {
         return in_array($this, [self::COMPLETED, self::CANCELLED, self::NO_SHOW]);

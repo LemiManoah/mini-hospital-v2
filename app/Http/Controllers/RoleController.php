@@ -12,6 +12,7 @@ use App\Http\Requests\UpdateRoleRequest;
 use App\Http\Requests\DeleteRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,7 +28,7 @@ final readonly class RoleController
             ->with('permissions')
             ->when(
                 $search !== '',
-                static fn($query) => $query->where('name', 'like', "%{$search}%")
+                static fn(Builder $query) => $query->where('name', 'like', "%{$search}%")
             )
             ->paginate(5)
             ->withQueryString();

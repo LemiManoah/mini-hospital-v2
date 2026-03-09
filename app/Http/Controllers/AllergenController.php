@@ -11,6 +11,7 @@ use App\Http\Requests\StoreAllergenRequest;
 use App\Http\Requests\UpdateAllergenRequest;
 use App\Http\Requests\DeleteAllergenRequest;
 use App\Models\Allergen;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,7 +26,7 @@ final readonly class AllergenController
         $allergens = Allergen::query()
             ->when(
                 $search !== '',
-                static fn($query) => $query->where('name', 'like', "%{$search}%")
+                static fn(Builder $query) => $query->where('name', 'like', "%{$search}%")
             )
             ->latest()
             ->paginate(10)

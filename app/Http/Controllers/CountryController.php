@@ -11,6 +11,7 @@ use App\Http\Requests\StoreCountryRequest;
 use App\Http\Requests\UpdateCountryRequest;
 use App\Http\Requests\DeleteCountryRequest;
 use App\Models\Country;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,7 +26,7 @@ final readonly class CountryController
         $countries = Country::query()
             ->when(
                 $search !== '',
-                static fn($query) => $query->where('country_name', 'like', "%{$search}%")
+                static fn(Builder $query) => $query->where('country_name', 'like', "%{$search}%")
                     ->orWhere('country_code', 'like', "%{$search}%")
             )
             ->latest()
