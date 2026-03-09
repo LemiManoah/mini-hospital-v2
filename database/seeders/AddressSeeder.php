@@ -14,7 +14,36 @@ final class AddressSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed 10 addresses
-        Address::factory()->count(10)->create();
+        $uganda = \App\Models\Country::where('country_code', 'UG')->first();
+
+        if (!$uganda) {
+            $this->call(CountrySeeder::class);
+            $uganda = \App\Models\Country::where('country_code', 'UG')->first();
+        }
+
+        $addresses = [
+            ['city' => 'Kampala', 'district' => 'Kampala', 'country_id' => $uganda->id],
+            ['city' => 'Entebbe', 'district' => 'Wakiso', 'country_id' => $uganda->id],
+            ['city' => 'Jinja', 'district' => 'Jinja', 'country_id' => $uganda->id],
+            ['city' => 'Mbarara', 'district' => 'Mbarara', 'country_id' => $uganda->id],
+            ['city' => 'Gulu', 'district' => 'Gulu', 'country_id' => $uganda->id],
+            ['city' => 'Mbale', 'district' => 'Mbale', 'country_id' => $uganda->id],
+            ['city' => 'Fort Portal', 'district' => 'Kabarole', 'country_id' => $uganda->id],
+            ['city' => 'Arua', 'district' => 'Arua', 'country_id' => $uganda->id],
+            ['city' => 'Lira', 'district' => 'Lira', 'country_id' => $uganda->id],
+            ['city' => 'Masaka', 'district' => 'Masaka', 'country_id' => $uganda->id],
+            ['city' => 'Mukono', 'district' => 'Mukono', 'country_id' => $uganda->id],
+            ['city' => 'Wakiso', 'district' => 'Wakiso', 'country_id' => $uganda->id],
+            ['city' => 'Kabale', 'district' => 'Kabale', 'country_id' => $uganda->id],
+            ['city' => 'Hoima', 'district' => 'Hoima', 'country_id' => $uganda->id],
+            ['city' => 'Soroti', 'district' => 'Soroti', 'country_id' => $uganda->id],
+        ];
+
+        foreach ($addresses as $address) {
+            Address::query()->updateOrCreate(
+                ['city' => $address['city'], 'district' => $address['district']],
+                $address
+            );
+        }
     }
 }

@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Carbon\CarbonInterface;
-use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\Fortify;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Override;
 use Spatie\Permission\Traits\HasRoles;
@@ -37,6 +40,16 @@ final class User extends Authenticatable implements MustVerifyEmail
     use HasUuids;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use BelongsToTenant;
+
+    protected $appends = ['name', 'avatar'];
+
+    protected $fillable = [
+        'tenant_id',
+        'staff_id',
+        'email',
+        'password',
+    ];
 
     /**
      * @var list<string>
@@ -56,7 +69,8 @@ final class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'id' => 'string',
-            'name' => 'string',
+            'tenant_id' => 'string',
+            'staff_id' => 'string',
             'email' => 'string',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
@@ -67,5 +81,46 @@ final class User extends Authenticatable implements MustVerifyEmail
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Staff, $this>
+     */
+    public function staff(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class);
+    }
+
+    /**
+     * @return BelongsTo<Address, $this>
+     */
+    public function address(): BelongsTo
+    {
+        return $this->belongsTo(Address::class);
+    }
+
+    /**
+     * Get the user's full name.
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->staff) {
+                return trim("{$this->staff->first_name} {$this->staff->last_name}");
+            }
+
+            return explode('@', $this->email)[0];
+        });
+    }
+
+    /**
+     * Get the user's avatar URL.
+     */
+    protected function avatar(): Attribute
+    {
+        return Attribute::get(function () {
+            $name = urlencode($this->name ?? $this->email);
+            return "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
+        });
     }
 }

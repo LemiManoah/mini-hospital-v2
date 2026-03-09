@@ -21,6 +21,10 @@ final class AllergenSeeder extends Seeder
             ['name' => 'Dust Mites', 'description' => 'House dust mite sensitivity.', 'type' => AllergyType::ENVIRONMENTAL],
             ['name' => 'Latex', 'description' => 'Latex sensitivity from gloves and medical products.', 'type' => AllergyType::LATEX],
             ['name' => 'Iodinated Contrast', 'description' => 'Contrast media hypersensitivity.', 'type' => AllergyType::CONTRAST],
+            ['name' => 'Aspirin', 'description' => 'Aspirin sensitivity or intolerance.', 'type' => AllergyType::MEDICATION],
+            ['name' => 'NSAIDs', 'description' => 'Sensitivity to Nonsteroidal Anti-inflammatory Drugs.', 'type' => AllergyType::MEDICATION],
+            ['name' => 'Morphine', 'description' => 'Opioid/Morphine sensitivity.', 'type' => AllergyType::MEDICATION],
+            ['name' => 'Egg Protein', 'description' => 'Common food allergen, potentially relevant for some vaccines.', 'type' => AllergyType::FOOD],
         ];
 
         foreach ($allergens as $allergen) {

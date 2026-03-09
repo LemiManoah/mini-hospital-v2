@@ -18,6 +18,7 @@ final class DatabaseSeeder extends Seeder
             AllergenSeeder::class,
             AddressSeeder::class,
             PermissionSeeder::class,
+            AdminUserSeeder::class,
         ]);
     }
 }

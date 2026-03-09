@@ -1,6 +1,6 @@
 # Implementation Plan & Build Order
 
-Building a Multi-Tenant Hospital Management System requires a structured approach to prevent foreign key constraint failures and to ensure that foundation layers are solid before complex business logic is applied. 
+Building a Multi-Tenant Hospital Management System requires a structured approach to prevent foreign key constraint failures and to ensure that foundation layers are solid before complex business logic is applied.
 
 Below is the recommended order of implementation and the reasoning behind it, followed by a list of potentially missing entities from the current schema.
 
@@ -16,7 +16,7 @@ These represent the absolute lowest level of the dependency tree. They are mostl
 
 ## Phase 1.5: Roles & Permissions (RBAC)
 
-Because security and access control are critical to a multi-tenant application, roles and permissions should be defined immediately after the foundation. 
+Because security and access control are critical to a multi-tenant application, roles and permissions should be defined immediately after the foundation.
 
 - **Tables to build**: `roles`, `permissions`, `model_has_permissions`, `model_has_roles`, `role_has_permissions` (Provided by `spatie/laravel-permission` package).
 - **Why build first?**
@@ -26,7 +26,7 @@ Because security and access control are critical to a multi-tenant application, 
 
 This is the core pillar of the multi-branch, multi-tenant architecture. All subsequent data will belong to these entities.
 
-- **Tables to build**: `tenants`, `facility_branches`, `departments`, `staff` (Users), `staff_branches`, `staff_addresses`
+- **Tables to build**: `tenants`, `facility_branches`, `departments`, `staff` (Users), `staff_branches`
 - **Why build first?**
   Every patient, visit, appointment, and transaction requires a `tenant_id` and often a `branch_id`. You also need authenticated `staff` members to act as the `created_by` or `updated_by` reference (audit trails) for all other records. Establishing global tenant scopes and authentication here is critical before moving on.
 
@@ -53,22 +53,22 @@ The daily operational flow of a hospital.
 - **Tables to build**: `schedules`, `appointments`, `patient_visits`, `triage_records`, `vital_signs`, `consultations`
 - **Why build first?**
   This maps to the real-world workflow:
-  1. Doctor creates a `schedule`.
-  2. Patient books an `appointment`.
-  3. Patient arrives and a `patient_visit` encounter is opened.
-  4. Nurse does `triage_records` and `vital_signs`.
-  5. Doctor performs `consultations`.
+    1. Doctor creates a `schedule`.
+    2. Patient books an `appointment`.
+    3. Patient arrives and a `patient_visit` encounter is opened.
+    4. Nurse does `triage_records` and `vital_signs`.
+    5. Doctor performs `consultations`.
 
 ## Phase 6: Clinical Support Services (Lab, Radiology, Pharmacy)
 
 These are investigations and treatments resulting from a consultation.
 
-- **Tables to build**: 
-  - *Lab*: `lab_requests`, `lab_request_items`, `lab_specimens`, `lab_results`
-  - *Radiology*: `imaging_requests`, `imaging_studies`, `radiology_reports`
-  - *Pharmacy*: `prescriptions`, `prescription_items`, `dispensing_records`
+- **Tables to build**:
+    - _Lab_: `lab_requests`, `lab_request_items`, `lab_specimens`, `lab_results`
+    - _Radiology_: `imaging_requests`, `imaging_studies`, `radiology_reports`
+    - _Pharmacy_: `prescriptions`, `prescription_items`, `dispensing_records`
 - **Why build first?**
-  These are ordered explicitly during or after a `consultation`. They depend on the visit and consultation context to exist. You also need the Catalogs from Phase 3 to know *what* can be requested.
+  These are ordered explicitly during or after a `consultation`. They depend on the visit and consultation context to exist. You also need the Catalogs from Phase 3 to know _what_ can be requested.
 
 ## Phase 7: Inpatient Operations (IPD)
 
@@ -93,22 +93,22 @@ The culmination of all hospital activities.
 While the schema is comprehensive, the following components are either missing or implicitly referenced without a defined table:
 
 1. **Currencies Table**
-   - **Issue**: `facility_branches` references a `currency_id` constrained to `currencies`, but the `currencies` table is not explicitly defined in the schema (only `countries` is, which contains currency strings, but not an independent table).
+    - **Issue**: `facility_branches` references a `currency_id` constrained to `currencies`, but the `currencies` table is not explicitly defined in the schema (only `countries` is, which contains currency strings, but not an independent table).
 
 2. **Insurance Management**
-   - **Issue**: `visit_billings` references `insurance_id` constrained to `patient_insurances`. However, `patient_insurances` and master `insurance_companies` (HMOs/TPA) tables are completely missing. You need tables to manage insurance providers, plans, and patient policy subscriptions.
+    - **Issue**: `visit_billings` references `insurance_id` constrained to `patient_insurances`. However, `patient_insurances` and master `insurance_companies` (HMOs/TPA) tables are completely missing. You need tables to manage insurance providers, plans, and patient policy subscriptions.
 
 3. **Roles & Permissions (RBAC)**
-   - **Issue**: The `staff` table has a simple `role` string column. **[RESOLVED in Phase 1.5]**: Implemented via `spatie/laravel-permission`.
+    - **Issue**: The `staff` table has a simple `role` string column. **[RESOLVED in Phase 1.5]**: Implemented via `spatie/laravel-permission`.
 
 4. **Inventory & Procurement (Supply Chain)**
-   - **Issue**: You have `medication_catalogs` but no tables for tracking stock levels, purchase orders, suppliers, or stock adjustments. A pharmacy cannot dispense without knowing physical inventory counts.
+    - **Issue**: You have `medication_catalogs` but no tables for tracking stock levels, purchase orders, suppliers, or stock adjustments. A pharmacy cannot dispense without knowing physical inventory counts.
 
 5. **Procedures & Surgeries (OR)**
-   - **Issue**: The Relationships Summary explicitly mentions `procedure_requests`, but it is not defined in the schema. You will need tables for Operating Theater scheduling, intra-operative notes, and anesthesia records.
+    - **Issue**: The Relationships Summary explicitly mentions `procedure_requests`, but it is not defined in the schema. You will need tables for Operating Theater scheduling, intra-operative notes, and anesthesia records.
 
 6. **Patient Portal / User Accounts**
-   - **Issue**: If patients are meant to log in to book appointments or view lab results, they need authentication credentials. Typically, this is solved by either a generic `users` table linked polymorphically, or adding login capability directly to the `patients` table.
+    - **Issue**: If patients are meant to log in to book appointments or view lab results, they need authentication credentials. Typically, this is solved by either a generic `users` table linked polymorphically, or adding login capability directly to the `patients` table.
 
 7. **System Notifications / Communications**
-   - **Issue**: A table for tracking outgoing SMS and Emails (e.g., appointment reminders, lab result readiness) is highly recommended for auditing patient communication.
+    - **Issue**: A table for tracking outgoing SMS and Emails (e.g., appointment reminders, lab result readiness) is highly recommended for auditing patient communication.

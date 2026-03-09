@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\AllergyType;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,7 @@ final class Allergen extends Model
 
     use HasUuids;
     use SoftDeletes;
+    use BelongsToTenant;
 
     #[Override]
     public $incrementing = false;
@@ -42,6 +44,7 @@ final class Allergen extends Model
      */
     #[Override]
     protected $fillable = [
+        'tenant_id',
         'name',
         'description',
         'type',
@@ -56,6 +59,7 @@ final class Allergen extends Model
     {
         return [
             'id' => 'string',
+            'tenant_id' => 'string',
             'name' => 'string',
             'description' => 'string',
             'type' => AllergyType::class,

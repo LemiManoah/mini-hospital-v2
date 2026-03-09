@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Database\Factories\AddressFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,12 +34,14 @@ final class Address extends Model
 
     use HasUuids;
     use SoftDeletes;
+    use BelongsToTenant;
 
     /**
      * @var list<string>
      */
     #[Override]
     protected $fillable = [
+        'tenant_id',
         'city',
         'district',
         'state',
@@ -54,6 +57,7 @@ final class Address extends Model
     {
         return [
             'id' => 'string',
+            'tenant_id' => 'string',
             'city' => 'string',
             'district' => 'string',
             'state' => 'string',
