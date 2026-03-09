@@ -11,8 +11,6 @@ final readonly class DeleteSubscriptionPackage
 {
     public function handle(SubscriptionPackage $package): bool
     {
-        return DB::transaction(function () use ($package): bool {
-            return $package->delete();
-        });
+        return DB::transaction(fn (): bool => $package->delete());
     }
 }

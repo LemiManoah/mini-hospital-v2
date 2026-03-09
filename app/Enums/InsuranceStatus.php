@@ -16,7 +16,7 @@ enum InsuranceStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVE => 'Active',
             self::INACTIVE => 'Inactive',
             self::EXPIRED => 'Expired',
@@ -26,7 +26,7 @@ enum InsuranceStatus: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVE => 'green',
             self::INACTIVE => 'gray',
             self::EXPIRED => 'yellow',

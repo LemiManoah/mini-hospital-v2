@@ -21,7 +21,7 @@ enum BloodGroup: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::A_POSITIVE => 'A+',
             self::A_NEGATIVE => 'A-',
             self::B_POSITIVE => 'B+',
@@ -36,6 +36,6 @@ enum BloodGroup: string
 
     public function color(): string
     {
-        return self::UNKNOWN === $this ? 'gray' : 'red';
+        return $this === self::UNKNOWN ? 'gray' : 'red';
     }
 }

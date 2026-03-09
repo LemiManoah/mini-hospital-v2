@@ -17,7 +17,7 @@ enum PatientType: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::NEW => 'New Patient',
             self::RETURNING => 'Returning Patient',
             self::EMERGENCY => 'Emergency',
@@ -28,7 +28,7 @@ enum PatientType: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::NEW => 'green',
             self::RETURNING => 'blue',
             self::EMERGENCY => 'red',

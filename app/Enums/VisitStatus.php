@@ -27,7 +27,7 @@ enum VisitStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::SCHEDULED => 'Scheduled',
             self::CHECKED_IN => 'Checked In',
             self::IN_TREATMENT => 'In Treatment',
@@ -48,7 +48,7 @@ enum VisitStatus: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::SCHEDULED, self::REGISTERED => 'gray',
             self::CHECKED_IN, self::TRIAGED, self::WAITING_CONSULTATION, self::WAITING_LAB, self::WAITING_IMAGING, self::WAITING_PHARMACY => 'blue',
             self::IN_TREATMENT, self::IN_CONSULTATION, self::ADMITTED => 'yellow',

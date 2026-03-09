@@ -93,7 +93,7 @@
         "test:unit": "pest --parallel",
         "test:unit:coverage": "php -d extension=pcov -d pcov.enabled=1 pest --parallel --coverage --exactly=100.0",
         "test:types": [
-            "phpstan",
+            "phpstan --memory-limit=1G",
             "bun run test:types"
         ],
         "test": [

@@ -7,9 +7,9 @@ namespace App\Http\Controllers;
 use App\Actions\CreateAddress;
 use App\Actions\DeleteAddress;
 use App\Actions\UpdateAddress;
+use App\Http\Requests\DeleteAddressRequest;
 use App\Http\Requests\StoreAddressRequest;
 use App\Http\Requests\UpdateAddressRequest;
-use App\Http\Requests\DeleteAddressRequest;
 use App\Models\Address;
 use App\Models\Country;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,15 +22,15 @@ final readonly class AddressController
 {
     public function index(Request $request): Response
     {
-        $search = trim((string) $request->query('search', ''));
+        $search = mb_trim((string) $request->query('search', ''));
 
         $addresses = Address::query()
             ->with('country')
             ->when(
                 $search !== '',
-                static fn(Builder $query) => $query->where('city', 'like', "%{$search}%")
-                    ->orWhere('district', 'like', "%{$search}%")
-                    ->orWhere('state', 'like', "%{$search}%")
+                static fn (Builder $query) => $query->where('city', 'like', sprintf('%%%s%%', $search))
+                    ->orWhere('district', 'like', sprintf('%%%s%%', $search))
+                    ->orWhere('state', 'like', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

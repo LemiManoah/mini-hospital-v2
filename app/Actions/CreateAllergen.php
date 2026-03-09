@@ -15,11 +15,9 @@ final readonly class CreateAllergen
      */
     public function handle(array $attributes): Allergen
     {
-        return DB::transaction(function () use ($attributes): Allergen {
-            return Allergen::query()->create([
-                ...$attributes,
-                'created_by' => Auth::id(),
-            ]);
-        });
+        return DB::transaction(fn (): Allergen => Allergen::query()->create([
+            ...$attributes,
+            'created_by' => Auth::id(),
+        ]));
     }
 }

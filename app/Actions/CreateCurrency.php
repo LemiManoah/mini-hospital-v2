@@ -14,8 +14,6 @@ final readonly class CreateCurrency
      */
     public function handle(array $attributes): Currency
     {
-        return DB::transaction(function () use ($attributes): Currency {
-            return Currency::query()->create($attributes);
-        });
+        return DB::transaction(fn (): Currency => Currency::query()->create($attributes));
     }
 }

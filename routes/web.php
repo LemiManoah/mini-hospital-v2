@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AddressController;
+use App\Http\Controllers\AllergenController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionController;
+use App\Http\Controllers\SubscriptionPackageController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserEmailResetNotificationController;
 use App\Http\Controllers\UserEmailVerificationController;
@@ -14,19 +18,19 @@ use App\Http\Controllers\UserTwoFactorAuthenticationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', fn() => Inertia::render('welcome'))->name('home');
+Route::get('/', fn () => Inertia::render('welcome'))->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
-    Route::get('dashboard', fn() => Inertia::render('dashboard'))->name('dashboard');
+    Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
 
     // Roles & Permissions...
     Route::resource('roles', RoleController::class)->except(['show']);
 
     // Phase 1 Foundation...
-    Route::resource('allergens', \App\Http\Controllers\AllergenController::class)->except(['show']);
-    Route::resource('addresses', \App\Http\Controllers\AddressController::class)->except(['show']);
-    Route::resource('currencies', \App\Http\Controllers\CurrencyController::class)->except(['show']);
-    Route::resource('subscription-packages', \App\Http\Controllers\SubscriptionPackageController::class)->except(['show']);
+    Route::resource('allergens', AllergenController::class)->except(['show']);
+    Route::resource('addresses', AddressController::class)->except(['show']);
+    Route::resource('currencies', CurrencyController::class)->except(['show']);
+    Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
 });
 
 Route::middleware('auth')->group(function (): void {
@@ -45,7 +49,7 @@ Route::middleware('auth')->group(function (): void {
         ->name('password.update');
 
     // Appearance...
-    Route::get('settings/appearance', fn() => Inertia::render('appearance/update'))->name('appearance.edit');
+    Route::get('settings/appearance', fn () => Inertia::render('appearance/update'))->name('appearance.edit');
 
     // User Two-Factor Authentication...
     Route::get('settings/two-factor', [UserTwoFactorAuthenticationController::class, 'show'])

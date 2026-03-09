@@ -17,11 +17,6 @@ parameters:
 
     tmpDir: /tmp/phpstan
 
-    memoryLimit: 1G
-
-    cache:
-        resultCachePath: /tmp/phpstan/result-cache.php
-
     parallel:
         jobSize: 20
         maximumNumberOfProcesses: 32

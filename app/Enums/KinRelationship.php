@@ -18,7 +18,7 @@ enum KinRelationship: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::SPOUSE => 'Spouse',
             self::PARENT => 'Parent',
             self::CHILD => 'Child',

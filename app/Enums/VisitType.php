@@ -21,7 +21,7 @@ enum VisitType: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::NEW => 'New Visit',
             self::FOLLOW_UP => 'Follow-up',
             self::EMERGENCY => 'Emergency',
@@ -36,7 +36,7 @@ enum VisitType: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::NEW, self::OPD_CONSULTATION, self::OUTPATIENT => 'blue',
             self::FOLLOW_UP => 'green',
             self::EMERGENCY => 'red',

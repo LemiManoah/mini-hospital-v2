@@ -11,8 +11,6 @@ final readonly class DeleteCountry
 {
     public function handle(Country $country): bool
     {
-        return DB::transaction(function () use ($country): bool {
-            return $country->delete();
-        });
+        return DB::transaction(fn (): bool => $country->delete());
     }
 }

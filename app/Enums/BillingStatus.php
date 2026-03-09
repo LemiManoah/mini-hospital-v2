@@ -19,7 +19,7 @@ enum BillingStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'Pending',
             self::PARTIAL_PAID => 'Partially Paid',
             self::FULLY_PAID => 'Fully Paid',
@@ -32,7 +32,7 @@ enum BillingStatus: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING, self::INSURANCE_PENDING => 'yellow',
             self::PARTIAL_PAID => 'blue',
             self::FULLY_PAID => 'green',
@@ -40,7 +40,7 @@ enum BillingStatus: string
             self::REFUNDED => 'purple',
         };
     }
-    
+
     public function isSettled(): bool
     {
         return in_array($this, [self::FULLY_PAID, self::WAIVED, self::WRITTEN_OFF]);

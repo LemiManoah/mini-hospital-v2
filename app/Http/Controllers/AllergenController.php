@@ -7,9 +7,9 @@ namespace App\Http\Controllers;
 use App\Actions\CreateAllergen;
 use App\Actions\DeleteAllergen;
 use App\Actions\UpdateAllergen;
+use App\Http\Requests\DeleteAllergenRequest;
 use App\Http\Requests\StoreAllergenRequest;
 use App\Http\Requests\UpdateAllergenRequest;
-use App\Http\Requests\DeleteAllergenRequest;
 use App\Models\Allergen;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -21,12 +21,12 @@ final readonly class AllergenController
 {
     public function index(Request $request): Response
     {
-        $search = trim((string) $request->query('search', ''));
+        $search = mb_trim((string) $request->query('search', ''));
 
         $allergens = Allergen::query()
             ->when(
                 $search !== '',
-                static fn(Builder $query) => $query->where('name', 'like', "%{$search}%")
+                static fn (Builder $query) => $query->where('name', 'like', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

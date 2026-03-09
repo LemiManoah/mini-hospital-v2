@@ -15,10 +15,11 @@ final readonly class UpdateCurrency
     public function handle(Currency $currency, array $attributes): Currency
     {
         return DB::transaction(function () use ($currency, $attributes): Currency {
-            if (!$currency->modifiable) {
-                // Should potentially throw an exception or handle validation elsewhere, 
+            if (! $currency->modifiable) {
+                // Should potentially throw an exception or handle validation elsewhere,
                 // but let's stick to the controller pattern for now.
             }
+
             $currency->update($attributes);
 
             return $currency;

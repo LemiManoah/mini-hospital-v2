@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\CountryFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
+use Override;
 
 /**
  * @property-read string $id
@@ -16,19 +20,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string $dial_code
  * @property-read string $currency
  * @property-read string $currency_symbol
- * @property-read \Illuminate\Support\Carbon $created_at
- * @property-read \Illuminate\Support\Carbon $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Address> $addresses
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
+ * @property-read Collection<int, Address> $addresses
  */
 final class Country extends Model
 {
-    /** @use HasFactory<\Database\Factories\CountryFactory> */
+    /** @use HasFactory<CountryFactory> */
     use HasFactory;
+
     use HasUuids;
 
     /**
      * @var list<string>
      */
+    #[Override]
     protected $fillable = [
         'country_name',
         'country_code',

@@ -7,9 +7,9 @@ namespace App\Http\Controllers;
 use App\Actions\CreateCountry;
 use App\Actions\DeleteCountry;
 use App\Actions\UpdateCountry;
+use App\Http\Requests\DeleteCountryRequest;
 use App\Http\Requests\StoreCountryRequest;
 use App\Http\Requests\UpdateCountryRequest;
-use App\Http\Requests\DeleteCountryRequest;
 use App\Models\Country;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -21,13 +21,13 @@ final readonly class CountryController
 {
     public function index(Request $request): Response
     {
-        $search = trim((string) $request->query('search', ''));
+        $search = mb_trim((string) $request->query('search', ''));
 
         $countries = Country::query()
             ->when(
                 $search !== '',
-                static fn(Builder $query) => $query->where('country_name', 'like', "%{$search}%")
-                    ->orWhere('country_code', 'like', "%{$search}%")
+                static fn (Builder $query) => $query->where('country_name', 'like', sprintf('%%%s%%', $search))
+                    ->orWhere('country_code', 'like', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

@@ -7,9 +7,9 @@ namespace App\Http\Controllers;
 use App\Actions\CreateSubscriptionPackage;
 use App\Actions\DeleteSubscriptionPackage;
 use App\Actions\UpdateSubscriptionPackage;
+use App\Http\Requests\DeleteSubscriptionPackageRequest;
 use App\Http\Requests\StoreSubscriptionPackageRequest;
 use App\Http\Requests\UpdateSubscriptionPackageRequest;
-use App\Http\Requests\DeleteSubscriptionPackageRequest;
 use App\Models\SubscriptionPackage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -21,12 +21,12 @@ final readonly class SubscriptionPackageController
 {
     public function index(Request $request): Response
     {
-        $search = trim((string) $request->query('search', ''));
+        $search = mb_trim((string) $request->query('search', ''));
 
         $packages = SubscriptionPackage::query()
             ->when(
                 $search !== '',
-                static fn(Builder $query) => $query->where('name', 'like', "%{$search}%")
+                static fn (Builder $query) => $query->where('name', 'like', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

@@ -44,11 +44,7 @@ export default function DeleteConfirmationModal({
                 <DialogTitle>{title}</DialogTitle>
                 <DialogDescription>{description}</DialogDescription>
 
-                <Form
-                    {...action}
-                    onSuccess={onSuccess}
-                    className="space-y-6"
-                >
+                <Form {...action} onSuccess={onSuccess} className="space-y-6">
                     {({ processing, resetAndClearErrors }) => (
                         <DialogFooter className="gap-2">
                             <DialogClose asChild>

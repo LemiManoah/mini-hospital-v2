@@ -7,9 +7,10 @@ namespace Database\Factories;
 use App\Models\Address;
 use App\Models\Country;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Override;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Address>
+ * @extends Factory<Address>
  */
 final class AddressFactory extends Factory
 {
@@ -18,6 +19,7 @@ final class AddressFactory extends Factory
      *
      * @var string
      */
+    #[Override]
     protected $model = Address::class;
 
     /**

@@ -21,7 +21,7 @@ final readonly class CreateRole
                 'guard_name' => 'web',
             ]);
 
-            if (!empty($permissions)) {
+            if ($permissions !== []) {
                 $role->syncPermissions($permissions);
             }
 

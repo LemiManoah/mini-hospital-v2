@@ -21,8 +21,8 @@ import {
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { formatIdentifierLabel } from '@/lib/utils';
-import { type Role, type RoleIndexPageProps } from '@/types/role';
 import { type BreadcrumbItem } from '@/types';
+import { type Role, type RoleIndexPageProps } from '@/types/role';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -59,9 +59,9 @@ export default function RoleIndex({ roles, filters }: RoleIndexPageProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Roles & Permissions" />
-            
-            <div className="mt-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4">
-                <div className="flex flex-col gap-1 sm:max-w-md w-full">
+
+            <div className="mt-4 mb-4 flex flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center">
+                <div className="flex w-full flex-col gap-1 sm:max-w-md">
                     <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                         Roles & Permissions
                     </h2>
@@ -72,58 +72,81 @@ export default function RoleIndex({ roles, filters }: RoleIndexPageProps) {
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button asChild className="shadow-sm border border-zinc-200 dark:border-zinc-800 shrink-0">
+                <Button
+                    asChild
+                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                >
                     <Link href={RoleController.create.url()} className="gap-2">
                         <span>+ Add Role</span>
                     </Link>
                 </Button>
             </div>
 
-            <div className="m-2 overflow-x-auto rounded border p-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+            <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
                 <Table className="min-w-[900px]">
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[250px] uppercase tracking-wider text-xs font-semibold">Role Name</TableHead>
-                            <TableHead className="text-center uppercase tracking-wider text-xs font-semibold">Permissions</TableHead>
-                            <TableHead className="text-right uppercase tracking-wider text-xs font-semibold">Actions</TableHead>
+                            <TableHead className="w-[250px] text-xs font-semibold tracking-wider uppercase">
+                                Role Name
+                            </TableHead>
+                            <TableHead className="text-center text-xs font-semibold tracking-wider uppercase">
+                                Permissions
+                            </TableHead>
+                            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+                                Actions
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {rows.length > 0 ? (
                             rows.map((role) => (
-                                <TableRow key={role.id} className="group transition-colors">
+                                <TableRow
+                                    key={role.id}
+                                    className="group transition-colors"
+                                >
                                     <TableCell className="font-semibold text-zinc-900 dark:text-zinc-100">
                                         {formatIdentifierLabel(role.name)}
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 uppercase tracking-tight">
-                                            {role.permissions.length} permissions
+                                        <span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-[10px] font-bold tracking-tight text-zinc-800 uppercase dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                                            {role.permissions.length}{' '}
+                                            permissions
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                asChild 
-                                                className="h-8 px-3 text-xs cursor-pointer border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 hover:text-indigo-600 dark:hover:border-indigo-400 dark:hover:text-indigo-400 shadow-sm"
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                asChild
+                                                className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
                                             >
-                                                <Link href={RoleController.edit.url({ role })}>
+                                                <Link
+                                                    href={RoleController.edit.url(
+                                                        { role },
+                                                    )}
+                                                >
                                                     Edit
                                                 </Link>
                                             </Button>
-                                            
+
                                             {role.name !== 'super_admin' && (
                                                 <DeleteConfirmationModal
                                                     title="Delete Role"
                                                     description={`Are you sure you want to delete the role "${formatIdentifierLabel(role.name)}"? This action cannot be undone.`}
-                                                    action={RoleController.destroy.form({ role })}
-                                                    onSuccess={() => toast.success(`Role "${formatIdentifierLabel(role.name)}" deleted successfully.`)}
+                                                    action={RoleController.destroy.form(
+                                                        { role },
+                                                    )}
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            `Role "${formatIdentifierLabel(role.name)}" deleted successfully.`,
+                                                        )
+                                                    }
                                                     trigger={
-                                                        <Button 
-                                                            variant="destructive" 
-                                                            size="sm" 
-                                                            className="h-8 px-3 text-xs cursor-pointer shadow-sm"
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            className="h-8 cursor-pointer px-3 text-xs shadow-sm"
                                                         >
                                                             Delete
                                                         </Button>
@@ -136,7 +159,10 @@ export default function RoleIndex({ roles, filters }: RoleIndexPageProps) {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={3} className="py-12 text-center text-zinc-500 italic">
+                                <TableCell
+                                    colSpan={3}
+                                    className="py-12 text-center text-zinc-500 italic"
+                                >
                                     No roles found.
                                 </TableCell>
                             </TableRow>
@@ -144,19 +170,25 @@ export default function RoleIndex({ roles, filters }: RoleIndexPageProps) {
                     </TableBody>
                 </Table>
 
-                {(!Array.isArray(roles) && roles.links?.length > 3) ? (
+                {!Array.isArray(roles) && roles.links?.length > 3 ? (
                     <div className="mt-4">
                         <Pagination>
                             <PaginationContent>
                                 <PaginationItem>
-                                    <PaginationPrevious href={roles.prev_page_url ?? undefined} />
+                                    <PaginationPrevious
+                                        href={roles.prev_page_url ?? undefined}
+                                    />
                                 </PaginationItem>
 
                                 {roles.links.map((link, idx) => {
-                                    const label = link.label.replace(/<[^>]*>/g, '').trim();
+                                    const label = link.label
+                                        .replace(/<[^>]*>/g, '')
+                                        .trim();
                                     if (label === '...') {
                                         return (
-                                            <PaginationItem key={`ellipsis-${idx}`}>
+                                            <PaginationItem
+                                                key={`ellipsis-${idx}`}
+                                            >
                                                 <PaginationEllipsis />
                                             </PaginationItem>
                                         );
@@ -164,7 +196,10 @@ export default function RoleIndex({ roles, filters }: RoleIndexPageProps) {
                                     if (/^\d+$/.test(label)) {
                                         return (
                                             <PaginationItem key={label}>
-                                                <PaginationLink href={link.url ?? undefined} isActive={link.active}>
+                                                <PaginationLink
+                                                    href={link.url ?? undefined}
+                                                    isActive={link.active}
+                                                >
                                                     {label}
                                                 </PaginationLink>
                                             </PaginationItem>
@@ -174,7 +209,9 @@ export default function RoleIndex({ roles, filters }: RoleIndexPageProps) {
                                 })}
 
                                 <PaginationItem>
-                                    <PaginationNext href={roles.next_page_url ?? undefined} />
+                                    <PaginationNext
+                                        href={roles.next_page_url ?? undefined}
+                                    />
                                 </PaginationItem>
                             </PaginationContent>
                         </Pagination>

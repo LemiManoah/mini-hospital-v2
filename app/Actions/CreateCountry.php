@@ -14,8 +14,6 @@ final readonly class CreateCountry
      */
     public function handle(array $attributes): Country
     {
-        return DB::transaction(function () use ($attributes): Country {
-            return Country::query()->create($attributes);
-        });
+        return DB::transaction(fn (): Country => Country::query()->create($attributes));
     }
 }

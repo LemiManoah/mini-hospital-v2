@@ -18,7 +18,7 @@ enum AllergyReaction: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::RASH => 'Rash',
             self::ANAPHYLAXIS => 'Anaphylaxis',
             self::BREATHING_DIFFICULTY => 'Breathing Difficulty',
@@ -30,7 +30,7 @@ enum AllergyReaction: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ANAPHYLAXIS, self::BREATHING_DIFFICULTY => 'red',
             self::SWELLING => 'orange',
             self::RASH, self::ITCHING => 'yellow',

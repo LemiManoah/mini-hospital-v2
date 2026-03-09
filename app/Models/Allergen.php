@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Override;
 
 /**
  * @property-read string $id
@@ -17,24 +19,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read AllergyType $type
  * @property-read string|null $created_by
  * @property-read string|null $updated_by
- * @property-read \Illuminate\Support\Carbon|null $deleted_at
- * @property-read \Illuminate\Support\Carbon $created_at
- * @property-read \Illuminate\Support\Carbon $updated_at
+ * @property-read Carbon|null $deleted_at
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
  */
 final class Allergen extends Model
 {
     /** @use HasFactory<\Database\Factories\AllergenFactory> */
     use HasFactory;
+
     use HasUuids;
     use SoftDeletes;
 
-    protected $keyType = 'string';
-
+    #[Override]
     public $incrementing = false;
+
+    #[Override]
+    protected $keyType = 'string';
 
     /**
      * @var list<string>
      */
+    #[Override]
     protected $fillable = [
         'name',
         'description',

@@ -7,9 +7,9 @@ namespace App\Http\Controllers;
 use App\Actions\CreateRole;
 use App\Actions\DeleteRole;
 use App\Actions\UpdateRole;
+use App\Http\Requests\DeleteRoleRequest;
 use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
-use App\Http\Requests\DeleteRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,13 +22,13 @@ final readonly class RoleController
 {
     public function index(Request $request): Response
     {
-        $search = trim((string) $request->query('search', ''));
+        $search = mb_trim((string) $request->query('search', ''));
 
         $roles = Role::query()
             ->with('permissions')
             ->when(
                 $search !== '',
-                static fn(Builder $query) => $query->where('name', 'like', "%{$search}%")
+                static fn (Builder $query) => $query->where('name', 'like', sprintf('%%%s%%', $search))
             )
             ->paginate(5)
             ->withQueryString();
@@ -44,9 +44,7 @@ final readonly class RoleController
     public function create(): Response
     {
         // Group permissions by their prefix (e.g., 'patients', 'visits')
-        $permissions = Permission::all()->groupBy(function (Permission $permission): string {
-            return explode('.', $permission->name)[0];
-        });
+        $permissions = Permission::all()->groupBy(fn (Permission $permission): string => explode('.', $permission->name)[0]);
 
         return Inertia::render('role/create', [
             'permissionGroups' => $permissions,
@@ -69,9 +67,7 @@ final readonly class RoleController
         $role->load('permissions');
 
         // Group permissions by their prefix (e.g., 'patients', 'visits')
-        $permissions = Permission::all()->groupBy(function (Permission $permission): string {
-            return explode('.', $permission->name)[0];
-        });
+        $permissions = Permission::all()->groupBy(fn (Permission $permission): string => explode('.', $permission->name)[0]);
 
         return Inertia::render('role/edit', [
             'role' => $role,

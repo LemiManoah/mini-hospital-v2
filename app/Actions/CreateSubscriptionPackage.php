@@ -14,8 +14,6 @@ final readonly class CreateSubscriptionPackage
      */
     public function handle(array $attributes): SubscriptionPackage
     {
-        return DB::transaction(function () use ($attributes): SubscriptionPackage {
-            return SubscriptionPackage::query()->create($attributes);
-        });
+        return DB::transaction(fn (): SubscriptionPackage => SubscriptionPackage::query()->create($attributes));
     }
 }

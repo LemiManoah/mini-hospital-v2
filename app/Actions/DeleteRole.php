@@ -11,7 +11,7 @@ final readonly class DeleteRole
 {
     public function handle(Role $role): void
     {
-        if (in_array($role->name, ['super_admin'])) {
+        if ($role->name === 'super_admin') {
             throw ValidationException::withMessages([
                 'role' => 'The super admin role cannot be deleted.',
             ]);

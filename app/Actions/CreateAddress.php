@@ -15,11 +15,9 @@ final readonly class CreateAddress
      */
     public function handle(array $attributes): Address
     {
-        return DB::transaction(function () use ($attributes): Address {
-            return Address::query()->create([
-                ...$attributes,
-                'created_by' => Auth::id(),
-            ]);
-        });
+        return DB::transaction(fn (): Address => Address::query()->create([
+            ...$attributes,
+            'created_by' => Auth::id(),
+        ]));
     }
 }

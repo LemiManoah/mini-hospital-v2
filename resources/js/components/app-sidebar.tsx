@@ -11,15 +11,24 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { index as indexRoles } from '@/routes/roles';
-import { index as indexAllergens } from '@/routes/allergens';
 import { index as indexAddresses } from '@/routes/addresses';
+import { index as indexAllergens } from '@/routes/allergens';
 import { index as indexCurrencies } from '@/routes/currencies';
+import { index as indexRoles } from '@/routes/roles';
 import { index as indexSubscriptionPackages } from '@/routes/subscription-packages';
 
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Shield, Coins, Package, MapPin, FlaskConical } from 'lucide-react';
+import {
+    BookOpen,
+    Coins,
+    FlaskConical,
+    Folder,
+    LayoutGrid,
+    MapPin,
+    Package,
+    Shield,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -52,7 +61,7 @@ const mainNavItems: NavItem[] = [
         title: 'Addresses',
         href: indexAddresses(),
         icon: MapPin,
-    }
+    },
 ];
 
 const footerNavItems: NavItem[] = [

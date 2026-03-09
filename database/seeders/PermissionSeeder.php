@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Models\Permission;
-use Illuminate\Database\Seeder;
 use App\Models\Role;
+use Illuminate\Database\Seeder;
 
 final class PermissionSeeder extends Seeder
 {
@@ -91,26 +91,26 @@ final class PermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate([
+            Permission::query()->firstOrCreate([
                 'name' => $permission,
                 'guard_name' => 'web',
             ]);
         }
 
         foreach ($roles as $role) {
-            Role::firstOrCreate([
+            Role::query()->firstOrCreate([
                 'name' => $role,
                 'guard_name' => 'web',
             ]);
         }
 
-        $superAdmin = Role::where('name', 'super_admin')->first();
+        $superAdmin = Role::query()->where('name', 'super_admin')->first();
         $superAdmin->givePermissionTo($permissions);
 
-        $admin = Role::where('name', 'admin')->first();
+        $admin = Role::query()->where('name', 'admin')->first();
         $admin->givePermissionTo($permissions);
 
-        $doctor = Role::where('name', 'doctor')->first();
+        $doctor = Role::query()->where('name', 'doctor')->first();
         $doctor->givePermissionTo([
             'dashboard.view',
             'patients.view',
@@ -127,7 +127,7 @@ final class PermissionSeeder extends Seeder
             'appointments.delete',
         ]);
 
-        $nurse = Role::where('name', 'nurse')->first();
+        $nurse = Role::query()->where('name', 'nurse')->first();
         $nurse->givePermissionTo([
             'dashboard.view',
             'patients.view',
@@ -144,7 +144,7 @@ final class PermissionSeeder extends Seeder
             'appointments.delete',
         ]);
 
-        $labTechnician = Role::where('name', 'lab_technician')->first();
+        $labTechnician = Role::query()->where('name', 'lab_technician')->first();
         $labTechnician->givePermissionTo([
             'dashboard.view',
             'patients.view',
@@ -153,7 +153,7 @@ final class PermissionSeeder extends Seeder
             'appointments.view',
         ]);
 
-        $pharmacist = Role::where('name', 'pharmacist')->first();
+        $pharmacist = Role::query()->where('name', 'pharmacist')->first();
         $pharmacist->givePermissionTo([
             'dashboard.view',
             'patients.view',
@@ -170,7 +170,7 @@ final class PermissionSeeder extends Seeder
             'appointments.delete',
         ]);
 
-        $receptionist = Role::where('name', 'receptionist')->first();
+        $receptionist = Role::query()->where('name', 'receptionist')->first();
         $receptionist->givePermissionTo([
             'dashboard.view',
             'patients.view',
@@ -184,7 +184,7 @@ final class PermissionSeeder extends Seeder
             'appointments.update',
         ]);
 
-        $accountant = Role::where('name', 'accountant')->first();
+        $accountant = Role::query()->where('name', 'accountant')->first();
         $accountant->givePermissionTo([
             'dashboard.view',
             'patients.view',
@@ -194,7 +194,7 @@ final class PermissionSeeder extends Seeder
             'appointments.view',
         ]);
 
-        $cashier = Role::where('name', 'cashier')->first();
+        $cashier = Role::query()->where('name', 'cashier')->first();
         $cashier->givePermissionTo([
             'dashboard.view',
             'patients.view',
@@ -206,10 +206,10 @@ final class PermissionSeeder extends Seeder
             'appointments.view',
         ]);
 
-        $humanResource = Role::where('name', 'human_resource')->first();
+        $humanResource = Role::query()->where('name', 'human_resource')->first();
         $humanResource->givePermissionTo($permissions);
 
-        $storeKeeper = Role::where('name', 'store_keeper')->first();
+        $storeKeeper = Role::query()->where('name', 'store_keeper')->first();
         $storeKeeper->givePermissionTo($permissions);
     }
 }
