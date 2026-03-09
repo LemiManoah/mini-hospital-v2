@@ -27,11 +27,16 @@ final class TenantScope implements Scope
             return;
         }
 
-        if (Auth::check() && Auth::user()->tenant_id !== null) {
-            $builder->where(function ($query) use ($model) {
-                $query->where($model->getTable() . '.tenant_id', Auth::user()->tenant_id)
-                    ->orWhereNull($model->getTable() . '.tenant_id');
-            });
+        if (Auth::check()) {
+            /** @var \App\Models\User $user */
+            $user = Auth::user();
+
+            if ($user->tenant_id !== null) {
+                $builder->where(function ($query) use ($model, $user) {
+                    $query->where($model->getTable() . '.tenant_id', $user->tenant_id)
+                        ->orWhereNull($model->getTable() . '.tenant_id');
+                });
+            }
         }
     }
 }

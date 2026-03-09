@@ -18,9 +18,15 @@ use App\Http\Controllers\UserTwoFactorAuthenticationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', fn () => Inertia::render('welcome'))->name('home');
+Route::get('/', function () {
+    if (auth()->check()) {
+        return Inertia::render('modules');
+    }
+    return Inertia::render('welcome');
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
+    Route::get('modules', fn () => Inertia::render('modules'))->name('modules');
     Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
 
     // Roles & Permissions...
