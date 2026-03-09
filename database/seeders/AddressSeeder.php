@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Models\Address;
+use App\Models\Country;
 use Illuminate\Database\Seeder;
 
 final class AddressSeeder extends Seeder
@@ -14,11 +15,11 @@ final class AddressSeeder extends Seeder
      */
     public function run(): void
     {
-        $uganda = \App\Models\Country::where('country_code', 'UG')->first();
+        $uganda = Country::query()->where('country_code', 'UG')->first();
 
-        if (!$uganda) {
+        if (! $uganda) {
             $this->call(CountrySeeder::class);
-            $uganda = \App\Models\Country::where('country_code', 'UG')->first();
+            $uganda = Country::query()->where('country_code', 'UG')->first();
         }
 
         $addresses = [

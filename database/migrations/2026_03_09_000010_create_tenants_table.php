@@ -25,11 +25,11 @@ return new class extends Migration
             $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
             $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
             $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
-            
+
             // Audit fields
             $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
-            
+
             $table->timestamps();
             $table->softDeletes();
         });

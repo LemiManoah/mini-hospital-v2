@@ -11,18 +11,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Override;
 
 final class Staff extends Model
 {
-    /** @use HasFactory<\Database\Factories\StaffFactory> */
-    use HasFactory;
-    use HasUuids;
-    use SoftDeletes;
     use BelongsToTenant;
 
+    /** @use HasFactory<\Database\Factories\StaffFactory> */
+    use HasFactory;
+
+    use HasUuids;
+    use SoftDeletes;
+
+    #[Override]
     protected $fillable = [
         'tenant_id',
         'employee_number',
@@ -44,6 +47,7 @@ final class Staff extends Model
         'updated_by',
     ];
 
+    #[Override]
     protected $casts = [
         'type' => StaffType::class,
         'hire_date' => 'date',

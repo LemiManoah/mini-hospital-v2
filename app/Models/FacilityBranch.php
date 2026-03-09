@@ -5,23 +5,26 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\GeneralStatus;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Override;
 
 final class FacilityBranch extends Model
 {
-    /** @use HasFactory<\Database\Factories\FacilityBranchFactory> */
-    use HasFactory;
-    use HasUuids;
-    use SoftDeletes;
     use BelongsToTenant;
 
+    /** @use HasFactory<\Database\Factories\FacilityBranchFactory> */
+    use HasFactory;
+
+    use HasUuids;
+    use SoftDeletes;
+
+    #[Override]
     protected $fillable = [
         'name',
         'address_id',
@@ -38,6 +41,7 @@ final class FacilityBranch extends Model
         'updated_by',
     ];
 
+    #[Override]
     protected $casts = [
         'status' => GeneralStatus::class,
         'is_main_branch' => 'boolean',

@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests;
+
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
+
+final class StoreDepartmentRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'department_code' => ['required', 'string', 'max:20'],
+            'department_name' => ['required', 'string', 'max:100'],
+            'location' => ['nullable', 'string', 'max:100'],
+            'head_of_department_id' => ['nullable', 'uuid', 'exists:staff,id'],
+            'is_clinical' => ['required', 'boolean'],
+            'is_active' => ['required', 'boolean'],
+            'contact_info' => ['nullable', 'array'],
+        ];
+    }
+}

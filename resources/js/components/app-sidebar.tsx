@@ -21,6 +21,7 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import {
     BookOpen,
+    Building2,
     Coins,
     FlaskConical,
     Folder,
@@ -28,6 +29,8 @@ import {
     MapPin,
     Package,
     Shield,
+    UserCog,
+    Users,
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -41,6 +44,26 @@ const mainNavItems: NavItem[] = [
         title: 'Roles Management',
         href: indexRoles(),
         icon: Shield,
+    },
+    {
+        title: 'Users',
+        href: '/users',
+        icon: UserCog,
+    },
+    {
+        title: 'Staff',
+        href: '/staff',
+        icon: Users,
+    },
+    {
+        title: 'Staff Positions',
+        href: '/staff-positions',
+        icon: Shield,
+    },
+    {
+        title: 'Departments',
+        href: '/departments',
+        icon: Building2,
     },
     {
         title: 'Currencies',

@@ -1,5 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import AuthLayout from '@/layouts/auth-layout';
 import { dashboard } from '@/routes';
 import { SharedData } from '@/types';
@@ -31,14 +37,16 @@ const modules: Module[] = [
     },
     {
         name: 'OutPatient (OPD)',
-        description: 'Patient registration, triage, and outpatient visit management.',
+        description:
+            'Patient registration, triage, and outpatient visit management.',
         icon: Users,
         permission: 'visits.view',
         href: dashboard().url, // Leading to dashboard as placeholder
     },
     {
         name: 'Doctors Module',
-        description: 'Clinician workbench for consultations, prescriptions and orders.',
+        description:
+            'Clinician workbench for consultations, prescriptions and orders.',
         icon: Activity,
         permission: 'visits.view',
         href: dashboard().url,
@@ -72,7 +80,10 @@ export default function Modules() {
     const hasPermission = (permission: string) => {
         if (!auth.user) return false;
         // Super admin has all permissions
-        if (auth.user.roles?.includes('super_admin') || auth.user.roles?.includes('admin')) {
+        if (
+            auth.user.roles?.includes('super_admin') ||
+            auth.user.roles?.includes('admin')
+        ) {
             return true;
         }
         return !!auth.user.can?.[permission];
@@ -103,7 +114,9 @@ export default function Modules() {
                                     <module.icon className="h-6 w-6" />
                                 </div>
                                 <CardTitle>{module.name}</CardTitle>
-                                <CardDescription>{module.description}</CardDescription>
+                                <CardDescription>
+                                    {module.description}
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="mt-auto">
                                 {canAccess ? (
@@ -113,7 +126,10 @@ export default function Modules() {
                                         </Link>
                                     </Button>
                                 ) : (
-                                    <Button disabled className="w-full variant-ghost">
+                                    <Button
+                                        disabled
+                                        className="variant-ghost w-full"
+                                    >
                                         Access Denied
                                     </Button>
                                 )}

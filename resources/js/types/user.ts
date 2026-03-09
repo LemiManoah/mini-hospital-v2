@@ -1,0 +1,36 @@
+import type { Role } from './role';
+
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    email_verified_at: string | null;
+    created_at: string;
+    updated_at: string;
+    roles: Role[];
+}
+
+export interface PaginatedUsers {
+    data: User[];
+    links: { url: string | null; label: string; active: boolean }[];
+    prev_page_url: string | null;
+    next_page_url: string | null;
+    current_page: number;
+    last_page: number;
+    total: number;
+}
+
+export interface UserIndexPageProps {
+    users: User[] | PaginatedUsers;
+    filters: {
+        search: string | null;
+    };
+}
+
+export interface UserCreatePageProps {
+    // Currently empty - can be extended for roles, etc.
+}
+
+export interface UserEditPageProps {
+    user: User;
+}

@@ -19,6 +19,10 @@ final class DatabaseSeeder extends Seeder
             AddressSeeder::class,
             PermissionSeeder::class,
             AdminUserSeeder::class,
+            DepartmentSeeder::class,
+            StaffPositionSeeder::class,
+            StaffSeeder::class,
+            UserSeeder::class,
         ]);
     }
 }

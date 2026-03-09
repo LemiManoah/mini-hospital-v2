@@ -5,8 +5,11 @@ declare(strict_types=1);
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AllergenController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\StaffPositionController;
 use App\Http\Controllers\SubscriptionPackageController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserEmailResetNotificationController;
@@ -22,12 +25,16 @@ Route::get('/', function () {
     if (auth()->check()) {
         return Inertia::render('modules');
     }
+
     return Inertia::render('welcome');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('modules', fn () => Inertia::render('modules'))->name('modules');
     Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+
+    // Users Management...
+    Route::resource('users', UserController::class)->except(['show']);
 
     // Roles & Permissions...
     Route::resource('roles', RoleController::class)->except(['show']);
@@ -37,6 +44,9 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::resource('addresses', AddressController::class)->except(['show']);
     Route::resource('currencies', CurrencyController::class)->except(['show']);
     Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
+    Route::resource('staff-positions', StaffPositionController::class)->except(['show']);
+    Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::resource('staff', StaffController::class)->except(['show']);
 });
 
 Route::middleware('auth')->group(function (): void {
@@ -63,12 +73,6 @@ Route::middleware('auth')->group(function (): void {
 });
 
 Route::middleware('guest')->group(function (): void {
-    // User...
-    Route::get('register', [UserController::class, 'create'])
-        ->name('register');
-    Route::post('register', [UserController::class, 'store'])
-        ->name('register.store');
-
     // User Password...
     Route::get('reset-password/{token}', [UserPasswordController::class, 'create'])
         ->name('password.reset');

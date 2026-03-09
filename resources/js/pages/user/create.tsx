@@ -1,117 +1,141 @@
 import UserController from '@/actions/App/Http/Controllers/UserController';
-import { login } from '@/routes';
-import { Form, Head } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
-
 import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AuthLayout from '@/layouts/auth-layout';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Form, Head, Link } from '@inertiajs/react';
+import { CheckCircle2, LoaderCircle, User } from 'lucide-react';
+import { toast } from 'sonner';
 
-export default function Register() {
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Users', href: UserController.index.url() },
+    { title: 'Create User', href: UserController.create.url() },
+];
+
+export default function UserCreate() {
     return (
-        <AuthLayout
-            title="Create an account"
-            description="Enter your details below to create your account"
-        >
-            <Head title="Register" />
-            <Form
-                {...UserController.store.form()}
-                resetOnSuccess={['password', 'password_confirmation']}
-                disableWhileProcessing
-                className="flex flex-col gap-6"
-            >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
-                                <Input
-                                    id="name"
-                                    type="text"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="name"
-                                    name="name"
-                                    placeholder="Full name"
-                                />
-                                <InputError
-                                    message={errors.name}
-                                    className="mt-2"
-                                />
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Create User" />
+
+            <div className="mt-4 mb-4 flex flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center">
+                <div className="flex w-full flex-col gap-1">
+                    <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                        <User className="h-6 w-6 text-indigo-500" />
+                        Create New User
+                    </h2>
+                    <p className="text-muted-foreground">
+                        Add a new user account to the system.
+                    </p>
+                </div>
+            </div>
+
+            <div className="m-2 overflow-hidden rounded border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <Form
+                    {...UserController.store.form()}
+                    onSuccess={() =>
+                        toast.success('User created successfully.')
+                    }
+                    className="space-y-6 p-6"
+                >
+                    {({ processing, errors }) => (
+                        <div className="max-w-2xl space-y-6">
+                            <div className="grid gap-4">
+                                <div className="grid gap-2">
+                                    <Label
+                                        htmlFor="name"
+                                        className="text-sm font-semibold"
+                                    >
+                                        Full Name
+                                    </Label>
+                                    <Input
+                                        id="name"
+                                        name="name"
+                                        placeholder="e.g. John Doe"
+                                        autoFocus
+                                        required
+                                    />
+                                    <InputError message={errors.name} />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label
+                                        htmlFor="email"
+                                        className="text-sm font-semibold"
+                                    >
+                                        Email Address
+                                    </Label>
+                                    <Input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        placeholder="e.g. john@example.com"
+                                        required
+                                    />
+                                    <InputError message={errors.email} />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label
+                                        htmlFor="password"
+                                        className="text-sm font-semibold"
+                                    >
+                                        Password
+                                    </Label>
+                                    <Input
+                                        id="password"
+                                        name="password"
+                                        type="password"
+                                        placeholder="Enter a secure password"
+                                        required
+                                    />
+                                    <InputError message={errors.password} />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label
+                                        htmlFor="password_confirmation"
+                                        className="text-sm font-semibold"
+                                    >
+                                        Confirm Password
+                                    </Label>
+                                    <Input
+                                        id="password_confirmation"
+                                        name="password_confirmation"
+                                        type="password"
+                                        placeholder="Confirm the password"
+                                        required
+                                    />
+                                    <InputError
+                                        message={errors.password_confirmation}
+                                    />
+                                </div>
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="email"
-                                    name="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
+                            <div className="flex items-center justify-start gap-3 border-t border-zinc-100 pt-6 dark:border-zinc-800">
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="min-w-[140px]"
+                                >
+                                    {processing ? (
+                                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                                    )}
+                                    Create User
+                                </Button>
+                                <Button variant="ghost" type="button" asChild>
+                                    <Link href={UserController.index.url()}>
+                                        Cancel
+                                    </Link>
+                                </Button>
                             </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    required
-                                    tabIndex={3}
-                                    autoComplete="new-password"
-                                    name="password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-                                <Input
-                                    id="password_confirmation"
-                                    type="password"
-                                    required
-                                    tabIndex={4}
-                                    autoComplete="new-password"
-                                    name="password_confirmation"
-                                    placeholder="Confirm password"
-                                />
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-2 w-full"
-                                tabIndex={5}
-                                data-test="register-user-button"
-                            >
-                                {processing && (
-                                    <LoaderCircle className="h-4 w-4 animate-spin" />
-                                )}
-                                Create account
-                            </Button>
                         </div>
-
-                        <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
-                                Log in
-                            </TextLink>
-                        </div>
-                    </>
-                )}
-            </Form>
-        </AuthLayout>
+                    )}
+                </Form>
+            </div>
+        </AppLayout>
     );
 }

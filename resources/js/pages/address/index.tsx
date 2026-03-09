@@ -67,8 +67,7 @@ export default function AddressIndex({
 
             <div className="mt-4 mb-4 flex flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center">
                 <div className="flex w-full flex-col gap-1 sm:max-w-md">
-                    <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                        <MapPin className="h-6 w-6 text-indigo-500" />
+                    <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                         Addresses
                     </h2>
                     <Input

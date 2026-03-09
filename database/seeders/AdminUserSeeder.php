@@ -29,7 +29,7 @@ final class AdminUserSeeder extends Seeder
         $country = Country::query()->where('country_code', 'UG')->first() ?? Country::query()->first();
         $currency = Currency::query()->where('code', 'UGX')->first() ?? Currency::query()->first();
 
-        if (!$package || !$country || !$currency) {
+        if (! $package || ! $country || ! $currency) {
             return;
         }
 
@@ -91,7 +91,7 @@ final class AdminUserSeeder extends Seeder
 
         // 7. Assign Role
         $user->assignRole('admin');
-        
+
         // Link staff to branch
         $staff->branches()->syncWithoutDetaching([$branch->id => ['is_primary_location' => true]]);
     }

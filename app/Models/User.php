@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\Fortify;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Override;
 use Spatie\Permission\Traits\HasRoles;
@@ -33,6 +32,8 @@ use Spatie\Permission\Traits\HasRoles;
  */
 final class User extends Authenticatable implements MustVerifyEmail
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory;
 
@@ -40,10 +41,11 @@ final class User extends Authenticatable implements MustVerifyEmail
     use HasUuids;
     use Notifiable;
     use TwoFactorAuthenticatable;
-    use BelongsToTenant;
 
+    #[Override]
     protected $appends = ['name', 'avatar'];
 
+    #[Override]
     protected $fillable = [
         'tenant_id',
         'staff_id',
@@ -104,9 +106,9 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     protected function name(): Attribute
     {
-        return Attribute::get(function () {
+        return Attribute::get(function (): string {
             if ($this->staff) {
-                return trim("{$this->staff->first_name} {$this->staff->last_name}");
+                return mb_trim(sprintf('%s %s', $this->staff->first_name, $this->staff->last_name));
             }
 
             return explode('@', $this->email)[0];
@@ -118,9 +120,10 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     protected function avatar(): Attribute
     {
-        return Attribute::get(function () {
+        return Attribute::get(function (): string {
             $name = urlencode($this->name ?? $this->email);
-            return "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
+
+            return sprintf('https://ui-avatars.com/api/?name=%s&color=7F9CF5&background=EBF4FF', $name);
         });
     }
 }

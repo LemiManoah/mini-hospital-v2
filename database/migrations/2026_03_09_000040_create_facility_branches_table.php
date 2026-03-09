@@ -27,11 +27,11 @@ return new class extends Migration
             $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
             $table->boolean('is_main_branch')->default(false);
             $table->boolean('has_store')->default(false);
-            
+
             // Audit fields
             $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
-            
+
             $table->timestamps();
             $table->softDeletes();
 

@@ -12,24 +12,24 @@ use Illuminate\Support\Facades\Auth;
 trait BelongsToTenant
 {
     /**
+     * @return BelongsTo<Tenant, $this>
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    /**
      * The "booted" method of the model.
      */
     protected static function booted(): void
     {
         static::addGlobalScope(new TenantScope());
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->tenant_id) && Auth::check() && Auth::user()->tenant_id !== null) {
                 $model->tenant_id = Auth::user()->tenant_id;
             }
         });
-    }
-
-    /**
-     * @return BelongsTo<Tenant, $this>
-     */
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
     }
 }

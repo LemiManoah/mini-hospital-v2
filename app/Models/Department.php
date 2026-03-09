@@ -11,22 +11,30 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Override;
 
 final class Department extends Model
 {
-    /** @use HasFactory<\Database\Factories\DepartmentFactory> */
-    use HasFactory;
-    use HasUuids;
-    use SoftDeletes;
     use BelongsToTenant;
 
+    /** @use HasFactory<\Database\Factories\DepartmentFactory> */
+    use HasFactory;
+
+    use HasUuids;
+    use SoftDeletes;
+
+    #[Override]
     protected $fillable = [
+        'department_code',
+        'department_name',
+        'location',
         'head_of_department_id',
         'is_clinical',
         'is_active',
         'contact_info',
     ];
 
+    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'is_clinical' => 'boolean',

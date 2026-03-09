@@ -6,6 +6,16 @@ Below is the recommended order of implementation and the reasoning behind it, fo
 
 ---
 
+## Phase 0: Client Onboarding (The SaaS Layer)
+
+Currently, onboarding is developer-driven (via seeders). For a production-ready system, we need a self-service flow:
+- **Self-Service Registration**: A public-facing signup page for new hospitals/tenants.
+- **Onboarding Wizard**: A post-login "Setup Guide" for the first admin to define:
+    - Primary Branch details.
+    - Department structure.
+    - Initial Staff accounts.
+- **Subscription Checkout**: Integration with a payment gateway (e.g., Flutterwave or Stripe) to activate the chosen `subscription_package`.
+
 ## Phase 1: Foundation & Base Helper Modules
 
 These represent the absolute lowest level of the dependency tree. They are mostly independent lookup/reference tables that other core entities will depend on.
@@ -110,5 +120,14 @@ While the schema is comprehensive, the following components are either missing o
 6. **Patient Portal / User Accounts**
     - **Issue**: If patients are meant to log in to book appointments or view lab results, they need authentication credentials. Typically, this is solved by either a generic `users` table linked polymorphically, or adding login capability directly to the `patients` table.
 
-7. **System Notifications / Communications**
-    - **Issue**: A table for tracking outgoing SMS and Emails (e.g., appointment reminders, lab result readiness) is highly recommended for auditing patient communication.
+8. **Detailed Audit Trails (Compliance)**
+    - **Issue**: For medical systems (HIPAA/GDPR style), we need to log not just changes, but also **access** (who viewed a patient's record).
+    
+9. **Patient Queue Management UI**
+    - **Issue**: While we have `queue_number` in appointments, we need a "Live Board" view for waiting areas.
+
+10. **File/Document Management**
+    - **Issue**: Storage for scanned diagnostic reports, patient ID copies, and lab attachments.
+
+11. **Localization & Multi-currency**
+    - **Issue**: While we have a `currencies` table, the UI needs to handle dynamic currency formatting based on the Active Branch.

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignUuid('staff_id')->constrained('staff')->onDelete('cascade');
             $table->foreignUuid('branch_id')->constrained('facility_branches')->onDelete('cascade');
             $table->boolean('is_primary_location')->default(false);
-            
+
             $table->primary(['staff_id', 'branch_id']);
         });
     }

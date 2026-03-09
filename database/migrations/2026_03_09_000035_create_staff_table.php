@@ -32,11 +32,11 @@ return new class extends Migration
             $table->date('hire_date');
             $table->date('termination_date')->nullable();
             $table->boolean('is_active')->default(true);
-            
+
             // Audit fields
             $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
-            
+
             $table->timestamps();
             $table->softDeletes();
 

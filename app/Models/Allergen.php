@@ -26,12 +26,13 @@ use Override;
  */
 final class Allergen extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<\Database\Factories\AllergenFactory> */
     use HasFactory;
 
     use HasUuids;
     use SoftDeletes;
-    use BelongsToTenant;
 
     #[Override]
     public $incrementing = false;

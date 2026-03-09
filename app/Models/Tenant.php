@@ -11,14 +11,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Override;
 
 final class Tenant extends Model
 {
     /** @use HasFactory<\Database\Factories\TenantFactory> */
     use HasFactory;
+
     use HasUuids;
     use SoftDeletes;
 
+    #[Override]
     protected $fillable = [
         'name',
         'domain',
@@ -33,6 +36,7 @@ final class Tenant extends Model
         'updated_by',
     ];
 
+    #[Override]
     protected $casts = [
         'has_branches' => 'boolean',
         'status' => GeneralStatus::class,

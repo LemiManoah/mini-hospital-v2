@@ -29,12 +29,13 @@ use Override;
  */
 final class Address extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<AddressFactory> */
     use HasFactory;
 
     use HasUuids;
     use SoftDeletes;
-    use BelongsToTenant;
 
     /**
      * @var list<string>
