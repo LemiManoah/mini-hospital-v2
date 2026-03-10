@@ -13,11 +13,7 @@ parameters:
         - public
         - routes
 
+
     level: max
 
     tmpDir: /tmp/phpstan
-
-    parallel:
-        jobSize: 20
-        maximumNumberOfProcesses: 32
-        minimumNumberOfJobsPerProcess: 2

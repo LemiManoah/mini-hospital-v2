@@ -37,7 +37,6 @@ final readonly class FacilitySwitcherController
 
         $this->switchTenantContext->handle($request, $user, $tenantId);
 
-        // Next step is selecting a branch within the tenant.
         return to_route('branch-switcher.index');
     }
 }

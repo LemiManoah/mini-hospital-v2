@@ -26,13 +26,16 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     if (Auth::check()) {
-        return to_route('modules');
+        return Inertia::render('modules');
     }
 
     return Inertia::render('welcome');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
+    Route::get('modules', fn () => Inertia::render('modules'))->name('modules');
+    Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+
     Route::middleware('support.only')
         ->prefix('facility-switcher')
         ->name('facility-switcher.')
@@ -41,29 +44,23 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             Route::post('/{tenantId}', [FacilitySwitcherController::class, 'switch'])->name('switch');
         });
 
-    // Branch Switcher
     Route::get('branch-switcher', [BranchSwitcherController::class, 'index'])->name('branch-switcher.index');
     Route::post('branch-switcher/{branchId}', [BranchSwitcherController::class, 'switch'])->name('branch-switcher.switch');
 
-    Route::middleware('ensure.active.branch')->group(function (): void {
-        Route::get('modules', fn () => Inertia::render('modules'))->name('modules');
-        Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+    // Users Management...
+    Route::resource('users', UserController::class)->except(['show']);
 
-        // Users Management...
-        Route::resource('users', UserController::class)->except(['show']);
+    // Roles & Permissions...
+    Route::resource('roles', RoleController::class)->except(['show']);
 
-        // Roles & Permissions...
-        Route::resource('roles', RoleController::class)->except(['show']);
-
-        // Phase 1 Foundation...
-        Route::resource('allergens', AllergenController::class)->except(['show']);
-        Route::resource('addresses', AddressController::class)->except(['show']);
-        Route::resource('currencies', CurrencyController::class)->except(['show']);
-        Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
-        Route::resource('staff-positions', StaffPositionController::class)->except(['show']);
-        Route::resource('departments', DepartmentController::class)->except(['show']);
-        Route::resource('staff', StaffController::class)->except(['show']);
-    });
+    // Phase 1 Foundation...
+    Route::resource('allergens', AllergenController::class)->except(['show']);
+    Route::resource('addresses', AddressController::class)->except(['show']);
+    Route::resource('currencies', CurrencyController::class)->except(['show']);
+    Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
+    Route::resource('staff-positions', StaffPositionController::class)->except(['show']);
+    Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::resource('staff', StaffController::class)->except(['show']);
 });
 
 Route::middleware('auth')->group(function (): void {
