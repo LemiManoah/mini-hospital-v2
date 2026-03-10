@@ -27,7 +27,7 @@ final class FacilitySeeder extends Seeder
         $ugxCurrency = Currency::query()->where('code', 'UGX')->first();
         $kesCurrency = Currency::query()->where('code', 'KES')->first();
 
-        if (!$package || !$uganda || !$kenya || !$ugxCurrency || !$kesCurrency) {
+        if (! $package || ! $uganda || ! $kenya || ! $ugxCurrency || ! $kesCurrency) {
             return;
         }
 

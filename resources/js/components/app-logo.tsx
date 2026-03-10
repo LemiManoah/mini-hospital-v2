@@ -1,5 +1,5 @@
-import AppLogoIcon from './app-logo-icon';
 import { usePage } from '@inertiajs/react';
+import AppLogoIcon from './app-logo-icon';
 
 interface PageProps {
     auth?: {
@@ -14,7 +14,7 @@ interface PageProps {
 export default function AppLogo() {
     const { auth } = (usePage().props || {}) as PageProps;
     const tenant = auth?.user?.tenant;
-    
+
     return (
         <>
             <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">

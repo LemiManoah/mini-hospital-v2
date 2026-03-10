@@ -6,6 +6,7 @@ use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AllergenController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\FacilitySwitcherController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\StaffController;
@@ -35,8 +36,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
 
     // Facility Switcher (Support Mode)
-    Route::get('facility-switcher', [\App\Http\Controllers\FacilitySwitcherController::class, 'index'])->name('facility-switcher.index');
-    Route::post('facility-switcher/{tenantId}', [\App\Http\Controllers\FacilitySwitcherController::class, 'switch'])->name('facility-switcher.switch');
+    Route::get('facility-switcher', [FacilitySwitcherController::class, 'index'])->name('facility-switcher.index');
+    Route::post('facility-switcher/{tenantId}', [FacilitySwitcherController::class, 'switch'])->name('facility-switcher.switch');
 
     // Users Management...
     Route::resource('users', UserController::class)->except(['show']);

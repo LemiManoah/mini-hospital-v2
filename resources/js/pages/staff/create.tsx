@@ -30,7 +30,7 @@ export default function StaffCreate({
     const [departmentId, setDepartmentId] = useState<string>('');
     const [positionId, setPositionId] = useState<string>('');
     const [staffType, setStaffType] = useState<string>('');
-    const [isActive, setIsActive] = useState(true);
+    const [isActive, _setIsActive] = useState(true);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

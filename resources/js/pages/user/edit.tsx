@@ -95,11 +95,9 @@ export default function UserEdit({ user, roles }: UserEditPageProps) {
                                                     type="checkbox"
                                                     name="roles[]"
                                                     value={role.id}
-                                                    defaultChecked={
-                                                        user.roles.some(
-                                                            (r) => r.id === role.id
-                                                        )
-                                                    }
+                                                    defaultChecked={user.roles.some(
+                                                        (r) => r.id === role.id,
+                                                    )}
                                                     className="checkbox"
                                                 />
                                                 <span>{role.name}</span>

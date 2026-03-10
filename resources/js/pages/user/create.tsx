@@ -15,8 +15,8 @@ import { type BreadcrumbItem } from '@/types';
 import { type UserCreatePageProps } from '@/types/user';
 import { Form, Head, Link } from '@inertiajs/react';
 import { CheckCircle2, LoaderCircle, User } from 'lucide-react';
-import { toast } from 'sonner';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Users', href: UserController.index.url() },
@@ -32,7 +32,7 @@ export default function UserCreate({ staff, roles }: UserCreatePageProps) {
 
         // Auto-fill email when staff is selected
         if (staffId) {
-            const selectedStaff = staff.find(s => s.id === staffId);
+            const selectedStaff = staff.find((s) => s.id === staffId);
             if (selectedStaff?.email) {
                 setEmail(selectedStaff.email);
             }
@@ -90,10 +90,20 @@ export default function UserCreate({ staff, roles }: UserCreatePageProps) {
                                                     key={staffMember.id}
                                                     value={staffMember.id}
                                                 >
-                                                    {staffMember.first_name} {staffMember.last_name} - {staffMember.employee_number}
+                                                    {staffMember.first_name}{' '}
+                                                    {staffMember.last_name} -{' '}
+                                                    {
+                                                        staffMember.employee_number
+                                                    }
                                                     {staffMember.department && (
-                                                        <span className="text-muted-foreground ml-2">
-                                                            ({staffMember.department.department_name})
+                                                        <span className="ml-2 text-muted-foreground">
+                                                            (
+                                                            {
+                                                                staffMember
+                                                                    .department
+                                                                    .department_name
+                                                            }
+                                                            )
                                                         </span>
                                                     )}
                                                 </SelectItem>
@@ -115,7 +125,9 @@ export default function UserCreate({ staff, roles }: UserCreatePageProps) {
                                         name="email"
                                         type="email"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) =>
+                                            setEmail(e.target.value)
+                                        }
                                         placeholder="e.g. john@example.com"
                                         required
                                     />

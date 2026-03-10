@@ -10,6 +10,7 @@ use App\Actions\UpdateUser;
 use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\DeleteUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Role;
 use App\Models\Staff;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -52,7 +53,7 @@ final readonly class UserController
             ->orderBy('first_name')
             ->get();
 
-        $roles = \App\Models\Role::query()
+        $roles = Role::query()
             ->orderBy('name')
             ->get();
 
@@ -64,7 +65,7 @@ final readonly class UserController
 
     public function store(CreateUserRequest $request, CreateUser $action): RedirectResponse
     {
-        $user = $action->handle(
+        $action->handle(
             $request->validated(),
             $request->string('password')->value(),
         );
@@ -76,7 +77,7 @@ final readonly class UserController
     {
         $user->load('roles');
 
-        $roles = \App\Models\Role::query()
+        $roles = Role::query()
             ->orderBy('name')
             ->get();
 

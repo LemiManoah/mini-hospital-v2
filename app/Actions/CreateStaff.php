@@ -19,7 +19,7 @@ final class CreateStaff
             $data['employee_number'] = $this->generateEmployeeNumber($data['type']);
         }
 
-        return Staff::create($data);
+        return Staff::query()->create($data);
     }
 
     /**
@@ -38,13 +38,13 @@ final class CreateStaff
         };
 
         // Get the next sequential number for this prefix
-        $lastEmployee = Staff::where('employee_number', 'like', $prefix.'-%')
+        $lastEmployee = Staff::query()->where('employee_number', 'like', $prefix.'-%')
             ->orderBy('employee_number', 'desc')
             ->first();
 
         if ($lastEmployee) {
             // Extract the number part and increment
-            $lastNumber = (int) mb_substr($lastEmployee->employee_number, mb_strlen($prefix) + 1);
+            $lastNumber = (int) mb_substr((string) $lastEmployee->employee_number, mb_strlen($prefix) + 1);
             $nextNumber = $lastNumber + 1;
         } else {
             $nextNumber = 1;

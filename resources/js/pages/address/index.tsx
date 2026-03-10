@@ -23,7 +23,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type Address, type AddressIndexPageProps } from '@/types/address';
 import { Head, Link, router } from '@inertiajs/react';
-import { MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 

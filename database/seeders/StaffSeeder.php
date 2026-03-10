@@ -259,7 +259,7 @@ final class StaffSeeder extends Seeder
                     'type' => $data['type'],
                     'license_number' => $data['license_number'] ?? null,
                     'specialty' => $data['specialty'] ?? null,
-                    'hire_date' => now()->subMonths(rand(3, 60)),
+                    'hire_date' => now()->subMonths(random_int(3, 60)),
                     'is_active' => true,
                     'tenant_id' => $tenant->id,
                 ],

@@ -26,7 +26,6 @@ import {
     type SubscriptionPackageIndexPageProps,
 } from '@/types/subscription-package';
 import { Head, Link, router } from '@inertiajs/react';
-import { Package } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
