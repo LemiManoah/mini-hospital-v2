@@ -33,9 +33,13 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
-    // Facility Switcher (Support Mode)
-    Route::get('facility-switcher', [FacilitySwitcherController::class, 'index'])->name('facility-switcher.index');
-    Route::post('facility-switcher/{tenantId}', [FacilitySwitcherController::class, 'switch'])->name('facility-switcher.switch');
+    Route::middleware('support.only')
+        ->prefix('facility-switcher')
+        ->name('facility-switcher.')
+        ->group(function (): void {
+            Route::get('/', [FacilitySwitcherController::class, 'index'])->name('index');
+            Route::post('/{tenantId}', [FacilitySwitcherController::class, 'switch'])->name('switch');
+        });
 
     // Branch Switcher
     Route::get('branch-switcher', [BranchSwitcherController::class, 'index'])->name('branch-switcher.index');

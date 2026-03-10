@@ -12,33 +12,37 @@ use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 function createTenantWithBranches(int $count = 2): array
 {
+    static $sequence = 1;
+    $suffix = Str::lower(Str::random(6));
+
     $country = Country::query()->create([
-        'country_name' => 'Uganda',
-        'country_code' => 'UG',
+        'country_name' => 'Uganda '.$suffix,
+        'country_code' => 'CT'.$sequence,
         'dial_code' => '+256',
         'currency' => 'UGX',
         'currency_symbol' => 'USh',
     ]);
 
     $currency = Currency::query()->create([
-        'code' => 'UGX',
-        'name' => 'Ugandan Shilling',
+        'code' => 'C'.str_pad((string) $sequence, 2, '0', STR_PAD_LEFT),
+        'name' => 'Currency '.$suffix,
         'symbol' => 'USh',
     ]);
 
     $package = SubscriptionPackage::query()->create([
-        'name' => 'Starter Package',
-        'users' => 2,
+        'name' => 'Starter Package '.$suffix,
+        'users' => $sequence + 1,
         'price' => 1000,
         'status' => GeneralStatus::ACTIVE,
     ]);
 
     $tenant = Tenant::query()->create([
-        'name' => 'City General Hospital',
-        'domain' => 'city-general',
+        'name' => 'City General Hospital '.$suffix,
+        'domain' => 'city-general-'.$suffix,
         'has_branches' => true,
         'subscription_package_id' => $package->id,
         'status' => GeneralStatus::ACTIVE,
@@ -50,13 +54,15 @@ function createTenantWithBranches(int $count = 2): array
         $branches->push(FacilityBranch::query()->create([
             'tenant_id' => $tenant->id,
             'name' => 'Branch '.$i,
-            'branch_code' => 'B'.$i,
+            'branch_code' => strtoupper(substr($suffix, 0, 3)).$i,
             'currency_id' => $currency->id,
             'status' => GeneralStatus::ACTIVE,
             'is_main_branch' => $i === 1,
             'has_store' => true,
         ]));
     }
+
+    $sequence++;
 
     return [$tenant, $branches];
 }
@@ -138,4 +144,46 @@ it('forbids non-support users from opening the facility switcher', function (): 
     $response = $this->actingAs($user)->get(route('facility-switcher.index'));
 
     $response->assertForbidden();
+});
+
+it('forbids non-support users from switching facility context', function (): void {
+    [$tenant] = createTenantWithBranches();
+
+    $user = User::query()->create([
+        'email' => 'plain.switch.user@hospital.com',
+        'password' => Hash::make('password'),
+        'is_support' => false,
+    ]);
+    $user->forceFill(['email_verified_at' => now()])->save();
+
+    $response = $this->actingAs($user)->post(route('facility-switcher.switch', $tenant->id));
+
+    $response->assertForbidden();
+});
+
+it('allows support users to switch tenant context and clears active branch selection', function (): void {
+    [$sourceTenant, $branches] = createTenantWithBranches();
+    [$targetTenant] = createTenantWithBranches();
+
+    $supportUser = User::query()->create([
+        'tenant_id' => $sourceTenant->id,
+        'email' => 'support.user@hospital.com',
+        'password' => Hash::make('password'),
+        'is_support' => true,
+    ]);
+    $supportUser->forceFill(['email_verified_at' => now()])->save();
+
+    $response = $this
+        ->withSession(['active_branch_id' => $branches[0]->id])
+        ->actingAs($supportUser)
+        ->post(route('facility-switcher.switch', $targetTenant->id));
+
+    $response->assertRedirectToRoute('branch-switcher.index');
+    $response->assertSessionMissing('active_branch_id');
+    $response->assertSessionHas('success', 'Switched to '.$targetTenant->name);
+
+    $this->assertDatabaseHas('users', [
+        'id' => $supportUser->id,
+        'tenant_id' => $targetTenant->id,
+    ]);
 });
