@@ -48,19 +48,20 @@ export default function UserEdit({ user, roles }: UserEditPageProps) {
                             <div className="grid gap-4">
                                 <div className="grid gap-2">
                                     <Label
-                                        htmlFor="name"
+                                        htmlFor="display_name"
                                         className="text-sm font-semibold"
                                     >
-                                        Full Name
+                                        Staff Name
                                     </Label>
                                     <Input
-                                        id="name"
-                                        name="name"
+                                        id="display_name"
                                         defaultValue={user.name}
-                                        placeholder="e.g. John Doe"
-                                        required
+                                        disabled
                                     />
-                                    <InputError message={errors.name} />
+                                    <p className="text-xs text-muted-foreground">
+                                        Name is managed on the linked staff
+                                        profile.
+                                    </p>
                                 </div>
 
                                 <div className="grid gap-2">

@@ -9,7 +9,7 @@ use App\Actions\DeleteUser;
 use App\Actions\UpdateUser;
 use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\DeleteUserRequest;
-use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\UpdateManagedUserRequest;
 use App\Models\Role;
 use App\Models\Staff;
 use App\Models\User;
@@ -100,7 +100,7 @@ final readonly class UserController
         ]);
     }
 
-    public function update(UpdateUserRequest $request, User $user, UpdateUser $action): RedirectResponse
+    public function update(UpdateManagedUserRequest $request, User $user, UpdateUser $action): RedirectResponse
     {
         $action->handle($user, $request->validated());
 
