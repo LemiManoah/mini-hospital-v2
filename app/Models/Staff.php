@@ -38,7 +38,6 @@ final class Staff extends Model
         'email',
         'phone',
         'address_id',
-        'department_id',
         'staff_position_id',
         'type',
         'license_number',
@@ -64,14 +63,6 @@ final class Staff extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
-    }
-
-    /**
-     * @return BelongsTo<Department, $this>
-     */
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
     }
 
     /**
@@ -105,6 +96,14 @@ final class Staff extends Model
     {
         return $this->belongsToMany(FacilityBranch::class, 'staff_branches', 'staff_id', 'branch_id')
             ->withPivot('is_primary_location');
+    }
+
+    /**
+     * @return BelongsToMany<Department, $this>
+     */
+    public function departments(): BelongsToMany
+    {
+        return $this->belongsToMany(Department::class, 'department_staff', 'staff_id', 'department_id');
     }
 
     /**

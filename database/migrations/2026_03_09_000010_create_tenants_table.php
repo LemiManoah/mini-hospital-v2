@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -23,12 +24,15 @@ return new class extends Migration
             $table->string('stamp')->nullable();
             $table->foreignUuid('subscription_package_id')->constrained('subscription_packages');
             $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
+            $table->enum('facility_level', array_column(FacilityLevel::cases(), 'value'));
             $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
             $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
 
-            // Audit fields
-            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            // Audit fields are plain UUIDs here; FKs are added in a later migration after users exists.
+            $table->uuid('created_by')->nullable()->index();
+            $table->uuid('updated_by')->nullable()->index();
 
             $table->timestamps();
             $table->softDeletes();

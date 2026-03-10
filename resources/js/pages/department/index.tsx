@@ -107,9 +107,6 @@ export default function DepartmentIndex({
                                 Type
                             </TableHead>
                             <TableHead className="text-xs font-semibold tracking-wider uppercase">
-                                Head of Dept
-                            </TableHead>
-                            <TableHead className="text-xs font-semibold tracking-wider uppercase">
                                 Location
                             </TableHead>
                             <TableHead className="w-[100px] text-right text-xs font-semibold tracking-wider uppercase">
@@ -151,15 +148,6 @@ export default function DepartmentIndex({
                                                 </span>
                                             )}
                                         </div>
-                                    </TableCell>
-                                    <TableCell className="text-sm text-zinc-600 dark:text-zinc-300">
-                                        {dept.head_of_department ? (
-                                            `${dept.head_of_department.first_name} ${dept.head_of_department.last_name}`
-                                        ) : (
-                                            <span className="text-xs text-red-500 italic opacity-50">
-                                                Not Assigned
-                                            </span>
-                                        )}
                                     </TableCell>
                                     <TableCell className="text-sm text-zinc-500 dark:text-zinc-400">
                                         {dept.location || (
@@ -217,7 +205,7 @@ export default function DepartmentIndex({
                         ) : (
                             <TableRow>
                                 <TableCell
-                                    colSpan={6}
+                                    colSpan={5}
                                     className="py-12 text-center text-zinc-500 italic"
                                 >
                                     No departments found.

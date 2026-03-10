@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Override;
 
@@ -28,7 +28,6 @@ final class Department extends Model
         'department_code',
         'department_name',
         'location',
-        'head_of_department_id',
         'is_clinical',
         'is_active',
         'contact_info',
@@ -51,18 +50,10 @@ final class Department extends Model
     }
 
     /**
-     * @return BelongsTo<Staff, $this>
+     * @return BelongsToMany<Staff, $this>
      */
-    public function headOfDepartment(): BelongsTo
+    public function staff(): BelongsToMany
     {
-        return $this->belongsTo(Staff::class, 'head_of_department_id');
-    }
-
-    /**
-     * @return HasMany<Staff, $this>
-     */
-    public function staff(): HasMany
-    {
-        return $this->hasMany(Staff::class);
+        return $this->belongsToMany(Staff::class, 'department_staff', 'department_id', 'staff_id');
     }
 }

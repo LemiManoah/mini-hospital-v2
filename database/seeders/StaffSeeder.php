@@ -254,7 +254,6 @@ final class StaffSeeder extends Seeder
                     'middle_name' => $data['middle_name'] ?? null,
                     'phone' => $data['phone'] ?? null,
                     'address_id' => $address->id,
-                    'department_id' => $department->id,
                     'staff_position_id' => $position->id,
                     'type' => $data['type'],
                     'license_number' => $data['license_number'] ?? null,
@@ -267,6 +266,7 @@ final class StaffSeeder extends Seeder
 
             // Link staff to branch
             $staff->branches()->syncWithoutDetaching([$branch->id => ['is_primary_location' => true]]);
+            $staff->departments()->syncWithoutDetaching([$department->id]);
         }
     }
 }

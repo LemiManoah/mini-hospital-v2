@@ -3,17 +3,9 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { type DepartmentCreatePageProps } from '@/types/department';
 import { Form, Head, Link } from '@inertiajs/react';
 import { Building2, CheckCircle2, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -24,10 +16,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Create Department', href: DepartmentController.create.url() },
 ];
 
-export default function DepartmentCreate({ staff }: DepartmentCreatePageProps) {
+export default function DepartmentCreate() {
     const [isActive, setIsActive] = useState(true);
     const [isClinical, setIsClinical] = useState(true);
-    const [headOfDepartmentId, setHeadOfDepartmentId] = useState<string>('');
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -64,11 +55,6 @@ export default function DepartmentCreate({ staff }: DepartmentCreatePageProps) {
                                 type="hidden"
                                 name="is_clinical"
                                 value={isClinical ? '1' : '0'}
-                            />
-                            <input
-                                type="hidden"
-                                name="head_of_department_id"
-                                value={headOfDepartmentId}
                             />
 
                             <div className="grid gap-4">
@@ -125,36 +111,6 @@ export default function DepartmentCreate({ staff }: DepartmentCreatePageProps) {
                                         placeholder="e.g. Second Floor, West Wing"
                                     />
                                     <InputError message={errors.location} />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label
-                                        htmlFor="head_of_dept"
-                                        className="text-sm font-semibold"
-                                    >
-                                        Head of Department
-                                    </Label>
-                                    <Select
-                                        onValueChange={setHeadOfDepartmentId}
-                                        value={headOfDepartmentId}
-                                    >
-                                        <SelectTrigger id="head_of_dept">
-                                            <SelectValue placeholder="Select a staff member" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {staff.map((s) => (
-                                                <SelectItem
-                                                    key={s.id}
-                                                    value={s.id}
-                                                >
-                                                    {s.first_name} {s.last_name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError
-                                        message={errors.head_of_department_id}
-                                    />
                                 </div>
 
                                 <div className="space-y-4 pt-2">

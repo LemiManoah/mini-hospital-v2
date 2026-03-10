@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('department_code', 20);
             $table->string('department_name', 100);
             $table->string('location', 100)->nullable();
-            $table->foreignUuid('head_of_department_id')->nullable()->constrained('staff')->nullOnDelete();
             $table->boolean('is_clinical')->default(true);
             $table->boolean('is_active')->default(true);
             $table->json('contact_info')->nullable();

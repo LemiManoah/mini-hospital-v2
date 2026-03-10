@@ -11,7 +11,6 @@ use App\Http\Requests\DeleteDepartmentRequest;
 use App\Http\Requests\StoreDepartmentRequest;
 use App\Http\Requests\UpdateDepartmentRequest;
 use App\Models\Department;
-use App\Models\Staff;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +24,6 @@ final readonly class DepartmentController
         $search = mb_trim((string) $request->query('search', ''));
 
         $departments = Department::query()
-            ->with(['headOfDepartment'])
             ->when(
                 $search !== '',
                 static fn (Builder $query) => $query->where('department_name', 'like', sprintf('%%%s%%', $search))
@@ -45,14 +43,7 @@ final readonly class DepartmentController
 
     public function create(): Response
     {
-        $staff = Staff::query()->forActiveBranch()->select('id', 'first_name', 'last_name')->get()->map(fn ($s): array => [
-            'id' => $s->id,
-            'name' => $s->first_name.' '.$s->last_name,
-        ]);
-
-        return Inertia::render('department/create', [
-            'staff' => $staff,
-        ]);
+        return Inertia::render('department/create');
     }
 
     public function store(StoreDepartmentRequest $request, CreateDepartment $action): RedirectResponse
@@ -64,14 +55,8 @@ final readonly class DepartmentController
 
     public function edit(Department $department): Response
     {
-        $staff = Staff::query()->forActiveBranch()->select('id', 'first_name', 'last_name')->get()->map(fn ($s): array => [
-            'id' => $s->id,
-            'name' => $s->first_name.' '.$s->last_name,
-        ]);
-
         return Inertia::render('department/edit', [
             'department' => $department,
-            'staff' => $staff,
         ]);
     }
 

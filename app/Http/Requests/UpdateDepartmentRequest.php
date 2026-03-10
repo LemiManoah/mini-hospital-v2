@@ -23,7 +23,6 @@ final class UpdateDepartmentRequest extends FormRequest
             'department_code' => ['required', 'string', 'max:20'],
             'department_name' => ['required', 'string', 'max:100'],
             'location' => ['nullable', 'string', 'max:100'],
-            'head_of_department_id' => ['nullable', 'uuid', 'exists:staff,id'],
             'is_clinical' => ['required', 'boolean'],
             'is_active' => ['required', 'boolean'],
             'contact_info' => ['nullable', 'array'],

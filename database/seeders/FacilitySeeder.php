@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Models\Address;
 use App\Models\Country;
@@ -37,6 +38,7 @@ final class FacilitySeeder extends Seeder
             'district' => 'Kampala Central',
             'state' => 'Central',
             'country_id' => $uganda->id,
+            
         ]);
 
         $entebbeAddress = Address::query()->firstOrCreate([
@@ -77,6 +79,9 @@ final class FacilitySeeder extends Seeder
             'status' => GeneralStatus::ACTIVE,
             'country_id' => $uganda->id,
             'address_id' => $kampalaAddress->id,
+            'facility_level' => FacilityLevel::HOSPITAL->value,
+            'longitude' => 32.5726,
+            'latitude' => 0.3166,
         ]);
 
         // Main branch for multi-branch facility
@@ -137,6 +142,9 @@ final class FacilitySeeder extends Seeder
             'status' => GeneralStatus::ACTIVE,
             'country_id' => $kenya->id,
             'address_id' => $nairobiAddress->id,
+            'facility_level' => FacilityLevel::HEALTH_CENTER_III->value,
+            'longitude' => 36.8219,
+            'latitude' => -1.2921,
         ]);
 
         // Single branch facility (main branch)
@@ -153,6 +161,7 @@ final class FacilitySeeder extends Seeder
             'main_contact' => '+254 20 123456',
             'other_contact' => '+254 20 123457',
             'email' => 'info@nairoimedical.ke',
+
         ]);
 
         // Facility 3: Another multi-branch facility (has_branches = true)
@@ -165,6 +174,9 @@ final class FacilitySeeder extends Seeder
             'status' => GeneralStatus::ACTIVE,
             'country_id' => $kenya->id,
             'address_id' => $mombasaAddress->id,
+            'facility_level' => FacilityLevel::HEALTH_CENTER_II->value,
+            'longitude' => 39.6682,
+            'latitude' => -4.0435,
         ]);
 
         // Main branch for second multi-branch facility

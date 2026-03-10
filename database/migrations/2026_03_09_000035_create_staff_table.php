@@ -24,7 +24,6 @@ return new class extends Migration
             $table->string('email')->index();
             $table->string('phone', 20)->nullable();
             $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
-            $table->foreignUuid('department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->foreignUuid('staff_position_id')->nullable()->constrained('staff_positions')->nullOnDelete();
             $table->enum('type', array_column(StaffType::cases(), 'value'));
             $table->string('license_number', 100)->nullable();
@@ -33,9 +32,9 @@ return new class extends Migration
             $table->date('termination_date')->nullable();
             $table->boolean('is_active')->default(true);
 
-            // Audit fields
-            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            // Audit fields are plain UUIDs here; FKs are added in a later migration after users exists.
+            $table->uuid('created_by')->nullable()->index();
+            $table->uuid('updated_by')->nullable()->index();
 
             $table->timestamps();
             $table->softDeletes();

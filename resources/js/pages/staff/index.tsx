@@ -129,10 +129,14 @@ export default function StaffIndex({ staff, filters }: StaffIndexPageProps) {
                                             : '-'}
                                     </TableCell>
                                     <TableCell className="text-zinc-600 dark:text-zinc-300">
-                                        {member.department
+                                        {(member.departments ?? []).length > 0
                                             ? formatIdentifierLabel(
-                                                  member.department
-                                                      .department_name,
+                                                  member.departments
+                                                      ?.map(
+                                                          department =>
+                                                              department.department_name,
+                                                      )
+                                                      .join(', ') ?? '',
                                               )
                                             : '-'}
                                     </TableCell>

@@ -11,7 +11,6 @@ export interface Staff {
     email: string;
     phone: string | null;
     address_id: string | null;
-    department_id: string | null;
     staff_position_id: string | null;
     type: string;
     license_number: string | null;
@@ -21,7 +20,7 @@ export interface Staff {
     is_active: boolean;
     created_at: string;
     updated_at: string;
-    department?: Department;
+    departments?: Department[];
     position?: StaffPosition;
     branches?: { id: string; name: string }[];
 }

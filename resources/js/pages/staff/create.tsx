@@ -28,7 +28,9 @@ export default function StaffCreate({
     positions,
     branches,
 }: StaffCreatePageProps) {
-    const [departmentId, setDepartmentId] = useState<string>('');
+    const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<
+        string[]
+    >([]);
     const [positionId, setPositionId] = useState<string>('');
     const [staffType, setStaffType] = useState<string>('');
     const [isActive, _setIsActive] = useState(true);
@@ -50,6 +52,17 @@ export default function StaffCreate({
         if (primaryBranchId === branchId) {
             setPrimaryBranchId(updated[0] ?? '');
         }
+    };
+
+    const handleDepartmentToggle = (departmentId: string, checked: boolean) => {
+        if (checked) {
+            setSelectedDepartmentIds([...selectedDepartmentIds, departmentId]);
+            return;
+        }
+
+        setSelectedDepartmentIds(
+            selectedDepartmentIds.filter(id => id !== departmentId),
+        );
     };
 
     return (
@@ -78,11 +91,14 @@ export default function StaffCreate({
                 >
                     {({ processing, errors }) => (
                         <div className="max-w-2xl space-y-6">
-                            <input
-                                type="hidden"
-                                name="department_id"
-                                value={departmentId}
-                            />
+                            {selectedDepartmentIds.map((departmentId) => (
+                                <input
+                                    key={departmentId}
+                                    type="hidden"
+                                    name="department_ids[]"
+                                    value={departmentId}
+                                />
+                            ))}
                             <input
                                 type="hidden"
                                 name="staff_position_id"
@@ -187,36 +203,6 @@ export default function StaffCreate({
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
                                         <Label
-                                            htmlFor="department"
-                                            className="text-sm font-semibold"
-                                        >
-                                            Department
-                                        </Label>
-                                        <Select
-                                            value={departmentId}
-                                            onValueChange={setDepartmentId}
-                                        >
-                                            <SelectTrigger id="department">
-                                                <SelectValue placeholder="Select department" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {departments.map((dept) => (
-                                                    <SelectItem
-                                                        key={dept.id}
-                                                        value={dept.id}
-                                                    >
-                                                        {dept.department_name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError
-                                            message={errors.department_id}
-                                        />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label
                                             htmlFor="position"
                                             className="text-sm font-semibold"
                                         >
@@ -244,6 +230,47 @@ export default function StaffCreate({
                                             message={errors.staff_position_id}
                                         />
                                     </div>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-semibold">
+                                        Departments
+                                    </Label>
+                                    <div className="space-y-2 rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
+                                        {departments.map((department) => {
+                                            const selected =
+                                                selectedDepartmentIds.includes(
+                                                    department.id,
+                                                );
+
+                                            return (
+                                                <label
+                                                    key={department.id}
+                                                    className="inline-flex items-center gap-2"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selected}
+                                                        onChange={(event) =>
+                                                            handleDepartmentToggle(
+                                                                department.id,
+                                                                event.target
+                                                                    .checked,
+                                                            )
+                                                        }
+                                                    />
+                                                    <span>
+                                                        {
+                                                            department.department_name
+                                                        }
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    <InputError
+                                        message={errors.department_ids}
+                                    />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">

@@ -95,13 +95,17 @@ export default function UserCreate({ staff, roles }: UserCreatePageProps) {
                                                     {
                                                         staffMember.employee_number
                                                     }
-                                                    {staffMember.department && (
+                                                    {(staffMember.departments ??
+                                                        []).length > 0 && (
                                                         <span className="ml-2 text-muted-foreground">
                                                             (
                                                             {
-                                                                staffMember
-                                                                    .department
-                                                                    .department_name
+                                                                staffMember.departments
+                                                                    ?.map(
+                                                                        department =>
+                                                                            department.department_name,
+                                                                    )
+                                                                    .join(', ')
                                                             }
                                                             )
                                                         </span>

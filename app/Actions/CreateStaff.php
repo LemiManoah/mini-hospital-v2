@@ -22,8 +22,9 @@ final class CreateStaff
 
         return DB::transaction(function () use ($data): Staff {
             $branchIds = $data['branch_ids'] ?? [];
+            $departmentIds = $data['department_ids'] ?? [];
             $primaryBranchId = $data['primary_branch_id'] ?? null;
-            unset($data['branch_ids'], $data['primary_branch_id']);
+            unset($data['branch_ids'], $data['department_ids'], $data['primary_branch_id']);
 
             $staff = Staff::query()->create($data);
 
@@ -36,6 +37,10 @@ final class CreateStaff
                 }
 
                 $staff->branches()->sync($pivotData);
+            }
+
+            if (is_array($departmentIds) && $departmentIds !== []) {
+                $staff->departments()->sync($departmentIds);
             }
 
             return $staff;

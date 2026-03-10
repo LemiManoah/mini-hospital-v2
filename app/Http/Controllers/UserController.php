@@ -61,7 +61,7 @@ final readonly class UserController
     {
         $staff = Staff::query()
             ->forActiveBranch()
-            ->with(['department', 'position'])
+            ->with(['departments', 'position'])
             ->whereDoesntHave('user') // Only show staff without user accounts
             ->orderBy('first_name')
             ->get();

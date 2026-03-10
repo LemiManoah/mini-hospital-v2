@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Traits\BelongsToTenant;
 use Database\Factories\AddressFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,8 +28,6 @@ use Override;
  */
 final class Address extends Model
 {
-    use BelongsToTenant;
-
     /** @use HasFactory<AddressFactory> */
     use HasFactory;
 
@@ -42,7 +39,6 @@ final class Address extends Model
      */
     #[Override]
     protected $fillable = [
-        'tenant_id',
         'city',
         'district',
         'state',
@@ -58,7 +54,6 @@ final class Address extends Model
     {
         return [
             'id' => 'string',
-            'tenant_id' => 'string',
             'city' => 'string',
             'district' => 'string',
             'state' => 'string',

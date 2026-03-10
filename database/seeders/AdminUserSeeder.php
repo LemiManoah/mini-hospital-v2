@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Enums\StaffType;
 use App\Models\Country;
@@ -41,6 +42,7 @@ final class AdminUserSeeder extends Seeder
                 'subscription_package_id' => $package->id,
                 'status' => GeneralStatus::ACTIVE,
                 'country_id' => $country->id,
+                'facility_level' => FacilityLevel::HOSPITAL->value,
             ]
         );
 

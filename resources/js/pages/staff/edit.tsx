@@ -32,7 +32,9 @@ export default function StaffEdit({
         },
     ];
 
-    const [departmentId, setDepartmentId] = useState(staff.department_id || '');
+    const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<
+        string[]
+    >((staff.departments ?? []).map(department => department.id));
     const [positionId, setPositionId] = useState(staff.staff_position_id || '');
     const [staffType, setStaffType] = useState(staff.type || '');
     const [isActive, _setIsActive] = useState(staff.is_active);
@@ -58,6 +60,17 @@ export default function StaffEdit({
         if (primaryBranchId === branchId) {
             setPrimaryBranchId(updated[0] ?? '');
         }
+    };
+
+    const handleDepartmentToggle = (departmentId: string, checked: boolean) => {
+        if (checked) {
+            setSelectedDepartmentIds([...selectedDepartmentIds, departmentId]);
+            return;
+        }
+
+        setSelectedDepartmentIds(
+            selectedDepartmentIds.filter(id => id !== departmentId),
+        );
     };
 
     return (
@@ -88,11 +101,14 @@ export default function StaffEdit({
                 >
                     {({ processing, errors }) => (
                         <div className="max-w-2xl space-y-6">
-                            <input
-                                type="hidden"
-                                name="department_id"
-                                value={departmentId}
-                            />
+                            {selectedDepartmentIds.map((departmentId) => (
+                                <input
+                                    key={departmentId}
+                                    type="hidden"
+                                    name="department_ids[]"
+                                    value={departmentId}
+                                />
+                            ))}
                             <input
                                 type="hidden"
                                 name="staff_position_id"
@@ -196,36 +212,6 @@ export default function StaffEdit({
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
                                         <Label
-                                            htmlFor="department"
-                                            className="text-sm font-semibold"
-                                        >
-                                            Department
-                                        </Label>
-                                        <Select
-                                            value={departmentId}
-                                            onValueChange={setDepartmentId}
-                                        >
-                                            <SelectTrigger id="department">
-                                                <SelectValue placeholder="Select department" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {departments.map((dept) => (
-                                                    <SelectItem
-                                                        key={dept.id}
-                                                        value={dept.id}
-                                                    >
-                                                        {dept.department_name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError
-                                            message={errors.department_id}
-                                        />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label
                                             htmlFor="position"
                                             className="text-sm font-semibold"
                                         >
@@ -253,6 +239,47 @@ export default function StaffEdit({
                                             message={errors.staff_position_id}
                                         />
                                     </div>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-semibold">
+                                        Departments
+                                    </Label>
+                                    <div className="space-y-2 rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
+                                        {departments.map((department) => {
+                                            const selected =
+                                                selectedDepartmentIds.includes(
+                                                    department.id,
+                                                );
+
+                                            return (
+                                                <label
+                                                    key={department.id}
+                                                    className="inline-flex items-center gap-2"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selected}
+                                                        onChange={(event) =>
+                                                            handleDepartmentToggle(
+                                                                department.id,
+                                                                event.target
+                                                                    .checked,
+                                                            )
+                                                        }
+                                                    />
+                                                    <span>
+                                                        {
+                                                            department.department_name
+                                                        }
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    <InputError
+                                        message={errors.department_ids}
+                                    />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">

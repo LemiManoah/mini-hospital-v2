@@ -16,8 +16,9 @@ final class UpdateStaff
     {
         DB::transaction(function () use ($staff, $data): void {
             $branchIds = $data['branch_ids'] ?? [];
+            $departmentIds = $data['department_ids'] ?? [];
             $primaryBranchId = $data['primary_branch_id'] ?? null;
-            unset($data['branch_ids'], $data['primary_branch_id']);
+            unset($data['branch_ids'], $data['department_ids'], $data['primary_branch_id']);
 
             $staff->update($data);
 
@@ -30,6 +31,10 @@ final class UpdateStaff
                 }
 
                 $staff->branches()->sync($pivotData);
+            }
+
+            if (is_array($departmentIds) && $departmentIds !== []) {
+                $staff->departments()->sync($departmentIds);
             }
         });
 

@@ -31,7 +31,7 @@ final readonly class StaffController
 
         $staff = Staff::query()
             ->forActiveBranch()
-            ->with(['department', 'position', 'branches'])
+            ->with(['departments', 'position', 'branches'])
             ->when(
                 $search !== '',
                 static fn (Builder $query) => $query
@@ -82,7 +82,7 @@ final readonly class StaffController
         /** @var User $user */
         $user = Auth::user();
 
-        $staff->load(['department', 'position', 'branches']);
+        $staff->load(['departments', 'position', 'branches']);
         $departments = Department::query()->select('id', 'department_name')->get();
         $positions = StaffPosition::query()->select('id', 'name')->get();
         $branches = BranchContext::getAccessibleBranches($user)->map(fn (FacilityBranch $branch): array => [

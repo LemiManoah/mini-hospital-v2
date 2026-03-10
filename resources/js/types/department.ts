@@ -4,17 +4,11 @@ export interface Department {
     department_code: string;
     department_name: string;
     location: string | null;
-    head_of_department_id: string | null;
     is_clinical: boolean;
     is_active: boolean;
     contact_info: Record<string, any> | null;
     created_at: string;
     updated_at: string;
-    head_of_department?: {
-        id: string;
-        first_name: string;
-        last_name: string;
-    } | null;
 }
 
 export interface DepartmentIndexPageProps {
@@ -38,19 +32,8 @@ export interface DepartmentIndexPageProps {
     };
 }
 
-export interface DepartmentCreatePageProps {
-    staff: {
-        id: string;
-        first_name: string;
-        last_name: string;
-    }[];
-}
+export interface DepartmentCreatePageProps {}
 
 export interface DepartmentEditPageProps {
     department: Department;
-    staff: {
-        id: string;
-        first_name: string;
-        last_name: string;
-    }[];
 }
