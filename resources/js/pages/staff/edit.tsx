@@ -34,7 +34,7 @@ export default function StaffEdit({
 
     const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<
         string[]
-    >((staff.departments ?? []).map(department => department.id));
+    >((staff.departments ?? []).map((department) => department.id));
     const [positionId, setPositionId] = useState(staff.staff_position_id || '');
     const [staffType, setStaffType] = useState(staff.type || '');
     const [isActive, _setIsActive] = useState(staff.is_active);
@@ -69,7 +69,7 @@ export default function StaffEdit({
         }
 
         setSelectedDepartmentIds(
-            selectedDepartmentIds.filter(id => id !== departmentId),
+            selectedDepartmentIds.filter((id) => id !== departmentId),
         );
     };
 

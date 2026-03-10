@@ -95,18 +95,20 @@ export default function UserCreate({ staff, roles }: UserCreatePageProps) {
                                                     {
                                                         staffMember.employee_number
                                                     }
-                                                    {(staffMember.departments ??
-                                                        []).length > 0 && (
+                                                    {(
+                                                        staffMember.departments ??
+                                                        []
+                                                    ).length > 0 && (
                                                         <span className="ml-2 text-muted-foreground">
                                                             (
-                                                            {
-                                                                staffMember.departments
-                                                                    ?.map(
-                                                                        department =>
-                                                                            department.department_name,
-                                                                    )
-                                                                    .join(', ')
-                                                            }
+                                                            {staffMember.departments
+                                                                ?.map(
+                                                                    (
+                                                                        department,
+                                                                    ) =>
+                                                                        department.department_name,
+                                                                )
+                                                                .join(', ')}
                                                             )
                                                         </span>
                                                     )}

@@ -61,7 +61,7 @@ export default function StaffCreate({
         }
 
         setSelectedDepartmentIds(
-            selectedDepartmentIds.filter(id => id !== departmentId),
+            selectedDepartmentIds.filter((id) => id !== departmentId),
         );
     };
 

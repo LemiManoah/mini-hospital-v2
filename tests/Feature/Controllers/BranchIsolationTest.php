@@ -28,7 +28,7 @@ function createTenantWithBranches(int $count = 2): array
     ]);
 
     $currency = Currency::query()->create([
-        'code' => 'C'.str_pad((string) $sequence, 2, '0', STR_PAD_LEFT),
+        'code' => 'C'.mb_str_pad((string) $sequence, 2, '0', STR_PAD_LEFT),
         'name' => 'Currency '.$suffix,
         'symbol' => 'USh',
     ]);
@@ -54,7 +54,7 @@ function createTenantWithBranches(int $count = 2): array
         $branches->push(FacilityBranch::query()->create([
             'tenant_id' => $tenant->id,
             'name' => 'Branch '.$i,
-            'branch_code' => strtoupper(substr($suffix, 0, 3)).$i,
+            'branch_code' => mb_strtoupper(mb_substr($suffix, 0, 3)).$i,
             'currency_id' => $currency->id,
             'status' => GeneralStatus::ACTIVE,
             'is_main_branch' => $i === 1,

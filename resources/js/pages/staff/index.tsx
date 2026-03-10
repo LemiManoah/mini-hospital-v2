@@ -133,7 +133,7 @@ export default function StaffIndex({ staff, filters }: StaffIndexPageProps) {
                                             ? formatIdentifierLabel(
                                                   member.departments
                                                       ?.map(
-                                                          department =>
+                                                          (department) =>
                                                               department.department_name,
                                                       )
                                                       .join(', ') ?? '',
