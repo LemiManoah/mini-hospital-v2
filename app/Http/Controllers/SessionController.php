@@ -39,6 +39,10 @@ final readonly class SessionController
 
         $request->session()->regenerate();
 
+        if ($user->is_support) {
+            return to_route('facility-switcher.index');
+        }
+
         return redirect()->intended(route('home', absolute: false));
     }
 

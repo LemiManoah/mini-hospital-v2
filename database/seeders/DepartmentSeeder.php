@@ -15,10 +15,8 @@ final class DepartmentSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get or create default tenant
-        $tenant = Tenant::query()->firstOrCreate(
-            ['name' => 'Default Hospital'],
-        );
+        // Get all tenants in the system
+        $tenants = Tenant::all();
 
         $departments = [
             [
@@ -100,11 +98,14 @@ final class DepartmentSeeder extends Seeder
             ],
         ];
 
-        foreach ($departments as $department) {
-            Department::query()->firstOrCreate(
-                ['tenant_id' => $tenant->id, 'department_code' => $department['department_code']],
-                array_merge($department, ['tenant_id' => $tenant->id]),
-            );
+        // Create departments for each tenant
+        foreach ($tenants as $tenant) {
+            foreach ($departments as $department) {
+                Department::query()->firstOrCreate(
+                    ['tenant_id' => $tenant->id, 'department_code' => $department['department_code']],
+                    array_merge($department, ['tenant_id' => $tenant->id]),
+                );
+            }
         }
     }
 }

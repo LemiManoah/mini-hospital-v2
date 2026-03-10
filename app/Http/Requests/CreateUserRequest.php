@@ -18,7 +18,7 @@ final class CreateUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'staff_id' => ['required', 'string', 'exists:staff,id'],
             'email' => [
                 'required',
                 'string',
@@ -33,6 +33,9 @@ final class CreateUserRequest extends FormRequest
                 'confirmed',
                 Password::defaults(),
             ],
+            // roles are optional but must be an array of valid role ids when present
+            'roles' => ['sometimes', 'array'],
+            'roles.*' => ['string', 'exists:roles,id'],
         ];
     }
 }

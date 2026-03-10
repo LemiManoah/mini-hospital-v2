@@ -39,6 +39,7 @@ final class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ? [
                     ...$request->user()->toArray(),
+                    'tenant' => $request->user()->tenant,
                     'can' => $request->user()->getAllPermissions()->pluck('name')->mapWithKeys(fn ($p): array => [$p => true]),
                     'roles' => $request->user()->getRoleNames(),
                 ] : null,

@@ -15,10 +15,8 @@ final class StaffPositionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get or create default tenant
-        $tenant = Tenant::query()->firstOrCreate(
-            ['name' => 'Default Hospital'],
-        );
+        // Get all tenants in the system
+        $tenants = Tenant::all();
 
         $positions = [
             [
@@ -108,11 +106,14 @@ final class StaffPositionSeeder extends Seeder
             ],
         ];
 
-        foreach ($positions as $position) {
-            StaffPosition::query()->firstOrCreate(
-                ['tenant_id' => $tenant->id, 'name' => $position['name']],
-                array_merge($position, ['tenant_id' => $tenant->id]),
-            );
+        // Create staff positions for each tenant
+        foreach ($tenants as $tenant) {
+            foreach ($positions as $position) {
+                StaffPosition::query()->firstOrCreate(
+                    ['tenant_id' => $tenant->id, 'name' => $position['name']],
+                    array_merge($position, ['tenant_id' => $tenant->id]),
+                );
+            }
         }
     }
 }

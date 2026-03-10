@@ -10,6 +10,7 @@ use App\Actions\UpdateUser;
 use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\DeleteUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Staff;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -45,13 +46,26 @@ final readonly class UserController
 
     public function create(): Response
     {
-        return Inertia::render('user/create');
+        $staff = Staff::query()
+            ->with(['department', 'position'])
+            ->whereDoesntHave('user') // Only show staff without user accounts
+            ->orderBy('first_name')
+            ->get();
+
+        $roles = \App\Models\Role::query()
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('user/create', [
+            'staff' => $staff,
+            'roles' => $roles,
+        ]);
     }
 
     public function store(CreateUserRequest $request, CreateUser $action): RedirectResponse
     {
-        $action->handle(
-            $request->safe()->except('password'),
+        $user = $action->handle(
+            $request->validated(),
             $request->string('password')->value(),
         );
 
@@ -62,8 +76,13 @@ final readonly class UserController
     {
         $user->load('roles');
 
+        $roles = \App\Models\Role::query()
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('user/edit', [
             'user' => $user,
+            'roles' => $roles,
         ]);
     }
 
@@ -79,5 +98,12 @@ final readonly class UserController
         $action->handle($user);
 
         return to_route('users.index')->with('success', 'User deleted successfully.');
+    }
+
+    public function destroyCurrentUser(DeleteUserRequest $request, DeleteUser $action): RedirectResponse
+    {
+        $action->handle($request->user());
+
+        return to_route('login')->with('success', 'Account deleted successfully.');
     }
 }

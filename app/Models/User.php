@@ -51,6 +51,7 @@ final class User extends Authenticatable implements MustVerifyEmail
         'staff_id',
         'email',
         'password',
+        'is_support',
     ];
 
     /**
@@ -80,6 +81,7 @@ final class User extends Authenticatable implements MustVerifyEmail
             'two_factor_secret' => 'string',
             'two_factor_recovery_codes' => 'string',
             'two_factor_confirmed_at' => 'datetime',
+            'is_support' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

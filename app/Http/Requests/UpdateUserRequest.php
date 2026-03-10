@@ -30,6 +30,9 @@ final class UpdateUserRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($user->id),
             ],
+            // allow roles to be synced when provided
+            'roles' => ['sometimes', 'array'],
+            'roles.*' => ['string', 'exists:roles,id'],
         ];
     }
 }

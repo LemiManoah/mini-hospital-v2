@@ -142,9 +142,12 @@ export default function UserIndex({ users, filters }: UserIndexPageProps) {
                                             <DeleteConfirmationModal
                                                 title="Delete User"
                                                 description={`Are you sure you want to delete the user "${formatIdentifierLabel(user.name)}"? This action cannot be undone.`}
-                                                action={UserController.destroy.form(
-                                                    { user },
-                                                )}
+                                                action={{
+                                                    action: UserController.destroy.url(
+                                                        { user },
+                                                    ),
+                                                    method: 'delete',
+                                                }}
                                                 onSuccess={() =>
                                                     toast.success(
                                                         `User "${formatIdentifierLabel(user.name)}" deleted successfully.`,

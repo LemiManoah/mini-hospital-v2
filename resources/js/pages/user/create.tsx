@@ -3,18 +3,44 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { type UserCreatePageProps } from '@/types/user';
 import { Form, Head, Link } from '@inertiajs/react';
 import { CheckCircle2, LoaderCircle, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Users', href: UserController.index.url() },
     { title: 'Create User', href: UserController.create.url() },
 ];
 
-export default function UserCreate() {
+export default function UserCreate({ staff, roles }: UserCreatePageProps) {
+    const [selectedStaffId, setSelectedStaffId] = useState<string>('');
+    const [email, setEmail] = useState<string>('');
+
+    const handleStaffChange = (staffId: string) => {
+        setSelectedStaffId(staffId);
+
+        // Auto-fill email when staff is selected
+        if (staffId) {
+            const selectedStaff = staff.find(s => s.id === staffId);
+            if (selectedStaff?.email) {
+                setEmail(selectedStaff.email);
+            }
+        } else {
+            setEmail('');
+        }
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create User" />
@@ -26,7 +52,7 @@ export default function UserCreate() {
                         Create New User
                     </h2>
                     <p className="text-muted-foreground">
-                        Add a new user account to the system.
+                        Create a user account for an existing staff member.
                     </p>
                 </div>
             </div>
@@ -44,19 +70,37 @@ export default function UserCreate() {
                             <div className="grid gap-4">
                                 <div className="grid gap-2">
                                     <Label
-                                        htmlFor="name"
+                                        htmlFor="staff_id"
                                         className="text-sm font-semibold"
                                     >
-                                        Full Name
+                                        Select Staff Member
                                     </Label>
-                                    <Input
-                                        id="name"
-                                        name="name"
-                                        placeholder="e.g. John Doe"
-                                        autoFocus
+                                    <Select
+                                        name="staff_id"
+                                        value={selectedStaffId}
+                                        onValueChange={handleStaffChange}
                                         required
-                                    />
-                                    <InputError message={errors.name} />
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Choose a staff member..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {staff.map((staffMember) => (
+                                                <SelectItem
+                                                    key={staffMember.id}
+                                                    value={staffMember.id}
+                                                >
+                                                    {staffMember.first_name} {staffMember.last_name} - {staffMember.employee_number}
+                                                    {staffMember.department && (
+                                                        <span className="text-muted-foreground ml-2">
+                                                            ({staffMember.department.department_name})
+                                                        </span>
+                                                    )}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.staff_id} />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -70,10 +114,35 @@ export default function UserCreate() {
                                         id="email"
                                         name="email"
                                         type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         placeholder="e.g. john@example.com"
                                         required
                                     />
                                     <InputError message={errors.email} />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-semibold">
+                                        Assign Roles
+                                    </Label>
+                                    <div className="flex flex-wrap gap-3">
+                                        {roles.map((role) => (
+                                            <label
+                                                key={role.id}
+                                                className="inline-flex items-center space-x-2"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    name="roles[]"
+                                                    value={role.id}
+                                                    className="checkbox"
+                                                />
+                                                <span>{role.name}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.roles} />
                                 </div>
 
                                 <div className="grid gap-2">

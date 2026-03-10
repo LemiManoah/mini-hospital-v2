@@ -10,7 +10,7 @@ import { Form, Head, Link } from '@inertiajs/react';
 import { LoaderCircle, Save, User } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function UserEdit({ user }: UserEditPageProps) {
+export default function UserEdit({ user, roles }: UserEditPageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Users', href: UserController.index.url() },
         {
@@ -79,6 +79,34 @@ export default function UserEdit({ user }: UserEditPageProps) {
                                         required
                                     />
                                     <InputError message={errors.email} />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-semibold">
+                                        Assign Roles
+                                    </Label>
+                                    <div className="flex flex-wrap gap-3">
+                                        {roles.map((role) => (
+                                            <label
+                                                key={role.id}
+                                                className="inline-flex items-center space-x-2"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    name="roles[]"
+                                                    value={role.id}
+                                                    defaultChecked={
+                                                        user.roles.some(
+                                                            (r) => r.id === role.id
+                                                        )
+                                                    }
+                                                    className="checkbox"
+                                                />
+                                                <span>{role.name}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.roles} />
                                 </div>
                             </div>
 

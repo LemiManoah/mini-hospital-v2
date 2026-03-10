@@ -18,11 +18,12 @@ use App\Http\Controllers\UserEmailVerificationNotificationController;
 use App\Http\Controllers\UserPasswordController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserTwoFactorAuthenticationController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    if (auth()->check()) {
+    if (Auth::check()) {
         return Inertia::render('modules');
     }
 
@@ -32,6 +33,10 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('modules', fn () => Inertia::render('modules'))->name('modules');
     Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+
+    // Facility Switcher (Support Mode)
+    Route::get('facility-switcher', [\App\Http\Controllers\FacilitySwitcherController::class, 'index'])->name('facility-switcher.index');
+    Route::post('facility-switcher/{tenantId}', [\App\Http\Controllers\FacilitySwitcherController::class, 'switch'])->name('facility-switcher.switch');
 
     // Users Management...
     Route::resource('users', UserController::class)->except(['show']);
@@ -50,8 +55,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 });
 
 Route::middleware('auth')->group(function (): void {
-    // User...
-    Route::delete('user', [UserController::class, 'destroy'])->name('user.destroy');
+    // User Account Management
+    Route::delete('user-account', [UserController::class, 'destroyCurrentUser'])->name('user.destroy-account');
 
     // User Profile...
     Route::redirect('settings', '/settings/profile');

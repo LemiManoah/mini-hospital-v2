@@ -17,12 +17,14 @@ final class DatabaseSeeder extends Seeder
             SubscriptionPackageSeeder::class,
             AllergenSeeder::class,
             AddressSeeder::class,
+            FacilitySeeder::class,
             PermissionSeeder::class,
             AdminUserSeeder::class,
             DepartmentSeeder::class,
             StaffPositionSeeder::class,
-            StaffSeeder::class,
-            UserSeeder::class,
+            // StaffSeeder::class,
+            // UserSeeder::class,
+            SupportUserSeeder::class,
         ]);
     }
 }

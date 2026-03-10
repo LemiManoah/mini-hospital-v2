@@ -15,10 +15,17 @@ final readonly class UpdateUser
     {
         $emailChanged = isset($attributes['email']) && $user->email !== $attributes['email'];
 
+        $roles = $attributes['roles'] ?? null;
+        unset($attributes['roles']);
+
         $user->update([
             ...$attributes,
             ...($emailChanged ? ['email_verified_at' => null] : []),
         ]);
+
+        if ($roles !== null) {
+            $user->syncRoles($roles);
+        }
 
         if ($emailChanged) {
             $user->sendEmailVerificationNotification();

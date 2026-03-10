@@ -17,10 +17,15 @@ final readonly class CreateUser
     public function handle(array $attributes, #[SensitiveParameter] string $password): User
     {
         return DB::transaction(function () use ($attributes, $password): User {
+            $roles = $attributes['roles'] ?? [];
+            unset($attributes['roles']);
+
             $user = User::query()->create([
                 ...$attributes,
                 'password' => $password,
             ]);
+
+            $user->syncRoles($roles);
 
             event(new Registered($user));
 

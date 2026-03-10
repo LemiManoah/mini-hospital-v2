@@ -1,4 +1,5 @@
 import type { Role } from './role';
+import { Staff } from './staff';
 
 export interface User {
     id: string;
@@ -8,6 +9,7 @@ export interface User {
     created_at: string;
     updated_at: string;
     roles: Role[];
+    staff: Staff | null;
 }
 
 export interface PaginatedUsers {
@@ -28,9 +30,11 @@ export interface UserIndexPageProps {
 }
 
 export interface UserCreatePageProps {
-    // Currently empty - can be extended for roles, etc.
+    staff: Staff[];
+    roles: Role[];
 }
 
 export interface UserEditPageProps {
     user: User;
+    roles: Role[];
 }
