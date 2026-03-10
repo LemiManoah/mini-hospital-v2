@@ -19,10 +19,7 @@ trait BelongsToTenant
         return $this->belongsTo(Tenant::class);
     }
 
-    /**
-     * The "booted" method of the model.
-     */
-    protected static function booted(): void
+    protected static function bootBelongsToTenant(): void
     {
         static::addGlobalScope(new TenantScope());
 

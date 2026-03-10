@@ -14,9 +14,12 @@ use App\Models\Department;
 use App\Models\FacilityBranch;
 use App\Models\Staff;
 use App\Models\StaffPosition;
+use App\Models\User;
+use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,6 +30,7 @@ final readonly class StaffController
         $search = mb_trim((string) $request->query('search', ''));
 
         $staff = Staff::query()
+            ->forActiveBranch()
             ->with(['department', 'position', 'branches'])
             ->when(
                 $search !== '',
@@ -49,9 +53,15 @@ final readonly class StaffController
 
     public function create(): Response
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         $departments = Department::query()->select('id', 'department_name')->get();
         $positions = StaffPosition::query()->select('id', 'name')->get();
-        $branches = FacilityBranch::query()->select('id', 'name')->get();
+        $branches = BranchContext::getAccessibleBranches($user)->map(fn (FacilityBranch $branch): array => [
+            'id' => $branch->id,
+            'name' => $branch->name,
+        ]);
 
         return Inertia::render('staff/create', [
             'departments' => $departments,
@@ -69,10 +79,16 @@ final readonly class StaffController
 
     public function edit(Staff $staff): Response
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         $staff->load(['department', 'position', 'branches']);
         $departments = Department::query()->select('id', 'department_name')->get();
         $positions = StaffPosition::query()->select('id', 'name')->get();
-        $branches = FacilityBranch::query()->select('id', 'name')->get();
+        $branches = BranchContext::getAccessibleBranches($user)->map(fn (FacilityBranch $branch): array => [
+            'id' => $branch->id,
+            'name' => $branch->name,
+        ]);
 
         return Inertia::render('staff/edit', [
             'staff' => $staff,

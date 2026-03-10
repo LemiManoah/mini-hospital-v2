@@ -13,6 +13,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\Staff;
 use App\Models\User;
+use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,17 @@ final readonly class UserController
 
         $users = User::query()
             ->with('roles')
+            ->when(
+                BranchContext::getActiveBranchId() !== null,
+                static fn (Builder $query) => $query->where(function (Builder $userQuery): void {
+                    $branchId = BranchContext::getActiveBranchId();
+
+                    $userQuery->whereNull('staff_id')
+                        ->orWhereHas('staff.branches', static function (Builder $staffQuery) use ($branchId): void {
+                            $staffQuery->where('facility_branches.id', $branchId);
+                        });
+                })
+            )
             ->when(
                 $search !== '',
                 static fn (Builder $query) => $query
@@ -48,6 +60,7 @@ final readonly class UserController
     public function create(): Response
     {
         $staff = Staff::query()
+            ->forActiveBranch()
             ->with(['department', 'position'])
             ->whereDoesntHave('user') // Only show staff without user accounts
             ->orderBy('first_name')

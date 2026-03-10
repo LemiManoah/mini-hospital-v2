@@ -22,6 +22,7 @@ export default function StaffEdit({
     staff,
     departments,
     positions,
+    branches,
 }: StaffEditPageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Staff', href: StaffController.index.url() },
@@ -35,6 +36,29 @@ export default function StaffEdit({
     const [positionId, setPositionId] = useState(staff.staff_position_id || '');
     const [staffType, setStaffType] = useState(staff.type || '');
     const [isActive, _setIsActive] = useState(staff.is_active);
+    const [selectedBranchIds, setSelectedBranchIds] = useState<string[]>(
+        (staff.branches ?? []).map((branch) => branch.id),
+    );
+    const [primaryBranchId, setPrimaryBranchId] = useState<string>(
+        (staff.branches ?? [])[0]?.id ?? '',
+    );
+
+    const handleBranchToggle = (branchId: string, checked: boolean) => {
+        if (checked) {
+            const updated = [...selectedBranchIds, branchId];
+            setSelectedBranchIds(updated);
+            if (!primaryBranchId) {
+                setPrimaryBranchId(branchId);
+            }
+            return;
+        }
+
+        const updated = selectedBranchIds.filter((id) => id !== branchId);
+        setSelectedBranchIds(updated);
+        if (primaryBranchId === branchId) {
+            setPrimaryBranchId(updated[0] ?? '');
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -84,6 +108,19 @@ export default function StaffEdit({
                                 name="is_active"
                                 value={isActive ? '1' : '0'}
                             />
+                            <input
+                                type="hidden"
+                                name="primary_branch_id"
+                                value={primaryBranchId}
+                            />
+                            {selectedBranchIds.map((branchId) => (
+                                <input
+                                    key={branchId}
+                                    type="hidden"
+                                    name="branch_ids[]"
+                                    value={branchId}
+                                />
+                            ))}
 
                             <div className="grid gap-4">
                                 <div className="grid grid-cols-2 gap-4">
@@ -310,6 +347,65 @@ export default function StaffEdit({
                                             message={errors.specialty}
                                         />
                                     </div>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-semibold">
+                                        Branch Assignment
+                                    </Label>
+                                    <div className="space-y-2 rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
+                                        {branches.map((branch) => {
+                                            const selected =
+                                                selectedBranchIds.includes(
+                                                    branch.id,
+                                                );
+
+                                            return (
+                                                <div
+                                                    key={branch.id}
+                                                    className="flex items-center justify-between gap-4"
+                                                >
+                                                    <label className="inline-flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selected}
+                                                            onChange={(event) =>
+                                                                handleBranchToggle(
+                                                                    branch.id,
+                                                                    event.target
+                                                                        .checked,
+                                                                )
+                                                            }
+                                                        />
+                                                        <span>
+                                                            {branch.name}
+                                                        </span>
+                                                    </label>
+                                                    <label className="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+                                                        <input
+                                                            type="radio"
+                                                            name="primary-branch-selector"
+                                                            checked={
+                                                                primaryBranchId ===
+                                                                branch.id
+                                                            }
+                                                            disabled={!selected}
+                                                            onChange={() =>
+                                                                setPrimaryBranchId(
+                                                                    branch.id,
+                                                                )
+                                                            }
+                                                        />
+                                                        Primary
+                                                    </label>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <InputError message={errors.branch_ids} />
+                                    <InputError
+                                        message={errors.primary_branch_id}
+                                    />
                                 </div>
                             </div>
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateSessionRequest;
+use App\Support\BranchContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +41,17 @@ final readonly class SessionController
         $request->session()->regenerate();
 
         if ($user->is_support) {
+            BranchContext::clear();
+
             return to_route('facility-switcher.index');
+        }
+
+        $accessibleBranches = BranchContext::getAccessibleBranches($user);
+
+        if ($accessibleBranches->isNotEmpty()) {
+            BranchContext::setActiveBranchId((string) $accessibleBranches->first()->id);
+        } else {
+            BranchContext::clear();
         }
 
         return redirect()->intended(route('home', absolute: false));
@@ -48,6 +59,8 @@ final readonly class SessionController
 
     public function destroy(Request $request): RedirectResponse
     {
+        BranchContext::clear();
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

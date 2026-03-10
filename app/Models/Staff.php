@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\StaffType;
+use App\Support\BranchContext;
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -102,5 +105,23 @@ final class Staff extends Model
     {
         return $this->belongsToMany(FacilityBranch::class, 'staff_branches', 'staff_id', 'branch_id')
             ->withPivot('is_primary_location');
+    }
+
+    /**
+     * @param  Builder<Staff>  $query
+     * @return Builder<Staff>
+     */
+    #[Scope]
+    protected function forActiveBranch(Builder $query): Builder
+    {
+        $branchId = BranchContext::getActiveBranchId();
+
+        if ($branchId === null) {
+            return $query;
+        }
+
+        return $query->whereHas('branches', function (Builder $branchQuery) use ($branchId): void {
+            $branchQuery->where('facility_branches.id', $branchId);
+        });
     }
 }

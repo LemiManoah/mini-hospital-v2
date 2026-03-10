@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\StaffType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Validator;
 
 final class UpdateStaffRequest extends FormRequest
 {
@@ -30,6 +31,21 @@ final class UpdateStaffRequest extends FormRequest
             'specialty' => ['nullable', 'string', 'max:255'],
             'hire_date' => ['required', 'date'],
             'is_active' => ['boolean'],
+            'branch_ids' => ['required', 'array', 'min:1'],
+            'branch_ids.*' => ['required', 'uuid', 'exists:facility_branches,id'],
+            'primary_branch_id' => ['required', 'uuid', 'exists:facility_branches,id'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $branchIds = $this->input('branch_ids', []);
+            $primaryBranchId = $this->input('primary_branch_id');
+
+            if (is_string($primaryBranchId) && is_array($branchIds) && ! in_array($primaryBranchId, $branchIds, true)) {
+                $validator->errors()->add('primary_branch_id', 'The primary branch must be one of the selected branches.');
+            }
+        });
     }
 }

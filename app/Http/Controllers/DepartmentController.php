@@ -45,7 +45,7 @@ final readonly class DepartmentController
 
     public function create(): Response
     {
-        $staff = Staff::query()->select('id', 'first_name', 'last_name')->get()->map(fn ($s): array => [
+        $staff = Staff::query()->forActiveBranch()->select('id', 'first_name', 'last_name')->get()->map(fn ($s): array => [
             'id' => $s->id,
             'name' => $s->first_name.' '.$s->last_name,
         ]);
@@ -64,7 +64,7 @@ final readonly class DepartmentController
 
     public function edit(Department $department): Response
     {
-        $staff = Staff::query()->select('id', 'first_name', 'last_name')->get()->map(fn ($s): array => [
+        $staff = Staff::query()->forActiveBranch()->select('id', 'first_name', 'last_name')->get()->map(fn ($s): array => [
             'id' => $s->id,
             'name' => $s->first_name.' '.$s->last_name,
         ]);

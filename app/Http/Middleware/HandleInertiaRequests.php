@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Models\FacilityBranch;
+use App\Support\BranchContext;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Override;
@@ -33,6 +35,17 @@ final class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $activeBranch = null;
+        $activeBranchModel = BranchContext::getActiveBranch($request->user());
+
+        if ($activeBranchModel instanceof FacilityBranch) {
+            $activeBranch = [
+                'id' => $activeBranchModel->id,
+                'name' => $activeBranchModel->name,
+                'branch_code' => $activeBranchModel->branch_code,
+            ];
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -40,6 +53,8 @@ final class HandleInertiaRequests extends Middleware
                 'user' => $request->user() ? [
                     ...$request->user()->toArray(),
                     'tenant' => $request->user()->tenant,
+                    'active_branch_id' => BranchContext::getActiveBranchId(),
+                    'active_branch' => $activeBranch,
                     'can' => $request->user()->getAllPermissions()->pluck('name')->mapWithKeys(fn ($p): array => [$p => true]),
                     'roles' => $request->user()->getRoleNames(),
                 ] : null,

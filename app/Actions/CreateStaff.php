@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\StaffType;
 use App\Models\Staff;
+use Illuminate\Support\Facades\DB;
 
 final class CreateStaff
 {
@@ -19,7 +20,26 @@ final class CreateStaff
             $data['employee_number'] = $this->generateEmployeeNumber($data['type']);
         }
 
-        return Staff::query()->create($data);
+        return DB::transaction(function () use ($data): Staff {
+            $branchIds = $data['branch_ids'] ?? [];
+            $primaryBranchId = $data['primary_branch_id'] ?? null;
+            unset($data['branch_ids'], $data['primary_branch_id']);
+
+            $staff = Staff::query()->create($data);
+
+            if (is_array($branchIds) && $branchIds !== []) {
+                $pivotData = [];
+                foreach ($branchIds as $branchId) {
+                    $pivotData[(string) $branchId] = [
+                        'is_primary_location' => $branchId === $primaryBranchId,
+                    ];
+                }
+
+                $staff->branches()->sync($pivotData);
+            }
+
+            return $staff;
+        });
     }
 
     /**
