@@ -23,6 +23,8 @@ final class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             DepartmentSeeder::class,
             StaffPositionSeeder::class,
+            InsuranceCompanySeeder::class,
+            InsurancePackageSeeder::class,
             // StaffSeeder::class,
             // UserSeeder::class,
             SupportUserSeeder::class,

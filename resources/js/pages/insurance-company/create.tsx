@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { type InsuranceCompanyCreatePageProps } from '@/types/insurance-company';
 import { Form, Head, Link } from '@inertiajs/react';
 import { Building2, CheckCircle2, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -21,8 +22,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Create Insurance Company', href: '/insurance-companies/create' },
 ];
 
-export default function InsuranceCompanyCreate() {
+export default function InsuranceCompanyCreate({ addresses }: InsuranceCompanyCreatePageProps) {
     const [status, setStatus] = useState('active');
+    const [addressId, setAddressId] = useState('');
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -30,10 +32,14 @@ export default function InsuranceCompanyCreate() {
 
             <div className="mt-4 mb-4 flex flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center">
                 <div className="flex w-full flex-col gap-1">
-                    <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                        <Building2 className="h-6 w-6 text-indigo-500" />
-                        Create Insurance Company
-                    </h2>
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                            Create Insurance Company
+                        </h2>
+                        <Button variant="outline" size="sm" asChild className="h-8">
+                            <Link href="/insurance-companies">Back</Link>
+                        </Button>
+                    </div>
                     <p className="text-muted-foreground">
                         Add a new insurance company for package and claim management.
                     </p>
@@ -50,6 +56,7 @@ export default function InsuranceCompanyCreate() {
                     {({ processing, errors }) => (
                         <div className="max-w-2xl space-y-6">
                             <input type="hidden" name="status" value={status} />
+                            <input type="hidden" name="address_id" value={addressId} />
 
                             <div className="grid gap-4">
                                 <div className="grid gap-2">
@@ -108,11 +115,22 @@ export default function InsuranceCompanyCreate() {
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="address" className="text-sm font-semibold">
+                                    <Label htmlFor="address_id" className="text-sm font-semibold">
                                         Address
                                     </Label>
-                                    <Input id="address" name="address" placeholder="Physical or postal address" />
-                                    <InputError message={errors.address} />
+                                    <Select value={addressId} onValueChange={setAddressId}>
+                                        <SelectTrigger id="address_id">
+                                            <SelectValue placeholder="Select an address" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {addresses.map((address) => (
+                                                <SelectItem key={address.id} value={address.id}>
+                                                    {address.city}{address.district ? `, ${address.district}` : ''}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.address_id} />
                                 </div>
                             </div>
 

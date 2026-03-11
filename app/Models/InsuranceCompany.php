@@ -31,7 +31,7 @@ final class InsuranceCompany extends Model
         'email',
         'main_contact',
         'other_contact',
-        'address',
+        'address_id',
         'status',
         'created_by',
         'updated_by',
@@ -65,5 +65,13 @@ final class InsuranceCompany extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(InsuranceCompanyInvoice::class);
+    }
+
+    /**
+     * @return BelongsTo<Address, $this>
+     */
+    public function address(): BelongsTo
+    {
+        return $this->belongsTo(Address::class);
     }
 }

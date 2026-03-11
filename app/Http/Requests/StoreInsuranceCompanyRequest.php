@@ -36,7 +36,7 @@ final class StoreInsuranceCompanyRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'main_contact' => ['nullable', 'string', 'max:20'],
             'other_contact' => ['nullable', 'string', 'max:20'],
-            'address' => ['nullable', 'string', 'max:255'],
+            'address_id' => ['nullable', 'uuid', 'exists:addresses,id'],
             'status' => ['required', new Enum(GeneralStatus::class)],
         ];
     }

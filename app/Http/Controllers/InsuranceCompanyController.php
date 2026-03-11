@@ -47,7 +47,9 @@ final readonly class InsuranceCompanyController
 
     public function create(): Response
     {
-        return Inertia::render('insurance-company/create');
+        return Inertia::render('insurance-company/create', [
+            'addresses' => \App\Models\Address::query()->select(['id', 'city', 'district'])->get(),
+        ]);
     }
 
     public function store(StoreInsuranceCompanyRequest $request, CreateInsuranceCompany $action): RedirectResponse
@@ -61,6 +63,7 @@ final readonly class InsuranceCompanyController
     {
         return Inertia::render('insurance-company/edit', [
             'insuranceCompany' => $insuranceCompany,
+            'addresses' => \App\Models\Address::query()->select(['id', 'city', 'district'])->get(),
         ]);
     }
 

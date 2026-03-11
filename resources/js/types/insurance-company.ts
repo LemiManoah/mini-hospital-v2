@@ -5,7 +5,7 @@ export interface InsuranceCompany {
     email: string | null;
     main_contact: string | null;
     other_contact: string | null;
-    address: string | null;
+    address_id: string | null;
     status: 'active' | 'inactive' | 'suspended' | 'cancelled' | 'pending';
     created_at: string;
     updated_at: string;
@@ -32,6 +32,10 @@ export interface InsuranceCompanyIndexPageProps {
     };
 }
 
-export interface InsuranceCompanyEditPageProps {
+export interface InsuranceCompanyCreatePageProps {
+    addresses: { id: string; city: string; district: string | null }[];
+}
+
+export interface InsuranceCompanyEditPageProps extends InsuranceCompanyCreatePageProps {
     insuranceCompany: InsuranceCompany;
 }

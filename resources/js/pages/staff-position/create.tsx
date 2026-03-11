@@ -26,10 +26,14 @@ export default function StaffPositionCreate() {
 
             <div className="mt-4 mb-4 flex flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center">
                 <div className="flex w-full flex-col gap-1">
-                    <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                        <ShieldCheck className="h-6 w-6 text-indigo-500" />
-                        Create New Position
-                    </h2>
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                            Create New Position
+                        </h2>
+                        <Button variant="outline" size="sm" asChild className="h-8">
+                            <Link href={StaffPositionController.index.url()}>Back</Link>
+                        </Button>
+                    </div>
                     <p className="text-muted-foreground">
                         Define a new staff position for the hospital.
                     </p>

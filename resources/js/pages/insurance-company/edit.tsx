@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 
 export default function InsuranceCompanyEdit({
     insuranceCompany,
+    addresses,
 }: InsuranceCompanyEditPageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Insurance Companies', href: '/insurance-companies' },
@@ -29,6 +30,7 @@ export default function InsuranceCompanyEdit({
     ];
 
     const [status, setStatus] = useState(insuranceCompany.status);
+    const [addressId, setAddressId] = useState(insuranceCompany.address_id ?? '');
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -54,6 +56,7 @@ export default function InsuranceCompanyEdit({
                     {({ processing, errors }) => (
                         <div className="max-w-2xl space-y-6">
                             <input type="hidden" name="status" value={status} />
+                            <input type="hidden" name="address_id" value={addressId} />
 
                             <div className="grid gap-4">
                                 <div className="grid gap-2">
@@ -103,7 +106,7 @@ export default function InsuranceCompanyEdit({
                                         <Label htmlFor="status" className="text-sm font-semibold">
                                             Status
                                         </Label>
-                                        <Select value={status} onValueChange={setStatus}>
+                                        <Select value={status} onValueChange={(v) => setStatus(v as any)}>
                                             <SelectTrigger id="status">
                                                 <SelectValue placeholder="Select status" />
                                             </SelectTrigger>
@@ -120,11 +123,22 @@ export default function InsuranceCompanyEdit({
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="address" className="text-sm font-semibold">
+                                    <Label htmlFor="address_id" className="text-sm font-semibold">
                                         Address
                                     </Label>
-                                    <Input id="address" name="address" defaultValue={insuranceCompany.address ?? ''} />
-                                    <InputError message={errors.address} />
+                                    <Select value={addressId} onValueChange={setAddressId}>
+                                        <SelectTrigger id="address_id">
+                                            <SelectValue placeholder="Select an address" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {addresses.map((address) => (
+                                                <SelectItem key={address.id} value={address.id}>
+                                                    {address.city}{address.district ? `, ${address.district}` : ''}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.address_id} />
                                 </div>
                             </div>
 

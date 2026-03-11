@@ -61,9 +61,14 @@ export default function RoleCreate({ permissionGroups }: RoleCreatePageProps) {
             <Head title="Create Role" />
             <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
                 <div className="flex flex-col gap-1">
-                    <h2 className="text-2xl font-bold tracking-tight text-gray-900 italic dark:text-gray-100">
-                        Create New Role
-                    </h2>
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold tracking-tight text-gray-900 italic dark:text-gray-100">
+                            Create New Role
+                        </h2>
+                        <Button variant="outline" size="sm" asChild className="h-8">
+                            <Link href={RoleController.index.url()}>Back</Link>
+                        </Button>
+                    </div>
                     <p className="text-muted-foreground">
                         Define a new role and assign specific permissions to it.
                     </p>
