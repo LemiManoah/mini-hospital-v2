@@ -223,6 +223,7 @@ public function up(): void
 ### billable item types (enum)
 
 Use one enum across insurance pricing:
+
 - `service`
 - `drug`
 - `test`
@@ -275,24 +276,27 @@ public function up(): void
 
 Because `billable_id` points to multiple possible tables, DB-level FK cannot be enforced directly.
 Use one of these:
+
 1. Application-level validator in request/service layer:
-   - `billable_type=service` => `billable_id` must exist in `facility_services`
-   - `billable_type=drug` => `billable_id` must exist in `inventory_items`
-   - `billable_type=test` => `billable_id` must exist in `facility_tests`
+    - `billable_type=service` => `billable_id` must exist in `facility_services`
+    - `billable_type=drug` => `billable_id` must exist in `inventory_items`
+    - `billable_type=test` => `billable_id` must exist in `facility_tests`
 2. Or introduce a materialized `billable_items` table and point `insurance_package_prices.billable_item_id` to it.
 
 ### migration strategy from old structure
 
 If legacy tables exist (`insurance_package_services`, `insurance_package_drugs`, `insurance_package_tests`):
+
 1. Create `insurance_package_prices`.
 2. Backfill:
-   - services -> `billable_type='service'`
-   - drugs -> `billable_type='drug'`
-   - tests -> `billable_type='test'`
+    - services -> `billable_type='service'`
+    - drugs -> `billable_type='drug'`
+    - tests -> `billable_type='test'`
 3. Switch code reads/writes to unified table.
 4. Archive/drop old tables in a later migration.
 
 ### Notes for production correctness
+
 - Use `status = inactive` for master data retirement; avoid deleting rows referenced by historical invoices.
 - Keep `softDeletes()` only for reversible admin mistakes, not routine deactivation.
 - For versioned pricing, always freeze applied amounts on charge rows (`unit_price_applied`) to preserve invoice integrity.
@@ -558,11 +562,14 @@ Schema::create('clinics', function (Blueprint $table) {
     $table->string('clinic_code', 20);
     $table->string('clinic_name', 100);
     $table->foreignUuid('department_id')->constrained();
-    $table->string('location', 100)->nullable();
+    $table->foreignUuid('address_id')->constrained();
     $table->string('phone', 20)->nullable();
     $table->integer('daily_capacity')->default(50);
     $table->boolean('accepts_walk_ins')->default(true);
-    $table->boolean('is_active')->default(true);
+    $table->enum('status', GENERALSTATUS::class)->default(GENERALSTATUS::ACTIVE);
+    $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+    $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
+    $table->softDeletes();
     $table->timestamps();
 
     $table->unique(['tenant_id', 'clinic_code']);

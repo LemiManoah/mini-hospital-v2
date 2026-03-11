@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class UnitController
+final readonly class UnitController
 {
     public function index(Request $request): Response
     {

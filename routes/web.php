@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AllergenController;
 use App\Http\Controllers\BranchSwitcherController;
+use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FacilitySwitcherController;
@@ -63,6 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
     Route::resource('staff-positions', StaffPositionController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::resource('clinics', ClinicController::class)->except(['show']);
     Route::resource('insurance-companies', InsuranceCompanyController::class)->except(['show']);
     Route::resource('insurance-packages', InsurancePackageController::class)->except(['show']);
     Route::resource('units', UnitController::class)->except(['show']);
