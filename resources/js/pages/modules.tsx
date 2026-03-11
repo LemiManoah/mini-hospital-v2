@@ -17,6 +17,7 @@ import {
     Pill,
     Settings,
     Users,
+    Scale,
 } from 'lucide-react';
 
 interface Module {

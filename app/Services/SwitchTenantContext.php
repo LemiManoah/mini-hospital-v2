@@ -19,7 +19,7 @@ final class SwitchTenantContext
      */
     public function handle(Request $request, User $actor, string $tenantId): Tenant
     {
-        throw_if(! $actor->is_support && ! $actor->hasRole('super_admin'), AuthorizationException::class, 'Only support users can switch facilities.');
+        throw_if(! $actor->is_support && ! $actor->hasRole('admin'), AuthorizationException::class, 'Only support users can switch facilities.');
 
         $tenant = Tenant::query()->findOrFail($tenantId);
 

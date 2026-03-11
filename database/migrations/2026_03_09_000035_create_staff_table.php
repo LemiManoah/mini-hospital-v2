@@ -31,6 +31,8 @@ return new class extends Migration
             $table->date('hire_date');
             $table->date('termination_date')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->timestamp('last_login_at')->nullable();
+            $table->string('last_login_ip', 45)->nullable();
 
             // Audit fields are plain UUIDs here; FKs are added in a later migration after users exists.
             $table->uuid('created_by')->nullable()->index();

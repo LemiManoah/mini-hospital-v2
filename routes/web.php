@@ -13,6 +13,7 @@ use App\Http\Controllers\SessionController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffPositionController;
 use App\Http\Controllers\SubscriptionPackageController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserEmailResetNotificationController;
 use App\Http\Controllers\UserEmailVerificationController;
@@ -60,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
     Route::resource('staff-positions', StaffPositionController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::resource('units', UnitController::class)->except(['show']);
     Route::resource('staff', StaffController::class)->except(['show']);
 });
 

@@ -74,6 +74,36 @@ final class PermissionSeeder extends Seeder
             'appointments.create',
             'appointments.update',
             'appointments.delete',
+
+            'tenants.view',
+            'tenants.create',
+            'tenants.update',
+            'tenants.delete',
+
+            'facility_branches.view',
+            'facility_branches.create',
+            'facility_branches.update',
+            'facility_branches.delete',
+
+            'staff_positions.view',
+            'staff_positions.create',
+            'staff_positions.update',
+            'staff_positions.delete',
+
+            'staff.view',
+            'staff.create',
+            'staff.update',
+            'staff.delete',
+
+            'departments.view',
+            'departments.create',
+            'departments.update',
+            'departments.delete',
+
+            'units.view',
+            'units.create',
+            'units.update',
+            'units.delete',
         ];
 
         $roles = [

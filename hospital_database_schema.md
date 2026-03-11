@@ -1,17 +1,18 @@
 # Hospital Management System - Database Schema Documentation
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Core Modules](#core-modules)
-  - [Patient Management](#patient-management)
-  - [Administration & Security](#administration--security)
-  - [Scheduling](#scheduling)
-  - [Clinical Operations](#clinical-operations)
-  - [Laboratory](#laboratory)
-  - [Radiology](#radiology)
-  - [Pharmacy](#pharmacy)
-  - [Inpatient (IPD)](#inpatient-ipd)
-  - [Billing & Finance](#billing--finance)
+    - [Patient Management](#patient-management)
+    - [Administration & Security](#administration--security)
+    - [Scheduling](#scheduling)
+    - [Clinical Operations](#clinical-operations)
+    - [Laboratory](#laboratory)
+    - [Radiology](#radiology)
+    - [Pharmacy](#pharmacy)
+    - [Inpatient (IPD)](#inpatient-ipd)
+    - [Billing & Finance](#billing--finance)
 - [Enums & Constants](#enums--constants)
 - [Indexes & Performance](#indexes--performance)
 
@@ -20,6 +21,7 @@
 ## Overview
 
 This schema follows **Laravel 12+** conventions with:
+
 - **UUID Primary Keys** for distributed system compatibility
 - **Soft Deletes** for regulatory compliance (HIPAA)
 - **Audit Trails** on all clinical tables
@@ -28,6 +30,7 @@ This schema follows **Laravel 12+** conventions with:
 - **Full Text Search** support for clinical notes
 
 ### Naming Conventions
+
 - Table names: `snake_case` plural (e.g., `patient_visits`)
 - Pivot tables: `table1_table2` alphabetical (e.g., `medication_allergy`)
 - Enum columns: `status`, `type`, `category` suffixes
@@ -35,17 +38,18 @@ This schema follows **Laravel 12+** conventions with:
 - Timestamp fields: `created_at`, `updated_at`, `deleted_at`
 
 ### Multi-tenant Architecture Notes
+
 - **Global Scopes**: The application should use Laravel Global Scopes (e.g., `TenantScope` and `BranchScope`) on all eloquent models to automatically append `where tenant_id = ?` to every query, preventing cross-tenant data leaks.
 - **Compound Unique Constraints**: Entities that traditionally have globally unique identifiers (MRNs, invoice numbers, employee numbers, test codes) use compound unique constraints (`tenant_id`, `identifier`) to allow multiple independent physical hospitals/tenants to use the same internal ID sequences without conflict.
 
 ---
-
 
 ## Core Modules
 
 ### Tenant & Branch Management
 
 #### tenants
+
 Represents the overarching hospital group or organization.
 
 ```php
@@ -67,10 +71,11 @@ Schema::create('tenants', function (Blueprint $table) {
 });
 ```
 
-
 ### SubscriptionPackage
+
 Subscription package options for all clients
-``` php
+
+```php
      Schema::create('subscription_packages', function (Blueprint $table) {
                 $table->id();
                 $table->string('name')->unique()->default(null);
@@ -90,6 +95,7 @@ Subscription package options for all clients
 ```
 
 #### facility branches
+
 Represents physical locations/facilities belonging to a tenant.
 
 ```php
@@ -117,9 +123,185 @@ Schema::create('facility_branches', function (Blueprint $table) {
 
 ---
 
+### Insurance master data
+
+### insurance companies
+
+```php
+public function up(): void
+{
+    Schema::create('insurance_companies', function (Blueprint $table) {
+        $table->uuid('id')->primary();
+        $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
+        $table->string('name', 150)->index();
+        $table->string('email')->nullable()->index();
+        $table->string('main_contact', 20)->nullable()->index();
+        $table->string('other_contact', 20)->nullable();
+        $table->string('address')->nullable();
+        $table->enum('status', GeneralStatus::class)->default(GeneralStatus::ACTIVE)->index();
+        $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->timestamps();
+        $table->softDeletes();
+
+        $table->unique(['tenant_id', 'name']);
+    });
+}
+```
+
+### insurance packages
+
+```php
+public function up(): void
+{
+    Schema::create('insurance_packages', function (Blueprint $table) {
+        $table->uuid('id')->primary();
+        $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
+        $table->foreignUuid('insurance_company_id')->constrained('insurance_companies')->onDelete('cascade');
+        $table->string('name', 150)->index();
+        $table->enum('status', GeneralStatus::class)->default(GeneralStatus::ACTIVE)->index();
+        $table->foreignUuid('facility_branch_id')->nullable()->constrained('facility_branches')->nullOnDelete();
+        $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->timestamps();
+        $table->softDeletes();
+
+        $table->unique(['tenant_id', 'insurance_company_id', 'name']);
+    });
+}
+```
+
+### insurance company invoices
+
+```php
+public function up(): void
+{
+    Schema::create('insurance_company_invoices', function (Blueprint $table) {
+        $table->uuid('id')->primary();
+        $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
+        $table->foreignUuid('facility_branch_id')->nullable()->constrained('facility_branches')->nullOnDelete();
+        $table->foreignUuid('insurance_company_id')->constrained('insurance_companies')->onDelete('cascade');
+        $table->string('code', 30)->index();
+        $table->date('start_date')->nullable();
+        $table->date('end_date')->nullable();
+        $table->date('due_date')->nullable();
+        $table->decimal('bill_amount', 14, 2)->default(0);
+        $table->decimal('paid_amount', 14, 2)->default(0);
+        $table->enum('status', BillingStatus::class)->default(BillingStatus::PENDING)->index();
+        $table->boolean('is_printed')->default(false);
+        $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->timestamps();
+        $table->softDeletes();
+
+        $table->unique(['tenant_id', 'code']);
+    });
+}
+```
+
+### insurance package invoice payments
+
+```php
+public function up(): void
+{
+    Schema::create('insurance_company_invoice_payments', function (Blueprint $table) {
+        $table->uuid('id')->primary();
+        $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
+        $table->foreignUuid('facility_branch_id')->nullable()->constrained('facility_branches')->nullOnDelete();
+        $table->foreignUuid('insurance_company_invoice_id')->constrained('insurance_company_invoices')->onDelete('cascade');
+        $table->date('payment_date');
+        $table->string('receipt', 100)->nullable()->index();
+        $table->decimal('paid_amount', 14, 2)->default(0);
+        $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->timestamps();
+        $table->softDeletes();
+    });
+}
+```
+
+### billable item types (enum)
+
+Use one enum across insurance pricing:
+- `service`
+- `drug`
+- `test`
+- `imaging`
+- `procedure`
+- `bed_day`
+- `other`
+
+### insurance package prices (unified abstraction)
+
+```php
+public function up(): void
+{
+    Schema::create('insurance_package_prices', function (Blueprint $table) {
+        $table->uuid('id')->primary();
+        $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
+        $table->foreignUuid('facility_branch_id')->constrained('facility_branches')->onDelete('cascade');
+        $table->foreignUuid('insurance_package_id')->constrained('insurance_packages')->onDelete('cascade');
+
+        // Generic billable item pointer
+        $table->enum('billable_type', BillableItemType::class)->index();
+        $table->uuid('billable_id')->index(); // references the UUID of the item in its source table
+
+        $table->decimal('price', 14, 2)->default(0);
+        $table->date('effective_from')->nullable()->index();
+        $table->date('effective_to')->nullable()->index();
+        $table->enum('status', GeneralStatus::class)->default(GeneralStatus::ACTIVE)->index();
+        $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->foreignUuid('updated_by')->nullable()->constrained('staff')->nullOnDelete();
+        $table->timestamps();
+        $table->softDeletes();
+
+        // Versioned pricing: allow multiple versions by effective_from
+        $table->unique(
+            ['tenant_id', 'facility_branch_id', 'insurance_package_id', 'billable_type', 'billable_id', 'effective_from'],
+            'ipp_unique_item_version'
+        );
+        $table->index(
+            ['tenant_id', 'facility_branch_id', 'insurance_package_id', 'billable_type', 'billable_id', 'status'],
+            'ipp_lookup_idx'
+        );
+
+        // enforce in app layer: effective_to is null or >= effective_from
+        // enforce in app layer: no overlapping effective date ranges for the same tenant/branch/package/item
+    });
+}
+```
+
+### billable pointer integrity (important)
+
+Because `billable_id` points to multiple possible tables, DB-level FK cannot be enforced directly.
+Use one of these:
+1. Application-level validator in request/service layer:
+   - `billable_type=service` => `billable_id` must exist in `facility_services`
+   - `billable_type=drug` => `billable_id` must exist in `inventory_items`
+   - `billable_type=test` => `billable_id` must exist in `facility_tests`
+2. Or introduce a materialized `billable_items` table and point `insurance_package_prices.billable_item_id` to it.
+
+### migration strategy from old structure
+
+If legacy tables exist (`insurance_package_services`, `insurance_package_drugs`, `insurance_package_tests`):
+1. Create `insurance_package_prices`.
+2. Backfill:
+   - services -> `billable_type='service'`
+   - drugs -> `billable_type='drug'`
+   - tests -> `billable_type='test'`
+3. Switch code reads/writes to unified table.
+4. Archive/drop old tables in a later migration.
+
+### Notes for production correctness
+- Use `status = inactive` for master data retirement; avoid deleting rows referenced by historical invoices.
+- Keep `softDeletes()` only for reversible admin mistakes, not routine deactivation.
+- For versioned pricing, always freeze applied amounts on charge rows (`unit_price_applied`) to preserve invoice integrity.
+- Unified model selected: use `insurance_package_prices` as the single source of package pricing.
+
 ### Patient Management
 
 #### patients
+
 Core demographic information. Uses UUID for cross-system integration.
 
 ```php
@@ -145,7 +327,7 @@ Schema::create('patients', function (Blueprint $table) {
     $table->string('occupation', 100)->nullable();
     $table->string('religion', 50)->nullable();
     $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
-    $table->string('blood_group', 10)->nullable();  
+    $table->string('blood_group', 10)->nullable();
     $table->boolean('is_organ_donor')->default(false);
 
     // Audit & Soft Delete
@@ -194,7 +376,6 @@ Schema::create('addresses', function (Blueprint $table) {
 });
 ```
 
-
 #### allergens
 
 ```php
@@ -213,8 +394,8 @@ Schema::create('allergens', function (Blueprint $table) {
 });
 ```
 
-
 #### patient_allergies
+
 Comprehensive allergy profile with reactions.
 
 ```php
@@ -237,6 +418,7 @@ Schema::create('patient_allergies', function (Blueprint $table) {
 ```
 
 #### past_medical_histories
+
 Chronic conditions and previous diagnoses.
 
 ```php
@@ -258,7 +440,8 @@ Schema::create('past_medical_histories', function (Blueprint $table) {
 ```
 
 #### currencies
-``` php
+
+```php
      Schema::create('currencies', function (Blueprint $table) {
                 $table->id();
                 $table->string('code')->index();
@@ -294,6 +477,7 @@ Schema::create('past_medical_histories', function (Blueprint $table) {
 ### Administration & Security
 
 #### staff
+
 Healthcare providers and administrative staff.
 
 ```php
@@ -328,6 +512,7 @@ Schema::create('staff', function (Blueprint $table) {
 ```
 
 #### staff_branches
+
 Pivot table to handle floating staff members across branches.
 
 ```php
@@ -335,12 +520,13 @@ Schema::create('staff_branches', function (Blueprint $table) {
     $table->foreignUuid('staff_id')->constrained()->onDelete('cascade');
     $table->foreignUuid('branch_id')->constrained()->onDelete('cascade');
     $table->boolean('is_primary_location')->default(false);
-    
+
     $table->primary(['staff_id', 'branch_id']);
 });
 ```
 
 #### departments
+
 Hospital departments and units.
 
 ```php
@@ -355,12 +541,13 @@ Schema::create('departments', function (Blueprint $table) {
     $table->boolean('is_active')->default(true);
     $table->json('contact_info')->nullable();
     $table->timestamps();
-    
+
     $table->unique(['tenant_id', 'department_code']);
 });
 ```
 
 #### clinics
+
 Outpatient clinics within departments.
 
 ```php
@@ -383,6 +570,7 @@ Schema::create('clinics', function (Blueprint $table) {
 ```
 
 #### audit_logs
+
 HIPAA-compliant audit trail.
 
 ```php
@@ -405,6 +593,7 @@ Schema::create('audit_logs', function (Blueprint $table) {
 ```
 
 #### system_settings
+
 Application settings and constants.
 
 ```php
@@ -422,12 +611,12 @@ Schema::create('general_settings', function (Blueprint $table) {
 });
 ```
 
-
 ---
 
 ### Scheduling
 
 #### schedules
+
 Doctor clinic schedules.
 
 ```php
@@ -453,6 +642,7 @@ Schema::create('schedules', function (Blueprint $table) {
 ```
 
 #### appointments
+
 Patient appointments with queue management.
 
 ```php
@@ -467,7 +657,7 @@ Schema::create('appointments', function (Blueprint $table) {
     $table->time('start_time');
     $table->time('end_time')->nullable();
     $table->enum('status', [
-        'scheduled', 'confirmed', 'checked_in', 'in_progress', 
+        'scheduled', 'confirmed', 'checked_in', 'in_progress',
         'completed', 'no_show', 'cancelled', 'rescheduled'
     ])->default('scheduled')->index();
     $table->text('reason_for_visit');
@@ -490,6 +680,7 @@ Schema::create('appointments', function (Blueprint $table) {
 ### Clinical Operations
 
 #### patient_visits
+
 The central encounter record. All clinical activities link here.
 
 ```php
@@ -502,12 +693,12 @@ Schema::create('patient_visits', function (Blueprint $table) {
     $table->date('visit_date');
     $table->time('visit_time');
     $table->enum('visit_type', [
-        'opd_consultation', 'emergency', 'day_care', 
+        'opd_consultation', 'emergency', 'day_care',
         'follow_up', 'procedure', 'telemedicine'
     ])->index();
     $table->enum('status', [
         'registered', 'triaged', 'waiting_consultation', 'in_consultation',
-        'waiting_lab', 'waiting_imaging', 'waiting_pharmacy', 
+        'waiting_lab', 'waiting_imaging', 'waiting_pharmacy',
         'admitted', 'discharged', 'cancelled'
     ])->default('registered')->index();
     $table->foreignUuid('clinic_id')->nullable()->constrained();
@@ -528,6 +719,7 @@ Schema::create('patient_visits', function (Blueprint $table) {
 ```
 
 #### triage_records
+
 Emergency and outpatient triage assessment.
 
 ```php
@@ -562,6 +754,7 @@ Schema::create('triage_records', function (Blueprint $table) {
 ```
 
 #### vital_signs
+
 Comprehensive vital measurements.
 
 ```php
@@ -600,6 +793,7 @@ Schema::create('vital_signs', function (Blueprint $table) {
 ```
 
 #### consultations
+
 Clinical encounter documentation (SOAP format).
 
 ```php
@@ -625,7 +819,7 @@ Schema::create('consultations', function (Blueprint $table) {
     $table->string('primary_icd10_code', 10)->nullable()->index();
     $table->json('secondary_diagnoses')->nullable(); // Array of {code, description}
     $table->enum('outcome', [
-        'discharged', 'admitted', 'referred', 'follow_up_required', 
+        'discharged', 'admitted', 'referred', 'follow_up_required',
         'transferred', 'deceased', 'left_against_advice'
     ])->nullable();
     $table->text('follow_up_instructions')->nullable();
@@ -645,6 +839,7 @@ Schema::create('consultations', function (Blueprint $table) {
 ### Laboratory
 
 #### lab_test_catalogs
+
 Master list of available tests.
 
 ```php
@@ -672,6 +867,7 @@ Schema::create('lab_test_catalogs', function (Blueprint $table) {
 ```
 
 #### lab_requests
+
 Test orders from clinicians.
 
 ```php
@@ -686,7 +882,7 @@ Schema::create('lab_requests', function (Blueprint $table) {
     $table->text('clinical_notes')->nullable();
     $table->enum('priority', ['routine', 'urgent', 'stat', 'critical'])->default('routine');
     $table->enum('status', [
-        'requested', 'sample_collected', 'in_progress', 
+        'requested', 'sample_collected', 'in_progress',
         'completed', 'cancelled', 'rejected'
     ])->default('requested')->index();
     $table->string('diagnosis_code', 10)->nullable();
@@ -702,6 +898,7 @@ Schema::create('lab_requests', function (Blueprint $table) {
 ```
 
 #### lab_request_items
+
 Individual tests within a request.
 
 ```php
@@ -721,6 +918,7 @@ Schema::create('lab_request_items', function (Blueprint $table) {
 ```
 
 #### lab_specimens
+
 Specimen tracking chain of custody.
 
 ```php
@@ -746,6 +944,7 @@ Schema::create('lab_specimens', function (Blueprint $table) {
 ```
 
 #### lab_results
+
 Actual test results with critical value flags.
 
 ```php
@@ -784,6 +983,7 @@ Schema::create('lab_results', function (Blueprint $table) {
 ### Radiology
 
 #### imaging_requests
+
 Radiology order management.
 
 ```php
@@ -813,6 +1013,7 @@ Schema::create('imaging_requests', function (Blueprint $table) {
 ```
 
 #### imaging_studies
+
 Performed studies with DICOM metadata.
 
 ```php
@@ -835,6 +1036,7 @@ Schema::create('imaging_studies', function (Blueprint $table) {
 ```
 
 #### radiology_reports
+
 Structured reporting with critical findings.
 
 ```php
@@ -865,6 +1067,7 @@ Schema::create('radiology_reports', function (Blueprint $table) {
 ### Pharmacy
 
 #### medication_catalogs
+
 Drug formulary management.
 
 ```php
@@ -893,6 +1096,7 @@ Schema::create('medication_catalogs', function (Blueprint $table) {
 ```
 
 #### prescriptions
+
 Medication orders.
 
 ```php
@@ -912,6 +1116,7 @@ Schema::create('prescriptions', function (Blueprint $table) {
 ```
 
 #### prescription_items
+
 Individual line items.
 
 ```php
@@ -935,6 +1140,7 @@ Schema::create('prescription_items', function (Blueprint $table) {
 ```
 
 #### dispensing_records
+
 Actual medication dispensing (MAR generation).
 
 ```php
@@ -958,6 +1164,7 @@ Schema::create('dispensing_records', function (Blueprint $table) {
 ### Inpatient (IPD)
 
 #### ipd_admissions
+
 Hospital admissions with bed tracking.
 
 ```php
@@ -993,6 +1200,7 @@ Schema::create('ipd_admissions', function (Blueprint $table) {
 ```
 
 #### beds
+
 Bed management within wards.
 
 ```php
@@ -1015,6 +1223,7 @@ Schema::create('beds', function (Blueprint $table) {
 ```
 
 #### wards
+
 Hospital wards/units.
 
 ```php
@@ -1037,6 +1246,7 @@ Schema::create('wards', function (Blueprint $table) {
 ```
 
 #### nursing_care
+
 Nursing documentation.
 
 ```php
@@ -1058,6 +1268,7 @@ Schema::create('nursing_care', function (Blueprint $table) {
 ```
 
 #### medication_administrations
+
 MAR (Medication Administration Record).
 
 ```php
@@ -1087,6 +1298,7 @@ Schema::create('medication_administrations', function (Blueprint $table) {
 ### Billing & Finance
 
 #### charge_masters
+
 Standardized pricing catalog.
 
 ```php
@@ -1096,7 +1308,7 @@ Schema::create('charge_masters', function (Blueprint $table) {
     $table->string('item_code', 50);
     $table->string('description', 255);
     $table->enum('category', [
-        'consultation', 'procedure', 'lab_test', 'imaging', 
+        'consultation', 'procedure', 'lab_test', 'imaging',
         'medication', 'room_charge', 'supply', 'equipment', 'service'
     ]);
     $table->foreignUuid('department_id')->nullable()->constrained();
@@ -1120,6 +1332,7 @@ Schema::create('charge_masters', function (Blueprint $table) {
 ```
 
 #### visit_charges
+
 Accumulated charges for a visit.
 
 ```php
@@ -1144,6 +1357,7 @@ Schema::create('visit_charges', function (Blueprint $table) {
 ```
 
 #### visit_billings
+
 Consolidated billing headers.
 
 ```php
@@ -1162,7 +1376,7 @@ Schema::create('visit_billings', function (Blueprint $table) {
     $table->decimal('insurance_covered', 12, 2)->default(0.00);
     $table->decimal('charity_amount', 12, 2)->default(0.00);
     $table->enum('status', [
-        'pending', 'partial_paid', 'fully_paid', 'insurance_pending', 
+        'pending', 'partial_paid', 'fully_paid', 'insurance_pending',
         'waived', 'refunded', 'written_off'
     ])->default('pending');
     $table->foreignUuid('insurance_id')->nullable()->constrained('patient_insurances');
@@ -1180,6 +1394,7 @@ Schema::create('visit_billings', function (Blueprint $table) {
 ```
 
 #### payments
+
 Payment transactions.
 
 ```php
@@ -1283,6 +1498,17 @@ enum InsuranceStatus: string {
     case CANCELLED = 'cancelled';
 }
 
+//Billable Item Type
+enum BillableItemType: string {
+    case SERVICE = 'service';
+    case DRUG = 'drug';
+    case TEST = 'test';
+    case IMAGING = 'imaging';
+    case PROCEDURE = 'procedure';
+    case BED_DAY = 'bed_day';
+    case OTHER = 'other';
+}
+
 //Marital Status
 enum MaritalStatus: string {
     case SINGLE = 'single';
@@ -1380,7 +1606,7 @@ enum AllergyReaction: string {
 // Patient search performance
 Schema::table('patients', function (Blueprint $table) {
     $table->index([
-        DB::raw('last_name(10)'), 
+        DB::raw('last_name(10)'),
         DB::raw('first_name(10)')
     ], 'idx_patient_name');
     $table->index('medical_record_number');
@@ -1440,11 +1666,13 @@ staff
 ## Data Integrity & Constraints
 
 ### Foreign Key Strategy
+
 - **Restrict**: For master data (departments, charge_masters) - prevents accidental deletion
 - **Cascade**: For visit-related records (charges automatically delete with visit)
 - **Set Null**: For staff references (keep audit trail even if staff leaves)
 
 ### Validation Rules (Business Logic)
+
 - Discharge date must be after admission date
 - Appointment end time after start time
 - Lab results cannot be modified after verification
