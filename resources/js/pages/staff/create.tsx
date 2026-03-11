@@ -14,7 +14,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type StaffCreatePageProps } from '@/types/staff';
 import { Form, Head, Link } from '@inertiajs/react';
-import { CheckCircle2, LoaderCircle, User } from 'lucide-react';
+import { CheckCircle2, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -75,7 +75,12 @@ export default function StaffCreate({
                         <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             Add New Staff Member
                         </h2>
-                        <Button variant="outline" size="sm" asChild className="h-8">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="h-8"
+                        >
                             <Link href={StaffController.index.url()}>Back</Link>
                         </Button>
                     </div>

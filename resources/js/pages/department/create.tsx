@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Form, Head, Link } from '@inertiajs/react';
-import { Building2, CheckCircle2, LoaderCircle } from 'lucide-react';
+import { CheckCircle2, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,8 +30,15 @@ export default function DepartmentCreate() {
                         <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             Create New Department
                         </h2>
-                        <Button variant="outline" size="sm" asChild className="h-8">
-                            <Link href={DepartmentController.index.url()}>Back</Link>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="h-8"
+                        >
+                            <Link href={DepartmentController.index.url()}>
+                                Back
+                            </Link>
                         </Button>
                     </div>
                     <p className="text-muted-foreground">

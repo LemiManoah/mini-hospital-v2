@@ -78,7 +78,10 @@ export default function InsuranceCompanyIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button asChild className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800">
+                <Button
+                    asChild
+                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                >
                     <Link href="/insurance-companies/create" className="gap-2">
                         <span>+ Add Insurance Company</span>
                     </Link>
@@ -109,15 +112,26 @@ export default function InsuranceCompanyIndex({
                     <TableBody>
                         {rows.length > 0 ? (
                             rows.map((company) => (
-                                <TableRow key={company.id} className="group transition-colors">
+                                <TableRow
+                                    key={company.id}
+                                    className="group transition-colors"
+                                >
                                     <TableCell className="font-medium text-zinc-900 dark:text-zinc-100">
                                         {company.name}
                                     </TableCell>
                                     <TableCell className="text-sm text-zinc-500 dark:text-zinc-400">
-                                        {company.email ?? <span className="italic opacity-50">N/A</span>}
+                                        {company.email ?? (
+                                            <span className="italic opacity-50">
+                                                N/A
+                                            </span>
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-sm text-zinc-500 dark:text-zinc-400">
-                                        {company.main_contact ?? <span className="italic opacity-50">N/A</span>}
+                                        {company.main_contact ?? (
+                                            <span className="italic opacity-50">
+                                                N/A
+                                            </span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-[10px] font-bold tracking-tight uppercase dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
@@ -167,7 +181,10 @@ export default function InsuranceCompanyIndex({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="py-12 text-center text-zinc-500 italic">
+                                <TableCell
+                                    colSpan={5}
+                                    className="py-12 text-center text-zinc-500 italic"
+                                >
                                     No insurance companies found.
                                 </TableCell>
                             </TableRow>
@@ -175,19 +192,29 @@ export default function InsuranceCompanyIndex({
                     </TableBody>
                 </Table>
 
-                {!Array.isArray(insuranceCompanies) && insuranceCompanies.links?.length > 3 ? (
+                {!Array.isArray(insuranceCompanies) &&
+                insuranceCompanies.links?.length > 3 ? (
                     <div className="mt-4">
                         <Pagination>
                             <PaginationContent>
                                 <PaginationItem>
-                                    <PaginationPrevious href={insuranceCompanies.prev_page_url ?? undefined} />
+                                    <PaginationPrevious
+                                        href={
+                                            insuranceCompanies.prev_page_url ??
+                                            undefined
+                                        }
+                                    />
                                 </PaginationItem>
 
                                 {insuranceCompanies.links.map((link, idx) => {
-                                    const label = link.label.replace(/<[^>]*>/g, '').trim();
+                                    const label = link.label
+                                        .replace(/<[^>]*>/g, '')
+                                        .trim();
                                     if (label === '...') {
                                         return (
-                                            <PaginationItem key={`ellipsis-${idx}`}>
+                                            <PaginationItem
+                                                key={`ellipsis-${idx}`}
+                                            >
                                                 <PaginationEllipsis />
                                             </PaginationItem>
                                         );
@@ -195,7 +222,10 @@ export default function InsuranceCompanyIndex({
                                     if (/^\d+$/.test(label)) {
                                         return (
                                             <PaginationItem key={label}>
-                                                <PaginationLink href={link.url ?? undefined} isActive={link.active}>
+                                                <PaginationLink
+                                                    href={link.url ?? undefined}
+                                                    isActive={link.active}
+                                                >
                                                     {label}
                                                 </PaginationLink>
                                             </PaginationItem>
@@ -205,7 +235,12 @@ export default function InsuranceCompanyIndex({
                                 })}
 
                                 <PaginationItem>
-                                    <PaginationNext href={insuranceCompanies.next_page_url ?? undefined} />
+                                    <PaginationNext
+                                        href={
+                                            insuranceCompanies.next_page_url ??
+                                            undefined
+                                        }
+                                    />
                                 </PaginationItem>
                             </PaginationContent>
                         </Pagination>

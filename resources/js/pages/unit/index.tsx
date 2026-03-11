@@ -49,13 +49,8 @@ const getTypeColor = (type: Unit['type']) => {
     }
 };
 
-export default function UnitIndex({
-    units,
-    filters,
-}: UnitIndexPageProps) {
-    const rows: Unit[] = Array.isArray(units)
-        ? units
-        : (units.data ?? []);
+export default function UnitIndex({ units, filters }: UnitIndexPageProps) {
+    const rows: Unit[] = Array.isArray(units) ? units : (units.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
 
     useEffect(() => {
@@ -99,10 +94,7 @@ export default function UnitIndex({
                     asChild
                     className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                 >
-                    <Link
-                        href={UnitController.create.url()}
-                        className="gap-2"
-                    >
+                    <Link href={UnitController.create.url()} className="gap-2">
                         <span>+ Add Unit</span>
                     </Link>
                 </Button>
@@ -217,9 +209,7 @@ export default function UnitIndex({
                             <PaginationContent>
                                 <PaginationItem>
                                     <PaginationPrevious
-                                        href={
-                                            units.prev_page_url ?? undefined
-                                        }
+                                        href={units.prev_page_url ?? undefined}
                                     />
                                 </PaginationItem>
 
@@ -253,9 +243,7 @@ export default function UnitIndex({
 
                                 <PaginationItem>
                                     <PaginationNext
-                                        href={
-                                            units.next_page_url ?? undefined
-                                        }
+                                        href={units.next_page_url ?? undefined}
                                     />
                                 </PaginationItem>
                             </PaginationContent>

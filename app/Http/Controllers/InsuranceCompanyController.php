@@ -10,6 +10,7 @@ use App\Actions\UpdateInsuranceCompany;
 use App\Http\Requests\DeleteInsuranceCompanyRequest;
 use App\Http\Requests\StoreInsuranceCompanyRequest;
 use App\Http\Requests\UpdateInsuranceCompanyRequest;
+use App\Models\Address;
 use App\Models\InsuranceCompany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -48,7 +49,7 @@ final readonly class InsuranceCompanyController
     public function create(): Response
     {
         return Inertia::render('insurance-company/create', [
-            'addresses' => \App\Models\Address::query()->select(['id', 'city', 'district'])->get(),
+            'addresses' => Address::query()->select(['id', 'city', 'district'])->get(),
         ]);
     }
 
@@ -63,7 +64,7 @@ final readonly class InsuranceCompanyController
     {
         return Inertia::render('insurance-company/edit', [
             'insuranceCompany' => $insuranceCompany,
-            'addresses' => \App\Models\Address::query()->select(['id', 'city', 'district'])->get(),
+            'addresses' => Address::query()->select(['id', 'city', 'district'])->get(),
         ]);
     }
 

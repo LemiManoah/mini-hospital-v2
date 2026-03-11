@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Form, Head, Link } from '@inertiajs/react';
-import { CheckCircle2, Ruler, LoaderCircle } from 'lucide-react';
+import { CheckCircle2, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -36,7 +36,12 @@ export default function UnitCreate() {
                         <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             Create New Unit
                         </h2>
-                        <Button variant="outline" size="sm" asChild className="h-8">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="h-8"
+                        >
                             <Link href={UnitController.index.url()}>Back</Link>
                         </Button>
                     </div>
@@ -107,13 +112,27 @@ export default function UnitCreate() {
                                             <SelectValue placeholder="Select type" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="mass">Mass</SelectItem>
-                                            <SelectItem value="volume">Volume</SelectItem>
-                                            <SelectItem value="length">Length</SelectItem>
-                                            <SelectItem value="temperature">Temperature</SelectItem>
-                                            <SelectItem value="time">Time</SelectItem>
-                                            <SelectItem value="count">Count</SelectItem>
-                                            <SelectItem value="other">Other</SelectItem>
+                                            <SelectItem value="mass">
+                                                Mass
+                                            </SelectItem>
+                                            <SelectItem value="volume">
+                                                Volume
+                                            </SelectItem>
+                                            <SelectItem value="length">
+                                                Length
+                                            </SelectItem>
+                                            <SelectItem value="temperature">
+                                                Temperature
+                                            </SelectItem>
+                                            <SelectItem value="time">
+                                                Time
+                                            </SelectItem>
+                                            <SelectItem value="count">
+                                                Count
+                                            </SelectItem>
+                                            <SelectItem value="other">
+                                                Other
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <input

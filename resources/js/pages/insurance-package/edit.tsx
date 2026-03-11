@@ -29,7 +29,9 @@ export default function InsurancePackageEdit({
         },
     ];
 
-    const [companyId, setCompanyId] = useState(insurancePackage.insurance_company_id);
+    const [companyId, setCompanyId] = useState(
+        insurancePackage.insurance_company_id,
+    );
     const [status, setStatus] = useState(insurancePackage.status);
 
     return (
@@ -42,7 +44,9 @@ export default function InsurancePackageEdit({
                         <Package className="h-6 w-6 text-indigo-500" />
                         Edit Insurance Package
                     </h2>
-                    <p className="text-muted-foreground">Modify insurance package details.</p>
+                    <p className="text-muted-foreground">
+                        Modify insurance package details.
+                    </p>
                 </div>
             </div>
 
@@ -50,57 +54,100 @@ export default function InsurancePackageEdit({
                 <Form
                     action={`/insurance-packages/${insurancePackage.id}`}
                     method="put"
-                    onSuccess={() => toast.success('Insurance package updated successfully.')}
+                    onSuccess={() =>
+                        toast.success('Insurance package updated successfully.')
+                    }
                     className="space-y-6 p-6"
                 >
                     {({ processing, errors }) => (
                         <div className="max-w-2xl space-y-6">
-                            <input type="hidden" name="insurance_company_id" value={companyId} />
+                            <input
+                                type="hidden"
+                                name="insurance_company_id"
+                                value={companyId}
+                            />
                             <input type="hidden" name="status" value={status} />
 
                             <div className="grid gap-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name" className="text-sm font-semibold">
+                                    <Label
+                                        htmlFor="name"
+                                        className="text-sm font-semibold"
+                                    >
                                         Package Name
                                     </Label>
-                                    <Input id="name" name="name" defaultValue={insurancePackage.name} required />
+                                    <Input
+                                        id="name"
+                                        name="name"
+                                        defaultValue={insurancePackage.name}
+                                        required
+                                    />
                                     <InputError message={errors.name} />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="insurance_company_id" className="text-sm font-semibold">
+                                        <Label
+                                            htmlFor="insurance_company_id"
+                                            className="text-sm font-semibold"
+                                        >
                                             Insurance Company
                                         </Label>
-                                        <Select value={companyId} onValueChange={setCompanyId}>
+                                        <Select
+                                            value={companyId}
+                                            onValueChange={setCompanyId}
+                                        >
                                             <SelectTrigger id="insurance_company_id">
                                                 <SelectValue placeholder="Select insurance company" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {companies.map((company) => (
-                                                    <SelectItem key={company.id} value={company.id}>
+                                                    <SelectItem
+                                                        key={company.id}
+                                                        value={company.id}
+                                                    >
                                                         {company.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.insurance_company_id} />
+                                        <InputError
+                                            message={
+                                                errors.insurance_company_id
+                                            }
+                                        />
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="status" className="text-sm font-semibold">
+                                        <Label
+                                            htmlFor="status"
+                                            className="text-sm font-semibold"
+                                        >
                                             Status
                                         </Label>
-                                        <Select value={status} onValueChange={setStatus}>
+                                        <Select
+                                            value={status}
+                                            onValueChange={setStatus}
+                                        >
                                             <SelectTrigger id="status">
                                                 <SelectValue placeholder="Select status" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="active">Active</SelectItem>
-                                                <SelectItem value="inactive">Inactive</SelectItem>
-                                                <SelectItem value="pending">Pending</SelectItem>
-                                                <SelectItem value="suspended">Suspended</SelectItem>
-                                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                                <SelectItem value="active">
+                                                    Active
+                                                </SelectItem>
+                                                <SelectItem value="inactive">
+                                                    Inactive
+                                                </SelectItem>
+                                                <SelectItem value="pending">
+                                                    Pending
+                                                </SelectItem>
+                                                <SelectItem value="suspended">
+                                                    Suspended
+                                                </SelectItem>
+                                                <SelectItem value="cancelled">
+                                                    Cancelled
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <InputError message={errors.status} />
@@ -109,7 +156,11 @@ export default function InsurancePackageEdit({
                             </div>
 
                             <div className="flex items-center justify-start gap-3 border-t border-zinc-100 pt-6 dark:border-zinc-800">
-                                <Button type="submit" disabled={processing} className="min-w-[140px]">
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="min-w-[140px]"
+                                >
                                     {processing ? (
                                         <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
@@ -118,7 +169,9 @@ export default function InsurancePackageEdit({
                                     Save Changes
                                 </Button>
                                 <Button variant="ghost" type="button" asChild>
-                                    <Link href="/insurance-packages">Cancel</Link>
+                                    <Link href="/insurance-packages">
+                                        Cancel
+                                    </Link>
                                 </Button>
                             </div>
                         </div>

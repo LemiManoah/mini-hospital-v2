@@ -13,7 +13,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type InsurancePackageCreatePageProps } from '@/types/insurance-package';
 import { Form, Head, Link } from '@inertiajs/react';
-import { CheckCircle2, LoaderCircle, Package } from 'lucide-react';
+import { CheckCircle2, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -22,7 +22,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Create Insurance Package', href: '/insurance-packages/create' },
 ];
 
-export default function InsurancePackageCreate({ companies }: InsurancePackageCreatePageProps) {
+export default function InsurancePackageCreate({
+    companies,
+}: InsurancePackageCreatePageProps) {
     const [companyId, setCompanyId] = useState('');
     const [status, setStatus] = useState('active');
 
@@ -36,7 +38,12 @@ export default function InsurancePackageCreate({ companies }: InsurancePackageCr
                         <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             Create Insurance Package
                         </h2>
-                        <Button variant="outline" size="sm" asChild className="h-8">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="h-8"
+                        >
                             <Link href="/insurance-packages">Back</Link>
                         </Button>
                     </div>
@@ -50,57 +57,101 @@ export default function InsurancePackageCreate({ companies }: InsurancePackageCr
                 <Form
                     action="/insurance-packages"
                     method="post"
-                    onSuccess={() => toast.success('Insurance package created successfully.')}
+                    onSuccess={() =>
+                        toast.success('Insurance package created successfully.')
+                    }
                     className="space-y-6 p-6"
                 >
                     {({ processing, errors }) => (
                         <div className="max-w-2xl space-y-6">
-                            <input type="hidden" name="insurance_company_id" value={companyId} />
+                            <input
+                                type="hidden"
+                                name="insurance_company_id"
+                                value={companyId}
+                            />
                             <input type="hidden" name="status" value={status} />
 
                             <div className="grid gap-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name" className="text-sm font-semibold">
+                                    <Label
+                                        htmlFor="name"
+                                        className="text-sm font-semibold"
+                                    >
                                         Package Name
                                     </Label>
-                                    <Input id="name" name="name" placeholder="e.g. Gold Outpatient Plan" autoFocus required />
+                                    <Input
+                                        id="name"
+                                        name="name"
+                                        placeholder="e.g. Gold Outpatient Plan"
+                                        autoFocus
+                                        required
+                                    />
                                     <InputError message={errors.name} />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="insurance_company_id" className="text-sm font-semibold">
+                                        <Label
+                                            htmlFor="insurance_company_id"
+                                            className="text-sm font-semibold"
+                                        >
                                             Insurance Company
                                         </Label>
-                                        <Select value={companyId} onValueChange={setCompanyId}>
+                                        <Select
+                                            value={companyId}
+                                            onValueChange={setCompanyId}
+                                        >
                                             <SelectTrigger id="insurance_company_id">
                                                 <SelectValue placeholder="Select insurance company" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {companies.map((company) => (
-                                                    <SelectItem key={company.id} value={company.id}>
+                                                    <SelectItem
+                                                        key={company.id}
+                                                        value={company.id}
+                                                    >
                                                         {company.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.insurance_company_id} />
+                                        <InputError
+                                            message={
+                                                errors.insurance_company_id
+                                            }
+                                        />
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="status" className="text-sm font-semibold">
+                                        <Label
+                                            htmlFor="status"
+                                            className="text-sm font-semibold"
+                                        >
                                             Status
                                         </Label>
-                                        <Select value={status} onValueChange={setStatus}>
+                                        <Select
+                                            value={status}
+                                            onValueChange={setStatus}
+                                        >
                                             <SelectTrigger id="status">
                                                 <SelectValue placeholder="Select status" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="active">Active</SelectItem>
-                                                <SelectItem value="inactive">Inactive</SelectItem>
-                                                <SelectItem value="pending">Pending</SelectItem>
-                                                <SelectItem value="suspended">Suspended</SelectItem>
-                                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                                <SelectItem value="active">
+                                                    Active
+                                                </SelectItem>
+                                                <SelectItem value="inactive">
+                                                    Inactive
+                                                </SelectItem>
+                                                <SelectItem value="pending">
+                                                    Pending
+                                                </SelectItem>
+                                                <SelectItem value="suspended">
+                                                    Suspended
+                                                </SelectItem>
+                                                <SelectItem value="cancelled">
+                                                    Cancelled
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <InputError message={errors.status} />
@@ -109,7 +160,11 @@ export default function InsurancePackageCreate({ companies }: InsurancePackageCr
                             </div>
 
                             <div className="flex items-center justify-start gap-3 border-t border-zinc-100 pt-6 dark:border-zinc-800">
-                                <Button type="submit" disabled={processing} className="min-w-[170px]">
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="min-w-[170px]"
+                                >
                                     {processing ? (
                                         <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
@@ -118,7 +173,9 @@ export default function InsurancePackageCreate({ companies }: InsurancePackageCr
                                     Create Insurance Package
                                 </Button>
                                 <Button variant="ghost" type="button" asChild>
-                                    <Link href="/insurance-packages">Cancel</Link>
+                                    <Link href="/insurance-packages">
+                                        Cancel
+                                    </Link>
                                 </Button>
                             </div>
                         </div>

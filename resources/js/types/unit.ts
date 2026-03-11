@@ -1,6 +1,13 @@
 import { type PaginatedResponse } from '@/types';
 
-export type UnitType = 'mass' | 'volume' | 'length' | 'temperature' | 'time' | 'count' | 'other';
+export type UnitType =
+    | 'mass'
+    | 'volume'
+    | 'length'
+    | 'temperature'
+    | 'time'
+    | 'count'
+    | 'other';
 
 export interface Unit {
     id: string;

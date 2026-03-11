@@ -15,7 +15,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type Unit } from '@/types/unit';
 import { Form, Head, Link } from '@inertiajs/react';
-import { Ruler, LoaderCircle, Save } from 'lucide-react';
+import { LoaderCircle, Ruler, Save } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -111,13 +111,27 @@ export default function UnitEdit({ unit }: UnitEditProps) {
                                             <SelectValue placeholder="Select type" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="mass">Mass</SelectItem>
-                                            <SelectItem value="volume">Volume</SelectItem>
-                                            <SelectItem value="length">Length</SelectItem>
-                                            <SelectItem value="temperature">Temperature</SelectItem>
-                                            <SelectItem value="time">Time</SelectItem>
-                                            <SelectItem value="count">Count</SelectItem>
-                                            <SelectItem value="other">Other</SelectItem>
+                                            <SelectItem value="mass">
+                                                Mass
+                                            </SelectItem>
+                                            <SelectItem value="volume">
+                                                Volume
+                                            </SelectItem>
+                                            <SelectItem value="length">
+                                                Length
+                                            </SelectItem>
+                                            <SelectItem value="temperature">
+                                                Temperature
+                                            </SelectItem>
+                                            <SelectItem value="time">
+                                                Time
+                                            </SelectItem>
+                                            <SelectItem value="count">
+                                                Count
+                                            </SelectItem>
+                                            <SelectItem value="other">
+                                                Other
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <input

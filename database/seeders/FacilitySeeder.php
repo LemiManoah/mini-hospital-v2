@@ -38,7 +38,7 @@ final class FacilitySeeder extends Seeder
             'district' => 'Kampala Central',
             'state' => 'Central',
             'country_id' => $uganda->id,
-            
+
         ]);
 
         $entebbeAddress = Address::query()->firstOrCreate([

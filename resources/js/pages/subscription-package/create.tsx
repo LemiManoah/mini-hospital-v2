@@ -13,7 +13,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Form, Head, Link } from '@inertiajs/react';
-import { CheckCircle2, LoaderCircle, Package } from 'lucide-react';
+import { CheckCircle2, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -41,8 +41,17 @@ export default function SubscriptionPackageCreate() {
                         <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             Create New Package
                         </h2>
-                        <Button variant="outline" size="sm" asChild className="h-8">
-                            <Link href={SubscriptionPackageController.index.url()}>Back</Link>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="h-8"
+                        >
+                            <Link
+                                href={SubscriptionPackageController.index.url()}
+                            >
+                                Back
+                            </Link>
                         </Button>
                     </div>
                     <p className="text-muted-foreground">

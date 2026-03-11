@@ -65,7 +65,12 @@ export default function RoleCreate({ permissionGroups }: RoleCreatePageProps) {
                         <h2 className="text-2xl font-bold tracking-tight text-gray-900 italic dark:text-gray-100">
                             Create New Role
                         </h2>
-                        <Button variant="outline" size="sm" asChild className="h-8">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="h-8"
+                        >
                             <Link href={RoleController.index.url()}>Back</Link>
                         </Button>
                     </div>

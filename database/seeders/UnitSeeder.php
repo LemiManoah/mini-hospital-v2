@@ -17,20 +17,20 @@ final class UnitSeeder extends Seeder
             ['name' => 'Milligram', 'symbol' => 'mg', 'description' => 'Metric unit of mass.', 'type' => UnitType::MASS],
             ['name' => 'Gram', 'symbol' => 'g', 'description' => 'Metric unit of mass.', 'type' => UnitType::MASS],
             ['name' => 'Kilogram', 'symbol' => 'kg', 'description' => 'Metric unit of mass.', 'type' => UnitType::MASS],
-            
+
             // Volume
             ['name' => 'Milliliter', 'symbol' => 'ml', 'description' => 'Metric unit of volume.', 'type' => UnitType::VOLUME],
             ['name' => 'Liter', 'symbol' => 'L', 'description' => 'Metric unit of volume.', 'type' => UnitType::VOLUME],
-            
+
             // Temperature
             ['name' => 'Celsius', 'symbol' => '°C', 'description' => 'Unit of temperature.', 'type' => UnitType::TEMPERATURE],
             ['name' => 'Fahrenheit', 'symbol' => '°F', 'description' => 'Unit of temperature.', 'type' => UnitType::TEMPERATURE],
-            
+
             // Time
             ['name' => 'Minute', 'symbol' => 'min', 'description' => 'Unit of time.', 'type' => UnitType::TIME],
             ['name' => 'Hour', 'symbol' => 'hr', 'description' => 'Unit of time.', 'type' => UnitType::TIME],
             ['name' => 'Day', 'symbol' => 'day', 'description' => 'Unit of time.', 'type' => UnitType::TIME],
-            
+
             // Count
             ['name' => 'Tablet', 'symbol' => 'tab', 'description' => 'Countable solid dose.', 'type' => UnitType::COUNT],
             ['name' => 'Capsule', 'symbol' => 'cap', 'description' => 'Countable solid dose.', 'type' => UnitType::COUNT],

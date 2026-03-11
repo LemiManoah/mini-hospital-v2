@@ -78,7 +78,10 @@ export default function InsurancePackageIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button asChild className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800">
+                <Button
+                    asChild
+                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                >
                     <Link href="/insurance-packages/create" className="gap-2">
                         <span>+ Add Insurance Package</span>
                     </Link>
@@ -106,13 +109,19 @@ export default function InsurancePackageIndex({
                     <TableBody>
                         {rows.length > 0 ? (
                             rows.map((insurancePackage) => (
-                                <TableRow key={insurancePackage.id} className="group transition-colors">
+                                <TableRow
+                                    key={insurancePackage.id}
+                                    className="group transition-colors"
+                                >
                                     <TableCell className="font-medium text-zinc-900 dark:text-zinc-100">
                                         {insurancePackage.name}
                                     </TableCell>
                                     <TableCell className="text-sm text-zinc-500 dark:text-zinc-400">
-                                        {insurancePackage.insurance_company?.name ?? (
-                                            <span className="italic opacity-50">N/A</span>
+                                        {insurancePackage.insurance_company
+                                            ?.name ?? (
+                                            <span className="italic opacity-50">
+                                                N/A
+                                            </span>
                                         )}
                                     </TableCell>
                                     <TableCell>
@@ -163,7 +172,10 @@ export default function InsurancePackageIndex({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={4} className="py-12 text-center text-zinc-500 italic">
+                                <TableCell
+                                    colSpan={4}
+                                    className="py-12 text-center text-zinc-500 italic"
+                                >
                                     No insurance packages found.
                                 </TableCell>
                             </TableRow>
@@ -171,19 +183,29 @@ export default function InsurancePackageIndex({
                     </TableBody>
                 </Table>
 
-                {!Array.isArray(insurancePackages) && insurancePackages.links?.length > 3 ? (
+                {!Array.isArray(insurancePackages) &&
+                insurancePackages.links?.length > 3 ? (
                     <div className="mt-4">
                         <Pagination>
                             <PaginationContent>
                                 <PaginationItem>
-                                    <PaginationPrevious href={insurancePackages.prev_page_url ?? undefined} />
+                                    <PaginationPrevious
+                                        href={
+                                            insurancePackages.prev_page_url ??
+                                            undefined
+                                        }
+                                    />
                                 </PaginationItem>
 
                                 {insurancePackages.links.map((link, idx) => {
-                                    const label = link.label.replace(/<[^>]*>/g, '').trim();
+                                    const label = link.label
+                                        .replace(/<[^>]*>/g, '')
+                                        .trim();
                                     if (label === '...') {
                                         return (
-                                            <PaginationItem key={`ellipsis-${idx}`}>
+                                            <PaginationItem
+                                                key={`ellipsis-${idx}`}
+                                            >
                                                 <PaginationEllipsis />
                                             </PaginationItem>
                                         );
@@ -191,7 +213,10 @@ export default function InsurancePackageIndex({
                                     if (/^\d+$/.test(label)) {
                                         return (
                                             <PaginationItem key={label}>
-                                                <PaginationLink href={link.url ?? undefined} isActive={link.active}>
+                                                <PaginationLink
+                                                    href={link.url ?? undefined}
+                                                    isActive={link.active}
+                                                >
                                                     {label}
                                                 </PaginationLink>
                                             </PaginationItem>
@@ -201,7 +226,12 @@ export default function InsurancePackageIndex({
                                 })}
 
                                 <PaginationItem>
-                                    <PaginationNext href={insurancePackages.next_page_url ?? undefined} />
+                                    <PaginationNext
+                                        href={
+                                            insurancePackages.next_page_url ??
+                                            undefined
+                                        }
+                                    />
                                 </PaginationItem>
                             </PaginationContent>
                         </Pagination>
