@@ -36,6 +36,8 @@ import { index as indexRoles } from "@/routes/roles"
 import { index as indexStaff } from "@/routes/staff"
 import { index as indexStaffPositions } from "@/routes/staff-positions"
 import { index as indexSubscriptionPackages } from "@/routes/subscription-packages"
+import { index as indexInsuranceCompanies } from "@/routes/insurance-companies"
+import { index as indexInsurancePackages } from "@/routes/insurance-packages"
 import { index as indexUnits } from "@/routes/units"
 import { create as createUsers, index as indexUsers } from "@/routes/users"
 import { type SharedData } from "@/types"
@@ -163,6 +165,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Units",
           url: indexUnits(),
         },
+        {
+          title: "Insurance Companies",
+          url: indexInsuranceCompanies(),
+        },
+        {
+          title: "Insurance Packages",
+          url: indexInsurancePackages(),
+        },
         ...(canSwitchFacility
           ? [
               {
@@ -195,6 +205,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       name: "Billing Packages",
       url: indexSubscriptionPackages(),
       icon: Package,
+    },
+    {
+      name: "Insurance Masters",
+      url: '/insurance-companies',
+      icon: Shield,
     },
   ]
 

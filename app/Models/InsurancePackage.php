@@ -1,0 +1,67 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\GeneralStatus;
+use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Override;
+
+final class InsurancePackage extends Model
+{
+    use BelongsToTenant;
+
+    /** @use HasFactory<\Database\Factories\InsurancePackageFactory> */
+    use HasFactory;
+
+    use HasUuids;
+    use SoftDeletes;
+
+    #[Override]
+    protected $fillable = [
+        'tenant_id',
+        'insurance_company_id',
+        'name',
+        'status',
+        'created_by',
+        'updated_by',
+    ];
+
+    #[Override]
+    protected $casts = [
+        'tenant_id' => 'string',
+        'insurance_company_id' => 'string',
+        'status' => GeneralStatus::class,
+    ];
+
+    /**
+     * @return BelongsTo<Tenant, $this>
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * @return BelongsTo<InsuranceCompany, $this>
+     */
+    public function insuranceCompany(): BelongsTo
+    {
+        return $this->belongsTo(InsuranceCompany::class);
+    }
+
+    /**
+     * @return HasMany<InsurancePackagePrice, $this>
+     */
+    public function prices(): HasMany
+    {
+        return $this->hasMany(InsurancePackagePrice::class);
+    }
+}
