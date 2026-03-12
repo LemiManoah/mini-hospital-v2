@@ -11,6 +11,8 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FacilitySwitcherController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\InsurancePackageController;
+use App\Http\Controllers\PatientAllergyController;
+use App\Http\Controllers\PatientController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\StaffController;
@@ -68,7 +70,9 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::resource('insurance-companies', InsuranceCompanyController::class)->except(['show']);
     Route::resource('insurance-packages', InsurancePackageController::class)->except(['show']);
     Route::resource('units', UnitController::class)->except(['show']);
+    Route::resource('patients', PatientController::class)->except(['show']);
     Route::resource('staff', StaffController::class)->except(['show']);
+    Route::resource('patients.allergies', PatientAllergyController::class);
 });
 
 Route::middleware('auth')->group(function (): void {
@@ -131,3 +135,6 @@ Route::middleware('auth')->group(function (): void {
     Route::post('logout', [SessionController::class, 'destroy'])
         ->name('logout');
 });
+
+
+

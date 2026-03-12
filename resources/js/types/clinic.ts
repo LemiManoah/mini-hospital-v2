@@ -1,4 +1,3 @@
-import { Address } from './address';
 import { Department } from './department';
 
 export interface Clinic {
@@ -8,7 +7,7 @@ export interface Clinic {
     clinic_code: string;
     clinic_name: string;
     department_id: string;
-    address_id: string | null;
+    location: string | null;
     phone: string | null;
     status: 'active' | 'inactive' | 'suspended' | 'cancelled' | 'pending';
     created_at: string;
@@ -18,7 +17,6 @@ export interface Clinic {
         name: string;
     };
     department?: Department;
-    address?: Address;
 }
 
 export interface ClinicIndexPageProps {
@@ -45,7 +43,6 @@ export interface ClinicIndexPageProps {
 export interface ClinicCreatePageProps {
     branches: { id: string; name: string }[];
     departments: Department[];
-    addresses: Address[];
 }
 
 export interface ClinicEditPageProps extends ClinicCreatePageProps {

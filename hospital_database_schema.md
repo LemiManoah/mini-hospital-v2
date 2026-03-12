@@ -332,7 +332,6 @@ Schema::create('patients', function (Blueprint $table) {
     $table->string('religion', 50)->nullable();
     $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
     $table->string('blood_group', 10)->nullable();
-    $table->boolean('is_organ_donor')->default(false);
 
     // Audit & Soft Delete
     $table->timestamps();

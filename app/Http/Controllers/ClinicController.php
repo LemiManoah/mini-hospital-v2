@@ -10,7 +10,6 @@ use App\Actions\UpdateClinic;
 use App\Http\Requests\DeleteClinicRequest;
 use App\Http\Requests\StoreClinicRequest;
 use App\Http\Requests\UpdateClinicRequest;
-use App\Models\Address;
 use App\Models\Clinic;
 use App\Models\Department;
 use App\Models\FacilityBranch;
@@ -27,7 +26,7 @@ final readonly class ClinicController
         $search = mb_trim((string) $request->query('search', ''));
 
         $clinics = Clinic::query()
-            ->with(['branch', 'department', 'address'])
+            ->with(['branch', 'department'])
             ->when(
                 $search !== '',
                 static fn (Builder $query) => $query->where('clinic_name', 'like', sprintf('%%%s%%', $search))
@@ -50,7 +49,6 @@ final readonly class ClinicController
         return Inertia::render('clinic/create', [
             'branches' => FacilityBranch::all(),
             'departments' => Department::all(),
-            'addresses' => Address::all(),
         ]);
     }
 
@@ -67,7 +65,6 @@ final readonly class ClinicController
             'clinic' => $clinic,
             'branches' => FacilityBranch::all(),
             'departments' => Department::all(),
-            'addresses' => Address::all(),
         ]);
     }
 

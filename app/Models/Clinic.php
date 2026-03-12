@@ -29,7 +29,7 @@ final class Clinic extends Model
         'clinic_code',
         'clinic_name',
         'department_id',
-        'address_id',
+        'location',
         'phone',
         'status',
     ];
@@ -39,7 +39,6 @@ final class Clinic extends Model
         'tenant_id' => 'string',
         'branch_id' => 'string',
         'department_id' => 'string',
-        'address_id' => 'string',
         'status' => GeneralStatus::class,
     ];
 
@@ -67,11 +66,4 @@ final class Clinic extends Model
         return $this->belongsTo(Department::class);
     }
 
-    /**
-     * @return BelongsTo<Address, $this>
-     */
-    public function address(): BelongsTo
-    {
-        return $this->belongsTo(Address::class);
-    }
 }

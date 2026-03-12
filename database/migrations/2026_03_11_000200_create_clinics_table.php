@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('clinic_code', 20);
             $table->string('clinic_name', 100);
             $table->foreignUuid('department_id')->constrained();
-            $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
+            $table->string('location', 255)->nullable();
             $table->string('phone', 20)->nullable();
             $table->string('status')->default(GeneralStatus::ACTIVE->value);
             $table->foreignUuid('created_by')->nullable()->constrained('staff')->nullOnDelete();

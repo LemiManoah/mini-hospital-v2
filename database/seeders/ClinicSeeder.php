@@ -4,50 +4,62 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\GeneralStatus;
-use App\Models\Address;
 use App\Models\Clinic;
 use App\Models\Department;
 use App\Models\FacilityBranch;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 final class ClinicSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $tenant = Tenant::first() ?? Tenant::factory()->create();
-        $branch = FacilityBranch::where('tenant_id', $tenant->id)->first() ?? FacilityBranch::factory()->create(['tenant_id' => $tenant->id]);
-        $department = Department::where('tenant_id', $tenant->id)->first() ?? Department::factory()->create(['tenant_id' => $tenant->id]);
-        $address = Address::first() ?? Address::factory()->create();
+        $tenant = Tenant::first();
+        if (!$tenant) {
+            return;
+        }
+
+        $branch = FacilityBranch::where('tenant_id', $tenant->id)->first();
+        $departments = Department::where('tenant_id', $tenant->id)->take(3)->get();
+
+        if (!$branch || $departments->isEmpty()) {
+            return;
+        }
 
         $clinics = [
-            ['name' => 'General OPD', 'code' => 'GOPD-01'],
-            ['name' => 'ENT Clinic', 'code' => 'ENT-01'],
-            ['name' => 'Dental Clinic', 'code' => 'DEN-01'],
-            ['name' => 'Eye Clinic', 'code' => 'EYE-01'],
-            ['name' => 'Mother & Child Clinic', 'code' => 'MCH-01'],
-            ['name' => 'Physiotherapy', 'code' => 'PHYS-01'],
+            [
+                'clinic_name' => 'General OPD',
+                'clinic_code' => 'OPD-01',
+                'department_id' => $departments[0]->id,
+                'location' => 'Main Wing, Ground Floor',
+                'phone' => '+1234567890',
+            ],
+            [
+                'clinic_name' => 'Dental Clinic',
+                'clinic_code' => 'DENT-01',
+                'department_id' => $departments[1]->id,
+                'location' => 'Block B, 1st Floor',
+                'phone' => '+1234567891',
+            ],
+            [
+                'clinic_name' => 'Eye Clinic',
+                'clinic_code' => 'EYE-01',
+                'department_id' => $departments[2]->id,
+                'location' => 'Block C, 2nd Floor',
+                'phone' => '+1234567892',
+            ],
         ];
 
-        foreach ($clinics as $clinic) {
+        foreach ($clinics as $clinicData) {
             Clinic::updateOrCreate(
                 [
                     'tenant_id' => $tenant->id,
-                    'clinic_code' => $clinic['code'],
+                    'clinic_code' => $clinicData['clinic_code'],
                 ],
-                [
-                    'id' => (string) Str::uuid(),
+                array_merge($clinicData, [
                     'branch_id' => $branch->id,
-                    'clinic_name' => $clinic['name'],
-                    'department_id' => $department->id,
-                    'address_id' => $address->id,
-                    'status' => GeneralStatus::ACTIVE,
-                ]
+                    'status' => 'active',
+                ])
             );
         }
     }

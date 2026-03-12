@@ -80,11 +80,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             items: [
                 {
                     title: 'Register Patient',
-                    url: dashboard(),
+                    url: '/patients/create',
                 },
                 {
                     title: 'View Patients',
-                    url: dashboard(),
+                    url: '/patients',
                 },
                 {
                     title: 'Active Visits',
@@ -210,16 +210,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             url: indexRoles(),
             icon: Shield,
         },
-        {
-            name: 'Billing Packages',
-            url: indexSubscriptionPackages(),
-            icon: Package,
-        },
-        {
-            name: 'Insurance Masters',
-            url: '/insurance-companies',
-            icon: Shield,
-        },
     ];
 
     return (
@@ -250,3 +240,4 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </Sidebar>
     );
 }
+

@@ -28,6 +28,8 @@ final class DatabaseSeeder extends Seeder
             // StaffSeeder::class,
             // UserSeeder::class,
             SupportUserSeeder::class,
+            ClinicSeeder::class,
+            PatientSeeder::class,
         ]);
     }
 }

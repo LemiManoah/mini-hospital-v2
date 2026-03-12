@@ -23,7 +23,7 @@ final class UpdateClinicRequest extends FormRequest
             'clinic_code' => ['required', 'string', 'max:20'],
             'clinic_name' => ['required', 'string', 'max:100'],
             'department_id' => ['required', 'uuid', 'exists:departments,id'],
-            'address_id' => ['nullable', 'uuid', 'exists:addresses,id'],
+            'location' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
             'status' => ['required', new Enum(GeneralStatus::class)],
         ];
