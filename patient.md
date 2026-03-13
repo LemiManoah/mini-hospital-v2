@@ -1,254 +1,168 @@
-# Patient Registration & Visit Flow Design
+# Patient Module Implementation Review
 
-## Objective
-Design a clean, real-world flow for:
-1. Patient registration
-2. Choosing payment mode (cash vs insurance)
-3. Visit creation and handoff to triage/consultation
-
-This is aligned with your `hospital_database_schema.md` and `implementation.md` Phase 4/5.
+**Date:** March 2026
 
 ---
 
-## Short Answer: When to Pick Cash vs Insurance
+## Current Implementation Status
 
-Use a two-step rule:
+### ✅ Implemented
 
-1. At patient registration: capture insurance profile(s) as optional demographic/coverage data.
-2. At visit creation (check-in): choose the payer for that specific encounter (cash or one active insurance policy).
+| Component          | Status      | Notes                                                                                                  |
+| ------------------ | ----------- | ------------------------------------------------------------------------------------------------------ |
+| Patient Model      | ✅ Complete | Comprehensive fields: demographics, contact, next of kin, insurance, blood group, occupation, religion |
+| Patient Controller | ✅ Complete | CRUD: index, create, store, edit, update, destroy                                                      |
+| Patient Actions    | ✅ Complete | CreatePatient, UpdatePatient, DeletePatient                                                            |
+| Form Requests      | ✅ Complete | StorePatientRequest, UpdatePatientRequest, DeletePatientRequest                                        |
+| Frontend Index     | ✅ Complete | Search, pagination, table with MRN, name, phone, gender, payer, insurance                              |
+| Frontend Create    | ✅ Complete | Multi-section form (Bio, Contact, Kin, Billing)                                                        |
+| Frontend Edit      | ✅ Complete | Same structure as create                                                                               |
+| Patient Allergies  | ✅ Complete | Separate model, controller, routes (`patients.allergies` resource)                                     |
+| Patient Insurance  | ✅ Complete | Relationship to InsuranceCompany, InsurancePackage                                                     |
+| PayerType Enum     | ✅ Complete | Supports `cash` and `insurance`                                                                        |
+| Routes             | ✅ Complete | `Route::resource('patients')`                                                                          |
 
-Reason:
-- A patient can have insurance on file but still pay cash for a specific visit.
-- One patient can have multiple insurance policies over time.
-- Billing is visit-based (`visit_billings` links to `visit_id` and optional `insurance_id`), so payer decision belongs to the visit.
+### ❌ Not Implemented
 
----
-
-## Module Boundaries
-
-## Phase 4 (Patient Master Data)
-- `patients`
-- `patient_addresses` (or `address_id` relation if you keep that design)
-- `patient_allergies`
-- `past_medical_histories`
-- `patient_insurances` (and master insurance tables, see missing data)
-
-## Phase 5 (Encounter/Visit)
-- `patient_visits`
-- `triage_records`
-- `vital_signs`
-- `consultations`
-
-## Phase 8 (Finance)
-- `visit_charges`
-- `visit_billings`
-- `payments`
+| Component               | Priority | Notes                                                               |
+| ----------------------- | -------- | ------------------------------------------------------------------- |
+| Patient Search Endpoint | High     | No dedicated search API to check for duplicates before registration |
+| Visit/Encounter System  | High     | No patient_visits, triage_records, consultations                    |
+| Visit Check-in          | High     | No flow to create a visit and select payer per encounter            |
+| Queue/Triage View       | Medium   | No queue page for triaging registered patients                      |
+| Billing Flow            | Medium   | No visit_charges, visit_billings, payments                          |
+| Patient Visit History   | Medium   | No view of patient's past visits                                    |
 
 ---
 
-## Proposed End-to-End Workflow
+## Design Pattern Review
 
-## 1) Patient Search First (Avoid Duplicate Registration)
-Before showing a full registration form:
-- Search by phone number
-- Search by patient number (MRN)
-- Search by name + date of birth
+### Current Design (Patient Pages)
 
-If found:
-- Use existing patient record and proceed to Visit Check-in.
+The patient create/edit pages use:
 
-If not found:
-- Open New Patient Registration.
+- `Card` component with `CardHeader` and `CardTitle` for sections
+- Form fields in grid layouts
+- Basic header with title and back button
 
----
+### Expected Design (per allergen pattern)
 
-## 2) New Patient Registration
-Create patient profile only (no billing yet).
+The allergen module uses:
 
-Minimum required fields:
-- `first_name`, `last_name`
-- `gender`
-- `phone_number`
-- `date_of_birth` or `age + age_units`
-- `country_id` (optional depending on local workflow)
+- Header with icon (e.g., `formatIdentifierLabel` helper)
+- Form inside bordered container
+- Proper label styling (`text-sm font-semibold`)
+- Cancel button in footer
 
-Recommended at registration:
-- Next of kin details
-- Address
-- Allergies summary flag (`has_allergies`)
-- Insurance details (optional section)
-
-Output:
-- New `patients` row with generated `patient_number` (tenant-scoped unique).
+**Gap:** Patient create/edit pages do NOT follow the allergen design pattern. Should be updated to match.
 
 ---
 
-## 3) Optional Insurance Capture During Registration
-In registration UI, include:
-- `Do you have insurance?` toggle
-- If yes, capture policy data and save to `patient_insurances`
+## Data Model Review
 
-Do not mark visit payer yet here.
+### Patient Model - ✅ Good
 
-Why:
-- Insurance info is patient master data.
-- Payer decision is encounter-specific.
+```php
+// Fillable fields are comprehensive
+$fillable = [
+    'tenant_id',
+    'patient_number',        // MRN
+    'first_name', 'last_name', 'middle_name',
+    'date_of_birth', 'age', 'age_units',
+    'gender',
+    'email', 'phone_number', 'alternative_phone',
+    'next_of_kin_name', 'next_of_kin_phone', 'next_of_kin_relationship',
+    'address_id',
+    'marital_status', 'occupation', 'religion',
+    'country_id',
+    'blood_group',
+    'default_payer_type',    // Cash or insurance
+    'created_by', 'updated_by',
+];
+```
 
----
+### Relationships - ✅ Good
 
-## 4) Visit Check-in / Visit Creation (This is where payer is selected)
-When patient arrives for care, create `patient_visits` record.
+- `country()` - BelongsTo
+- `address()` - BelongsTo
+- `insurances()` - HasMany (PatientInsurance)
+- `primaryInsurance()` - HasOne
+- `allergies()` - HasMany
+- `activeAllergies()` - HasMany (scoped to active)
 
-Fields at check-in:
-- `patient_id`
-- `visit_type` (`opd_consultation`, `emergency`, etc.)
-- `clinic_id` (if known at front desk)
-- `doctor_id` (optional at desk, can be assigned after triage)
-- `is_emergency`
-- `appointment_id` if from schedule
-- `payer_type` (UI field): `cash` | `insurance`
-- If insurance selected: choose active policy from patient insurances
+### Missing Models
 
-System actions:
-- Generate `visit_number` (tenant-scoped unique)
-- Set `status = registered`
-- Create initial `visit_billings` header for this visit:
-  - `status = pending` for cash
-  - `status = insurance_pending` for insurance
-  - set `insurance_id` if payer type is insurance
+For a complete patient management system, you would need:
 
----
-
-## 5) Triage and Clinical Flow
-After visit creation:
-- Queue patient to triage
-- Create `triage_records` (1:1 with visit)
-- Add `vital_signs`
-- Move to consultation
-
-Status transitions (recommended):
-- `registered` -> `triaged` -> `waiting_consultation` -> `in_consultation`
-- then downstream statuses (`waiting_lab`, `waiting_pharmacy`, etc.)
+1. **PatientVisit** - For encounter tracking
+2. **TriageRecord** - For triage data
+3. **VitalSign** - For vital signs
+4. **Consultation** - For doctor consultations
+5. **VisitCharge** - For billing line items
+6. **VisitBilling** - For billing header
+7. **Payment** - For payment records
 
 ---
 
-## 6) Billing and Payment Flow
+## Workflow Review
 
-For cash visits:
-- Charges accumulate in `visit_charges`
-- Cashier collects payment into `payments`
-- `visit_billings.status`: `pending` -> `partial_paid` -> `fully_paid`
+### Documented Flow (from patient.md)
 
-For insurance visits:
-- Charges accumulate same way
-- Billing marked `insurance_pending`
-- Submit claim (`claim_number`, `claim_submitted_at`)
-- Record insurer payment in `payments` using method `insurance`
-- Any co-pay by patient recorded separately (cash/mobile/etc.)
+1. **Patient Search First** → Check for duplicates by phone/MRN/name+DOB
+2. **New Patient Registration** → Create patient profile only (no billing)
+3. **Optional Insurance Capture** → At registration time
+4. **Visit Check-in** → Choose payer (cash vs insurance) per visit
+5. **Triage and Clinical Flow** → Queue, triage, consultation
+6. **Billing and Payment** → Charges, payments, claims
 
----
+### Actual Implementation
 
-## Data Model Additions You Should Add Before Building UI
+The current implementation covers **Step 2-3 partially**:
 
-Your docs reference `patient_insurances`, but practical implementation needs two extra masters:
-
-1. `insurance_providers`
-- `id`, `tenant_id`, `name`, `code`, `contact_phone`, `contact_email`, `is_active`
-
-2. `insurance_plans`
-- `id`, `tenant_id`, `provider_id`, `name`, `plan_code`, `coverage_percent`, `copay_type`, `copay_value`, `is_active`
-
-3. `patient_insurances`
-- `id`, `tenant_id`, `patient_id`, `provider_id`, `plan_id`
-- `policy_number`, `member_number`
-- `valid_from`, `valid_to`
-- `status` (`active`, `inactive`, `expired`, `cancelled`)
-- `is_primary`
-
-4. `patient_visits` (small extension recommended)
-- Add `payer_type` enum: `cash`, `insurance`, `waiver`, `corporate`
-- Add `patient_insurance_id` nullable FK for selected encounter coverage
-
-If you do not want to alter `patient_visits`, keep payer on `visit_billings` only, but still collect it at visit check-in UI.
+- ✅ Patient registration form exists
+- ✅ Insurance can be captured at registration
+- ✅ Default payer type stored on patient
+- ❌ No patient search before registration
+- ❌ No visit creation/check-in flow
+- ❌ No triage queue
+- ❌ No billing flow
 
 ---
 
-## UI Design: Suggested Screens
+## Recommendations
 
-1. `Patient Search / Quick Register`
-- Search bar + recent patients
-- `New Patient` button
+### High Priority
 
-2. `Patient Registration Form`
-- Demographics tab
-- Contact/kin tab
-- Allergies/history quick capture
-- Insurance tab (optional)
+1. **Update Patient Create/Edit pages** to match allergen design pattern
+2. **Add patient search** before registration to prevent duplicates
+3. **Implement Visit model** and check-in flow
 
-3. `Visit Check-in Form`
-- Patient summary card
-- Visit details (`visit_type`, clinic, doctor)
-- Payer selector (`cash` / `insurance`)
-- If insurance: policy selector + validity indicator
+### Medium Priority
 
-4. `Triage Queue`
-- Pulls visits with status `registered`
+4. Add queue/triage view for registered patients
+5. Add patient visit history view
+6. Implement billing and payment flow
+
+### Low Priority
+
+7. Add insurance claim tracking
+8. Add patient portal (future)
 
 ---
 
-## Validation Rules (Important)
+## Code Locations
 
-Patient registration:
-- unique `patient_number` per tenant
-- prevent duplicate likely matches (same name + dob + phone soft warning)
-
-Insurance selection at visit:
-- policy must belong to same patient
-- policy must be `active`
-- visit date within `valid_from..valid_to`
-
-Visit creation:
-- `clinic_id` must belong to same tenant/branch context
-- emergency visit can bypass scheduled appointment requirement
-
-Billing:
-- if `insurance_id` set, billing cannot be `fully_paid` unless `balance_amount = 0`
-
----
-
-## Recommended Implementation Order for This Module
-
-1. Migrations
-- `patients`
-- insurance master tables + `patient_insurances`
-- `patient_visits`
-- `visit_billings` stub creation logic
-
-2. Backend
-- `PatientController` (search, create, update)
-- `VisitCheckinController` (create visit + payer selection)
-- service class: `CreateVisitWithBillingContext`
-
-3. Frontend
-- Search/registration/check-in screens
-- Queue page for triage intake
-
-4. Tests
-- duplicate prevention
-- insurance validity checks
-- cash vs insurance visit check-in paths
-- branch/tenant isolation on all queries
-
----
-
-## Practical Decision
-
-If you want least friction:
-- Make insurance optional at registration.
-- Require payer selection at visit check-in every time.
-- Default payer to:
-  - last visit payer if returning patient
-  - else `cash`
-- Allow cashier/frontdesk to change payer before first charge is posted.
-
-This gives a flexible flow without forcing wrong assumptions early.
+| Component          | Path                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| Patient Model      | `app/Models/Patient.php`                                                             |
+| Patient Controller | `app/Http/Controllers/PatientController.php`                                         |
+| Patient Actions    | `app/Actions/{Create,Update,Delete}Patient.php`                                      |
+| Patient Requests   | `app/Http/Requests/{Store,Update,Delete}PatientRequest.php`                          |
+| Patient Index      | `resources/js/pages/patient/index.tsx`                                               |
+| Patient Create     | `resources/js/pages/patient/create.tsx`                                              |
+| Patient Edit       | `resources/js/pages/patient/edit.tsx`                                                |
+| Patient Types      | `resources/js/types/patient.ts`                                                      |
+| Patient Allergies  | `app/Models/PatientAllergy.php`, `app/Http/Controllers/PatientAllergyController.php` |
+| Patient Insurance  | `app/Models/PatientInsurance.php`                                                    |
+| PayerType Enum     | `app/Enums/PayerType.php`                                                            |
+| Routes             | `routes/web.php` (line 73)                                                           |

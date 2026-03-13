@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\PayerType;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Override;
 
@@ -48,7 +46,6 @@ final class Patient extends Model
         'religion',
         'country_id',
         'blood_group',
-        'default_payer_type',
         'created_by',
         'updated_by',
     ];
@@ -59,62 +56,35 @@ final class Patient extends Model
         'address_id' => 'string',
         'country_id' => 'string',
         'date_of_birth' => 'date',
-        'default_payer_type' => PayerType::class,
     ];
 
-    /**
-     * @return BelongsTo<Tenant, $this>
-     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    /**
-     * @return BelongsTo<Country, $this>
-     */
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
     }
 
-    /**
-     * @return BelongsTo<Address, $this>
-     */
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class);
     }
 
-    /**
-     * @return HasMany<PatientInsurance, $this>
-     */
-    public function insurances(): HasMany
-    {
-        return $this->hasMany(PatientInsurance::class);
-    }
-
-    /**
-     * @return HasOne<PatientInsurance, $this>
-     */
-    public function primaryInsurance(): HasOne
-    {
-        return $this->hasOne(PatientInsurance::class);
-    }
-
-    /**
-     * @return HasMany<PatientAllergy, $this>
-     */
     public function allergies(): HasMany
     {
         return $this->hasMany(PatientAllergy::class);
     }
 
-    /**
-     * @return HasMany<PatientAllergy, $this>
-     */
     public function activeAllergies(): HasMany
     {
         return $this->hasMany(PatientAllergy::class)->where('is_active', true);
+    }
+
+    public function visits(): HasMany
+    {
+        return $this->hasMany(PatientVisit::class);
     }
 }

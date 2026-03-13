@@ -698,20 +698,12 @@ Schema::create('patient_visits', function (Blueprint $table) {
     $table->foreignUuid('patient_id')->constrained();
     $table->date('visit_date');
     $table->time('visit_time');
-    $table->enum('visit_type', [
-        'opd_consultation', 'emergency', 'day_care',
-        'follow_up', 'procedure', 'telemedicine'
-    ])->index();
-    $table->enum('status', [
-        'registered', 'triaged', 'waiting_consultation', 'in_consultation',
-        'waiting_lab', 'waiting_imaging', 'waiting_pharmacy',
-        'admitted', 'discharged', 'cancelled'
-    ])->default('registered')->index();
+    $table->enum('visit_type', [new Enum(VisitType::class)])->defalt();
+    $table->enum('status', [new Enum(VisitStatus::class)])->default();
     $table->foreignUuid('clinic_id')->nullable()->constrained();
     $table->foreignUuid('doctor_id')->nullable()->constrained('staff');
     $table->foreignUuid('appointment_id')->nullable()->constrained();
-    $table->boolean('is_emergency')->default(false)->index();
-    $table->text('cancellation_reason')->nullable();
+    $table->boolean('is_emergency')->default(false);
     $table->timestamp('closed_at')->nullable();
     $table->foreignUuid('closed_by')->nullable()->constrained('staff');
     $table->timestamps();

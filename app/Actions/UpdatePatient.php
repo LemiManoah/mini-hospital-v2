@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\PayerType;
 use App\Models\Patient;
-use App\Models\PatientInsurance;
 use Illuminate\Support\Facades\DB;
 
 final class UpdatePatient
@@ -39,20 +37,7 @@ final class UpdatePatient
                 'religion' => $data['religion'] ?? null,
                 'country_id' => $data['country_id'] ?? null,
                 'blood_group' => $data['blood_group'] ?? null,
-                'default_payer_type' => $data['payer_type'],
             ]);
-
-            if (($data['payer_type'] ?? PayerType::CASH->value) === PayerType::INSURANCE->value) {
-                $patient->insurances()->delete();
-
-                PatientInsurance::create([
-                    'patient_id' => $patient->id,
-                    'insurance_company_id' => $data['insurance_company_id'],
-                    'insurance_package_id' => $data['insurance_package_id'],
-                ]);
-            } else {
-                $patient->insurances()->delete();
-            }
 
             return $patient;
         });

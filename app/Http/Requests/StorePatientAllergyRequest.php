@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\AllergyReaction;
 use App\Enums\AllergySeverity;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class StorePatientAllergyRequest extends FormRequest
@@ -22,8 +23,8 @@ final class StorePatientAllergyRequest extends FormRequest
     {
         return [
             'allergen_id' => ['required', 'uuid', 'exists:allergens,id'],
-            'severity' => ['required', 'in:' . implode(',', ['mild', 'moderate', 'severe', 'life_threatening'])],
-            'reaction' => ['required', 'in:' . implode(',', ['rash', 'anaphylaxis', 'breathing_difficulty', 'itching', 'swelling', 'other'])],
+            'severity' => ['required', new Enum(AllergySeverity::class)],
+            'reaction' => ['required', new Enum(AllergyReaction::class)],
             'notes' => ['nullable', 'string', 'max:1000'],
             'is_active' => ['boolean'],
         ];
@@ -41,24 +42,5 @@ final class StorePatientAllergyRequest extends FormRequest
             'reaction.required' => 'Please select a reaction type.',
             'notes.max' => 'Notes must not exceed 1000 characters.',
         ];
-    }
-
-    /**
-     * Get custom attributes for validator errors.
-     */
-    public function attributes(): array
-    {
-        return [
-            'allergen_id' => 'allergen',
-            'severity' => 'severity level',
-            'reaction' => 'reaction type',
-        ];
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'is_active' => $this->boolean('is_active', true),
-        ]);
     }
 }

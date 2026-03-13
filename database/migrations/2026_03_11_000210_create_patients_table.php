@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types = 1)
-;
+declare(strict_types=1);
 
-use App\Enums\PayerType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration 
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -38,15 +36,10 @@ return new class extends Migration
             $table->string('religion', 50)->nullable();
             $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
             $table->string('blood_group', 10)->nullable();
-            $table->enum('default_payer_type', array_column(PayerType::cases(), 'value'))->default(PayerType::CASH->value);
-
-            // Audit fields
             $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
-
             $table->timestamps();
             $table->softDeletes();
-
             $table->index(['last_name', 'first_name']);
             $table->unique(['tenant_id', 'patient_number']);
             $table->index('patient_number');

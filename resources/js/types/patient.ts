@@ -1,13 +1,16 @@
 import { InsuranceCompany } from './insurance-company';
 import { InsurancePackage } from './insurance-package';
 
-export interface PatientInsurance {
+export interface VisitPayer {
     id: string;
-    patient_id: string;
-    insurance_company_id: string;
-    insurance_package_id: string;
+    patient_visit_id: string;
+    billing_type: 'cash' | 'insurance';
+    insurance_company_id: string | null;
+    insurance_package_id: string | null;
     insurance_company?: Pick<InsuranceCompany, 'id' | 'name'>;
     insurance_package?: Pick<InsurancePackage, 'id' | 'name'>;
+    insuranceCompany?: Pick<InsuranceCompany, 'id' | 'name'>;
+    insurancePackage?: Pick<InsurancePackage, 'id' | 'name'>;
 }
 
 export interface Patient {
@@ -32,10 +35,7 @@ export interface Patient {
     religion: string | null;
     country_id: string | null;
     blood_group: string | null;
-    default_payer_type: 'cash' | 'insurance';
     country?: { id: string; country_name: string };
-    primary_insurance?: PatientInsurance | null;
-    primaryInsurance?: PatientInsurance | null;
 }
 
 export interface PatientIndexPageProps {
@@ -59,15 +59,74 @@ export interface PatientIndexPageProps {
     };
 }
 
-export interface PatientFormPageProps {
+interface PatientBaseFormProps {
     countries: { id: string; country_name: string }[];
     addresses: { id: string; city: string; district: string | null }[];
-    companies: Pick<InsuranceCompany, 'id' | 'name'>[];
-    packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];
+    maritalStatusOptions: { value: string; label: string }[];
+    bloodGroupOptions: { value: string; label: string }[];
+    religionOptions: { value: string; label: string }[];
+    kinRelationshipOptions: { value: string; label: string }[];
 }
 
-export interface PatientCreatePageProps extends PatientFormPageProps {}
+export interface PatientCreatePageProps extends PatientBaseFormProps {
+    companies: Pick<InsuranceCompany, 'id' | 'name'>[];
+    packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];
+    clinics: { id: string; name: string }[];
+    doctors: { id: string; first_name: string; last_name: string }[];
+    visitTypes: { value: string; label: string }[];
+}
 
-export interface PatientEditPageProps extends PatientFormPageProps {
+export interface PatientEditPageProps extends PatientBaseFormProps {
     patient: Patient;
+}
+
+export interface PatientAllergy {
+    id: string;
+    patient_id: string;
+    allergen_id: string;
+    reaction: string | null;
+    severity: string | null;
+    is_active: boolean;
+    allergen?: { id: string; name: string };
+}
+
+export interface PatientVisit {
+    id: string;
+    visit_number: string;
+    visit_type: string;
+    status: string;
+    is_emergency: boolean;
+    notes: string | null;
+    registered_at: string | null;
+    started_at: string | null;
+    completed_at: string | null;
+    created_at: string;
+    clinic?: { id: string; name: string } | null;
+    doctor?: { id: string; first_name: string; last_name: string } | null;
+    payer?: VisitPayer | null;
+}
+
+export interface PatientStats {
+    total_visits: number;
+    completed_visits: number;
+    emergency_visits: number;
+    last_visit: string | null;
+}
+
+export interface PatientShowPageProps {
+    patient: Patient & {
+        allergies: PatientAllergy[];
+        visits: PatientVisit[];
+        address?: { id: string; city: string; district: string | null } | null;
+    };
+    stats: PatientStats;
+    visitTypes: { value: string; label: string }[];
+    allergens: { id: string; name: string }[];
+    severityOptions: { value: string; label: string }[];
+    reactionOptions: { value: string; label: string }[];
+    clinics: { id: string; name: string }[];
+    doctors: { id: string; first_name: string; last_name: string }[];
+    companies: Pick<InsuranceCompany, 'id' | 'name'>[];
+    packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];
+    hasActiveVisit: boolean;
 }

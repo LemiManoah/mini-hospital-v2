@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\PayerType;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,11 +13,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Override;
 
-final class PatientInsurance extends Model
+final class VisitPayer extends Model
 {
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\PatientInsuranceFactory> */
+    /** @use HasFactory<\Database\Factories\VisitPayerFactory> */
     use HasFactory;
 
     use HasUuids;
@@ -25,7 +26,8 @@ final class PatientInsurance extends Model
     #[Override]
     protected $fillable = [
         'tenant_id',
-        'patient_id',
+        'patient_visit_id',
+        'billing_type',
         'insurance_company_id',
         'insurance_package_id',
         'created_by',
@@ -35,38 +37,22 @@ final class PatientInsurance extends Model
     #[Override]
     protected $casts = [
         'tenant_id' => 'string',
-        'patient_id' => 'string',
+        'patient_visit_id' => 'string',
         'insurance_company_id' => 'string',
         'insurance_package_id' => 'string',
+        'billing_type' => PayerType::class,
     ];
 
-    /**
-     * @return BelongsTo<Tenant, $this>
-     */
-    public function tenant(): BelongsTo
+    public function visit(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(PatientVisit::class, 'patient_visit_id');
     }
 
-    /**
-     * @return BelongsTo<Patient, $this>
-     */
-    public function patient(): BelongsTo
-    {
-        return $this->belongsTo(Patient::class);
-    }
-
-    /**
-     * @return BelongsTo<InsuranceCompany, $this>
-     */
     public function insuranceCompany(): BelongsTo
     {
         return $this->belongsTo(InsuranceCompany::class);
     }
 
-    /**
-     * @return BelongsTo<InsurancePackage, $this>
-     */
     public function insurancePackage(): BelongsTo
     {
         return $this->belongsTo(InsurancePackage::class);

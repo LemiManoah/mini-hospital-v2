@@ -8,7 +8,6 @@ use App\Enums\BloodGroup;
 use App\Enums\Gender;
 use App\Enums\KinRelationship;
 use App\Enums\MaritalStatus;
-use App\Enums\PayerType;
 use App\Enums\Religion;
 use App\Models\Patient;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -30,7 +29,6 @@ final class UpdatePatientRequest extends FormRequest
     {
         /** @var Patient $patient */
         $patient = $this->route('patient');
-        $tenantId = (string) $this->user()?->tenant_id;
 
         return [
             'first_name' => ['required', 'string', 'max:100'],
@@ -53,25 +51,6 @@ final class UpdatePatientRequest extends FormRequest
             'religion' => ['nullable', new Enum(Religion::class)],
             'country_id' => ['nullable', 'uuid', 'exists:countries,id'],
             'blood_group' => ['nullable', new Enum(BloodGroup::class)],
-            'payer_type' => ['required', new Enum(PayerType::class)],
-            'insurance_company_id' => [
-                'nullable',
-                'required_if:payer_type,insurance',
-                'uuid',
-                Rule::exists('insurance_companies', 'id')->where(
-                    static fn ($query) => $query->where('tenant_id', $tenantId)
-                ),
-            ],
-            'insurance_package_id' => [
-                'nullable',
-                'required_if:payer_type,insurance',
-                'uuid',
-                Rule::exists('insurance_packages', 'id')->where(
-                    fn ($query) => $query
-                        ->where('tenant_id', $tenantId)
-                        ->where('insurance_company_id', (string) $this->input('insurance_company_id'))
-                ),
-            ],
         ];
     }
 }

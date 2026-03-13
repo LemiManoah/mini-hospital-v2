@@ -43,10 +43,14 @@ final class StorePatientRequest extends FormRequest
             'religion' => ['nullable', 'string', 'max:50'],
             'country_id' => ['nullable', 'uuid', 'exists:countries,id'],
             'blood_group' => ['nullable', 'string', 'max:10'],
-            'payer_type' => ['required', Rule::in(['cash', 'insurance'])],
+            'visit_type' => ['required', 'string'],
+            'clinic_id' => ['nullable', 'uuid', 'exists:clinics,id'],
+            'doctor_id' => ['nullable', 'uuid', 'exists:staff,id'],
+            'is_emergency' => ['nullable', 'boolean'],
+            'billing_type' => ['required', Rule::in(['cash', 'insurance'])],
             'insurance_company_id' => [
                 'nullable',
-                'required_if:payer_type,insurance',
+                'required_if:billing_type,insurance',
                 'uuid',
                 Rule::exists('insurance_companies', 'id')->where(
                     static fn ($query) => $query->where('tenant_id', $tenantId)
@@ -54,7 +58,7 @@ final class StorePatientRequest extends FormRequest
             ],
             'insurance_package_id' => [
                 'nullable',
-                'required_if:payer_type,insurance',
+                'required_if:billing_type,insurance',
                 'uuid',
                 Rule::exists('insurance_packages', 'id')->where(
                     fn ($query) => $query

@@ -8,6 +8,7 @@ use App\Http\Requests\StorePatientAllergyRequest;
 use App\Http\Requests\UpdatePatientAllergyRequest;
 use App\Models\Patient;
 use App\Models\PatientAllergy;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -56,12 +57,14 @@ final readonly class PatientAllergyController
         $patient->allergies()->create($validated);
 
         return redirect()
-            ->route('patients.allergies.index', $patient)
+            ->route('patients.show', $patient)
             ->with('success', 'Allergy recorded successfully');
     }
 
     public function edit(Patient $patient, PatientAllergy $patientAllergy): Response
     {
+        $this->ensureBelongsToPatient($patient, $patientAllergy);
+
         $patientAllergy->load(['allergen:id,name', 'createdBy:id,first_name,last_name']);
 
         return Inertia::render('patient-allergy/edit', [
@@ -75,6 +78,8 @@ final readonly class PatientAllergyController
         Patient $patient,
         PatientAllergy $patientAllergy
     ): RedirectResponse {
+        $this->ensureBelongsToPatient($patient, $patientAllergy);
+
         $validated = $request->validated();
 
         $patientAllergy->update($validated);
@@ -86,6 +91,8 @@ final readonly class PatientAllergyController
 
     public function destroy(Patient $patient, PatientAllergy $patientAllergy): RedirectResponse
     {
+        $this->ensureBelongsToPatient($patient, $patientAllergy);
+
         $patientAllergy->delete();
 
         return redirect()
@@ -95,6 +102,8 @@ final readonly class PatientAllergyController
 
     public function toggleActive(Patient $patient, PatientAllergy $patientAllergy): RedirectResponse
     {
+        $this->ensureBelongsToPatient($patient, $patientAllergy);
+
         $patientAllergy->update([
             'is_active' => !$patientAllergy->is_active,
         ]);
@@ -104,5 +113,12 @@ final readonly class PatientAllergyController
         return redirect()
             ->route('patients.allergies.index', $patient)
             ->with('success', "Allergy {$status} successfully");
+    }
+
+    private function ensureBelongsToPatient(Patient $patient, PatientAllergy $patientAllergy): void
+    {
+        if ($patientAllergy->patient_id !== $patient->id) {
+            throw new ModelNotFoundException();
+        }
     }
 }

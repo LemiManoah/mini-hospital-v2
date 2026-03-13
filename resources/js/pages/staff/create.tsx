@@ -14,7 +14,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type StaffCreatePageProps } from '@/types/staff';
 import { Form, Head, Link } from '@inertiajs/react';
-import { CheckCircle2, LoaderCircle } from 'lucide-react';
+import { CheckCircle2, LoaderCircle, User, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -28,42 +28,11 @@ export default function StaffCreate({
     positions,
     branches,
 }: StaffCreatePageProps) {
-    const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<
-        string[]
-    >([]);
+    const [departmentIds, setDepartmentIds] = useState<string[]>([]);
     const [positionId, setPositionId] = useState<string>('');
+    const [branchId, setBranchId] = useState<string>('');
     const [staffType, setStaffType] = useState<string>('');
-    const [isActive, _setIsActive] = useState(true);
-    const [selectedBranchIds, setSelectedBranchIds] = useState<string[]>([]);
-    const [primaryBranchId, setPrimaryBranchId] = useState<string>('');
-
-    const handleBranchToggle = (branchId: string, checked: boolean) => {
-        if (checked) {
-            const updated = [...selectedBranchIds, branchId];
-            setSelectedBranchIds(updated);
-            if (!primaryBranchId) {
-                setPrimaryBranchId(branchId);
-            }
-            return;
-        }
-
-        const updated = selectedBranchIds.filter((id) => id !== branchId);
-        setSelectedBranchIds(updated);
-        if (primaryBranchId === branchId) {
-            setPrimaryBranchId(updated[0] ?? '');
-        }
-    };
-
-    const handleDepartmentToggle = (departmentId: string, checked: boolean) => {
-        if (checked) {
-            setSelectedDepartmentIds([...selectedDepartmentIds, departmentId]);
-            return;
-        }
-
-        setSelectedDepartmentIds(
-            selectedDepartmentIds.filter((id) => id !== departmentId),
-        );
-    };
+    const [isActive, setIsActive] = useState(true);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -71,19 +40,10 @@ export default function StaffCreate({
 
             <div className="mt-4 mb-4 flex flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center">
                 <div className="flex w-full flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                            Add New Staff Member
-                        </h2>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            asChild
-                            className="h-8"
-                        >
-                            <Link href={StaffController.index.url()}>Back</Link>
-                        </Button>
-                    </div>
+                    <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                        <User className="h-6 w-6 text-indigo-500" />
+                        Add New Staff Member
+                    </h2>
                     <p className="text-muted-foreground">
                         Register a new staff member in the system.
                     </p>
@@ -100,12 +60,12 @@ export default function StaffCreate({
                 >
                     {({ processing, errors }) => (
                         <div className="max-w-2xl space-y-6">
-                            {selectedDepartmentIds.map((departmentId) => (
+                            {departmentIds.map((id) => (
                                 <input
-                                    key={departmentId}
+                                    key={id}
                                     type="hidden"
                                     name="department_ids[]"
-                                    value={departmentId}
+                                    value={id}
                                 />
                             ))}
                             <input
@@ -125,17 +85,14 @@ export default function StaffCreate({
                             />
                             <input
                                 type="hidden"
-                                name="primary_branch_id"
-                                value={primaryBranchId}
+                                name="branch_ids"
+                                value={[branchId]}
                             />
-                            {selectedBranchIds.map((branchId) => (
-                                <input
-                                    key={branchId}
-                                    type="hidden"
-                                    name="branch_ids[]"
-                                    value={branchId}
-                                />
-                            ))}
+                            <input
+                                type="hidden"
+                                name="primary_branch_id"
+                                value={branchId}
+                            />
 
                             <div className="grid gap-4">
                                 <div className="grid grid-cols-2 gap-4">
@@ -208,6 +165,45 @@ export default function StaffCreate({
                                     />
                                     <InputError message={errors.phone} />
                                 </div>
+                            </div>
+
+                            <div className="grid gap-4">
+                                <div className="grid gap-2">
+                                    <Label
+                                        htmlFor="department"
+                                        className="text-sm font-semibold"
+                                    >
+                                        Departments
+                                    </Label>
+                                    <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                                        {departments.map((dept) => (
+                                            <div key={dept.id} className="flex items-center space-x-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`dept-${dept.id}`}
+                                                    checked={departmentIds.includes(dept.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setDepartmentIds([...departmentIds, dept.id]);
+                                                        } else {
+                                                            setDepartmentIds(departmentIds.filter(id => id !== dept.id));
+                                                        }
+                                                    }}
+                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <Label
+                                                    htmlFor={`dept-${dept.id}`}
+                                                    className="text-sm font-normal cursor-pointer"
+                                                >
+                                                    {dept.department_name}
+                                                </Label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <InputError
+                                        message={errors.department_ids}
+                                    />
+                                </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
@@ -239,47 +235,36 @@ export default function StaffCreate({
                                             message={errors.staff_position_id}
                                         />
                                     </div>
-                                </div>
 
-                                <div className="grid gap-2">
-                                    <Label className="text-sm font-semibold">
-                                        Departments
-                                    </Label>
-                                    <div className="space-y-2 rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
-                                        {departments.map((department) => {
-                                            const selected =
-                                                selectedDepartmentIds.includes(
-                                                    department.id,
-                                                );
-
-                                            return (
-                                                <label
-                                                    key={department.id}
-                                                    className="inline-flex items-center gap-2"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selected}
-                                                        onChange={(event) =>
-                                                            handleDepartmentToggle(
-                                                                department.id,
-                                                                event.target
-                                                                    .checked,
-                                                            )
-                                                        }
-                                                    />
-                                                    <span>
-                                                        {
-                                                            department.department_name
-                                                        }
-                                                    </span>
-                                                </label>
-                                            );
-                                        })}
+                                    <div className="grid gap-2">
+                                        <Label
+                                            htmlFor="branch"
+                                            className="text-sm font-semibold"
+                                        >
+                                            Branch/Facility
+                                        </Label>
+                                        <Select
+                                            value={branchId}
+                                            onValueChange={setBranchId}
+                                        >
+                                            <SelectTrigger id="branch">
+                                                <SelectValue placeholder="Select branch" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {branches.map((branch) => (
+                                                    <SelectItem
+                                                        key={branch.id}
+                                                        value={branch.id}
+                                                    >
+                                                        {branch.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError
+                                            message={errors.primary_branch_id}
+                                        />
                                     </div>
-                                    <InputError
-                                        message={errors.department_ids}
-                                    />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -371,65 +356,6 @@ export default function StaffCreate({
                                             message={errors.specialty}
                                         />
                                     </div>
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label className="text-sm font-semibold">
-                                        Branch Assignment
-                                    </Label>
-                                    <div className="space-y-2 rounded-md border border-zinc-200 p-4 dark:border-zinc-700">
-                                        {branches.map((branch) => {
-                                            const selected =
-                                                selectedBranchIds.includes(
-                                                    branch.id,
-                                                );
-
-                                            return (
-                                                <div
-                                                    key={branch.id}
-                                                    className="flex items-center justify-between gap-4"
-                                                >
-                                                    <label className="inline-flex items-center gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selected}
-                                                            onChange={(event) =>
-                                                                handleBranchToggle(
-                                                                    branch.id,
-                                                                    event.target
-                                                                        .checked,
-                                                                )
-                                                            }
-                                                        />
-                                                        <span>
-                                                            {branch.name}
-                                                        </span>
-                                                    </label>
-                                                    <label className="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
-                                                        <input
-                                                            type="radio"
-                                                            name="primary-branch-selector"
-                                                            checked={
-                                                                primaryBranchId ===
-                                                                branch.id
-                                                            }
-                                                            disabled={!selected}
-                                                            onChange={() =>
-                                                                setPrimaryBranchId(
-                                                                    branch.id,
-                                                                )
-                                                            }
-                                                        />
-                                                        Primary
-                                                    </label>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    <InputError message={errors.branch_ids} />
-                                    <InputError
-                                        message={errors.primary_branch_id}
-                                    />
                                 </div>
                             </div>
 
