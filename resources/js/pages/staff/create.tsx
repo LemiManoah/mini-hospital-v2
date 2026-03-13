@@ -85,8 +85,8 @@ export default function StaffCreate({
                             />
                             <input
                                 type="hidden"
-                                name="branch_ids"
-                                value={[branchId]}
+                                name="branch_ids[]"
+                                value={branchId}
                             />
                             <input
                                 type="hidden"

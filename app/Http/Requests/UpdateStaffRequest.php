@@ -11,6 +11,11 @@ use Illuminate\Validation\Validator;
 
 final class UpdateStaffRequest extends FormRequest
 {
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     /**
      * @return array<string, array<int, Enum|string>|string>
      */
