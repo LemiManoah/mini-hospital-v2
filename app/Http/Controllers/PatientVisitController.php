@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\AssessPatientVisitCompletion;
 use App\Actions\TransitionPatientVisitStatus;
 use App\Enums\PayerType;
 use App\Enums\VisitStatus;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -24,14 +26,15 @@ use Inertia\Response;
 
 final class PatientVisitController
 {
-    public function index(Request $request): Response
+    public function index(Request $request, AssessPatientVisitCompletion $assessment): Response
     {
         $search = mb_trim((string) $request->query('search', ''));
 
+        /** @var LengthAwarePaginator<int, PatientVisit> $visits */
         $visits = PatientVisit::query()
             ->with([
                 'patient:id,patient_number,first_name,last_name,middle_name,phone_number',
-                'clinic:id,name',
+                'clinic:id,clinic_name',
                 'doctor:id,first_name,last_name',
                 'payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
                 'payer.insuranceCompany:id,name',
@@ -54,7 +57,11 @@ final class PatientVisitController
             )
             ->latest('registered_at')
             ->paginate(10)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (PatientVisit $visit): array => [
+                ...$visit->toArray(),
+                'completion_check' => $assessment->handle($visit),
+            ]);
 
         return Inertia::render('visit/active', [
             'visits' => $visits,
@@ -64,16 +71,17 @@ final class PatientVisitController
         ]);
     }
 
-    public function show(PatientVisit $visit): Response
+    public function show(PatientVisit $visit, AssessPatientVisitCompletion $assessment): Response
     {
         $visit->load([
             'patient:id,patient_number,first_name,last_name,middle_name,date_of_birth,age,age_units,gender,phone_number,email,blood_group,next_of_kin_name,next_of_kin_phone,address_id,country_id',
             'patient.address:id,city,district',
             'patient.country:id,country_name',
             'branch:id,name',
-            'clinic:id,name',
+            'clinic:id,clinic_name',
             'doctor:id,first_name,last_name',
-            'registeredBy:id,name',
+            'registeredBy:id,staff_id',
+            'registeredBy.staff:id,first_name,last_name',
             'payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
             'payer.insuranceCompany:id,name',
             'payer.insurancePackage:id,name',
@@ -82,6 +90,7 @@ final class PatientVisitController
         return Inertia::render('visit/show', [
             'visit' => $visit,
             'availableTransitions' => $this->availableTransitions($visit),
+            'completionCheck' => $assessment->handle($visit),
         ]);
     }
 
@@ -103,9 +112,10 @@ final class PatientVisitController
             'billing_type' => ['required', Rule::in(['cash', 'insurance'])],
             'insurance_company_id' => ['nullable', 'required_if:billing_type,insurance', 'uuid', 'exists:insurance_companies,id'],
             'insurance_package_id' => ['nullable', 'required_if:billing_type,insurance', 'uuid', 'exists:insurance_packages,id'],
+            'redirect_to' => ['nullable', Rule::in(['patient', 'visit', 'index'])],
         ]);
 
-        DB::transaction(static function () use ($patient, $validated): void {
+        $visit = DB::transaction(static function () use ($patient, $validated): PatientVisit {
             $activeBranch = BranchContext::getActiveBranch();
             $prefix = $activeBranch instanceof FacilityBranch ? mb_strtoupper(mb_substr($activeBranch->name, 0, 3)) : 'VIS';
             $userId = Auth::id();
@@ -150,20 +160,55 @@ final class PatientVisitController
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ]);
+
+            return $visit;
         });
 
-        return to_route('patients.show', $patient->id)->with('success', 'Visit started successfully.');
+        $message = 'Visit started successfully.';
+        $redirectTo = $validated['redirect_to'] ?? 'patient';
+
+        return match ($redirectTo) {
+            'visit' => to_route('visits.show', $visit)->with('success', $message),
+            'index' => to_route('visits.index')->with('success', $message),
+            default => to_route('patients.show', $patient->id)->with('success', $message),
+        };
     }
 
-    public function updateStatus(Request $request, PatientVisit $visit, TransitionPatientVisitStatus $action): RedirectResponse
-    {
+    public function updateStatus(
+        Request $request,
+        PatientVisit $visit,
+        TransitionPatientVisitStatus $action,
+        AssessPatientVisitCompletion $assessment,
+    ): RedirectResponse {
         $validated = $request->validate([
             'status' => ['required', Rule::in(['in_progress', 'completed', 'cancelled'])],
+            'redirect_to' => ['nullable', Rule::in(['show', 'index'])],
         ]);
+
+        $redirectTo = $validated['redirect_to'] ?? 'show';
+
+        $allowedStatuses = collect($this->availableTransitions($visit))
+            ->pluck('value')
+            ->all();
+
+        if (! in_array($validated['status'], $allowedStatuses, true)) {
+            return $this->statusRedirect($visit, $redirectTo)
+                ->with('error', 'That status change is not allowed for the current visit state.');
+        }
+
+        if ($validated['status'] === VisitStatus::COMPLETED->value) {
+            $completionCheck = $assessment->handle($visit);
+
+            if ($completionCheck['can_complete'] === false) {
+                $message = $completionCheck['blocking_reasons'][0] ?? 'This visit cannot be completed yet.';
+
+                return $this->statusRedirect($visit, $redirectTo)->with('error', $message);
+            }
+        }
 
         $action->handle($visit, VisitStatus::from($validated['status']));
 
-        return to_route('visits.show', $visit)->with('success', 'Visit status updated successfully.');
+        return $this->statusRedirect($visit, $redirectTo)->with('success', 'Visit status updated successfully.');
     }
 
     public function markInProgress(PatientVisit $visit, TransitionPatientVisitStatus $action): JsonResponse
@@ -193,4 +238,13 @@ final class PatientVisitController
             default => [],
         };
     }
+
+    private function statusRedirect(PatientVisit $visit, string $redirectTo): RedirectResponse
+    {
+        return $redirectTo === 'index'
+            ? to_route('visits.index')
+            : to_route('visits.show', $visit);
+    }
 }
+
+

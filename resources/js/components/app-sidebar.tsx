@@ -28,19 +28,21 @@ import {
 import { dashboard } from '@/routes';
 import { index as indexAddresses } from '@/routes/addresses';
 import { index as indexAllergens } from '@/routes/allergens';
+import { index as indexClinics } from '@/routes/clinics';
 import { index as indexCurrencies } from '@/routes/currencies';
 import { index as indexDepartments } from '@/routes/departments';
 import { index as indexFacilitySwitcher } from '@/routes/facility-switcher';
 import { index as indexInsuranceCompanies } from '@/routes/insurance-companies';
 import { index as indexInsurancePackages } from '@/routes/insurance-packages';
+import {
+    create as createPatients,
+    index as indexPatients,
+} from '@/routes/patients';
 import { index as indexRoles } from '@/routes/roles';
 import { index as indexStaff } from '@/routes/staff';
 import { index as indexStaffPositions } from '@/routes/staff-positions';
 import { index as indexSubscriptionPackages } from '@/routes/subscription-packages';
 import { index as indexUnits } from '@/routes/units';
-import { index as indexClinics } from '@/routes/clinics';
-import { index as indexPatients } from '@/routes/patients';
-import { create as createPatients } from '@/routes/patients';
 import { create as createUsers, index as indexUsers } from '@/routes/users';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
@@ -245,5 +247,3 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </Sidebar>
     );
 }
-
-

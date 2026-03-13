@@ -109,7 +109,7 @@ final class User extends Authenticatable implements MustVerifyEmail
     protected function name(): Attribute
     {
         return Attribute::get(function (): string {
-            if ($this->staff) {
+            if ($this->getAttribute('staff_id') && $this->staff) {
                 return mb_trim(sprintf('%s %s', $this->staff->first_name, $this->staff->last_name));
             }
 

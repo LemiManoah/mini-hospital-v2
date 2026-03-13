@@ -22,10 +22,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { formatIdentifierLabel } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
-import {
-    type Clinic,
-    type ClinicIndexPageProps,
-} from '@/types/clinic';
+import { type Clinic, type ClinicIndexPageProps } from '@/types/clinic';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -216,16 +213,14 @@ export default function ClinicIndex({
                     </TableBody>
                 </Table>
 
-                {!Array.isArray(clinics) &&
-                clinics.links?.length > 3 ? (
+                {!Array.isArray(clinics) && clinics.links?.length > 3 ? (
                     <div className="mt-4">
                         <Pagination>
                             <PaginationContent>
                                 <PaginationItem>
                                     <PaginationPrevious
                                         href={
-                                            clinics.prev_page_url ??
-                                            undefined
+                                            clinics.prev_page_url ?? undefined
                                         }
                                     />
                                 </PaginationItem>
@@ -261,8 +256,7 @@ export default function ClinicIndex({
                                 <PaginationItem>
                                     <PaginationNext
                                         href={
-                                            clinics.next_page_url ??
-                                            undefined
+                                            clinics.next_page_url ?? undefined
                                         }
                                     />
                                 </PaginationItem>

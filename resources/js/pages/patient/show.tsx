@@ -1,28 +1,11 @@
+import VisitStartDialog from '@/components/visit-start-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type PatientShowPageProps } from '@/types/patient';
-import { Form, Head, Link } from '@inertiajs/react';
-import { Calendar, Edit, Plus, Stethoscope, User } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { Calendar, Edit, Plus, User } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Patients', href: '/patients' },
@@ -50,13 +33,20 @@ function formatDateTime(date: string | null): string {
 }
 
 function statusClasses(status: string): string {
-    return {
-        registered: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100',
-        in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200',
-        awaiting_payment: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
-        completed: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200',
-        cancelled: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200',
-    }[status] ?? 'bg-zinc-100 text-zinc-800';
+    return (
+        {
+            registered:
+                'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100',
+            in_progress:
+                'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200',
+            awaiting_payment:
+                'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
+            completed:
+                'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200',
+            cancelled:
+                'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200',
+        }[status] ?? 'bg-zinc-100 text-zinc-800'
+    );
 }
 
 export default function PatientShow({
@@ -69,20 +59,11 @@ export default function PatientShow({
     packages,
     hasActiveVisit,
 }: PatientShowPageProps) {
-    const [visitModalOpen, setVisitModalOpen] = useState(false);
-    const [visitType, setVisitType] = useState(visitTypes[0]?.value ?? '');
-    const [clinicId, setClinicId] = useState('');
-    const [doctorId, setDoctorId] = useState('');
-    const [billingType, setBillingType] = useState<'cash' | 'insurance'>('cash');
-    const [companyId, setCompanyId] = useState('');
-    const [packageId, setPackageId] = useState('');
-
-    const filteredPackages = useMemo(
-        () => packages.filter((pkg) => pkg.insurance_company_id === companyId),
-        [packages, companyId],
-    );
-
-    const fullName = [patient.first_name, patient.middle_name, patient.last_name]
+    const fullName = [
+        patient.first_name,
+        patient.middle_name,
+        patient.last_name,
+    ]
         .filter(Boolean)
         .join(' ');
 
@@ -98,104 +79,30 @@ export default function PatientShow({
                         </div>
                         <div>
                             <h1 className="text-2xl font-semibold">{fullName}</h1>
-                            <p className="text-sm text-muted-foreground">MRN: {patient.patient_number}</p>
+                            <p className="text-sm text-muted-foreground">
+                                MRN: {patient.patient_number}
+                            </p>
                         </div>
                     </div>
 
                     <div className="flex gap-2">
-                        <Dialog open={visitModalOpen} onOpenChange={setVisitModalOpen}>
-                            <DialogTrigger asChild>
+                        <VisitStartDialog
+                            patientId={patient.id}
+                            patientName={fullName}
+                            visitTypes={visitTypes}
+                            clinics={clinics}
+                            doctors={doctors}
+                            companies={companies}
+                            packages={packages}
+                            disabled={hasActiveVisit}
+                            trigger={
                                 <Button disabled={hasActiveVisit}>
-                                    <Stethoscope className="mr-2 h-4 w-4" />
-                                    {hasActiveVisit ? 'Active Visit Exists' : 'Start Visit'}
+                                    {hasActiveVisit
+                                        ? 'Active Visit Exists'
+                                        : 'Start Visit'}
                                 </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Start Visit</DialogTitle>
-                                    <DialogDescription>Create a new visit with a per-visit payer snapshot.</DialogDescription>
-                                </DialogHeader>
-                                <Form
-                                    method="post"
-                                    action={`/patients/${patient.id}/visits`}
-                                    onSuccess={() => {
-                                        setVisitModalOpen(false);
-                                        window.location.reload();
-                                    }}
-                                >
-                                    <input type="hidden" name="visit_type" value={visitType} />
-                                    <input type="hidden" name="clinic_id" value={clinicId} />
-                                    <input type="hidden" name="doctor_id" value={doctorId} />
-                                    <input type="hidden" name="billing_type" value={billingType} />
-                                    <input type="hidden" name="insurance_company_id" value={companyId} />
-                                    <input type="hidden" name="insurance_package_id" value={packageId} />
-
-                                    <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="visit_type">Visit Type</Label>
-                                            <Select value={visitType} onValueChange={setVisitType}>
-                                                <SelectTrigger id="visit_type"><SelectValue placeholder="Select visit type" /></SelectTrigger>
-                                                <SelectContent>{visitTypes.map((type) => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}</SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="grid gap-2 sm:grid-cols-2">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="clinic_id">Clinic</Label>
-                                                <Select value={clinicId} onValueChange={setClinicId}>
-                                                    <SelectTrigger id="clinic_id"><SelectValue placeholder="Select clinic" /></SelectTrigger>
-                                                    <SelectContent>{clinics.map((clinic) => <SelectItem key={clinic.id} value={clinic.id}>{clinic.name}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="doctor_id">Doctor</Label>
-                                                <Select value={doctorId} onValueChange={setDoctorId}>
-                                                    <SelectTrigger id="doctor_id"><SelectValue placeholder="Select doctor" /></SelectTrigger>
-                                                    <SelectContent>{doctors.map((doctor) => <SelectItem key={doctor.id} value={doctor.id}>{doctor.first_name} {doctor.last_name}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                        <div className="grid gap-2 sm:grid-cols-2">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="billing_type">Billing Type</Label>
-                                                <Select value={billingType} onValueChange={(value) => setBillingType(value as 'cash' | 'insurance')}>
-                                                    <SelectTrigger id="billing_type"><SelectValue placeholder="Select billing type" /></SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="cash">Cash</SelectItem>
-                                                        <SelectItem value="insurance">Insurance</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="flex items-center gap-2 pt-8">
-                                                <input type="checkbox" id="is_emergency" name="is_emergency" value="1" className="h-4 w-4 rounded border-gray-300" />
-                                                <Label htmlFor="is_emergency" className="font-normal">Emergency Visit</Label>
-                                            </div>
-                                        </div>
-                                        {billingType === 'insurance' ? (
-                                            <div className="grid gap-2 sm:grid-cols-2">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="insurance_company_id">Insurer</Label>
-                                                    <Select value={companyId} onValueChange={setCompanyId}>
-                                                        <SelectTrigger id="insurance_company_id"><SelectValue placeholder="Select insurer" /></SelectTrigger>
-                                                        <SelectContent>{companies.map((company) => <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>)}</SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="insurance_package_id">Package</Label>
-                                                    <Select value={packageId} onValueChange={setPackageId}>
-                                                        <SelectTrigger id="insurance_package_id"><SelectValue placeholder="Select package" /></SelectTrigger>
-                                                        <SelectContent>{filteredPackages.map((pkg) => <SelectItem key={pkg.id} value={pkg.id}>{pkg.name}</SelectItem>)}</SelectContent>
-                                                    </Select>
-                                                </div>
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <DialogFooter>
-                                        <Button type="button" variant="outline" onClick={() => setVisitModalOpen(false)}>Cancel</Button>
-                                        <Button type="submit">Start Visit</Button>
-                                    </DialogFooter>
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
+                            }
+                        />
                         <Button variant="outline" asChild>
                             <Link href={`/patients/${patient.id}/edit`}>
                                 <Edit className="mr-2 h-4 w-4" />
@@ -208,57 +115,178 @@ export default function PatientShow({
                 <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
                     <div className="space-y-6">
                         <Card>
-                            <CardHeader><CardTitle>Patient Summary</CardTitle></CardHeader>
+                            <CardHeader>
+                                <CardTitle>Patient Summary</CardTitle>
+                            </CardHeader>
                             <CardContent className="grid gap-4 sm:grid-cols-3">
-                                <div><p className="text-sm text-muted-foreground">Gender</p><p className="capitalize">{patient.gender}</p></div>
-                                <div><p className="text-sm text-muted-foreground">Date of Birth</p><p>{patient.date_of_birth ? formatDate(patient.date_of_birth) : patient.age ? `${patient.age} ${patient.age_units}` : 'N/A'}</p></div>
-                                <div><p className="text-sm text-muted-foreground">Blood Group</p><p>{patient.blood_group || 'Not specified'}</p></div>
-                                <div><p className="text-sm text-muted-foreground">Phone</p><p>{patient.phone_number}</p></div>
-                                <div><p className="text-sm text-muted-foreground">Address</p><p>{patient.address ? `${patient.address.city}${patient.address.district ? `, ${patient.address.district}` : ''}` : 'Not specified'}</p></div>
-                                <div><p className="text-sm text-muted-foreground">Next of Kin</p><p>{patient.next_of_kin_name || 'Not specified'}</p></div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Gender
+                                    </p>
+                                    <p className="capitalize">{patient.gender}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Date of Birth
+                                    </p>
+                                    <p>
+                                        {patient.date_of_birth
+                                            ? formatDate(patient.date_of_birth)
+                                            : patient.age
+                                              ? `${patient.age} ${patient.age_units}`
+                                              : 'N/A'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Blood Group
+                                    </p>
+                                    <p>{patient.blood_group || 'Not specified'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Phone
+                                    </p>
+                                    <p>{patient.phone_number}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Address
+                                    </p>
+                                    <p>
+                                        {patient.address
+                                            ? `${patient.address.city}${patient.address.district ? `, ${patient.address.district}` : ''}`
+                                            : 'Not specified'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Next of Kin
+                                    </p>
+                                    <p>
+                                        {patient.next_of_kin_name ||
+                                            'Not specified'}
+                                    </p>
+                                </div>
                             </CardContent>
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle>Visit History</CardTitle></CardHeader>
+                            <CardHeader>
+                                <CardTitle>Visit History</CardTitle>
+                            </CardHeader>
                             <CardContent className="space-y-3">
-                                {patient.visits.length > 0 ? patient.visits.map((visit) => {
-                                    const payer = visit.payer;
-                                    const company = payer?.insuranceCompany?.name ?? payer?.insurance_company?.name;
-                                    const packageName = payer?.insurancePackage?.name ?? payer?.insurance_package?.name;
+                                {patient.visits.length > 0 ? (
+                                    patient.visits.map((visit) => {
+                                        const payer = visit.payer;
+                                        const company =
+                                            payer?.insuranceCompany?.name ??
+                                            payer?.insurance_company?.name;
+                                        const packageName =
+                                            payer?.insurancePackage?.name ??
+                                            payer?.insurance_package?.name;
 
-                                    return (
-                                        <div key={visit.id} className="rounded-lg border p-4">
-                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                                <div className="space-y-1">
-                                                    <p className="font-medium">{visit.visit_number}</p>
-                                                    <p className="text-sm text-muted-foreground">{visit.visit_type.replaceAll('_', ' ')} on {formatDateTime(visit.registered_at ?? visit.created_at)}</p>
-                                                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                                                        <span>Clinic: {visit.clinic?.name || 'Not assigned'}</span>
-                                                        <span>Doctor: {visit.doctor ? `${visit.doctor.first_name} ${visit.doctor.last_name}` : 'Not assigned'}</span>
-                                                        <span>Payer: {payer?.billing_type ?? 'cash'}</span>
-                                                        {company ? <span>Insurance: {company}{packageName ? ` / ${packageName}` : ''}</span> : null}
+                                        return (
+                                            <div
+                                                key={visit.id}
+                                                className="rounded-lg border p-4"
+                                            >
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                    <div className="space-y-1">
+                                                        <p className="font-medium">
+                                                            {visit.visit_number}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {visit.visit_type.replaceAll(
+                                                                '_',
+                                                                ' ',
+                                                            )}{' '}
+                                                            on{' '}
+                                                            {formatDateTime(
+                                                                visit.registered_at ??
+                                                                    visit.created_at,
+                                                            )}
+                                                        </p>
+                                                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                                            <span>
+                                                                Clinic:{' '}
+                                                                {visit.clinic
+                                                                    ?.name ||
+                                                                    'Not assigned'}
+                                                            </span>
+                                                            <span>
+                                                                Doctor:{' '}
+                                                                {visit.doctor
+                                                                    ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
+                                                                    : 'Not assigned'}
+                                                            </span>
+                                                            <span>
+                                                                Payer:{' '}
+                                                                {payer?.billing_type ??
+                                                                    'cash'}
+                                                            </span>
+                                                            {company ? (
+                                                                <span>
+                                                                    Insurance:{' '}
+                                                                    {company}
+                                                                    {packageName
+                                                                        ? ` / ${packageName}`
+                                                                        : ''}
+                                                                </span>
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            asChild
+                                                        >
+                                                            <Link
+                                                                href={`/visits/${visit.id}`}
+                                                            >
+                                                                Open Visit
+                                                            </Link>
+                                                        </Button>
+                                                        <span
+                                                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses(visit.status)}`}
+                                                        >
+                                                            {visit.status.replaceAll(
+                                                                '_',
+                                                                ' ',
+                                                            )}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Button variant="outline" size="sm" asChild>
-                                                        <Link href={`/visits/${visit.id}`}>Open Visit</Link>
-                                                    </Button>
-                                                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses(visit.status)}`}>
-                                                        {visit.status.replaceAll('_', ' ')}
-                                                    </span>
-                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                }) : (
+                                        );
+                                    })
+                                ) : (
                                     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-10 text-center">
                                         <Calendar className="mb-3 h-10 w-10 text-muted-foreground" />
-                                        <p className="text-sm text-muted-foreground">No visits recorded yet.</p>
-                                        <Button className="mt-4" size="sm" onClick={() => setVisitModalOpen(true)} disabled={hasActiveVisit}>
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Start First Visit
-                                        </Button>
+                                        <p className="text-sm text-muted-foreground">
+                                            No visits recorded yet.
+                                        </p>
+                                        <VisitStartDialog
+                                            patientId={patient.id}
+                                            patientName={fullName}
+                                            visitTypes={visitTypes}
+                                            clinics={clinics}
+                                            doctors={doctors}
+                                            companies={companies}
+                                            packages={packages}
+                                            disabled={hasActiveVisit}
+                                            trigger={
+                                                <Button
+                                                    className="mt-4"
+                                                    size="sm"
+                                                    disabled={hasActiveVisit}
+                                                >
+                                                    <Plus className="mr-2 h-4 w-4" />
+                                                    Start First Visit
+                                                </Button>
+                                            }
+                                        />
                                     </div>
                                 )}
                             </CardContent>
@@ -267,29 +295,71 @@ export default function PatientShow({
 
                     <div className="space-y-6">
                         <Card>
-                            <CardHeader><CardTitle>Visit Statistics</CardTitle></CardHeader>
+                            <CardHeader>
+                                <CardTitle>Visit Statistics</CardTitle>
+                            </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Total Visits</span><span className="text-2xl font-semibold">{stats.total_visits}</span></div>
-                                <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Completed</span><span className="text-2xl font-semibold text-green-600">{stats.completed_visits}</span></div>
-                                <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Emergency</span><span className="text-2xl font-semibold text-red-600">{stats.emergency_visits}</span></div>
-                                <div><p className="text-sm text-muted-foreground">Last Visit</p><p>{stats.last_visit ? formatDate(stats.last_visit) : 'No visits yet'}</p></div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-muted-foreground">
+                                        Total Visits
+                                    </span>
+                                    <span className="text-2xl font-semibold">
+                                        {stats.total_visits}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-muted-foreground">
+                                        Completed
+                                    </span>
+                                    <span className="text-2xl font-semibold text-green-600">
+                                        {stats.completed_visits}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-muted-foreground">
+                                        Emergency
+                                    </span>
+                                    <span className="text-2xl font-semibold text-red-600">
+                                        {stats.emergency_visits}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Last Visit
+                                    </p>
+                                    <p>
+                                        {stats.last_visit
+                                            ? formatDate(stats.last_visit)
+                                            : 'No visits yet'}
+                                    </p>
+                                </div>
                             </CardContent>
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle>Current Allergies</CardTitle></CardHeader>
+                            <CardHeader>
+                                <CardTitle>Current Allergies</CardTitle>
+                            </CardHeader>
                             <CardContent>
                                 {patient.allergies.length > 0 ? (
                                     <div className="space-y-2">
                                         {patient.allergies.map((allergy) => (
-                                            <div key={allergy.id} className="rounded-md border px-3 py-2 text-sm">
-                                                {allergy.allergen?.name || 'Unknown'}
-                                                {allergy.severity ? ` (${allergy.severity})` : ''}
+                                            <div
+                                                key={allergy.id}
+                                                className="rounded-md border px-3 py-2 text-sm"
+                                            >
+                                                {allergy.allergen?.name ||
+                                                    'Unknown'}
+                                                {allergy.severity
+                                                    ? ` (${allergy.severity})`
+                                                    : ''}
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">No allergies recorded.</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        No allergies recorded.
+                                    </p>
                                 )}
                             </CardContent>
                         </Card>
@@ -299,4 +369,3 @@ export default function PatientShow({
         </AppLayout>
     );
 }
-

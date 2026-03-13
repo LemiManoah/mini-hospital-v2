@@ -1,3 +1,4 @@
+import VisitStartDialog from '@/components/visit-start-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -21,6 +22,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type Patient, type ReturningPatientsPageProps } from '@/types/patient';
 import { Head, Link, router } from '@inertiajs/react';
+import { PlusCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -37,8 +39,18 @@ function formatDate(date: string | null | undefined): string {
     });
 }
 
-export default function ReturningPatients({ patients, filters }: ReturningPatientsPageProps) {
-    const rows: Patient[] = Array.isArray(patients) ? patients : (patients.data ?? []);
+export default function ReturningPatients({
+    patients,
+    filters,
+    visitTypes,
+    clinics,
+    doctors,
+    companies,
+    packages,
+}: ReturningPatientsPageProps) {
+    const rows: Patient[] = Array.isArray(patients)
+        ? patients
+        : (patients.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
 
     useEffect(() => {
@@ -47,12 +59,24 @@ export default function ReturningPatients({ patients, filters }: ReturningPatien
         }
 
         const timeoutId = window.setTimeout(() => {
-            router.get('/patients/returning', { search: search || undefined }, {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-                only: ['patients', 'filters'],
-            });
+            router.get(
+                '/patients/returning',
+                { search: search || undefined },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    only: [
+                        'patients',
+                        'filters',
+                        'visitTypes',
+                        'clinics',
+                        'doctors',
+                        'companies',
+                        'packages',
+                    ],
+                },
+            );
         }, 300);
 
         return () => window.clearTimeout(timeoutId);
@@ -65,8 +89,12 @@ export default function ReturningPatients({ patients, filters }: ReturningPatien
             <div className="m-4 space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div className="w-full sm:max-w-md">
-                        <h1 className="text-2xl font-semibold">Returning Patients</h1>
-                        <p className="text-sm text-muted-foreground">Patients with at least one completed visit.</p>
+                        <h1 className="text-2xl font-semibold">
+                            Returning Patients
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Patients with at least one completed visit.
+                        </p>
                     </div>
                     <Input
                         placeholder="Search by patient number, name, or phone..."
@@ -77,7 +105,7 @@ export default function ReturningPatients({ patients, filters }: ReturningPatien
                 </div>
 
                 <div className="overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <Table className="min-w-[900px]">
+                    <Table className="min-w-[980px]">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Patient</TableHead>
@@ -89,36 +117,88 @@ export default function ReturningPatients({ patients, filters }: ReturningPatien
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {rows.length > 0 ? rows.map((patient) => {
-                                const fullName = [patient.first_name, patient.middle_name, patient.last_name].filter(Boolean).join(' ');
+                            {rows.length > 0 ? (
+                                rows.map((patient) => {
+                                    const fullName = [
+                                        patient.first_name,
+                                        patient.middle_name,
+                                        patient.last_name,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' ');
 
-                                return (
-                                    <TableRow key={patient.id}>
-                                        <TableCell>
-                                            <div>
-                                                <p className="font-medium">{fullName}</p>
-                                                <p className="text-xs text-muted-foreground">{patient.patient_number}</p>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{patient.phone_number}</TableCell>
-                                        <TableCell>{patient.country?.country_name || 'N/A'}</TableCell>
-                                        <TableCell>{patient.completed_visits_count ?? 0}</TableCell>
-                                        <TableCell>{formatDate(patient.last_completed_visit_at)}</TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-2">
-                                                <Button variant="outline" size="sm" asChild>
-                                                    <Link href={`/patients/${patient.id}`}>Open Patient</Link>
-                                                </Button>
-                                                <Button size="sm" asChild>
-                                                    <Link href={`/patients/${patient.id}`}>Start New Visit</Link>
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            }) : (
+                                    return (
+                                        <TableRow key={patient.id}>
+                                            <TableCell>
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {fullName}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {patient.patient_number}
+                                                    </p>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {patient.phone_number}
+                                            </TableCell>
+                                            <TableCell>
+                                                {patient.country
+                                                    ?.country_name || 'N/A'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {patient.completed_visits_count ??
+                                                    0}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatDate(
+                                                    patient.last_completed_visit_at,
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        asChild
+                                                    >
+                                                        <Link
+                                                            href={`/patients/${patient.id}`}
+                                                        >
+                                                            Open Patient
+                                                        </Link>
+                                                    </Button>
+                                                    <VisitStartDialog
+                                                        patientId={patient.id}
+                                                        patientName={fullName}
+                                                        visitTypes={visitTypes}
+                                                        clinics={clinics}
+                                                        doctors={doctors}
+                                                        companies={companies}
+                                                        packages={packages}
+                                                        redirectTo="visit"
+                                                        title="Start Return Visit"
+                                                        description="Create a fresh visit for this returning patient without leaving the list."
+                                                        trigger={
+                                                            <Button size="sm">
+                                                                <PlusCircle className="mr-2 h-4 w-4" />
+                                                                New Visit
+                                                            </Button>
+                                                        }
+                                                    />
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            ) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="py-12 text-center text-zinc-500 italic">No returning patients found.</TableCell>
+                                    <TableCell
+                                        colSpan={6}
+                                        className="py-12 text-center text-zinc-500 italic"
+                                    >
+                                        No returning patients found.
+                                    </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -128,18 +208,52 @@ export default function ReturningPatients({ patients, filters }: ReturningPatien
                         <div className="mt-4">
                             <Pagination>
                                 <PaginationContent>
-                                    <PaginationItem><PaginationPrevious href={patients.prev_page_url ?? undefined} /></PaginationItem>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            href={
+                                                patients.prev_page_url ??
+                                                undefined
+                                            }
+                                        />
+                                    </PaginationItem>
                                     {patients.links.map((link, idx) => {
-                                        const label = link.label.replace(/<[^>]*>/g, '').trim();
+                                        const label = link.label
+                                            .replace(/<[^>]*>/g, '')
+                                            .trim();
                                         if (label === '...') {
-                                            return <PaginationItem key={`ellipsis-${idx}`}><PaginationEllipsis /></PaginationItem>;
+                                            return (
+                                                <PaginationItem
+                                                    key={`ellipsis-${idx}`}
+                                                >
+                                                    <PaginationEllipsis />
+                                                </PaginationItem>
+                                            );
                                         }
                                         if (/^\d+$/.test(label)) {
-                                            return <PaginationItem key={label}><PaginationLink href={link.url ?? undefined} isActive={link.active}>{label}</PaginationLink></PaginationItem>;
+                                            return (
+                                                <PaginationItem key={label}>
+                                                    <PaginationLink
+                                                        href={
+                                                            link.url ??
+                                                            undefined
+                                                        }
+                                                        isActive={link.active}
+                                                    >
+                                                        {label}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            );
                                         }
                                         return null;
                                     })}
-                                    <PaginationItem><PaginationNext href={patients.next_page_url ?? undefined} /></PaginationItem>
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            href={
+                                                patients.next_page_url ??
+                                                undefined
+                                            }
+                                        />
+                                    </PaginationItem>
                                 </PaginationContent>
                             </Pagination>
                         </div>

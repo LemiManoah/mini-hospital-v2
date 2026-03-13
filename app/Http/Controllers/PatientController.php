@@ -93,6 +93,7 @@ final readonly class PatientController
             'filters' => [
                 'search' => $search,
             ],
+            ...$this->visitFormOptions(),
         ]);
     }
 
@@ -101,18 +102,7 @@ final readonly class PatientController
         return Inertia::render('patient/create', [
             'countries' => Country::query()->select('id', 'country_name')->orderBy('country_name')->get(),
             'addresses' => Address::query()->select('id', 'city', 'district')->orderBy('city')->get(),
-            'companies' => InsuranceCompany::query()->select('id', 'name')->orderBy('name')->get(),
-            'packages' => InsurancePackage::query()->select('id', 'name', 'insurance_company_id')->orderBy('name')->get(),
-            'clinics' => Clinic::query()->select('id', 'clinic_name')->orderBy('clinic_name')->get(),
-            'doctors' => Staff::query()
-                ->select('id', 'first_name', 'last_name')
-                ->where('type', 'medical')
-                ->orderBy('first_name')
-                ->get(),
-            'visitTypes' => collect(VisitType::cases())->map(fn ($case): array => [
-                'value' => $case->value,
-                'label' => $case->label(),
-            ]),
+            ...$this->visitFormOptions(),
             'maritalStatusOptions' => $this->enumOptions(MaritalStatus::cases()),
             'bloodGroupOptions' => $this->enumOptions(BloodGroup::cases()),
             'religionOptions' => $this->enumOptions(Religion::cases()),
@@ -190,10 +180,6 @@ final readonly class PatientController
         return Inertia::render('patient/show', [
             'patient' => $patient,
             'stats' => $stats,
-            'visitTypes' => collect(VisitType::cases())->map(fn ($case): array => [
-                'value' => $case->value,
-                'label' => $case->label(),
-            ]),
             'allergens' => Allergen::query()->select('id', 'name')->orderBy('name')->get(),
             'severityOptions' => collect(AllergySeverity::cases())->map(fn ($case): array => [
                 'value' => $case->value,
@@ -203,14 +189,7 @@ final readonly class PatientController
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
-            'clinics' => Clinic::query()->select('id', 'clinic_name')->orderBy('name')->get(),
-            'doctors' => Staff::query()
-                ->select('id', 'first_name', 'last_name')
-                ->where('type', 'medical')
-                ->orderBy('first_name')
-                ->get(),
-            'companies' => InsuranceCompany::query()->select('id', 'name')->orderBy('name')->get(),
-            'packages' => InsurancePackage::query()->select('id', 'name', 'insurance_company_id')->orderBy('name')->get(),
+            ...$this->visitFormOptions(),
             'hasActiveVisit' => $patient->visits()
                 ->whereNotIn('status', ['completed', 'cancelled'])
                 ->exists(),
@@ -230,5 +209,32 @@ final readonly class PatientController
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array{
+     *     companies: \Illuminate\Support\Collection<int, InsuranceCompany>,
+     *     packages: \Illuminate\Support\Collection<int, InsurancePackage>,
+     *     clinics: \Illuminate\Support\Collection<int, Clinic>,
+     *     doctors: \Illuminate\Support\Collection<int, Staff>,
+     *     visitTypes: \Illuminate\Support\Collection<int, array{value: string, label: string}>
+     * }
+     */
+    private function visitFormOptions(): array
+    {
+        return [
+            'companies' => InsuranceCompany::query()->select('id', 'name')->orderBy('name')->get(),
+            'packages' => InsurancePackage::query()->select('id', 'name', 'insurance_company_id')->orderBy('name')->get(),
+            'clinics' => Clinic::query()->select('id')->selectRaw('clinic_name as name')->orderBy('clinic_name')->get(),
+            'doctors' => Staff::query()
+                ->select('id', 'first_name', 'last_name')
+                ->where('type', 'medical')
+                ->orderBy('first_name')
+                ->get(),
+            'visitTypes' => collect(VisitType::cases())->map(fn ($case): array => [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ]),
+        ];
     }
 }

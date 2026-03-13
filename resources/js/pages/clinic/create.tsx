@@ -59,7 +59,9 @@ export default function ClinicCreate({
                             asChild
                             className="h-8"
                         >
-                            <Link href={ClinicController.index.url()}>Back</Link>
+                            <Link href={ClinicController.index.url()}>
+                                Back
+                            </Link>
                         </Button>
                     </div>
                     <p className="text-muted-foreground">

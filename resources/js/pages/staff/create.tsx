@@ -175,25 +175,39 @@ export default function StaffCreate({
                                     >
                                         Departments
                                     </Label>
-                                    <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                                    <div className="max-h-32 space-y-2 overflow-y-auto rounded-md border p-3">
                                         {departments.map((dept) => (
-                                            <div key={dept.id} className="flex items-center space-x-2">
+                                            <div
+                                                key={dept.id}
+                                                className="flex items-center space-x-2"
+                                            >
                                                 <input
                                                     type="checkbox"
                                                     id={`dept-${dept.id}`}
-                                                    checked={departmentIds.includes(dept.id)}
+                                                    checked={departmentIds.includes(
+                                                        dept.id,
+                                                    )}
                                                     onChange={(e) => {
                                                         if (e.target.checked) {
-                                                            setDepartmentIds([...departmentIds, dept.id]);
+                                                            setDepartmentIds([
+                                                                ...departmentIds,
+                                                                dept.id,
+                                                            ]);
                                                         } else {
-                                                            setDepartmentIds(departmentIds.filter(id => id !== dept.id));
+                                                            setDepartmentIds(
+                                                                departmentIds.filter(
+                                                                    (id) =>
+                                                                        id !==
+                                                                        dept.id,
+                                                                ),
+                                                            );
                                                         }
                                                     }}
                                                     className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                                 />
                                                 <Label
                                                     htmlFor={`dept-${dept.id}`}
-                                                    className="text-sm font-normal cursor-pointer"
+                                                    className="cursor-pointer text-sm font-normal"
                                                 >
                                                     {dept.department_name}
                                                 </Label>

@@ -1,6 +1,16 @@
 import { InsuranceCompany } from './insurance-company';
 import { InsurancePackage } from './insurance-package';
 
+export interface VisitCompletionCheck {
+    can_complete: boolean;
+    has_pending_services: boolean;
+    pending_services_count: number;
+    has_unpaid_balance: boolean;
+    unpaid_balance: number;
+    blocking_reasons: string[];
+    warning_messages: string[];
+}
+
 export interface VisitPayer {
     id: string;
     patient_visit_id: string;
@@ -55,6 +65,14 @@ export interface PaginatedList<T> {
     total: number;
 }
 
+export interface VisitFormOptions {
+    companies: Pick<InsuranceCompany, 'id' | 'name'>[];
+    packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];
+    clinics: { id: string; name: string }[];
+    doctors: { id: string; first_name: string; last_name: string }[];
+    visitTypes: { value: string; label: string }[];
+}
+
 export interface PatientIndexPageProps {
     patients: PaginatedList<Patient> | Patient[];
     filters: {
@@ -71,13 +89,9 @@ interface PatientBaseFormProps {
     kinRelationshipOptions: { value: string; label: string }[];
 }
 
-export interface PatientCreatePageProps extends PatientBaseFormProps {
-    companies: Pick<InsuranceCompany, 'id' | 'name'>[];
-    packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];
-    clinics: { id: string; name: string }[];
-    doctors: { id: string; first_name: string; last_name: string }[];
-    visitTypes: { value: string; label: string }[];
-}
+export interface PatientCreatePageProps
+    extends PatientBaseFormProps,
+        VisitFormOptions {}
 
 export interface PatientEditPageProps extends PatientBaseFormProps {
     patient: Patient;
@@ -110,6 +124,7 @@ export interface PatientVisit {
     registeredBy?: { id: string; name: string } | null;
     patient?: Patient | null;
     payer?: VisitPayer | null;
+    completion_check?: VisitCompletionCheck | null;
 }
 
 export interface PatientStats {
@@ -119,21 +134,16 @@ export interface PatientStats {
     last_visit: string | null;
 }
 
-export interface PatientShowPageProps {
+export interface PatientShowPageProps extends VisitFormOptions {
     patient: Patient & {
         allergies: PatientAllergy[];
         visits: PatientVisit[];
         address?: { id: string; city: string; district: string | null } | null;
     };
     stats: PatientStats;
-    visitTypes: { value: string; label: string }[];
     allergens: { id: string; name: string }[];
     severityOptions: { value: string; label: string }[];
     reactionOptions: { value: string; label: string }[];
-    clinics: { id: string; name: string }[];
-    doctors: { id: string; first_name: string; last_name: string }[];
-    companies: Pick<InsuranceCompany, 'id' | 'name'>[];
-    packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];
     hasActiveVisit: boolean;
 }
 
@@ -144,7 +154,7 @@ export interface ActiveVisitsPageProps {
     };
 }
 
-export interface ReturningPatientsPageProps {
+export interface ReturningPatientsPageProps extends VisitFormOptions {
     patients: PaginatedList<Patient> | Patient[];
     filters: {
         search: string | null;
@@ -154,4 +164,5 @@ export interface ReturningPatientsPageProps {
 export interface VisitShowPageProps {
     visit: PatientVisit;
     availableTransitions: { value: string; label: string }[];
+    completionCheck?: VisitCompletionCheck;
 }
