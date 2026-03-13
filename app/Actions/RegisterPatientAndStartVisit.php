@@ -26,7 +26,7 @@ final class RegisterPatientAndStartVisit
             $activeBranch = BranchContext::getActiveBranch();
             $userId = Auth::id();
 
-            $patient = Patient::create([
+            $patient = Patient::query()->create([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'middle_name' => $data['middle_name'] ?? null,
@@ -46,16 +46,16 @@ final class RegisterPatientAndStartVisit
                 'religion' => $data['religion'] ?? null,
                 'country_id' => $data['country_id'] ?? null,
                 'blood_group' => $data['blood_group'] ?? null,
-                'patient_number' => self::generatePatientNumber(),
+                'patient_number' => $this->generatePatientNumber(),
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ]);
 
-            $visit = PatientVisit::create([
+            $visit = PatientVisit::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_id' => $patient->id,
                 'facility_branch_id' => $activeBranch?->id,
-                'visit_number' => self::generateVisitNumber($activeBranch?->name),
+                'visit_number' => $this->generateVisitNumber($activeBranch?->name),
                 'visit_type' => $data['visit_type'],
                 'status' => VisitStatus::REGISTERED,
                 'clinic_id' => $data['clinic_id'] ?? null,
@@ -67,7 +67,7 @@ final class RegisterPatientAndStartVisit
                 'updated_by' => $userId,
             ]);
 
-            VisitPayer::create([
+            VisitPayer::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_visit_id' => $visit->id,
                 'billing_type' => $data['billing_type'] ?? PayerType::CASH->value,
@@ -88,10 +88,10 @@ final class RegisterPatientAndStartVisit
         });
     }
 
-    private static function generatePatientNumber(): string
+    private function generatePatientNumber(): string
     {
         $activeBranch = BranchContext::getActiveBranch();
-        $prefix = self::branchInitials($activeBranch?->name ?? null, 'HSP');
+        $prefix = $this->branchInitials($activeBranch?->name ?? null, 'HSP');
 
         $latest = Patient::query()
             ->where('patient_number', 'like', sprintf('%s-%%', $prefix))
@@ -107,9 +107,9 @@ final class RegisterPatientAndStartVisit
         return sprintf('%s-%06d', $prefix, $nextNumber);
     }
 
-    private static function generateVisitNumber(?string $branchName): string
+    private function generateVisitNumber(?string $branchName): string
     {
-        $prefix = self::branchInitials($branchName, 'VIS');
+        $prefix = $this->branchInitials($branchName, 'VIS');
 
         $latest = PatientVisit::query()
             ->where('visit_number', 'like', sprintf('%s-%%', $prefix))
@@ -125,9 +125,9 @@ final class RegisterPatientAndStartVisit
         return sprintf('%s-%06d', $prefix, $nextNumber);
     }
 
-    private static function branchInitials(?string $branchName, string $fallback): string
+    private function branchInitials(?string $branchName, string $fallback): string
     {
-        $name = mb_strtoupper(trim((string) $branchName));
+        $name = mb_strtoupper(mb_trim((string) $branchName));
         if ($name === '') {
             return $fallback;
         }
@@ -147,6 +147,6 @@ final class RegisterPatientAndStartVisit
             }
         }
 
-        return str_pad(mb_substr($initials, 0, 3), 3, 'X');
+        return mb_str_pad(mb_substr($initials, 0, 3), 3, 'X');
     }
 }

@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\AllergyReaction;
 use App\Enums\AllergySeverity;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -17,7 +18,7 @@ final class UpdatePatientAllergyRequest extends FormRequest
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

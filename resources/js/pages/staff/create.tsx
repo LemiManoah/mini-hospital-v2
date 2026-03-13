@@ -14,7 +14,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type StaffCreatePageProps } from '@/types/staff';
 import { Form, Head, Link } from '@inertiajs/react';
-import { CheckCircle2, LoaderCircle, User, X } from 'lucide-react';
+import { CheckCircle2, LoaderCircle, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -32,7 +32,7 @@ export default function StaffCreate({
     const [positionId, setPositionId] = useState<string>('');
     const [branchId, setBranchId] = useState<string>('');
     const [staffType, setStaffType] = useState<string>('');
-    const [isActive, setIsActive] = useState(true);
+    const [isActive, _setIsActive] = useState(true);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

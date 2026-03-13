@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\AllergyReaction;
 use App\Enums\AllergySeverity;
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -92,7 +93,8 @@ final class PatientAllergy extends Model
     /**
      * Scope to get only active allergies
      */
-    public function scopeActive($query)
+    #[Scope]
+    protected function active($query)
     {
         return $query->where('is_active', true);
     }
@@ -100,7 +102,8 @@ final class PatientAllergy extends Model
     /**
      * Scope to get allergies by severity
      */
-    public function scopeBySeverity($query, AllergySeverity $severity)
+    #[Scope]
+    protected function bySeverity($query, AllergySeverity $severity)
     {
         return $query->where('severity', $severity);
     }
@@ -108,7 +111,7 @@ final class PatientAllergy extends Model
     /**
      * Get the severity label
      */
-    public function getSeverityLabelAttribute(): string
+    protected function getSeverityLabelAttribute(): string
     {
         return $this->severity->label();
     }
@@ -116,7 +119,7 @@ final class PatientAllergy extends Model
     /**
      * Get the severity color
      */
-    public function getSeverityColorAttribute(): string
+    protected function getSeverityColorAttribute(): string
     {
         return $this->severity->color();
     }
@@ -124,7 +127,7 @@ final class PatientAllergy extends Model
     /**
      * Get the reaction label
      */
-    public function getReactionLabelAttribute(): string
+    protected function getReactionLabelAttribute(): string
     {
         return $this->reaction->label();
     }
@@ -132,7 +135,7 @@ final class PatientAllergy extends Model
     /**
      * Get the reaction color
      */
-    public function getReactionColorAttribute(): string
+    protected function getReactionColorAttribute(): string
     {
         return $this->reaction->color();
     }

@@ -109,14 +109,14 @@ final readonly class PatientController
                 ->where('type', 'medical')
                 ->orderBy('first_name')
                 ->get(),
-            'visitTypes' => collect(VisitType::cases())->map(fn ($case) => [
+            'visitTypes' => collect(VisitType::cases())->map(fn ($case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
-            'maritalStatusOptions' => self::enumOptions(MaritalStatus::cases()),
-            'bloodGroupOptions' => self::enumOptions(BloodGroup::cases()),
-            'religionOptions' => self::enumOptions(Religion::cases()),
-            'kinRelationshipOptions' => self::enumOptions(KinRelationship::cases()),
+            'maritalStatusOptions' => $this->enumOptions(MaritalStatus::cases()),
+            'bloodGroupOptions' => $this->enumOptions(BloodGroup::cases()),
+            'religionOptions' => $this->enumOptions(Religion::cases()),
+            'kinRelationshipOptions' => $this->enumOptions(KinRelationship::cases()),
         ]);
     }
 
@@ -139,10 +139,10 @@ final readonly class PatientController
             'patient' => $patient,
             'countries' => Country::query()->select('id', 'country_name')->orderBy('country_name')->get(),
             'addresses' => Address::query()->select('id', 'city', 'district')->orderBy('city')->get(),
-            'maritalStatusOptions' => self::enumOptions(MaritalStatus::cases()),
-            'bloodGroupOptions' => self::enumOptions(BloodGroup::cases()),
-            'religionOptions' => self::enumOptions(Religion::cases()),
-            'kinRelationshipOptions' => self::enumOptions(KinRelationship::cases()),
+            'maritalStatusOptions' => $this->enumOptions(MaritalStatus::cases()),
+            'bloodGroupOptions' => $this->enumOptions(BloodGroup::cases()),
+            'religionOptions' => $this->enumOptions(Religion::cases()),
+            'kinRelationshipOptions' => $this->enumOptions(KinRelationship::cases()),
         ]);
     }
 
@@ -167,7 +167,7 @@ final readonly class PatientController
             'address',
             'allergies:id,patient_id,allergen_id,reaction,severity,is_active',
             'allergies.allergen:id,name',
-            'visits' => static function ($query) {
+            'visits' => static function ($query): void {
                 $query->with([
                     'clinic:id,clinic_name',
                     'doctor:id,first_name,last_name',
@@ -190,16 +190,16 @@ final readonly class PatientController
         return Inertia::render('patient/show', [
             'patient' => $patient,
             'stats' => $stats,
-            'visitTypes' => collect(VisitType::cases())->map(fn ($case) => [
+            'visitTypes' => collect(VisitType::cases())->map(fn ($case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
             'allergens' => Allergen::query()->select('id', 'name')->orderBy('name')->get(),
-            'severityOptions' => collect(AllergySeverity::cases())->map(fn ($case) => [
+            'severityOptions' => collect(AllergySeverity::cases())->map(fn ($case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
-            'reactionOptions' => collect(AllergyReaction::cases())->map(fn ($case) => [
+            'reactionOptions' => collect(AllergyReaction::cases())->map(fn ($case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
@@ -218,10 +218,10 @@ final readonly class PatientController
     }
 
     /**
-     * @param array<int, object{value: string, label: string}> $cases
+     * @param  array<int, object{value: string, label: string}>  $cases
      * @return array<int, array{value: string, label: string}>
      */
-    private static function enumOptions(array $cases): array
+    private function enumOptions(array $cases): array
     {
         return collect($cases)
             ->map(static fn ($case): array => [

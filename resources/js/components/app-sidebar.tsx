@@ -5,7 +5,6 @@ import {
     Building2,
     FlaskConical,
     LayoutGrid,
-    Package,
     Settings2,
     Shield,
     Stethoscope,

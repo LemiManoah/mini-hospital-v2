@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\TransitionPatientVisitStatus;
 use App\Enums\PayerType;
 use App\Enums\VisitStatus;
+use App\Models\FacilityBranch;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\VisitPayer;
@@ -95,10 +96,10 @@ final class PatientVisitController
         }
 
         $validated = $request->validate([
-            'visit_type' => 'required|string',
-            'clinic_id' => 'nullable|uuid|exists:clinics,id',
-            'doctor_id' => 'nullable|uuid|exists:staff,id',
-            'is_emergency' => 'nullable|boolean',
+            'visit_type' => ['required', 'string'],
+            'clinic_id' => ['nullable', 'uuid', 'exists:clinics,id'],
+            'doctor_id' => ['nullable', 'uuid', 'exists:staff,id'],
+            'is_emergency' => ['nullable', 'boolean'],
             'billing_type' => ['required', Rule::in(['cash', 'insurance'])],
             'insurance_company_id' => ['nullable', 'required_if:billing_type,insurance', 'uuid', 'exists:insurance_companies,id'],
             'insurance_package_id' => ['nullable', 'required_if:billing_type,insurance', 'uuid', 'exists:insurance_packages,id'],
@@ -106,7 +107,7 @@ final class PatientVisitController
 
         DB::transaction(static function () use ($patient, $validated): void {
             $activeBranch = BranchContext::getActiveBranch();
-            $prefix = $activeBranch ? strtoupper(mb_substr($activeBranch->name, 0, 3)) : 'VIS';
+            $prefix = $activeBranch instanceof FacilityBranch ? mb_strtoupper(mb_substr($activeBranch->name, 0, 3)) : 'VIS';
             $userId = Auth::id();
 
             $latest = PatientVisit::query()
@@ -120,7 +121,7 @@ final class PatientVisitController
                 $nextNumber = ((int) $matches['num']) + 1;
             }
 
-            $visit = PatientVisit::create([
+            $visit = PatientVisit::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_id' => $patient->id,
                 'facility_branch_id' => $activeBranch?->id,
@@ -136,7 +137,7 @@ final class PatientVisitController
                 'updated_by' => $userId,
             ]);
 
-            VisitPayer::create([
+            VisitPayer::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_visit_id' => $visit->id,
                 'billing_type' => $validated['billing_type'],

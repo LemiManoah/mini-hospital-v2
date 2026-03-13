@@ -56,8 +56,7 @@ final readonly class PatientAllergyController
 
         $patient->allergies()->create($validated);
 
-        return redirect()
-            ->route('patients.show', $patient)
+        return to_route('patients.show', $patient)
             ->with('success', 'Allergy recorded successfully');
     }
 
@@ -84,8 +83,7 @@ final readonly class PatientAllergyController
 
         $patientAllergy->update($validated);
 
-        return redirect()
-            ->route('patients.allergies.index', $patient)
+        return to_route('patients.allergies.index', $patient)
             ->with('success', 'Allergy updated successfully');
     }
 
@@ -95,8 +93,7 @@ final readonly class PatientAllergyController
 
         $patientAllergy->delete();
 
-        return redirect()
-            ->route('patients.allergies.index', $patient)
+        return to_route('patients.allergies.index', $patient)
             ->with('success', 'Allergy deleted successfully');
     }
 
@@ -105,20 +102,17 @@ final readonly class PatientAllergyController
         $this->ensureBelongsToPatient($patient, $patientAllergy);
 
         $patientAllergy->update([
-            'is_active' => !$patientAllergy->is_active,
+            'is_active' => ! $patientAllergy->is_active,
         ]);
 
         $status = $patientAllergy->is_active ? 'activated' : 'deactivated';
 
-        return redirect()
-            ->route('patients.allergies.index', $patient)
-            ->with('success', "Allergy {$status} successfully");
+        return to_route('patients.allergies.index', $patient)
+            ->with('success', sprintf('Allergy %s successfully', $status));
     }
 
     private function ensureBelongsToPatient(Patient $patient, PatientAllergy $patientAllergy): void
     {
-        if ($patientAllergy->patient_id !== $patient->id) {
-            throw new ModelNotFoundException();
-        }
+        throw_if($patientAllergy->patient_id !== $patient->id, ModelNotFoundException::class);
     }
 }

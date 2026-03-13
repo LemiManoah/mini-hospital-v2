@@ -100,9 +100,9 @@ export default function PatientIndex({ patients, filters }: PatientIndexPageProp
                                             </Button>
                                             <DeleteConfirmationModal
                                                 title="Delete Patient"
-                                                description={`Are you sure you want to delete \"${fullName}\"? This action cannot be undone.`}
+                                                description={`Are you sure you want to delete "${fullName}"? This action cannot be undone.`}
                                                 action={{ action: `/patients/${patient.id}`, method: 'delete' }}
-                                                onSuccess={() => toast.success(`Patient \"${fullName}\" deleted successfully.`)}
+                                                onSuccess={() => toast.success(`Patient "${fullName}" deleted successfully.`)}
                                                 trigger={<Button variant="destructive" size="sm">Delete</Button>}
                                             />
                                         </div>

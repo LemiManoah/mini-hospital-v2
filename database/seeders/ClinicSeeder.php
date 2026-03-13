@@ -14,15 +14,15 @@ final class ClinicSeeder extends Seeder
 {
     public function run(): void
     {
-        $tenant = Tenant::first();
-        if (!$tenant) {
+        $tenant = Tenant::query()->first();
+        if (! $tenant) {
             return;
         }
 
-        $branch = FacilityBranch::where('tenant_id', $tenant->id)->first();
-        $departments = Department::where('tenant_id', $tenant->id)->take(3)->get();
+        $branch = FacilityBranch::query()->where('tenant_id', $tenant->id)->first();
+        $departments = Department::query()->where('tenant_id', $tenant->id)->take(3)->get();
 
-        if (!$branch || $departments->isEmpty()) {
+        if (! $branch || $departments->isEmpty()) {
             return;
         }
 
@@ -51,16 +51,13 @@ final class ClinicSeeder extends Seeder
         ];
 
         foreach ($clinics as $clinicData) {
-            Clinic::updateOrCreate(
-                [
-                    'tenant_id' => $tenant->id,
-                    'clinic_code' => $clinicData['clinic_code'],
-                ],
-                array_merge($clinicData, [
-                    'branch_id' => $branch->id,
-                    'status' => 'active',
-                ])
-            );
+            Clinic::query()->updateOrCreate([
+                'tenant_id' => $tenant->id,
+                'clinic_code' => $clinicData['clinic_code'],
+            ], array_merge($clinicData, [
+                'branch_id' => $branch->id,
+                'status' => 'active',
+            ]));
         }
     }
 }

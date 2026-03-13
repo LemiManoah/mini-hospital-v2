@@ -166,21 +166,21 @@ export default function PatientCreate({
                                         <Label htmlFor="country_id">Country</Label>
                                         <Select value={countryId} onValueChange={setCountryId}>
                                             <SelectTrigger id="country_id"><SelectValue placeholder="Select country" /></SelectTrigger>
-                                            <SelectContent>{countries.length > 0 ? countries.map((country) => <SelectItem key={country.id} value={country.id}>{country.country_name}</SelectItem>) : <SelectItem disabled value={''}>No countries available</SelectItem>}</SelectContent>
+                                            <SelectContent>{countries.length > 0 ? countries.map((country) => <SelectItem key={country.id} value={country.id}>{country.country_name}</SelectItem>) : <SelectItem disabled value="none">No countries available</SelectItem>}</SelectContent>
                                         </Select>
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="address_id">City / Address</Label>
                                         <Select value={addressId} onValueChange={setAddressId}>
                                             <SelectTrigger id="address_id"><SelectValue placeholder="Select address" /></SelectTrigger>
-                                            <SelectContent>{addresses.length > 0 ? addresses.map((address) => <SelectItem key={address.id} value={address.id}>{address.city}{address.district ? `, ${address.district}` : ''}</SelectItem>) : <SelectItem  disabled value={''}>No addresses available</SelectItem>}</SelectContent>
+                                            <SelectContent>{addresses.length > 0 ? addresses.map((address) => <SelectItem key={address.id} value={address.id}>{address.city}{address.district ? `, ${address.district}` : ''}</SelectItem>) : <SelectItem disabled value="none">No addresses available</SelectItem>}</SelectContent>
                                         </Select>
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="marital_status">Marital Status</Label>
                                         <Select value={maritalStatus} onValueChange={setMaritalStatus}>
                                             <SelectTrigger id="marital_status"><SelectValue placeholder="Select marital status" /></SelectTrigger>
-                                            <SelectContent>{maritalStatusOptions.length > 0 ? maritalStatusOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>) : <SelectItem disabled value={''}>No marital status options available</SelectItem>}</SelectContent>
+                                            <SelectContent>{maritalStatusOptions.length > 0 ? maritalStatusOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>) : <SelectItem disabled value="none">No marital status options available</SelectItem>}</SelectContent>
                                         </Select>
                                     </div>
                                     <div className="grid gap-2"><Label htmlFor="occupation">Occupation</Label><Input id="occupation" name="occupation" /></div>
@@ -188,14 +188,14 @@ export default function PatientCreate({
                                         <Label htmlFor="religion">Religion</Label>
                                         <Select value={religion} onValueChange={setReligion}>
                                             <SelectTrigger id="religion"><SelectValue placeholder="Select religion" /></SelectTrigger>
-                                            <SelectContent>{religionOptions.length > 0 ? religionOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>) : <SelectItem disabled value={''}>No religion options available</SelectItem>}</SelectContent>
+                                            <SelectContent>{religionOptions.length > 0 ? religionOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>) : <SelectItem disabled value="none">No religion options available</SelectItem>}</SelectContent>
                                         </Select>
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="blood_group">Blood Group</Label>
                                         <Select value={bloodGroup} onValueChange={setBloodGroup}>
                                             <SelectTrigger id="blood_group"><SelectValue placeholder="Select blood group" /></SelectTrigger>
-                                            <SelectContent>{bloodGroupOptions.length > 0 ? bloodGroupOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>) : <SelectItem disabled value={''}>No blood group options available</SelectItem>}</SelectContent>
+                                            <SelectContent>{bloodGroupOptions.length > 0 ? bloodGroupOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>) : <SelectItem disabled value="none">No blood group options available</SelectItem>}</SelectContent>
                                         </Select>
                                     </div>
                                 </CardContent>
@@ -210,7 +210,7 @@ export default function PatientCreate({
                                         <Label htmlFor="next_of_kin_relationship">Relationship</Label>
                                         <Select value={kinRelationship} onValueChange={setKinRelationship}>
                                             <SelectTrigger id="next_of_kin_relationship"><SelectValue placeholder="Select relationship" /></SelectTrigger>
-                                            <SelectContent>{kinRelationshipOptions.length > 0 ? kinRelationshipOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>) : <SelectItem disabled value={''}>No relationship options available</SelectItem>}</SelectContent>
+                                            <SelectContent>{kinRelationshipOptions.length > 0 ? kinRelationshipOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>) : <SelectItem disabled value="none">No relationship options available</SelectItem>}</SelectContent>
                                         </Select>
                                     </div>
                                 </CardContent>

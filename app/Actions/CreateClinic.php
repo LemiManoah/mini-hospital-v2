@@ -13,6 +13,6 @@ final readonly class CreateClinic
      */
     public function handle(array $data): Clinic
     {
-        return Clinic::create($data);
+        return Clinic::query()->create($data);
     }
 }

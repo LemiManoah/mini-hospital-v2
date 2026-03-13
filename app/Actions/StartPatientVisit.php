@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\PayerType;
 use App\Enums\VisitStatus;
+use App\Models\FacilityBranch;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\VisitPayer;
@@ -16,14 +17,14 @@ use Illuminate\Support\Facades\DB;
 final class StartPatientVisit
 {
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function handle(Patient $patient, array $data): PatientVisit
     {
         /** @var PatientVisit */
         return DB::transaction(static function () use ($patient, $data): PatientVisit {
             $activeBranch = BranchContext::getActiveBranch();
-            $prefix = $activeBranch ? strtoupper(mb_substr($activeBranch->name, 0, 3)) : 'VIS';
+            $prefix = $activeBranch instanceof FacilityBranch ? mb_strtoupper(mb_substr($activeBranch->name, 0, 3)) : 'VIS';
             $userId = Auth::id();
 
             $latest = PatientVisit::query()
@@ -37,7 +38,7 @@ final class StartPatientVisit
                 $nextNumber = ((int) $matches['num']) + 1;
             }
 
-            $visit = PatientVisit::create([
+            $visit = PatientVisit::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_id' => $patient->id,
                 'facility_branch_id' => $activeBranch?->id,
@@ -53,7 +54,7 @@ final class StartPatientVisit
                 'updated_by' => $userId,
             ]);
 
-            VisitPayer::create([
+            VisitPayer::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_visit_id' => $visit->id,
                 'billing_type' => $data['billing_type'],

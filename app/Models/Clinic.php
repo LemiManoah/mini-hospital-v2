@@ -65,5 +65,4 @@ final class Clinic extends Model
     {
         return $this->belongsTo(Department::class);
     }
-
 }

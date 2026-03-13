@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Enums\VisitStatus;
+use App\Enums\VisitType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,8 +18,8 @@ return new class extends Migration
             $table->foreignUuid('patient_id')->constrained('patients')->onDelete('cascade');
             $table->foreignUuid('facility_branch_id')->nullable()->constrained('facility_branches')->nullOnDelete();
             $table->string('visit_number', 50)->comment('Unique visit identifier');
-            $table->enum('visit_type', array_column(App\Enums\VisitType::cases(), 'value'))->default(App\Enums\VisitType::OPD_CONSULTATION->value);
-            $table->enum('status', array_column(App\Enums\VisitStatus::cases(), 'value'))->default(App\Enums\VisitStatus::REGISTERED->value);
+            $table->enum('visit_type', array_column(VisitType::cases(), 'value'))->default(VisitType::OPD_CONSULTATION->value);
+            $table->enum('status', array_column(VisitStatus::cases(), 'value'))->default(VisitStatus::REGISTERED->value);
             $table->foreignUuid('clinic_id')->nullable()->constrained('clinics')->nullOnDelete();
             $table->foreignUuid('doctor_id')->nullable()->constrained('staff')->nullOnDelete();
             $table->boolean('is_emergency')->default(false);
