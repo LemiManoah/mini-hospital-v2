@@ -1,5 +1,7 @@
 import { InsuranceCompany } from './insurance-company';
 import { InsurancePackage } from './insurance-package';
+import { Clinic } from './clinic';
+
 
 export interface VisitPayer {
     id: string;
@@ -71,7 +73,7 @@ interface PatientBaseFormProps {
 export interface PatientCreatePageProps extends PatientBaseFormProps {
     companies: Pick<InsuranceCompany, 'id' | 'name'>[];
     packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];
-    clinics: { id: string; name: string }[];
+    clinics: { id: string; clinic_name: string }[];
     doctors: { id: string; first_name: string; last_name: string }[];
     visitTypes: { value: string; label: string }[];
 }
@@ -101,7 +103,7 @@ export interface PatientVisit {
     started_at: string | null;
     completed_at: string | null;
     created_at: string;
-    clinic?: { id: string; name: string } | null;
+    clinic?: { id: string; clinic_name: string } | null;
     doctor?: { id: string; first_name: string; last_name: string } | null;
     payer?: VisitPayer | null;
 }
@@ -124,7 +126,7 @@ export interface PatientShowPageProps {
     allergens: { id: string; name: string }[];
     severityOptions: { value: string; label: string }[];
     reactionOptions: { value: string; label: string }[];
-    clinics: { id: string; name: string }[];
+    clinics: { id: string; clinic_name: string }[];
     doctors: { id: string; first_name: string; last_name: string }[];
     companies: Pick<InsuranceCompany, 'id' | 'name'>[];
     packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];

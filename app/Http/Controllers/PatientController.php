@@ -134,7 +134,7 @@ final readonly class PatientController
             'allergies.allergen:id,name',
             'visits' => static function ($query) {
                 $query->with([
-                    'clinic:id,name',
+                    'clinic:id,clinic_name',
                     'doctor:id,first_name,last_name',
                     'payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
                     'payer.insuranceCompany:id,name',
@@ -168,7 +168,7 @@ final readonly class PatientController
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
-            'clinics' => Clinic::query()->select('id', 'name')->orderBy('name')->get(),
+            'clinics' => Clinic::query()->select('id', 'clinic_name')->orderBy('name')->get(),
             'doctors' => Staff::query()
                 ->select('id', 'first_name', 'last_name')
                 ->where('type', 'medical')
