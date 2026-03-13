@@ -240,9 +240,14 @@ export default function PatientShow({
                                                         {company ? <span>Insurance: {company}{packageName ? ` / ${packageName}` : ''}</span> : null}
                                                     </div>
                                                 </div>
-                                                <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses(visit.status)}`}>
-                                                    {visit.status.replaceAll('_', ' ')}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <Button variant="outline" size="sm" asChild>
+                                                        <Link href={`/visits/${visit.id}`}>Open Visit</Link>
+                                                    </Button>
+                                                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses(visit.status)}`}>
+                                                        {visit.status.replaceAll('_', ' ')}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -294,3 +299,4 @@ export default function PatientShow({
         </AppLayout>
     );
 }
+

@@ -1,411 +1,262 @@
-# Patient Visit Module - Exhaustive Implementation Plan
+# Patient Visit Module - Implementation Status
 
-**Date:** March 12, 2026
-**Status:** Planning only (pre-build)
+**Date:** March 13, 2026
+**Status:** Phase 1 partially implemented
 **Primary Reference:** `hospital_database_schema.md`
 
 ---
 
-## 1) Goal and Scope
+## 1) Goal
 
-Build a complete encounter lifecycle for OPD and ER from check-in to closure, with tight integration into triage, consultation, orders (lab/imaging/pharmacy), IPD admission, and billing.
+Keep patient demographics on `patients`, keep payer choice on the visit, and make front-desk registration a single transaction that creates:
+- patient
+- visit
+- visit payer snapshot
 
-In scope:
-- Visit creation (walk-in and from appointment)
-- Queue and triage workflow
-- Consultation workflow
-- Clinical orders linked to visit
-- Visit billing and payments
-- Visit timeline/history
-- Auditability, permissions, and reporting
-
-Out of scope (phase-later):
-- Advanced claim adjudication rules engine
-- Cross-facility referral network integrations
-- Patient portal/self check-in
+The visit workflow now targets these statuses:
+- `registered`
+- `in_progress`
+- `awaiting_payment` (defined, not yet used in flow)
+- `completed`
+- `cancelled`
 
 ---
 
-## 2) Current State (Repo)
+## 2) What Was Done
 
-Implemented now:
-- Patient registration module exists (`Patient`, patient pages)
-- No visit-related models/controllers/pages yet
+### 2.1 Registration flow
+Implemented a single registration flow that creates patient + visit + payer in one DB transaction.
 
-Gap:
-- `patient_visits` workflow is not implemented in application code
+Done:
+- Added `RegisterPatientAndStartVisit` action
+- Patient create screen now includes visit fields and billing type
+- Registration success message now reflects both patient creation and visit start
+
+Current behavior:
+- Front desk can register a new patient and immediately start a visit from one screen
+- If any part fails, the transaction rolls back
+
+### 2.2 Payer ownership moved from patient to visit
+The design was changed so payer data is no longer stored on the patient record.
+
+Done:
+- Removed patient-level default payer from `patients` migration
+- Replaced patient insurance persistence with visit-level payer persistence
+- Added `visit_payers` table with:
+  - `patient_visit_id`
+  - `billing_type`
+  - `insurance_company_id`
+  - `insurance_package_id`
+- Left out verification fields as requested:
+  - `member_id`
+  - `verification_status`
+  - `approval_reference`
+  - `verified_at`
+  - `verified_by`
+
+Current principle now implemented:
+- patient = demographics only
+- visit = workflow record
+- visit payer = billing snapshot for that visit
+
+### 2.3 Visit model and status defaults
+Done:
+- Added `facility_branch_id` to visit
+- Renamed timing semantics to `registered_at` and `registered_by`
+- Simplified `VisitStatus` enum to:
+  - `registered`
+  - `in_progress`
+  - `awaiting_payment`
+  - `completed`
+  - `cancelled`
+- Added `TransitionPatientVisitStatus` action
+- Implemented automatic `started_at` stamping when moving to `in_progress`
+
+Practical defaults implemented:
+- one active non-terminal visit per patient
+- no payment gating enforced yet
+- payer snapshot is frozen on visit creation
+- `awaiting_payment` exists but is not wired into the workflow yet
+
+### 2.4 Existing patient visit start flow updated
+Done:
+- Existing patients can still start new visits from the patient profile
+- Starting a visit now requires selecting a per-visit billing type
+- Insurance selection now happens per visit instead of per patient
+
+### 2.5 Frontend updates
+Done:
+- Reworked patient registration page into `Register Patient & Start Visit`
+- Removed billing section from patient edit page
+- Updated patient profile page to display payer details per visit
+- Simplified patient list page to stop showing patient-owned insurance state
+- Updated TypeScript patient/visit types to match the new model
 
 ---
 
-## 3) Core Data Model from Schema
+## 3) What Still Needs To Be Done
 
-Base tables from `hospital_database_schema.md` that power visits:
-- `patient_visits`
-- `triage_records`
-- `vital_signs`
-- `consultations`
-- `lab_requests`, `lab_request_items`, `lab_specimens`, `lab_results`
-- `imaging_requests`, `imaging_studies`, `radiology_reports`
-- `prescriptions`, `prescription_items`, `dispensing_records`
-- `ipd_admissions`
-- `visit_charges`, `visit_billings`, `payments`
+### 3.1 Clinical workflow
+Not done yet:
+- triage records
+- vital signs
+- consultation records
+- automatic status promotion from actual clinical activity
 
-Visit status enum reference:
-- `registered`, `triaged`, `waiting_consultation`, `in_consultation`, `waiting_lab`, `waiting_imaging`, `waiting_pharmacy`, `admitted`, `discharged`, `cancelled`
+Needed next:
+- create `triage_records`
+- create `consultations`
+- wire status transitions so any first clinical action moves visit from `registered` to `in_progress`
 
----
+### 3.2 Queue workflow
+Not done yet:
+- triage queue entries
+- clinic queue entries
+- queue dashboard
+- queue numbering and priority management
 
-## 4) Required Schema Corrections Before Build
+Needed next:
+- queue table or event table
+- registration-time optional queue insertion
+- visit list / queue page for staff
 
-Fix these inconsistencies first (in migration files, not only docs):
-- `patient_visits.visit_type` declaration appears malformed in docs (`enum('visit_type', [new Enum(VisitType::class)])->defalt()`) and should use Laravel enum casting style consistently.
-- `patient_visits.status` default is unspecified (`default()` in docs). Set explicit default: `registered`.
-- `radiology_reports` has a leading whitespace typo in `' communicated_at'`; correct to `communicated_at`.
-- Index note references `visit_charges.department_id`, but table does not define `department_id`; either add column or remove that index.
+### 3.3 Visit detail module
+Current patient profile only shows summary cards and visit history.
 
----
+Still needed:
+- dedicated visit details page
+- visit timeline
+- clinician-facing visit workspace
+- structured encounter notes
 
-## 5) Additional Fields to Add (Recommended)
+### 3.4 Billing workflow
+Only payer snapshot is in place. Full billing is not.
 
-To make visits production-ready, extend `patient_visits` and related structures.
+Still needed:
+- `visit_charges`
+- `visit_billings`
+- `payments`
+- price freeze on charge creation
+- invoice and payment summaries
+- optional payment-gating logic before care continues
 
-### 5.1 patient_visits (add)
-- `source_type` enum: `walk_in`, `appointment`, `referral`, `transfer`
-- `service_area` enum: `opd`, `emergency`, `specialty`, `telemedicine`
-- `queue_number` integer nullable
-- `queue_priority` enum: `normal`, `priority`, `emergency`
-- `arrival_datetime` timestamp
-- `check_in_datetime` timestamp nullable
-- `started_consultation_at` timestamp nullable
-- `ended_consultation_at` timestamp nullable
-- `disposition` enum: `discharged`, `admitted`, `referred`, `transferred`, `left_against_advice`, `deceased` nullable
-- `payer_type` enum: `cash`, `insurance`, `corporate`, `waiver`
-- `patient_insurance_id` uuid nullable (snapshot pointer used for this visit)
-- `authorization_code` string nullable
-- `referral_source` string nullable
-- `referral_document_path` string nullable
-- `cancellation_reason` text nullable
-- `clinical_summary` text nullable
+### 3.5 Insurance workflow
+Minimal insurance selection is implemented, but claim workflow is not.
 
-Why: supports queue operations, per-visit payer decisions, and lifecycle analytics without joining many tables.
+Still needed:
+- package eligibility rules
+- package-based pricing resolution
+- insurer approval workflow if required later
+- claim/invoice generation for insurance companies
 
-### 5.2 triage_records (add)
-- `triage_wait_minutes` integer nullable
-- `seen_by_doctor_target_minutes` integer nullable
-- `red_flag_symptoms` json nullable
-- `infection_screening` json nullable
-
-Why: quality metrics and public-health screening.
-
-### 5.3 consultations (add)
-- `consultation_type` enum: `initial`, `review`, `procedure_follow_up`
-- `provisional_diagnosis` text nullable
-- `final_diagnosis` text nullable
-- `requires_follow_up` boolean default false
-- `follow_up_date` date nullable
-
-### 5.4 visit_charges (add)
-- `department_id` uuid nullable (to match reporting index requirement)
-- `source_table` string nullable (e.g., `lab_requests`, `prescription_items`)
-- `source_id` uuid nullable
-
-Why: traceability from generated charges to originating clinical actions.
-
-### 5.5 New supporting tables
+### 3.6 Audit and timeline support
+Still needed:
 - `visit_status_logs`
-  - `visit_id`, `from_status`, `to_status`, `changed_by`, `changed_at`, `reason`
-- `visit_queue_events`
-  - `visit_id`, `event_type`, `event_time`, `actor_id`, `notes`
+- immutable visit activity timeline
+- actor and reason capture for transitions
 
-Why: immutable timeline and audit-friendly operations.
+### 3.7 Permissions and policies
+Still needed:
+- visit-specific permissions
+- triage permissions
+- billing/payment permissions
+- close/cancel visit authorization rules
 
----
-
-## 6) Domain Rules and Lifecycle
-
-### 6.1 Visit lifecycle (state machine)
-1. `registered`
-2. `triaged`
-3. `waiting_consultation`
-4. `in_consultation`
-5. branching to `waiting_lab` / `waiting_imaging` / `waiting_pharmacy`
-6. terminal: `discharged` or `admitted` or `cancelled`
-
-### 6.2 Hard business rules
-- One active visit per patient per service area (configurable override for ER).
-- Triage required before non-emergency consultation.
-- Cannot close visit with pending critical orders unless override reason captured.
-- Admission requires consultation outcome `admitted`.
-- Insurance visit requires active patient insurance and validity covering `visit_date`.
-- Payments cannot exceed outstanding balance unless refund flow is triggered.
-
-### 6.3 Soft rules
-- Auto-prioritize queue for red/yellow triage grades.
-- Auto-transition statuses when major actions complete.
+### 3.8 Testing
+Not done yet for this refactor:
+- feature tests for single-transaction registration
+- feature tests for starting a visit on an existing patient
+- guard test for one active visit rule
+- status transition tests for `TransitionPatientVisitStatus`
 
 ---
 
-## 7) Backend Implementation Plan (Laravel)
+## 4) Current Gaps / Known Follow-up Items
 
-### 7.1 Enums
-Create/confirm enums:
-- `VisitType`
-- `VisitStatus`
-- `VisitSourceType`
-- `QueuePriority`
-- `DispositionType`
-- `ConsultationOutcome`
+### 4.1 Migration naming cleanup
+The former patient insurance migration file was reused to create `visit_payers`.
 
-### 7.2 Migrations
-Create in order:
-1. `create_patient_visits_table`
-2. `create_visit_status_logs_table`
-3. `create_visit_queue_events_table`
-4. `create_triage_records_table`
-5. `create_vital_signs_table`
-6. `create_consultations_table`
-7. `create_visit_charges_table`
-8. `create_visit_billings_table`
-9. `create_payments_table`
-10. Alter tables for added fields/indexes
+Follow-up:
+- rename the migration file for clarity if the team wants filenames to match table names exactly
 
-### 7.3 Models and relationships
-Create models:
-- `PatientVisit`, `VisitStatusLog`, `VisitQueueEvent`, `TriageRecord`, `VitalSign`, `Consultation`, `VisitCharge`, `VisitBilling`, `Payment`
+### 4.2 Documentation alignment
+Still needs updating in broader docs:
+- `patient.md`
+- `hospital_database_schema.md`
+- any onboarding notes that still mention patient-owned insurance
 
-Relationship essentials:
-- `Patient hasMany PatientVisit`
-- `PatientVisit belongsTo Patient, Clinic, Doctor, Appointment`
-- `PatientVisit hasOne TriageRecord, Consultation, VisitBilling`
-- `PatientVisit hasMany VisitCharge, VisitStatusLog, VisitQueueEvent`
-- `VisitBilling hasMany Payment`
+### 4.3 Verification status intentionally omitted
+This was intentionally not implemented in this pass.
 
-Apply tenant/branch global scopes where applicable.
-
-### 7.4 Services / Actions (recommended pattern)
-Create actions:
-- `CreateVisit`
-- `CheckInVisit`
-- `TriageVisit`
-- `StartConsultation`
-- `CompleteConsultation`
-- `TransitionVisitStatus`
-- `GenerateVisitCharge`
-- `FinalizeVisitBilling`
-- `RecordVisitPayment`
-- `CloseVisit`
-
-### 7.5 Validation requests
-Create request classes:
-- `StorePatientVisitRequest`
-- `UpdatePatientVisitRequest`
-- `StoreTriageRecordRequest`
-- `StoreConsultationRequest`
-- `StoreVisitChargeRequest`
-- `StorePaymentRequest`
-- `CloseVisitRequest`
-
-### 7.6 Controllers
-- `PatientVisitController` (CRUD + queue endpoints)
-- `VisitTriageController`
-- `VisitConsultationController`
-- `VisitBillingController`
-- `VisitPaymentController`
-- `PatientVisitTimelineController`
-
-### 7.7 Route design
-Add grouped routes:
-- `/visits`
-- `/visits/{visit}/triage`
-- `/visits/{visit}/consultation`
-- `/visits/{visit}/charges`
-- `/visits/{visit}/billing`
-- `/visits/{visit}/payments`
-- `/visits/{visit}/timeline`
-
-### 7.8 Policies and permissions
-Add permissions:
-- `visit.view`, `visit.create`, `visit.update`, `visit.close`
-- `triage.perform`
-- `consultation.perform`
-- `billing.manage`, `payment.receive`
-
-Enforce at controller and UI level.
-
-### 7.9 Events and listeners
-Events:
-- `VisitCreated`
-- `VisitTriaged`
-- `ConsultationCompleted`
-- `VisitAdmitted`
-- `VisitClosed`
-- `PaymentRecorded`
-
-Listeners:
-- queue notification updates
-- automatic billing recalculation
-- audit log creation
+If needed later, add a second pass for:
+- member/policy identifier
+- verification outcome
+- insurer authorization reference
+- who verified and when
 
 ---
 
-## 8) Frontend Implementation Plan
+## 5) Recommended Next Build Buckets
 
-### 8.1 Type definitions
-Create TS types in `resources/js/types/visit.ts`:
-- `PatientVisit`
-- `TriageRecord`
-- `Consultation`
-- `VisitBilling`
-- `VisitTimelineEvent`
+### Bucket 1: Triage foundations
+- create `triage_records`
+- build triage form/page
+- move visit to `in_progress` when triage starts
 
-### 8.2 Pages
-Create pages:
-- `resources/js/pages/visits/index.tsx` (queue/list)
-- `resources/js/pages/visits/create.tsx` (check-in)
-- `resources/js/pages/visits/show.tsx` (timeline)
-- `resources/js/pages/visits/triage.tsx`
-- `resources/js/pages/visits/consultation.tsx`
-- `resources/js/pages/visits/billing.tsx`
+### Bucket 2: Consultation foundations
+- create consultation model/table
+- clinician note workflow
+- complete visit from clinician action
 
-### 8.3 UI sections
-Check-in form sections:
-- Patient and payer selection
-- Visit context (type, clinic, doctor, source)
-- Reason and complaint
-- Queue metadata
+### Bucket 3: Queue operations
+- triage queue entry model/table
+- registration-time queue option
+- queue dashboard for active visits
 
-Visit detail sections:
-- Status timeline
-- Triage snapshot + latest vitals
-- Consultation notes and diagnosis
-- Orders summary (lab/imaging/pharmacy)
-- Financial summary and payments
+### Bucket 4: Billing foundations
+- create `visit_charges`
+- freeze price at charge time
+- add `visit_billings` and `payments`
 
-### 8.4 UX workflow
-- From patient index: `Start Visit`
-- On create success: redirect to visit detail
-- Triage card appears if status is `registered`
-- Consultation card locked until triage complete unless emergency override
-- Billing tab always visible with role-based actions
+### Bucket 5: Visit timeline and audit
+- add `visit_status_logs`
+- add timeline UI on visit details page
+- capture actor/reason on transitions
+
+### Bucket 6: Tests and stabilization
+- feature tests for new registration flow
+- regression tests for patient pages
+- status transition tests
 
 ---
 
-## 9) Billing Integration Plan
+## 6) Definition of Done for the Current Phase
 
-- Charge generation points:
-  - consultation completion
-  - each lab/imaging/procedure request item
-  - dispensed medication
-- Billing recalculation strategy:
-  - synchronous per transaction for totals
-  - fallback nightly reconciliation command
-- Insurance handling:
-  - split patient vs insurance responsibility at visit billing level
-  - persist authorization and claim metadata on billing
+This phase should be considered complete when all of the following are true:
+- front desk can register patient + visit + payer in one transaction
+- payer is no longer patient-owned in active application flow
+- existing patients can start new visits with per-visit payer selection
+- only one active visit is allowed at a time
+- visit status model is simplified and usable for future workflow automation
+- tests cover the registration and visit creation happy paths
 
 ---
 
-## 10) Reporting and Analytics
+## 7) Summary
 
-Add visit KPIs:
-- Daily visits by clinic/doctor/type
-- Waiting time: check-in to triage, triage to doctor
-- Disposition rates (discharged vs admitted)
-- Revenue per visit and collection rate
-- Cancellation and no-consultation rates
+### Implemented now
+- single-screen patient registration plus visit start
+- visit-owned payer snapshot
+- simplified visit statuses
+- one active visit rule
+- patient pages updated to stop treating insurance as patient-owned
 
----
+### Remaining major work
+- triage
+- consultation
+- queueing
+- charges and payments
+- audit timeline
+- tests
 
-## 11) Testing Plan
-
-### 11.1 Unit tests
-- Status transition guard rules
-- Billing math and payment allocation
-- Insurance validity checks
-
-### 11.2 Feature tests
-- Walk-in visit creation
-- Appointment to visit conversion
-- Triage then consultation happy path
-- Admission path
-- Discharge with full payment and with partial payment
-- Permission denial paths
-
-### 11.3 Regression tests
-- Patient module unaffected
-- Existing appointment workflows unaffected
-
----
-
-## 12) Phased Delivery Plan
-
-### Phase 1 - Foundations
-- enums, migrations, models, relationships, factories, seeders
-- visit create/list/show endpoints
-
-### Phase 2 - Clinical workflow
-- triage + vitals + consultation flows
-- status transition automation
-
-### Phase 3 - Financial workflow
-- charges, billing, payments, invoice generation
-
-### Phase 4 - UX hardening
-- queue dashboard, timelines, filters, role-specific UX
-
-### Phase 5 - Reporting and stabilization
-- KPI dashboards, audits, performance tuning, load checks
-
----
-
-## 13) Acceptance Criteria (Definition of Done)
-
-- A staff member can create a visit for walk-in or appointment patient.
-- Queue and triage can be completed and logged with timestamps.
-- Consultation can be documented and outcome updates visit status.
-- Orders and medication can generate traceable visit charges.
-- Billing totals are correct and payments update balance/status.
-- Visit can be closed only when validation rules pass.
-- Full timeline is visible (status logs, clinical events, financial events).
-- Tests cover critical happy paths and guard rails.
-
----
-
-## 14) Risks and Mitigations
-
-- Risk: status drift between modules.
-  - Mitigation: central `TransitionVisitStatus` action + log table.
-- Risk: duplicate or missing charges.
-  - Mitigation: `source_table/source_id` idempotency guard.
-- Risk: queue bottlenecks at peak times.
-  - Mitigation: indexes on `(clinic_id, status, created_at)` and `(doctor_id, status)`.
-- Risk: insurance disputes.
-  - Mitigation: per-visit payer snapshot and authorization capture.
-
----
-
-## 15) Build Checklist (Execution Order)
-
-1. Correct schema inconsistencies listed in Section 4.
-2. Implement added fields and supporting tables from Section 5.
-3. Create enums + models + relationships.
-4. Implement visit lifecycle actions/services.
-5. Add controllers and routes.
-6. Build frontend pages and navigation entry points.
-7. Implement billing auto-charge hooks.
-8. Add tests (unit + feature).
-9. Run migration + seed smoke checks.
-10. UAT with OPD and ER workflows.
-11. Deploy behind feature flag.
-
----
-
-## 16) Recommended Next Build Ticket Split
-
-- Ticket A: Visit foundations (schema + model + CRUD)
-- Ticket B: Queue and triage
-- Ticket C: Consultation + status machine
-- Ticket D: Charges, billing, payments
-- Ticket E: Timeline + reports + hardening
-
-This document is the implementation baseline for patient visit module development.
+This document is now a post-implementation checkpoint for the patient visit module, not just a planning draft.

@@ -66,6 +66,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::resource('insurance-companies', InsuranceCompanyController::class)->except(['show']);
     Route::resource('insurance-packages', InsurancePackageController::class)->except(['show']);
     Route::resource('units', UnitController::class)->except(['show']);
+    Route::get('patients/returning', [PatientController::class, 'returning'])->name('patients.returning');
+    Route::get('visits', [PatientVisitController::class, 'index'])->name('visits.index');
+    Route::get('visits/{visit}', [PatientVisitController::class, 'show'])->name('visits.show');
+    Route::patch('visits/{visit}/status', [PatientVisitController::class, 'updateStatus'])->name('visits.update-status');
     Route::resource('patients', PatientController::class);
     Route::resource('staff', StaffController::class)->except(['show']);
     Route::resource('patients.allergies', PatientAllergyController::class);

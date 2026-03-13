@@ -40,6 +40,8 @@ import { index as indexStaffPositions } from '@/routes/staff-positions';
 import { index as indexSubscriptionPackages } from '@/routes/subscription-packages';
 import { index as indexUnits } from '@/routes/units';
 import { index as indexClinics } from '@/routes/clinics';
+import { index as indexPatients } from '@/routes/patients';
+import { create as createPatients } from '@/routes/patients';
 import { create as createUsers, index as indexUsers } from '@/routes/users';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
@@ -80,15 +82,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             items: [
                 {
                     title: 'Register Patient',
-                    url: '/patients/create',
+                    url: createPatients(),
                 },
                 {
                     title: 'View Patients',
-                    url: '/patients',
+                    url: indexPatients(),
                 },
                 {
                     title: 'Active Visits',
-                    url: dashboard(),
+                    url: '/visits',
+                },
+                {
+                    title: 'Returning Patients',
+                    url: '/patients/returning',
                 },
             ],
         },
@@ -240,4 +246,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </Sidebar>
     );
 }
+
 

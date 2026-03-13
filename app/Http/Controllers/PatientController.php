@@ -61,6 +61,41 @@ final readonly class PatientController
         ]);
     }
 
+    public function returning(Request $request): Response
+    {
+        $search = mb_trim((string) $request->query('search', ''));
+
+        $patients = Patient::query()
+            ->with(['country:id,country_name'])
+            ->whereHas('visits', static fn (Builder $query) => $query->where('status', 'completed'))
+            ->withCount([
+                'visits as completed_visits_count' => static fn (Builder $query) => $query->where('status', 'completed'),
+            ])
+            ->withMax([
+                'visits as last_completed_visit_at' => static fn (Builder $query) => $query->where('status', 'completed'),
+            ], 'completed_at')
+            ->when(
+                $search !== '',
+                static fn (Builder $query) => $query->where(
+                    static fn (Builder $searchQuery) => $searchQuery
+                        ->where('patient_number', 'like', sprintf('%%%s%%', $search))
+                        ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
+                        ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
+                        ->orWhere('phone_number', 'like', sprintf('%%%s%%', $search))
+                )
+            )
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return Inertia::render('patient/returning', [
+            'patients' => $patients,
+            'filters' => [
+                'search' => $search,
+            ],
+        ]);
+    }
+
     public function create(): Response
     {
         return Inertia::render('patient/create', [
@@ -68,7 +103,7 @@ final readonly class PatientController
             'addresses' => Address::query()->select('id', 'city', 'district')->orderBy('city')->get(),
             'companies' => InsuranceCompany::query()->select('id', 'name')->orderBy('name')->get(),
             'packages' => InsurancePackage::query()->select('id', 'name', 'insurance_company_id')->orderBy('name')->get(),
-            'clinics' => Clinic::query()->select('id', 'name')->orderBy('name')->get(),
+            'clinics' => Clinic::query()->select('id', 'clinic_name')->orderBy('clinic_name')->get(),
             'doctors' => Staff::query()
                 ->select('id', 'first_name', 'last_name')
                 ->where('type', 'medical')

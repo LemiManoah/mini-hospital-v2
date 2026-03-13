@@ -308,6 +308,8 @@ If legacy tables exist (`insurance_package_services`, `insurance_package_drugs`,
 
 Core demographic information. Uses UUID for cross-system integration.
 
+> **Note:** Payer information moved to visit level (visit_payers table). Patient stores demographics only.
+
 ```php
 Schema::create('patients', function (Blueprint $table) {
     $table->uuid('id')->primary();
@@ -417,6 +419,24 @@ Schema::create('patient_allergies', function (Blueprint $table) {
 
     $table->index(['patient_id', 'allergen_id']);
     $table->index('severity');
+});
+```
+
+#### visit_payers
+
+Per-visit billing snapshot. Payer is now stored at visit level, not patient level.
+
+```php
+Schema::create('visit_payers', function (Blueprint $table) {
+    $table->uuid('id')->primary();
+    $table->foreignUuid('patient_visit_id')->constrained('patient_visits')->onDelete('cascade');
+    $table->enum('billing_type', ['cash', 'insurance']);
+    $table->foreignUuid('insurance_company_id')->nullable()->constrained('insurance_companies')->nullOnDelete();
+    $table->foreignUuid('insurance_package_id')->nullable()->constrained('insurance_packages')->nullOnDelete();
+    $table->timestamps();
+
+    $table->index('billing_type');
+    $table->index('insurance_company_id');
 });
 ```
 
@@ -689,6 +709,10 @@ Schema::create('appointments', function (Blueprint $table) {
 
 The central encounter record. All clinical activities link here.
 
+**Implementation Status:** ✅ Implemented (March 2026)
+
+Visit Statuses: `registered`, `in_progress`, `awaiting_payment`, `completed`, `cancelled`
+
 ```php
 Schema::create('patient_visits', function (Blueprint $table) {
     $table->uuid('id')->primary();
@@ -698,12 +722,13 @@ Schema::create('patient_visits', function (Blueprint $table) {
     $table->foreignUuid('patient_id')->constrained();
     $table->date('visit_date');
     $table->time('visit_time');
-    $table->enum('visit_type', [new Enum(VisitType::class)])->defalt();
-    $table->enum('status', [new Enum(VisitStatus::class)])->default();
+    $table->enum('visit_type', [VisitType::class])->default('outpatient');
+    $table->enum('status', [VisitStatus::class])->default('registered');
     $table->foreignUuid('clinic_id')->nullable()->constrained();
     $table->foreignUuid('doctor_id')->nullable()->constrained('staff');
     $table->foreignUuid('appointment_id')->nullable()->constrained();
     $table->boolean('is_emergency')->default(false);
+    $table->timestamp('started_at')->nullable();
     $table->timestamp('closed_at')->nullable();
     $table->foreignUuid('closed_by')->nullable()->constrained('staff');
     $table->timestamps();
@@ -711,10 +736,18 @@ Schema::create('patient_visits', function (Blueprint $table) {
 
     $table->unique(['tenant_id', 'visit_number']);
     $table->index(['patient_id', 'visit_date']);
+    $table->index(['patient_id', 'status']);
     $table->index('visit_number');
     $table->index('is_emergency');
+    $table->index('status');
 });
 ```
+
+**Business Rules:**
+
+- One active (non-terminal) visit per patient at a time
+- `started_at` automatically set when status moves to `in_progress`
+- Payer info stored in separate `visit_payers` table (one-to-one)
 
 #### triage_records
 

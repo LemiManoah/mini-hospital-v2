@@ -86,6 +86,11 @@ final class PatientVisit extends Model
         return $this->belongsTo(Staff::class, 'doctor_id');
     }
 
+    public function registeredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registered_by');
+    }
+
     public function payer(): HasOne
     {
         return $this->hasOne(VisitPayer::class, 'patient_visit_id');

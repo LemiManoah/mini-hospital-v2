@@ -1,6 +1,6 @@
 # Patient Module Implementation Review
 
-**Date:** March 2026
+**Date:** March 13, 2026
 
 ---
 
@@ -8,30 +8,38 @@
 
 ### ✅ Implemented
 
-| Component          | Status      | Notes                                                                                                  |
-| ------------------ | ----------- | ------------------------------------------------------------------------------------------------------ |
-| Patient Model      | ✅ Complete | Comprehensive fields: demographics, contact, next of kin, insurance, blood group, occupation, religion |
-| Patient Controller | ✅ Complete | CRUD: index, create, store, edit, update, destroy                                                      |
-| Patient Actions    | ✅ Complete | CreatePatient, UpdatePatient, DeletePatient                                                            |
-| Form Requests      | ✅ Complete | StorePatientRequest, UpdatePatientRequest, DeletePatientRequest                                        |
-| Frontend Index     | ✅ Complete | Search, pagination, table with MRN, name, phone, gender, payer, insurance                              |
-| Frontend Create    | ✅ Complete | Multi-section form (Bio, Contact, Kin, Billing)                                                        |
-| Frontend Edit      | ✅ Complete | Same structure as create                                                                               |
-| Patient Allergies  | ✅ Complete | Separate model, controller, routes (`patients.allergies` resource)                                     |
-| Patient Insurance  | ✅ Complete | Relationship to InsuranceCompany, InsurancePackage                                                     |
-| PayerType Enum     | ✅ Complete | Supports `cash` and `insurance`                                                                        |
-| Routes             | ✅ Complete | `Route::resource('patients')`                                                                          |
+| Component                | Status        | Notes                                                                                 |
+| ------------------------ | ------------- | ------------------------------------------------------------------------------------- |
+| Patient Model            | ✅ Complete   | Demographics only - contact, next of kin, blood group, occupation, religion           |
+| Patient Controller       | ✅ Complete   | CRUD: index, create, store, edit, update, destroy                                     |
+| Patient Actions          | ✅ Complete   | CreatePatient, UpdatePatient, DeletePatient                                           |
+| Form Requests            | ✅ Complete   | StorePatientRequest, UpdatePatientRequest, DeletePatientRequest                       |
+| Frontend Index           | ✅ Complete   | Search, pagination, table with MRN, name, phone, gender                               |
+| Frontend Create          | ✅ Complete   | Multi-section form (Bio, Contact, Kin) - billing moved to visit                       |
+| Frontend Edit            | ✅ Complete   | Same structure as create                                                              |
+| Patient Allergies        | ✅ Complete   | Separate model, controller, routes (`patients.allergies` resource)                    |
+| Patient Insurance        | ✅ Deprecated | Moved to visit-level (visit_payers) - patient insurances retained for historical data |
+| PayerType Enum           | ✅ Complete   | Supports `cash` and `insurance`                                                       |
+| Routes                   | ✅ Complete   | `Route::resource('patients')`                                                         |
+| PatientVisit Model       | ✅ Complete   | Encounter tracking with status, clinic, doctor                                        |
+| Visit Payer              | ✅ Complete   | Per-visit billing snapshot (visit_payers table)                                       |
+| Register + Visit Start   | ✅ Complete   | Single transaction registration + visit creation                                      |
+| Visit Status Transitions | ✅ Complete   | TransitionPatientVisitStatus action                                                   |
+| One Active Visit Rule    | ✅ Complete   | Prevents multiple active visits per patient                                           |
+| Patient Visit History    | ✅ Complete   | Visit history shown on patient profile                                                |
 
 ### ❌ Not Implemented
 
 | Component               | Priority | Notes                                                               |
 | ----------------------- | -------- | ------------------------------------------------------------------- |
 | Patient Search Endpoint | High     | No dedicated search API to check for duplicates before registration |
-| Visit/Encounter System  | High     | No patient_visits, triage_records, consultations                    |
-| Visit Check-in          | High     | No flow to create a visit and select payer per encounter            |
+| Triage Records          | High     | No triage_records table yet                                         |
+| Vital Signs             | High     | No vital_signs table yet                                            |
+| Consultation Records    | High     | No consultations table yet                                          |
 | Queue/Triage View       | Medium   | No queue page for triaging registered patients                      |
+| Visit Status Logs       | Medium   | No immutable audit timeline for visit transitions                   |
 | Billing Flow            | Medium   | No visit_charges, visit_billings, payments                          |
-| Patient Visit History   | Medium   | No view of patient's past visits                                    |
+| Insurance Claims        | Low      | No claim workflow for insurance companies                           |
 
 ---
 
@@ -60,10 +68,10 @@ The allergen module uses:
 
 ## Data Model Review
 
-### Patient Model - ✅ Good
+### Patient Model - ✅ Demographics Only
 
 ```php
-// Fillable fields are comprehensive
+// Fillable fields - demographics only, no billing
 $fillable = [
     'tenant_id',
     'patient_number',        // MRN
@@ -76,7 +84,6 @@ $fillable = [
     'marital_status', 'occupation', 'religion',
     'country_id',
     'blood_group',
-    'default_payer_type',    // Cash or insurance
     'created_by', 'updated_by',
 ];
 ```
@@ -85,47 +92,61 @@ $fillable = [
 
 - `country()` - BelongsTo
 - `address()` - BelongsTo
-- `insurances()` - HasMany (PatientInsurance)
-- `primaryInsurance()` - HasOne
 - `allergies()` - HasMany
 - `activeAllergies()` - HasMany (scoped to active)
+- `visits()` - HasMany (PatientVisit)
+- `activeVisit()` - HasOne (scoped to active visit)
+- `insurances()` - HasMany (PatientInsurance - deprecated for new registrations, kept for historical data)
 
-### Missing Models
+### Implemented Models
 
-For a complete patient management system, you would need:
+1. **PatientVisit** ✅ - Encounter tracking with status, clinic, doctor
+2. **VisitPayer** ✅ - Per-visit billing snapshot
 
-1. **PatientVisit** - For encounter tracking
-2. **TriageRecord** - For triage data
-3. **VitalSign** - For vital signs
-4. **Consultation** - For doctor consultations
-5. **VisitCharge** - For billing line items
-6. **VisitBilling** - For billing header
-7. **Payment** - For payment records
+### Pending Models
+
+3. **TriageRecord** - For triage data
+4. **VitalSign** - For vital signs
+5. **Consultation** - For doctor consultations
+6. **VisitCharge** - For billing line items
+7. **VisitBilling** - For billing header
+8. **Payment** - For payment records
+9. **VisitStatusLog** - For immutable audit timeline
 
 ---
 
 ## Workflow Review
 
-### Documented Flow (from patient.md)
+### Documented Flow (from patient_visit.md)
 
 1. **Patient Search First** → Check for duplicates by phone/MRN/name+DOB
-2. **New Patient Registration** → Create patient profile only (no billing)
-3. **Optional Insurance Capture** → At registration time
-4. **Visit Check-in** → Choose payer (cash vs insurance) per visit
-5. **Triage and Clinical Flow** → Queue, triage, consultation
-6. **Billing and Payment** → Charges, payments, claims
+2. **New Patient Registration + Visit Start** → Create patient + visit + payer in single transaction
+3. **Visit Check-in** → Choose payer (cash vs insurance) per visit (visit_payers table)
+4. **Triage and Clinical Flow** → Queue, triage, consultation (NOT YET IMPLEMENTED)
+5. **Billing and Payment** → Charges, payments, claims (NOT YET IMPLEMENTED)
 
 ### Actual Implementation
 
-The current implementation covers **Step 2-3 partially**:
+The current implementation covers **Step 2-3**:
 
 - ✅ Patient registration form exists
-- ✅ Insurance can be captured at registration
-- ✅ Default payer type stored on patient
+- ✅ Single transaction: patient + visit + payer in one screen
+- ✅ Per-visit payer selection (cash vs insurance)
+- ✅ Insurance selection happens per visit, not per patient
+- ✅ Visit status transitions (registered → in_progress → completed)
+- ✅ One active visit rule enforced
 - ❌ No patient search before registration
-- ❌ No visit creation/check-in flow
 - ❌ No triage queue
-- ❌ No billing flow
+- ❌ No billing flow (charges, billings, payments)
+- ❌ No consultation records
+
+### Visit Statuses (Simplified)
+
+- `registered` - Patient checked in, waiting for clinical action
+- `in_progress` - Clinical activity started (triage, consultation)
+- `awaiting_payment` - Defined but not wired into workflow yet
+- `completed` - Visit closed
+- `cancelled` - Visit cancelled
 
 ---
 
@@ -133,15 +154,15 @@ The current implementation covers **Step 2-3 partially**:
 
 ### High Priority
 
-1. **Update Patient Create/Edit pages** to match allergen design pattern
-2. **Add patient search** before registration to prevent duplicates
-3. **Implement Visit model** and check-in flow
+1. **Add patient search** before registration to prevent duplicates
+2. **Implement Triage Records** - triage form, status promotion to `in_progress`
+3. **Implement Consultation Records** - clinician notes, status completion
 
 ### Medium Priority
 
 4. Add queue/triage view for registered patients
-5. Add patient visit history view
-6. Implement billing and payment flow
+5. Add visit status logs for audit timeline
+6. Implement billing and payment flow (visit_charges, visit_billings, payments)
 
 ### Low Priority
 
@@ -152,17 +173,22 @@ The current implementation covers **Step 2-3 partially**:
 
 ## Code Locations
 
-| Component          | Path                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------ |
-| Patient Model      | `app/Models/Patient.php`                                                             |
-| Patient Controller | `app/Http/Controllers/PatientController.php`                                         |
-| Patient Actions    | `app/Actions/{Create,Update,Delete}Patient.php`                                      |
-| Patient Requests   | `app/Http/Requests/{Store,Update,Delete}PatientRequest.php`                          |
-| Patient Index      | `resources/js/pages/patient/index.tsx`                                               |
-| Patient Create     | `resources/js/pages/patient/create.tsx`                                              |
-| Patient Edit       | `resources/js/pages/patient/edit.tsx`                                                |
-| Patient Types      | `resources/js/types/patient.ts`                                                      |
-| Patient Allergies  | `app/Models/PatientAllergy.php`, `app/Http/Controllers/PatientAllergyController.php` |
-| Patient Insurance  | `app/Models/PatientInsurance.php`                                                    |
-| PayerType Enum     | `app/Enums/PayerType.php`                                                            |
-| Routes             | `routes/web.php` (line 73)                                                           |
+| Component               | Path                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| Patient Model           | `app/Models/Patient.php`                                                             |
+| Patient Controller      | `app/Http/Controllers/PatientController.php`                                         |
+| Patient Actions         | `app/Actions/{Create,Update,Delete}Patient.php`                                      |
+| Patient Requests        | `app/Http/Requests/{Store,Update,Delete}PatientRequest.php`                          |
+| Patient Index           | `resources/js/pages/patient/index.tsx`                                               |
+| Patient Create          | `resources/js/pages/patient/create.tsx`                                              |
+| Patient Profile         | `resources/js/pages/patient/show.tsx`                                                |
+| Patient Edit            | `resources/js/pages/patient/edit.tsx`                                                |
+| Patient Types           | `resources/js/types/patient.ts`                                                      |
+| Patient Allergies       | `app/Models/PatientAllergy.php`, `app/Http/Controllers/PatientAllergyController.php` |
+| PatientVisit Model      | `app/Models/PatientVisit.php`                                                        |
+| PatientVisit Controller | `app/Http/Controllers/PatientVisitController.php`                                    |
+| Visit Payer Model       | `app/Models/VisitPayer.php`                                                          |
+| PayerType Enum          | `app/Enums/PayerType.php`                                                            |
+| VisitType Enum          | `app/Enums/VisitType.php`                                                            |
+| VisitStatus Enum        | `app/Enums/VisitStatus.php`                                                          |
+| Routes                  | `routes/web.php`                                                                     |
