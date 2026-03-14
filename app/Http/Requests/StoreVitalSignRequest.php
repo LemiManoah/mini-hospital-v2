@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 final class StoreVitalSignRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'on_supplemental_oxygen' => $this->boolean('on_supplemental_oxygen'),
+            'temperature_unit' => $this->input('temperature_unit') ?: 'celsius',
+            'blood_glucose_unit' => $this->input('blood_glucose_unit') ?: 'mg_dl',
+        ]);
     }
 
     public function rules(): array

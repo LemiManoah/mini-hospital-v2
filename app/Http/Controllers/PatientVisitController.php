@@ -93,7 +93,7 @@ final class PatientVisitController
             'triage:id,visit_id,nurse_id,triage_datetime,triage_grade,attendance_type,news_score,pews_score,conscious_level,mobility_status,chief_complaint,history_of_presenting_illness,assigned_clinic_id,requires_priority,is_pediatric,poisoning_case,poisoning_agent,snake_bite_case,referred_by,nurse_notes',
             'triage.nurse:id,first_name,last_name',
             'triage.assignedClinic:id,clinic_name',
-            'triage.vitalSigns' => static fn (Builder $query) => $query
+            'triage.vitalSigns' => static fn ( $query) => $query
                 ->with(['recordedBy:id,first_name,last_name'])
                 ->latest('recorded_at'),
         ]);

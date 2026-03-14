@@ -36,6 +36,7 @@ export interface VitalSign {
     muac_cm: number | null;
     capillary_refill: string | null;
     recordedBy?: { id: string; first_name: string; last_name: string } | null;
+    recorded_by?: { id: string; first_name: string; last_name: string } | null;
 }
 
 export interface TriageRecord {
@@ -59,7 +60,9 @@ export interface TriageRecord {
     nurse_notes: string | null;
     nurse?: { id: string; first_name: string; last_name: string } | null;
     assignedClinic?: { id: string; name: string } | null;
+    assigned_clinic?: { id: string; name: string } | null;
     vitalSigns?: VitalSign[];
+    vital_signs?: VitalSign[];
 }
 
 export interface VisitPayer {
@@ -173,6 +176,7 @@ export interface PatientVisit {
     doctor?: { id: string; first_name: string; last_name: string } | null;
     branch?: { id: string; name: string } | null;
     registeredBy?: { id: string; name: string } | null;
+    registered_by?: { id: string; name: string } | null;
     patient?: Patient | null;
     payer?: VisitPayer | null;
     triage?: TriageRecord | null;

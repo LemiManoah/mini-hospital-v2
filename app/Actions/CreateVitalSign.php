@@ -15,13 +15,24 @@ final readonly class CreateVitalSign
         $triage = $visit->triage;
         $staffId = Auth::user()?->staff_id;
 
+        $systolicBp = $this->nullableInt($data['systolic_bp'] ?? null);
+        $diastolicBp = $this->nullableInt($data['diastolic_bp'] ?? null);
+        $heightCm = $this->nullableFloat($data['height_cm'] ?? null);
+        $weightKg = $this->nullableFloat($data['weight_kg'] ?? null);
+
+        $data['temperature_unit'] = $data['temperature_unit'] ?? 'celsius';
+        $data['blood_glucose_unit'] = $data['blood_glucose_unit'] ?? 'mg_dl';
+        $data['systolic_bp'] = $systolicBp;
+        $data['diastolic_bp'] = $diastolicBp;
+        $data['height_cm'] = $heightCm;
+        $data['weight_kg'] = $weightKg;
         $data['map'] = $this->meanArterialPressure(
-            $data['systolic_bp'] ?? null,
-            $data['diastolic_bp'] ?? null,
+            $systolicBp,
+            $diastolicBp,
         );
         $data['bmi'] = $this->bodyMassIndex(
-            $data['height_cm'] ?? null,
-            $data['weight_kg'] ?? null,
+            $heightCm,
+            $weightKg,
         );
 
         return VitalSign::query()->create([
@@ -54,5 +65,23 @@ final readonly class CreateVitalSign
         }
 
         return round(((float) $weightKg) / ($heightMeters * $heightMeters), 2);
+    }
+
+    private function nullableInt(mixed $value): ?int
+    {
+        if (! is_numeric($value)) {
+            return null;
+        }
+
+        return (int) $value;
+    }
+
+    private function nullableFloat(mixed $value): ?float
+    {
+        if (! is_numeric($value)) {
+            return null;
+        }
+
+        return (float) $value;
     }
 }

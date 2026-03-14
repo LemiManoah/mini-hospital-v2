@@ -137,7 +137,7 @@ export default function VisitShow({
         visit.payer?.insurancePackage?.name ??
         visit.payer?.insurance_package?.name;
     const triage: TriageRecord | null | undefined = visit.triage;
-    const vitalSigns = triage?.vitalSigns ?? [];
+    const vitalSigns = triage?.vitalSigns ?? triage?.vital_signs ?? [];
     const latestVital = vitalSigns[0];
 
     const [triageGrade, setTriageGrade] = useState(
@@ -241,7 +241,7 @@ export default function VisitShow({
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Registered By</p>
-                                    <p className="font-medium">{visit.registeredBy?.name || 'Unknown'}</p>
+                                    <p className="font-medium">{visit.registeredBy?.name || visit.registered_by?.name || 'Unknown'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Completed At</p>
@@ -301,7 +301,7 @@ export default function VisitShow({
                                     <p className="text-sm text-muted-foreground">Next of Kin</p>
                                     <p className="font-medium">
                                         {visit.patient?.next_of_kin_name || 'N/A'}
-                                        {visit.patient?.next_of_kin_phone ? ` • ${visit.patient.next_of_kin_phone}` : ''}
+                                        {visit.patient?.next_of_kin_phone ? ` ï¿½ ${visit.patient.next_of_kin_phone}` : ''}
                                     </p>
                                 </div>
                             </CardContent>
@@ -490,7 +490,7 @@ export default function VisitShow({
                                         <div><p className="text-sm text-muted-foreground">Attendance</p><p className="font-medium">{findLabel(attendanceTypes, triage.attendance_type)}</p></div>
                                         <div><p className="text-sm text-muted-foreground">Conscious Level</p><p className="font-medium">{findLabel(consciousLevels, triage.conscious_level)}</p></div>
                                         <div><p className="text-sm text-muted-foreground">Mobility</p><p className="font-medium">{findLabel(mobilityStatuses, triage.mobility_status)}</p></div>
-                                        <div><p className="text-sm text-muted-foreground">Assigned Clinic</p><p className="font-medium">{triage.assignedClinic?.name || visit.clinic?.name || 'Not assigned'}</p></div>
+                                        <div><p className="text-sm text-muted-foreground">Assigned Clinic</p><p className="font-medium">{triage.assignedClinic?.name || triage.assigned_clinic?.name || visit.clinic?.name || 'Not assigned'}</p></div>
                                         <div><p className="text-sm text-muted-foreground">NEWS / PEWS</p><p className="font-medium">{triage.news_score ?? 'N/A'} / {triage.pews_score ?? 'N/A'}</p></div>
                                         <div>
                                             <p className="text-sm text-muted-foreground">Special Flags</p>
