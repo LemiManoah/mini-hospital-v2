@@ -96,6 +96,8 @@ final class PatientVisitController
             'triage.vitalSigns' => static fn ( $query) => $query
                 ->with(['recordedBy:id,first_name,last_name'])
                 ->latest('recorded_at'),
+            'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code',
+            'consultation.doctor:id,first_name,last_name',
         ]);
 
         return Inertia::render('visit/show', [

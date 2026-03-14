@@ -13,7 +13,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { type TriageRecord, type VitalSign, type VisitShowPageProps } from '@/types/patient';
+import { type Consultation, type TriageRecord, type VitalSign, type VisitShowPageProps } from '@/types/patient';
 import { Form, Head, Link } from '@inertiajs/react';
 import {
     Activity,
@@ -23,7 +23,6 @@ import {
     HeartPulse,
     NotebookPen,
     Stethoscope,
-    UserRound,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -137,6 +136,7 @@ export default function VisitShow({
         visit.payer?.insurancePackage?.name ??
         visit.payer?.insurance_package?.name;
     const triage: TriageRecord | null | undefined = visit.triage;
+    const consultation: Consultation | null | undefined = visit.consultation;
     const vitalSigns = triage?.vitalSigns ?? triage?.vital_signs ?? [];
     const latestVital = vitalSigns[0];
 
@@ -210,6 +210,14 @@ export default function VisitShow({
                                 Back to Active Visits
                             </Link>
                         </Button>
+                        {triage ? (
+                            <Button asChild>
+                                <Link href={`/doctors/consultations/${visit.id}`}>
+                                    <NotebookPen className="mr-2 h-4 w-4" />
+                                    Open Consultation
+                                </Link>
+                            </Button>
+                        ) : null}
                         <Button variant="outline" asChild>
                             <Link href={`/patients/${visit.patient?.id}`}>Open Patient</Link>
                         </Button>
@@ -609,6 +617,54 @@ export default function VisitShow({
                                 )}
                             </CardContent>
                         </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <NotebookPen className="h-5 w-5" />
+                                    Doctor Workspace
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {!triage ? (
+                                    <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                        Record triage first to unlock the doctor consultation workspace for this visit.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4 rounded-lg border p-4">
+                                        <p className="text-sm text-muted-foreground">
+                                            Consultation has been moved into the dedicated Doctors workspace so the visit page can stay focused on registration, triage, vitals, and visit status.
+                                        </p>
+                                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                            <div>
+                                                <p className="text-sm text-muted-foreground">Consultation Status</p>
+                                                <p className="font-medium">{consultation ? 'Draft in progress' : 'Ready to start'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-muted-foreground">Chief Complaint</p>
+                                                <p className="font-medium">{consultation?.chief_complaint ?? triage.chief_complaint}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-muted-foreground">Primary Diagnosis</p>
+                                                <p className="font-medium">{consultation?.primary_diagnosis || 'Not documented yet'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-muted-foreground">Workspace</p>
+                                                <p className="font-medium">Overview, labs, prescriptions, imaging, services</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-end">
+                                            <Button asChild>
+                                                <Link href={`/doctors/consultations/${visit.id}`}>
+                                                    <NotebookPen className="mr-2 h-4 w-4" />
+                                                    {consultation ? 'Continue in Consultation Workspace' : 'Start in Consultation Workspace'}
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
 
                     <div className="space-y-6">
@@ -662,9 +718,24 @@ export default function VisitShow({
                         </Card>
 
                         <Card>
+                            <CardHeader><CardTitle>Consultation Snapshot</CardTitle></CardHeader>
+                            <CardContent className="space-y-3 text-sm">
+                                {consultation ? (
+                                    <>
+                                        <div><p className="text-muted-foreground">Started</p><p className="font-medium">{formatDateTime(consultation.started_at)}</p></div>
+                                        <div><p className="text-muted-foreground">Clinician</p><p className="font-medium">{consultation.doctor ? `${consultation.doctor.first_name} ${consultation.doctor.last_name}` : 'Assigned clinician'}</p></div>
+                                        <div><p className="text-muted-foreground">Primary Diagnosis</p><p className="font-medium">{consultation.primary_diagnosis || 'Not documented yet'}</p></div>
+                                        <div><p className="text-muted-foreground">Plan</p><p className="font-medium">{consultation.plan || 'No plan documented yet'}</p></div>
+                                    </>
+                                ) : (
+                                    <p className="text-muted-foreground">Consultation has not been started yet. Use the dedicated Doctors workspace to start the note and manage downstream clinical work.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
                             <CardHeader><CardTitle>Next Build Areas</CardTitle></CardHeader>
                             <CardContent className="space-y-2 text-sm text-muted-foreground">
-                                <div className="rounded-md border px-3 py-2"><UserRound className="mr-2 inline h-4 w-4" />Consultation notes and diagnosis</div>
                                 <div className="rounded-md border px-3 py-2"><Stethoscope className="mr-2 inline h-4 w-4" />Orders, procedures, and service requests</div>
                                 <div className="rounded-md border px-3 py-2"><CreditCard className="mr-2 inline h-4 w-4" />Charges, billing, and payments</div>
                             </CardContent>

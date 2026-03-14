@@ -8,6 +8,7 @@ use App\Http\Controllers\BranchSwitcherController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DoctorConsultationController;
 use App\Http\Controllers\FacilitySwitcherController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\InsurancePackageController;
@@ -72,6 +73,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('visits', [PatientVisitController::class, 'index'])->name('visits.index');
     Route::get('visits/{visit}', [PatientVisitController::class, 'show'])->name('visits.show');
     Route::patch('visits/{visit}/status', [PatientVisitController::class, 'updateStatus'])->name('visits.update-status');
+    Route::get('doctors/consultations', [DoctorConsultationController::class, 'index'])->name('doctors.consultations.index');
+    Route::get('doctors/consultations/{visit}', [DoctorConsultationController::class, 'show'])->name('doctors.consultations.show');
+    Route::post('doctors/consultations/{visit}', [DoctorConsultationController::class, 'store'])->name('doctors.consultations.store');
+    Route::put('doctors/consultations/{visit}', [DoctorConsultationController::class, 'update'])->name('doctors.consultations.update');
     Route::post('visits/{visit}/triage', [VisitTriageController::class, 'store'])->name('visits.triage.store');
     Route::post('visits/{visit}/vitals', [VisitVitalSignController::class, 'store'])->name('visits.vitals.store');
     Route::resource('patients', PatientController::class);

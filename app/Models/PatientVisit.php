@@ -100,4 +100,9 @@ final class PatientVisit extends Model
     {
         return $this->hasOne(TriageRecord::class, 'visit_id');
     }
+
+    public function consultation(): HasOne
+    {
+        return $this->hasOne(Consultation::class, 'visit_id');
+    }
 }

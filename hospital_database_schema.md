@@ -851,7 +851,7 @@ Schema::create('consultations', function (Blueprint $table) {
     $table->text('objective_findings')->nullable();
     $table->text('assessment')->nullable();
     $table->text('plan')->nullable();
-    $table->string('primary_diagnosis', 255)->nullable();
+    $table->string('primary_diagnosis', 255);
     $table->string('primary_icd10_code', 10)->nullable()->index();
     $table->json('secondary_diagnoses')->nullable(); // Array of {code, description}
     $table->enum('outcome', [

@@ -49,7 +49,7 @@ const modules: Module[] = [
             'Clinician workbench for consultations, prescriptions and orders.',
         icon: Activity,
         permission: 'visits.view',
-        href: dashboard().url,
+        href: '/doctors/consultations',
     },
     {
         name: 'Pharmacy',

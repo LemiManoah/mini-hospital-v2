@@ -65,6 +65,27 @@ export interface TriageRecord {
     vital_signs?: VitalSign[];
 }
 
+export interface Consultation {
+    id: string;
+    visit_id: string;
+    doctor_id: string;
+    started_at: string;
+    completed_at: string | null;
+    chief_complaint: string | null;
+    history_of_presenting_illness: string | null;
+    review_of_systems: string | null;
+    past_medical_history_summary: string | null;
+    family_history: string | null;
+    social_history: string | null;
+    subjective_notes: string | null;
+    objective_findings: string | null;
+    assessment: string | null;
+    plan: string | null;
+    primary_diagnosis: string | null;
+    primary_icd10_code: string | null;
+    doctor?: { id: string; first_name: string; last_name: string } | null;
+}
+
 export interface VisitPayer {
     id: string;
     patient_visit_id: string;
@@ -180,6 +201,7 @@ export interface PatientVisit {
     patient?: Patient | null;
     payer?: VisitPayer | null;
     triage?: TriageRecord | null;
+    consultation?: Consultation | null;
     completion_check?: VisitCompletionCheck | null;
 }
 
@@ -228,4 +250,15 @@ export interface VisitShowPageProps {
     clinics: { id: string; name: string }[];
     temperatureUnits: { value: string; label: string }[];
     bloodGlucoseUnits: { value: string; label: string }[];
+}
+
+export interface DoctorConsultationIndexPageProps {
+    visits: PaginatedList<PatientVisit> | PatientVisit[];
+    filters: {
+        search: string | null;
+    };
+}
+
+export interface DoctorConsultationShowPageProps {
+    visit: PatientVisit;
 }

@@ -8,6 +8,7 @@ import {
     Settings2,
     Shield,
     Stethoscope,
+    UserRoundSearch,
     UserCog,
     Users,
 } from 'lucide-react';
@@ -97,6 +98,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {
                     title: 'Returning Patients',
                     url: returningPatients(),
+                },
+            ],
+        },
+        {
+            title: 'Doctors',
+            url: '/doctors/consultations',
+            icon: UserRoundSearch,
+            items: [
+                {
+                    title: 'Consultation',
+                    url: '/doctors/consultations',
                 },
             ],
         },
@@ -205,7 +217,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const projects: React.ComponentProps<typeof NavProjects>['projects'] = [
         {
             name: 'Clinical Operations',
-            url: indexStaff(),
+            url: '/doctors/consultations',
             icon: Stethoscope,
         },
         {
