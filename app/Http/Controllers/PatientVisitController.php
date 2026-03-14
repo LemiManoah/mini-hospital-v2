@@ -6,8 +6,13 @@ namespace App\Http\Controllers;
 
 use App\Actions\AssessPatientVisitCompletion;
 use App\Actions\TransitionPatientVisitStatus;
+use App\Enums\AttendanceType;
+use App\Enums\ConsciousLevel;
+use App\Enums\MobilityStatus;
 use App\Enums\PayerType;
+use App\Enums\TriageGrade;
 use App\Enums\VisitStatus;
+use App\Models\Clinic;
 use App\Models\FacilityBranch;
 use App\Models\Patient;
 use App\Models\PatientVisit;
@@ -80,17 +85,36 @@ final class PatientVisitController
             'branch:id,name',
             'clinic:id,clinic_name',
             'doctor:id,first_name,last_name',
-            'registeredBy:id,staff_id',
+            'registeredBy:id,staff_id,email',
             'registeredBy.staff:id,first_name,last_name',
             'payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
             'payer.insuranceCompany:id,name',
             'payer.insurancePackage:id,name',
+            'triage:id,visit_id,nurse_id,triage_datetime,triage_grade,attendance_type,news_score,pews_score,conscious_level,mobility_status,chief_complaint,history_of_presenting_illness,assigned_clinic_id,requires_priority,is_pediatric,poisoning_case,poisoning_agent,snake_bite_case,referred_by,nurse_notes',
+            'triage.nurse:id,first_name,last_name',
+            'triage.assignedClinic:id,clinic_name',
+            'triage.vitalSigns' => static fn (Builder $query) => $query
+                ->with(['recordedBy:id,first_name,last_name'])
+                ->latest('recorded_at'),
         ]);
 
         return Inertia::render('visit/show', [
             'visit' => $visit,
             'availableTransitions' => $this->availableTransitions($visit),
             'completionCheck' => $assessment->handle($visit),
+            'triageGrades' => $this->enumOptions(TriageGrade::cases()),
+            'attendanceTypes' => $this->enumOptions(AttendanceType::cases()),
+            'consciousLevels' => $this->enumOptions(ConsciousLevel::cases()),
+            'mobilityStatuses' => $this->enumOptions(MobilityStatus::cases()),
+            'clinics' => Clinic::query()->select('id')->selectRaw('clinic_name as name')->orderBy('clinic_name')->get(),
+            'temperatureUnits' => [
+                ['value' => 'celsius', 'label' => 'Celsius'],
+                ['value' => 'fahrenheit', 'label' => 'Fahrenheit'],
+            ],
+            'bloodGlucoseUnits' => [
+                ['value' => 'mg_dl', 'label' => 'mg/dL'],
+                ['value' => 'mmol_l', 'label' => 'mmol/L'],
+            ],
         ]);
     }
 
@@ -239,6 +263,21 @@ final class PatientVisitController
         };
     }
 
+    /**
+     * @param  array<int, object{value: string, label: string}>  $cases
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function enumOptions(array $cases): array
+    {
+        return collect($cases)
+            ->map(static fn ($case): array => [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ])
+            ->values()
+            ->all();
+    }
+
     private function statusRedirect(PatientVisit $visit, string $redirectTo): RedirectResponse
     {
         return $redirectTo === 'index'
@@ -246,5 +285,3 @@ final class PatientVisitController
             : to_route('visits.show', $visit);
     }
 }
-
-

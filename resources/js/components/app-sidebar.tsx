@@ -37,6 +37,7 @@ import { index as indexInsurancePackages } from '@/routes/insurance-packages';
 import {
     create as createPatients,
     index as indexPatients,
+    returning as returningPatients,
 } from '@/routes/patients';
 import { index as indexRoles } from '@/routes/roles';
 import { index as indexStaff } from '@/routes/staff';
@@ -86,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     url: createPatients(),
                 },
                 {
-                    title: 'View Patients',
+                    title: 'All Patients',
                     url: indexPatients(),
                 },
                 {
@@ -95,7 +96,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 },
                 {
                     title: 'Returning Patients',
-                    url: '/patients/returning',
+                    url: returningPatients(),
                 },
             ],
         },

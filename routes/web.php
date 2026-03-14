@@ -27,6 +27,8 @@ use App\Http\Controllers\UserEmailVerificationNotificationController;
 use App\Http\Controllers\UserPasswordController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserTwoFactorAuthenticationController;
+use App\Http\Controllers\VisitTriageController;
+use App\Http\Controllers\VisitVitalSignController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -70,6 +72,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('visits', [PatientVisitController::class, 'index'])->name('visits.index');
     Route::get('visits/{visit}', [PatientVisitController::class, 'show'])->name('visits.show');
     Route::patch('visits/{visit}/status', [PatientVisitController::class, 'updateStatus'])->name('visits.update-status');
+    Route::post('visits/{visit}/triage', [VisitTriageController::class, 'store'])->name('visits.triage.store');
+    Route::post('visits/{visit}/vitals', [VisitVitalSignController::class, 'store'])->name('visits.vitals.store');
     Route::resource('patients', PatientController::class);
     Route::resource('staff', StaffController::class)->except(['show']);
     Route::resource('patients.allergies', PatientAllergyController::class);

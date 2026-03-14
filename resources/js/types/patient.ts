@@ -11,6 +11,57 @@ export interface VisitCompletionCheck {
     warning_messages: string[];
 }
 
+export interface VitalSign {
+    id: string;
+    recorded_at: string;
+    temperature: number | null;
+    temperature_unit: 'celsius' | 'fahrenheit';
+    pulse_rate: number | null;
+    respiratory_rate: number | null;
+    systolic_bp: number | null;
+    diastolic_bp: number | null;
+    map: number | null;
+    oxygen_saturation: number | null;
+    on_supplemental_oxygen: boolean;
+    oxygen_delivery_method: string | null;
+    oxygen_flow_rate: number | null;
+    blood_glucose: number | null;
+    blood_glucose_unit: 'mg_dl' | 'mmol_l';
+    pain_score: number | null;
+    height_cm: number | null;
+    weight_kg: number | null;
+    bmi: number | null;
+    head_circumference_cm: number | null;
+    chest_circumference_cm: number | null;
+    muac_cm: number | null;
+    capillary_refill: string | null;
+    recordedBy?: { id: string; first_name: string; last_name: string } | null;
+}
+
+export interface TriageRecord {
+    id: string;
+    visit_id: string;
+    triage_datetime: string;
+    triage_grade: string;
+    attendance_type: string;
+    news_score: number | null;
+    pews_score: number | null;
+    conscious_level: string;
+    mobility_status: string;
+    chief_complaint: string;
+    history_of_presenting_illness: string | null;
+    requires_priority: boolean;
+    is_pediatric: boolean;
+    poisoning_case: boolean;
+    poisoning_agent: string | null;
+    snake_bite_case: boolean;
+    referred_by: string | null;
+    nurse_notes: string | null;
+    nurse?: { id: string; first_name: string; last_name: string } | null;
+    assignedClinic?: { id: string; name: string } | null;
+    vitalSigns?: VitalSign[];
+}
+
 export interface VisitPayer {
     id: string;
     patient_visit_id: string;
@@ -124,6 +175,7 @@ export interface PatientVisit {
     registeredBy?: { id: string; name: string } | null;
     patient?: Patient | null;
     payer?: VisitPayer | null;
+    triage?: TriageRecord | null;
     completion_check?: VisitCompletionCheck | null;
 }
 
@@ -165,4 +217,11 @@ export interface VisitShowPageProps {
     visit: PatientVisit;
     availableTransitions: { value: string; label: string }[];
     completionCheck?: VisitCompletionCheck;
+    triageGrades: { value: string; label: string }[];
+    attendanceTypes: { value: string; label: string }[];
+    consciousLevels: { value: string; label: string }[];
+    mobilityStatuses: { value: string; label: string }[];
+    clinics: { id: string; name: string }[];
+    temperatureUnits: { value: string; label: string }[];
+    bloodGlucoseUnits: { value: string; label: string }[];
 }

@@ -754,6 +754,11 @@ Schema::create('patient_visits', function (Blueprint $table) {
 Emergency and outpatient triage assessment.
 
 ```php
+use App\Enums\TriageGrade;
+use App\Enums\AttendanceType;
+use App\Enums\ConsciousLevel;
+use App\Enums\MobilityStatus;
+
 Schema::create('triage_records', function (Blueprint $table) {
     $table->uuid('id')->primary();
     $table->foreignUuid('tenant_id')->constrained();
@@ -761,12 +766,12 @@ Schema::create('triage_records', function (Blueprint $table) {
     $table->foreignUuid('visit_id')->constrained()->unique(); // One triage per visit
     $table->foreignUuid('nurse_id')->constrained('staff');
     $table->timestamp('triage_datetime')->useCurrent();
-    $table->enum('triage_grade', ['red', 'yellow', 'green', 'black'])->comment('Red=Emergency, Yellow=Priority, Green=Routine');
-    $table->enum('attendance_type', ['new', 're_attendance', 'referral']);
+    $table->enum('triage_grade', TriageGrade::class)->comment('Red=Emergency, Yellow=Priority, Green=Routine');
+    $table->enum('attendance_type', AttendanceType::class);
     $table->integer('news_score')->nullable()->comment('National Early Warning Score');
     $table->integer('pews_score')->nullable()->comment('Pediatric Early Warning Score');
-    $table->enum('conscious_level', ['alert', 'voice', 'pain', 'unresponsive']);
-    $table->enum('mobility_status', ['independent', 'assisted', 'wheelchair', 'stretcher']);
+    $table->enum('conscious_level', ConsciousLevel::class);
+    $table->enum('mobility_status', MobilityStatus::class);
     $table->text('chief_complaint');
     $table->text('history_of_presenting_illness')->nullable();
     $table->foreignUuid('assigned_clinic_id')->nullable()->constrained('clinics');
