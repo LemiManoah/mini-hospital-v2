@@ -72,7 +72,7 @@ export interface Consultation {
     started_at: string;
     completed_at: string | null;
     chief_complaint: string | null;
-    history_of_presenting_illness: string | null;
+    history_of_present_illness: string | null;
     review_of_systems: string | null;
     past_medical_history_summary: string | null;
     family_history: string | null;
@@ -83,6 +83,13 @@ export interface Consultation {
     plan: string | null;
     primary_diagnosis: string | null;
     primary_icd10_code: string | null;
+    outcome: string | null;
+    follow_up_instructions: string | null;
+    follow_up_days: number | null;
+    is_referred: boolean;
+    referred_to_department: string | null;
+    referred_to_facility: string | null;
+    referral_reason: string | null;
     doctor?: { id: string; first_name: string; last_name: string } | null;
 }
 
@@ -261,4 +268,5 @@ export interface DoctorConsultationIndexPageProps {
 
 export interface DoctorConsultationShowPageProps {
     visit: PatientVisit;
+    consultationOutcomes: { value: string; label: string }[];
 }

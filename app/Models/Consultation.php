@@ -13,6 +13,16 @@ use Override;
 
 final class Consultation extends Model
 {
+    public const OUTCOMES = [
+        'discharged',
+        'admitted',
+        'referred',
+        'follow_up_required',
+        'transferred',
+        'deceased',
+        'left_against_advice',
+    ];
+
     use BelongsToTenant;
 
     /** @use HasFactory<\Database\Factories\ConsultationFactory> */
@@ -71,5 +81,10 @@ final class Consultation extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'doctor_id');
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->completed_at !== null;
     }
 }

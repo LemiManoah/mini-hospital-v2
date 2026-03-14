@@ -60,6 +60,14 @@ function consultationState(visit: PatientVisit): {
     className: string;
     actionLabel: string;
 } {
+    if (visit.consultation?.completed_at) {
+        return {
+            label: 'Finalized',
+            className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+            actionLabel: 'Review Consultation',
+        };
+    }
+
     if (visit.consultation) {
         return {
             label: 'In progress',
@@ -221,6 +229,11 @@ export default function DoctorConsultationsIndex({
                                                             ?.primary_diagnosis ||
                                                             'No diagnosis yet'}
                                                     </p>
+                                                    {visit.consultation?.completed_at ? (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Finalized {formatDateTime(visit.consultation.completed_at)}
+                                                        </p>
+                                                    ) : null}
                                                 </div>
                                             </TableCell>
                                             <TableCell>

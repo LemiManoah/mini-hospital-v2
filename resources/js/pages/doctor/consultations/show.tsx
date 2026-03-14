@@ -3,6 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
@@ -23,6 +30,7 @@ import {
     ScanLine,
     Stethoscope,
 } from 'lucide-react';
+import { useState } from 'react';
 
 function formatDate(date: string | null | undefined): string {
     if (!date) return 'N/A';
@@ -113,6 +121,7 @@ function OrdersPlaceholder({
 
 export default function DoctorConsultationShow({
     visit,
+    consultationOutcomes,
 }: DoctorConsultationShowPageProps) {
     const patientName = [
         visit.patient?.first_name,
@@ -125,6 +134,8 @@ export default function DoctorConsultationShow({
     const consultation: Consultation | null | undefined = visit.consultation;
     const vitalSigns = triage?.vitalSigns ?? triage?.vital_signs ?? [];
     const latestVital = vitalSigns[0];
+    const isConsultationFinalized = consultation?.completed_at != null;
+    const [outcome, setOutcome] = useState(consultation?.outcome ?? '');
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Doctors', href: '/doctors/consultations' },
@@ -208,7 +219,7 @@ export default function DoctorConsultationShow({
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="grid gap-3 rounded-lg border p-4 sm:grid-cols-2 xl:grid-cols-4">
+                                                    <div className="grid gap-3 rounded-lg border p-4 sm:grid-cols-2 xl:grid-cols-4">
                                                     <div>
                                                         <p className="text-sm text-muted-foreground">Triage Grade</p>
                                                         <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${triageGradeClasses(triage.triage_grade)}`}>
@@ -227,11 +238,13 @@ export default function DoctorConsultationShow({
                                                         <p className="text-sm text-muted-foreground">Consultation Status</p>
                                                         <p className="font-medium">{consultation ? 'Draft in progress' : 'Ready to start'}</p>
                                                     </div>
-                                                </div>
+                                                    </div>
 
                                                 <Form method={consultation ? 'put' : 'post'} action={`/doctors/consultations/${visit.id}`}>
                                                     {({ processing, errors }) => (
                                                         <div className="space-y-4 rounded-lg border p-4">
+                                                            <input type="hidden" name="outcome" value={outcome} />
+
                                                             <div className="grid gap-2">
                                                                 <Label htmlFor="chief_complaint">Chief Complaint</Label>
                                                                 <Textarea id="chief_complaint" name="chief_complaint" rows={3} defaultValue={consultation?.chief_complaint ?? triage.chief_complaint} />
@@ -240,7 +253,7 @@ export default function DoctorConsultationShow({
 
                                                             <div className="grid gap-2">
                                                                 <Label htmlFor="history_of_presenting_illness">History of Presenting Illness</Label>
-                                                                <Textarea id="history_of_presenting_illness" name="history_of_presenting_illness" rows={4} defaultValue={consultation?.history_of_presenting_illness ?? triage.history_of_presenting_illness ?? ''} />
+                                                                <Textarea id="history_of_presenting_illness" name="history_of_presenting_illness" rows={4} defaultValue={consultation?.history_of_present_illness ?? triage.history_of_presenting_illness ?? ''} />
                                                                 <InputError message={errors.history_of_presenting_illness} />
                                                             </div>
 
@@ -309,13 +322,98 @@ export default function DoctorConsultationShow({
                                                                 </div>
                                                             </div>
 
+                                                            <div className="rounded-lg border p-4">
+                                                                <div className="mb-4">
+                                                                    <h3 className="font-medium">Disposition</h3>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        Use these fields when finalizing the consultation.
+                                                                    </p>
+                                                                </div>
+
+                                                                <div className="grid gap-4 md:grid-cols-2">
+                                                                    <div className="grid gap-2">
+                                                                        <Label>Outcome</Label>
+                                                                        <Select value={outcome} onValueChange={setOutcome}>
+                                                                            <SelectTrigger>
+                                                                                <SelectValue placeholder="Select outcome" />
+                                                                            </SelectTrigger>
+                                                                            <SelectContent>
+                                                                                {consultationOutcomes.map((outcome) => (
+                                                                                    <SelectItem key={outcome.value} value={outcome.value}>
+                                                                                        {outcome.label}
+                                                                                    </SelectItem>
+                                                                                ))}
+                                                                            </SelectContent>
+                                                                        </Select>
+                                                                        <InputError message={errors.outcome} />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="follow_up_days">Follow-up Days</Label>
+                                                                        <Input id="follow_up_days" name="follow_up_days" type="number" min={1} max={365} defaultValue={consultation?.follow_up_days ?? ''} />
+                                                                        <InputError message={errors.follow_up_days} />
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="mt-4 grid gap-2">
+                                                                    <Label htmlFor="follow_up_instructions">Follow-up Instructions</Label>
+                                                                    <Textarea id="follow_up_instructions" name="follow_up_instructions" rows={3} defaultValue={consultation?.follow_up_instructions ?? ''} />
+                                                                    <InputError message={errors.follow_up_instructions} />
+                                                                </div>
+
+                                                                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="referred_to_department">Referred To Department</Label>
+                                                                        <Input id="referred_to_department" name="referred_to_department" defaultValue={consultation?.referred_to_department ?? ''} />
+                                                                        <InputError message={errors.referred_to_department} />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="referred_to_facility">Referred To Facility</Label>
+                                                                        <Input id="referred_to_facility" name="referred_to_facility" defaultValue={consultation?.referred_to_facility ?? ''} />
+                                                                        <InputError message={errors.referred_to_facility} />
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="mt-4 grid gap-2">
+                                                                    <Label htmlFor="referral_reason">Referral Reason</Label>
+                                                                    <Textarea id="referral_reason" name="referral_reason" rows={3} defaultValue={consultation?.referral_reason ?? ''} />
+                                                                    <InputError message={errors.referral_reason} />
+                                                                </div>
+
+                                                                <label className="mt-4 flex items-center gap-2 text-sm">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        name="is_referred"
+                                                                        value="1"
+                                                                        defaultChecked={consultation?.is_referred ?? false}
+                                                                        className="h-4 w-4"
+                                                                    />
+                                                                    Mark this consultation as a referral
+                                                                </label>
+                                                            </div>
+
                                                             <div className="flex items-center justify-between gap-3">
                                                                 <p className="text-sm text-muted-foreground">
-                                                                    {consultation ? 'Continue refining the consultation draft from this workspace.' : 'Start the consultation draft here, then use the other tabs for downstream clinical work as those phases land.'}
+                                                                    {isConsultationFinalized
+                                                                        ? 'This consultation has been finalized and is now read-only from this stage of the workflow.'
+                                                                        : consultation
+                                                                          ? 'Save draft as you work, then finalize once diagnosis and disposition are complete.'
+                                                                          : 'Start the consultation draft here, then use the other tabs for downstream clinical work as those phases land.'}
                                                                 </p>
-                                                                <Button type="submit" disabled={processing}>
-                                                                    {consultation ? 'Save Consultation' : 'Start Consultation'}
-                                                                </Button>
+                                                                <div className="flex gap-2">
+                                                                    <Button type="submit" name="intent" value="save_draft" disabled={processing || isConsultationFinalized}>
+                                                                        {consultation ? 'Save Draft' : 'Start Consultation'}
+                                                                    </Button>
+                                                                    {consultation ? (
+                                                                        <Button
+                                                                            type="submit"
+                                                                            name="intent"
+                                                                            value="complete"
+                                                                            disabled={processing || isConsultationFinalized}
+                                                                        >
+                                                                            {isConsultationFinalized ? 'Consultation Finalized' : 'Finalize Consultation'}
+                                                                        </Button>
+                                                                    ) : null}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
@@ -370,6 +468,16 @@ export default function DoctorConsultationShow({
                                 ) : (
                                     <p className="text-muted-foreground">No triage record is available for this visit yet.</p>
                                 )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader><CardTitle>Consultation Status</CardTitle></CardHeader>
+                            <CardContent className="space-y-3 text-sm">
+                                <div><p className="text-muted-foreground">Draft Status</p><p className="font-medium">{consultation?.completed_at ? 'Finalized' : consultation ? 'Draft in progress' : 'Not started'}</p></div>
+                                <div><p className="text-muted-foreground">Outcome</p><p className="font-medium">{consultation?.outcome ? consultation.outcome.replaceAll('_', ' ') : 'Not set'}</p></div>
+                                <div><p className="text-muted-foreground">Completed At</p><p className="font-medium">{formatDateTime(consultation?.completed_at)}</p></div>
+                                <div><p className="text-muted-foreground">Follow-up</p><p className="font-medium">{consultation?.follow_up_days ? `${consultation.follow_up_days} day(s)` : 'Not scheduled'}</p></div>
                             </CardContent>
                         </Card>
 

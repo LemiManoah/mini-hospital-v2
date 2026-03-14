@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\CreateConsultation;
+use App\Actions\CompleteConsultation;
 use App\Actions\UpdateConsultation;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
+use App\Models\Consultation;
 use App\Models\PatientVisit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -94,12 +96,19 @@ final class DoctorConsultationController
             'triage.vitalSigns' => static fn ($query) => $query
                 ->with(['recordedBy:id,first_name,last_name'])
                 ->latest('recorded_at'),
-            'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_presenting_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code',
+            'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code,outcome,follow_up_instructions,follow_up_days,is_referred,referred_to_department,referred_to_facility,referral_reason',
             'consultation.doctor:id,first_name,last_name',
         ]);
 
         return Inertia::render('doctor/consultations/show', [
             'visit' => $visit,
+            'consultationOutcomes' => collect(Consultation::OUTCOMES)
+                ->map(static fn (string $outcome): array => [
+                    'value' => $outcome,
+                    'label' => mb_convert_case(str_replace('_', ' ', $outcome), MB_CASE_TITLE),
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -132,6 +141,7 @@ final class DoctorConsultationController
         UpdateConsultationRequest $request,
         PatientVisit $visit,
         UpdateConsultation $updateConsultation,
+        CompleteConsultation $completeConsultation,
     ): RedirectResponse {
         $staffId = Auth::user()?->staff_id;
         if (! is_string($staffId) || $staffId === '') {
@@ -146,7 +156,19 @@ final class DoctorConsultationController
             return to_route('doctors.consultations.show', $visit)->with('error', 'Start the consultation before updating it.');
         }
 
-        $updateConsultation->handle($consultation, $request->validated());
+        if ($consultation->completed_at !== null) {
+            return to_route('doctors.consultations.show', $visit)->with('error', 'This consultation has already been finalized.');
+        }
+
+        $validated = $request->validated();
+
+        if (($validated['intent'] ?? 'save_draft') === 'complete') {
+            $completeConsultation->handle($consultation, $validated);
+
+            return to_route('doctors.consultations.show', $visit)->with('success', 'Consultation finalized successfully.');
+        }
+
+        $updateConsultation->handle($consultation, $validated);
 
         return to_route('doctors.consultations.show', $visit)->with('success', 'Consultation saved successfully.');
     }

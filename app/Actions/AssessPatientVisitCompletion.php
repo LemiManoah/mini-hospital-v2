@@ -23,9 +23,14 @@ final class AssessPatientVisitCompletion
     {
         $pendingServicesCount = $this->pendingServicesCount($visit);
         $unpaidBalance = $this->unpaidBalance($visit);
+        $consultationBlockingReason = $this->consultationBlockingReason($visit);
 
         $blockingReasons = [];
         $warningMessages = [];
+
+        if ($consultationBlockingReason !== null) {
+            $blockingReasons[] = $consultationBlockingReason;
+        }
 
         if ($pendingServicesCount > 0) {
             $blockingReasons[] = sprintf(
@@ -63,5 +68,28 @@ final class AssessPatientVisitCompletion
     {
         // Visit-level charges and payments are not in the codebase yet, so default to no balance.
         return 0.0;
+    }
+
+    private function consultationBlockingReason(PatientVisit $visit): ?string
+    {
+        if (! $visit->relationLoaded('triage')) {
+            $visit->loadMissing(['triage:id,visit_id', 'consultation:id,visit_id,completed_at']);
+        } else {
+            $visit->loadMissing('consultation:id,visit_id,completed_at');
+        }
+
+        if ($visit->triage === null) {
+            return null;
+        }
+
+        if ($visit->consultation === null) {
+            return 'This visit cannot be completed until the consultation has been started.';
+        }
+
+        if ($visit->consultation->completed_at === null) {
+            return 'This visit cannot be completed until the consultation has been finalized.';
+        }
+
+        return null;
     }
 }
