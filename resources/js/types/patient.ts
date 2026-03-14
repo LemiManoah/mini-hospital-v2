@@ -93,6 +93,101 @@ export interface Consultation {
     doctor?: { id: string; first_name: string; last_name: string } | null;
 }
 
+export interface LabTestOption {
+    id: string;
+    test_code: string;
+    test_name: string;
+    category: string | null;
+    base_price: number | null;
+}
+
+export interface LabRequestItem {
+    id: string;
+    status: string;
+    price: number;
+    is_external: boolean;
+    external_lab_name: string | null;
+    completed_at: string | null;
+    test?: LabTestOption | null;
+}
+
+export interface LabRequest {
+    id: string;
+    visit_id: string;
+    consultation_id: string | null;
+    requested_by: string;
+    request_date: string;
+    clinical_notes: string | null;
+    priority: string;
+    status: string;
+    diagnosis_code: string | null;
+    is_stat: boolean;
+    billing_status: string;
+    completed_at: string | null;
+    requestedBy?: { id: string; first_name: string; last_name: string } | null;
+    items: LabRequestItem[];
+}
+
+export interface DrugOption {
+    id: string;
+    generic_name: string;
+    brand_name: string | null;
+    strength: string | null;
+    dosage_form: string | null;
+}
+
+export interface PrescriptionItem {
+    id: string;
+    dosage: string;
+    frequency: string;
+    route: string;
+    duration_days: number;
+    quantity: number;
+    instructions: string | null;
+    is_prn: boolean;
+    prn_reason: string | null;
+    is_external_pharmacy: boolean;
+    status: string;
+    dispensed_at: string | null;
+    drug?: DrugOption | null;
+}
+
+export interface Prescription {
+    id: string;
+    visit_id: string;
+    consultation_id: string;
+    prescribed_by: string;
+    prescription_date: string;
+    is_discharge_medication: boolean;
+    is_long_term: boolean;
+    primary_diagnosis: string | null;
+    pharmacy_notes: string | null;
+    status: string;
+    prescribedBy?: { id: string; first_name: string; last_name: string } | null;
+    items: PrescriptionItem[];
+}
+
+export interface ImagingRequest {
+    id: string;
+    visit_id: string;
+    consultation_id: string | null;
+    requested_by: string;
+    modality: string;
+    body_part: string;
+    laterality: string;
+    clinical_history: string;
+    indication: string;
+    priority: string;
+    status: string;
+    scheduled_date: string | null;
+    requires_contrast: boolean;
+    contrast_allergy_status: string | null;
+    pregnancy_status: string;
+    radiation_dose_msv: number | null;
+    requestedBy?: { id: string; first_name: string; last_name: string } | null;
+    scheduledBy?: { id: string; first_name: string; last_name: string } | null;
+}
+
 export interface VisitPayer {
     id: string;
     patient_visit_id: string;
@@ -209,6 +304,9 @@ export interface PatientVisit {
     payer?: VisitPayer | null;
     triage?: TriageRecord | null;
     consultation?: Consultation | null;
+    labRequests?: LabRequest[] | null;
+    imagingRequests?: ImagingRequest[] | null;
+    prescriptions?: Prescription[] | null;
     completion_check?: VisitCompletionCheck | null;
 }
 
@@ -268,5 +366,13 @@ export interface DoctorConsultationIndexPageProps {
 
 export interface DoctorConsultationShowPageProps {
     visit: PatientVisit;
+    activeTab: string;
     consultationOutcomes: { value: string; label: string }[];
+    labTestOptions: LabTestOption[];
+    drugOptions: DrugOption[];
+    labPriorities: { value: string; label: string }[];
+    imagingModalities: { value: string; label: string }[];
+    imagingPriorities: { value: string; label: string }[];
+    imagingLateralities: { value: string; label: string }[];
+    pregnancyStatuses: { value: string; label: string }[];
 }

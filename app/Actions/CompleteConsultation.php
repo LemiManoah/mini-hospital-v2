@@ -12,7 +12,7 @@ final readonly class CompleteConsultation
     {
         $consultation->update([
             'chief_complaint' => $this->nullableText($data['chief_complaint'] ?? null),
-            'history_of_present_illness' => $this->nullableText($data['history_of_presenting_illness'] ?? null),
+            'history_of_present_illness' => $this->nullableText($data['history_of_present_illness'] ?? null),
             'review_of_systems' => $this->nullableText($data['review_of_systems'] ?? null),
             'past_medical_history_summary' => $this->nullableText($data['past_medical_history_summary'] ?? null),
             'family_history' => $this->nullableText($data['family_history'] ?? null),

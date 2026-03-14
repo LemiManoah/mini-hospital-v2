@@ -17,6 +17,7 @@ final class DatabaseSeeder extends Seeder
             SubscriptionPackageSeeder::class,
             AllergenSeeder::class,
             UnitSeeder::class,
+            DrugSeeder::class,
             AddressSeeder::class,
             FacilitySeeder::class,
             PermissionSeeder::class,

@@ -191,6 +191,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     url: indexUnits(),
                 },
                 {
+                    title: 'Drugs',
+                    url: '/drugs',
+                },
+                {
                     title: 'Insurance Companies',
                     url: indexInsuranceCompanies(),
                 },

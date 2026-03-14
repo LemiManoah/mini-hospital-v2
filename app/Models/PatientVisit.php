@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Override;
@@ -104,5 +105,20 @@ final class PatientVisit extends Model
     public function consultation(): HasOne
     {
         return $this->hasOne(Consultation::class, 'visit_id');
+    }
+
+    public function labRequests(): HasMany
+    {
+        return $this->hasMany(LabRequest::class, 'visit_id');
+    }
+
+    public function imagingRequests(): HasMany
+    {
+        return $this->hasMany(ImagingRequest::class, 'visit_id');
+    }
+
+    public function prescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class, 'visit_id');
     }
 }

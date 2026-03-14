@@ -4,28 +4,35 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\CreateConsultation;
 use App\Actions\CompleteConsultation;
+use App\Actions\CreateConsultation;
 use App\Actions\UpdateConsultation;
+use App\Enums\ImagingLaterality;
+use App\Enums\ImagingModality;
+use App\Enums\ImagingPriority;
+use App\Enums\PregnancyStatus;
+use App\Enums\Priority;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
 use App\Models\Consultation;
+use App\Models\Drug;
+use App\Models\ImagingRequest;
+use App\Models\LabRequest;
+use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
+use App\Support\DoctorConsultationAccess;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final class DoctorConsultationController
 {
-    public function index(Request $request): Response
+    public function index(Request $request, DoctorConsultationAccess $consultationAccess): Response
     {
-        $staffId = Auth::user()?->staff_id;
-        abort_if(! is_string($staffId) || $staffId === '', 403, 'Your user account is not linked to a staff profile.');
-
+        $staffId = $consultationAccess->resolveStaffId();
         $search = mb_trim((string) $request->query('search', ''));
 
         /** @var LengthAwarePaginator<int, PatientVisit> $visits */
@@ -74,11 +81,10 @@ final class DoctorConsultationController
         ]);
     }
 
-    public function show(PatientVisit $visit): Response
+    public function show(Request $request, PatientVisit $visit, DoctorConsultationAccess $consultationAccess): Response
     {
-        $staffId = Auth::user()?->staff_id;
-        abort_if(! is_string($staffId) || $staffId === '', 403, 'Your user account is not linked to a staff profile.');
-        abort_unless($this->canAccessVisit($visit, $staffId), 403, 'You do not have access to this consultation workspace.');
+        $staffId = $consultationAccess->resolveStaffId();
+        $consultationAccess->authorizeVisit($visit, $staffId);
 
         $visit->load([
             'patient:id,patient_number,first_name,last_name,middle_name,date_of_birth,age,age_units,gender,phone_number,email,blood_group,next_of_kin_name,next_of_kin_phone,address_id,country_id',
@@ -98,14 +104,93 @@ final class DoctorConsultationController
                 ->latest('recorded_at'),
             'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code,outcome,follow_up_instructions,follow_up_days,is_referred,referred_to_department,referred_to_facility,referral_reason',
             'consultation.doctor:id,first_name,last_name',
+            'labRequests' => static fn ($query) => $query
+                ->with([
+                    'requestedBy:id,first_name,last_name',
+                    'items.test:id,test_name,test_code,category',
+                ])
+                ->latest('request_date'),
+            'imagingRequests' => static fn ($query) => $query
+                ->with([
+                    'requestedBy:id,first_name,last_name',
+                    'scheduledBy:id,first_name,last_name',
+                ])
+                ->latest(),
+            'prescriptions' => static fn ($query) => $query
+                ->with([
+                    'prescribedBy:id,first_name,last_name',
+                    'items.drug:id,generic_name,brand_name,strength,dosage_form',
+                ])
+                ->latest('prescription_date'),
         ]);
 
         return Inertia::render('doctor/consultations/show', [
             'visit' => $visit,
+            'activeTab' => $request->query('tab', 'overview'),
             'consultationOutcomes' => collect(Consultation::OUTCOMES)
                 ->map(static fn (string $outcome): array => [
                     'value' => $outcome,
                     'label' => mb_convert_case(str_replace('_', ' ', $outcome), MB_CASE_TITLE),
+                ])
+                ->values()
+                ->all(),
+            'labTestOptions' => LabTestCatalog::query()
+                ->where('is_active', true)
+                ->orderBy('category')
+                ->orderBy('test_name')
+                ->get(['id', 'test_code', 'test_name', 'category', 'base_price'])
+                ->map(static fn (LabTestCatalog $test): array => [
+                    'id' => $test->id,
+                    'test_code' => $test->test_code,
+                    'test_name' => $test->test_name,
+                    'category' => $test->category,
+                    'base_price' => $test->base_price,
+                ])
+                ->all(),
+            'drugOptions' => Drug::query()
+                ->where('is_active', true)
+                ->orderBy('generic_name')
+                ->get(['id', 'generic_name', 'brand_name', 'strength', 'dosage_form'])
+                ->map(static fn (Drug $drug): array => [
+                    'id' => $drug->id,
+                    'generic_name' => $drug->generic_name,
+                    'brand_name' => $drug->brand_name,
+                    'strength' => $drug->strength,
+                    'dosage_form' => $drug->dosage_form->value,
+                ])
+                ->all(),
+            'labPriorities' => collect(Priority::cases())
+                ->map(static fn (Priority $priority): array => [
+                    'value' => $priority->value,
+                    'label' => $priority->label(),
+                ])
+                ->values()
+                ->all(),
+            'imagingModalities' => collect(ImagingModality::cases())
+                ->map(static fn (ImagingModality $modality): array => [
+                    'value' => $modality->value,
+                    'label' => $modality->label(),
+                ])
+                ->values()
+                ->all(),
+            'imagingPriorities' => collect(ImagingPriority::cases())
+                ->map(static fn (ImagingPriority $priority): array => [
+                    'value' => $priority->value,
+                    'label' => $priority->label(),
+                ])
+                ->values()
+                ->all(),
+            'imagingLateralities' => collect(ImagingLaterality::cases())
+                ->map(static fn (ImagingLaterality $laterality): array => [
+                    'value' => $laterality->value,
+                    'label' => $laterality->label(),
+                ])
+                ->values()
+                ->all(),
+            'pregnancyStatuses' => collect(PregnancyStatus::cases())
+                ->map(static fn (PregnancyStatus $status): array => [
+                    'value' => $status->value,
+                    'label' => $status->label(),
                 ])
                 ->values()
                 ->all(),
@@ -116,13 +201,10 @@ final class DoctorConsultationController
         StoreConsultationRequest $request,
         PatientVisit $visit,
         CreateConsultation $createConsultation,
+        DoctorConsultationAccess $consultationAccess,
     ): RedirectResponse {
-        $staffId = Auth::user()?->staff_id;
-        if (! is_string($staffId) || $staffId === '') {
-            return to_route('doctors.consultations.index')->with('error', 'Your user account is not linked to a staff profile.');
-        }
-
-        abort_unless($this->canAccessVisit($visit, $staffId), 403, 'You do not have access to this consultation workspace.');
+        $staffId = $consultationAccess->resolveStaffId();
+        $consultationAccess->authorizeVisit($visit, $staffId);
 
         if ($visit->triage === null) {
             return to_route('doctors.consultations.show', $visit)->with('error', 'Record triage before starting a consultation.');
@@ -142,13 +224,10 @@ final class DoctorConsultationController
         PatientVisit $visit,
         UpdateConsultation $updateConsultation,
         CompleteConsultation $completeConsultation,
+        DoctorConsultationAccess $consultationAccess,
     ): RedirectResponse {
-        $staffId = Auth::user()?->staff_id;
-        if (! is_string($staffId) || $staffId === '') {
-            return to_route('doctors.consultations.index')->with('error', 'Your user account is not linked to a staff profile.');
-        }
-
-        abort_unless($this->canAccessVisit($visit, $staffId), 403, 'You do not have access to this consultation workspace.');
+        $staffId = $consultationAccess->resolveStaffId();
+        $consultationAccess->authorizeVisit($visit, $staffId);
 
         $consultation = $visit->consultation;
 
@@ -171,24 +250,5 @@ final class DoctorConsultationController
         $updateConsultation->handle($consultation, $validated);
 
         return to_route('doctors.consultations.show', $visit)->with('success', 'Consultation saved successfully.');
-    }
-
-    private function canAccessVisit(PatientVisit $visit, string $staffId): bool
-    {
-        if ($visit->status->value === 'completed' || $visit->status->value === 'cancelled') {
-            return false;
-        }
-
-        if (! $visit->triage()->exists()) {
-            return false;
-        }
-
-        if ($visit->doctor_id === $staffId || $visit->doctor_id === null) {
-            return true;
-        }
-
-        return $visit->consultation()
-            ->where('doctor_id', $staffId)
-            ->exists();
     }
 }

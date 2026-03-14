@@ -20,8 +20,8 @@ final readonly class CreateVitalSign
         $heightCm = $this->nullableFloat($data['height_cm'] ?? null);
         $weightKg = $this->nullableFloat($data['weight_kg'] ?? null);
 
-        $data['temperature_unit'] = $data['temperature_unit'] ?? 'celsius';
-        $data['blood_glucose_unit'] = $data['blood_glucose_unit'] ?? 'mg_dl';
+        $data['temperature_unit'] ??= 'celsius';
+        $data['blood_glucose_unit'] ??= 'mg_dl';
         $data['systolic_bp'] = $systolicBp;
         $data['diastolic_bp'] = $diastolicBp;
         $data['height_cm'] = $heightCm;

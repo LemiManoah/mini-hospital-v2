@@ -13,15 +13,6 @@ final class StoreVitalSignRequest extends FormRequest
         return true;
     }
 
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'on_supplemental_oxygen' => $this->boolean('on_supplemental_oxygen'),
-            'temperature_unit' => $this->input('temperature_unit') ?: 'celsius',
-            'blood_glucose_unit' => $this->input('blood_glucose_unit') ?: 'mg_dl',
-        ]);
-    }
-
     public function rules(): array
     {
         return [
@@ -45,5 +36,14 @@ final class StoreVitalSignRequest extends FormRequest
             'muac_cm' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'capillary_refill' => ['nullable', 'string', 'max:20'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'on_supplemental_oxygen' => $this->boolean('on_supplemental_oxygen'),
+            'temperature_unit' => $this->input('temperature_unit') ?: 'celsius',
+            'blood_glucose_unit' => $this->input('blood_glucose_unit') ?: 'mg_dl',
+        ]);
     }
 }

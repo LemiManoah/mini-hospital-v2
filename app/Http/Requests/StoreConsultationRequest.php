@@ -30,4 +30,13 @@ class StoreConsultationRequest extends FormRequest
             'primary_icd10_code' => ['nullable', 'string', 'max:10'],
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->missing('history_of_present_illness') && $this->filled('history_of_presenting_illness')) {
+            $this->merge([
+                'history_of_present_illness' => $this->input('history_of_presenting_illness'),
+            ]);
+        }
+    }
 }

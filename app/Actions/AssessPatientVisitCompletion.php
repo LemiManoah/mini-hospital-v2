@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\ImagingRequestStatus;
+use App\Enums\LabRequestStatus;
+use App\Enums\PrescriptionStatus;
 use App\Models\PatientVisit;
 
 final class AssessPatientVisitCompletion
@@ -22,7 +25,7 @@ final class AssessPatientVisitCompletion
     public function handle(PatientVisit $visit): array
     {
         $pendingServicesCount = $this->pendingServicesCount($visit);
-        $unpaidBalance = $this->unpaidBalance($visit);
+        $unpaidBalance = $this->unpaidBalance();
         $consultationBlockingReason = $this->consultationBlockingReason($visit);
 
         $blockingReasons = [];
@@ -60,11 +63,32 @@ final class AssessPatientVisitCompletion
 
     private function pendingServicesCount(PatientVisit $visit): int
     {
-        // Pending service tracking will plug into this method once visit service/order tables land.
-        return 0;
+        $pendingLabRequests = $visit->labRequests()
+            ->whereNotIn('status', [
+                LabRequestStatus::COMPLETED->value,
+                LabRequestStatus::CANCELLED->value,
+                LabRequestStatus::REJECTED->value,
+            ])
+            ->count();
+
+        $pendingImagingRequests = $visit->imagingRequests()
+            ->whereNotIn('status', [
+                ImagingRequestStatus::COMPLETED->value,
+                ImagingRequestStatus::CANCELLED->value,
+            ])
+            ->count();
+
+        $pendingPrescriptions = $visit->prescriptions()
+            ->whereNotIn('status', [
+                PrescriptionStatus::FULLY_DISPENSED->value,
+                PrescriptionStatus::CANCELLED->value,
+            ])
+            ->count();
+
+        return $pendingLabRequests + $pendingImagingRequests + $pendingPrescriptions;
     }
 
-    private function unpaidBalance(PatientVisit $visit): float
+    private function unpaidBalance(): float
     {
         // Visit-level charges and payments are not in the codebase yet, so default to no balance.
         return 0.0;

@@ -10,15 +10,6 @@ use Illuminate\Validation\Validator;
 
 final class UpdateConsultationRequest extends StoreConsultationRequest
 {
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'intent' => $this->input('intent') ?: 'save_draft',
-            'is_referred' => $this->boolean('is_referred'),
-            'outcome' => $this->filled('outcome') ? $this->input('outcome') : null,
-        ]);
-    }
-
     public function rules(): array
     {
         return [
@@ -78,5 +69,16 @@ final class UpdateConsultationRequest extends StoreConsultationRequest
                 $validator->errors()->add('follow_up_instructions', 'Follow-up instructions are required when follow-up days are provided.');
             }
         });
+    }
+
+    protected function prepareForValidation(): void
+    {
+        parent::prepareForValidation();
+
+        $this->merge([
+            'intent' => $this->input('intent') ?: 'save_draft',
+            'is_referred' => $this->boolean('is_referred'),
+            'outcome' => $this->filled('outcome') ? $this->input('outcome') : null,
+        ]);
     }
 }

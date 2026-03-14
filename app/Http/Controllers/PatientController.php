@@ -28,6 +28,7 @@ use App\Models\Staff;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -212,13 +213,7 @@ final readonly class PatientController
     }
 
     /**
-     * @return array{
-     *     companies: \Illuminate\Support\Collection<int, InsuranceCompany>,
-     *     packages: \Illuminate\Support\Collection<int, InsurancePackage>,
-     *     clinics: \Illuminate\Support\Collection<int, Clinic>,
-     *     doctors: \Illuminate\Support\Collection<int, Staff>,
-     *     visitTypes: \Illuminate\Support\Collection<int, array{value: string, label: string}>
-     * }
+     * @return array{companies: Collection<int, InsuranceCompany>, packages: Collection<int, InsurancePackage>, clinics: Collection<int, Clinic>, doctors: Collection<int, Staff>, visitTypes: Collection<int, array{value: string, label: string}>}
      */
     private function visitFormOptions(): array
     {
