@@ -13,29 +13,53 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tenants', function (Blueprint $table): void {
-            $table->foreign('created_by', 'tenants_created_by_foreign')
-                ->references('id')
-                ->on('users')
-                ->nullOnDelete();
+        if (
+            Schema::hasTable('tenants')
+            && Schema::hasColumn('tenants', 'created_by')
+            && Schema::hasColumn('tenants', 'updated_by')
+        ) {
+            $foreignKeys = collect(Schema::getForeignKeys('tenants'));
 
-            $table->foreign('updated_by', 'tenants_updated_by_foreign')
-                ->references('id')
-                ->on('users')
-                ->nullOnDelete();
-        });
+            Schema::table('tenants', function (Blueprint $table) use ($foreignKeys): void {
+                if (!$foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'tenants_created_by_foreign')) {
+                    $table->foreign('created_by', 'tenants_created_by_foreign')
+                        ->references('id')
+                        ->on('users')
+                        ->nullOnDelete();
+                }
 
-        Schema::table('staff', function (Blueprint $table): void {
-            $table->foreign('created_by', 'staff_created_by_foreign')
-                ->references('id')
-                ->on('users')
-                ->nullOnDelete();
+                if (!$foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'tenants_updated_by_foreign')) {
+                    $table->foreign('updated_by', 'tenants_updated_by_foreign')
+                        ->references('id')
+                        ->on('users')
+                        ->nullOnDelete();
+                }
+            });
+        }
 
-            $table->foreign('updated_by', 'staff_updated_by_foreign')
-                ->references('id')
-                ->on('users')
-                ->nullOnDelete();
-        });
+        if (
+            Schema::hasTable('staff')
+            && Schema::hasColumn('staff', 'created_by')
+            && Schema::hasColumn('staff', 'updated_by')
+        ) {
+            $foreignKeys = collect(Schema::getForeignKeys('staff'));
+
+            Schema::table('staff', function (Blueprint $table) use ($foreignKeys): void {
+                if (!$foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_created_by_foreign')) {
+                    $table->foreign('created_by', 'staff_created_by_foreign')
+                        ->references('id')
+                        ->on('users')
+                        ->nullOnDelete();
+                }
+
+                if (!$foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_updated_by_foreign')) {
+                    $table->foreign('updated_by', 'staff_updated_by_foreign')
+                        ->references('id')
+                        ->on('users')
+                        ->nullOnDelete();
+                }
+            });
+        }
     }
 
     /**
@@ -43,14 +67,32 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tenants', function (Blueprint $table): void {
-            $table->dropForeign('tenants_created_by_foreign');
-            $table->dropForeign('tenants_updated_by_foreign');
-        });
+        if (Schema::hasTable('tenants')) {
+            $foreignKeys = collect(Schema::getForeignKeys('tenants'));
 
-        Schema::table('staff', function (Blueprint $table): void {
-            $table->dropForeign('staff_created_by_foreign');
-            $table->dropForeign('staff_updated_by_foreign');
-        });
+            Schema::table('tenants', function (Blueprint $table) use ($foreignKeys): void {
+                if ($foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'tenants_created_by_foreign')) {
+                    $table->dropForeign('tenants_created_by_foreign');
+                }
+
+                if ($foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'tenants_updated_by_foreign')) {
+                    $table->dropForeign('tenants_updated_by_foreign');
+                }
+            });
+        }
+
+        if (Schema::hasTable('staff')) {
+            $foreignKeys = collect(Schema::getForeignKeys('staff'));
+
+            Schema::table('staff', function (Blueprint $table) use ($foreignKeys): void {
+                if ($foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_created_by_foreign')) {
+                    $table->dropForeign('staff_created_by_foreign');
+                }
+
+                if ($foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_updated_by_foreign')) {
+                    $table->dropForeign('staff_updated_by_foreign');
+                }
+            });
+        }
     }
 };

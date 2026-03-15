@@ -14,39 +14,41 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('staff', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained()->onDelete('cascade');
-            $table->string('employee_number', 50);
-            $table->string('first_name', 100);
-            $table->string('last_name', 100);
-            $table->string('middle_name', 100)->nullable();
-            $table->string('email')->index();
-            $table->string('phone', 20)->nullable();
-            $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
-            $table->foreignUuid('staff_position_id')->nullable()->constrained('staff_positions')->nullOnDelete();
-            $table->enum('type', array_column(StaffType::cases(), 'value'));
-            $table->string('license_number', 100)->nullable();
-            $table->string('specialty', 100)->nullable();
-            $table->date('hire_date');
-            $table->date('termination_date')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamp('last_login_at')->nullable();
-            $table->string('last_login_ip', 45)->nullable();
+        if (!Schema::hasTable('staff')) {
+            Schema::create('staff', function (Blueprint $table): void {
+                $table->uuid('id')->primary();
+                $table->foreignUuid('tenant_id')->constrained()->onDelete('cascade');
+                $table->string('employee_number', 50);
+                $table->string('first_name', 100);
+                $table->string('last_name', 100);
+                $table->string('middle_name', 100)->nullable();
+                $table->string('email')->index();
+                $table->string('phone', 20)->nullable();
+                $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
+                $table->foreignUuid('staff_position_id')->nullable()->constrained('staff_positions')->nullOnDelete();
+                $table->enum('type', array_column(StaffType::cases(), 'value'));
+                $table->string('license_number', 100)->nullable();
+                $table->string('specialty', 100)->nullable();
+                $table->date('hire_date');
+                $table->date('termination_date')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->timestamp('last_login_at')->nullable();
+                $table->string('last_login_ip', 45)->nullable();
 
-            // Audit fields are plain UUIDs here; FKs are added in a later migration after users exists.
-            $table->uuid('created_by')->nullable()->index();
-            $table->uuid('updated_by')->nullable()->index();
+                // Audit fields are plain UUIDs here; FKs are added in a later migration after users exists.
+                $table->uuid('created_by')->nullable()->index();
+                $table->uuid('updated_by')->nullable()->index();
 
-            $table->timestamps();
-            $table->softDeletes();
+                $table->timestamps();
+                $table->softDeletes();
 
-            $table->unique(['tenant_id', 'employee_number']);
-            $table->unique(['tenant_id', 'email']);
-            $table->unique(['tenant_id', 'license_number']);
-            $table->index('is_active');
-            $table->index('type');
-        });
+                $table->unique(['tenant_id', 'employee_number']);
+                $table->unique(['tenant_id', 'email']);
+                $table->unique(['tenant_id', 'license_number']);
+                $table->index('is_active');
+                $table->index('type');
+            });
+        }
     }
 
     /**

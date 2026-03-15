@@ -13,13 +13,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('staff_branches', function (Blueprint $table): void {
-            $table->foreignUuid('staff_id')->constrained('staff')->onDelete('cascade');
-            $table->foreignUuid('branch_id')->constrained('facility_branches')->onDelete('cascade');
-            $table->boolean('is_primary_location')->default(false);
+        if (!Schema::hasTable('staff_branches')) {
+            Schema::create('staff_branches', function (Blueprint $table): void {
+                $table->foreignUuid('staff_id')->constrained('staff')->onDelete('cascade');
+                $table->foreignUuid('branch_id')->constrained('facility_branches')->onDelete('cascade');
+                $table->boolean('is_primary_location')->default(false);
 
-            $table->primary(['staff_id', 'branch_id']);
-        });
+                $table->primary(['staff_id', 'branch_id']);
+            });
+        }
     }
 
     /**

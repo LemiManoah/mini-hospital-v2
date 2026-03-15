@@ -15,28 +15,30 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tenants', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->string('name', 100)->unique();
-            $table->string('domain', 100)->unique()->nullable()->comment('For custom subdomains');
-            $table->boolean('has_branches')->default(false);
-            $table->string('logo')->nullable();
-            $table->string('stamp')->nullable();
-            $table->foreignUuid('subscription_package_id')->constrained('subscription_packages');
-            $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
-            $table->enum('facility_level', array_column(FacilityLevel::cases(), 'value'));
-            $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
-            $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
-            $table->decimal('longitude', 10, 7)->nullable();
-            $table->decimal('latitude', 10, 7)->nullable();
+        if (!Schema::hasTable('tenants')) {
+            Schema::create('tenants', function (Blueprint $table): void {
+                $table->uuid('id')->primary();
+                $table->string('name', 100)->unique();
+                $table->string('domain', 100)->unique()->nullable()->comment('For custom subdomains');
+                $table->boolean('has_branches')->default(false);
+                $table->string('logo')->nullable();
+                $table->string('stamp')->nullable();
+                $table->foreignUuid('subscription_package_id')->constrained('subscription_packages');
+                $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
+                $table->enum('facility_level', array_column(FacilityLevel::cases(), 'value'));
+                $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
+                $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
+                $table->decimal('longitude', 10, 7)->nullable();
+                $table->decimal('latitude', 10, 7)->nullable();
 
-            // Audit fields are plain UUIDs here; FKs are added in a later migration after users exists.
-            $table->uuid('created_by')->nullable()->index();
-            $table->uuid('updated_by')->nullable()->index();
+                // Audit fields are plain UUIDs here; FKs are added in a later migration after users exists.
+                $table->uuid('created_by')->nullable()->index();
+                $table->uuid('updated_by')->nullable()->index();
 
-            $table->timestamps();
-            $table->softDeletes();
-        });
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
     }
 
     /**

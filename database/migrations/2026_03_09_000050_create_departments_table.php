@@ -13,22 +13,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('departments', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained()->onDelete('cascade');
-            $table->string('department_code', 20);
-            $table->string('department_name', 100);
-            $table->string('location', 100)->nullable();
-            $table->boolean('is_clinical')->default(true);
-            $table->boolean('is_active')->default(true);
-            $table->json('contact_info')->nullable();
-            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamps();
-            $table->softDeletes();
+        if (!Schema::hasTable('departments')) {
+            Schema::create('departments', function (Blueprint $table): void {
+                $table->uuid('id')->primary();
+                $table->foreignUuid('tenant_id')->constrained()->onDelete('cascade');
+                $table->string('department_code', 20);
+                $table->string('department_name', 100);
+                $table->string('location', 100)->nullable();
+                $table->boolean('is_clinical')->default(true);
+                $table->boolean('is_active')->default(true);
+                $table->json('contact_info')->nullable();
+                $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamps();
+                $table->softDeletes();
 
-            $table->unique(['tenant_id', 'department_code']);
-        });
+                $table->unique(['tenant_id', 'department_code']);
+            });
+        }
     }
 
     /**

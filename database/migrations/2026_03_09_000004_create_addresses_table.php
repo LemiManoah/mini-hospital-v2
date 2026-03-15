@@ -10,19 +10,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('addresses', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->string('city', 100)->index();
-            $table->string('district', 100)->nullable()->index();
-            $table->string('state', 100)->nullable();
-            $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
+        if (!Schema::hasTable('addresses')) {
+            Schema::create('addresses', function (Blueprint $table): void {
+                $table->uuid('id')->primary();
+                $table->string('city', 100)->index();
+                $table->string('district', 100)->nullable()->index();
+                $table->string('state', 100)->nullable();
+                $table->foreignUuid('country_id')->nullable()->constrained('countries')->nullOnDelete();
 
-            $table->softDeletes();
-            // Phase 2 introduces the staff table; keep nullable UUIDs for now.
-            $table->uuid('created_by')->nullable()->index();
-            $table->uuid('updated_by')->nullable()->index();
-            $table->timestamps();
-        });
+                $table->softDeletes();
+                // Phase 2 introduces the staff table; keep nullable UUIDs for now.
+                $table->uuid('created_by')->nullable()->index();
+                $table->uuid('updated_by')->nullable()->index();
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void

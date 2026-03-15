@@ -14,30 +14,32 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('facility_branches', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->string('name')->index();
-            $table->string('branch_code', 20);
-            $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
-            $table->string('main_contact')->nullable()->index();
-            $table->string('other_contact')->nullable();
-            $table->string('email')->nullable()->index();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
-            $table->foreignUuid('currency_id')->constrained('currencies')->onDelete('cascade');
-            $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
-            $table->boolean('is_main_branch')->default(false);
-            $table->boolean('has_store')->default(false);
+        if (!Schema::hasTable('facility_branches')) {
+            Schema::create('facility_branches', function (Blueprint $table): void {
+                $table->uuid('id')->primary();
+                $table->string('name')->index();
+                $table->string('branch_code', 20);
+                $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
+                $table->string('main_contact')->nullable()->index();
+                $table->string('other_contact')->nullable();
+                $table->string('email')->nullable()->index();
+                $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
+                $table->foreignUuid('currency_id')->constrained('currencies')->onDelete('cascade');
+                $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
+                $table->boolean('is_main_branch')->default(false);
+                $table->boolean('has_store')->default(false);
 
-            // Audit fields
-            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
+                // Audit fields
+                $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
 
-            $table->timestamps();
-            $table->softDeletes();
+                $table->timestamps();
+                $table->softDeletes();
 
-            $table->unique(['tenant_id', 'branch_code']);
-            $table->index(['tenant_id', 'status']);
-        });
+                $table->unique(['tenant_id', 'branch_code']);
+                $table->index(['tenant_id', 'status']);
+            });
+        }
     }
 
     /**
