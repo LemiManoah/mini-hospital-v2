@@ -63,7 +63,8 @@ function consultationState(visit: PatientVisit): {
     if (visit.consultation?.completed_at) {
         return {
             label: 'Finalized',
-            className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+            className:
+                'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
             actionLabel: 'Review Consultation',
         };
     }
@@ -71,14 +72,16 @@ function consultationState(visit: PatientVisit): {
     if (visit.consultation) {
         return {
             label: 'In progress',
-            className: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200',
+            className:
+                'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200',
             actionLabel: 'Continue Consultation',
         };
     }
 
     return {
         label: 'New',
-        className: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100',
+        className:
+            'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100',
         actionLabel: 'Start Consultation',
     };
 }
@@ -161,7 +164,8 @@ export default function DoctorConsultationsIndex({
                                     ]
                                         .filter(Boolean)
                                         .join(' ');
-                                    const consultation = consultationState(visit);
+                                    const consultation =
+                                        consultationState(visit);
 
                                     return (
                                         <TableRow key={visit.id}>
@@ -200,12 +204,13 @@ export default function DoctorConsultationsIndex({
                                                 <span
                                                     className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${triageBadgeClass(visit.triage?.triage_grade)}`}
                                                 >
-                                                    {visit.triage?.triage_grade ??
-                                                        'N/A'}
+                                                    {visit.triage
+                                                        ?.triage_grade ?? 'N/A'}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="max-w-[260px] whitespace-normal">
-                                                {visit.triage?.chief_complaint ||
+                                                {visit.triage
+                                                    ?.chief_complaint ||
                                                     'No complaint captured'}
                                             </TableCell>
                                             <TableCell>
@@ -229,9 +234,15 @@ export default function DoctorConsultationsIndex({
                                                             ?.primary_diagnosis ||
                                                             'No diagnosis yet'}
                                                     </p>
-                                                    {visit.consultation?.completed_at ? (
+                                                    {visit.consultation
+                                                        ?.completed_at ? (
                                                         <p className="text-xs text-muted-foreground">
-                                                            Finalized {formatDateTime(visit.consultation.completed_at)}
+                                                            Finalized{' '}
+                                                            {formatDateTime(
+                                                                visit
+                                                                    .consultation
+                                                                    .completed_at,
+                                                            )}
                                                         </p>
                                                     ) : null}
                                                 </div>
@@ -255,7 +266,9 @@ export default function DoctorConsultationsIndex({
                                                         ) : (
                                                             <PlayCircle className="mr-2 h-4 w-4" />
                                                         )}
-                                                        {consultation.actionLabel}
+                                                        {
+                                                            consultation.actionLabel
+                                                        }
                                                     </Link>
                                                 </Button>
                                             </TableCell>
@@ -268,7 +281,8 @@ export default function DoctorConsultationsIndex({
                                         colSpan={9}
                                         className="py-12 text-center text-zinc-500 italic"
                                     >
-                                        No triaged visits are ready for consultation.
+                                        No triaged visits are ready for
+                                        consultation.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -333,7 +347,8 @@ export default function DoctorConsultationsIndex({
 
                 <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
                     <ClipboardPen className="mr-2 inline h-4 w-4" />
-                    Existing consultations stay in the queue so doctors can continue and refine draft notes from one place.
+                    Existing consultations stay in the queue so doctors can
+                    continue and refine draft notes from one place.
                 </div>
             </div>
         </AppLayout>

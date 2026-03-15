@@ -267,8 +267,7 @@ interface PatientBaseFormProps {
 }
 
 export interface PatientCreatePageProps
-    extends PatientBaseFormProps,
-        VisitFormOptions {}
+    extends PatientBaseFormProps, VisitFormOptions {}
 
 export interface PatientEditPageProps extends PatientBaseFormProps {
     patient: Patient;

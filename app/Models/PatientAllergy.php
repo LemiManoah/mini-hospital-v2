@@ -8,6 +8,7 @@ use App\Enums\AllergyReaction;
 use App\Enums\AllergySeverity;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -94,7 +95,7 @@ final class PatientAllergy extends Model
      * Scope to get only active allergies
      */
     #[Scope]
-    protected function active($query)
+    protected function active(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
@@ -103,7 +104,7 @@ final class PatientAllergy extends Model
      * Scope to get allergies by severity
      */
     #[Scope]
-    protected function bySeverity($query, AllergySeverity $severity)
+    protected function bySeverity(Builder $query, AllergySeverity $severity): Builder
     {
         return $query->where('severity', $severity);
     }

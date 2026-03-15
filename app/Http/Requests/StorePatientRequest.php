@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -53,7 +54,9 @@ final class StorePatientRequest extends FormRequest
                 'required_if:billing_type,insurance',
                 'uuid',
                 Rule::exists('insurance_companies', 'id')->where(
-                    static fn ($query) => $query->where('tenant_id', $tenantId)
+                    function (Builder $query) use ($tenantId): void {
+                        $query->where('tenant_id', $tenantId);
+                    }
                 ),
             ],
             'insurance_package_id' => [
@@ -61,9 +64,10 @@ final class StorePatientRequest extends FormRequest
                 'required_if:billing_type,insurance',
                 'uuid',
                 Rule::exists('insurance_packages', 'id')->where(
-                    fn ($query) => $query
-                        ->where('tenant_id', $tenantId)
-                        ->where('insurance_company_id', (string) $this->input('insurance_company_id'))
+                    function (Builder $query) use ($tenantId): void {
+                        $query->where('tenant_id', $tenantId)
+                            ->where('insurance_company_id', (string) $this->input('insurance_company_id'));
+                    }
                 ),
             ],
         ];

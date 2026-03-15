@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\GeneralStatus;
 use App\Models\InsurancePackage;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -32,7 +33,9 @@ final class UpdateInsurancePackageRequest extends FormRequest
                 'required',
                 'uuid',
                 Rule::exists('insurance_companies', 'id')->where(
-                    static fn ($query) => $query->where('tenant_id', $tenantId)
+                    function (Builder $query) use ($tenantId): void {
+                        $query->where('tenant_id', $tenantId);
+                    }
                 ),
             ],
             'name' => [
@@ -40,9 +43,10 @@ final class UpdateInsurancePackageRequest extends FormRequest
                 'string',
                 'max:150',
                 Rule::unique('insurance_packages', 'name')
-                    ->where(fn ($query) => $query
-                        ->where('tenant_id', $tenantId)
-                        ->where('insurance_company_id', (string) $this->input('insurance_company_id')))
+                    ->where(function (Builder $query) use ($tenantId): void {
+                        $query->where('tenant_id', $tenantId)
+                            ->where('insurance_company_id', (string) $this->input('insurance_company_id'));
+                    })
                     ->ignore($insurancePackage->id),
             ],
             'status' => ['required', new Enum(GeneralStatus::class)],

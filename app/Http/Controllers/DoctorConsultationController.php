@@ -16,8 +16,6 @@ use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
 use App\Models\Consultation;
 use App\Models\Drug;
-use App\Models\ImagingRequest;
-use App\Models\LabRequest;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
 use App\Support\DoctorConsultationAccess;
@@ -57,17 +55,21 @@ final class DoctorConsultationController
             })
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where(function (Builder $searchQuery) use ($search): void {
-                    $searchQuery
-                        ->where('visit_number', 'like', sprintf('%%%s%%', $search))
-                        ->orWhereHas('patient', static function (Builder $patientQuery) use ($search): void {
-                            $patientQuery
-                                ->where('patient_number', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('phone_number', 'like', sprintf('%%%s%%', $search));
-                        });
-                })
+                static function (Builder $query) use ($search): void {
+                    $query->where(
+                        function (Builder $searchQuery) use ($search): void {
+                            $searchQuery
+                                ->where('visit_number', 'like', sprintf('%%%s%%', $search))
+                                ->orWhereHas('patient', static function (Builder $patientQuery) use ($search): void {
+                                    $patientQuery
+                                        ->where('patient_number', 'like', sprintf('%%%s%%', $search))
+                                        ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
+                                        ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
+                                        ->orWhere('phone_number', 'like', sprintf('%%%s%%', $search));
+                                });
+                        }
+                    );
+                }
             )
             ->latest('registered_at')
             ->paginate(10)
@@ -99,29 +101,33 @@ final class DoctorConsultationController
             'triage:id,visit_id,nurse_id,triage_datetime,triage_grade,attendance_type,news_score,pews_score,conscious_level,mobility_status,chief_complaint,history_of_presenting_illness,assigned_clinic_id,requires_priority,is_pediatric,poisoning_case,poisoning_agent,snake_bite_case,referred_by,nurse_notes',
             'triage.nurse:id,first_name,last_name',
             'triage.assignedClinic:id,clinic_name',
-            'triage.vitalSigns' => static fn ($query) => $query
-                ->with(['recordedBy:id,first_name,last_name'])
-                ->latest('recorded_at'),
+            'triage.vitalSigns' => static function (Builder $query): void {
+                $query->with(['recordedBy:id,first_name,last_name'])
+                    ->latest('recorded_at');
+            },
             'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code,outcome,follow_up_instructions,follow_up_days,is_referred,referred_to_department,referred_to_facility,referral_reason',
             'consultation.doctor:id,first_name,last_name',
-            'labRequests' => static fn ($query) => $query
-                ->with([
+            'labRequests' => static function (Builder $query): void {
+                $query->with([
                     'requestedBy:id,first_name,last_name',
                     'items.test:id,test_name,test_code,category',
                 ])
-                ->latest('request_date'),
-            'imagingRequests' => static fn ($query) => $query
-                ->with([
+                    ->latest('request_date');
+            },
+            'imagingRequests' => static function (Builder $query): void {
+                $query->with([
                     'requestedBy:id,first_name,last_name',
                     'scheduledBy:id,first_name,last_name',
                 ])
-                ->latest(),
-            'prescriptions' => static fn ($query) => $query
-                ->with([
+                    ->latest();
+            },
+            'prescriptions' => static function (Builder $query): void {
+                $query->with([
                     'prescribedBy:id,first_name,last_name',
                     'items.drug:id,generic_name,brand_name,strength,dosage_form',
                 ])
-                ->latest('prescription_date'),
+                    ->latest('prescription_date');
+            },
         ]);
 
         return Inertia::render('doctor/consultations/show', [

@@ -1,4 +1,3 @@
-import VisitCompletionModal from '@/components/visit-completion-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,6 +17,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import VisitCompletionModal from '@/components/visit-completion-modal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type ActiveVisitsPageProps, type PatientVisit } from '@/types/patient';
@@ -168,7 +168,7 @@ export default function ActiveVisits({
                                                         }{' '}
                                                         {visit.patient
                                                             ?.phone_number
-                                                            ? `• ${visit.patient.phone_number}`
+                                                            ? ` ${visit.patient.phone_number}`
                                                             : ''}
                                                     </p>
                                                 </div>
@@ -207,16 +207,14 @@ export default function ActiveVisits({
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                {completionCheck
-                                                    ?.has_pending_services ? (
+                                                {completionCheck?.has_pending_services ? (
                                                     <p className="text-xs font-medium text-red-600">
-                                                        Pending services: {' '}
+                                                        Pending services:{' '}
                                                         {
                                                             completionCheck.pending_services_count
                                                         }
                                                     </p>
-                                                ) : completionCheck
-                                                      ?.has_unpaid_balance ? (
+                                                ) : completionCheck?.has_unpaid_balance ? (
                                                     <p className="text-xs font-medium text-amber-600">
                                                         Unpaid balance warning
                                                     </p>
@@ -246,25 +244,35 @@ export default function ActiveVisits({
                                                             Open Visit
                                                         </Link>
                                                     </Button>
-                                                    {visit.status === 'in_progress' ||
+                                                    {visit.status ===
+                                                        'in_progress' ||
                                                     visit.status ===
                                                         'awaiting_payment' ? (
                                                         <VisitCompletionModal
                                                             visitId={visit.id}
-                                                            visitNumber={visit.visit_number}
-                                                            completionCheck={completionCheck}
+                                                            visitNumber={
+                                                                visit.visit_number
+                                                            }
+                                                            completionCheck={
+                                                                completionCheck
+                                                            }
                                                             redirectTo="index"
                                                             trigger={
                                                                 <Button size="sm">
                                                                     <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                                    Complete Visit
+                                                                    Complete
+                                                                    Visit
                                                                 </Button>
                                                             }
                                                         />
                                                     ) : (
-                                                        <Button size="sm" disabled>
+                                                        <Button
+                                                            size="sm"
+                                                            disabled
+                                                        >
                                                             <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                            Mark In Progress First
+                                                            Mark In Progress
+                                                            First
                                                         </Button>
                                                     )}
                                                 </div>
@@ -344,4 +352,3 @@ export default function ActiveVisits({
         </AppLayout>
     );
 }
-

@@ -158,7 +158,7 @@ final readonly class PatientController
             'address',
             'allergies:id,patient_id,allergen_id,reaction,severity,is_active',
             'allergies.allergen:id,name',
-            'visits' => static function ($query): void {
+            'visits' => static function (Builder $query): void {
                 $query->with([
                     'clinic:id,clinic_name',
                     'doctor:id,first_name,last_name',

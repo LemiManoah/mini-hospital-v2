@@ -57,7 +57,9 @@ export default function VisitStartDialog({
     const [visitType, setVisitType] = useState(visitTypes[0]?.value ?? '');
     const [clinicId, setClinicId] = useState('');
     const [doctorId, setDoctorId] = useState('');
-    const [billingType, setBillingType] = useState<'cash' | 'insurance'>('cash');
+    const [billingType, setBillingType] = useState<'cash' | 'insurance'>(
+        'cash',
+    );
     const [companyId, setCompanyId] = useState('');
     const [packageId, setPackageId] = useState('');
 
@@ -109,21 +111,45 @@ export default function VisitStartDialog({
                     <input type="hidden" name="visit_type" value={visitType} />
                     <input type="hidden" name="clinic_id" value={clinicId} />
                     <input type="hidden" name="doctor_id" value={doctorId} />
-                    <input type="hidden" name="billing_type" value={billingType} />
-                    <input type="hidden" name="insurance_company_id" value={companyId} />
-                    <input type="hidden" name="insurance_package_id" value={packageId} />
-                    <input type="hidden" name="redirect_to" value={redirectTo} />
+                    <input
+                        type="hidden"
+                        name="billing_type"
+                        value={billingType}
+                    />
+                    <input
+                        type="hidden"
+                        name="insurance_company_id"
+                        value={companyId}
+                    />
+                    <input
+                        type="hidden"
+                        name="insurance_package_id"
+                        value={packageId}
+                    />
+                    <input
+                        type="hidden"
+                        name="redirect_to"
+                        value={redirectTo}
+                    />
 
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor={`visit_type_${patientId}`}>Visit Type</Label>
-                            <Select value={visitType} onValueChange={setVisitType}>
+                            <Label htmlFor={`visit_type_${patientId}`}>
+                                Visit Type
+                            </Label>
+                            <Select
+                                value={visitType}
+                                onValueChange={setVisitType}
+                            >
                                 <SelectTrigger id={`visit_type_${patientId}`}>
                                     <SelectValue placeholder="Select visit type" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {visitTypes.map((type) => (
-                                        <SelectItem key={type.value} value={type.value}>
+                                        <SelectItem
+                                            key={type.value}
+                                            value={type.value}
+                                        >
                                             {type.label}
                                         </SelectItem>
                                     ))}
@@ -133,14 +159,24 @@ export default function VisitStartDialog({
 
                         <div className="grid gap-2 sm:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label htmlFor={`clinic_id_${patientId}`}>Clinic</Label>
-                                <Select value={clinicId} onValueChange={setClinicId}>
-                                    <SelectTrigger id={`clinic_id_${patientId}`}>
+                                <Label htmlFor={`clinic_id_${patientId}`}>
+                                    Clinic
+                                </Label>
+                                <Select
+                                    value={clinicId}
+                                    onValueChange={setClinicId}
+                                >
+                                    <SelectTrigger
+                                        id={`clinic_id_${patientId}`}
+                                    >
                                         <SelectValue placeholder="Select clinic" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {clinics.map((clinic) => (
-                                            <SelectItem key={clinic.id} value={clinic.id}>
+                                            <SelectItem
+                                                key={clinic.id}
+                                                value={clinic.id}
+                                            >
                                                 {clinic.name}
                                             </SelectItem>
                                         ))}
@@ -149,15 +185,26 @@ export default function VisitStartDialog({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor={`doctor_id_${patientId}`}>Doctor</Label>
-                                <Select value={doctorId} onValueChange={setDoctorId}>
-                                    <SelectTrigger id={`doctor_id_${patientId}`}>
+                                <Label htmlFor={`doctor_id_${patientId}`}>
+                                    Doctor
+                                </Label>
+                                <Select
+                                    value={doctorId}
+                                    onValueChange={setDoctorId}
+                                >
+                                    <SelectTrigger
+                                        id={`doctor_id_${patientId}`}
+                                    >
                                         <SelectValue placeholder="Select doctor" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {doctors.map((doctor) => (
-                                            <SelectItem key={doctor.id} value={doctor.id}>
-                                                {doctor.first_name} {doctor.last_name}
+                                            <SelectItem
+                                                key={doctor.id}
+                                                value={doctor.id}
+                                            >
+                                                {doctor.first_name}{' '}
+                                                {doctor.last_name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -167,19 +214,29 @@ export default function VisitStartDialog({
 
                         <div className="grid gap-2 sm:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label htmlFor={`billing_type_${patientId}`}>Billing Type</Label>
+                                <Label htmlFor={`billing_type_${patientId}`}>
+                                    Billing Type
+                                </Label>
                                 <Select
                                     value={billingType}
                                     onValueChange={(value) =>
-                                        setBillingType(value as 'cash' | 'insurance')
+                                        setBillingType(
+                                            value as 'cash' | 'insurance',
+                                        )
                                     }
                                 >
-                                    <SelectTrigger id={`billing_type_${patientId}`}>
+                                    <SelectTrigger
+                                        id={`billing_type_${patientId}`}
+                                    >
                                         <SelectValue placeholder="Select billing type" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="cash">Cash</SelectItem>
-                                        <SelectItem value="insurance">Insurance</SelectItem>
+                                        <SelectItem value="cash">
+                                            Cash
+                                        </SelectItem>
+                                        <SelectItem value="insurance">
+                                            Insurance
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -204,16 +261,26 @@ export default function VisitStartDialog({
                         {billingType === 'insurance' ? (
                             <div className="grid gap-2 sm:grid-cols-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor={`insurance_company_id_${patientId}`}>
+                                    <Label
+                                        htmlFor={`insurance_company_id_${patientId}`}
+                                    >
                                         Insurer
                                     </Label>
-                                    <Select value={companyId} onValueChange={setCompanyId}>
-                                        <SelectTrigger id={`insurance_company_id_${patientId}`}>
+                                    <Select
+                                        value={companyId}
+                                        onValueChange={setCompanyId}
+                                    >
+                                        <SelectTrigger
+                                            id={`insurance_company_id_${patientId}`}
+                                        >
                                             <SelectValue placeholder="Select insurer" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {companies.map((company) => (
-                                                <SelectItem key={company.id} value={company.id}>
+                                                <SelectItem
+                                                    key={company.id}
+                                                    value={company.id}
+                                                >
                                                     {company.name}
                                                 </SelectItem>
                                             ))}
@@ -222,16 +289,26 @@ export default function VisitStartDialog({
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor={`insurance_package_id_${patientId}`}>
+                                    <Label
+                                        htmlFor={`insurance_package_id_${patientId}`}
+                                    >
                                         Package
                                     </Label>
-                                    <Select value={packageId} onValueChange={setPackageId}>
-                                        <SelectTrigger id={`insurance_package_id_${patientId}`}>
+                                    <Select
+                                        value={packageId}
+                                        onValueChange={setPackageId}
+                                    >
+                                        <SelectTrigger
+                                            id={`insurance_package_id_${patientId}`}
+                                        >
                                             <SelectValue placeholder="Select package" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {filteredPackages.map((pkg) => (
-                                                <SelectItem key={pkg.id} value={pkg.id}>
+                                                <SelectItem
+                                                    key={pkg.id}
+                                                    value={pkg.id}
+                                                >
                                                     {pkg.name}
                                                 </SelectItem>
                                             ))}
@@ -243,7 +320,11 @@ export default function VisitStartDialog({
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit">{submitLabel}</Button>

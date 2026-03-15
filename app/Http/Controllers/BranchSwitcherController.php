@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\FacilityBranch;
 use App\Models\User;
 use App\Support\BranchContext;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,7 @@ final readonly class BranchSwitcherController
         }
 
         $branches = BranchContext::getAccessibleBranches($user)
-            ->map(fn ($branch): array => [
+            ->map(fn (FacilityBranch $branch): array => [
                 'id' => $branch->id,
                 'name' => $branch->name,
                 'branch_code' => $branch->branch_code,

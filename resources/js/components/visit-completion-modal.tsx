@@ -53,13 +53,16 @@ export default function VisitCompletionModal({
                 <DialogHeader>
                     <DialogTitle>Complete Visit {visitNumber}</DialogTitle>
                     <DialogDescription>
-                        This will close the visit. Make sure all intended work for this encounter is done before proceeding.
+                        This will close the visit. Make sure all intended work
+                        for this encounter is done before proceeding.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-3 text-sm">
                     <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
-                        This action is operationally irreversible. The visit will move to completed and drop off the active visits list.
+                        This action is operationally irreversible. The visit
+                        will move to completed and drop off the active visits
+                        list.
                     </div>
 
                     {blockingReasons.map((reason) => (
@@ -85,7 +88,8 @@ export default function VisitCompletionModal({
                     {!isBlocked && warningMessages.length === 0 ? (
                         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-100">
                             <CheckCircle2 className="mr-2 inline h-4 w-4" />
-                            No pending service or unpaid balance warning is currently recorded for this visit.
+                            No pending service or unpaid balance warning is
+                            currently recorded for this visit.
                         </div>
                     ) : null}
                 </div>
@@ -98,8 +102,16 @@ export default function VisitCompletionModal({
                 >
                     {({ processing, resetAndClearErrors }) => (
                         <>
-                            <input type="hidden" name="status" value="completed" />
-                            <input type="hidden" name="redirect_to" value={redirectTo} />
+                            <input
+                                type="hidden"
+                                name="status"
+                                value="completed"
+                            />
+                            <input
+                                type="hidden"
+                                name="redirect_to"
+                                value={redirectTo}
+                            />
 
                             <DialogFooter className="gap-2">
                                 <DialogClose asChild>
@@ -111,7 +123,10 @@ export default function VisitCompletionModal({
                                     </Button>
                                 </DialogClose>
 
-                                <Button disabled={processing || isBlocked} type="submit">
+                                <Button
+                                    disabled={processing || isBlocked}
+                                    type="submit"
+                                >
                                     {processing ? (
                                         <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                                     ) : null}

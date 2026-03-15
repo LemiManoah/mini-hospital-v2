@@ -40,8 +40,10 @@ final class TenantScope implements Scope
             }
 
             if ($user->tenant_id !== null) {
-                $tableName = $model->getTable();
-                $builder->where(function ($query) use ($tableName, $user): void {
+                /** @var Model $modelInstance */
+                $modelInstance = $builder->getModel();
+                $tableName = $modelInstance->getTable();
+                $builder->where(function (Builder $query) use ($tableName, $user): void {
                     $query->where($tableName.'.tenant_id', $user->tenant_id)
                         ->orWhereNull($tableName.'.tenant_id');
                 });

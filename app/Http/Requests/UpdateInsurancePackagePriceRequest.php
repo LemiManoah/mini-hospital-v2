@@ -9,6 +9,7 @@ use App\Enums\GeneralStatus;
 use App\Models\InsurancePackagePrice;
 use App\Rules\NoOverlappingInsurancePriceWindow;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -35,14 +36,18 @@ final class UpdateInsurancePackagePriceRequest extends FormRequest
                 'required',
                 'uuid',
                 Rule::exists('facility_branches', 'id')->where(
-                    static fn ($query) => $query->where('tenant_id', $tenantId)
+                    function (Builder $query) use ($tenantId): void {
+                        $query->where('tenant_id', $tenantId);
+                    }
                 ),
             ],
             'insurance_package_id' => [
                 'required',
                 'uuid',
                 Rule::exists('insurance_packages', 'id')->where(
-                    static fn ($query) => $query->where('tenant_id', $tenantId)
+                    function (Builder $query) use ($tenantId): void {
+                        $query->where('tenant_id', $tenantId);
+                    }
                 ),
             ],
             'billable_type' => ['required', new Enum(BillableItemType::class)],

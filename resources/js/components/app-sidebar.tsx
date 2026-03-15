@@ -8,8 +8,8 @@ import {
     Settings2,
     Shield,
     Stethoscope,
-    UserRoundSearch,
     UserCog,
+    UserRoundSearch,
     Users,
 } from 'lucide-react';
 import * as React from 'react';

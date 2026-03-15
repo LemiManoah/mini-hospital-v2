@@ -8,6 +8,7 @@ use App\Http\Requests\StorePatientAllergyRequest;
 use App\Http\Requests\UpdatePatientAllergyRequest;
 use App\Models\Patient;
 use App\Models\PatientAllergy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,11 +25,15 @@ final readonly class PatientAllergyController
             ->with(['allergen:id,name', 'createdBy:id,first_name,last_name'])
             ->when(
                 $search !== '',
-                static fn ($query) => $query->where(
-                    static fn ($searchQuery) => $searchQuery
-                        ->where('notes', 'like', sprintf('%%%s%%', $search))
-                        ->orWhereRelation('allergen', 'name', 'like', sprintf('%%%s%%', $search))
-                )
+                static function (Builder $query) use ($search): void {
+                    $query->where(
+                        function (Builder $searchQuery) use ($search): void {
+                            $searchQuery
+                                ->where('notes', 'like', sprintf('%%%s%%', $search))
+                                ->orWhereRelation('allergen', 'name', 'like', sprintf('%%%s%%', $search));
+                        }
+                    );
+                }
             )
             ->latest()
             ->paginate(10)

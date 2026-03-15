@@ -1,4 +1,3 @@
-import VisitStartDialog from '@/components/visit-start-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,6 +17,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import VisitStartDialog from '@/components/visit-start-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type Patient, type ReturningPatientsPageProps } from '@/types/patient';

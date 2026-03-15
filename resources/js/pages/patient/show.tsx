@@ -1,6 +1,6 @@
-import VisitStartDialog from '@/components/visit-start-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import VisitStartDialog from '@/components/visit-start-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type PatientShowPageProps } from '@/types/patient';
@@ -78,7 +78,9 @@ export default function PatientShow({
                             <User className="h-6 w-6" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-semibold">{fullName}</h1>
+                            <h1 className="text-2xl font-semibold">
+                                {fullName}
+                            </h1>
                             <p className="text-sm text-muted-foreground">
                                 MRN: {patient.patient_number}
                             </p>
@@ -123,7 +125,9 @@ export default function PatientShow({
                                     <p className="text-sm text-muted-foreground">
                                         Gender
                                     </p>
-                                    <p className="capitalize">{patient.gender}</p>
+                                    <p className="capitalize">
+                                        {patient.gender}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">
@@ -141,7 +145,9 @@ export default function PatientShow({
                                     <p className="text-sm text-muted-foreground">
                                         Blood Group
                                     </p>
-                                    <p>{patient.blood_group || 'Not specified'}</p>
+                                    <p>
+                                        {patient.blood_group || 'Not specified'}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">

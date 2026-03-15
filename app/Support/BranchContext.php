@@ -6,6 +6,7 @@ namespace App\Support;
 
 use App\Models\FacilityBranch;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -77,7 +78,7 @@ final class BranchContext
 
         if ($user->staff_id !== null) {
             return $baseQuery
-                ->whereHas('staff', function ($query) use ($user): void {
+                ->whereHas('staff', function (Builder $query) use ($user): void {
                     $query->where('staff.id', $user->staff_id);
                 })
                 ->get();
@@ -101,7 +102,7 @@ final class BranchContext
         }
 
         if ($user->staff_id !== null) {
-            return $query->whereHas('staff', function ($staffQuery) use ($user): void {
+            return $query->whereHas('staff', function (Builder $staffQuery) use ($user): void {
                 $staffQuery->where('staff.id', $user->staff_id);
             })->exists();
         }
