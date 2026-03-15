@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\Consultation;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-final class UpdateConsultationRequest extends StoreConsultationRequest
+final class UpdateConsultationRequest extends FormRequest
 {
     public function rules(): array
     {
