@@ -18,7 +18,11 @@ return new class extends Migration
                 $table->uuid('id')->primary();
                 $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
                 $table->foreignUuid('facility_branch_id')->nullable()->constrained('facility_branches')->nullOnDelete();
-                $table->foreignUuid('insurance_company_invoice_id')->constrained('insurance_company_invoices')->onDelete('cascade');
+                $table->uuid('insurance_company_invoice_id');
+                $table->foreign('insurance_company_invoice_id', 'ic_invoice_payments_invoice_fk')
+                    ->references('id')
+                    ->on('insurance_company_invoices')
+                    ->onDelete('cascade');
                 $table->date('payment_date');
                 $table->string('receipt', 100)->nullable()->index();
                 $table->decimal('paid_amount', 14, 2)->default(0);
