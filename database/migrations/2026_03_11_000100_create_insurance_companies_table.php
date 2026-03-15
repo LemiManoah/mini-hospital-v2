@@ -14,25 +14,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('insurance_companies', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
-            $table->string('name', 150)->index();
-            $table->string('email')->nullable()->index();
-            $table->string('main_contact', 20)->nullable()->index();
-            $table->string('other_contact', 20)->nullable();
-            $table->string('address')->nullable();
-            $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
+        if (!Schema::hasTable('insurance_companies')) {
+            Schema::create('insurance_companies', function (Blueprint $table): void {
+                $table->uuid('id')->primary();
+                $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
+                $table->string('name', 150)->index();
+                $table->string('email')->nullable()->index();
+                $table->string('main_contact', 20)->nullable()->index();
+                $table->string('other_contact', 20)->nullable();
+                $table->string('address')->nullable();
+                $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
 
-            // Audit fields
-            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
+                // Audit fields
+                $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
 
-            $table->timestamps();
-            $table->softDeletes();
+                $table->timestamps();
+                $table->softDeletes();
 
-            $table->unique(['tenant_id', 'name']);
-        });
+                $table->unique(['tenant_id', 'name']);
+            });
+        }
     }
 
     /**

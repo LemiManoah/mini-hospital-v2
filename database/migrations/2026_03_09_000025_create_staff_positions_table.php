@@ -13,19 +13,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('staff_positions', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained()->onDelete('cascade');
-            $table->string('name', 100);
-            $table->text('description')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->foreignUuid('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignUuid('updated_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->timestamps();
-            $table->softDeletes();
+        if (!Schema::hasTable('staff_positions')) {
+            Schema::create('staff_positions', function (Blueprint $table): void {
+                $table->uuid('id')->primary();
+                $table->foreignUuid('tenant_id')->constrained()->onDelete('cascade');
+                $table->string('name', 100);
+                $table->text('description')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->foreignUuid('created_by')->nullable()->constrained('users')->onDelete('set null');
+                $table->foreignUuid('updated_by')->nullable()->constrained('users')->onDelete('set null');
+                $table->timestamps();
+                $table->softDeletes();
 
-            $table->unique(['tenant_id', 'name']);
-        });
+                $table->unique(['tenant_id', 'name']);
+            });
+        }
     }
 
     /**
