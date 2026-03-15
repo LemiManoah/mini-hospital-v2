@@ -2,12 +2,9 @@
 
 import {
     Bot,
-    Building2,
     FlaskConical,
     LayoutGrid,
     Settings2,
-    Shield,
-    Stethoscope,
     UserCog,
     UserRoundSearch,
     Users,
@@ -15,7 +12,6 @@ import {
 import * as React from 'react';
 
 import { NavMain } from '@/components/nav-main';
-import { NavProjects } from '@/components/nav-projects';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
@@ -32,6 +28,7 @@ import { index as indexAllergens } from '@/routes/allergens';
 import { index as indexClinics } from '@/routes/clinics';
 import { index as indexCurrencies } from '@/routes/currencies';
 import { index as indexDepartments } from '@/routes/departments';
+// import { index as indexFacilityServices } from '@/routes/facility-services';
 import { index as indexFacilitySwitcher } from '@/routes/facility-switcher';
 import { index as indexInsuranceCompanies } from '@/routes/insurance-companies';
 import { index as indexInsurancePackages } from '@/routes/insurance-packages';
@@ -206,6 +203,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     title: 'Insurance Packages',
                     url: indexInsurancePackages(),
                 },
+                {
+                    title: 'Facility Services',
+                    url: '/facility-services',
+                },
                 ...(canSwitchFacility
                     ? [
                           {
@@ -218,23 +219,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
     ];
 
-    const projects: React.ComponentProps<typeof NavProjects>['projects'] = [
-        {
-            name: 'Clinical Operations',
-            url: '/doctors/consultations',
-            icon: Stethoscope,
-        },
-        {
-            name: 'HR & Departments',
-            url: indexDepartments(),
-            icon: Building2,
-        },
-        {
-            name: 'Access Control',
-            url: indexRoles(),
-            icon: Shield,
-        },
-    ];
+    // const projects: React.ComponentProps<typeof NavProjects>['projects'] = [
+    //     {
+    //         name: 'Clinical Operations',
+    //         url: '/doctors/consultations',
+    //         icon: Stethoscope,
+    //     },
+    //     {
+    //         name: 'HR & Departments',
+    //         url: indexDepartments(),
+    //         icon: Building2,
+    //     },
+    //     {
+    //         name: 'Access Control',
+    //         url: indexRoles(),
+    //         icon: Shield,
+    //     },
+    // ];
 
     return (
         <Sidebar collapsible="icon" {...props}>
@@ -255,7 +256,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={navMain} />
-                <NavProjects projects={projects} />
+                {/* <NavProjects projects={projects} /> */}
             </SidebarContent>
             <SidebarFooter>
                 <NavUser />

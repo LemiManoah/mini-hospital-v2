@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\FacilityServiceOrderStatus;
 use App\Enums\ImagingRequestStatus;
 use App\Enums\LabRequestStatus;
 use App\Enums\PrescriptionStatus;
@@ -85,7 +86,14 @@ final class AssessPatientVisitCompletion
             ])
             ->count();
 
-        return $pendingLabRequests + $pendingImagingRequests + $pendingPrescriptions;
+        $pendingFacilityServiceOrders = $visit->facilityServiceOrders()
+            ->whereNotIn('status', [
+                FacilityServiceOrderStatus::COMPLETED->value,
+                FacilityServiceOrderStatus::CANCELLED->value,
+            ])
+            ->count();
+
+        return $pendingLabRequests + $pendingImagingRequests + $pendingPrescriptions + $pendingFacilityServiceOrders;
     }
 
     private function unpaidBalance(): float

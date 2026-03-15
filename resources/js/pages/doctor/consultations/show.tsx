@@ -185,6 +185,7 @@ export default function DoctorConsultationShow({
     imagingPriorities,
     imagingLateralities,
     pregnancyStatuses,
+    facilityServiceOptions,
 }: DoctorConsultationShowPageProps) {
     const patientName = [
         visit.patient?.first_name,
@@ -242,6 +243,11 @@ export default function DoctorConsultationShow({
         is_long_term: false,
         items: [createPrescriptionItem()],
     });
+    const serviceForm = useForm({
+        facility_service_id: '',
+        clinical_notes: consultation?.assessment ?? '',
+        service_instructions: '',
+    });
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Doctors', href: '/doctors/consultations' },
@@ -271,6 +277,9 @@ export default function DoctorConsultationShow({
                 itemIndex === index ? { ...item, [field]: value } : item,
             ),
         );
+    const selectedFacilityService = facilityServiceOptions.find(
+        (option) => option.id === serviceForm.data.facility_service_id,
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -2296,23 +2305,295 @@ export default function DoctorConsultationShow({
 
                             <TabsContent value="services">
                                 <Card>
-                                    <CardContent className="p-6">
-                                        <div className="space-y-2">
-                                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-100 text-zinc-700">
-                                                <CreditCard className="h-5 w-5" />
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <CreditCard className="h-5 w-5" />
+                                            Facility Services
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        {!canPlaceOrders ? (
+                                            <OrderGuard
+                                                consultation={consultation}
+                                            />
+                                        ) : facilityServiceOptions.length ===
+                                          0 ? (
+                                            <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                                No facility services are active
+                                                in the catalog yet. Add them
+                                                from Settings before doctors
+                                                can place operational orders.
                                             </div>
-                                            <h3 className="font-semibold">
-                                                Facility Services
-                                            </h3>
+                                        ) : (
+                                            <form
+                                                className="space-y-4 rounded-lg border p-4"
+                                                onSubmit={(event) => {
+                                                    event.preventDefault();
+                                                    serviceForm.post(
+                                                        `/doctors/consultations/${visit.id}/facility-service-orders`,
+                                                        {
+                                                            preserveScroll:
+                                                                true,
+                                                            onSuccess: () =>
+                                                                serviceForm.reset(
+                                                                    'facility_service_id',
+                                                                    'service_instructions',
+                                                                ),
+                                                        },
+                                                    );
+                                                }}
+                                            >
+                                                <div className="grid gap-4 lg:grid-cols-2">
+                                                    <div className="grid gap-2">
+                                                        <Label>
+                                                            Facility Service
+                                                        </Label>
+                                                        <Select
+                                                            value={
+                                                                serviceForm.data
+                                                                    .facility_service_id
+                                                            }
+                                                            onValueChange={(
+                                                                value,
+                                                            ) => {
+                                                                const selectedOption =
+                                                                    facilityServiceOptions.find(
+                                                                        (
+                                                                            option,
+                                                                        ) =>
+                                                                            option.id ===
+                                                                            value,
+                                                                    );
+
+                                                                serviceForm.setData(
+                                                                    (data) => ({
+                                                                        ...data,
+                                                                        facility_service_id:
+                                                                            value,
+                                                                        service_instructions:
+                                                                            selectedOption?.default_instructions ??
+                                                                            data.service_instructions,
+                                                                    }),
+                                                                );
+                                                            }}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select service" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {facilityServiceOptions.map(
+                                                                    (
+                                                                        option,
+                                                                    ) => (
+                                                                        <SelectItem
+                                                                            key={
+                                                                                option.id
+                                                                            }
+                                                                            value={
+                                                                                option.id
+                                                                            }
+                                                                        >
+                                                                            {option.name}{' '}
+                                                                            (
+                                                                            {
+                                                                                option.service_code
+                                                                            }
+                                                                            )
+                                                                            {' - '}
+                                                                            {labelize(
+                                                                                option.category,
+                                                                            )}
+                                                                        </SelectItem>
+                                                                    ),
+                                                                )}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <InputError
+                                                            message={
+                                                                serviceForm
+                                                                    .errors
+                                                                    .facility_service_id
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <div className="rounded-lg border bg-zinc-50 p-3 text-sm dark:bg-zinc-950">
+                                                        <p className="font-medium">
+                                                            Service Snapshot
+                                                        </p>
+                                                        <p className="mt-1 text-muted-foreground">
+                                                            {selectedFacilityService
+                                                                ? `${selectedFacilityService.name} in ${
+                                                                      selectedFacilityService.department_name ||
+                                                                      'General Services'
+                                                                  }`
+                                                                : 'Select a service to review its department and default instructions.'}
+                                                        </p>
+                                                        {selectedFacilityService ? (
+                                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                                <Badge
+                                                                    variant="outline"
+                                                                >
+                                                                    {labelize(
+                                                                        selectedFacilityService.category,
+                                                                    )}
+                                                                </Badge>
+                                                                <Badge
+                                                                    variant="outline"
+                                                                >
+                                                                    {selectedFacilityService.is_billable
+                                                                        ? 'Billable'
+                                                                        : 'Non-billable'}
+                                                                </Badge>
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                    <div className="grid gap-2 lg:col-span-2">
+                                                        <Label htmlFor="service_clinical_notes">
+                                                            Clinical Notes
+                                                        </Label>
+                                                        <Textarea
+                                                            id="service_clinical_notes"
+                                                            rows={3}
+                                                            value={
+                                                                serviceForm.data
+                                                                    .clinical_notes
+                                                            }
+                                                            onChange={(event) =>
+                                                                serviceForm.setData(
+                                                                    'clinical_notes',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                serviceForm
+                                                                    .errors
+                                                                    .clinical_notes
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-2 lg:col-span-2">
+                                                        <Label htmlFor="service_instructions">
+                                                            Service Instructions
+                                                        </Label>
+                                                        <Textarea
+                                                            id="service_instructions"
+                                                            rows={3}
+                                                            value={
+                                                                serviceForm.data
+                                                                    .service_instructions
+                                                            }
+                                                            onChange={(event) =>
+                                                                serviceForm.setData(
+                                                                    'service_instructions',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                serviceForm
+                                                                    .errors
+                                                                    .service_instructions
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-end">
+                                                    <Button
+                                                        type="submit"
+                                                        disabled={
+                                                            serviceForm.processing
+                                                        }
+                                                    >
+                                                        Order Facility Service
+                                                    </Button>
+                                                </div>
+                                            </form>
+                                        )}
+
+                                        {(visit.facilityServiceOrders ?? [])
+                                            .length === 0 ? (
                                             <p className="text-sm text-muted-foreground">
-                                                General facility service
-                                                ordering is still reserved for
-                                                the next operational layer so we
-                                                can keep lab, imaging, and
-                                                pharmacy on their dedicated
-                                                flows.
+                                                No facility services have been
+                                                ordered yet.
                                             </p>
-                                        </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {(
+                                                    visit.facilityServiceOrders ??
+                                                    []
+                                                ).map((order) => (
+                                                    <div
+                                                        key={order.id}
+                                                        className="rounded-lg border p-4"
+                                                    >
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h3 className="font-medium">
+                                                                {order.service
+                                                                    ?.name ??
+                                                                    'Facility Service'}
+                                                            </h3>
+                                                            <Badge
+                                                                className={cn(
+                                                                    'border-0',
+                                                                    statusBadgeClasses(
+                                                                        order.status,
+                                                                    ),
+                                                                )}
+                                                            >
+                                                                {labelize(
+                                                                    order.status,
+                                                                )}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="mt-1 text-sm text-muted-foreground">
+                                                            Ordered by{' '}
+                                                            {staffName(
+                                                                order.orderedBy,
+                                                            )}{' '}
+                                                            on{' '}
+                                                            {formatDateTime(
+                                                                order.ordered_at,
+                                                            )}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Department:{' '}
+                                                            {order.service
+                                                                ?.department_name ||
+                                                                'General Services'}
+                                                        </p>
+                                                        {order.clinical_notes ? (
+                                                            <p className="mt-2 text-sm text-muted-foreground">
+                                                                Clinical notes:{' '}
+                                                                {
+                                                                    order.clinical_notes
+                                                                }
+                                                            </p>
+                                                        ) : null}
+                                                        {order.service_instructions ? (
+                                                            <p className="text-sm text-muted-foreground">
+                                                                Instructions:{' '}
+                                                                {
+                                                                    order.service_instructions
+                                                                }
+                                                            </p>
+                                                        ) : null}
+                                                        {order.completed_at ? (
+                                                            <p className="text-sm text-muted-foreground">
+                                                                Completed:{' '}
+                                                                {formatDateTime(
+                                                                    order.completed_at,
+                                                                )}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                             </TabsContent>
@@ -2472,7 +2753,12 @@ export default function DoctorConsultationShow({
                                         {(visit.imagingRequests ?? []).length}{' '}
                                         imaging |{' '}
                                         {(visit.prescriptions ?? []).length}{' '}
-                                        prescription set(s)
+                                        prescription set(s) |{' '}
+                                        {
+                                            (visit.facilityServiceOrders ?? [])
+                                                .length
+                                        }{' '}
+                                        services
                                     </p>
                                 </div>
                             </CardContent>

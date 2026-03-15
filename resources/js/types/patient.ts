@@ -188,6 +188,32 @@ export interface ImagingRequest {
     scheduledBy?: { id: string; first_name: string; last_name: string } | null;
 }
 
+export interface FacilityServiceOption {
+    id: string;
+    service_code: string;
+    name: string;
+    category: string;
+    department_name: string | null;
+    default_instructions: string | null;
+    is_billable: boolean;
+}
+
+export interface FacilityServiceOrder {
+    id: string;
+    visit_id: string;
+    consultation_id: string | null;
+    facility_service_id: string;
+    ordered_by: string;
+    status: string;
+    clinical_notes: string | null;
+    service_instructions: string | null;
+    ordered_at: string;
+    completed_at: string | null;
+    service?: FacilityServiceOption | null;
+    orderedBy?: { id: string; first_name: string; last_name: string } | null;
+    performedBy?: { id: string; first_name: string; last_name: string } | null;
+}
+
 export interface VisitPayer {
     id: string;
     patient_visit_id: string;
@@ -306,6 +332,7 @@ export interface PatientVisit {
     labRequests?: LabRequest[] | null;
     imagingRequests?: ImagingRequest[] | null;
     prescriptions?: Prescription[] | null;
+    facilityServiceOrders?: FacilityServiceOrder[] | null;
     completion_check?: VisitCompletionCheck | null;
 }
 
@@ -374,4 +401,5 @@ export interface DoctorConsultationShowPageProps {
     imagingPriorities: { value: string; label: string }[];
     imagingLateralities: { value: string; label: string }[];
     pregnancyStatuses: { value: string; label: string }[];
+    facilityServiceOptions: FacilityServiceOption[];
 }

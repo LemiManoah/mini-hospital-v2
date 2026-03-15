@@ -193,3 +193,115 @@ it('blocks visit completion when downstream consultation orders are still pendin
         ->and($result['pending_services_count'])->toBe(1)
         ->and($result['blocking_reasons'])->toContain('This visit still has 1 pending service.');
 });
+
+it('counts pending facility service orders as blocking downstream work', function (): void {
+    DB::statement('PRAGMA foreign_keys = OFF');
+
+    $tenantId = (string) Str::uuid();
+    $staffId = (string) Str::uuid();
+    $patientId = (string) Str::uuid();
+    $visitId = (string) Str::uuid();
+    $consultationId = (string) Str::uuid();
+    $facilityServiceId = (string) Str::uuid();
+
+    DB::table('staff')->insert([
+        'id' => $staffId,
+        'tenant_id' => $tenantId,
+        'employee_number' => 'EMP-005',
+        'first_name' => 'Service',
+        'last_name' => 'Doctor',
+        'email' => 'facility-service-block@example.com',
+        'type' => 'medical',
+        'hire_date' => now()->toDateString(),
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('patient_visits')->insert([
+        'id' => $visitId,
+        'tenant_id' => $tenantId,
+        'patient_id' => $patientId,
+        'visit_number' => 'VIS-005',
+        'visit_type' => 'outpatient',
+        'status' => 'in_progress',
+        'doctor_id' => $staffId,
+        'is_emergency' => false,
+        'registered_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('triage_records')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $tenantId,
+        'visit_id' => $visitId,
+        'nurse_id' => $staffId,
+        'triage_datetime' => now(),
+        'triage_grade' => 'green',
+        'attendance_type' => 'new',
+        'conscious_level' => 'alert',
+        'mobility_status' => 'independent',
+        'chief_complaint' => 'Wound review',
+        'requires_priority' => false,
+        'is_pediatric' => false,
+        'poisoning_case' => false,
+        'snake_bite_case' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('consultations')->insert([
+        'id' => $consultationId,
+        'tenant_id' => $tenantId,
+        'visit_id' => $visitId,
+        'doctor_id' => $staffId,
+        'started_at' => now(),
+        'completed_at' => now(),
+        'chief_complaint' => 'Wound review',
+        'primary_diagnosis' => 'Soft tissue injury',
+        'assessment' => 'Needs dressing',
+        'plan' => 'Send to treatment room',
+        'outcome' => 'discharged',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('facility_services')->insert([
+        'id' => $facilityServiceId,
+        'tenant_id' => $tenantId,
+        'service_code' => 'SRV-001',
+        'name' => 'Wound Dressing',
+        'category' => 'dressing',
+        'department_name' => 'Treatment Room',
+        'is_billable' => false,
+        'is_active' => true,
+        'created_by' => $staffId,
+        'updated_by' => $staffId,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('facility_service_orders')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $tenantId,
+        'facility_branch_id' => null,
+        'visit_id' => $visitId,
+        'consultation_id' => $consultationId,
+        'facility_service_id' => $facilityServiceId,
+        'ordered_by' => $staffId,
+        'status' => 'pending',
+        'clinical_notes' => 'Daily dressing required',
+        'service_instructions' => 'Use sterile pack',
+        'ordered_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $visit = PatientVisit::query()->findOrFail($visitId);
+    $result = resolve(AssessPatientVisitCompletion::class)->handle($visit);
+
+    expect($result['can_complete'])->toBeFalse()
+        ->and($result['pending_services_count'])->toBe(1)
+        ->and($result['blocking_reasons'])->toContain('This visit still has 1 pending service.');
+});

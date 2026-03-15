@@ -99,6 +99,11 @@ final class Consultation extends Model
         return $this->hasMany(Prescription::class, 'consultation_id');
     }
 
+    public function facilityServiceOrders(): HasMany
+    {
+        return $this->hasMany(FacilityServiceOrder::class, 'consultation_id');
+    }
+
     public function isCompleted(): bool
     {
         return $this->completed_at !== null;

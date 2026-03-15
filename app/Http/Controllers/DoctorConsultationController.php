@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\CompleteConsultation;
 use App\Actions\CreateConsultation;
 use App\Actions\UpdateConsultation;
+use App\Models\FacilityService;
 use App\Enums\ImagingLaterality;
 use App\Enums\ImagingModality;
 use App\Enums\ImagingPriority;
@@ -129,6 +130,14 @@ final class DoctorConsultationController
                 ])
                     ->latest('prescription_date');
             },
+            'facilityServiceOrders' => static function (HasMany $query): void {
+                $query->with([
+                    'service:id,name,service_code,category,is_billable',
+                    'orderedBy:id,first_name,last_name',
+                    'performedBy:id,first_name,last_name',
+                ])
+                    ->latest('ordered_at');
+            },
         ]);
 
         return Inertia::render('doctor/consultations/show', [
@@ -200,6 +209,21 @@ final class DoctorConsultationController
                     'label' => $status->label(),
                 ])
                 ->values()
+                ->all(),
+            'facilityServiceOptions' => FacilityService::query()
+                ->where('is_active', true)
+                ->orderBy('category')
+                ->orderBy('name')
+                ->get(['id', 'service_code', 'name', 'category', 'department_name', 'default_instructions', 'is_billable'])
+                ->map(static fn (FacilityService $service): array => [
+                    'id' => $service->id,
+                    'service_code' => $service->service_code,
+                    'name' => $service->name,
+                    'category' => $service->category->value,
+                    'department_name' => $service->department_name,
+                    'default_instructions' => $service->default_instructions,
+                    'is_billable' => $service->is_billable,
+                ])
                 ->all(),
         ]);
     }

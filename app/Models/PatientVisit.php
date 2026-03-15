@@ -121,4 +121,9 @@ final class PatientVisit extends Model
     {
         return $this->hasMany(Prescription::class, 'visit_id');
     }
+
+    public function facilityServiceOrders(): HasMany
+    {
+        return $this->hasMany(FacilityServiceOrder::class, 'visit_id');
+    }
 }
