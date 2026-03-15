@@ -20,6 +20,7 @@ use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
 use App\Support\DoctorConsultationAccess;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -101,27 +102,27 @@ final class DoctorConsultationController
             'triage:id,visit_id,nurse_id,triage_datetime,triage_grade,attendance_type,news_score,pews_score,conscious_level,mobility_status,chief_complaint,history_of_presenting_illness,assigned_clinic_id,requires_priority,is_pediatric,poisoning_case,poisoning_agent,snake_bite_case,referred_by,nurse_notes',
             'triage.nurse:id,first_name,last_name',
             'triage.assignedClinic:id,clinic_name',
-            'triage.vitalSigns' => static function (Builder $query): void {
+            'triage.vitalSigns' => static function (HasMany $query): void {
                 $query->with(['recordedBy:id,first_name,last_name'])
                     ->latest('recorded_at');
             },
             'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code,outcome,follow_up_instructions,follow_up_days,is_referred,referred_to_department,referred_to_facility,referral_reason',
             'consultation.doctor:id,first_name,last_name',
-            'labRequests' => static function (Builder $query): void {
+            'labRequests' => static function (HasMany $query): void {
                 $query->with([
                     'requestedBy:id,first_name,last_name',
                     'items.test:id,test_name,test_code,category',
                 ])
                     ->latest('request_date');
             },
-            'imagingRequests' => static function (Builder $query): void {
+            'imagingRequests' => static function (HasMany $query): void {
                 $query->with([
                     'requestedBy:id,first_name,last_name',
                     'scheduledBy:id,first_name,last_name',
                 ])
                     ->latest();
             },
-            'prescriptions' => static function (Builder $query): void {
+            'prescriptions' => static function (HasMany $query): void {
                 $query->with([
                     'prescribedBy:id,first_name,last_name',
                     'items.drug:id,generic_name,brand_name,strength,dosage_form',
