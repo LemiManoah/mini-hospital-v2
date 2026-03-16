@@ -1,6 +1,7 @@
 'use client';
 
 import {
+    CalendarDays,
     Bot,
     FlaskConical,
     HeartPulse,
@@ -96,6 +97,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {
                     title: 'Returning Patients',
                     url: returningPatients(),
+                },
+            ],
+        },
+        {
+            title: 'Appointments',
+            url: '/appointment-categories',
+            icon: CalendarDays,
+            items: [
+                {
+                    title: 'Categories',
+                    url: '/appointment-categories',
+                },
+                {
+                    title: 'Modes',
+                    url: '/appointment-modes',
                 },
             ],
         },

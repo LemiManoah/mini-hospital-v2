@@ -661,6 +661,9 @@ Schema::create('schedules', function (Blueprint $table) {
     $table->date('valid_to')->nullable();
     $table->boolean('is_active')->default(true);
     $table->text('notes')->nullable();
+    $table->foreignUuid('created_by')->constrained('users');
+    $table->foreignUuid('updated_by')->constrained('users');
+    $table->softDeletes();
     $table->timestamps();
 
     $table->unique(['doctor_id', 'clinic_id', 'day_of_week', 'start_time'], 'unique_schedule');
@@ -694,6 +697,9 @@ Schema::create('appointments', function (Blueprint $table) {
     $table->timestamp('completed_at')->nullable();
     $table->text('cancellation_reason')->nullable();
     $table->foreignUuid('cancelled_by')->nullable()->constrained('staff');
+    $table->foreignUuid('created_by')->constrained('users');
+    $table->foreignUuid('updated_by')->constrained('users');
+    $table->softDeletes();
     $table->timestamps();
 
     $table->index(['appointment_date', 'status']);
@@ -731,6 +737,8 @@ Schema::create('patient_visits', function (Blueprint $table) {
     $table->timestamp('started_at')->nullable();
     $table->timestamp('closed_at')->nullable();
     $table->foreignUuid('closed_by')->nullable()->constrained('staff');
+    $table->foreignUuid('created_by')->constrained('users');
+    $table->foreignUuid('updated_by')->constrained('users');
     $table->timestamps();
     $table->softDeletes();
 
