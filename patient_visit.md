@@ -146,7 +146,6 @@ Minimal insurance selection is implemented, but claim workflow is not.
 Still needed:
 - package eligibility rules
 - package-based pricing resolution
-- insurer approval workflow if required later
 - claim/invoice generation for insurance companies
 
 ### 3.6 Audit and timeline support

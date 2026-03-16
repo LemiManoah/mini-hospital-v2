@@ -390,6 +390,24 @@ export interface DoctorConsultationIndexPageProps {
     };
 }
 
+export interface TriageQueuePageProps {
+    visits: PaginatedList<PatientVisit> | PatientVisit[];
+    filters: {
+        search: string | null;
+    };
+}
+
+export interface TriageShowPageProps {
+    visit: PatientVisit;
+    triageGrades: { value: string; label: string }[];
+    attendanceTypes: { value: string; label: string }[];
+    consciousLevels: { value: string; label: string }[];
+    mobilityStatuses: { value: string; label: string }[];
+    clinics: { id: string; name: string }[];
+    temperatureUnits: { value: string; label: string }[];
+    bloodGlucoseUnits: { value: string; label: string }[];
+}
+
 export interface DoctorConsultationShowPageProps {
     visit: PatientVisit;
     activeTab: string;

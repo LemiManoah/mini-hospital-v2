@@ -26,6 +26,7 @@ use App\Http\Controllers\SessionController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffPositionController;
 use App\Http\Controllers\SubscriptionPackageController;
+use App\Http\Controllers\TriageController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserEmailResetNotificationController;
@@ -83,6 +84,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('doctors/consultations/{visit}', [DoctorConsultationController::class, 'show'])->name('doctors.consultations.show');
     Route::post('doctors/consultations/{visit}', [DoctorConsultationController::class, 'store'])->name('doctors.consultations.store');
     Route::put('doctors/consultations/{visit}', [DoctorConsultationController::class, 'update'])->name('doctors.consultations.update');
+    Route::get('triage', [TriageController::class, 'index'])->name('triage.index');
+    Route::get('triage/{visit}', [TriageController::class, 'show'])->name('triage.show');
     Route::post('doctors/consultations/{visit}/lab-requests', [DoctorConsultationLabRequestController::class, 'store'])->name('doctors.consultations.lab-requests.store');
     Route::post('doctors/consultations/{visit}/imaging-requests', [DoctorConsultationImagingRequestController::class, 'store'])->name('doctors.consultations.imaging-requests.store');
     Route::post('doctors/consultations/{visit}/prescriptions', [DoctorConsultationPrescriptionController::class, 'store'])->name('doctors.consultations.prescriptions.store');

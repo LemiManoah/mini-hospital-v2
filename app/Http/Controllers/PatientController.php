@@ -26,6 +26,7 @@ use App\Models\InsurancePackage;
 use App\Models\Patient;
 use App\Models\Staff;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -158,7 +159,7 @@ final readonly class PatientController
             'address',
             'allergies:id,patient_id,allergen_id,reaction,severity,is_active',
             'allergies.allergen:id,name',
-            'visits' => static function (Builder $query): void {
+            'visits' => static function (HasMany $query): void {
                 $query->with([
                     'clinic:id,clinic_name',
                     'doctor:id,first_name,last_name',

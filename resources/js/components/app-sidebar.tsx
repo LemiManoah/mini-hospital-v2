@@ -3,6 +3,7 @@
 import {
     Bot,
     FlaskConical,
+    HeartPulse,
     LayoutGrid,
     Settings2,
     UserCog,
@@ -95,6 +96,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {
                     title: 'Returning Patients',
                     url: returningPatients(),
+                },
+            ],
+        },
+        {
+            title: 'Triage',
+            url: '/triage',
+            icon: HeartPulse,
+            items: [
+                {
+                    title: 'Queue',
+                    url: '/triage',
                 },
             ],
         },

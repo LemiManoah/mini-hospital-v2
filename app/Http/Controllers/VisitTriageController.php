@@ -17,17 +17,26 @@ final class VisitTriageController
         PatientVisit $visit,
         CreateTriageRecord $createTriage,
     ): RedirectResponse {
+        $redirectTo = $request->input('redirect_to') === 'triage' ? 'triage' : 'visit';
+
         if ($visit->triage()->exists()) {
-            return to_route('visits.show', $visit)->with('error', 'This visit already has a triage record.');
+            return $this->redirect($visit, $redirectTo)->with('error', 'This visit already has a triage record.');
         }
 
         $staffId = Auth::user()?->staff_id;
         if (! is_string($staffId) || $staffId === '') {
-            return to_route('visits.show', $visit)->with('error', 'Your user account is not linked to a staff profile.');
+            return $this->redirect($visit, $redirectTo)->with('error', 'Your user account is not linked to a staff profile.');
         }
 
         $createTriage->handle($visit, $request->validated());
 
-        return to_route('visits.show', $visit)->with('success', 'Triage recorded successfully.');
+        return $this->redirect($visit, $redirectTo)->with('success', 'Triage recorded successfully.');
+    }
+
+    private function redirect(PatientVisit $visit, string $redirectTo): RedirectResponse
+    {
+        return $redirectTo === 'triage'
+            ? to_route('triage.show', $visit)
+            : to_route('visits.show', $visit);
     }
 }
