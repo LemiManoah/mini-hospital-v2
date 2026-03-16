@@ -102,9 +102,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
         {
             title: 'Appointments',
-            url: '/appointment-categories',
+            url: '/appointments',
             icon: CalendarDays,
             items: [
+                {
+                    title: 'Bookings',
+                    url: '/appointments',
+                },
+                {
+                    title: 'Schedules',
+                    url: '/appointments/schedules',
+                },
                 {
                     title: 'Categories',
                     url: '/appointment-categories',

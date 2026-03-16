@@ -111,6 +111,19 @@ final class Staff extends Model
      * @return Builder<Staff>
      */
     #[Scope]
+    protected function doctors(Builder $query): Builder
+    {
+        return $query->whereHas('position', function (Builder $query): void {
+            $query->where('name', 'like', '%Doctor%')
+                ->orWhere('name', 'like', '%Consultant%');
+        });
+    }
+
+    /**
+     * @param  Builder<Staff>  $query
+     * @return Builder<Staff>
+     */
+    #[Scope]
     protected function forActiveBranch(Builder $query): Builder
     {
         $branchId = BranchContext::getActiveBranchId();

@@ -9,6 +9,10 @@ use App\Models\PatientVisit;
 
 final class TransitionPatientVisitStatus
 {
+    public function __construct(
+        private readonly SyncAppointmentStatusFromVisit $syncAppointmentStatusFromVisit,
+    ) {}
+
     public function handle(PatientVisit $visit, VisitStatus $status): PatientVisit
     {
         $attributes = ['status' => $status];
@@ -23,6 +27,10 @@ final class TransitionPatientVisitStatus
 
         $visit->update($attributes);
 
-        return $visit->refresh();
+        $visit = $visit->refresh();
+
+        $this->syncAppointmentStatusFromVisit->handle($visit);
+
+        return $visit;
     }
 }

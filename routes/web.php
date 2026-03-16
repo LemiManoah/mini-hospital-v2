@@ -5,11 +5,13 @@ declare(strict_types=1);
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AllergenController;
 use App\Http\Controllers\AppointmentCategoryController;
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AppointmentModeController;
 use App\Http\Controllers\BranchSwitcherController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DoctorScheduleController;
 use App\Http\Controllers\DoctorConsultationController;
 use App\Http\Controllers\DoctorConsultationFacilityServiceOrderController;
 use App\Http\Controllers\DoctorConsultationImagingRequestController;
@@ -71,6 +73,19 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::resource('allergens', AllergenController::class)->except(['show']);
     Route::resource('appointment-categories', AppointmentCategoryController::class)->except(['show']);
     Route::resource('appointment-modes', AppointmentModeController::class)->except(['show']);
+    Route::resource('appointments/schedules', DoctorScheduleController::class)
+        ->except(['show'])
+        ->names('appointments.schedules');
+    Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+    Route::get('appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
+    Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+    Route::get('appointments/{appointment}', [AppointmentController::class, 'show'])->name('appointments.show');
+    Route::put('appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+    Route::post('appointments/{appointment}/confirm', [AppointmentController::class, 'confirm'])->name('appointments.confirm');
+    Route::post('appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+    Route::post('appointments/{appointment}/no-show', [AppointmentController::class, 'markNoShow'])->name('appointments.no-show');
+    Route::post('appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
+    Route::post('appointments/{appointment}/check-in', [AppointmentController::class, 'checkIn'])->name('appointments.check-in');
     Route::resource('addresses', AddressController::class)->except(['show']);
     Route::resource('currencies', CurrencyController::class)->except(['show']);
     Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);

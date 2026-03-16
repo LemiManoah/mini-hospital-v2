@@ -36,6 +36,7 @@ final class PatientVisit extends Model
         'status',
         'clinic_id',
         'doctor_id',
+        'appointment_id',
         'is_emergency',
         'complaint',
         'notes',
@@ -54,6 +55,7 @@ final class PatientVisit extends Model
         'facility_branch_id' => 'string',
         'clinic_id' => 'string',
         'doctor_id' => 'string',
+        'appointment_id' => 'string',
         'is_emergency' => 'boolean',
         'visit_type' => VisitType::class,
         'status' => VisitStatus::class,
@@ -85,6 +87,11 @@ final class PatientVisit extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'doctor_id');
+    }
+
+    public function appointment(): BelongsTo
+    {
+        return $this->belongsTo(Appointment::class);
     }
 
     public function registeredBy(): BelongsTo
