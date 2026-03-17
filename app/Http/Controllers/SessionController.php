@@ -46,6 +46,12 @@ final readonly class SessionController
             return to_route('facility-switcher.index');
         }
 
+        if ($user->tenant !== null && ! $user->tenant->isOnboardingComplete()) {
+            BranchContext::clear();
+
+            return to_route('onboarding.show');
+        }
+
         $accessibleBranches = BranchContext::getAccessibleBranches($user);
 
         if ($accessibleBranches->isNotEmpty()) {

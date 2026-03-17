@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,7 +25,14 @@ final class Tenant extends Model
     protected $casts = [
         'has_branches' => 'boolean',
         'status' => GeneralStatus::class,
+        'facility_level' => FacilityLevel::class,
+        'onboarding_completed_at' => 'datetime',
     ];
+
+    public function isOnboardingComplete(): bool
+    {
+        return $this->onboarding_completed_at instanceof CarbonInterface;
+    }
 
     /**
      * @return BelongsTo<SubscriptionPackage, $this>

@@ -1,133 +1,373 @@
-# Implementation Plan & Build Order
+# Implementation Status & Gap Analysis
 
-Building a Multi-Tenant Hospital Management System requires a structured approach to prevent foreign key constraint failures and to ensure that foundation layers are solid before complex business logic is applied.
-
-Below is the recommended order of implementation and the reasoning behind it, followed by a list of potentially missing entities from the current schema.
+**Date:** March 17, 2026  
+**Status:** Core OPD and administration modules are substantially implemented; billing, inventory, IPD, and result/dispensing workflows are still incomplete.  
+**Primary References:** `patient_visit.md`, `hospital_database_schema.md`
 
 ---
 
-## Phase 0: Client Onboarding (The SaaS Layer)
+## 1) Executive Summary
 
-Currently, onboarding is developer-driven (via seeders). For a production-ready system, we need a self-service flow:
-- **Self-Service Registration**: A public-facing signup page for new hospitals/tenants.
-- **Onboarding Wizard**: A post-login "Setup Guide" for the first admin to define:
-    - Primary Branch details.
-    - Department structure.
-    - Initial Staff accounts.
-- **Subscription Checkout**: Integration with a payment gateway (e.g., Flutterwave or Stripe) to activate the chosen `subscription_package`.
+The project is no longer in a pure planning stage. A large portion of the administration, patient registration, appointment, visit, triage, consultation, and consultation-order workflows now exist in code with routes, controllers, models, pages, and some automated tests.
+
+What is clearly implemented today:
+- foundation master data such as countries, currencies, allergens, subscription packages, departments, clinics, staff positions, roles, users, insurance companies, insurance packages, drugs, and facility services
+- multi-tenant and branch-aware application structure with tenant/branch scopes, branch switching, and branch isolation tests
+- patient registration and returning-patient flows
+- visit creation with per-visit payer snapshot
+- active visit list and visit detail workspace
+- triage workspace with triage record capture and repeated vital sign capture
+- doctor consultation workspace
+- consultation-linked orders for lab requests, imaging requests, prescriptions, and facility service orders
+- appointment scheduling, queueing, rescheduling, confirmation, cancellation, no-show, and check-in to visit
+
+What is only partial:
+- tenant and facility branch administration is present architecturally, but not yet exposed as a complete CRUD/admin module in the current route surface
+- queue workflow exists as operational pages, but not as dedicated queue tables/events as originally imagined
+- insurance is implemented for visit payer snapshots and insurance master data, but not yet for claims/adjudication/invoicing against visits
+- lab, imaging, and pharmacy ordering exist, but downstream execution and result/dispensing workflows are missing
+- visit completion rules exist, but full audit/timeline/billing gating is not wired
+
+What is still largely missing:
+- billing and payments
+- inventory and procurement
+- inpatient admissions, wards, beds, and nursing operations
+- lab results, radiology reports, and dispensing records
+- client onboarding / SaaS self-service
+- full compliance-oriented audit timeline
+
+---
+
+## 2) Current Reality vs Older Planning Docs
+
+Two important project realities should drive future planning:
+
+### 2.1 Patient visit work has moved far beyond the older draft
+
+`patient_visit.md` is now closer to the truth than the older build-order assumptions. Triage, vitals, consultation, and queue pages are no longer "next"; they already exist.
+
+### 2.2 The live app has intentionally diverged from parts of `hospital_database_schema.md`
+
+Examples:
+- patient payer ownership has been moved from patient-level concepts to `visit_payers`
+- visit status handling in the app has been simplified compared with the more granular status ideas in the schema doc
+- queue behavior currently relies on visit/appointment-driven screens rather than dedicated queue tables
+- some schema-described domains like `wards`, `beds`, `charge_masters`, `visit_billings`, and `payments` are not yet implemented in the app
+
+This means future work should use the codebase and `patient_visit.md` as the source of truth, then update `hospital_database_schema.md` afterward for alignment.
+
+---
+
+## 3) Phase-by-Phase Status
+
+## Phase 0: Client Onboarding / SaaS Layer
+
+### Done
+- authentication, email verification, password reset, profile settings, and two-factor settings are present
+- subscription packages exist as data and admin CRUD
+
+### Partial
+- support-only facility switching exists
+- branch switching exists for active operational context
+
+### Not Done
+- self-service tenant signup
+- onboarding wizard for first-time tenant setup
+- subscription checkout and activation flow
+- tenant-facing billing/subscription lifecycle
 
 ## Phase 1: Foundation & Base Helper Modules
 
-These represent the absolute lowest level of the dependency tree. They are mostly independent lookup/reference tables that other core entities will depend on.
+### Done
+- countries
+- currencies
+- addresses
+- allergens
+- subscription packages
+- units
 
-- **Tables to build**: `countries`, `addresses`, `currencies` (see Missing Features), `subscription_packages`, `allergens`
-- **Why build first?**
-  You cannot create a tenant without a subscription, country, or address. Similarly, patient and staff records will heavily rely on base addresses and country codes. Having these in place means you will never face a missing foreign key when seeding your primary tables.
+### Partial
+- not every foundation entity appears to have the same level of polished admin UX, but the domain objects and CRUD patterns are broadly present
 
-## Phase 1.5: Roles & Permissions (RBAC)
+### Not Done
+- no major foundation-table gap stands out here relative to the active app surface
 
-Because security and access control are critical to a multi-tenant application, roles and permissions should be defined immediately after the foundation.
+## Phase 1.5: Roles & Permissions
 
-- **Tables to build**: `roles`, `permissions`, `model_has_permissions`, `model_has_roles`, `role_has_permissions` (Provided by `spatie/laravel-permission` package).
-- **Why build first?**
-  Staff and Users will need to be assigned roles immediately upon creation in Phase 2. Defining the permissions early allows seamless seeding of an "Admin" or "Superadmin" user in the subsequent steps.
+### Done
+- roles and permissions via Spatie
+- role CRUD
+- user CRUD
+- browser coverage exists for role permissions
+
+### Partial
+- some module-specific policies/permission matrices still appear lightweight or implicit rather than deeply enforced everywhere
+
+### Not Done
+- fine-grained clinical/billing authorization model described in later planning notes
 
 ## Phase 2: Multi-Tenant Architecture & Security
 
-This is the core pillar of the multi-branch, multi-tenant architecture. All subsequent data will belong to these entities.
+### Done
+- tenant-aware and branch-aware traits/scopes exist
+- branch context support exists
+- active branch middleware exists
+- staff, staff positions, departments, clinics, users, and branch switching are implemented
+- branch isolation test coverage exists
 
-- **Tables to build**: `tenants`, `facility_branches`, `departments`, `staff` (Users), `staff_branches`
-- **Why build first?**
-  Every patient, visit, appointment, and transaction requires a `tenant_id` and often a `branch_id`. You also need authenticated `staff` members to act as the `created_by` or `updated_by` reference (audit trails) for all other records. Establishing global tenant scopes and authentication here is critical before moving on.
+### Partial
+- tenant/facility branch architecture is present in models and context switching, but full tenant/branch administration modules are not exposed as rich day-to-day CRUD in the visible route layer
+- support switching is operational, but onboarding/provisioning still looks developer/admin driven
+
+### Not Done
+- end-user tenant onboarding flows
+- polished tenant management dashboard
 
 ## Phase 3: Hospital Infrastructure & Service Catalogs
 
-Before patients arrive, the hospital must define what it is and what it offers.
+### Done
+- clinics
+- doctor schedules and schedule exceptions
+- facility services
+- drugs
+- lab test catalog model usage in consultation ordering
 
-- **Tables to build**: `clinics`, `wards`, `beds`, `charge_masters`, `lab_test_catalogs`, `medication_catalogs`
-- **Why build first?**
-  These represent the physical limits and financial services of the hospital. You cannot admit a patient without a `bed`, you cannot order a test without a `lab_test_catalog` entry, and you cannot bill without `charge_masters`. These catalogs are relatively static master data.
+### Partial
+- lab test catalogs are used by doctor consultation order entry, but there is no complete visible lab-catalog admin module in the current route surface
+- infrastructure for chargeable service ordering exists through facility service orders, but full billing catalog implementation does not
+
+### Not Done
+- wards
+- beds
+- charge masters
+- medication stock / inventory catalog beyond the drug master
 
 ## Phase 4: Patient Registration & Demographics
 
-The central entity of the healthcare system.
+### Done
+- patient CRUD
+- returning patient flow
+- patient allergy management
+- patient registration integrated with visit creation
+- patient profile with visit context
+- visit payer snapshot owned by the visit
 
-- **Tables to build**: `patients`, `patient_addresses`, `patient_allergies`, `past_medical_histories`, `patient_insurances` (see Missing Features)
-- **Why build first?**
-  Patients are the focus of the system. You cannot schedule an appointment, create a visit, or order medications without a registered patient. Dependencies from Phase 1 (addresses, allergens) and Phase 2 (tenant, creator) are already resolved, making this safe to implement.
+### Partial
+- demographics are well covered, but broader longitudinal history areas from the schema are not fully surfaced
+- the schema doc still mentions concepts that the app has intentionally replaced
 
-## Phase 5: Scheduling & Outpatient (OPD) Workflow
+### Not Done
+- past medical histories module
+- patient portal/accounts
+- file/document management for patient attachments
 
-The daily operational flow of a hospital.
+## Phase 5: Scheduling & OPD Workflow
 
-- **Tables to build**: `schedules`, `appointments`, `patient_visits`, `triage_records`, `vital_signs`, `consultations`
-- **Why build first?**
-  This maps to the real-world workflow:
-    1. Doctor creates a `schedule`.
-    2. Patient books an `appointment`.
-    3. Patient arrives and a `patient_visit` encounter is opened.
-    4. Nurse does `triage_records` and `vital_signs`.
-    5. Doctor performs `consultations`.
+### Done
+- appointment creation and editing
+- appointment confirmation, cancellation, no-show, rescheduling, and check-in
+- appointment queue page
+- patient visit creation for new and existing patients
+- active visit list and visit detail page
+- simplified visit status transitions
+- triage queue page
+- triage workspace
+- vital sign capture
+- doctor consultation index and detail workspace
+- consultation drafting and completion
+- visit completion assessment rules
 
-## Phase 6: Clinical Support Services (Lab, Radiology, Pharmacy)
+### Partial
+- queue workflow is implemented as pages and operational lists, but not through dedicated queue tables/events
+- visit status progression is functional, but not as rich as the original schema vision
+- visit completion is guarded by clinical logic, but not yet by payment/billing logic
+- some workflow semantics are intentionally simplified compared with the original schema
 
-These are investigations and treatments resulting from a consultation.
+### Not Done
+- visit timeline / immutable activity feed
+- richer queue prioritization/event tracking model
+- clinician encounter note timeline outside the current consultation record shape
 
-- **Tables to build**:
-    - _Lab_: `lab_requests`, `lab_request_items`, `lab_specimens`, `lab_results`
-    - _Radiology_: `imaging_requests`, `imaging_studies`, `radiology_reports`
-    - _Pharmacy_: `prescriptions`, `prescription_items`, `dispensing_records`
-- **Why build first?**
-  These are ordered explicitly during or after a `consultation`. They depend on the visit and consultation context to exist. You also need the Catalogs from Phase 3 to know _what_ can be requested.
+## Phase 6: Clinical Support Services
+
+### Done
+- lab request creation from consultation
+- imaging request creation from consultation
+- prescription creation from consultation
+- facility service order creation from consultation
+
+### Partial
+- these domains currently support ordering, but not the full downstream lifecycle
+- doctor consultation page already acts as the ordering hub, which is a strong foundation for later module expansion
+
+### Not Done
+- lab specimen workflow
+- lab result entry and verification
+- imaging scheduling workflow beyond request capture
+- imaging studies
+- radiology reports
+- dispensing records
+- pharmacy fulfillment workflow
+- procedure requests / theatre workflow
 
 ## Phase 7: Inpatient Operations (IPD)
 
-The most complex continuous care loop.
+### Done
+- no clear IPD implementation was found in the active route/controller surface
 
-- **Tables to build**: `ipd_admissions`, `nursing_care`, `medication_administrations`
-- **Why build first?**
-  IPD relies on `wards` and `beds` being set up (Phase 3), as well as an initial `patient_visit` or emergency encounter (Phase 5) that led to the admission. It sits near the top of the dependency chain.
+### Partial
+- none of significance
+
+### Not Done
+- wards
+- beds
+- admissions
+- nursing care
+- medication administrations
+- discharge workflow
 
 ## Phase 8: Billing, Finance & Auditing
 
-The culmination of all hospital activities.
+### Done
+- per-visit payer snapshot
+- insurance companies and insurance packages admin
+- insurance package pricing request/action layer exists
+- billing-related enums and insurance invoice models exist in the domain layer
 
-- **Tables to build**: `visit_charges`, `visit_billings`, `payments`, `audit_logs`
-- **Why build first?**
-  Billing aggregates data from all other modules: consultations, lab tests, pharmacy dispensing, and IPD bed charges. It must be the last operational step implemented because it references almost every service module. (Note: `audit_logs` should be conceptually configured early via model observers, but its reporting UI/logic is usually done last).
+### Partial
+- insurance master data is in place, but operational billing is not
+- there are model-level pieces around insurance invoicing, but no visible completed workflow in routes/pages for visit billing and payments
+
+### Not Done
+- visit charges
+- visit billings
+- payments
+- invoice generation for patient visits
+- cashier workflow
+- payment-gating before progression of care
+- claims submission/adjudication workflow
+- audit logs / access logs / timeline UI
 
 ---
 
-## 🔍 What Could Be Missing From the Current Schema?
+## 4) Module Status Snapshot
 
-While the schema is comprehensive, the following components are either missing or implicitly referenced without a defined table:
+## Clearly Implemented Modules
 
-1. **Currencies Table**
-    - **Issue**: `facility_branches` references a `currency_id` constrained to `currencies`, but the `currencies` table is not explicitly defined in the schema (only `countries` is, which contains currency strings, but not an independent table).
+- Authentication and user settings
+- Roles and permissions
+- Countries, currencies, allergens, subscription packages, units
+- Departments, staff positions, staff, clinics
+- Insurance companies and insurance packages
+- Doctor schedules and appointment support tables
+- Patients and patient allergies
+- Appointments
+- Patient visits
+- Triage and vital signs
+- Doctor consultations
+- Consultation-linked lab requests
+- Consultation-linked imaging requests
+- Consultation-linked prescriptions
+- Consultation-linked facility service orders
 
-2. **Insurance Management**
-    - **Issue**: `visit_billings` references `insurance_id` constrained to `patient_insurances`. However, `patient_insurances` and master `insurance_companies` (HMOs/TPA) tables are completely missing. You need tables to manage insurance providers, plans, and patient policy subscriptions.
+## Implemented But Still Partial
 
-3. **Roles & Permissions (RBAC)**
-    - **Issue**: The `staff` table has a simple `role` string column. **[RESOLVED in Phase 1.5]**: Implemented via `spatie/laravel-permission`.
+- Multi-tenant and branch architecture
+- Facility/service catalog layer
+- Insurance domain
+- Queue workflow
+- Visit lifecycle automation
+- Testing coverage
 
-4. **Inventory & Procurement (Supply Chain)**
-    - **Issue**: You have `medication_catalogs` but no tables for tracking stock levels, purchase orders, suppliers, or stock adjustments. A pharmacy cannot dispense without knowing physical inventory counts.
+## Mostly Not Implemented Yet
 
-5. **Procedures & Surgeries (OR)**
-    - **Issue**: The Relationships Summary explicitly mentions `procedure_requests`, but it is not defined in the schema. You will need tables for Operating Theater scheduling, intra-operative notes, and anesthesia records.
+- Billing and payments
+- Inventory and procurement
+- Lab result workflow
+- Radiology reporting workflow
+- Pharmacy dispensing workflow
+- Inpatient operations
+- Audit timeline / compliance reporting
+- SaaS onboarding
 
-6. **Patient Portal / User Accounts**
-    - **Issue**: If patients are meant to log in to book appointments or view lab results, they need authentication credentials. Typically, this is solved by either a generic `users` table linked polymorphically, or adding login capability directly to the `patients` table.
+---
 
-8. **Detailed Audit Trails (Compliance)**
-    - **Issue**: For medical systems (HIPAA/GDPR style), we need to log not just changes, but also **access** (who viewed a patient's record).
-    
-9. **Patient Queue Management UI**
-    - **Issue**: While we have `queue_number` in appointments, we need a "Live Board" view for waiting areas.
+## 5) Testing Status
 
-10. **File/Document Management**
-    - **Issue**: Storage for scanned diagnostic reports, patient ID copies, and lab attachments.
+### Present
+- unit tests for creating vital signs
+- unit tests for creating consultations
+- unit tests for consultation orders
+- unit tests for visit completion assessment
+- feature coverage for branch isolation
+- browser coverage for role/permission behavior
 
-11. **Localization & Multi-currency**
-    - **Issue**: While we have a `currencies` table, the UI needs to handle dynamic currency formatting based on the Active Branch.
+### Partial
+- core OPD workflows have some meaningful coverage, but not enough end-to-end feature coverage yet
+
+### Still Needed
+- feature tests for patient registration plus visit start
+- feature tests for starting visits on existing patients
+- triage feature tests
+- consultation feature tests
+- appointment lifecycle feature tests
+- consultation order feature tests
+- billing and cashier tests when those modules exist
+
+---
+
+## 6) Highest-Impact Remaining Work
+
+The codebase suggests this is the most logical remaining build order:
+
+### 6.1 Billing Foundations
+- create `visit_charges`
+- create `visit_billings`
+- create `payments`
+- freeze prices when charges are generated
+- connect consultation orders and service execution to charges
+
+### 6.2 Execution Workflows For Existing Orders
+- lab specimen and result workflow
+- imaging scheduling/report workflow
+- prescription fulfillment / dispensing workflow
+- facility service completion workflow
+
+### 6.3 Inventory & Pharmacy Operations
+- stock items
+- suppliers
+- purchases
+- stock adjustments
+- dispense validation against stock
+
+### 6.4 Audit & Timeline
+- visit status/activity logs
+- actor/reason tracking
+- immutable visit timeline on the visit page
+
+### 6.5 IPD
+- wards and beds
+- admissions
+- nursing care
+- medication administration
+
+---
+
+## 7) Recommended Definition Of "Current Phase Complete"
+
+The current OPD phase should be considered reasonably complete when all of the following are true:
+- patient registration, appointment check-in, and direct visit start are stable
+- triage and vital capture are stable
+- doctor consultation is stable
+- consultation orders can be created reliably
+- visit completion rules are enforced consistently
+- visit timeline/audit basics exist
+- tests cover the main OPD happy paths and critical guards
+
+Billing, inventory, and IPD should be treated as subsequent phases rather than blockers to calling the current OPD foundation substantially implemented.
+
+---
+
+## 8) Bottom Line
+
+This project already has a strong outpatient/admin core. The biggest shift needed in documentation is to stop describing triage, consultations, and queues as future work, because they are already in the application. The biggest actual gaps now are billing, order-fulfillment execution, inventory, IPD, and audit/timeline support.

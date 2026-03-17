@@ -23,6 +23,7 @@ use App\Http\Controllers\FacilityServiceController;
 use App\Http\Controllers\FacilitySwitcherController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\InsurancePackageController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PatientAllergyController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientVisitController;
@@ -42,12 +43,19 @@ use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserTwoFactorAuthenticationController;
 use App\Http\Controllers\VisitTriageController;
 use App\Http\Controllers\VisitVitalSignController;
+use App\Http\Controllers\WorkspaceRegistrationController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
     if (Auth::check()) {
+        $user = Auth::user();
+
+        if ($user?->tenant !== null && ! $user->tenant->isOnboardingComplete()) {
+            return to_route('onboarding.show');
+        }
+
         return Inertia::render('modules');
     }
 
@@ -127,6 +135,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::patch('onboarding/profile', [OnboardingController::class, 'updateProfile'])->name('onboarding.profile.update');
+    Route::post('onboarding/branch', [OnboardingController::class, 'storeBranch'])->name('onboarding.branch.store');
+    Route::post('onboarding/departments', [OnboardingController::class, 'storeDepartments'])->name('onboarding.departments.store');
     Route::delete('user-account', [UserController::class, 'destroyCurrentUser'])->name('user.destroy-account');
     Route::redirect('settings', '/settings/profile');
     Route::get('settings/profile', [UserProfileController::class, 'edit'])->name('user-profile.edit');
@@ -141,6 +153,8 @@ Route::middleware('auth')->group(function (): void {
 });
 
 Route::middleware('guest')->group(function (): void {
+    Route::get('create-workspace', [WorkspaceRegistrationController::class, 'create'])->name('workspace-register.create');
+    Route::post('create-workspace', [WorkspaceRegistrationController::class, 'store'])->name('workspace-register.store');
     Route::get('reset-password/{token}', [UserPasswordController::class, 'create'])
         ->name('password.reset');
     Route::post('reset-password', [UserPasswordController::class, 'store'])
