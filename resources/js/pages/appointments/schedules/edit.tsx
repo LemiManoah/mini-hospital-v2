@@ -18,16 +18,16 @@ import { LoaderCircle, Save } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-function toTimeValue(value: string | null | undefined): string {
-    if (!value) return '';
-
-    return value.slice(0, 5);
-}
-
 function toDateValue(value: string | null | undefined): string {
     if (!value) return '';
 
     return value.slice(0, 10);
+}
+
+function toTimeValue(value: string | null | undefined): string {
+    if (!value) return '';
+
+    return value.slice(0, 5);
 }
 
 function toSelectValue(value: string | number | null | undefined): string {
@@ -37,7 +37,7 @@ function toSelectValue(value: string | number | null | undefined): string {
 }
 
 const breadcrumbs = (id: string): BreadcrumbItem[] => [
-    { title: 'Appointments', href: '/appointment-categories' },
+    { title: 'Appointments', href: '/appointments' },
     { title: 'Schedules', href: '/appointments/schedules' },
     { title: 'Edit Schedule', href: `/appointments/schedules/${id}/edit` },
 ];
@@ -71,7 +71,8 @@ export default function DoctorScheduleEdit({
                             Edit Doctor Schedule
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Update recurring appointment availability.
+                            Update recurring appointment availability for this
+                            doctor.
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -119,20 +120,14 @@ export default function DoctorScheduleEdit({
                                                 <SelectValue placeholder="Select doctor" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {doctorsList.length > 0 ? (
-                                                    doctorsList.map((doctor) => (
-                                                        <SelectItem
-                                                            key={doctor.id}
-                                                            value={doctor.id}
-                                                        >
-                                                            {doctor.name}
-                                                        </SelectItem>
-                                                    ))
-                                                ) : (
-                                                    <div className="p-2 text-sm text-muted-foreground italic">
-                                                        No active doctors found.
-                                                    </div>
-                                                )}
+                                                {doctorsList.map((doctor) => (
+                                                    <SelectItem
+                                                        key={doctor.id}
+                                                        value={doctor.id}
+                                                    >
+                                                        {doctor.name}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <InputError message={errors.doctor_id} />
@@ -147,20 +142,14 @@ export default function DoctorScheduleEdit({
                                                 <SelectValue placeholder="Select clinic" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {clinicsList.length > 0 ? (
-                                                    clinicsList.map((clinic) => (
-                                                        <SelectItem
-                                                            key={clinic.id}
-                                                            value={clinic.id}
-                                                        >
-                                                            {clinic.name}
-                                                        </SelectItem>
-                                                    ))
-                                                ) : (
-                                                    <div className="p-2 text-sm text-muted-foreground italic">
-                                                        No clinics found.
-                                                    </div>
-                                                )}
+                                                {clinicsList.map((clinic) => (
+                                                    <SelectItem
+                                                        key={clinic.id}
+                                                        value={clinic.id}
+                                                    >
+                                                        {clinic.name}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <InputError message={errors.clinic_id} />

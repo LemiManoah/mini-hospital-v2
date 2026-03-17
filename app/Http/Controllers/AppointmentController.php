@@ -29,6 +29,7 @@ use App\Models\InsuranceCompany;
 use App\Models\InsurancePackage;
 use App\Models\Patient;
 use App\Models\Staff;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,9 +42,12 @@ final readonly class AppointmentController
     {
         $search = mb_trim((string) $request->query('search', ''));
         $status = mb_trim((string) $request->query('status', ''));
-        $date = mb_trim((string) $request->query('date', ''));
+        $view = mb_trim((string) $request->query('view', 'list'));
+        $date = mb_trim((string) $request->query('date', CarbonImmutable::today()->toDateString()));
+        $calendarView = in_array($view, ['day', 'week'], true) ? $view : 'list';
+        $anchorDate = CarbonImmutable::parse($date);
 
-        $appointments = Appointment::query()
+        $appointmentsQuery = Appointment::query()
             ->with([
                 'patient:id,patient_number,first_name,last_name,middle_name,phone_number',
                 'doctor:id,first_name,last_name',
@@ -53,7 +57,17 @@ final readonly class AppointmentController
                 'visit:id,appointment_id,visit_number,status',
             ])
             ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))
-            ->when($date !== '', static fn (Builder $query) => $query->whereDate('appointment_date', $date))
+            ->when(
+                $calendarView === 'day',
+                static fn (Builder $query) => $query->whereDate('appointment_date', $anchorDate->toDateString()),
+            )
+            ->when(
+                $calendarView === 'week',
+                static fn (Builder $query) => $query->whereBetween('appointment_date', [
+                    $anchorDate->startOfWeek()->toDateString(),
+                    $anchorDate->endOfWeek()->toDateString(),
+                ]),
+            )
             ->when(
                 $search !== '',
                 static function (Builder $query) use ($search): void {
@@ -77,17 +91,24 @@ final readonly class AppointmentController
                     });
                 }
             )
-            ->latest('appointment_date')
-            ->latest('start_time')
-            ->paginate(10)
-            ->withQueryString();
+            ->orderBy('appointment_date')
+            ->orderBy('start_time');
+
+        $appointments = $calendarView === 'list'
+            ? $appointmentsQuery
+                ->latest('appointment_date')
+                ->latest('start_time')
+                ->paginate(10)
+                ->withQueryString()
+            : $appointmentsQuery->get();
 
         return Inertia::render('appointments/index', [
             'appointments' => $appointments,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
-                'date' => $date,
+                'date' => $anchorDate->toDateString(),
+                'view' => $calendarView,
             ],
             'statusOptions' => $this->statusOptions(),
         ]);
@@ -193,11 +214,7 @@ final readonly class AppointmentController
         Appointment $appointment,
         CheckInAppointment $action,
     ): RedirectResponse {
-        try {
-            $visit = $action->handle($appointment, $request->validated());
-        } catch (\RuntimeException $exception) {
-            return to_route('appointments.show', $appointment)->with('error', $exception->getMessage());
-        }
+        $visit = $action->handle($appointment, $request->validated());
 
         return to_route('visits.show', $visit)->with('success', 'Appointment checked in successfully.');
     }

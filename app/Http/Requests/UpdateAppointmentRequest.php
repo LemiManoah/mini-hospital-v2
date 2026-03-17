@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Support\ValidatesAppointmentScheduling;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 final class UpdateAppointmentRequest extends FormRequest
 {
@@ -20,7 +22,7 @@ final class UpdateAppointmentRequest extends FormRequest
             'clinic_id' => ['nullable', 'uuid', 'exists:clinics,id'],
             'appointment_category_id' => ['nullable', 'uuid', 'exists:appointment_categories,id'],
             'appointment_mode_id' => ['nullable', 'uuid', 'exists:appointment_modes,id'],
-            'appointment_date' => ['required', 'date'],
+            'appointment_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
             'reason_for_visit' => ['required', 'string'],
@@ -40,5 +42,29 @@ final class UpdateAppointmentRequest extends FormRequest
             'end_time' => $this->filled('end_time') ? $this->input('end_time') : null,
             'is_walk_in' => $this->boolean('is_walk_in'),
         ]);
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            app(ValidatesAppointmentScheduling::class)->validate(
+                $validator,
+                $this->validatedForScheduling(),
+            );
+        });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validatedForScheduling(): array
+    {
+        return [
+            'doctor_id' => $this->input('doctor_id'),
+            'clinic_id' => $this->input('clinic_id'),
+            'appointment_date' => $this->input('appointment_date'),
+            'start_time' => $this->input('start_time'),
+            'end_time' => $this->input('end_time'),
+        ];
     }
 }

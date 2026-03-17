@@ -510,6 +510,7 @@ export default function AppointmentShow({
                                 >
                                     {({ processing, errors }) => (
                                         <>
+                                            <InputError message={errors.appointment} />
                                             <input type="hidden" name="visit_type" value={visitType} />
                                             <input type="hidden" name="billing_type" value={billingType} />
                                             <input

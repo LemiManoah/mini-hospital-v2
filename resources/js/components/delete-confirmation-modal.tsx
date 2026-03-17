@@ -1,3 +1,4 @@
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -45,28 +46,32 @@ export default function DeleteConfirmationModal({
                 <DialogDescription>{description}</DialogDescription>
 
                 <Form {...action} onSuccess={onSuccess} className="space-y-6">
-                    {({ processing, resetAndClearErrors }) => (
-                        <DialogFooter className="gap-2">
-                            <DialogClose asChild>
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => resetAndClearErrors()}
-                                >
-                                    Cancel
-                                </Button>
-                            </DialogClose>
+                    {({ processing, resetAndClearErrors, errors }) => (
+                        <>
+                            <InputError message={errors.delete} />
 
-                            <Button
-                                variant="destructive"
-                                disabled={processing}
-                                type="submit"
-                            >
-                                {processing && (
-                                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                                )}
-                                Confirm Delete
-                            </Button>
-                        </DialogFooter>
+                            <DialogFooter className="gap-2">
+                                <DialogClose asChild>
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => resetAndClearErrors()}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </DialogClose>
+
+                                <Button
+                                    variant="destructive"
+                                    disabled={processing}
+                                    type="submit"
+                                >
+                                    {processing && (
+                                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                    )}
+                                    Confirm Delete
+                                </Button>
+                            </DialogFooter>
+                        </>
                     )}
                 </Form>
             </DialogContent>

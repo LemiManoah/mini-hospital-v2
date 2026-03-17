@@ -149,6 +149,7 @@ export interface AppointmentIndexPageProps {
         search: string | null;
         status: string | null;
         date: string | null;
+        view?: string | null;
     };
     statusOptions: { value: string; label: string }[];
 }

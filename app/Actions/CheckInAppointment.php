@@ -15,6 +15,7 @@ use App\Models\VisitPayer;
 use App\Support\BranchContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final readonly class CheckInAppointment
 {
@@ -25,12 +26,26 @@ final readonly class CheckInAppointment
     {
         /** @var PatientVisit */
         return DB::transaction(static function () use ($appointment, $attributes): PatientVisit {
+            if ($appointment->visit()->exists()) {
+                throw ValidationException::withMessages([
+                    'appointment' => 'This appointment has already been checked in.',
+                ]);
+            }
+
+            if ($appointment->isTerminal()) {
+                throw ValidationException::withMessages([
+                    'appointment' => 'This appointment can no longer be checked in.',
+                ]);
+            }
+
             $activeVisitExists = $appointment->patient->visits()
                 ->whereNotIn('status', [VisitStatus::COMPLETED->value, VisitStatus::CANCELLED->value])
                 ->exists();
 
             if ($activeVisitExists) {
-                throw new \RuntimeException('Patient already has an active visit.');
+                throw ValidationException::withMessages([
+                    'appointment' => 'Patient already has an active visit. Please complete or cancel it first.',
+                ]);
             }
 
             $activeBranch = BranchContext::getActiveBranch();

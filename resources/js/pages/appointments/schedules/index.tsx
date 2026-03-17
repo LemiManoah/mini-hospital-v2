@@ -30,7 +30,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Appointments', href: '/appointment-categories' },
+    { title: 'Appointments', href: '/appointments' },
     { title: 'Schedules', href: '/appointments/schedules' },
 ];
 

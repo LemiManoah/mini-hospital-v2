@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\Appointment;
+use App\Support\ValidatesAppointmentScheduling;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 final class RescheduleAppointmentRequest extends FormRequest
 {
@@ -16,7 +19,7 @@ final class RescheduleAppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'appointment_date' => ['required', 'date'],
+            'appointment_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
         ];
@@ -27,5 +30,24 @@ final class RescheduleAppointmentRequest extends FormRequest
         $this->merge([
             'end_time' => $this->filled('end_time') ? $this->input('end_time') : null,
         ]);
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            /** @var Appointment|null $appointment */
+            $appointment = $this->route('appointment');
+
+            app(ValidatesAppointmentScheduling::class)->validate(
+                $validator,
+                [
+                    'doctor_id' => $appointment?->doctor_id,
+                    'clinic_id' => $appointment?->clinic_id,
+                    'appointment_date' => $this->input('appointment_date'),
+                    'start_time' => $this->input('start_time'),
+                    'end_time' => $this->input('end_time'),
+                ],
+            );
+        });
     }
 }
