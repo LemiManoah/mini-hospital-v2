@@ -26,19 +26,26 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useDateRangeQueryFilters } from '@/hooks/use-date-range-query-filters';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import {
     type Appointment,
     type AppointmentIndexPageProps,
 } from '@/types/appointment';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { CalendarDays, List } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Appointments', href: '/appointments' },
 ];
+
+const indexFilterDefaults = {
+    search: '',
+    status: 'all',
+    view: 'list',
+};
 
 const weekDayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -132,67 +139,21 @@ export default function AppointmentIndex({
     const rows: Appointment[] = Array.isArray(appointments)
         ? appointments
         : (appointments.data ?? []);
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [status, setStatus] = useState(filters.status ?? 'all');
-    const [fromDate, setFromDate] = useState(
-        filters.from_date ?? toDateInputValue(new Date()),
-    );
-    const [toDate, setToDate] = useState(
-        filters.to_date ?? toDateInputValue(new Date()),
-    );
-    const [view, setView] = useState(filters.view ?? 'list');
-
-    useEffect(() => {
-        setSearch(filters.search ?? '');
-        setStatus(filters.status ?? 'all');
-        setFromDate(filters.from_date ?? toDateInputValue(new Date()));
-        setToDate(filters.to_date ?? toDateInputValue(new Date()));
-        setView(filters.view ?? 'list');
-    }, [filters.search, filters.status, filters.from_date, filters.to_date, filters.view]);
-
-    useEffect(() => {
-        if (
-            search === (filters.search ?? '') &&
-            status === (filters.status ?? 'all') &&
-            fromDate === (filters.from_date ?? toDateInputValue(new Date())) &&
-            toDate === (filters.to_date ?? toDateInputValue(new Date())) &&
-            view === (filters.view ?? 'list')
-        ) {
-            return;
-        }
-
-        const timeoutId = window.setTimeout(() => {
-            router.get(
-                '/appointments',
-                {
-                    search: search || undefined,
-                    status: status === 'all' ? undefined : status,
-                    from_date: fromDate || undefined,
-                    to_date: toDate || undefined,
-                    view,
-                },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                    only: ['appointments', 'filters'],
-                },
-            );
-        }, 250);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [
-        search,
-        status,
-        fromDate,
-        toDate,
-        view,
-        filters.search,
-        filters.status,
-        filters.from_date,
-        filters.to_date,
-        filters.view,
-    ]);
+    const { fromDate, setFromDate, toDate, setToDate, values, setValue } =
+        useDateRangeQueryFilters({
+            route: '/appointments',
+            filters: {
+                from_date:
+                    filters.from_date ?? toDateInputValue(new Date()),
+                to_date: filters.to_date ?? toDateInputValue(new Date()),
+                search: filters.search ?? '',
+                status: filters.status ?? 'all',
+                view: filters.view ?? 'list',
+            },
+            defaults: indexFilterDefaults,
+            only: ['appointments', 'filters'],
+        });
+    const { search, status, view } = values;
 
     const days = useMemo(
         () => enumerateDays(fromDate, toDate),
@@ -221,9 +182,16 @@ export default function AppointmentIndex({
                             <Input
                                 placeholder="Search patient, doctor, or clinic..."
                                 value={search}
-                                onChange={(event) => setSearch(event.target.value)}
+                                onChange={(event) =>
+                                    setValue('search', event.target.value)
+                                }
                             />
-                            <Select value={status} onValueChange={setStatus}>
+                            <Select
+                                value={status}
+                                onValueChange={(value) =>
+                                    setValue('status', value)
+                                }
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="All statuses" />
                                 </SelectTrigger>
@@ -253,7 +221,7 @@ export default function AppointmentIndex({
                             value={view}
                             onValueChange={(value) => {
                                 if (value) {
-                                    setView(value);
+                                    setValue('view', value);
                                 }
                             }}
                             variant="outline"

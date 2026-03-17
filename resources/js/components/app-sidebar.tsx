@@ -122,6 +122,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     url: '/appointments/schedules',
                 },
                 {
+                    title: 'Schedule Exceptions',
+                    url: '/appointments/exceptions',
+                },
+                {
                     title: 'Categories',
                     url: '/appointment-categories',
                 },

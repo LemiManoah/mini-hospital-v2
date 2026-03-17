@@ -42,10 +42,8 @@ final class User extends Authenticatable implements MustVerifyEmail
     use Notifiable;
     use TwoFactorAuthenticatable;
 
-    #[Override]
     protected $appends = ['name', 'avatar'];
 
-    #[Override]
     protected $fillable = [
         'tenant_id',
         'staff_id',
@@ -57,7 +55,6 @@ final class User extends Authenticatable implements MustVerifyEmail
     /**
      * @var list<string>
      */
-    #[Override]
     protected $hidden = [
         'password',
         'remember_token',

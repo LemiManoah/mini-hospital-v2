@@ -12,6 +12,7 @@ use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DoctorScheduleController;
+use App\Http\Controllers\DoctorScheduleExceptionController;
 use App\Http\Controllers\DoctorConsultationController;
 use App\Http\Controllers\DoctorConsultationFacilityServiceOrderController;
 use App\Http\Controllers\DoctorConsultationImagingRequestController;
@@ -76,6 +77,9 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::resource('appointments/schedules', DoctorScheduleController::class)
         ->except(['show'])
         ->names('appointments.schedules');
+    Route::resource('appointments/exceptions', DoctorScheduleExceptionController::class)
+        ->except(['show'])
+        ->names('appointments.exceptions');
     Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::get('appointments/my', [AppointmentController::class, 'myAppointments'])->name('appointments.my');
     Route::get('appointments/queue', [AppointmentController::class, 'queue'])->name('appointments.queue');

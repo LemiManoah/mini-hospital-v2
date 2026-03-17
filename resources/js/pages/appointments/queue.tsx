@@ -8,19 +8,24 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useDateRangeQueryFilters } from '@/hooks/use-date-range-query-filters';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import {
     type Appointment,
     type AppointmentQueuePageProps,
 } from '@/types/appointment';
-import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Appointments', href: '/appointments' },
     { title: 'Queue', href: '/appointments/queue' },
 ];
+
+const queueFilterDefaults = {
+    doctor_id: 'all',
+    clinic_id: 'all',
+};
 
 const badgeClass = (status: string): string =>
     ({
@@ -69,48 +74,19 @@ export default function AppointmentQueue({
     doctors,
     clinics,
 }: AppointmentQueuePageProps) {
-    const [fromDate, setFromDate] = useState(filters.from_date ?? '');
-    const [toDate, setToDate] = useState(filters.to_date ?? '');
-    const [doctorId, setDoctorId] = useState(filters.doctor_id ?? 'all');
-    const [clinicId, setClinicId] = useState(filters.clinic_id ?? 'all');
-
-    useEffect(() => {
-        setFromDate(filters.from_date ?? '');
-        setToDate(filters.to_date ?? '');
-        setDoctorId(filters.doctor_id ?? 'all');
-        setClinicId(filters.clinic_id ?? 'all');
-    }, [filters.from_date, filters.to_date, filters.doctor_id, filters.clinic_id]);
-
-    useEffect(() => {
-        if (
-            fromDate === (filters.from_date ?? '') &&
-            toDate === (filters.to_date ?? '') &&
-            doctorId === (filters.doctor_id ?? 'all') &&
-            clinicId === (filters.clinic_id ?? 'all')
-        ) {
-            return;
-        }
-
-        const timeoutId = window.setTimeout(() => {
-            router.get(
-                '/appointments/queue',
-                {
-                    from_date: fromDate || undefined,
-                    to_date: toDate || undefined,
-                    doctor_id: doctorId === 'all' ? undefined : doctorId,
-                    clinic_id: clinicId === 'all' ? undefined : clinicId,
-                },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                    only: ['appointments', 'filters'],
-                },
-            );
-        }, 250);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [fromDate, toDate, doctorId, clinicId, filters.from_date, filters.to_date, filters.doctor_id, filters.clinic_id]);
+    const { fromDate, setFromDate, toDate, setToDate, values, setValue } =
+        useDateRangeQueryFilters({
+            route: '/appointments/queue',
+            filters: {
+                from_date: filters.from_date ?? '',
+                to_date: filters.to_date ?? '',
+                doctor_id: filters.doctor_id ?? 'all',
+                clinic_id: filters.clinic_id ?? 'all',
+            },
+            defaults: queueFilterDefaults,
+            only: ['appointments', 'filters'],
+        });
+    const { doctor_id: doctorId, clinic_id: clinicId } = values;
 
     const groups = appointments.reduce<Record<string, Appointment[]>>(
         (carry, appointment) => {
@@ -146,7 +122,10 @@ export default function AppointmentQueue({
                         value={toDate}
                         onChange={(event) => setToDate(event.target.value)}
                     />
-                    <Select value={clinicId} onValueChange={setClinicId}>
+                    <Select
+                        value={clinicId}
+                        onValueChange={(value) => setValue('clinic_id', value)}
+                    >
                         <SelectTrigger>
                             <SelectValue placeholder="All clinics" />
                         </SelectTrigger>
@@ -159,7 +138,10 @@ export default function AppointmentQueue({
                             ))}
                         </SelectContent>
                     </Select>
-                    <Select value={doctorId} onValueChange={setDoctorId}>
+                    <Select
+                        value={doctorId}
+                        onValueChange={(value) => setValue('doctor_id', value)}
+                    >
                         <SelectTrigger>
                             <SelectValue placeholder="All doctors" />
                         </SelectTrigger>

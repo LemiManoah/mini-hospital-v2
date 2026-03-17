@@ -89,6 +89,24 @@ export interface DoctorSchedule {
     branch?: { id: string; name: string } | null;
 }
 
+export interface DoctorScheduleException {
+    id: string;
+    doctor_id: string;
+    clinic_id: string | null;
+    facility_branch_id: string | null;
+    exception_date: string;
+    start_time: string | null;
+    end_time: string | null;
+    type: string;
+    reason: string | null;
+    is_all_day: boolean;
+    created_at: string;
+    updated_at: string;
+    doctor?: { id: string; first_name?: string; last_name?: string; name?: string } | null;
+    clinic?: AppointmentClinicOption | null;
+    branch?: { id: string; name: string } | null;
+}
+
 export interface DoctorScheduleIndexPageProps {
     doctorSchedules: AppointmentPaginatedList<DoctorSchedule> | DoctorSchedule[];
     filters: {
@@ -104,6 +122,26 @@ export interface DoctorScheduleFormPageProps {
 
 export interface DoctorScheduleEditPageProps extends DoctorScheduleFormPageProps {
     doctorSchedule: DoctorSchedule;
+}
+
+export interface DoctorScheduleExceptionIndexPageProps {
+    exceptions:
+        | AppointmentPaginatedList<DoctorScheduleException>
+        | DoctorScheduleException[];
+    filters: {
+        search: string | null;
+    };
+}
+
+export interface DoctorScheduleExceptionFormPageProps {
+    doctors: { id: string; name: string }[];
+    clinics: AppointmentClinicOption[];
+    typeOptions: { value: string; label: string }[];
+}
+
+export interface DoctorScheduleExceptionEditPageProps
+    extends DoctorScheduleExceptionFormPageProps {
+    exception: DoctorScheduleException;
 }
 
 export interface AppointmentPatientOption {

@@ -8,16 +8,20 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useDateRangeQueryFilters } from '@/hooks/use-date-range-query-filters';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type AppointmentMyPageProps } from '@/types/appointment';
-import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Appointments', href: '/appointments' },
     { title: 'My Appointments', href: '/appointments/my' },
 ];
+
+const myAppointmentFilterDefaults = {
+    status: 'all',
+};
 
 const badgeClass = (status: string): string =>
     ({
@@ -42,44 +46,18 @@ export default function AppointmentMy({
     filters,
     statusOptions,
 }: AppointmentMyPageProps) {
-    const [fromDate, setFromDate] = useState(filters.from_date ?? '');
-    const [toDate, setToDate] = useState(filters.to_date ?? '');
-    const [status, setStatus] = useState(filters.status ?? 'all');
-
-    useEffect(() => {
-        setFromDate(filters.from_date ?? '');
-        setToDate(filters.to_date ?? '');
-        setStatus(filters.status ?? 'all');
-    }, [filters.from_date, filters.to_date, filters.status]);
-
-    useEffect(() => {
-        if (
-            fromDate === (filters.from_date ?? '') &&
-            toDate === (filters.to_date ?? '') &&
-            status === (filters.status ?? 'all')
-        ) {
-            return;
-        }
-
-        const timeoutId = window.setTimeout(() => {
-            router.get(
-                '/appointments/my',
-                {
-                    from_date: fromDate || undefined,
-                    to_date: toDate || undefined,
-                    status: status === 'all' ? undefined : status,
-                },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                    only: ['appointments', 'filters'],
-                },
-            );
-        }, 250);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [fromDate, toDate, status, filters.from_date, filters.to_date, filters.status]);
+    const { fromDate, setFromDate, toDate, setToDate, values, setValue } =
+        useDateRangeQueryFilters({
+            route: '/appointments/my',
+            filters: {
+                from_date: filters.from_date ?? '',
+                to_date: filters.to_date ?? '',
+                status: filters.status ?? 'all',
+            },
+            defaults: myAppointmentFilterDefaults,
+            only: ['appointments', 'filters'],
+        });
+    const { status } = values;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -104,7 +82,10 @@ export default function AppointmentMy({
                         value={toDate}
                         onChange={(event) => setToDate(event.target.value)}
                     />
-                    <Select value={status} onValueChange={setStatus}>
+                    <Select
+                        value={status}
+                        onValueChange={(value) => setValue('status', value)}
+                    >
                         <SelectTrigger>
                             <SelectValue placeholder="All statuses" />
                         </SelectTrigger>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Models\DoctorSchedule;
+use App\Models\DoctorScheduleException;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Validator;
@@ -136,6 +137,79 @@ final readonly class ValidatesAppointmentScheduling
                     'This appointment falls outside the doctor schedule. Available time window%s: %s.',
                     $clinicSchedules->count() > 1 ? 's' : '',
                     $this->formatScheduleWindows($clinicSchedules),
+                ),
+            );
+
+            return;
+        }
+
+        $matchingExceptions = DoctorScheduleException::query()
+            ->where('doctor_id', $doctorId)
+            ->whereDate('exception_date', $date->toDateString())
+            ->when(
+                $branchId !== null,
+                static function ($query) use ($branchId): void {
+                    $query->where(function ($innerQuery) use ($branchId): void {
+                        $innerQuery
+                            ->where('facility_branch_id', $branchId)
+                            ->orWhereNull('facility_branch_id');
+                    });
+                },
+            )
+            ->when(
+                is_string($clinicId) && $clinicId !== '',
+                static function ($query) use ($clinicId): void {
+                    $query->where(function ($innerQuery) use ($clinicId): void {
+                        $innerQuery
+                            ->where('clinic_id', $clinicId)
+                            ->orWhereNull('clinic_id');
+                    });
+                },
+                static function ($query): void {
+                    $query->whereNull('clinic_id');
+                },
+            )
+            ->get([
+                'type',
+                'reason',
+                'is_all_day',
+                'start_time',
+                'end_time',
+            ]);
+
+        if ($matchingExceptions->isEmpty()) {
+            return;
+        }
+
+        $blockedException = $matchingExceptions->first(function (DoctorScheduleException $exception) use ($startAt, $endAt): bool {
+            if ($exception->is_all_day) {
+                return true;
+            }
+
+            if ($exception->start_time === null || $exception->end_time === null) {
+                return true;
+            }
+
+            $exceptionStart = $this->normaliseTime((string) $exception->start_time);
+            $exceptionEnd = $this->normaliseTime((string) $exception->end_time);
+            $appointmentEnd = $endAt ?? $startAt;
+
+            return $startAt < $exceptionEnd && $appointmentEnd > $exceptionStart;
+        });
+
+        if ($blockedException instanceof DoctorScheduleException) {
+            $typeLabel = $blockedException->type?->label() ?? 'schedule exception';
+            $reasonSuffix = $blockedException->reason !== null && $blockedException->reason !== ''
+                ? sprintf(' Reason: %s.', $blockedException->reason)
+                : '';
+
+            $validator->errors()->add(
+                'start_time',
+                sprintf(
+                    'This appointment falls within a doctor %s on %s.%s',
+                    strtolower($typeLabel),
+                    $date->isoFormat('dddd, D MMMM YYYY'),
+                    $reasonSuffix,
                 ),
             );
         }

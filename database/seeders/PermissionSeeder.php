@@ -85,6 +85,11 @@ final class PermissionSeeder extends Seeder
             'doctor_schedules.update',
             'doctor_schedules.delete',
 
+            'doctor_schedule_exceptions.view',
+            'doctor_schedule_exceptions.create',
+            'doctor_schedule_exceptions.update',
+            'doctor_schedule_exceptions.delete',
+
             'appointment_categories.view',
             'appointment_categories.create',
             'appointment_categories.update',
@@ -274,6 +279,10 @@ final class PermissionSeeder extends Seeder
             'appointments.no_show',
             'appointments.reschedule',
             'doctor_schedules.view',
+            'doctor_schedule_exceptions.view',
+            'doctor_schedule_exceptions.create',
+            'doctor_schedule_exceptions.update',
+            'doctor_schedule_exceptions.delete',
             'appointment_categories.view',
             'appointment_modes.view',
         ]);
