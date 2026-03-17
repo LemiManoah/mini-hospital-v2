@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 final class StoreVitalSignRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ final class StoreVitalSignRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'temperature' => ['nullable', 'numeric', 'min:25', 'max:45'],
+            'temperature' => ['nullable', 'numeric'],
             'temperature_unit' => ['required', 'in:celsius,fahrenheit'],
             'pulse_rate' => ['nullable', 'integer', 'min:0', 'max:300'],
             'respiratory_rate' => ['nullable', 'integer', 'min:0', 'max:120'],
@@ -35,6 +36,33 @@ final class StoreVitalSignRequest extends FormRequest
             'chest_circumference_cm' => ['nullable', 'numeric', 'min:0', 'max:200'],
             'muac_cm' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'capillary_refill' => ['nullable', 'string', 'max:20'],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                $temperature = $this->input('temperature');
+
+                if ($temperature === null || $temperature === '') {
+                    return;
+                }
+
+                $unit = $this->input('temperature_unit', 'celsius');
+                [$min, $max] = $unit === 'fahrenheit'
+                    ? [77, 113]
+                    : [25, 45];
+
+                if ((float) $temperature < $min || (float) $temperature > $max) {
+                    $validator->errors()->add(
+                        'temperature',
+                        $unit === 'fahrenheit'
+                            ? 'Temperature must be between 77 and 113 F.'
+                            : 'Temperature must be between 25 and 45 C.'
+                    );
+                }
+            },
         ];
     }
 

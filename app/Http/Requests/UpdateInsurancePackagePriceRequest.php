@@ -9,7 +9,7 @@ use App\Enums\GeneralStatus;
 use App\Models\InsurancePackagePrice;
 use App\Rules\NoOverlappingInsurancePriceWindow;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;

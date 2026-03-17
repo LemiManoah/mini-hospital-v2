@@ -7,7 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\GeneralStatus;
 use App\Models\InsuranceCompany;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
