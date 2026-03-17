@@ -159,27 +159,38 @@ final readonly class ValidatesAppointmentScheduling
 
     private function normaliseTime(string $time): string
     {
-        foreach (['H:i:s', 'H:i'] as $format) {
-            $parsed = CarbonImmutable::createFromFormat($format, $time);
+        $trimmed = trim($time);
 
-            if ($parsed !== false) {
-                return $parsed->format('H:i:s');
-            }
+        if (preg_match('/^(?<hour>\d{2}):(?<minute>\d{2})(?::(?<second>\d{2}))?(?:\.\d+)?$/', $trimmed, $matches) === 1) {
+            return sprintf(
+                '%s:%s:%s',
+                $matches['hour'],
+                $matches['minute'],
+                $matches['second'] ?? '00',
+            );
         }
 
-        return CarbonImmutable::parse($time)->format('H:i:s');
+        return CarbonImmutable::parse($trimmed)->format('H:i:s');
     }
 
     private static function displayTime(string $time): string
     {
-        foreach (['H:i:s', 'H:i'] as $format) {
-            $parsed = CarbonImmutable::createFromFormat($format, $time);
+        return CarbonImmutable::parse(self::safeNormalisedTime($time))->format('g:i A');
+    }
 
-            if ($parsed !== false) {
-                return $parsed->format('g:i A');
-            }
+    private static function safeNormalisedTime(string $time): string
+    {
+        $trimmed = trim($time);
+
+        if (preg_match('/^(?<hour>\d{2}):(?<minute>\d{2})(?::(?<second>\d{2}))?(?:\.\d+)?$/', $trimmed, $matches) === 1) {
+            return sprintf(
+                '%s:%s:%s',
+                $matches['hour'],
+                $matches['minute'],
+                $matches['second'] ?? '00',
+            );
         }
 
-        return CarbonImmutable::parse($time)->format('g:i A');
+        return CarbonImmutable::parse($trimmed)->format('H:i:s');
     }
 }

@@ -71,36 +71,38 @@ final readonly class DoctorScheduleController
         return to_route('appointments.schedules.index')->with('success', 'Doctor schedule created successfully.');
     }
 
-    public function edit(DoctorSchedule $doctorSchedule): Response
+    public function edit(DoctorSchedule $schedule): Response
     {
         return Inertia::render('appointments/schedules/edit', [
-            'doctorSchedule' => $doctorSchedule->load([
+            'doctorSchedule' => $schedule->load([
                 'doctor:id,first_name,last_name',
                 'clinic:id,clinic_name',
                 'branch:id,name',
             ]),
-            ...$this->formOptions($doctorSchedule),
+            ...$this->formOptions($schedule),
         ]);
     }
 
     public function update(
         UpdateDoctorScheduleRequest $request,
-        DoctorSchedule $doctorSchedule,
+        DoctorSchedule $schedule,
         UpdateDoctorSchedule $action,
     ): RedirectResponse {
-        $action->handle($doctorSchedule, $request->validated());
+        $action->handle($schedule, $request->validated());
 
-        return to_route('appointments.schedules.index')->with('success', 'Doctor schedule updated successfully.');
+        return to_route('appointments.schedules.index')
+            ->with('success', 'Doctor schedule updated successfully.');
     }
 
     public function destroy(
         DeleteDoctorScheduleRequest $request,
-        DoctorSchedule $doctorSchedule,
+        DoctorSchedule $schedule,
         DeleteDoctorSchedule $action,
     ): RedirectResponse {
-        $action->handle($doctorSchedule);
+        $action->handle($schedule);
 
-        return to_route('appointments.schedules.index')->with('success', 'Doctor schedule deleted successfully.');
+        return to_route('appointments.schedules.index')
+            ->with('success', 'Doctor schedule deleted successfully.');
     }
 
     private function formOptions(?DoctorSchedule $schedule = null): array

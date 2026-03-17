@@ -77,6 +77,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         ->except(['show'])
         ->names('appointments.schedules');
     Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+    Route::get('appointments/my', [AppointmentController::class, 'myAppointments'])->name('appointments.my');
+    Route::get('appointments/queue', [AppointmentController::class, 'queue'])->name('appointments.queue');
     Route::get('appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
     Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store');
     Route::get('appointments/{appointment}', [AppointmentController::class, 'show'])->name('appointments.show');

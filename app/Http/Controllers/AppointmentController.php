@@ -9,6 +9,7 @@ use App\Actions\CheckInAppointment;
 use App\Actions\ConfirmAppointment;
 use App\Actions\CreateAppointment;
 use App\Actions\MarkAppointmentNoShow;
+use App\Actions\ResolveDateRange;
 use App\Actions\RescheduleAppointment;
 use App\Actions\UpdateAppointment;
 use App\Enums\AppointmentStatus;
@@ -28,8 +29,8 @@ use App\Models\Clinic;
 use App\Models\InsuranceCompany;
 use App\Models\InsurancePackage;
 use App\Models\Patient;
+use App\Models\User;
 use App\Models\Staff;
-use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,36 +39,27 @@ use Inertia\Response;
 
 final readonly class AppointmentController
 {
+    public function __construct(
+        private ResolveDateRange $resolveDateRange,
+    ) {}
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));
         $status = mb_trim((string) $request->query('status', ''));
         $view = mb_trim((string) $request->query('view', 'list'));
-        $date = mb_trim((string) $request->query('date', CarbonImmutable::today()->toDateString()));
-        $calendarView = in_array($view, ['day', 'week'], true) ? $view : 'list';
-        $anchorDate = CarbonImmutable::parse($date);
+        ['from' => $fromDate, 'to' => $toDate] = $this->resolveDateRange->handle(
+            mb_trim((string) $request->query('from_date', '')),
+            mb_trim((string) $request->query('to_date', '')),
+        );
+        $calendarView = $view === 'calendar' ? 'calendar' : 'list';
 
-        $appointmentsQuery = Appointment::query()
-            ->with([
-                'patient:id,patient_number,first_name,last_name,middle_name,phone_number',
-                'doctor:id,first_name,last_name',
-                'clinic:id,clinic_name',
-                'category:id,name',
-                'mode:id,name,is_virtual',
-                'visit:id,appointment_id,visit_number,status',
-            ])
+        $appointmentsQuery = $this->appointmentQuery()
             ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))
-            ->when(
-                $calendarView === 'day',
-                static fn (Builder $query) => $query->whereDate('appointment_date', $anchorDate->toDateString()),
-            )
-            ->when(
-                $calendarView === 'week',
-                static fn (Builder $query) => $query->whereBetween('appointment_date', [
-                    $anchorDate->startOfWeek()->toDateString(),
-                    $anchorDate->endOfWeek()->toDateString(),
-                ]),
-            )
+            ->whereBetween('appointment_date', [
+                $fromDate->toDateString(),
+                $toDate->toDateString(),
+            ])
             ->when(
                 $search !== '',
                 static function (Builder $query) use ($search): void {
@@ -107,9 +99,104 @@ final readonly class AppointmentController
             'filters' => [
                 'search' => $search,
                 'status' => $status,
-                'date' => $anchorDate->toDateString(),
+                'from_date' => $fromDate->toDateString(),
+                'to_date' => $toDate->toDateString(),
                 'view' => $calendarView,
             ],
+            'statusOptions' => $this->statusOptions(),
+        ]);
+    }
+
+    public function myAppointments(Request $request): Response
+    {
+        /** @var User|null $user */
+        $user = $request->user();
+        $status = mb_trim((string) $request->query('status', ''));
+        ['from' => $fromDate, 'to' => $toDate] = $this->resolveDateRange->handle(
+            mb_trim((string) $request->query('from_date', '')),
+            mb_trim((string) $request->query('to_date', '')),
+        );
+
+        $appointments = $this->appointmentQuery()
+            ->when(
+                $user?->staff_id !== null,
+                fn (Builder $query) => $query->where('doctor_id', $user?->staff_id),
+            )
+            ->whereBetween('appointment_date', [
+                $fromDate->toDateString(),
+                $toDate->toDateString(),
+            ])
+            ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))
+            ->orderBy('appointment_date')
+            ->orderBy('start_time')
+            ->get();
+
+        return Inertia::render('appointments/my', [
+            'appointments' => $appointments,
+            'filters' => [
+                'from_date' => $fromDate->toDateString(),
+                'to_date' => $toDate->toDateString(),
+                'status' => $status,
+            ],
+            'statusOptions' => $this->statusOptions(),
+        ]);
+    }
+
+    public function queue(Request $request): Response
+    {
+        $doctorId = mb_trim((string) $request->query('doctor_id', ''));
+        $clinicId = mb_trim((string) $request->query('clinic_id', ''));
+        ['from' => $fromDate, 'to' => $toDate] = $this->resolveDateRange->handle(
+            mb_trim((string) $request->query('from_date', '')),
+            mb_trim((string) $request->query('to_date', '')),
+        );
+
+        $appointments = $this->appointmentQuery()
+            ->whereBetween('appointment_date', [
+                $fromDate->toDateString(),
+                $toDate->toDateString(),
+            ])
+            ->when($doctorId !== '', static fn (Builder $query) => $query->where('doctor_id', $doctorId))
+            ->when($clinicId !== '', static fn (Builder $query) => $query->where('clinic_id', $clinicId))
+            ->orderBy('appointment_date')
+            ->orderBy('clinic_id')
+            ->orderBy('doctor_id')
+            ->orderBy('start_time')
+            ->get();
+
+        return Inertia::render('appointments/queue', [
+            'appointments' => $appointments,
+            'filters' => [
+                'from_date' => $fromDate->toDateString(),
+                'to_date' => $toDate->toDateString(),
+                'doctor_id' => $doctorId,
+                'clinic_id' => $clinicId,
+            ],
+            'doctors' => Staff::query()
+                ->doctors()
+                ->when(
+                    \App\Support\BranchContext::getActiveBranchId() !== null,
+                    fn ($query) => $query->forActiveBranch()
+                )
+                ->where('is_active', true)
+                ->orderBy('first_name')
+                ->orderBy('last_name')
+                ->get(['id', 'first_name', 'last_name'])
+                ->map(static fn (Staff $staff): array => [
+                    'id' => $staff->id,
+                    'name' => trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
+                ])
+                ->values()
+                ->all(),
+            'clinics' => Clinic::query()
+                ->orderBy('clinic_name')
+                ->get(['id', 'clinic_name'])
+                ->map(static fn (Clinic $clinic): array => [
+                    'id' => $clinic->id,
+                    'name' => $clinic->clinic_name,
+                ])
+                ->values()
+                ->all(),
             'statusOptions' => $this->statusOptions(),
         ]);
     }
@@ -391,5 +478,17 @@ final readonly class AppointmentController
                 'label' => $status->label(),
             ])
             ->all();
+    }
+
+    private function appointmentQuery(): Builder
+    {
+        return Appointment::query()->with([
+            'patient:id,patient_number,first_name,last_name,middle_name,phone_number',
+            'doctor:id,first_name,last_name',
+            'clinic:id,clinic_name',
+            'category:id,name',
+            'mode:id,name,is_virtual',
+            'visit:id,appointment_id,visit_number,status',
+        ]);
     }
 }

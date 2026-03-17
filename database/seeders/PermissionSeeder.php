@@ -74,6 +74,34 @@ final class PermissionSeeder extends Seeder
             'appointments.create',
             'appointments.update',
             'appointments.delete',
+            'appointments.confirm',
+            'appointments.check_in',
+            'appointments.cancel',
+            'appointments.no_show',
+            'appointments.reschedule',
+
+            'doctor_schedules.view',
+            'doctor_schedules.create',
+            'doctor_schedules.update',
+            'doctor_schedules.delete',
+
+            'appointment_categories.view',
+            'appointment_categories.create',
+            'appointment_categories.update',
+            'appointment_categories.delete',
+
+            'appointment_modes.view',
+            'appointment_modes.create',
+            'appointment_modes.update',
+            'appointment_modes.delete',
+
+            'triage.view',
+            'triage.create',
+            'triage.update',
+
+            'consultations.view',
+            'consultations.create',
+            'consultations.update',
 
             'tenants.view',
             'tenants.create',
@@ -100,10 +128,27 @@ final class PermissionSeeder extends Seeder
             'departments.update',
             'departments.delete',
 
+            'clinics.view',
+            'clinics.create',
+            'clinics.update',
+            'clinics.delete',
+
             'units.view',
             'units.create',
             'units.update',
             'units.delete',
+
+            'drugs.view',
+            'drugs.create',
+            'drugs.update',
+            'drugs.delete',
+
+            'facility_services.view',
+            'facility_services.create',
+            'facility_services.update',
+            'facility_services.delete',
+
+            
         ];
 
         $roles = [
@@ -152,9 +197,10 @@ final class PermissionSeeder extends Seeder
             'visits.update',
             'visits.delete',
             'appointments.view',
-            'appointments.create',
             'appointments.update',
-            'appointments.delete',
+            'consultations.view',
+            'consultations.create',
+            'consultations.update',
         ]);
 
         $nurse = Role::query()->where('name', 'nurse')->first();
@@ -169,9 +215,10 @@ final class PermissionSeeder extends Seeder
             'visits.update',
             'visits.delete',
             'appointments.view',
-            'appointments.create',
             'appointments.update',
-            'appointments.delete',
+            'triage.view',
+            'triage.create',
+            'triage.update',
         ]);
 
         $labTechnician = Role::query()->where('name', 'lab_technician')->first();
@@ -195,9 +242,18 @@ final class PermissionSeeder extends Seeder
             'visits.update',
             'visits.delete',
             'appointments.view',
-            'appointments.create',
-            'appointments.update',
-            'appointments.delete',
+            'drugs.view',
+            'drugs.create',
+            'drugs.update',
+            'drugs.delete',
+            'units.view',
+            'units.create',
+            'units.update',
+            'units.delete',
+            'facility_services.view',
+            'facility_services.create',
+            'facility_services.update',
+            'facility_services.delete',
         ]);
 
         $receptionist = Role::query()->where('name', 'receptionist')->first();
@@ -212,6 +268,14 @@ final class PermissionSeeder extends Seeder
             'appointments.view',
             'appointments.create',
             'appointments.update',
+            'appointments.confirm',
+            'appointments.check_in',
+            'appointments.cancel',
+            'appointments.no_show',
+            'appointments.reschedule',
+            'doctor_schedules.view',
+            'appointment_categories.view',
+            'appointment_modes.view',
         ]);
 
         $accountant = Role::query()->where('name', 'accountant')->first();

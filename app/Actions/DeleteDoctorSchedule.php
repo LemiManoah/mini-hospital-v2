@@ -14,6 +14,17 @@ final readonly class DeleteDoctorSchedule
 {
     public function handle(DoctorSchedule $schedule): void
     {
+        if (
+            ! $schedule->exists
+            || $schedule->doctor_id === null
+            || $schedule->clinic_id === null
+            || $schedule->day_of_week === null
+        ) {
+            throw ValidationException::withMessages([
+                'delete' => 'The selected schedule could not be loaded for deletion.',
+            ]);
+        }
+
         $validFrom = $schedule->valid_from instanceof \Carbon\CarbonInterface
             ? $schedule->valid_from->toDateString()
             : ($schedule->valid_from !== null
@@ -43,7 +54,11 @@ final readonly class DeleteDoctorSchedule
                     CarbonImmutable::parse($appointment->appointment_date)->englishDayOfWeek,
                 );
 
-                if ($appointmentDay !== $schedule->day_of_week->value) {
+                $scheduleDay = is_string($schedule->day_of_week)
+                    ? $schedule->day_of_week
+                    : $schedule->day_of_week->value;
+
+                if ($appointmentDay !== $scheduleDay) {
                     return false;
                 }
 

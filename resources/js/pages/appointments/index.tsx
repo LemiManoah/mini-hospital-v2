@@ -33,12 +33,7 @@ import {
     type AppointmentIndexPageProps,
 } from '@/types/appointment';
 import { Head, Link, router } from '@inertiajs/react';
-import {
-    CalendarDays,
-    ChevronLeft,
-    ChevronRight,
-    List,
-} from 'lucide-react';
+import { CalendarDays, List } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -73,23 +68,6 @@ function toDateInputValue(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
-function shiftDate(value: string, days: number): string {
-    const date = parseDate(value);
-
-    date.setDate(date.getDate() + days);
-
-    return toDateInputValue(date);
-}
-
-function startOfWeek(value: string): string {
-    const date = parseDate(value);
-    const day = date.getDay();
-
-    date.setDate(date.getDate() - day);
-
-    return toDateInputValue(date);
-}
-
 function formatDate(value: string | null | undefined): string {
     if (!value) return 'N/A';
 
@@ -97,32 +75,6 @@ function formatDate(value: string | null | undefined): string {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
-    });
-}
-
-function formatCalendarHeader(value: string, view: string): string {
-    const date = parseDate(value);
-
-    if (view === 'week') {
-        const weekStart = parseDate(startOfWeek(value));
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-
-        return `${weekStart.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-        })} - ${weekEnd.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        })}`;
-    }
-
-    return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
     });
 }
 
@@ -136,23 +88,40 @@ function matchesDate(appointment: Appointment, value: string): boolean {
     return appointment.appointment_date.slice(0, 10) === value;
 }
 
-function calendarDays(anchorDate: string, view: string): string[] {
-    if (view === 'day') {
-        return [anchorDate];
+function formatRangeLabel(fromDate: string, toDate: string): string {
+    if (!fromDate && !toDate) {
+        return 'Date range';
     }
 
-    const firstDay = parseDate(startOfWeek(anchorDate));
+    if (fromDate && toDate) {
+        if (fromDate === toDate) {
+            return formatDate(fromDate);
+        }
 
-    return Array.from({ length: 7 }, (_, index) => {
-        const date = new Date(firstDay);
-        date.setDate(firstDay.getDate() + index);
+        return `${formatDate(fromDate)} - ${formatDate(toDate)}`;
+    }
 
-        return toDateInputValue(date);
-    });
+    return formatDate(fromDate || toDate);
 }
 
-function calendarStep(view: string): number {
-    return view === 'week' ? 7 : 1;
+function enumerateDays(fromDate: string, toDate: string): string[] {
+    if (!fromDate && !toDate) {
+        return [];
+    }
+
+    const start = parseDate(fromDate || toDate);
+    const end = parseDate(toDate || fromDate);
+    const normalizedStart = start <= end ? start : end;
+    const normalizedEnd = start <= end ? end : start;
+    const days: string[] = [];
+    const cursor = new Date(normalizedStart);
+
+    while (cursor <= normalizedEnd) {
+        days.push(toDateInputValue(cursor));
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return days;
 }
 
 export default function AppointmentIndex({
@@ -165,21 +134,28 @@ export default function AppointmentIndex({
         : (appointments.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? 'all');
-    const [date, setDate] = useState(filters.date ?? toDateInputValue(new Date()));
+    const [fromDate, setFromDate] = useState(
+        filters.from_date ?? toDateInputValue(new Date()),
+    );
+    const [toDate, setToDate] = useState(
+        filters.to_date ?? toDateInputValue(new Date()),
+    );
     const [view, setView] = useState(filters.view ?? 'list');
 
     useEffect(() => {
         setSearch(filters.search ?? '');
         setStatus(filters.status ?? 'all');
-        setDate(filters.date ?? toDateInputValue(new Date()));
+        setFromDate(filters.from_date ?? toDateInputValue(new Date()));
+        setToDate(filters.to_date ?? toDateInputValue(new Date()));
         setView(filters.view ?? 'list');
-    }, [filters.search, filters.status, filters.date, filters.view]);
+    }, [filters.search, filters.status, filters.from_date, filters.to_date, filters.view]);
 
     useEffect(() => {
         if (
             search === (filters.search ?? '') &&
             status === (filters.status ?? 'all') &&
-            date === (filters.date ?? toDateInputValue(new Date())) &&
+            fromDate === (filters.from_date ?? toDateInputValue(new Date())) &&
+            toDate === (filters.to_date ?? toDateInputValue(new Date())) &&
             view === (filters.view ?? 'list')
         ) {
             return;
@@ -191,7 +167,8 @@ export default function AppointmentIndex({
                 {
                     search: search || undefined,
                     status: status === 'all' ? undefined : status,
-                    date: date || undefined,
+                    from_date: fromDate || undefined,
+                    to_date: toDate || undefined,
                     view,
                 },
                 {
@@ -204,9 +181,23 @@ export default function AppointmentIndex({
         }, 250);
 
         return () => window.clearTimeout(timeoutId);
-    }, [search, status, date, view, filters.search, filters.status, filters.date, filters.view]);
+    }, [
+        search,
+        status,
+        fromDate,
+        toDate,
+        view,
+        filters.search,
+        filters.status,
+        filters.from_date,
+        filters.to_date,
+        filters.view,
+    ]);
 
-    const days = useMemo(() => calendarDays(date, view), [date, view]);
+    const days = useMemo(
+        () => enumerateDays(fromDate, toDate),
+        [fromDate, toDate],
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -226,7 +217,7 @@ export default function AppointmentIndex({
 
                 <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="grid gap-3 md:grid-cols-3 lg:flex-1">
+                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 lg:flex-1">
                             <Input
                                 placeholder="Search patient, doctor, or clinic..."
                                 value={search}
@@ -247,8 +238,13 @@ export default function AppointmentIndex({
                             </Select>
                             <Input
                                 type="date"
-                                value={date}
-                                onChange={(event) => setDate(event.target.value)}
+                                value={fromDate}
+                                onChange={(event) => setFromDate(event.target.value)}
+                            />
+                            <Input
+                                type="date"
+                                value={toDate}
+                                onChange={(event) => setToDate(event.target.value)}
                             />
                         </div>
 
@@ -266,13 +262,9 @@ export default function AppointmentIndex({
                                 <List className="mr-2 h-4 w-4" />
                                 List
                             </ToggleGroupItem>
-                            <ToggleGroupItem value="day" aria-label="Day view">
+                            <ToggleGroupItem value="calendar" aria-label="Calendar view">
                                 <CalendarDays className="mr-2 h-4 w-4" />
-                                Day
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="week" aria-label="Week view">
-                                <CalendarDays className="mr-2 h-4 w-4" />
-                                Week
+                                Calendar
                             </ToggleGroupItem>
                         </ToggleGroup>
                     </div>
@@ -404,49 +396,16 @@ export default function AppointmentIndex({
                     </div>
                 ) : (
                     <div className="space-y-4 rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <h2 className="text-lg font-semibold">
-                                    {formatCalendarHeader(date, view)}
-                                </h2>
-                                <p className="text-sm text-muted-foreground">
-                                    Faster reading by day and doctor workload.
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        setDate(shiftDate(date, -calendarStep(view)))
-                                    }
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setDate(toDateInputValue(new Date()))}
-                                >
-                                    Today
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        setDate(shiftDate(date, calendarStep(view)))
-                                    }
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
+                        <div>
+                            <h2 className="text-lg font-semibold">
+                                {formatRangeLabel(fromDate, toDate)}
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                Faster reading across the selected booking range.
+                            </p>
                         </div>
 
-                        <div
-                            className={`grid gap-4 ${
-                                view === 'day' ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-7'
-                            }`}
-                        >
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                             {days.map((day) => {
                                 const dayAppointments = rows.filter((appointment) =>
                                     matchesDate(appointment, day),
@@ -518,7 +477,7 @@ export default function AppointmentIndex({
                                                 ))
                                             ) : (
                                                 <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm italic text-muted-foreground dark:border-zinc-700">
-                                                    No bookings for this {view}.
+                                                    No bookings for this day.
                                                 </div>
                                             )}
                                         </div>

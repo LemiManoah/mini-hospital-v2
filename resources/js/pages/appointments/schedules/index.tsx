@@ -37,6 +37,24 @@ const breadcrumbs: BreadcrumbItem[] = [
 const labelize = (value: string): string =>
     value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+const formatDate = (value: string | null): string => {
+    if (!value) {
+        return 'Open ended';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+};
+
 export default function DoctorScheduleIndex({
     doctorSchedules,
     filters,
@@ -138,9 +156,9 @@ export default function DoctorScheduleIndex({
                                     </TableCell>
                                     <TableCell>
                                         <div className="space-y-1">
-                                            <p>{schedule.valid_from}</p>
+                                            <p>{formatDate(schedule.valid_from)}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {schedule.valid_to ?? 'Open ended'}
+                                                {formatDate(schedule.valid_to)}
                                             </p>
                                         </div>
                                     </TableCell>

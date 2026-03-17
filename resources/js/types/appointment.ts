@@ -148,7 +148,8 @@ export interface AppointmentIndexPageProps {
     filters: {
         search: string | null;
         status: string | null;
-        date: string | null;
+        from_date: string | null;
+        to_date: string | null;
         view?: string | null;
     };
     statusOptions: { value: string; label: string }[];
@@ -169,4 +170,27 @@ export interface AppointmentShowPageProps extends AppointmentFormPageProps {
     billingTypes: { value: string; label: string }[];
     insuranceCompanies: { id: string; name: string }[];
     insurancePackages: { id: string; name: string; insurance_company_id: string }[];
+}
+
+export interface AppointmentMyPageProps {
+    appointments: Appointment[];
+    filters: {
+        from_date: string | null;
+        to_date: string | null;
+        status: string | null;
+    };
+    statusOptions: { value: string; label: string }[];
+}
+
+export interface AppointmentQueuePageProps {
+    appointments: Appointment[];
+    filters: {
+        from_date: string | null;
+        to_date: string | null;
+        doctor_id: string | null;
+        clinic_id: string | null;
+    };
+    doctors: { id: string; name: string }[];
+    clinics: AppointmentClinicOption[];
+    statusOptions: { value: string; label: string }[];
 }

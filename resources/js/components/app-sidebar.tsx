@@ -110,6 +110,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     url: '/appointments',
                 },
                 {
+                    title: 'Queue',
+                    url: '/appointments/queue',
+                },
+                {
+                    title: 'My Appointments',
+                    url: '/appointments/my',
+                },
+                {
                     title: 'Schedules',
                     url: '/appointments/schedules',
                 },
