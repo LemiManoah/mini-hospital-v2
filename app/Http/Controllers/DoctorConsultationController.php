@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\CompleteConsultation;
 use App\Actions\CreateConsultation;
 use App\Actions\UpdateConsultation;
+use App\Enums\ConsultationOutcome;
 use App\Enums\ImagingLaterality;
 use App\Enums\ImagingModality;
 use App\Enums\ImagingPriority;
@@ -143,10 +144,10 @@ final class DoctorConsultationController
         return Inertia::render('doctor/consultations/show', [
             'visit' => $visit,
             'activeTab' => $request->query('tab', 'overview'),
-            'consultationOutcomes' => collect(Consultation::OUTCOMES)
-                ->map(static fn (string $outcome): array => [
-                    'value' => $outcome,
-                    'label' => mb_convert_case(str_replace('_', ' ', $outcome), MB_CASE_TITLE),
+            'consultationOutcomes' => collect(ConsultationOutcome::cases())
+                ->map(static fn (ConsultationOutcome $outcome): array => [
+                    'value' => $outcome->value,
+                    'label' => $outcome->label(),
                 ])
                 ->values()
                 ->all(),

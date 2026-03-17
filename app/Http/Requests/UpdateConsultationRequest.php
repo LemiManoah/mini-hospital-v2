@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Models\Consultation;
+use App\Enums\ConsultationOutcome;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -15,7 +15,7 @@ final class UpdateConsultationRequest extends FormRequest
     {
         return [
             'intent' => ['required', Rule::in(['save_draft', 'complete'])],
-            'outcome' => ['nullable', 'string', Rule::in(Consultation::OUTCOMES)],
+            'outcome' => ['nullable', Rule::enum(ConsultationOutcome::class)],
             'follow_up_instructions' => ['nullable', 'string'],
             'follow_up_days' => ['nullable', 'integer', 'min:1', 'max:365'],
             'is_referred' => ['nullable', 'boolean'],

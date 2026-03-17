@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ConsultationOutcome;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,16 +21,6 @@ final class Consultation extends Model
 
     use HasUuids;
 
-    public const array OUTCOMES = [
-        'discharged',
-        'admitted',
-        'referred',
-        'follow_up_required',
-        'transferred',
-        'deceased',
-        'left_against_advice',
-    ];
-
     protected $casts = [
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',
@@ -40,6 +31,7 @@ final class Consultation extends Model
         'secondary_diagnoses' => 'array',
         'follow_up_days' => 'integer',
         'is_referred' => 'boolean',
+        'outcome' => ConsultationOutcome::class,
     ];
 
     public function visit(): BelongsTo
