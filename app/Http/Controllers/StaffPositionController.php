@@ -55,7 +55,7 @@ final readonly class StaffPositionController
     public function edit(StaffPosition $staffPosition): Response
     {
         return Inertia::render('staff-position/edit', [
-            'position' => $staffPosition,
+            'staff_position' => $staffPosition,
         ]);
     }
 

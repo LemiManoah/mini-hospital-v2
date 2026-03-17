@@ -38,8 +38,7 @@ final class BootstrapOnboardingDepartments
 
         $tenant->update([
             'updated_by' => $user->id,
-            'onboarding_completed_at' => now(),
-            'onboarding_current_step' => 'complete',
+            'onboarding_current_step' => 'staff',
         ]);
     }
 

@@ -271,7 +271,7 @@ export interface PaginatedList<T> {
 export interface VisitFormOptions {
     companies: Pick<InsuranceCompany, 'id' | 'name'>[];
     packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];
-    clinics: { id: string; name: string }[];
+    clinics: { id: string; name: string, clinic_name: string }[];
     doctors: { id: string; first_name: string; last_name: string }[];
     visitTypes: { value: string; label: string }[];
 }
@@ -286,6 +286,7 @@ export interface PatientIndexPageProps {
 interface PatientBaseFormProps {
     countries: { id: string; country_name: string }[];
     addresses: { id: string; city: string; district: string | null }[];
+    genderOptions: { value: string; label: string }[];
     maritalStatusOptions: { value: string; label: string }[];
     bloodGroupOptions: { value: string; label: string }[];
     religionOptions: { value: string; label: string }[];

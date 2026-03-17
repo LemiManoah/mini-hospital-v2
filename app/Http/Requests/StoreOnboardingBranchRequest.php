@@ -25,9 +25,7 @@ final class StoreOnboardingBranchRequest extends FormRequest
             'main_contact' => ['nullable', 'string', 'max:20'],
             'other_contact' => ['nullable', 'string', 'max:20'],
             'currency_id' => ['required', 'string', 'exists:currencies,id'],
-            'city' => ['required', 'string', 'max:100'],
-            'district' => ['nullable', 'string', 'max:100'],
-            'state' => ['nullable', 'string', 'max:100'],
+            'address_id' => ['required', 'uuid', 'exists:addresses,id'],
             'country_id' => ['nullable', 'string', 'exists:countries,id'],
             'has_store' => ['nullable', 'boolean'],
         ];

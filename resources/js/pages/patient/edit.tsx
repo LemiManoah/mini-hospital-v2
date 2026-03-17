@@ -22,6 +22,7 @@ export default function PatientEdit({
     patient,
     countries,
     addresses,
+    genderOptions,
     maritalStatusOptions,
     bloodGroupOptions,
     religionOptions,
@@ -39,7 +40,7 @@ export default function PatientEdit({
     const [ageInputMode, setAgeInputMode] = useState<'dob' | 'age'>(
         patient.date_of_birth ? 'dob' : 'age',
     );
-    const [gender, setGender] = useState(patient.gender || 'unknown');
+    const [gender, setGender] = useState(patient.gender || genderOptions[0]?.value || '');
     const [ageUnits, setAgeUnits] = useState<'year' | 'month' | 'day'>(
         patient.age_units || 'year',
     );
@@ -173,32 +174,20 @@ export default function PatientEdit({
                                         <Label htmlFor="gender">Gender</Label>
                                         <Select
                                             value={gender}
-                                            onValueChange={(value) =>
-                                                setGender(
-                                                    value as
-                                                        | 'male'
-                                                        | 'female'
-                                                        | 'other'
-                                                        | 'unknown',
-                                                )
-                                            }
+                                            onValueChange={setGender}
                                         >
                                             <SelectTrigger id="gender">
                                                 <SelectValue placeholder="Select gender" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="male">
-                                                    Male
-                                                </SelectItem>
-                                                <SelectItem value="female">
-                                                    Female
-                                                </SelectItem>
-                                                <SelectItem value="other">
-                                                    Other
-                                                </SelectItem>
-                                                <SelectItem value="unknown">
-                                                    Unknown
-                                                </SelectItem>
+                                                {genderOptions.map((option) => (
+                                                    <SelectItem
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     </div>

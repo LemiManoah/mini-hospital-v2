@@ -10,6 +10,7 @@ use App\Actions\UpdatePatient;
 use App\Enums\AllergyReaction;
 use App\Enums\AllergySeverity;
 use App\Enums\BloodGroup;
+use App\Enums\Gender;
 use App\Enums\KinRelationship;
 use App\Enums\MaritalStatus;
 use App\Enums\Religion;
@@ -105,6 +106,7 @@ final readonly class PatientController
             'countries' => Country::query()->select('id', 'country_name')->orderBy('country_name')->get(),
             'addresses' => Address::query()->select('id', 'city', 'district')->orderBy('city')->get(),
             ...$this->visitFormOptions(),
+            'genderOptions' => $this->enumOptions(Gender::cases()),
             'maritalStatusOptions' => $this->enumOptions(MaritalStatus::cases()),
             'bloodGroupOptions' => $this->enumOptions(BloodGroup::cases()),
             'religionOptions' => $this->enumOptions(Religion::cases()),
@@ -131,6 +133,7 @@ final readonly class PatientController
             'patient' => $patient,
             'countries' => Country::query()->select('id', 'country_name')->orderBy('country_name')->get(),
             'addresses' => Address::query()->select('id', 'city', 'district')->orderBy('city')->get(),
+            'genderOptions' => $this->enumOptions(Gender::cases()),
             'maritalStatusOptions' => $this->enumOptions(MaritalStatus::cases()),
             'bloodGroupOptions' => $this->enumOptions(BloodGroup::cases()),
             'religionOptions' => $this->enumOptions(Religion::cases()),

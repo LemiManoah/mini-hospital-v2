@@ -31,6 +31,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffPositionController;
+use App\Http\Controllers\SubscriptionActivationController;
 use App\Http\Controllers\SubscriptionPackageController;
 use App\Http\Controllers\TriageController;
 use App\Http\Controllers\UnitController;
@@ -139,6 +140,9 @@ Route::middleware('auth')->group(function (): void {
     Route::patch('onboarding/profile', [OnboardingController::class, 'updateProfile'])->name('onboarding.profile.update');
     Route::post('onboarding/branch', [OnboardingController::class, 'storeBranch'])->name('onboarding.branch.store');
     Route::post('onboarding/departments', [OnboardingController::class, 'storeDepartments'])->name('onboarding.departments.store');
+    Route::post('onboarding/staff', [OnboardingController::class, 'storeStaff'])->name('onboarding.staff.store');
+    Route::get('subscription/activate', [SubscriptionActivationController::class, 'show'])->name('subscription.activate.show');
+    Route::post('subscription/activate', [SubscriptionActivationController::class, 'store'])->name('subscription.activate.store');
     Route::delete('user-account', [UserController::class, 'destroyCurrentUser'])->name('user.destroy-account');
     Route::redirect('settings', '/settings/profile');
     Route::get('settings/profile', [UserProfileController::class, 'edit'])->name('user-profile.edit');

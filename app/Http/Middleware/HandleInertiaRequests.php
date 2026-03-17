@@ -52,7 +52,10 @@ final class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ? [
                     ...$request->user()->toArray(),
-                    'tenant' => $request->user()->tenant,
+                    'tenant' => $request->user()->tenant?->loadMissing([
+                        'subscriptionPackage',
+                        'currentSubscription.subscriptionPackage',
+                    ]),
                     'active_branch_id' => BranchContext::getActiveBranchId(),
                     'active_branch' => $activeBranch,
                     'can' => $request->user()->getAllPermissions()->pluck('name')->mapWithKeys(fn ($p): array => [$p => true]),

@@ -76,6 +76,16 @@ const modules: Module[] = [
 
 export default function Modules() {
     const { auth } = usePage<SharedData>().props;
+    const currentSubscription = auth.user?.tenant?.current_subscription as
+        | {
+              status: string;
+              subscription_package?: {
+                  name: string;
+                  price: string;
+              } | null;
+              trial_ends_at?: string | null;
+          }
+        | undefined;
 
     const hasPermission = (permission: string) => {
         if (!auth.user) return false;
@@ -88,6 +98,15 @@ export default function Modules() {
         }
         return !!auth.user.can?.[permission];
     };
+
+    const formatDate = (value?: string | null) =>
+        value
+            ? new Date(value).toLocaleDateString('en-UG', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+              })
+            : 'Not set';
 
     return (
         <AuthLayout
@@ -102,6 +121,38 @@ export default function Modules() {
                    max-width: 64rem !important;
                 }
             `}</style>
+
+            {currentSubscription ? (
+                <Card className="mb-6 border-zinc-200">
+                    <CardHeader>
+                        <CardTitle>Subscription status</CardTitle>
+                        <CardDescription>
+                            {currentSubscription.subscription_package?.name ??
+                                'Current package'}{' '}
+                            is currently{' '}
+                            {currentSubscription.status.replaceAll('_', ' ')}.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                            <p>
+                                Package:{' '}
+                                {currentSubscription.subscription_package
+                                    ?.name ?? 'Not set'}
+                            </p>
+                            <p>
+                                Trial ends:{' '}
+                                {formatDate(currentSubscription.trial_ends_at)}
+                            </p>
+                        </div>
+                        <Button asChild variant="outline">
+                            <Link href="/subscription/activate">
+                                Open subscription activation
+                            </Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            ) : null}
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 lg:grid-cols-3">
                 {modules.map((module) => {

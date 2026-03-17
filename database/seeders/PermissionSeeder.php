@@ -1,6 +1,7 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1)
+;
 
 namespace Database\Seeders;
 
@@ -152,6 +153,29 @@ final class PermissionSeeder extends Seeder
             'facility_services.create',
             'facility_services.update',
             'facility_services.delete',
+
+            'insurance_companies.view',
+            'insurance_companies.create',
+            'insurance_companies.update',
+            'insurance_companies.delete',
+
+            'insurance_packages.view',
+            'insurance_packages.create',
+            'insurance_packages.update',
+            'insurance_packages.delete',
+
+            'insurance_claims.view',
+            'insurance_claims.create',
+            'insurance_claims.update',
+            'insurance_claims.delete',
+
+            'insurance_payments.view',
+            'insurance_payments.create',
+            'insurance_payments.update',
+            'insurance_payments.delete',
+
+
+
 
         ];
 

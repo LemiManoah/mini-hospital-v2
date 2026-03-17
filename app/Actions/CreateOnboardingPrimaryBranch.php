@@ -18,14 +18,7 @@ final class CreateOnboardingPrimaryBranch
      */
     public function handle(Tenant $tenant, User $user, array $data): FacilityBranch
     {
-        $address = Address::query()->create([
-            'city' => $data['city'],
-            'district' => $data['district'] ?: null,
-            'state' => $data['state'] ?: null,
-            'country_id' => $data['country_id'] ?: $tenant->country_id,
-            'created_by' => $user->id,
-            'updated_by' => $user->id,
-        ]);
+        $address = Address::query()->findOrFail($data['address_id']);
 
         $branch = FacilityBranch::query()->updateOrCreate(
             [
@@ -55,6 +48,7 @@ final class CreateOnboardingPrimaryBranch
 
         $tenant->update([
             'has_branches' => true,
+            'country_id' => $address->country_id ?? $tenant->country_id,
             'updated_by' => $user->id,
             'onboarding_current_step' => 'departments',
         ]);

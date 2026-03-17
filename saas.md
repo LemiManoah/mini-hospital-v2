@@ -22,12 +22,12 @@
 - [x] Create the primary branch during onboarding
 - [x] Persist onboarding progress step by step
 - [x] Add department bootstrap
-- [ ] Add first operational staff bootstrap or invitations
+- [x] Add first operational staff bootstrap or invitations
 
 ### Milestone 3: Subscription Activation
 
-- [ ] Connect package selection to subscription records
-- [ ] Add trial and pending activation states
+- [x] Connect package selection to subscription records
+- [x] Add trial and pending activation states
 - [ ] Integrate checkout
 - [ ] Handle payment success and failure callbacks
 

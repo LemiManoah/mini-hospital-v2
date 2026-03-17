@@ -31,13 +31,14 @@ export default function PatientCreate({
     clinics,
     doctors,
     visitTypes,
+    genderOptions,
     maritalStatusOptions,
     bloodGroupOptions,
     religionOptions,
     kinRelationshipOptions,
 }: PatientCreatePageProps) {
     const [ageInputMode, setAgeInputMode] = useState<'dob' | 'age'>('dob');
-    const [gender, setGender] = useState('unknown');
+    const [gender, setGender] = useState(genderOptions[0]?.value ?? '');
     const [ageUnits, setAgeUnits] = useState<'year' | 'month' | 'day'>('year');
     const [maritalStatus, setMaritalStatus] = useState('');
     const [bloodGroup, setBloodGroup] = useState('');
@@ -236,18 +237,14 @@ export default function PatientCreate({
                                                 <SelectValue placeholder="Select gender" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="male">
-                                                    Male
-                                                </SelectItem>
-                                                <SelectItem value="female">
-                                                    Female
-                                                </SelectItem>
-                                                <SelectItem value="other">
-                                                    Other
-                                                </SelectItem>
-                                                <SelectItem value="unknown">
-                                                    Unknown
-                                                </SelectItem>
+                                                {genderOptions.map((option) => (
+                                                    <SelectItem
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <InputError message={errors.gender} />

@@ -10,7 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import AuthLayout from '@/layouts/auth-layout';
+import OnboardingLayout from '@/layouts/auth/onboarding-layout';
 import { Form, Head } from '@inertiajs/react';
 import { CheckCircle2, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -21,6 +21,27 @@ type PackageOption = {
     users: number;
     price: string;
 };
+
+const signupSteps = [
+    {
+        key: 'signup',
+        title: 'Create workspace',
+        description: 'Enter the owner account and basic hospital details.',
+        status: 'current' as const,
+    },
+    {
+        key: 'package',
+        title: 'Select package',
+        description: 'Choose the starting plan for the workspace.',
+        status: 'upcoming' as const,
+    },
+    {
+        key: 'onboarding',
+        title: 'Finish setup',
+        description: 'Complete branch and department onboarding.',
+        status: 'upcoming' as const,
+    },
+];
 
 export default function WorkspaceRegister({
     facilityLevels,
@@ -46,9 +67,14 @@ export default function WorkspaceRegister({
     );
 
     return (
-        <AuthLayout
+        <OnboardingLayout
             title="Create your hospital workspace"
             description="Start your tenant, choose a package, and enter onboarding in one flow."
+            tenantName="New hospital workspace"
+            sidebarLabel="New workspace"
+            steps={signupSteps}
+            currentStep="signup"
+            asideNote="We will create the tenant, first owner account, and hand off directly into onboarding after signup."
         >
             <Head title="Create Workspace" />
 
@@ -310,6 +336,6 @@ export default function WorkspaceRegister({
                 Already have a workspace?{' '}
                 <TextLink href="/login">Log in instead</TextLink>
             </p>
-        </AuthLayout>
+        </OnboardingLayout>
     );
 }

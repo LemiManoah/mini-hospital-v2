@@ -8,6 +8,7 @@ use App\Enums\GeneralStatus;
 use App\Enums\StaffType;
 use App\Models\Role;
 use App\Models\Staff;
+use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -17,6 +18,10 @@ use SensitiveParameter;
 
 final readonly class RegisterWorkspace
 {
+    public function __construct(
+        private StartTenantSubscription $startTenantSubscription,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $attributes
      * @return array{tenant: Tenant, staff: Staff, user: User}
@@ -24,11 +29,15 @@ final readonly class RegisterWorkspace
     public function handle(array $attributes, #[SensitiveParameter] string $password): array
     {
         return DB::transaction(function () use ($attributes, $password): array {
+            $package = SubscriptionPackage::query()->findOrFail(
+                $attributes['subscription_package_id'],
+            );
+
             $tenant = Tenant::query()->create([
                 'name' => $attributes['workspace_name'],
                 'domain' => $attributes['domain'] ?: null,
                 'has_branches' => false,
-                'subscription_package_id' => $attributes['subscription_package_id'],
+                'subscription_package_id' => $package->id,
                 'status' => GeneralStatus::PENDING,
                 'facility_level' => $attributes['facility_level'],
                 'country_id' => $attributes['country_id'] ?: null,
@@ -69,6 +78,8 @@ final readonly class RegisterWorkspace
             if ($adminRole instanceof Role) {
                 $user->assignRole($adminRole);
             }
+
+            $this->startTenantSubscription->handle($tenant, $package, $user);
 
             event(new Registered($user));
 

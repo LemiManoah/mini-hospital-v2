@@ -27,10 +27,8 @@ final class UpdateOnboardingProfileRequest extends FormRequest
             'name' => ['required', 'string', 'max:100', Rule::unique(Tenant::class, 'name')->ignore($tenantId)],
             'domain' => ['nullable', 'string', 'max:100', Rule::unique(Tenant::class, 'domain')->ignore($tenantId)],
             'facility_level' => ['required', Rule::enum(FacilityLevel::class)],
+            'address_id' => ['nullable', 'uuid', 'exists:addresses,id'],
             'country_id' => ['nullable', 'string', 'exists:countries,id'],
-            'city' => ['nullable', 'string', 'max:100'],
-            'district' => ['nullable', 'string', 'max:100'],
-            'state' => ['nullable', 'string', 'max:100'],
         ];
     }
 }

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Tenant extends Model
@@ -34,12 +35,33 @@ final class Tenant extends Model
         return $this->onboarding_completed_at instanceof CarbonInterface;
     }
 
+    public function hasActiveOrTrialSubscription(): bool
+    {
+        return $this->currentSubscription !== null;
+    }
+
     /**
      * @return BelongsTo<SubscriptionPackage, $this>
      */
     public function subscriptionPackage(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPackage::class);
+    }
+
+    /**
+     * @return HasMany<TenantSubscription, $this>
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(TenantSubscription::class);
+    }
+
+    /**
+     * @return HasOne<TenantSubscription, $this>
+     */
+    public function currentSubscription(): HasOne
+    {
+        return $this->hasOne(TenantSubscription::class)->latestOfMany();
     }
 
     /**
