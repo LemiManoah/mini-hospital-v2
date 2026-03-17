@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use Override;
 
 /**
  * @property-read string $id
@@ -33,25 +32,8 @@ final class Allergen extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
     public $incrementing = false;
-
-    #[Override]
     protected $keyType = 'string';
-
-    /**
-     * @var list<string>
-     */
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'name',
-        'description',
-        'type',
-        'created_by',
-        'updated_by',
-    ];
 
     /**
      * @return array<string, string>

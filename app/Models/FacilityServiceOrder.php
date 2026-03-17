@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Override;
 
 final class FacilityServiceOrder extends Model
 {
@@ -20,25 +19,6 @@ final class FacilityServiceOrder extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'facility_branch_id',
-        'visit_id',
-        'consultation_id',
-        'facility_service_id',
-        'ordered_by',
-        'status',
-        'clinical_notes',
-        'service_instructions',
-        'ordered_at',
-        'performed_by',
-        'completed_at',
-        'cancellation_reason',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',

@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class AppointmentMode extends Model
 {
@@ -20,19 +19,6 @@ final class AppointmentMode extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'name',
-        'description',
-        'is_virtual',
-        'is_active',
-        'created_by',
-        'updated_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'is_virtual' => 'boolean',

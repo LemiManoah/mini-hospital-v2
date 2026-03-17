@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class InsuranceCompany extends Model
 {
@@ -23,21 +22,6 @@ final class InsuranceCompany extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'name',
-        'email',
-        'main_contact',
-        'other_contact',
-        'address_id',
-        'status',
-        'created_by',
-        'updated_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'status' => GeneralStatus::class,

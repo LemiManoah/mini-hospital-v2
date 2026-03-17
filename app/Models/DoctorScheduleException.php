@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class DoctorScheduleException extends Model
 {
@@ -22,24 +21,6 @@ final class DoctorScheduleException extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'facility_branch_id',
-        'doctor_id',
-        'clinic_id',
-        'exception_date',
-        'start_time',
-        'end_time',
-        'type',
-        'reason',
-        'is_all_day',
-        'created_by',
-        'updated_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',

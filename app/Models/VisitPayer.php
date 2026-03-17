@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class VisitPayer extends Model
 {
@@ -22,19 +21,6 @@ final class VisitPayer extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'patient_visit_id',
-        'billing_type',
-        'insurance_company_id',
-        'insurance_package_id',
-        'created_by',
-        'updated_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'patient_visit_id' => 'string',

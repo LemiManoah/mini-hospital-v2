@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class FacilityBranch extends Model
 {
@@ -23,25 +22,6 @@ final class FacilityBranch extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'name',
-        'address_id',
-        'main_contact',
-        'other_contact',
-        'email',
-        'tenant_id',
-        'currency_id',
-        'status',
-        'is_main_branch',
-        'has_store',
-        'branch_code',
-        'created_by',
-        'updated_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'status' => GeneralStatus::class,
         'is_main_branch' => 'boolean',

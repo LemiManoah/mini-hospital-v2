@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class Department extends Model
 {
@@ -22,18 +21,6 @@ final class Department extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'department_code',
-        'department_name',
-        'location',
-        'is_clinical',
-        'is_active',
-        'contact_info',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'is_clinical' => 'boolean',

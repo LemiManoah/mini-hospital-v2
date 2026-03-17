@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use Override;
 
 /**
  * @property-read string $id
@@ -33,19 +32,6 @@ final class Address extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    /**
-     * @var list<string>
-     */
-    #[Override]
-    protected $fillable = [
-        'city',
-        'district',
-        'state',
-        'country_id',
-        'created_by',
-        'updated_by',
-    ];
 
     /**
      * @return array<string, string>

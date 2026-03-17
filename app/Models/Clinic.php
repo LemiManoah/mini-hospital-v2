@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class Clinic extends Model
 {
@@ -22,19 +21,6 @@ final class Clinic extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'branch_id',
-        'clinic_code',
-        'clinic_name',
-        'department_id',
-        'location',
-        'phone',
-        'status',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'branch_id' => 'string',

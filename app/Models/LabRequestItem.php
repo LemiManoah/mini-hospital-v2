@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Override;
 
 final class LabRequestItem extends Model
 {
@@ -17,19 +16,6 @@ final class LabRequestItem extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
-    protected $fillable = [
-        'request_id',
-        'test_id',
-        'status',
-        'price',
-        'is_external',
-        'external_lab_name',
-        'completed_at',
-    ];
-
-    #[Override]
     protected $casts = [
         'request_id' => 'string',
         'test_id' => 'string',

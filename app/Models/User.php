@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-use Override;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -43,14 +42,6 @@ final class User extends Authenticatable implements MustVerifyEmail
     use TwoFactorAuthenticatable;
 
     protected $appends = ['name', 'avatar'];
-
-    protected $fillable = [
-        'tenant_id',
-        'staff_id',
-        'email',
-        'password',
-        'is_support',
-    ];
 
     /**
      * @var list<string>

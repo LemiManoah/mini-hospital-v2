@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Override;
 
 final class PrescriptionItem extends Model
 {
@@ -17,25 +16,6 @@ final class PrescriptionItem extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
-    protected $fillable = [
-        'prescription_id',
-        'drug_id',
-        'dosage',
-        'frequency',
-        'route',
-        'duration_days',
-        'quantity',
-        'instructions',
-        'is_prn',
-        'prn_reason',
-        'is_external_pharmacy',
-        'status',
-        'dispensed_at',
-    ];
-
-    #[Override]
     protected $casts = [
         'prescription_id' => 'string',
         'drug_id' => 'string',

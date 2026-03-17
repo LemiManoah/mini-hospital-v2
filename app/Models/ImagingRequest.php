@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Override;
 
 final class ImagingRequest extends Model
 {
@@ -21,28 +20,6 @@ final class ImagingRequest extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
-    protected $fillable = [
-        'visit_id',
-        'consultation_id',
-        'requested_by',
-        'modality',
-        'body_part',
-        'laterality',
-        'clinical_history',
-        'indication',
-        'priority',
-        'status',
-        'scheduled_date',
-        'scheduled_by',
-        'requires_contrast',
-        'contrast_allergy_status',
-        'pregnancy_status',
-        'radiation_dose_msv',
-    ];
-
-    #[Override]
     protected $casts = [
         'visit_id' => 'string',
         'consultation_id' => 'string',

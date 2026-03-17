@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Override;
 
 final class Prescription extends Model
 {
@@ -18,21 +17,6 @@ final class Prescription extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
-    protected $fillable = [
-        'visit_id',
-        'consultation_id',
-        'prescribed_by',
-        'prescription_date',
-        'is_discharge_medication',
-        'is_long_term',
-        'primary_diagnosis',
-        'pharmacy_notes',
-        'status',
-    ];
-
-    #[Override]
     protected $casts = [
         'visit_id' => 'string',
         'consultation_id' => 'string',

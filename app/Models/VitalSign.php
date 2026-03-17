@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Override;
 
 final class VitalSign extends Model
 {
@@ -16,36 +15,6 @@ final class VitalSign extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
-    protected $fillable = [
-        'triage_id',
-        'recorded_at',
-        'temperature',
-        'temperature_unit',
-        'pulse_rate',
-        'respiratory_rate',
-        'systolic_bp',
-        'diastolic_bp',
-        'map',
-        'oxygen_saturation',
-        'on_supplemental_oxygen',
-        'oxygen_delivery_method',
-        'oxygen_flow_rate',
-        'blood_glucose',
-        'blood_glucose_unit',
-        'pain_score',
-        'height_cm',
-        'weight_kg',
-        'bmi',
-        'head_circumference_cm',
-        'chest_circumference_cm',
-        'muac_cm',
-        'capillary_refill',
-        'recorded_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'triage_id' => 'string',
         'recorded_by' => 'string',

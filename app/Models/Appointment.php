@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class Appointment extends Model
 {
@@ -23,35 +22,6 @@ final class Appointment extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'facility_branch_id',
-        'patient_id',
-        'doctor_id',
-        'clinic_id',
-        'appointment_category_id',
-        'appointment_mode_id',
-        'appointment_date',
-        'start_time',
-        'end_time',
-        'status',
-        'reason_for_visit',
-        'chief_complaint',
-        'is_walk_in',
-        'queue_number',
-        'checked_in_at',
-        'completed_at',
-        'cancellation_reason',
-        'cancelled_by',
-        'rescheduled_from_appointment_id',
-        'notes',
-        'created_by',
-        'updated_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',

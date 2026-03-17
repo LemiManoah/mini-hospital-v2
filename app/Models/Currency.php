@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Override;
 
 /**
  * @property-read string $id
@@ -25,23 +24,8 @@ final class Currency extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
     public $incrementing = false;
-
-    #[Override]
     protected $keyType = 'string';
-
-    /**
-     * @var list<string>
-     */
-    #[Override]
-    protected $fillable = [
-        'code',
-        'name',
-        'symbol',
-        'modifiable',
-    ];
 
     /**
      * @return array<string, string>

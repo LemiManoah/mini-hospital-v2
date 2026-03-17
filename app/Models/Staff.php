@@ -16,7 +16,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class Staff extends Model
 {
@@ -27,29 +26,6 @@ final class Staff extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'employee_number',
-        'first_name',
-        'last_name',
-        'middle_name',
-        'email',
-        'phone',
-        'address_id',
-        'staff_position_id',
-        'type',
-        'license_number',
-        'specialty',
-        'hire_date',
-        'termination_date',
-        'is_active',
-        'created_by',
-        'updated_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'type' => StaffType::class,
         'hire_date' => 'date',

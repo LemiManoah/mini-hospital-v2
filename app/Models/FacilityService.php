@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Override;
 
 final class FacilityService extends Model
 {
@@ -20,24 +19,6 @@ final class FacilityService extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'service_code',
-        'name',
-        'category',
-        'department_name',
-        'description',
-        'default_instructions',
-        'is_billable',
-        'charge_master_id',
-        'is_active',
-        'created_by',
-        'updated_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'category' => FacilityServiceCategory::class,

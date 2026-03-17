@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Override;
 
 final class LabRequest extends Model
 {
@@ -23,26 +22,6 @@ final class LabRequest extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'facility_branch_id',
-        'visit_id',
-        'consultation_id',
-        'requested_by',
-        'request_date',
-        'clinical_notes',
-        'priority',
-        'status',
-        'diagnosis_code',
-        'is_stat',
-        'billing_status',
-        'cancellation_reason',
-        'completed_at',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',

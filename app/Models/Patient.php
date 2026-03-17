@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Override;
 
 final class Patient extends Model
 {
@@ -22,35 +21,6 @@ final class Patient extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'patient_number',
-        'first_name',
-        'last_name',
-        'middle_name',
-        'date_of_birth',
-        'age',
-        'age_units',
-        'gender',
-        'email',
-        'phone_number',
-        'alternative_phone',
-        'next_of_kin_name',
-        'next_of_kin_phone',
-        'next_of_kin_relationship',
-        'address_id',
-        'marital_status',
-        'occupation',
-        'religion',
-        'country_id',
-        'blood_group',
-        'created_by',
-        'updated_by',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'address_id' => 'string',

@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Override;
 
 /**
  * @property-read string $id
@@ -30,18 +29,6 @@ final class Country extends Model
     use HasFactory;
 
     use HasUuids;
-
-    /**
-     * @var list<string>
-     */
-    #[Override]
-    protected $fillable = [
-        'country_name',
-        'country_code',
-        'dial_code',
-        'currency',
-        'currency_symbol',
-    ];
 
     /**
      * @return array<string, string>

@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Override;
 
 final class TriageRecord extends Model
 {
@@ -24,33 +23,6 @@ final class TriageRecord extends Model
     use HasFactory;
 
     use HasUuids;
-
-    #[Override]
-    protected $fillable = [
-        'tenant_id',
-        'facility_branch_id',
-        'visit_id',
-        'nurse_id',
-        'triage_datetime',
-        'triage_grade',
-        'attendance_type',
-        'news_score',
-        'pews_score',
-        'conscious_level',
-        'mobility_status',
-        'chief_complaint',
-        'history_of_presenting_illness',
-        'assigned_clinic_id',
-        'requires_priority',
-        'is_pediatric',
-        'poisoning_case',
-        'poisoning_agent',
-        'snake_bite_case',
-        'referred_by',
-        'nurse_notes',
-    ];
-
-    #[Override]
     protected $casts = [
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',
