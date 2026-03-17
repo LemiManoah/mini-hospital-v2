@@ -32,7 +32,9 @@ final class Allergen extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     /**

@@ -52,13 +52,14 @@ export interface AppointmentCategoryFormPageProps {
     clinics: AppointmentClinicOption[];
 }
 
-export interface AppointmentCategoryEditPageProps
-    extends AppointmentCategoryFormPageProps {
+export interface AppointmentCategoryEditPageProps extends AppointmentCategoryFormPageProps {
     appointmentCategory: AppointmentCategory;
 }
 
 export interface AppointmentModeIndexPageProps {
-    appointmentModes: AppointmentPaginatedList<AppointmentMode> | AppointmentMode[];
+    appointmentModes:
+        | AppointmentPaginatedList<AppointmentMode>
+        | AppointmentMode[];
     filters: {
         search: string | null;
     };
@@ -84,7 +85,12 @@ export interface DoctorSchedule {
     is_active: boolean;
     created_at: string;
     updated_at: string;
-    doctor?: { id: string; first_name?: string; last_name?: string; name?: string } | null;
+    doctor?: {
+        id: string;
+        first_name?: string;
+        last_name?: string;
+        name?: string;
+    } | null;
     clinic?: AppointmentClinicOption | null;
     branch?: { id: string; name: string } | null;
 }
@@ -102,13 +108,20 @@ export interface DoctorScheduleException {
     is_all_day: boolean;
     created_at: string;
     updated_at: string;
-    doctor?: { id: string; first_name?: string; last_name?: string; name?: string } | null;
+    doctor?: {
+        id: string;
+        first_name?: string;
+        last_name?: string;
+        name?: string;
+    } | null;
     clinic?: AppointmentClinicOption | null;
     branch?: { id: string; name: string } | null;
 }
 
 export interface DoctorScheduleIndexPageProps {
-    doctorSchedules: AppointmentPaginatedList<DoctorSchedule> | DoctorSchedule[];
+    doctorSchedules:
+        | AppointmentPaginatedList<DoctorSchedule>
+        | DoctorSchedule[];
     filters: {
         search: string | null;
     };
@@ -139,8 +152,7 @@ export interface DoctorScheduleExceptionFormPageProps {
     typeOptions: { value: string; label: string }[];
 }
 
-export interface DoctorScheduleExceptionEditPageProps
-    extends DoctorScheduleExceptionFormPageProps {
+export interface DoctorScheduleExceptionEditPageProps extends DoctorScheduleExceptionFormPageProps {
     exception: DoctorScheduleException;
 }
 
@@ -173,12 +185,22 @@ export interface Appointment {
     rescheduled_from_appointment_id?: string | null;
     notes: string | null;
     patient?: AppointmentPatientOption | null;
-    doctor?: { id: string; first_name?: string; last_name?: string; name?: string } | null;
+    doctor?: {
+        id: string;
+        first_name?: string;
+        last_name?: string;
+        name?: string;
+    } | null;
     clinic?: AppointmentClinicOption | null;
     category?: { id: string; name: string } | null;
     mode?: { id: string; name: string; is_virtual?: boolean } | null;
     branch?: { id: string; name: string } | null;
-    visit?: { id: string; appointment_id: string; visit_number: string; status: string } | null;
+    visit?: {
+        id: string;
+        appointment_id: string;
+        visit_number: string;
+        status: string;
+    } | null;
 }
 
 export interface AppointmentIndexPageProps {
@@ -207,7 +229,11 @@ export interface AppointmentShowPageProps extends AppointmentFormPageProps {
     visitTypes: { value: string; label: string }[];
     billingTypes: { value: string; label: string }[];
     insuranceCompanies: { id: string; name: string }[];
-    insurancePackages: { id: string; name: string; insurance_company_id: string }[];
+    insurancePackages: {
+        id: string;
+        name: string;
+        insurance_company_id: string;
+    }[];
 }
 
 export interface AppointmentMyPageProps {

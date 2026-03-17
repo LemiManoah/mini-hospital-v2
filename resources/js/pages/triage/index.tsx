@@ -74,10 +74,7 @@ function triageState(visit: PatientVisit): {
     };
 }
 
-export default function TriageIndex({
-    visits,
-    filters,
-}: TriageQueuePageProps) {
+export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
     const rows: PatientVisit[] = Array.isArray(visits)
         ? visits
         : (visits.data ?? []);
@@ -210,7 +207,8 @@ export default function TriageIndex({
                                                 )}
                                             </TableCell>
                                             <TableCell className="max-w-[260px] whitespace-normal">
-                                                {visit.triage?.chief_complaint ||
+                                                {visit.triage
+                                                    ?.chief_complaint ||
                                                     'Capture complaint in triage'}
                                             </TableCell>
                                             <TableCell>

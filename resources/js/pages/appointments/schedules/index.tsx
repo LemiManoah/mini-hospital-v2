@@ -35,7 +35,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const labelize = (value: string): string =>
-    value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+    value
+        .replaceAll('_', ' ')
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 const formatDate = (value: string | null): string => {
     if (!value) {
@@ -120,7 +122,9 @@ export default function DoctorScheduleIndex({
                             <TableHead>Slots</TableHead>
                             <TableHead>Validity</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right">
+                                Actions
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -148,7 +152,8 @@ export default function DoctorScheduleIndex({
                                         {labelize(schedule.day_of_week)}
                                     </TableCell>
                                     <TableCell>
-                                        {schedule.start_time} - {schedule.end_time}
+                                        {schedule.start_time} -{' '}
+                                        {schedule.end_time}
                                     </TableCell>
                                     <TableCell>
                                         {schedule.slot_duration_minutes} min /{' '}
@@ -156,7 +161,11 @@ export default function DoctorScheduleIndex({
                                     </TableCell>
                                     <TableCell>
                                         <div className="space-y-1">
-                                            <p>{formatDate(schedule.valid_from)}</p>
+                                            <p>
+                                                {formatDate(
+                                                    schedule.valid_from,
+                                                )}
+                                            </p>
                                             <p className="text-xs text-muted-foreground">
                                                 {formatDate(schedule.valid_to)}
                                             </p>

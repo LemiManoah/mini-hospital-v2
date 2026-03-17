@@ -21,14 +21,14 @@ return new class extends Migration
             $foreignKeys = collect(Schema::getForeignKeys('tenants'));
 
             Schema::table('tenants', function (Blueprint $table) use ($foreignKeys): void {
-                if (!$foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'tenants_created_by_foreign')) {
+                if ($foreignKeys->doesntContain(fn (array $foreignKey): bool => $foreignKey['name'] === 'tenants_created_by_foreign')) {
                     $table->foreign('created_by', 'tenants_created_by_foreign')
                         ->references('id')
                         ->on('users')
                         ->nullOnDelete();
                 }
 
-                if (!$foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'tenants_updated_by_foreign')) {
+                if ($foreignKeys->doesntContain(fn (array $foreignKey): bool => $foreignKey['name'] === 'tenants_updated_by_foreign')) {
                     $table->foreign('updated_by', 'tenants_updated_by_foreign')
                         ->references('id')
                         ->on('users')
@@ -45,14 +45,14 @@ return new class extends Migration
             $foreignKeys = collect(Schema::getForeignKeys('staff'));
 
             Schema::table('staff', function (Blueprint $table) use ($foreignKeys): void {
-                if (!$foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_created_by_foreign')) {
+                if ($foreignKeys->doesntContain(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_created_by_foreign')) {
                     $table->foreign('created_by', 'staff_created_by_foreign')
                         ->references('id')
                         ->on('users')
                         ->nullOnDelete();
                 }
 
-                if (!$foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_updated_by_foreign')) {
+                if ($foreignKeys->doesntContain(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_updated_by_foreign')) {
                     $table->foreign('updated_by', 'staff_updated_by_foreign')
                         ->references('id')
                         ->on('users')

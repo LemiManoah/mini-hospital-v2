@@ -22,6 +22,7 @@ final class InsuranceCompanyInvoice extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',

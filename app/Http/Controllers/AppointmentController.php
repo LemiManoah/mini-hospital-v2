@@ -9,8 +9,8 @@ use App\Actions\CheckInAppointment;
 use App\Actions\ConfirmAppointment;
 use App\Actions\CreateAppointment;
 use App\Actions\MarkAppointmentNoShow;
-use App\Actions\ResolveDateRange;
 use App\Actions\RescheduleAppointment;
+use App\Actions\ResolveDateRange;
 use App\Actions\UpdateAppointment;
 use App\Enums\AppointmentStatus;
 use App\Enums\PayerType;
@@ -29,8 +29,9 @@ use App\Models\Clinic;
 use App\Models\InsuranceCompany;
 use App\Models\InsurancePackage;
 use App\Models\Patient;
-use App\Models\User;
 use App\Models\Staff;
+use App\Models\User;
+use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -83,7 +84,7 @@ final readonly class AppointmentController
                     });
                 }
             )
-            ->orderBy('appointment_date')
+            ->oldest('appointment_date')
             ->orderBy('start_time');
 
         $appointments = $calendarView === 'list'
@@ -127,7 +128,7 @@ final readonly class AppointmentController
                 $toDate->toDateString(),
             ])
             ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))
-            ->orderBy('appointment_date')
+            ->oldest('appointment_date')
             ->orderBy('start_time')
             ->get();
 
@@ -158,7 +159,7 @@ final readonly class AppointmentController
             ])
             ->when($doctorId !== '', static fn (Builder $query) => $query->where('doctor_id', $doctorId))
             ->when($clinicId !== '', static fn (Builder $query) => $query->where('clinic_id', $clinicId))
-            ->orderBy('appointment_date')
+            ->oldest('appointment_date')
             ->orderBy('clinic_id')
             ->orderBy('doctor_id')
             ->orderBy('start_time')
@@ -175,7 +176,7 @@ final readonly class AppointmentController
             'doctors' => Staff::query()
                 ->doctors()
                 ->when(
-                    \App\Support\BranchContext::getActiveBranchId() !== null,
+                    BranchContext::getActiveBranchId() !== null,
                     fn ($query) => $query->forActiveBranch()
                 )
                 ->where('is_active', true)
@@ -184,7 +185,7 @@ final readonly class AppointmentController
                 ->get(['id', 'first_name', 'last_name'])
                 ->map(static fn (Staff $staff): array => [
                     'id' => $staff->id,
-                    'name' => trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
+                    'name' => mb_trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
                 ])
                 ->values()
                 ->all(),
@@ -321,7 +322,7 @@ final readonly class AppointmentController
             ])
             ->map(static fn (Patient $patient): array => [
                 'id' => $patient->id,
-                'name' => trim(sprintf(
+                'name' => mb_trim(sprintf(
                     '%s %s %s',
                     $patient->first_name,
                     $patient->middle_name ?? '',
@@ -333,7 +334,7 @@ final readonly class AppointmentController
 
         if (
             $appointment?->patient()->exists()
-            && ! $patients->contains('id', $appointment->patient_id)
+            && $patients->doesntContain('id', $appointment->patient_id)
         ) {
             $patient = $appointment->patient()->first([
                 'id',
@@ -347,7 +348,7 @@ final readonly class AppointmentController
             if ($patient instanceof Patient) {
                 $patients->prepend([
                     'id' => $patient->id,
-                    'name' => trim(sprintf(
+                    'name' => mb_trim(sprintf(
                         '%s %s %s',
                         $patient->first_name,
                         $patient->middle_name ?? '',
@@ -362,7 +363,7 @@ final readonly class AppointmentController
         $doctors = Staff::query()
             ->doctors()
             ->when(
-                \App\Support\BranchContext::getActiveBranchId() !== null,
+                BranchContext::getActiveBranchId() !== null,
                 fn ($query) => $query->forActiveBranch()
             )
             ->where('is_active', true)
@@ -371,7 +372,7 @@ final readonly class AppointmentController
             ->get(['id', 'first_name', 'last_name'])
             ->map(static fn (Staff $staff): array => [
                 'id' => $staff->id,
-                'name' => trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
+                'name' => mb_trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
             ]);
 
         if (
@@ -383,7 +384,7 @@ final readonly class AppointmentController
             if ($doctor instanceof Staff) {
                 $doctors->prepend([
                     'id' => $doctor->id,
-                    'name' => trim(sprintf('%s %s', $doctor->first_name, $doctor->last_name)),
+                    'name' => mb_trim(sprintf('%s %s', $doctor->first_name, $doctor->last_name)),
                 ]);
             }
         }
@@ -398,7 +399,7 @@ final readonly class AppointmentController
 
         if (
             $appointment?->clinic()->exists()
-            && ! $clinics->contains('id', $appointment->clinic_id)
+            && $clinics->doesntContain('id', $appointment->clinic_id)
         ) {
             $clinic = $appointment->clinic()->first(['id', 'clinic_name']);
 
@@ -421,7 +422,7 @@ final readonly class AppointmentController
 
         if (
             $appointment?->category()->exists()
-            && ! $appointmentCategories->contains(
+            && $appointmentCategories->doesntContain(
                 'id',
                 $appointment->appointment_category_id
             )
@@ -448,7 +449,7 @@ final readonly class AppointmentController
 
         if (
             $appointment?->mode()->exists()
-            && ! $appointmentModes->contains('id', $appointment->appointment_mode_id)
+            && $appointmentModes->doesntContain('id', $appointment->appointment_mode_id)
         ) {
             $mode = $appointment->mode()->first(['id', 'name', 'is_virtual']);
 

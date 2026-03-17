@@ -25,20 +25,13 @@ final class RescheduleAppointmentRequest extends FormRequest
         ];
     }
 
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'end_time' => $this->filled('end_time') ? $this->input('end_time') : null,
-        ]);
-    }
-
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
             /** @var Appointment|null $appointment */
             $appointment = $this->route('appointment');
 
-            app(ValidatesAppointmentScheduling::class)->validate(
+            resolve(ValidatesAppointmentScheduling::class)->validate(
                 $validator,
                 [
                     'doctor_id' => $appointment?->doctor_id,
@@ -49,5 +42,12 @@ final class RescheduleAppointmentRequest extends FormRequest
                 ],
             );
         });
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'end_time' => $this->filled('end_time') ? $this->input('end_time') : null,
+        ]);
     }
 }

@@ -15,7 +15,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('insurance_package_prices')) {
+        if (! Schema::hasTable('insurance_package_prices')) {
             Schema::create('insurance_package_prices', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');

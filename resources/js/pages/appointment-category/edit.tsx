@@ -107,7 +107,9 @@ export default function AppointmentCategoryEdit({
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.clinic_id} />
+                                        <InputError
+                                            message={errors.clinic_id}
+                                        />
                                     </div>
                                     <div className="grid gap-2 md:col-span-2">
                                         <Label htmlFor="description">

@@ -14,7 +14,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('lab_requests')) {
+        if (! Schema::hasTable('lab_requests')) {
             Schema::create('lab_requests', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
@@ -38,7 +38,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('lab_request_items')) {
+        if (! Schema::hasTable('lab_request_items')) {
             Schema::create('lab_request_items', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('request_id')->constrained('lab_requests')->onDelete('cascade');

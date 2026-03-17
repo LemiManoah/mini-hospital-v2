@@ -21,6 +21,7 @@ final class VisitPayer extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'tenant_id' => 'string',
         'patient_visit_id' => 'string',

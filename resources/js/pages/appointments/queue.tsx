@@ -104,7 +104,9 @@ export default function AppointmentQueue({
             <Head title="Appointment Queue" />
             <div className="m-4 space-y-4">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-semibold">Appointment Queue</h1>
+                    <h1 className="text-2xl font-semibold">
+                        Appointment Queue
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         Front-desk queue grouped by clinic and doctor across a
                         selected date range.
@@ -163,7 +165,9 @@ export default function AppointmentQueue({
                                 key={label}
                                 className="rounded border bg-white p-4 shadow-sm dark:bg-zinc-900"
                             >
-                                <h2 className="text-lg font-semibold">{label}</h2>
+                                <h2 className="text-lg font-semibold">
+                                    {label}
+                                </h2>
                                 <div className="mt-4 space-y-3">
                                     {items.map((appointment) => (
                                         <div
@@ -173,31 +177,57 @@ export default function AppointmentQueue({
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-3">
                                                     <p className="font-semibold">
-                                                        {formatDate(appointment.appointment_date)}
+                                                        {formatDate(
+                                                            appointment.appointment_date,
+                                                        )}
                                                     </p>
                                                     <p className="font-semibold">
-                                                        {formatTime(appointment.start_time)}
+                                                        {formatTime(
+                                                            appointment.start_time,
+                                                        )}
                                                     </p>
-                                                    <Badge className={badgeClass(appointment.status)}>
-                                                        {appointment.status.replaceAll('_', ' ')}
+                                                    <Badge
+                                                        className={badgeClass(
+                                                            appointment.status,
+                                                        )}
+                                                    >
+                                                        {appointment.status.replaceAll(
+                                                            '_',
+                                                            ' ',
+                                                        )}
                                                     </Badge>
                                                 </div>
-                                                <p>{appointment.patient?.name ?? 'Unknown patient'}</p>
+                                                <p>
+                                                    {appointment.patient
+                                                        ?.name ??
+                                                        'Unknown patient'}
+                                                </p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {appointment.patient?.patient_number ?? 'N/A'} /{' '}
-                                                    {appointment.visit?.visit_number ||
+                                                    {appointment.patient
+                                                        ?.patient_number ??
+                                                        'N/A'}{' '}
+                                                    /{' '}
+                                                    {appointment.visit
+                                                        ?.visit_number ||
                                                         'Not checked in'}
                                                 </p>
                                             </div>
                                             <div className="flex gap-2">
-                                                <Button variant="outline" asChild>
-                                                    <Link href={`/appointments/${appointment.id}`}>
+                                                <Button
+                                                    variant="outline"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={`/appointments/${appointment.id}`}
+                                                    >
                                                         Open
                                                     </Link>
                                                 </Button>
                                                 {appointment.visit ? (
                                                     <Button asChild>
-                                                        <Link href={`/visits/${appointment.visit.id}`}>
+                                                        <Link
+                                                            href={`/visits/${appointment.visit.id}`}
+                                                        >
                                                             Visit
                                                         </Link>
                                                     </Button>
@@ -210,7 +240,8 @@ export default function AppointmentQueue({
                         ))
                     ) : (
                         <div className="rounded border border-dashed bg-white p-8 text-center text-muted-foreground dark:bg-zinc-900">
-                            No appointments found for the selected queue filters.
+                            No appointments found for the selected queue
+                            filters.
                         </div>
                     )}
                 </div>

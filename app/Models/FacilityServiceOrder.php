@@ -19,6 +19,7 @@ final class FacilityServiceOrder extends Model
     use HasFactory;
 
     use HasUuids;
+
     protected $casts = [
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',

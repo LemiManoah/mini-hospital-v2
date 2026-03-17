@@ -21,6 +21,7 @@ final class Patient extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'tenant_id' => 'string',
         'address_id' => 'string',

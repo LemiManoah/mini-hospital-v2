@@ -130,7 +130,9 @@ export default function DoctorScheduleEdit({
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.doctor_id} />
+                                        <InputError
+                                            message={errors.doctor_id}
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label>Clinic</Label>
@@ -152,7 +154,9 @@ export default function DoctorScheduleEdit({
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.clinic_id} />
+                                        <InputError
+                                            message={errors.clinic_id}
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label>Day</Label>
@@ -266,7 +270,9 @@ export default function DoctorScheduleEdit({
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="valid_to">Valid To</Label>
+                                        <Label htmlFor="valid_to">
+                                            Valid To
+                                        </Label>
                                         <Input
                                             id="valid_to"
                                             name="valid_to"

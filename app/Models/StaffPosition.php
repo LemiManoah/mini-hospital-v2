@@ -20,6 +20,7 @@ final class StaffPosition extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'is_active' => 'boolean',
     ];

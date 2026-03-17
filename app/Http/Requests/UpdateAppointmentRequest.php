@@ -32,6 +32,16 @@ final class UpdateAppointmentRequest extends FormRequest
         ];
     }
 
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            resolve(ValidatesAppointmentScheduling::class)->validate(
+                $validator,
+                $this->validatedForScheduling(),
+            );
+        });
+    }
+
     protected function prepareForValidation(): void
     {
         $this->merge([
@@ -42,16 +52,6 @@ final class UpdateAppointmentRequest extends FormRequest
             'end_time' => $this->filled('end_time') ? $this->input('end_time') : null,
             'is_walk_in' => $this->boolean('is_walk_in'),
         ]);
-    }
-
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator): void {
-            app(ValidatesAppointmentScheduling::class)->validate(
-                $validator,
-                $this->validatedForScheduling(),
-            );
-        });
     }
 
     /**

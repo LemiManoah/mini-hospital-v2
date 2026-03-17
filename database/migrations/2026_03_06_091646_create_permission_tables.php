@@ -26,7 +26,7 @@ return new class extends Migration
         /**
          * See `docs/prerequisites.md` for suggested lengths on 'name' and 'guard_name' if "1071 Specified key was too long" errors are encountered.
          */
-        if (!Schema::hasTable($tableNames['permissions'])) {
+        if (! Schema::hasTable($tableNames['permissions'])) {
             Schema::create($tableNames['permissions'], static function (Blueprint $table): void {
                 $table->uuid('id')->primary(); // permission uuid
                 $table->string('name');
@@ -40,7 +40,7 @@ return new class extends Migration
         /**
          * See `docs/prerequisites.md` for suggested lengths on 'name' and 'guard_name' if "1071 Specified key was too long" errors are encountered.
          */
-        if (!Schema::hasTable($tableNames['roles'])) {
+        if (! Schema::hasTable($tableNames['roles'])) {
             Schema::create($tableNames['roles'], static function (Blueprint $table) use ($teams, $columnNames): void {
                 $table->uuid('id')->primary(); // role uuid
                 if ($teams || config('permission.testing')) { // permission.testing is a fix for sqlite testing
@@ -59,7 +59,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable($tableNames['model_has_permissions'])) {
+        if (! Schema::hasTable($tableNames['model_has_permissions'])) {
             Schema::create($tableNames['model_has_permissions'], static function (Blueprint $table) use ($tableNames, $columnNames, $pivotPermission, $teams): void {
                 $table->uuid($pivotPermission);
 
@@ -84,7 +84,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable($tableNames['model_has_roles'])) {
+        if (! Schema::hasTable($tableNames['model_has_roles'])) {
             Schema::create($tableNames['model_has_roles'], static function (Blueprint $table) use ($tableNames, $columnNames, $pivotRole, $teams): void {
                 $table->uuid($pivotRole);
 
@@ -109,7 +109,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable($tableNames['role_has_permissions'])) {
+        if (! Schema::hasTable($tableNames['role_has_permissions'])) {
             Schema::create($tableNames['role_has_permissions'], static function (Blueprint $table) use ($tableNames, $pivotRole, $pivotPermission): void {
                 $table->uuid($pivotPermission);
                 $table->uuid($pivotRole);

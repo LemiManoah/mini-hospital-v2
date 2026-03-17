@@ -26,6 +26,7 @@ final class Staff extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'type' => StaffType::class,
         'hire_date' => 'date',

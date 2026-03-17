@@ -14,6 +14,7 @@ use App\Http\Requests\UpdateDoctorScheduleRequest;
 use App\Models\Clinic;
 use App\Models\DoctorSchedule;
 use App\Models\Staff;
+use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -110,7 +111,7 @@ final readonly class DoctorScheduleController
         $doctors = Staff::query()
             ->doctors()
             ->when(
-                \App\Support\BranchContext::getActiveBranchId() !== null,
+                BranchContext::getActiveBranchId() !== null,
                 fn ($query) => $query->forActiveBranch()
             )
             ->where('is_active', true)
@@ -119,7 +120,7 @@ final readonly class DoctorScheduleController
             ->get(['id', 'first_name', 'last_name'])
             ->map(static fn (Staff $staff): array => [
                 'id' => $staff->id,
-                'name' => trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
+                'name' => mb_trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
             ]);
 
         if ($schedule?->doctor()->exists() && ! $doctors->contains('id', $schedule->doctor_id)) {
@@ -128,7 +129,7 @@ final readonly class DoctorScheduleController
             if ($doctor instanceof Staff) {
                 $doctors->prepend([
                     'id' => $doctor->id,
-                    'name' => trim(sprintf('%s %s', $doctor->first_name, $doctor->last_name)),
+                    'name' => mb_trim(sprintf('%s %s', $doctor->first_name, $doctor->last_name)),
                 ]);
             }
         }
@@ -141,7 +142,7 @@ final readonly class DoctorScheduleController
                 'name' => $clinic->clinic_name,
             ]);
 
-        if ($schedule?->clinic()->exists() && ! $clinics->contains('id', $schedule->clinic_id)) {
+        if ($schedule?->clinic()->exists() && $clinics->doesntContain('id', $schedule->clinic_id)) {
             $clinic = $schedule->clinic()->first(['id', 'clinic_name']);
 
             if ($clinic instanceof Clinic) {

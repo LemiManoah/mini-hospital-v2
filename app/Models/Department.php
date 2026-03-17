@@ -21,6 +21,7 @@ final class Department extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'tenant_id' => 'string',
         'is_clinical' => 'boolean',

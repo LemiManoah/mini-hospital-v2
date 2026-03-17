@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('addresses')) {
+        if (! Schema::hasTable('addresses')) {
             Schema::create('addresses', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->string('city', 100)->index();

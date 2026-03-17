@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('vital_signs')) {
+        if (! Schema::hasTable('vital_signs')) {
             Schema::create('vital_signs', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('triage_id')->constrained('triage_records')->onDelete('cascade');

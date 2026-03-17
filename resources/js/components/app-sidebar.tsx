@@ -1,8 +1,8 @@
 'use client';
 
 import {
-    CalendarDays,
     Bot,
+    CalendarDays,
     FlaskConical,
     HeartPulse,
     LayoutGrid,

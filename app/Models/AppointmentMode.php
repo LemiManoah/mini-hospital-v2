@@ -19,6 +19,7 @@ final class AppointmentMode extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'tenant_id' => 'string',
         'is_virtual' => 'boolean',

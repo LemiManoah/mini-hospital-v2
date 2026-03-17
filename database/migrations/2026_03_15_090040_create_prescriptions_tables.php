@@ -12,7 +12,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('prescriptions')) {
+        if (! Schema::hasTable('prescriptions')) {
             Schema::create('prescriptions', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('visit_id')->constrained('patient_visits')->onDelete('cascade');
@@ -28,7 +28,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('prescription_items')) {
+        if (! Schema::hasTable('prescription_items')) {
             Schema::create('prescription_items', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('prescription_id')->constrained('prescriptions')->onDelete('cascade');

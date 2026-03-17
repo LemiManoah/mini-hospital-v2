@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('currencies')) {
+        if (! Schema::hasTable('currencies')) {
             Schema::create('currencies', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->string('code', 10)->unique();

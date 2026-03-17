@@ -17,6 +17,7 @@ final class LabTestCatalog extends Model
     use HasFactory;
 
     use HasUuids;
+
     protected $casts = [
         'tenant_id' => 'string',
         'department_id' => 'string',

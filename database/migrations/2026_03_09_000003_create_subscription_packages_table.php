@@ -11,7 +11,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('subscription_packages')) {
+        if (! Schema::hasTable('subscription_packages')) {
             Schema::create('subscription_packages', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->string('name', 100)->unique();

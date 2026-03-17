@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\FacilityService;
 use Illuminate\Validation\Rule;
 
 final class UpdateFacilityServiceRequest extends StoreFacilityServiceRequest
 {
     public function rules(): array
     {
-        /** @var \App\Models\FacilityService $facilityService */
+        /** @var FacilityService $facilityService */
         $facilityService = $this->route('facility_service');
 
         return [

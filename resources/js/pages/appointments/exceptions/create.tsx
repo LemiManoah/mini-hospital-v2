@@ -58,13 +58,19 @@ export default function DoctorScheduleExceptionCreate({
                         action="/appointments/exceptions"
                         method="post"
                         onSuccess={() =>
-                            toast.success('Schedule exception created successfully.')
+                            toast.success(
+                                'Schedule exception created successfully.',
+                            )
                         }
                         className="space-y-6"
                     >
                         {({ processing, errors }) => (
                             <>
-                                <input type="hidden" name="doctor_id" value={doctorId} />
+                                <input
+                                    type="hidden"
+                                    name="doctor_id"
+                                    value={doctorId}
+                                />
                                 <input
                                     type="hidden"
                                     name="clinic_id"
@@ -75,40 +81,61 @@ export default function DoctorScheduleExceptionCreate({
                                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                     <div className="grid gap-2">
                                         <Label>Doctor</Label>
-                                        <Select value={doctorId} onValueChange={setDoctorId}>
+                                        <Select
+                                            value={doctorId}
+                                            onValueChange={setDoctorId}
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select doctor" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {doctors.map((doctor) => (
-                                                    <SelectItem key={doctor.id} value={doctor.id}>
+                                                    <SelectItem
+                                                        key={doctor.id}
+                                                        value={doctor.id}
+                                                    >
                                                         {doctor.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.doctor_id} />
+                                        <InputError
+                                            message={errors.doctor_id}
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label>Clinic</Label>
-                                        <Select value={clinicId} onValueChange={setClinicId}>
+                                        <Select
+                                            value={clinicId}
+                                            onValueChange={setClinicId}
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="All clinics" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="all">All clinics</SelectItem>
+                                                <SelectItem value="all">
+                                                    All clinics
+                                                </SelectItem>
                                                 {clinics.map((clinic) => (
-                                                    <SelectItem key={clinic.id} value={clinic.id}>
+                                                    <SelectItem
+                                                        key={clinic.id}
+                                                        value={clinic.id}
+                                                    >
                                                         {clinic.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.clinic_id} />
+                                        <InputError
+                                            message={errors.clinic_id}
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label>Type</Label>
-                                        <Select value={type} onValueChange={setType}>
+                                        <Select
+                                            value={type}
+                                            onValueChange={setType}
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select type" />
                                             </SelectTrigger>
@@ -126,27 +153,37 @@ export default function DoctorScheduleExceptionCreate({
                                         <InputError message={errors.type} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="exception_date">Exception Date</Label>
+                                        <Label htmlFor="exception_date">
+                                            Exception Date
+                                        </Label>
                                         <Input
                                             id="exception_date"
                                             name="exception_date"
                                             type="date"
                                             required
                                         />
-                                        <InputError message={errors.exception_date} />
+                                        <InputError
+                                            message={errors.exception_date}
+                                        />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="start_time">Start Time</Label>
+                                        <Label htmlFor="start_time">
+                                            Start Time
+                                        </Label>
                                         <Input
                                             id="start_time"
                                             name="start_time"
                                             type="time"
                                             disabled={isAllDay}
                                         />
-                                        <InputError message={errors.start_time} />
+                                        <InputError
+                                            message={errors.start_time}
+                                        />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="end_time">End Time</Label>
+                                        <Label htmlFor="end_time">
+                                            End Time
+                                        </Label>
                                         <Input
                                             id="end_time"
                                             name="end_time"
@@ -157,7 +194,11 @@ export default function DoctorScheduleExceptionCreate({
                                     </div>
                                     <div className="grid gap-2 md:col-span-2 xl:col-span-3">
                                         <Label htmlFor="reason">Reason</Label>
-                                        <Textarea id="reason" name="reason" rows={4} />
+                                        <Textarea
+                                            id="reason"
+                                            name="reason"
+                                            rows={4}
+                                        />
                                         <InputError message={errors.reason} />
                                     </div>
                                     <div className="flex items-center gap-2 md:col-span-2 xl:col-span-3">
@@ -168,11 +209,16 @@ export default function DoctorScheduleExceptionCreate({
                                             value="1"
                                             checked={isAllDay}
                                             onChange={(event) =>
-                                                setIsAllDay(event.target.checked)
+                                                setIsAllDay(
+                                                    event.target.checked,
+                                                )
                                             }
                                             className="h-4 w-4"
                                         />
-                                        <Label htmlFor="is_all_day" className="font-normal">
+                                        <Label
+                                            htmlFor="is_all_day"
+                                            className="font-normal"
+                                        >
                                             Block the entire day
                                         </Label>
                                     </div>
@@ -187,8 +233,14 @@ export default function DoctorScheduleExceptionCreate({
                                         )}
                                         Create Exception
                                     </Button>
-                                    <Button variant="ghost" type="button" asChild>
-                                        <Link href="/appointments/exceptions">Cancel</Link>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        asChild
+                                    >
+                                        <Link href="/appointments/exceptions">
+                                            Cancel
+                                        </Link>
                                     </Button>
                                 </div>
                             </>

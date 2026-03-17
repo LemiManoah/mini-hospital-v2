@@ -22,6 +22,7 @@ final class FacilityBranch extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'status' => GeneralStatus::class,
         'is_main_branch' => 'boolean',

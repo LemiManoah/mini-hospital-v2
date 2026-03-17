@@ -7,10 +7,10 @@ namespace App\Actions;
 use App\Enums\VisitStatus;
 use App\Models\PatientVisit;
 
-final class TransitionPatientVisitStatus
+final readonly class TransitionPatientVisitStatus
 {
     public function __construct(
-        private readonly SyncAppointmentStatusFromVisit $syncAppointmentStatusFromVisit,
+        private SyncAppointmentStatusFromVisit $syncAppointmentStatusFromVisit,
     ) {}
 
     public function handle(PatientVisit $visit, VisitStatus $status): PatientVisit

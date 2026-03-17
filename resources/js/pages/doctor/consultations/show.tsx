@@ -2321,8 +2321,8 @@ export default function DoctorConsultationShow({
                                             <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
                                                 No facility services are active
                                                 in the catalog yet. Add them
-                                                from Settings before doctors
-                                                can place operational orders.
+                                                from Settings before doctors can
+                                                place operational orders.
                                             </div>
                                         ) : (
                                             <form
@@ -2332,8 +2332,7 @@ export default function DoctorConsultationShow({
                                                     serviceForm.post(
                                                         `/doctors/consultations/${visit.id}/facility-service-orders`,
                                                         {
-                                                            preserveScroll:
-                                                                true,
+                                                            preserveScroll: true,
                                                             onSuccess: () =>
                                                                 serviceForm.reset(
                                                                     'facility_service_id',
@@ -2393,13 +2392,17 @@ export default function DoctorConsultationShow({
                                                                                 option.id
                                                                             }
                                                                         >
-                                                                            {option.name}{' '}
+                                                                            {
+                                                                                option.name
+                                                                            }{' '}
                                                                             (
                                                                             {
                                                                                 option.service_code
                                                                             }
                                                                             )
-                                                                            {' - '}
+                                                                            {
+                                                                                ' - '
+                                                                            }
                                                                             {labelize(
                                                                                 option.category,
                                                                             )}
@@ -2430,16 +2433,12 @@ export default function DoctorConsultationShow({
                                                         </p>
                                                         {selectedFacilityService ? (
                                                             <div className="mt-2 flex flex-wrap gap-2">
-                                                                <Badge
-                                                                    variant="outline"
-                                                                >
+                                                                <Badge variant="outline">
                                                                     {labelize(
                                                                         selectedFacilityService.category,
                                                                     )}
                                                                 </Badge>
-                                                                <Badge
-                                                                    variant="outline"
-                                                                >
+                                                                <Badge variant="outline">
                                                                     {selectedFacilityService.is_billable
                                                                         ? 'Billable'
                                                                         : 'Non-billable'}

@@ -19,6 +19,7 @@ final class Drug extends Model
     use HasFactory;
 
     use HasUuids;
+
     protected $casts = [
         'tenant_id' => 'string',
         'category' => DrugCategory::class,

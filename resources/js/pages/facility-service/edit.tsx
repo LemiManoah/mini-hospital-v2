@@ -70,7 +70,9 @@ export default function FacilityServiceEdit({
                                 />
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="name">Service Name</Label>
+                                        <Label htmlFor="name">
+                                            Service Name
+                                        </Label>
                                         <Input
                                             id="name"
                                             name="name"
@@ -142,7 +144,8 @@ export default function FacilityServiceEdit({
                                             name="description"
                                             rows={3}
                                             defaultValue={
-                                                facilityService.description ?? ''
+                                                facilityService.description ??
+                                                ''
                                             }
                                         />
                                         <InputError

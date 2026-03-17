@@ -21,6 +21,7 @@ final class Clinic extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'tenant_id' => 'string',
         'branch_id' => 'string',

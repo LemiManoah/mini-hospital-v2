@@ -16,6 +16,7 @@ final class LabRequestItem extends Model
     use HasFactory;
 
     use HasUuids;
+
     protected $casts = [
         'request_id' => 'string',
         'test_id' => 'string',

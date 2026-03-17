@@ -12,6 +12,8 @@ final class Role extends SpatieRole
 {
     use HasFactory;
     use HasUuids;
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 }

@@ -96,14 +96,18 @@ export default function DoctorScheduleCreate({
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {doctorsList.length > 0 ? (
-                                                    doctorsList.map((doctor) => (
-                                                        <SelectItem
-                                                            key={doctor.id}
-                                                            value={doctor.id}
-                                                        >
-                                                            {doctor.name}
-                                                        </SelectItem>
-                                                    ))
+                                                    doctorsList.map(
+                                                        (doctor) => (
+                                                            <SelectItem
+                                                                key={doctor.id}
+                                                                value={
+                                                                    doctor.id
+                                                                }
+                                                            >
+                                                                {doctor.name}
+                                                            </SelectItem>
+                                                        ),
+                                                    )
                                                 ) : (
                                                     <div className="p-2 text-sm text-muted-foreground italic">
                                                         No active doctors found.
@@ -111,7 +115,9 @@ export default function DoctorScheduleCreate({
                                                 )}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.doctor_id} />
+                                        <InputError
+                                            message={errors.doctor_id}
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label>Clinic</Label>
@@ -124,14 +130,18 @@ export default function DoctorScheduleCreate({
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {clinicsList.length > 0 ? (
-                                                    clinicsList.map((clinic) => (
-                                                        <SelectItem
-                                                            key={clinic.id}
-                                                            value={clinic.id}
-                                                        >
-                                                            {clinic.name}
-                                                        </SelectItem>
-                                                    ))
+                                                    clinicsList.map(
+                                                        (clinic) => (
+                                                            <SelectItem
+                                                                key={clinic.id}
+                                                                value={
+                                                                    clinic.id
+                                                                }
+                                                            >
+                                                                {clinic.name}
+                                                            </SelectItem>
+                                                        ),
+                                                    )
                                                 ) : (
                                                     <div className="p-2 text-sm text-muted-foreground italic">
                                                         No clinics found.
@@ -139,7 +149,9 @@ export default function DoctorScheduleCreate({
                                                 )}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.clinic_id} />
+                                        <InputError
+                                            message={errors.clinic_id}
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label>Day</Label>
@@ -240,7 +252,9 @@ export default function DoctorScheduleCreate({
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="valid_to">Valid To</Label>
+                                        <Label htmlFor="valid_to">
+                                            Valid To
+                                        </Label>
                                         <Input
                                             id="valid_to"
                                             name="valid_to"

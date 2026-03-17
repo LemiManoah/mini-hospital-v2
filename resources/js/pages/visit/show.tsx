@@ -5,8 +5,8 @@ import { type BreadcrumbItem } from '@/types';
 import {
     type Consultation,
     type TriageRecord,
-    type VitalSign,
     type VisitShowPageProps,
+    type VitalSign,
 } from '@/types/patient';
 import { Form, Head, Link } from '@inertiajs/react';
 import {
@@ -91,7 +91,10 @@ function vitalSummaryItems(vital: VitalSign | undefined) {
                     : `${vital.temperature} ${vital.temperature_unit === 'celsius' ? 'C' : 'F'}`,
         },
         { label: 'Pulse', value: measurement(vital.pulse_rate, 'bpm') },
-        { label: 'Respiratory', value: measurement(vital.respiratory_rate, '/min') },
+        {
+            label: 'Respiratory',
+            value: measurement(vital.respiratory_rate, '/min'),
+        },
         {
             label: 'Blood Pressure',
             value:
@@ -100,7 +103,10 @@ function vitalSummaryItems(vital: VitalSign | undefined) {
                     : `${vital.systolic_bp}/${vital.diastolic_bp} mmHg`,
         },
         { label: 'SpO2', value: measurement(vital.oxygen_saturation, '%') },
-        { label: 'Pain', value: vital.pain_score === null ? 'N/A' : `${vital.pain_score}/10` },
+        {
+            label: 'Pain',
+            value: vital.pain_score === null ? 'N/A' : `${vital.pain_score}/10`,
+        },
     ];
 }
 
@@ -168,7 +174,9 @@ export default function VisitShow({
                             >
                                 {visit.status.replaceAll('_', ' ')}
                             </span>
-                            <span>Clinic: {visit.clinic?.name || 'Not assigned'}</span>
+                            <span>
+                                Clinic: {visit.clinic?.name || 'Not assigned'}
+                            </span>
                             <span>
                                 Doctor:{' '}
                                 {visit.doctor
@@ -199,7 +207,9 @@ export default function VisitShow({
                         </Button>
                         {triage ? (
                             <Button variant="outline" asChild>
-                                <Link href={`/doctors/consultations/${visit.id}`}>
+                                <Link
+                                    href={`/doctors/consultations/${visit.id}`}
+                                >
                                     <NotebookPen className="mr-2 h-4 w-4" />
                                     Open Consultation
                                 </Link>
@@ -216,28 +226,57 @@ export default function VisitShow({
                             </CardHeader>
                             <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Visit Number</p>
-                                    <p className="font-medium">{visit.visit_number}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Visit Number
+                                    </p>
+                                    <p className="font-medium">
+                                        {visit.visit_number}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Visit Type</p>
-                                    <p className="font-medium">{visit.visit_type.replaceAll('_', ' ')}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Visit Type
+                                    </p>
+                                    <p className="font-medium">
+                                        {visit.visit_type.replaceAll('_', ' ')}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Emergency</p>
-                                    <p className="font-medium">{visit.is_emergency ? 'Yes' : 'No'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Emergency
+                                    </p>
+                                    <p className="font-medium">
+                                        {visit.is_emergency ? 'Yes' : 'No'}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Registered At</p>
-                                    <p className="font-medium">{formatDateTime(visit.registered_at ?? visit.created_at)}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Registered At
+                                    </p>
+                                    <p className="font-medium">
+                                        {formatDateTime(
+                                            visit.registered_at ??
+                                                visit.created_at,
+                                        )}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Registered By</p>
-                                    <p className="font-medium">{visit.registeredBy?.name || visit.registered_by?.name || 'Unknown'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Registered By
+                                    </p>
+                                    <p className="font-medium">
+                                        {visit.registeredBy?.name ||
+                                            visit.registered_by?.name ||
+                                            'Unknown'}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Completed At</p>
-                                    <p className="font-medium">{formatDateTime(visit.completed_at)}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Completed At
+                                    </p>
+                                    <p className="font-medium">
+                                        {formatDateTime(visit.completed_at)}
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -248,34 +287,58 @@ export default function VisitShow({
                             </CardHeader>
                             <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Patient</p>
-                                    <p className="font-medium">{patientName || 'Unknown'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Patient
+                                    </p>
+                                    <p className="font-medium">
+                                        {patientName || 'Unknown'}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">MRN</p>
-                                    <p className="font-medium">{visit.patient?.patient_number || 'N/A'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        MRN
+                                    </p>
+                                    <p className="font-medium">
+                                        {visit.patient?.patient_number || 'N/A'}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Gender</p>
-                                    <p className="font-medium capitalize">{visit.patient?.gender || 'N/A'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Gender
+                                    </p>
+                                    <p className="font-medium capitalize">
+                                        {visit.patient?.gender || 'N/A'}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Date of Birth</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Date of Birth
+                                    </p>
                                     <p className="font-medium">
                                         {visit.patient?.date_of_birth
-                                            ? formatDate(visit.patient.date_of_birth)
+                                            ? formatDate(
+                                                  visit.patient.date_of_birth,
+                                              )
                                             : visit.patient?.age
                                               ? `${visit.patient.age} ${visit.patient.age_units}`
                                               : 'N/A'}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Phone</p>
-                                    <p className="font-medium">{visit.patient?.phone_number || 'N/A'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Phone
+                                    </p>
+                                    <p className="font-medium">
+                                        {visit.patient?.phone_number || 'N/A'}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Blood Group</p>
-                                    <p className="font-medium">{visit.patient?.blood_group || 'N/A'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Blood Group
+                                    </p>
+                                    <p className="font-medium">
+                                        {visit.patient?.blood_group || 'N/A'}
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -286,13 +349,20 @@ export default function VisitShow({
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 {timeline.map((entry) => (
-                                    <div key={entry.label} className="flex items-start gap-3 rounded-lg border p-3">
+                                    <div
+                                        key={entry.label}
+                                        className="flex items-start gap-3 rounded-lg border p-3"
+                                    >
                                         <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
                                             <CalendarClock className="h-4 w-4" />
                                         </div>
                                         <div>
-                                            <p className="font-medium">{entry.label}</p>
-                                            <p className="text-sm text-muted-foreground">{entry.value}</p>
+                                            <p className="font-medium">
+                                                {entry.label}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {entry.value}
+                                            </p>
                                         </div>
                                     </div>
                                 ))}
@@ -306,7 +376,8 @@ export default function VisitShow({
                             <CardContent className="space-y-4">
                                 {!triage ? (
                                     <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-                                        Triage is now managed in the dedicated triage workspace for this visit.
+                                        Triage is now managed in the dedicated
+                                        triage workspace for this visit.
                                     </div>
                                 ) : (
                                     <>
@@ -314,19 +385,31 @@ export default function VisitShow({
                                             <span
                                                 className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${triageGradeClasses(triage.triage_grade)}`}
                                             >
-                                                {findLabel(triageGrades, triage.triage_grade)}
+                                                {findLabel(
+                                                    triageGrades,
+                                                    triage.triage_grade,
+                                                )}
                                             </span>
                                             <span className="text-sm text-muted-foreground">
-                                                Recorded {formatDateTime(triage.triage_datetime)}
+                                                Recorded{' '}
+                                                {formatDateTime(
+                                                    triage.triage_datetime,
+                                                )}
                                             </span>
                                         </div>
                                         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Chief Complaint</p>
-                                                <p className="font-medium">{triage.chief_complaint}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Chief Complaint
+                                                </p>
+                                                <p className="font-medium">
+                                                    {triage.chief_complaint}
+                                                </p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Nurse</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Nurse
+                                                </p>
                                                 <p className="font-medium">
                                                     {triage.nurse
                                                         ? `${triage.nurse.first_name} ${triage.nurse.last_name}`
@@ -334,36 +417,66 @@ export default function VisitShow({
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Assigned Clinic</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Assigned Clinic
+                                                </p>
                                                 <p className="font-medium">
-                                                    {triage.assignedClinic?.name || triage.assigned_clinic?.name || 'Not assigned'}
+                                                    {triage.assignedClinic
+                                                        ?.name ||
+                                                        triage.assigned_clinic
+                                                            ?.name ||
+                                                        'Not assigned'}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Latest Vitals</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Latest Vitals
+                                                </p>
                                                 <p className="font-medium">
-                                                    {latestVital ? formatDateTime(latestVital.recorded_at) : 'Not yet captured'}
+                                                    {latestVital
+                                                        ? formatDateTime(
+                                                              latestVital.recorded_at,
+                                                          )
+                                                        : 'Not yet captured'}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="grid gap-3 rounded-lg border p-4">
                                             <div>
-                                                <p className="text-sm text-muted-foreground">History of Presenting Illness</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    History of Presenting
+                                                    Illness
+                                                </p>
                                                 <p className="font-medium">
-                                                    {triage.history_of_presenting_illness || 'Not documented'}
+                                                    {triage.history_of_presenting_illness ||
+                                                        'Not documented'}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Notes</p>
-                                                <p className="font-medium">{triage.nurse_notes || 'Not documented'}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Notes
+                                                </p>
+                                                <p className="font-medium">
+                                                    {triage.nurse_notes ||
+                                                        'Not documented'}
+                                                </p>
                                             </div>
                                         </div>
                                         {latestVital ? (
                                             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                                {vitalSummaryItems(latestVital).map((item) => (
-                                                    <div key={item.label} className="rounded-lg border p-3">
-                                                        <p className="text-sm text-muted-foreground">{item.label}</p>
-                                                        <p className="font-medium">{item.value}</p>
+                                                {vitalSummaryItems(
+                                                    latestVital,
+                                                ).map((item) => (
+                                                    <div
+                                                        key={item.label}
+                                                        className="rounded-lg border p-3"
+                                                    >
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {item.label}
+                                                        </p>
+                                                        <p className="font-medium">
+                                                            {item.value}
+                                                        </p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -374,7 +487,9 @@ export default function VisitShow({
                                     <Button asChild>
                                         <Link href={`/triage/${visit.id}`}>
                                             <HeartPulse className="mr-2 h-4 w-4" />
-                                            {triage ? 'Continue in Triage Workspace' : 'Open Triage Workspace'}
+                                            {triage
+                                                ? 'Continue in Triage Workspace'
+                                                : 'Open Triage Workspace'}
                                         </Link>
                                     </Button>
                                 </div>
@@ -389,11 +504,19 @@ export default function VisitShow({
                                 {consultation ? (
                                     <>
                                         <div>
-                                            <p className="text-muted-foreground">Started</p>
-                                            <p className="font-medium">{formatDateTime(consultation.started_at)}</p>
+                                            <p className="text-muted-foreground">
+                                                Started
+                                            </p>
+                                            <p className="font-medium">
+                                                {formatDateTime(
+                                                    consultation.started_at,
+                                                )}
+                                            </p>
                                         </div>
                                         <div>
-                                            <p className="text-muted-foreground">Clinician</p>
+                                            <p className="text-muted-foreground">
+                                                Clinician
+                                            </p>
                                             <p className="font-medium">
                                                 {consultation.doctor
                                                     ? `${consultation.doctor.first_name} ${consultation.doctor.last_name}`
@@ -401,12 +524,19 @@ export default function VisitShow({
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-muted-foreground">Primary Diagnosis</p>
-                                            <p className="font-medium">{consultation.primary_diagnosis || 'Not documented yet'}</p>
+                                            <p className="text-muted-foreground">
+                                                Primary Diagnosis
+                                            </p>
+                                            <p className="font-medium">
+                                                {consultation.primary_diagnosis ||
+                                                    'Not documented yet'}
+                                            </p>
                                         </div>
                                         <div className="flex justify-end">
                                             <Button variant="outline" asChild>
-                                                <Link href={`/doctors/consultations/${visit.id}`}>
+                                                <Link
+                                                    href={`/doctors/consultations/${visit.id}`}
+                                                >
                                                     <NotebookPen className="mr-2 h-4 w-4" />
                                                     Continue Consultation
                                                 </Link>
@@ -415,7 +545,9 @@ export default function VisitShow({
                                     </>
                                 ) : (
                                     <p className="text-muted-foreground">
-                                        Consultation has not been started yet. Use the dedicated doctors workspace after triage.
+                                        Consultation has not been started yet.
+                                        Use the dedicated doctors workspace
+                                        after triage.
                                     </p>
                                 )}
                             </CardContent>
@@ -433,17 +565,30 @@ export default function VisitShow({
                                         <CreditCard className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <p className="text-sm text-muted-foreground">Billing Type</p>
-                                        <p className="font-medium capitalize">{visit.payer?.billing_type ?? 'cash'}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Billing Type
+                                        </p>
+                                        <p className="font-medium capitalize">
+                                            {visit.payer?.billing_type ??
+                                                'cash'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Insurer</p>
-                                    <p className="font-medium">{insurer || 'Not applicable'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Insurer
+                                    </p>
+                                    <p className="font-medium">
+                                        {insurer || 'Not applicable'}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Package</p>
-                                    <p className="font-medium">{packageName || 'Not applicable'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Package
+                                    </p>
+                                    <p className="font-medium">
+                                        {packageName || 'Not applicable'}
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -455,12 +600,25 @@ export default function VisitShow({
                             <CardContent className="space-y-3">
                                 {availableTransitions.length > 0 ? (
                                     availableTransitions.map((transition) => (
-                                        <Form key={transition.value} method="patch" action={`/visits/${visit.id}/status`}>
-                                            <input type="hidden" name="status" value={transition.value} />
+                                        <Form
+                                            key={transition.value}
+                                            method="patch"
+                                            action={`/visits/${visit.id}/status`}
+                                        >
+                                            <input
+                                                type="hidden"
+                                                name="status"
+                                                value={transition.value}
+                                            />
                                             <Button
                                                 type="submit"
                                                 className="w-full justify-start"
-                                                variant={transition.value === 'cancelled' ? 'destructive' : 'default'}
+                                                variant={
+                                                    transition.value ===
+                                                    'cancelled'
+                                                        ? 'destructive'
+                                                        : 'default'
+                                                }
                                             >
                                                 <Activity className="mr-2 h-4 w-4" />
                                                 {transition.label}
@@ -469,7 +627,8 @@ export default function VisitShow({
                                     ))
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        No further status actions are available for this visit.
+                                        No further status actions are available
+                                        for this visit.
                                     </p>
                                 )}
                             </CardContent>

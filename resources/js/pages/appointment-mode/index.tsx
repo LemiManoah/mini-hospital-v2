@@ -80,9 +80,7 @@ export default function AppointmentModeIndex({
                     asChild
                     className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                 >
-                    <Link href="/appointment-modes/create">
-                        + Add Mode
-                    </Link>
+                    <Link href="/appointment-modes/create">+ Add Mode</Link>
                 </Button>
             </div>
 
@@ -94,7 +92,9 @@ export default function AppointmentModeIndex({
                             <TableHead>Type</TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right">
+                                Actions
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

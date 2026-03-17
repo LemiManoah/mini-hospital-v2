@@ -22,6 +22,7 @@ final class InsuranceCompany extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'tenant_id' => 'string',
         'status' => GeneralStatus::class,

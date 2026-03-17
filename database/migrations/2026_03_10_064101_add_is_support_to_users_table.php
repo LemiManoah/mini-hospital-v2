@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('users') && !Schema::hasColumn('users', 'is_support')) {
+        if (Schema::hasTable('users') && ! Schema::hasColumn('users', 'is_support')) {
             Schema::table('users', function (Blueprint $table): void {
                 $table->boolean('is_support')->default(false)->after('password');
             });

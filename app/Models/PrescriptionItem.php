@@ -16,6 +16,7 @@ final class PrescriptionItem extends Model
     use HasFactory;
 
     use HasUuids;
+
     protected $casts = [
         'prescription_id' => 'string',
         'drug_id' => 'string',

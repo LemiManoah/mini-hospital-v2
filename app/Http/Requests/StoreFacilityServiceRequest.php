@@ -8,7 +8,7 @@ use App\Enums\FacilityServiceCategory;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreFacilityServiceRequest extends FormRequest
+final class StoreFacilityServiceRequest extends FormRequest
 {
     public function authorize(): bool
     {

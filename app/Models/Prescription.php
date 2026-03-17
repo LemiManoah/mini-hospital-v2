@@ -17,6 +17,7 @@ final class Prescription extends Model
     use HasFactory;
 
     use HasUuids;
+
     protected $casts = [
         'visit_id' => 'string',
         'consultation_id' => 'string',

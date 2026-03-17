@@ -14,6 +14,7 @@ use App\Http\Requests\UpdateDoctorScheduleExceptionRequest;
 use App\Models\Clinic;
 use App\Models\DoctorScheduleException;
 use App\Models\Staff;
+use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -117,7 +118,7 @@ final readonly class DoctorScheduleExceptionController
         $doctors = Staff::query()
             ->doctors()
             ->when(
-                \App\Support\BranchContext::getActiveBranchId() !== null,
+                BranchContext::getActiveBranchId() !== null,
                 fn ($query) => $query->forActiveBranch()
             )
             ->where('is_active', true)
@@ -126,7 +127,7 @@ final readonly class DoctorScheduleExceptionController
             ->get(['id', 'first_name', 'last_name'])
             ->map(static fn (Staff $staff): array => [
                 'id' => $staff->id,
-                'name' => trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
+                'name' => mb_trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
             ]);
 
         if ($exception?->doctor()->exists() && ! $doctors->contains('id', $exception->doctor_id)) {
@@ -135,7 +136,7 @@ final readonly class DoctorScheduleExceptionController
             if ($doctor instanceof Staff) {
                 $doctors->prepend([
                     'id' => $doctor->id,
-                    'name' => trim(sprintf('%s %s', $doctor->first_name, $doctor->last_name)),
+                    'name' => mb_trim(sprintf('%s %s', $doctor->first_name, $doctor->last_name)),
                 ]);
             }
         }
@@ -148,7 +149,7 @@ final readonly class DoctorScheduleExceptionController
                 'name' => $clinic->clinic_name,
             ]);
 
-        if ($exception?->clinic()->exists() && ! $clinics->contains('id', $exception->clinic_id)) {
+        if ($exception?->clinic()->exists() && $clinics->doesntContain('id', $exception->clinic_id)) {
             $clinic = $exception->clinic()->first(['id', 'clinic_name']);
 
             if ($clinic instanceof Clinic) {

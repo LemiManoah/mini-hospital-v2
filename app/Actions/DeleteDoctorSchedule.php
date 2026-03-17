@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Models\Appointment;
 use App\Models\DoctorSchedule;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -25,13 +26,13 @@ final readonly class DeleteDoctorSchedule
             ]);
         }
 
-        $validFrom = $schedule->valid_from instanceof \Carbon\CarbonInterface
+        $validFrom = $schedule->valid_from instanceof CarbonInterface
             ? $schedule->valid_from->toDateString()
             : ($schedule->valid_from !== null
                 ? CarbonImmutable::parse((string) $schedule->valid_from)->toDateString()
                 : null);
 
-        $validTo = $schedule->valid_to instanceof \Carbon\CarbonInterface
+        $validTo = $schedule->valid_to instanceof CarbonInterface
             ? $schedule->valid_to->toDateString()
             : ($schedule->valid_to !== null
                 ? CarbonImmutable::parse((string) $schedule->valid_to)->toDateString()
@@ -50,7 +51,7 @@ final readonly class DeleteDoctorSchedule
             )
             ->get(['appointment_date', 'start_time', 'end_time'])
             ->contains(function (Appointment $appointment) use ($schedule): bool {
-                $appointmentDay = strtolower(
+                $appointmentDay = mb_strtolower(
                     CarbonImmutable::parse($appointment->appointment_date)->englishDayOfWeek,
                 );
 

@@ -143,8 +143,7 @@ export default function AppointmentIndex({
         useDateRangeQueryFilters({
             route: '/appointments',
             filters: {
-                from_date:
-                    filters.from_date ?? toDateInputValue(new Date()),
+                from_date: filters.from_date ?? toDateInputValue(new Date()),
                 to_date: filters.to_date ?? toDateInputValue(new Date()),
                 search: filters.search ?? '',
                 status: filters.status ?? 'all',
@@ -178,7 +177,7 @@ export default function AppointmentIndex({
 
                 <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 lg:flex-1">
+                        <div className="grid gap-3 md:grid-cols-2 lg:flex-1 xl:grid-cols-4">
                             <Input
                                 placeholder="Search patient, doctor, or clinic..."
                                 value={search}
@@ -196,9 +195,14 @@ export default function AppointmentIndex({
                                     <SelectValue placeholder="All statuses" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All statuses</SelectItem>
+                                    <SelectItem value="all">
+                                        All statuses
+                                    </SelectItem>
                                     {statusOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
+                                        <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
                                             {option.label}
                                         </SelectItem>
                                     ))}
@@ -207,12 +211,16 @@ export default function AppointmentIndex({
                             <Input
                                 type="date"
                                 value={fromDate}
-                                onChange={(event) => setFromDate(event.target.value)}
+                                onChange={(event) =>
+                                    setFromDate(event.target.value)
+                                }
                             />
                             <Input
                                 type="date"
                                 value={toDate}
-                                onChange={(event) => setToDate(event.target.value)}
+                                onChange={(event) =>
+                                    setToDate(event.target.value)
+                                }
                             />
                         </div>
 
@@ -226,11 +234,17 @@ export default function AppointmentIndex({
                             }}
                             variant="outline"
                         >
-                            <ToggleGroupItem value="list" aria-label="List view">
+                            <ToggleGroupItem
+                                value="list"
+                                aria-label="List view"
+                            >
                                 <List className="mr-2 h-4 w-4" />
                                 List
                             </ToggleGroupItem>
-                            <ToggleGroupItem value="calendar" aria-label="Calendar view">
+                            <ToggleGroupItem
+                                value="calendar"
+                                aria-label="Calendar view"
+                            >
                                 <CalendarDays className="mr-2 h-4 w-4" />
                                 Calendar
                             </ToggleGroupItem>
@@ -250,7 +264,9 @@ export default function AppointmentIndex({
                                     <TableHead>Time</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Visit</TableHead>
-                                    <TableHead className="text-right">Action</TableHead>
+                                    <TableHead className="text-right">
+                                        Action
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -260,10 +276,15 @@ export default function AppointmentIndex({
                                             <TableCell>
                                                 <div>
                                                     <p className="font-medium">
-                                                        {appointment.patient?.name || 'Unknown patient'}
+                                                        {appointment.patient
+                                                            ?.name ||
+                                                            'Unknown patient'}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {appointment.patient?.patient_number}
+                                                        {
+                                                            appointment.patient
+                                                                ?.patient_number
+                                                        }
                                                     </p>
                                                 </div>
                                             </TableCell>
@@ -274,29 +295,49 @@ export default function AppointmentIndex({
                                             </TableCell>
                                             <TableCell>
                                                 {appointment.clinic?.name ||
-                                                    appointment.clinic?.clinic_name ||
+                                                    appointment.clinic
+                                                        ?.clinic_name ||
                                                     'Unassigned'}
                                             </TableCell>
                                             <TableCell>
-                                                {formatDate(appointment.appointment_date)}
+                                                {formatDate(
+                                                    appointment.appointment_date,
+                                                )}
                                             </TableCell>
                                             <TableCell>
-                                                {formatTime(appointment.start_time)}
+                                                {formatTime(
+                                                    appointment.start_time,
+                                                )}
                                                 {appointment.end_time
                                                     ? ` - ${formatTime(appointment.end_time)}`
                                                     : ''}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge className={badgeClass(appointment.status)}>
-                                                    {appointment.status.replaceAll('_', ' ')}
+                                                <Badge
+                                                    className={badgeClass(
+                                                        appointment.status,
+                                                    )}
+                                                >
+                                                    {appointment.status.replaceAll(
+                                                        '_',
+                                                        ' ',
+                                                    )}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                {appointment.visit?.visit_number || 'Not checked in'}
+                                                {appointment.visit
+                                                    ?.visit_number ||
+                                                    'Not checked in'}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="outline" size="sm" asChild>
-                                                    <Link href={`/appointments/${appointment.id}`}>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={`/appointments/${appointment.id}`}
+                                                    >
                                                         Open
                                                     </Link>
                                                 </Button>
@@ -316,13 +357,17 @@ export default function AppointmentIndex({
                             </TableBody>
                         </Table>
 
-                        {!Array.isArray(appointments) && appointments.links?.length > 3 ? (
+                        {!Array.isArray(appointments) &&
+                        appointments.links?.length > 3 ? (
                             <div className="mt-4">
                                 <Pagination>
                                     <PaginationContent>
                                         <PaginationItem>
                                             <PaginationPrevious
-                                                href={appointments.prev_page_url ?? undefined}
+                                                href={
+                                                    appointments.prev_page_url ??
+                                                    undefined
+                                                }
                                             />
                                         </PaginationItem>
                                         {appointments.links.map((link, idx) => {
@@ -331,7 +376,9 @@ export default function AppointmentIndex({
                                                 .trim();
                                             if (label === '...') {
                                                 return (
-                                                    <PaginationItem key={`ellipsis-${idx}`}>
+                                                    <PaginationItem
+                                                        key={`ellipsis-${idx}`}
+                                                    >
                                                         <PaginationEllipsis />
                                                     </PaginationItem>
                                                 );
@@ -341,8 +388,13 @@ export default function AppointmentIndex({
                                                 return (
                                                     <PaginationItem key={label}>
                                                         <PaginationLink
-                                                            href={link.url ?? undefined}
-                                                            isActive={link.active}
+                                                            href={
+                                                                link.url ??
+                                                                undefined
+                                                            }
+                                                            isActive={
+                                                                link.active
+                                                            }
                                                         >
                                                             {label}
                                                         </PaginationLink>
@@ -354,7 +406,10 @@ export default function AppointmentIndex({
                                         })}
                                         <PaginationItem>
                                             <PaginationNext
-                                                href={appointments.next_page_url ?? undefined}
+                                                href={
+                                                    appointments.next_page_url ??
+                                                    undefined
+                                                }
                                             />
                                         </PaginationItem>
                                     </PaginationContent>
@@ -369,14 +424,16 @@ export default function AppointmentIndex({
                                 {formatRangeLabel(fromDate, toDate)}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Faster reading across the selected booking range.
+                                Faster reading across the selected booking
+                                range.
                             </p>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                             {days.map((day) => {
-                                const dayAppointments = rows.filter((appointment) =>
-                                    matchesDate(appointment, day),
+                                const dayAppointments = rows.filter(
+                                    (appointment) =>
+                                        matchesDate(appointment, day),
                                 );
 
                                 return (
@@ -385,8 +442,12 @@ export default function AppointmentIndex({
                                         className="min-h-72 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-800 dark:bg-zinc-950/30"
                                     >
                                         <div className="mb-3 border-b border-zinc-200 pb-3 dark:border-zinc-800">
-                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                                                {weekDayLabels[parseDate(day).getDay()]}
+                                            <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                                                {
+                                                    weekDayLabels[
+                                                        parseDate(day).getDay()
+                                                    ]
+                                                }
                                             </p>
                                             <p className="text-sm font-semibold">
                                                 {formatDate(day)}
@@ -395,56 +456,73 @@ export default function AppointmentIndex({
 
                                         <div className="space-y-3">
                                             {dayAppointments.length > 0 ? (
-                                                dayAppointments.map((appointment) => (
-                                                    <Link
-                                                        key={appointment.id}
-                                                        href={`/appointments/${appointment.id}`}
-                                                        className="block rounded-lg border border-zinc-200 bg-white p-3 transition hover:border-zinc-400 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-                                                    >
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div>
-                                                                <p className="text-sm font-semibold">
-                                                                    {formatTime(appointment.start_time)}
-                                                                    {appointment.end_time
-                                                                        ? ` - ${formatTime(appointment.end_time)}`
-                                                                        : ''}
+                                                dayAppointments.map(
+                                                    (appointment) => (
+                                                        <Link
+                                                            key={appointment.id}
+                                                            href={`/appointments/${appointment.id}`}
+                                                            className="block rounded-lg border border-zinc-200 bg-white p-3 transition hover:border-zinc-400 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                                                        >
+                                                            <div className="flex items-start justify-between gap-3">
+                                                                <div>
+                                                                    <p className="text-sm font-semibold">
+                                                                        {formatTime(
+                                                                            appointment.start_time,
+                                                                        )}
+                                                                        {appointment.end_time
+                                                                            ? ` - ${formatTime(appointment.end_time)}`
+                                                                            : ''}
+                                                                    </p>
+                                                                    <p className="mt-1 text-sm">
+                                                                        {appointment
+                                                                            .patient
+                                                                            ?.name ||
+                                                                            'Unknown patient'}
+                                                                    </p>
+                                                                </div>
+                                                                <Badge
+                                                                    className={badgeClass(
+                                                                        appointment.status,
+                                                                    )}
+                                                                >
+                                                                    {appointment.status.replaceAll(
+                                                                        '_',
+                                                                        ' ',
+                                                                    )}
+                                                                </Badge>
+                                                            </div>
+                                                            <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                                                                <p>
+                                                                    Doctor:{' '}
+                                                                    {appointment
+                                                                        .doctor
+                                                                        ?.name ||
+                                                                        `${appointment.doctor?.first_name ?? ''} ${appointment.doctor?.last_name ?? ''}`.trim() ||
+                                                                        'Unassigned'}
                                                                 </p>
-                                                                <p className="mt-1 text-sm">
-                                                                    {appointment.patient?.name ||
-                                                                        'Unknown patient'}
+                                                                <p>
+                                                                    Clinic:{' '}
+                                                                    {appointment
+                                                                        .clinic
+                                                                        ?.name ||
+                                                                        appointment
+                                                                            .clinic
+                                                                            ?.clinic_name ||
+                                                                        'Unassigned'}
+                                                                </p>
+                                                                <p>
+                                                                    Visit:{' '}
+                                                                    {appointment
+                                                                        .visit
+                                                                        ?.visit_number ||
+                                                                        'Not checked in'}
                                                                 </p>
                                                             </div>
-                                                            <Badge
-                                                                className={badgeClass(
-                                                                    appointment.status,
-                                                                )}
-                                                            >
-                                                                {appointment.status.replaceAll('_', ' ')}
-                                                            </Badge>
-                                                        </div>
-                                                        <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                                                            <p>
-                                                                Doctor:{' '}
-                                                                {appointment.doctor?.name ||
-                                                                    `${appointment.doctor?.first_name ?? ''} ${appointment.doctor?.last_name ?? ''}`.trim() ||
-                                                                    'Unassigned'}
-                                                            </p>
-                                                            <p>
-                                                                Clinic:{' '}
-                                                                {appointment.clinic?.name ||
-                                                                    appointment.clinic?.clinic_name ||
-                                                                    'Unassigned'}
-                                                            </p>
-                                                            <p>
-                                                                Visit:{' '}
-                                                                {appointment.visit?.visit_number ||
-                                                                    'Not checked in'}
-                                                            </p>
-                                                        </div>
-                                                    </Link>
-                                                ))
+                                                        </Link>
+                                                    ),
+                                                )
                                             ) : (
-                                                <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm italic text-muted-foreground dark:border-zinc-700">
+                                                <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-muted-foreground italic dark:border-zinc-700">
                                                     No bookings for this day.
                                                 </div>
                                             )}

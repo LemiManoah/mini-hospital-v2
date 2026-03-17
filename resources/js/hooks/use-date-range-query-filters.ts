@@ -73,9 +73,7 @@ export function useDateRangeQueryFilters<TDefaults extends FilterDefaults>({
                 const value = values[key];
 
                 payload[String(key)] =
-                    value === '' || value === defaults[key]
-                        ? undefined
-                        : value;
+                    value === '' || value === defaults[key] ? undefined : value;
             });
 
             router.get(route, payload, {

@@ -14,7 +14,6 @@ final class UpdateConsultationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            ...parent::rules(),
             'intent' => ['required', Rule::in(['save_draft', 'complete'])],
             'outcome' => ['nullable', 'string', Rule::in(Consultation::OUTCOMES)],
             'follow_up_instructions' => ['nullable', 'string'],

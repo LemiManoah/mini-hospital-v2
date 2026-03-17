@@ -34,7 +34,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const labelize = (value: string): string =>
-    value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+    value
+        .replaceAll('_', ' ')
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 export default function FacilityServiceIndex({
     facilityServices,

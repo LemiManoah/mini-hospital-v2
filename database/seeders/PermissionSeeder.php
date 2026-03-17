@@ -153,7 +153,6 @@ final class PermissionSeeder extends Seeder
             'facility_services.update',
             'facility_services.delete',
 
-            
         ];
 
         $roles = [

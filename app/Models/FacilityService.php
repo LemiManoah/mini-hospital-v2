@@ -19,6 +19,7 @@ final class FacilityService extends Model
     use HasFactory;
 
     use HasUuids;
+
     protected $casts = [
         'tenant_id' => 'string',
         'category' => FacilityServiceCategory::class,

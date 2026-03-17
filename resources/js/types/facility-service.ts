@@ -33,7 +33,9 @@ export interface FacilityServiceFormOption {
 }
 
 export interface FacilityServiceIndexPageProps {
-    facilityServices: PaginatedFacilityServiceList<FacilityService> | FacilityService[];
+    facilityServices:
+        | PaginatedFacilityServiceList<FacilityService>
+        | FacilityService[];
     filters: {
         search: string | null;
     };
@@ -43,7 +45,6 @@ export interface FacilityServiceFormPageProps {
     categories: FacilityServiceFormOption[];
 }
 
-export interface FacilityServiceEditPageProps
-    extends FacilityServiceFormPageProps {
+export interface FacilityServiceEditPageProps extends FacilityServiceFormPageProps {
     facilityService: FacilityService;
 }

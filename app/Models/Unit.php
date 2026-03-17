@@ -33,7 +33,9 @@ final class Unit extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     /**

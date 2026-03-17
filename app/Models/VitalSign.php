@@ -15,6 +15,7 @@ final class VitalSign extends Model
     use HasFactory;
 
     use HasUuids;
+
     protected $casts = [
         'triage_id' => 'string',
         'recorded_by' => 'string',

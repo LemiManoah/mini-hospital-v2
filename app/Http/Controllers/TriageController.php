@@ -103,7 +103,7 @@ final class TriageController
     }
 
     /**
-     * @param array<int, object> $cases
+     * @param  array<int, object>  $cases
      * @return array<int, array{value: string, label: string}>
      */
     private function enumOptions(array $cases): array

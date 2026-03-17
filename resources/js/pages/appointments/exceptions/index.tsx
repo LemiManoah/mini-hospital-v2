@@ -65,7 +65,9 @@ function formatTimeRange(exception: DoctorScheduleException): string {
 }
 
 const labelize = (value: string): string =>
-    value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+    value
+        .replaceAll('_', ' ')
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 export default function DoctorScheduleExceptionIndex({
     exceptions,
@@ -133,7 +135,9 @@ export default function DoctorScheduleExceptionIndex({
                             <TableHead>Type</TableHead>
                             <TableHead>Window</TableHead>
                             <TableHead>Reason</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right">
+                                Actions
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -147,8 +151,7 @@ export default function DoctorScheduleExceptionIndex({
                                     </TableCell>
                                     <TableCell>
                                         {exception.clinic?.name ||
-                                            exception.clinic?.clinic_name ||
-                                            (
+                                            exception.clinic?.clinic_name || (
                                                 <span className="italic opacity-50">
                                                     All clinics
                                                 </span>
@@ -161,23 +164,31 @@ export default function DoctorScheduleExceptionIndex({
                                             </span>
                                         )}
                                     </TableCell>
-                                    <TableCell>{formatDate(exception.exception_date)}</TableCell>
+                                    <TableCell>
+                                        {formatDate(exception.exception_date)}
+                                    </TableCell>
                                     <TableCell>
                                         <Badge variant="outline">
                                             {labelize(exception.type)}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{formatTimeRange(exception)}</TableCell>
+                                    <TableCell>
+                                        {formatTimeRange(exception)}
+                                    </TableCell>
                                     <TableCell className="max-w-sm">
                                         {exception.reason || (
-                                            <span className="italic text-muted-foreground">
+                                            <span className="text-muted-foreground italic">
                                                 No reason recorded
                                             </span>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button variant="outline" size="sm" asChild>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                asChild
+                                            >
                                                 <Link
                                                     href={`/appointments/exceptions/${exception.id}/edit`}
                                                 >
@@ -197,7 +208,10 @@ export default function DoctorScheduleExceptionIndex({
                                                     )
                                                 }
                                                 trigger={
-                                                    <Button variant="destructive" size="sm">
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                    >
                                                         Delete
                                                     </Button>
                                                 }
@@ -225,15 +239,22 @@ export default function DoctorScheduleExceptionIndex({
                             <PaginationContent>
                                 <PaginationItem>
                                     <PaginationPrevious
-                                        href={exceptions.prev_page_url ?? undefined}
+                                        href={
+                                            exceptions.prev_page_url ??
+                                            undefined
+                                        }
                                     />
                                 </PaginationItem>
                                 {exceptions.links.map((link, idx) => {
-                                    const label = link.label.replace(/<[^>]*>/g, '').trim();
+                                    const label = link.label
+                                        .replace(/<[^>]*>/g, '')
+                                        .trim();
 
                                     if (label === '...') {
                                         return (
-                                            <PaginationItem key={`ellipsis-${idx}`}>
+                                            <PaginationItem
+                                                key={`ellipsis-${idx}`}
+                                            >
                                                 <PaginationEllipsis />
                                             </PaginationItem>
                                         );
@@ -256,7 +277,10 @@ export default function DoctorScheduleExceptionIndex({
                                 })}
                                 <PaginationItem>
                                     <PaginationNext
-                                        href={exceptions.next_page_url ?? undefined}
+                                        href={
+                                            exceptions.next_page_url ??
+                                            undefined
+                                        }
                                     />
                                 </PaginationItem>
                             </PaginationContent>

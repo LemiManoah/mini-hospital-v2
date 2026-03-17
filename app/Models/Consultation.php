@@ -29,6 +29,7 @@ final class Consultation extends Model
         'deceased',
         'left_against_advice',
     ];
+
     protected $casts = [
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',

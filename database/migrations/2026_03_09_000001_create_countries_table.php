@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('countries')) {
+        if (! Schema::hasTable('countries')) {
             Schema::create('countries', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->string('country_name', 100)->unique();

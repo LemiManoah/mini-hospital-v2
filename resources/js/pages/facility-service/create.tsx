@@ -66,7 +66,9 @@ export default function FacilityServiceCreate({
                                 />
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="name">Service Name</Label>
+                                        <Label htmlFor="name">
+                                            Service Name
+                                        </Label>
                                         <Input
                                             id="name"
                                             name="name"

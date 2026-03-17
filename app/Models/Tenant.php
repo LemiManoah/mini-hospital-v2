@@ -19,6 +19,7 @@ final class Tenant extends Model
 
     use HasUuids;
     use SoftDeletes;
+
     protected $casts = [
         'has_branches' => 'boolean',
         'status' => GeneralStatus::class,

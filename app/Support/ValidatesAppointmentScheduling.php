@@ -55,7 +55,7 @@ final readonly class ValidatesAppointmentScheduling
 
         $scheduleQuery = DoctorSchedule::query()
             ->where('doctor_id', $doctorId)
-            ->where('day_of_week', strtolower($date->englishDayOfWeek))
+            ->where('day_of_week', mb_strtolower($date->englishDayOfWeek))
             ->whereDate('valid_from', '<=', $date->toDateString())
             ->where(function ($query) use ($date): void {
                 $query
@@ -207,12 +207,33 @@ final readonly class ValidatesAppointmentScheduling
                 'start_time',
                 sprintf(
                     'This appointment falls within a doctor %s on %s.%s',
-                    strtolower($typeLabel),
+                    mb_strtolower($typeLabel),
                     $date->isoFormat('dddd, D MMMM YYYY'),
                     $reasonSuffix,
                 ),
             );
         }
+    }
+
+    private static function displayTime(string $time): string
+    {
+        return CarbonImmutable::parse(self::safeNormalisedTime($time))->format('g:i A');
+    }
+
+    private static function safeNormalisedTime(string $time): string
+    {
+        $trimmed = mb_trim($time);
+
+        if (preg_match('/^(?<hour>\d{2}):(?<minute>\d{2})(?::(?<second>\d{2}))?(?:\.\d+)?$/', $trimmed, $matches) === 1) {
+            return sprintf(
+                '%s:%s:%s',
+                $matches['hour'],
+                $matches['minute'],
+                $matches['second'] ?? '00',
+            );
+        }
+
+        return CarbonImmutable::parse($trimmed)->format('H:i:s');
     }
 
     /**
@@ -233,28 +254,7 @@ final readonly class ValidatesAppointmentScheduling
 
     private function normaliseTime(string $time): string
     {
-        $trimmed = trim($time);
-
-        if (preg_match('/^(?<hour>\d{2}):(?<minute>\d{2})(?::(?<second>\d{2}))?(?:\.\d+)?$/', $trimmed, $matches) === 1) {
-            return sprintf(
-                '%s:%s:%s',
-                $matches['hour'],
-                $matches['minute'],
-                $matches['second'] ?? '00',
-            );
-        }
-
-        return CarbonImmutable::parse($trimmed)->format('H:i:s');
-    }
-
-    private static function displayTime(string $time): string
-    {
-        return CarbonImmutable::parse(self::safeNormalisedTime($time))->format('g:i A');
-    }
-
-    private static function safeNormalisedTime(string $time): string
-    {
-        $trimmed = trim($time);
+        $trimmed = mb_trim($time);
 
         if (preg_match('/^(?<hour>\d{2}):(?<minute>\d{2})(?::(?<second>\d{2}))?(?:\.\d+)?$/', $trimmed, $matches) === 1) {
             return sprintf(

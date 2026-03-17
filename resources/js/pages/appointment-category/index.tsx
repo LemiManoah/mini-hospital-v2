@@ -94,7 +94,9 @@ export default function AppointmentCategoryIndex({
                             <TableHead>Clinic</TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right">
+                                Actions
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -107,9 +109,9 @@ export default function AppointmentCategoryIndex({
                                     <TableCell>
                                         {category.clinic?.name ||
                                             category.clinic?.clinic_name || (
-                                            <span className="italic opacity-50">
-                                                All clinics
-                                            </span>
+                                                <span className="italic opacity-50">
+                                                    All clinics
+                                                </span>
                                             )}
                                     </TableCell>
                                     <TableCell className="max-w-[360px] whitespace-normal">
@@ -190,35 +192,40 @@ export default function AppointmentCategoryIndex({
                                         }
                                     />
                                 </PaginationItem>
-                                {appointmentCategories.links.map((link, idx) => {
-                                    const label = link.label
-                                        .replace(/<[^>]*>/g, '')
-                                        .trim();
-                                    if (label === '...') {
-                                        return (
-                                            <PaginationItem
-                                                key={`ellipsis-${idx}`}
-                                            >
-                                                <PaginationEllipsis />
-                                            </PaginationItem>
-                                        );
-                                    }
-
-                                    if (/^\d+$/.test(label)) {
-                                        return (
-                                            <PaginationItem key={label}>
-                                                <PaginationLink
-                                                    href={link.url ?? undefined}
-                                                    isActive={link.active}
+                                {appointmentCategories.links.map(
+                                    (link, idx) => {
+                                        const label = link.label
+                                            .replace(/<[^>]*>/g, '')
+                                            .trim();
+                                        if (label === '...') {
+                                            return (
+                                                <PaginationItem
+                                                    key={`ellipsis-${idx}`}
                                                 >
-                                                    {label}
-                                                </PaginationLink>
-                                            </PaginationItem>
-                                        );
-                                    }
+                                                    <PaginationEllipsis />
+                                                </PaginationItem>
+                                            );
+                                        }
 
-                                    return null;
-                                })}
+                                        if (/^\d+$/.test(label)) {
+                                            return (
+                                                <PaginationItem key={label}>
+                                                    <PaginationLink
+                                                        href={
+                                                            link.url ??
+                                                            undefined
+                                                        }
+                                                        isActive={link.active}
+                                                    >
+                                                        {label}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            );
+                                        }
+
+                                        return null;
+                                    },
+                                )}
                                 <PaginationItem>
                                     <PaginationNext
                                         href={

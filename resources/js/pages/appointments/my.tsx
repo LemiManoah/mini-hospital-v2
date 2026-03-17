@@ -92,7 +92,10 @@ export default function AppointmentMy({
                         <SelectContent>
                             <SelectItem value="all">All statuses</SelectItem>
                             {statusOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                >
                                     {option.label}
                                 </SelectItem>
                             ))}
@@ -111,13 +114,22 @@ export default function AppointmentMy({
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-3">
                                             <h2 className="text-lg font-semibold">
-                                                {formatTime(appointment.start_time)}
+                                                {formatTime(
+                                                    appointment.start_time,
+                                                )}
                                                 {appointment.end_time
                                                     ? ` - ${formatTime(appointment.end_time)}`
                                                     : ''}
                                             </h2>
-                                            <Badge className={badgeClass(appointment.status)}>
-                                                {appointment.status.replaceAll('_', ' ')}
+                                            <Badge
+                                                className={badgeClass(
+                                                    appointment.status,
+                                                )}
+                                            >
+                                                {appointment.status.replaceAll(
+                                                    '_',
+                                                    ' ',
+                                                )}
                                             </Badge>
                                         </div>
                                         <p className="font-medium">
@@ -127,31 +139,37 @@ export default function AppointmentMy({
                                         <div className="space-y-1 text-sm text-muted-foreground">
                                             <p>
                                                 MRN:{' '}
-                                                {appointment.patient?.patient_number ??
-                                                    'N/A'}
+                                                {appointment.patient
+                                                    ?.patient_number ?? 'N/A'}
                                             </p>
                                             <p>
                                                 Clinic:{' '}
                                                 {appointment.clinic?.name ||
-                                                    appointment.clinic?.clinic_name ||
+                                                    appointment.clinic
+                                                        ?.clinic_name ||
                                                     'Unassigned'}
                                             </p>
                                             <p>
                                                 Visit:{' '}
-                                                {appointment.visit?.visit_number ||
+                                                {appointment.visit
+                                                    ?.visit_number ||
                                                     'Not checked in'}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
                                         <Button variant="outline" asChild>
-                                            <Link href={`/appointments/${appointment.id}`}>
+                                            <Link
+                                                href={`/appointments/${appointment.id}`}
+                                            >
                                                 Open Appointment
                                             </Link>
                                         </Button>
                                         {appointment.visit ? (
                                             <Button asChild>
-                                                <Link href={`/visits/${appointment.visit.id}`}>
+                                                <Link
+                                                    href={`/visits/${appointment.visit.id}`}
+                                                >
                                                     Open Visit
                                                 </Link>
                                             </Button>
