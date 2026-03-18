@@ -100,7 +100,8 @@ export default function SubscriptionActivate({
                                 Checkout reference
                             </p>
                             <p className="mt-1 font-medium">
-                                {subscription.checkout_reference ?? 'Not requested yet'}
+                                {subscription.checkout_reference ??
+                                    'Not requested yet'}
                             </p>
                         </div>
                     </CardContent>
@@ -116,7 +117,11 @@ export default function SubscriptionActivate({
                             className="w-full sm:w-auto"
                         >
                             {({ processing }) => (
-                                <Button type="submit" disabled={processing} className="w-full sm:w-auto">
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full sm:w-auto"
+                                >
                                     {processing ? (
                                         <LoaderCircle className="h-4 w-4 animate-spin" />
                                     ) : null}
