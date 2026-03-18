@@ -39,25 +39,7 @@ final readonly class SubscriptionActivationController
                 'id' => $user->tenant->id,
                 'name' => $user->tenant->name,
             ],
-            'subscription' => [
-                'id' => $subscription->id,
-                'status' => $subscription->status->value,
-                'status_label' => $subscription->status->label(),
-                'starts_at' => $subscription->starts_at,
-                'trial_ends_at' => $subscription->trial_ends_at,
-                'activated_at' => $subscription->activated_at,
-                'current_period_starts_at' => $subscription->current_period_starts_at,
-                'current_period_ends_at' => $subscription->current_period_ends_at,
-                'checkout_provider' => $subscription->checkout_provider,
-                'checkout_reference' => $subscription->checkout_reference,
-                'checkout_url' => $subscription->checkout_url,
-                'package' => [
-                    'id' => $subscription->subscriptionPackage->id,
-                    'name' => $subscription->subscriptionPackage->name,
-                    'users' => $subscription->subscriptionPackage->users,
-                    'price' => $subscription->subscriptionPackage->price,
-                ],
-            ],
+            'subscription' => $this->subscriptionPayload($subscription),
         ]);
     }
 
@@ -80,7 +62,7 @@ final readonly class SubscriptionActivationController
         $subscription->update([
             'checkout_provider' => 'manual_placeholder',
             'checkout_reference' => sprintf('SUB-%s', now()->format('YmdHis')),
-            'checkout_url' => route('subscription.activate.show'),
+            'checkout_url' => route('subscription.checkout.show'),
             'updated_by' => $user->id,
             'meta' => [
                 ...($subscription->meta ?? []),
@@ -88,9 +70,124 @@ final readonly class SubscriptionActivationController
             ],
         ]);
 
-        return to_route('subscription.activate.show')->with(
+        return to_route('subscription.checkout.show')->with(
             'success',
-            'Subscription moved to pending activation. Payment gateway checkout will plug into this handoff next.',
+            'Subscription moved to pending activation. Continue through checkout to finish activation.',
         );
+    }
+
+    public function checkout(Request $request): Response|RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User || $user->tenant === null) {
+            return to_route('home');
+        }
+
+        $subscription = $user->tenant->currentSubscription()
+            ->with('subscriptionPackage')
+            ->first();
+
+        if (! $subscription instanceof TenantSubscription) {
+            return to_route('home');
+        }
+
+        return Inertia::render('subscription/checkout', [
+            'tenant' => [
+                'id' => $user->tenant->id,
+                'name' => $user->tenant->name,
+            ],
+            'subscription' => $this->subscriptionPayload($subscription),
+        ]);
+    }
+
+    public function success(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User || $user->tenant === null) {
+            return to_route('home');
+        }
+
+        $subscription = $user->tenant->currentSubscription()->first();
+
+        if (! $subscription instanceof TenantSubscription) {
+            return to_route('home')->with('error', 'No subscription record was found for activation.');
+        }
+
+        $this->startTenantSubscription->markActive($subscription, $user);
+
+        $subscription->update([
+            'checkout_provider' => $subscription->checkout_provider ?? 'manual_placeholder',
+            'checkout_url' => route('subscription.checkout.show'),
+            'updated_by' => $user->id,
+            'meta' => [
+                ...($subscription->meta ?? []),
+                'checkout_completed_at' => now()->toIso8601String(),
+            ],
+        ]);
+
+        return to_route('modules')->with(
+            'success',
+            'Subscription activated successfully. The tenant is now in an active billing period.',
+        );
+    }
+
+    public function failure(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User || $user->tenant === null) {
+            return to_route('home');
+        }
+
+        $subscription = $user->tenant->currentSubscription()->first();
+
+        if (! $subscription instanceof TenantSubscription) {
+            return to_route('home')->with('error', 'No subscription record was found for checkout recovery.');
+        }
+
+        $this->startTenantSubscription->markFailed($subscription, $user);
+
+        $subscription->update([
+            'checkout_provider' => $subscription->checkout_provider ?? 'manual_placeholder',
+            'checkout_url' => route('subscription.checkout.show'),
+            'updated_by' => $user->id,
+            'meta' => [
+                ...($subscription->meta ?? []),
+                'checkout_failed_at' => now()->toIso8601String(),
+            ],
+        ]);
+
+        return to_route('subscription.activate.show')->with(
+            'error',
+            'Checkout was marked as failed. You can retry activation when ready.',
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function subscriptionPayload(TenantSubscription $subscription): array
+    {
+        return [
+            'id' => $subscription->id,
+            'status' => $subscription->status->value,
+            'status_label' => $subscription->status->label(),
+            'starts_at' => $subscription->starts_at,
+            'trial_ends_at' => $subscription->trial_ends_at,
+            'activated_at' => $subscription->activated_at,
+            'current_period_starts_at' => $subscription->current_period_starts_at,
+            'current_period_ends_at' => $subscription->current_period_ends_at,
+            'checkout_provider' => $subscription->checkout_provider,
+            'checkout_reference' => $subscription->checkout_reference,
+            'checkout_url' => $subscription->checkout_url,
+            'package' => [
+                'id' => $subscription->subscriptionPackage->id,
+                'name' => $subscription->subscriptionPackage->name,
+                'users' => $subscription->subscriptionPackage->users,
+                'price' => $subscription->subscriptionPackage->price,
+            ],
+        ];
     }
 }

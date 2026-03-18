@@ -143,6 +143,9 @@ Route::middleware('auth')->group(function (): void {
     Route::post('onboarding/staff', [OnboardingController::class, 'storeStaff'])->name('onboarding.staff.store');
     Route::get('subscription/activate', [SubscriptionActivationController::class, 'show'])->name('subscription.activate.show');
     Route::post('subscription/activate', [SubscriptionActivationController::class, 'store'])->name('subscription.activate.store');
+    Route::get('subscription/checkout', [SubscriptionActivationController::class, 'checkout'])->name('subscription.checkout.show');
+    Route::post('subscription/checkout/success', [SubscriptionActivationController::class, 'success'])->name('subscription.checkout.success');
+    Route::post('subscription/checkout/failure', [SubscriptionActivationController::class, 'failure'])->name('subscription.checkout.failure');
     Route::delete('user-account', [UserController::class, 'destroyCurrentUser'])->name('user.destroy-account');
     Route::redirect('settings', '/settings/profile');
     Route::get('settings/profile', [UserProfileController::class, 'edit'])->name('user-profile.edit');

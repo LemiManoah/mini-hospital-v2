@@ -42,6 +42,44 @@ final class StartTenantSubscription
         $subscription->update([
             'status' => SubscriptionStatus::PENDING_ACTIVATION,
             'updated_by' => $actor?->id,
+            'meta' => [
+                ...($subscription->meta ?? []),
+                'pending_activation_at' => now()->toIso8601String(),
+            ],
+        ]);
+
+        return $subscription->fresh();
+    }
+
+    public function markActive(TenantSubscription $subscription, ?User $actor = null, int $billingDays = 30): TenantSubscription
+    {
+        $now = now();
+
+        $subscription->update([
+            'status' => SubscriptionStatus::ACTIVE,
+            'activated_at' => $subscription->activated_at ?? $now,
+            'current_period_starts_at' => $now,
+            'current_period_ends_at' => $now->copy()->addDays($billingDays),
+            'updated_by' => $actor?->id,
+            'meta' => [
+                ...($subscription->meta ?? []),
+                'activated_via' => 'checkout_callback',
+                'activated_at' => $now->toIso8601String(),
+            ],
+        ]);
+
+        return $subscription->fresh();
+    }
+
+    public function markFailed(TenantSubscription $subscription, ?User $actor = null): TenantSubscription
+    {
+        $subscription->update([
+            'status' => SubscriptionStatus::PAST_DUE,
+            'updated_by' => $actor?->id,
+            'meta' => [
+                ...($subscription->meta ?? []),
+                'checkout_failed_at' => now()->toIso8601String(),
+            ],
         ]);
 
         return $subscription->fresh();

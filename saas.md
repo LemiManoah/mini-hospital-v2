@@ -28,8 +28,8 @@
 
 - [x] Connect package selection to subscription records
 - [x] Add trial and pending activation states
-- [ ] Integrate checkout
-- [ ] Handle payment success and failure callbacks
+- [x] Integrate checkout
+- [x] Handle payment success and failure callbacks
 
 ### Milestone 4: SaaS Admin Operations
 

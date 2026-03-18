@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import AuthLayout from '@/layouts/auth-layout';
 import { Form, Head, Link } from '@inertiajs/react';
-import { CreditCard, LoaderCircle } from 'lucide-react';
+import { ArrowRight, CreditCard, LoaderCircle } from 'lucide-react';
 
 type SubscriptionActivateProps = {
     tenant: {
@@ -51,10 +51,14 @@ export default function SubscriptionActivate({
     tenant,
     subscription,
 }: SubscriptionActivateProps) {
+    const isActive = subscription.status === 'active';
+    const isPendingCheckout = subscription.status === 'pending_activation';
+
     return (
         <AuthLayout
             title="Subscription activation"
-            description="Review the current package and move the tenant toward activation."
+            description="Review the current package and move the tenant into the checkout handoff."
+            contentClassName="max-w-3xl"
         >
             <Head title="Subscription Activation" />
 
@@ -107,28 +111,46 @@ export default function SubscriptionActivate({
                     </CardContent>
                     <CardFooter className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-sm text-muted-foreground">
-                            This Milestone 3 slice establishes real subscription
-                            state now. Gateway checkout plugs into this screen
-                            next.
+                            Subscription activation now moves through a hosted
+                            checkout step before final success or failure is
+                            recorded.
                         </p>
-                        <Form
-                            method="post"
-                            action="/subscription/activate"
-                            className="w-full sm:w-auto"
-                        >
-                            {({ processing }) => (
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full sm:w-auto"
+                        {isActive ? (
+                            <Button asChild className="w-full sm:w-auto">
+                                <Link href="/modules">Return to modules</Link>
+                            </Button>
+                        ) : isPendingCheckout ? (
+                            <Button asChild className="w-full sm:w-auto">
+                                <Link
+                                    href={
+                                        subscription.checkout_url ??
+                                        '/subscription/checkout'
+                                    }
                                 >
-                                    {processing ? (
-                                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                                    ) : null}
-                                    Request activation handoff
-                                </Button>
-                            )}
-                        </Form>
+                                    Continue to checkout
+                                    <ArrowRight className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Form
+                                method="post"
+                                action="/subscription/activate"
+                                className="w-full sm:w-auto"
+                            >
+                                {({ processing }) => (
+                                    <Button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        {processing ? (
+                                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                                        ) : null}
+                                        Request activation handoff
+                                    </Button>
+                                )}
+                            </Form>
+                        )}
                     </CardFooter>
                 </Card>
 

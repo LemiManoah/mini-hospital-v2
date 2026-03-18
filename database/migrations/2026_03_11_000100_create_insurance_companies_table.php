@@ -22,7 +22,7 @@ return new class extends Migration
                 $table->string('email')->nullable()->index();
                 $table->string('main_contact', 20)->nullable()->index();
                 $table->string('other_contact', 20)->nullable();
-                $table->string('address')->nullable();
+                $table->foreignUuid('address_id')->nullable()->constrained('addresses')->nullOnDelete();
                 $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value);
 
                 // Audit fields
