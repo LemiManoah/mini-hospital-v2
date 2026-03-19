@@ -19,6 +19,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type Patient, type PatientIndexPageProps } from '@/types/patient';
 import { Head, Link, router } from '@inertiajs/react';
@@ -33,6 +34,7 @@ export default function PatientIndex({
     patients,
     filters,
 }: PatientIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: Patient[] = Array.isArray(patients)
         ? patients
         : (patients.data ?? []);
@@ -75,14 +77,16 @@ export default function PatientIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link href="/patients/create" className="gap-2">
-                        <span>+ Register Patient & Start Visit</span>
-                    </Link>
-                </Button>
+                {hasPermission('patients.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                    >
+                        <Link href="/patients/create" className="gap-2">
+                            <span>+ Register Patient & Start Visit</span>
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -134,38 +138,42 @@ export default function PatientIndex({
                                                         Select
                                                     </Link>
                                                 </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    asChild
-                                                >
-                                                    <Link
-                                                        href={`/patients/${patient.id}/edit`}
+                                                {hasPermission('patients.update') ? (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        asChild
                                                     >
-                                                        Edit
-                                                    </Link>
-                                                </Button>
-                                                <DeleteConfirmationModal
-                                                    title="Delete Patient"
-                                                    description={`Are you sure you want to delete "${fullName}"? This action cannot be undone.`}
-                                                    action={{
-                                                        action: `/patients/${patient.id}`,
-                                                        method: 'delete',
-                                                    }}
-                                                    onSuccess={() =>
-                                                        toast.success(
-                                                            `Patient "${fullName}" deleted successfully.`,
-                                                        )
-                                                    }
-                                                    trigger={
-                                                        <Button
-                                                            variant="destructive"
-                                                            size="sm"
+                                                        <Link
+                                                            href={`/patients/${patient.id}/edit`}
                                                         >
-                                                            Delete
-                                                        </Button>
-                                                    }
-                                                />
+                                                            Edit
+                                                        </Link>
+                                                    </Button>
+                                                ) : null}
+                                                {hasPermission('patients.delete') ? (
+                                                    <DeleteConfirmationModal
+                                                        title="Delete Patient"
+                                                        description={`Are you sure you want to delete "${fullName}"? This action cannot be undone.`}
+                                                        action={{
+                                                            action: `/patients/${patient.id}`,
+                                                            method: 'delete',
+                                                        }}
+                                                        onSuccess={() =>
+                                                            toast.success(
+                                                                `Patient "${fullName}" deleted successfully.`,
+                                                            )
+                                                        }
+                                                        trigger={
+                                                            <Button
+                                                                variant="destructive"
+                                                                size="sm"
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                        }
+                                                    />
+                                                ) : null}
                                             </div>
                                         </TableCell>
                                     </TableRow>

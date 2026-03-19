@@ -11,6 +11,7 @@ use App\Models\Staff;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -68,6 +69,8 @@ function createTenantWithBranches(int $count = 2): array
 }
 
 it('redirects tenant users to branch switcher when multiple branches and none selected', function (): void {
+    $this->seed(PermissionSeeder::class);
+
     [$tenant, $branches] = createTenantWithBranches();
 
     $staff = Staff::query()->create([
@@ -94,6 +97,7 @@ it('redirects tenant users to branch switcher when multiple branches and none se
         'is_support' => false,
     ]);
     $user->forceFill(['email_verified_at' => now()])->save();
+    $user->givePermissionTo('facility_branches.view');
 
     $response = $this->actingAs($user)->get(route('dashboard'));
 
@@ -101,6 +105,8 @@ it('redirects tenant users to branch switcher when multiple branches and none se
 });
 
 it('allows switching to an authorized branch and stores it in session', function (): void {
+    $this->seed(PermissionSeeder::class);
+
     [$tenant, $branches] = createTenantWithBranches();
 
     $staff = Staff::query()->create([
@@ -126,6 +132,7 @@ it('allows switching to an authorized branch and stores it in session', function
         'is_support' => false,
     ]);
     $user->forceFill(['email_verified_at' => now()])->save();
+    $user->givePermissionTo(['facility_branches.view', 'facility_branches.update']);
 
     $response = $this->actingAs($user)->post(route('branch-switcher.switch', $branches[0]->id));
 
@@ -162,6 +169,8 @@ it('forbids non-support users from switching facility context', function (): voi
 });
 
 it('allows support users to switch tenant context and clears active branch selection', function (): void {
+    $this->seed(PermissionSeeder::class);
+
     [$sourceTenant, $branches] = createTenantWithBranches();
     [$targetTenant] = createTenantWithBranches();
 
@@ -172,6 +181,7 @@ it('allows support users to switch tenant context and clears active branch selec
         'is_support' => true,
     ]);
     $supportUser->forceFill(['email_verified_at' => now()])->save();
+    $supportUser->givePermissionTo('tenants.update');
 
     $response = $this
         ->withSession(['active_branch_id' => $branches[0]->id])

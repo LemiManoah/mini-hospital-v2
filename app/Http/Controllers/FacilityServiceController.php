@@ -15,11 +15,23 @@ use App\Models\FacilityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class FacilityServiceController
+final readonly class FacilityServiceController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:facility_services.view', only: ['index']),
+            new Middleware('permission:facility_services.create', only: ['create', 'store']),
+            new Middleware('permission:facility_services.update', only: ['edit', 'update']),
+            new Middleware('permission:facility_services.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

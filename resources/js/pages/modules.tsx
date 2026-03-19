@@ -8,9 +8,9 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AuthLayout from '@/layouts/auth-layout';
+import { usePermissions } from '@/lib/permissions';
 import { dashboard } from '@/routes';
-import { SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     Activity,
     ArrowRight,
@@ -91,8 +91,8 @@ const categories: Array<Module['category']> = [
 ];
 
 export default function Modules() {
-    const { auth } = usePage<SharedData>().props;
-    const currentSubscription = auth.user?.tenant?.current_subscription as
+    const { user, hasPermission } = usePermissions();
+    const currentSubscription = user?.tenant?.current_subscription as
         | {
               status: string;
               subscription_package?: {
@@ -102,19 +102,6 @@ export default function Modules() {
               trial_ends_at?: string | null;
           }
         | undefined;
-
-    const hasPermission = (permission: string) => {
-        if (!auth.user) return false;
-
-        if (
-            auth.user.roles?.includes('super_admin') ||
-            auth.user.roles?.includes('admin')
-        ) {
-            return true;
-        }
-
-        return !!auth.user.can?.[permission];
-    };
 
     const formatDate = (value?: string | null) =>
         value
@@ -184,18 +171,22 @@ export default function Modules() {
                                     </p>
                                 </div>
                             </div>
-                            <Button asChild variant="outline">
-                                <Link href="/subscription/activate">
-                                    Open subscription activation
-                                </Link>
-                            </Button>
+                            {hasPermission('tenants.manage_subscription') ? (
+                                <Button asChild variant="outline">
+                                    <Link href="/subscription/activate">
+                                        Open subscription activation
+                                    </Link>
+                                </Button>
+                            ) : null}
                         </CardContent>
                     </Card>
                 ) : null}
 
                 {categories.map((category) => {
                     const categoryModules = modules.filter(
-                        (module) => module.category === category,
+                        (module) =>
+                            module.category === category &&
+                            hasPermission(module.permission),
                     );
 
                     return (
@@ -214,13 +205,9 @@ export default function Modules() {
                                 </Badge>
                             </div>
 
-                            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                                {categoryModules.map((module) => {
-                                    const canAccess = hasPermission(
-                                        module.permission,
-                                    );
-
-                                    return (
+                            {categoryModules.length > 0 ? (
+                                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                                    {categoryModules.map((module) => (
                                         <Card
                                             key={module.name}
                                             className="flex min-h-56 flex-col rounded-3xl"
@@ -231,15 +218,9 @@ export default function Modules() {
                                                         <module.icon className="h-6 w-6" />
                                                     </div>
                                                     <Badge
-                                                        variant={
-                                                            canAccess
-                                                                ? 'secondary'
-                                                                : 'outline'
-                                                        }
+                                                        variant="secondary"
                                                     >
-                                                        {canAccess
-                                                            ? 'Ready'
-                                                            : 'No access'}
+                                                        Ready
                                                     </Badge>
                                                 </div>
                                                 <div className="space-y-2">
@@ -252,32 +233,20 @@ export default function Modules() {
                                                 </div>
                                             </CardHeader>
                                             <CardContent className="mt-auto pt-0">
-                                                {canAccess ? (
-                                                    <Button
-                                                        asChild
-                                                        className="w-full justify-between rounded-xl"
-                                                    >
-                                                        <Link
-                                                            href={module.href}
-                                                        >
-                                                            Launch module
-                                                            <ArrowRight className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        disabled
-                                                        variant="outline"
-                                                        className="w-full rounded-xl"
-                                                    >
-                                                        Access denied
-                                                    </Button>
-                                                )}
+                                                <Button
+                                                    asChild
+                                                    className="w-full justify-between rounded-xl"
+                                                >
+                                                    <Link href={module.href}>
+                                                        Launch module
+                                                        <ArrowRight className="h-4 w-4" />
+                                                    </Link>
+                                                </Button>
                                             </CardContent>
                                         </Card>
-                                    );
-                                })}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : null}
                         </section>
                     );
                 })}

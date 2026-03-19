@@ -9,9 +9,18 @@ use App\Http\Requests\StoreConsultationLabRequest;
 use App\Models\PatientVisit;
 use App\Support\DoctorConsultationAccess;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-final class DoctorConsultationLabRequestController
+final class DoctorConsultationLabRequestController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:consultations.update', only: ['store']),
+        ];
+    }
+
     public function store(
         StoreConsultationLabRequest $request,
         PatientVisit $visit,

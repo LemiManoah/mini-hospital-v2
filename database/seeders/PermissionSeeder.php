@@ -11,331 +11,188 @@ use Illuminate\Database\Seeder;
 
 final class PermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $permissions = [
-            'dashboard.view',
+        $permissionCatalog = $this->permissionCatalog();
+        $allPermissions = $this->expandPermissions($permissionCatalog);
 
-            'settings.update',
-
-            'countries.view',
-            'countries.create',
-            'countries.update',
-            'countries.delete',
-
-            'addresses.view',
-            'addresses.create',
-            'addresses.update',
-            'addresses.delete',
-
-            'currencies.view',
-            'currencies.create',
-            'currencies.update',
-            'currencies.delete',
-
-            'subscription_packages.view',
-            'subscription_packages.create',
-            'subscription_packages.update',
-            'subscription_packages.delete',
-
-            'allergens.view',
-            'allergens.create',
-            'allergens.update',
-            'allergens.delete',
-
-            'roles.view',
-            'roles.create',
-            'roles.update',
-            'roles.delete',
-
-            'permissions.view',
-            'permissions.create',
-            'permissions.update',
-            'permissions.delete',
-
-            'users.view',
-            'users.create',
-            'users.update',
-            'users.delete',
-
-            'patients.view',
-            'patients.create',
-            'patients.update',
-            'patients.delete',
-
-            'visits.view',
-            'visits.create',
-            'visits.update',
-            'visits.delete',
-
-            'appointments.view',
-            'appointments.create',
-            'appointments.update',
-            'appointments.delete',
-            'appointments.confirm',
-            'appointments.check_in',
-            'appointments.cancel',
-            'appointments.no_show',
-            'appointments.reschedule',
-
-            'doctor_schedules.view',
-            'doctor_schedules.create',
-            'doctor_schedules.update',
-            'doctor_schedules.delete',
-
-            'doctor_schedule_exceptions.view',
-            'doctor_schedule_exceptions.create',
-            'doctor_schedule_exceptions.update',
-            'doctor_schedule_exceptions.delete',
-
-            'appointment_categories.view',
-            'appointment_categories.create',
-            'appointment_categories.update',
-            'appointment_categories.delete',
-
-            'appointment_modes.view',
-            'appointment_modes.create',
-            'appointment_modes.update',
-            'appointment_modes.delete',
-
-            'triage.view',
-            'triage.create',
-            'triage.update',
-
-            'consultations.view',
-            'consultations.create',
-            'consultations.update',
-
-            'tenants.view',
-            'tenants.create',
-            'tenants.update',
-            'tenants.delete',
-
-            'facility_branches.view',
-            'facility_branches.create',
-            'facility_branches.update',
-            'facility_branches.delete',
-
-            'staff_positions.view',
-            'staff_positions.create',
-            'staff_positions.update',
-            'staff_positions.delete',
-
-            'staff.view',
-            'staff.create',
-            'staff.update',
-            'staff.delete',
-
-            'departments.view',
-            'departments.create',
-            'departments.update',
-            'departments.delete',
-
-            'clinics.view',
-            'clinics.create',
-            'clinics.update',
-            'clinics.delete',
-
-            'units.view',
-            'units.create',
-            'units.update',
-            'units.delete',
-
-            'drugs.view',
-            'drugs.create',
-            'drugs.update',
-            'drugs.delete',
-
-            'facility_services.view',
-            'facility_services.create',
-            'facility_services.update',
-            'facility_services.delete',
-
-            'insurance_companies.view',
-            'insurance_companies.create',
-            'insurance_companies.update',
-            'insurance_companies.delete',
-
-            'insurance_packages.view',
-            'insurance_packages.create',
-            'insurance_packages.update',
-            'insurance_packages.delete',
-
-            'insurance_claims.view',
-            'insurance_claims.create',
-            'insurance_claims.update',
-            'insurance_claims.delete',
-
-            'insurance_payments.view',
-            'insurance_payments.create',
-            'insurance_payments.update',
-            'insurance_payments.delete',
-
-
-
-
-        ];
-
-        $roles = [
-            'super_admin',
-            'admin',
-            'doctor',
-            'nurse',
-            'lab_technician',
-            'pharmacist',
-            'receptionist',
-            'accountant',
-            'cashier',
-            'human_resource',
-            'store_keeper',
-        ];
-
-        foreach ($permissions as $permission) {
+        foreach ($allPermissions as $permissionName) {
             Permission::query()->firstOrCreate([
-                'name' => $permission,
+                'name' => $permissionName,
                 'guard_name' => 'web',
             ]);
         }
 
-        foreach ($roles as $role) {
+        foreach (array_keys($this->roleDefinitions()) as $roleName) {
             Role::query()->firstOrCreate([
-                'name' => $role,
+                'name' => $roleName,
                 'guard_name' => 'web',
             ]);
         }
 
-        $superAdmin = Role::query()->where('name', 'super_admin')->first();
-        $superAdmin->givePermissionTo($permissions);
+        foreach ($this->resolvedRolePermissions($permissionCatalog, $allPermissions) as $roleName => $permissions) {
+            $role = Role::query()->where('name', $roleName)->firstOrFail();
+            $role->syncPermissions($permissions);
+        }
+    }
 
-        $admin = Role::query()->where('name', 'admin')->first();
-        $admin->givePermissionTo($permissions);
+    /**
+     * @return array<string, list<string>>
+     */
+    private function permissionCatalog(): array
+    {
+        return [
+            'dashboard' => ['view'],
+            'settings' => ['update'],
+            'countries' => ['view', 'create', 'update', 'delete'],
+            'addresses' => ['view', 'create', 'update', 'delete'],
+            'currencies' => ['view', 'create', 'update', 'delete'],
+            'subscription_packages' => ['view', 'create', 'update', 'delete'],
+            'allergens' => ['view', 'create', 'update', 'delete'],
+            'roles' => ['view', 'create', 'update', 'delete'],
+            'permissions' => ['view', 'create', 'update', 'delete'],
+            'users' => ['view', 'create', 'update', 'delete'],
+            'patients' => ['view', 'create', 'update', 'delete'],
+            'patient_allergies' => ['view', 'create', 'update', 'delete'],
+            'visits' => ['view', 'create', 'update', 'delete'],
+            'appointments' => ['view', 'create', 'update', 'delete', 'confirm', 'check_in', 'cancel', 'no_show', 'reschedule'],
+            'doctor_schedules' => ['view', 'create', 'update', 'delete'],
+            'doctor_schedule_exceptions' => ['view', 'create', 'update', 'delete'],
+            'appointment_categories' => ['view', 'create', 'update', 'delete'],
+            'appointment_modes' => ['view', 'create', 'update', 'delete'],
+            'triage' => ['view', 'create', 'update'],
+            'consultations' => ['view', 'create', 'update'],
+            'tenants' => ['view', 'create', 'update', 'delete', 'onboard', 'manage_subscription'],
+            'facility_branches' => ['view', 'create', 'update', 'delete'],
+            'staff_positions' => ['view', 'create', 'update', 'delete'],
+            'staff' => ['view', 'create', 'update', 'delete'],
+            'departments' => ['view', 'create', 'update', 'delete'],
+            'clinics' => ['view', 'create', 'update', 'delete'],
+            'units' => ['view', 'create', 'update', 'delete'],
+            'drugs' => ['view', 'create', 'update', 'delete'],
+            'facility_services' => ['view', 'create', 'update', 'delete'],
+            'insurance_companies' => ['view', 'create', 'update', 'delete'],
+            'insurance_packages' => ['view', 'create', 'update', 'delete'],
+            'insurance_claims' => ['view', 'create', 'update', 'delete'],
+            'insurance_payments' => ['view', 'create', 'update', 'delete'],
+        ];
+    }
 
-        $doctor = Role::query()->where('name', 'doctor')->first();
-        $doctor->givePermissionTo([
-            'dashboard.view',
-            'patients.view',
-            'patients.create',
-            'patients.update',
-            'patients.delete',
-            'visits.view',
-            'visits.create',
-            'visits.update',
-            'visits.delete',
-            'appointments.view',
-            'appointments.update',
-            'consultations.view',
-            'consultations.create',
-            'consultations.update',
-        ]);
+    /**
+     * @return array<string, array<string, list<string>>>
+     */
+    private function roleDefinitions(): array
+    {
+        return [
+            'super_admin' => [],
+            'admin' => [],
+            'doctor' => [
+                'patients' => ['view', 'create', 'update', 'delete'],
+                'patient_allergies' => ['view', 'create', 'update'],
+                'visits' => ['view', 'create', 'update', 'delete'],
+                'appointments' => ['view', 'update'],
+                'consultations' => ['view', 'create', 'update'],
+            ],
+            'nurse' => [
+                'patients' => ['view', 'create', 'update', 'delete'],
+                'patient_allergies' => ['view', 'create', 'update'],
+                'visits' => ['view', 'create', 'update', 'delete'],
+                'appointments' => ['view', 'update'],
+                'triage' => ['view', 'create', 'update'],
+            ],
+            'lab_technician' => [
+                'patients' => ['view'],
+                'visits' => ['view', 'update'],
+                'appointments' => ['view'],
+            ],
+            'pharmacist' => [
+                'patients' => ['view', 'create', 'update', 'delete'],
+                'patient_allergies' => ['view'],
+                'visits' => ['view', 'create', 'update', 'delete'],
+                'appointments' => ['view'],
+                'drugs' => ['view', 'create', 'update', 'delete'],
+                'units' => ['view', 'create', 'update', 'delete'],
+                'facility_services' => ['view', 'create', 'update', 'delete'],
+            ],
+            'receptionist' => [
+                'patients' => ['view', 'create', 'update'],
+                'patient_allergies' => ['view', 'create', 'update'],
+                'visits' => ['view', 'create', 'update'],
+                'appointments' => ['view', 'create', 'update', 'confirm', 'check_in', 'cancel', 'no_show', 'reschedule'],
+                'doctor_schedules' => ['view'],
+                'doctor_schedule_exceptions' => ['view', 'create', 'update', 'delete'],
+                'appointment_categories' => ['view'],
+                'appointment_modes' => ['view'],
+            ],
+            'accountant' => [
+                'patients' => ['view'],
+                'visits' => ['view'],
+                'appointments' => ['view'],
+            ],
+            'cashier' => [
+                'patients' => ['view', 'create', 'update'],
+                'visits' => ['view', 'create', 'update'],
+                'appointments' => ['view'],
+            ],
+            'human_resource' => [
+                'users' => ['view', 'create', 'update'],
+                'roles' => ['view'],
+                'staff' => ['view', 'create', 'update', 'delete'],
+                'staff_positions' => ['view', 'create', 'update', 'delete'],
+                'departments' => ['view'],
+                'clinics' => ['view'],
+            ],
+            'store_keeper' => [
+                'drugs' => ['view', 'create', 'update', 'delete'],
+                'units' => ['view', 'create', 'update', 'delete'],
+                'facility_services' => ['view'],
+            ],
+        ];
+    }
 
-        $nurse = Role::query()->where('name', 'nurse')->first();
-        $nurse->givePermissionTo([
-            'dashboard.view',
-            'patients.view',
-            'patients.create',
-            'patients.update',
-            'patients.delete',
-            'visits.view',
-            'visits.create',
-            'visits.update',
-            'visits.delete',
-            'appointments.view',
-            'appointments.update',
-            'triage.view',
-            'triage.create',
-            'triage.update',
-        ]);
+    /**
+     * @param  array<string, list<string>>  $catalog
+     * @return list<string>
+     */
+    private function expandPermissions(array $catalog): array
+    {
+        return collect($catalog)
+            ->flatMap(
+        static fn(array $abilities, string $resource) => collect($abilities)
+        ->map(static fn(string $ability): string => sprintf('%s.%s', $resource, $ability))
+        )
+            ->values()
+            ->all();
+    }
 
-        $labTechnician = Role::query()->where('name', 'lab_technician')->first();
-        $labTechnician->givePermissionTo([
-            'dashboard.view',
-            'patients.view',
-            'visits.view',
-            'visits.update',
-            'appointments.view',
-        ]);
+    /**
+     * @param  array<string, list<string>>  $catalog
+     * @param  list<string>  $allPermissions
+     * @return array<string, list<string>>
+     */
+    private function resolvedRolePermissions(array $catalog, array $allPermissions): array
+    {
+        return collect($this->roleDefinitions())
+            ->map(function (array $definition, string $role) use ($allPermissions): array {
+            if (in_array($role, ['super_admin', 'admin'], true)) {
+                return $allPermissions;
+            }
 
-        $pharmacist = Role::query()->where('name', 'pharmacist')->first();
-        $pharmacist->givePermissionTo([
-            'dashboard.view',
-            'patients.view',
-            'patients.create',
-            'patients.update',
-            'patients.delete',
-            'visits.view',
-            'visits.create',
-            'visits.update',
-            'visits.delete',
-            'appointments.view',
-            'drugs.view',
-            'drugs.create',
-            'drugs.update',
-            'drugs.delete',
-            'units.view',
-            'units.create',
-            'units.update',
-            'units.delete',
-            'facility_services.view',
-            'facility_services.create',
-            'facility_services.update',
-            'facility_services.delete',
-        ]);
+            return $this->expandPermissions($this->withCommonTenantAccess($definition));
+        })
+            ->all();
+    }
 
-        $receptionist = Role::query()->where('name', 'receptionist')->first();
-        $receptionist->givePermissionTo([
-            'dashboard.view',
-            'patients.view',
-            'patients.create',
-            'patients.update',
-            'visits.view',
-            'visits.create',
-            'visits.update',
-            'appointments.view',
-            'appointments.create',
-            'appointments.update',
-            'appointments.confirm',
-            'appointments.check_in',
-            'appointments.cancel',
-            'appointments.no_show',
-            'appointments.reschedule',
-            'doctor_schedules.view',
-            'doctor_schedule_exceptions.view',
-            'doctor_schedule_exceptions.create',
-            'doctor_schedule_exceptions.update',
-            'doctor_schedule_exceptions.delete',
-            'appointment_categories.view',
-            'appointment_modes.view',
-        ]);
-
-        $accountant = Role::query()->where('name', 'accountant')->first();
-        $accountant->givePermissionTo([
-            'dashboard.view',
-            'patients.view',
-            'visits.view',
-            'visits.create',
-            'visits.update',
-            'appointments.view',
-        ]);
-
-        $cashier = Role::query()->where('name', 'cashier')->first();
-        $cashier->givePermissionTo([
-            'dashboard.view',
-            'patients.view',
-            'patients.create',
-            'patients.update',
-            'visits.view',
-            'visits.create',
-            'visits.update',
-            'appointments.view',
-        ]);
-
-        $humanResource = Role::query()->where('name', 'human_resource')->first();
-        $humanResource->givePermissionTo($permissions);
-
-        $storeKeeper = Role::query()->where('name', 'store_keeper')->first();
-        $storeKeeper->givePermissionTo($permissions);
+    /**
+     * @param  array<string, list<string>>  $definition
+     * @return array<string, list<string>>
+     */
+    private function withCommonTenantAccess(array $definition): array
+    {
+        return [
+            'dashboard' => ['view'],
+            'facility_branches' => ['view', 'update'],
+            ...$definition,
+        ];
     }
 }

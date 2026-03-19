@@ -12,11 +12,23 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class PatientAllergyController
+final readonly class PatientAllergyController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:patient_allergies.view', only: ['index']),
+            new Middleware('permission:patient_allergies.create', only: ['create', 'store']),
+            new Middleware('permission:patient_allergies.update', only: ['edit', 'update', 'toggleActive']),
+            new Middleware('permission:patient_allergies.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request, Patient $patient): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

@@ -15,14 +15,17 @@ final class SupportUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create a support user for internal company use
-        User::query()->firstOrCreate(
-            ['email' => 'support@mini-hospital.com'],
-            [
-                'password' => Hash::make('password'),
-                'is_support' => true,
-                'email_verified_at' => now(),
-            ]
-        );
+        // Create or repair the internal support user account.
+        $user = User::query()->firstOrNew([
+            'email' => 'support@mini-hospital.com',
+        ]);
+
+        $user->forceFill([
+            'password' => $user->exists ? $user->password : Hash::make('password'),
+            'is_support' => true,
+            'email_verified_at' => $user->email_verified_at ?? now(),
+        ])->save();
+
+        $user->syncRoles(['admin']);
     }
 }

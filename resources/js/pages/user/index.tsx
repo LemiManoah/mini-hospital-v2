@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { formatIdentifierLabel } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { type User, type UserIndexPageProps } from '@/types/user';
@@ -32,6 +33,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function UserIndex({ users, filters }: UserIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: User[] = Array.isArray(users) ? users : (users.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -72,14 +74,16 @@ export default function UserIndex({ users, filters }: UserIndexPageProps) {
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link href={UserController.create.url()} className="gap-2">
-                        <span>+ Add User</span>
-                    </Link>
-                </Button>
+                {hasPermission('users.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                    >
+                        <Link href={UserController.create.url()} className="gap-2">
+                            <span>+ Add User</span>
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -124,45 +128,49 @@ export default function UserIndex({ users, filters }: UserIndexPageProps) {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                                className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
-                                            >
-                                                <Link
-                                                    href={UserController.edit.url(
-                                                        { user },
-                                                    )}
+                                            {hasPermission('users.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                    className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
                                                 >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-
-                                            <DeleteConfirmationModal
-                                                title="Delete User"
-                                                description={`Are you sure you want to delete the user "${formatIdentifierLabel(user.name)}"? This action cannot be undone.`}
-                                                action={{
-                                                    action: UserController.destroy.url(
-                                                        { user },
-                                                    ),
-                                                    method: 'delete',
-                                                }}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        `User "${formatIdentifierLabel(user.name)}" deleted successfully.`,
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="h-8 cursor-pointer px-3 text-xs shadow-sm"
+                                                    <Link
+                                                        href={UserController.edit.url(
+                                                            { user },
+                                                        )}
                                                     >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+
+                                            {hasPermission('users.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete User"
+                                                    description={`Are you sure you want to delete the user "${formatIdentifierLabel(user.name)}"? This action cannot be undone.`}
+                                                    action={{
+                                                        action: UserController.destroy.url(
+                                                            { user },
+                                                        ),
+                                                        method: 'delete',
+                                                    }}
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            `User "${formatIdentifierLabel(user.name)}" deleted successfully.`,
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            className="h-8 cursor-pointer px-3 text-xs shadow-sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

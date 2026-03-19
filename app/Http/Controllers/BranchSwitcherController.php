@@ -9,11 +9,22 @@ use App\Models\User;
 use App\Support\BranchContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class BranchSwitcherController
+final readonly class BranchSwitcherController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:facility_branches.view', only: ['index']),
+            new Middleware('permission:facility_branches.update', only: ['switch']),
+        ];
+    }
+
     public function index(Request $request): Response|RedirectResponse
     {
         /** @var User $user */
@@ -22,6 +33,8 @@ final readonly class BranchSwitcherController
         if ($user->tenant_id === null) {
             return to_route('facility-switcher.index');
         }
+
+        Gate::authorize('viewAny', FacilityBranch::class);
 
         $branches = BranchContext::getAccessibleBranches($user)
             ->map(fn (FacilityBranch $branch): array => [
@@ -43,8 +56,9 @@ final readonly class BranchSwitcherController
     {
         /** @var User $user */
         $user = $request->user();
+        $branch = FacilityBranch::query()->findOrFail($branchId);
 
-        abort_unless(BranchContext::canAccessBranch($user, $branchId), 403, 'You are not allowed to switch to this branch.');
+        Gate::authorize('switchTo', $branch);
 
         BranchContext::setActiveBranchId($branchId);
 

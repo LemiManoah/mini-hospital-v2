@@ -26,11 +26,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class DoctorConsultationController
+final class DoctorConsultationController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:consultations.view', only: ['index', 'show']),
+            new Middleware('permission:consultations.create', only: ['store']),
+            new Middleware('permission:consultations.update', only: ['update']),
+        ];
+    }
+
     public function index(Request $request, DoctorConsultationAccess $consultationAccess): Response
     {
         $staffId = $consultationAccess->resolveStaffId();

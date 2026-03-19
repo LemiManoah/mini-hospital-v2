@@ -9,6 +9,7 @@ use App\Models\TenantSubscription;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,6 +26,8 @@ final readonly class SubscriptionActivationController
         if (! $user instanceof User || $user->tenant === null) {
             return to_route('home');
         }
+
+        Gate::authorize('manageSubscription', $user->tenant);
 
         $subscription = $user->tenant->currentSubscription()
             ->with('subscriptionPackage')
@@ -50,6 +53,8 @@ final readonly class SubscriptionActivationController
         if (! $user instanceof User || $user->tenant === null) {
             return to_route('home');
         }
+
+        Gate::authorize('manageSubscription', $user->tenant);
 
         $subscription = $user->tenant->currentSubscription()->first();
 
@@ -84,6 +89,8 @@ final readonly class SubscriptionActivationController
             return to_route('home');
         }
 
+        Gate::authorize('manageSubscription', $user->tenant);
+
         $subscription = $user->tenant->currentSubscription()
             ->with('subscriptionPackage')
             ->first();
@@ -108,6 +115,8 @@ final readonly class SubscriptionActivationController
         if (! $user instanceof User || $user->tenant === null) {
             return to_route('home');
         }
+
+        Gate::authorize('manageSubscription', $user->tenant);
 
         $subscription = $user->tenant->currentSubscription()->first();
 
@@ -140,6 +149,8 @@ final readonly class SubscriptionActivationController
         if (! $user instanceof User || $user->tenant === null) {
             return to_route('home');
         }
+
+        Gate::authorize('manageSubscription', $user->tenant);
 
         $subscription = $user->tenant->currentSubscription()->first();
 

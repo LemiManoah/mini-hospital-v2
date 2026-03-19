@@ -33,10 +33,10 @@
 
 ### Milestone 4: SaaS Admin Operations
 
-- [ ] Add internal tenant lifecycle dashboard
-- [ ] Show onboarding state to support/admin users
-- [ ] Show subscription state to support/admin users
-- [ ] Add controlled support actions for activation and recovery
+- [x] Add internal tenant lifecycle dashboard
+- [x] Show onboarding state to support/admin users
+- [x] Show subscription state to support/admin users
+- [x] Add controlled support actions for activation and recovery
 
 ---
 

@@ -16,11 +16,23 @@ use App\Models\FacilityBranch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class ClinicController
+final readonly class ClinicController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:clinics.view', only: ['index']),
+            new Middleware('permission:clinics.create', only: ['create', 'store']),
+            new Middleware('permission:clinics.update', only: ['edit', 'update']),
+            new Middleware('permission:clinics.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

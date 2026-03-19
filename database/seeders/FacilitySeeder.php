@@ -6,209 +6,345 @@ namespace Database\Seeders;
 
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
+use App\Enums\SubscriptionStatus;
 use App\Models\Address;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
+use App\Models\TenantSubscription;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
 final class FacilitySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Get dependencies
         $package = SubscriptionPackage::query()->first();
-        $uganda = Country::query()->where('country_code', 'UG')->first();
-        $kenya = Country::query()->where('country_code', 'KE')->first();
-        $ugxCurrency = Currency::query()->where('code', 'UGX')->first();
-        $kesCurrency = Currency::query()->where('code', 'KES')->first();
 
-        if (! $package || ! $uganda || ! $kenya || ! $ugxCurrency || ! $kesCurrency) {
-            return;
+        if (! $package instanceof SubscriptionPackage) {
+            throw new RuntimeException('FacilitySeeder requires at least one subscription package.');
         }
 
-        // Create addresses for facilities
-        $kampalaAddress = Address::query()->firstOrCreate([
-            'city' => 'Kampala',
-            'district' => 'Kampala Central',
-            'state' => 'Central',
-            'country_id' => $uganda->id,
+        $countries = Country::query()
+            ->whereIn('country_code', ['RW', 'UG', 'KE'])
+            ->get()
+            ->keyBy('country_code');
 
-        ]);
+        $currencies = Currency::query()
+            ->whereIn('code', ['RWF', 'UGX', 'KES'])
+            ->get()
+            ->keyBy('code');
 
-        $entebbeAddress = Address::query()->firstOrCreate([
-            'city' => 'Entebbe',
-            'district' => 'Wakiso',
-            'state' => 'Central',
-            'country_id' => $uganda->id,
-        ]);
+        foreach (['RW', 'UG', 'KE'] as $countryCode) {
+            if (! $countries->has($countryCode)) {
+                throw new RuntimeException("FacilitySeeder requires country [{$countryCode}] to be seeded first.");
+            }
+        }
 
-        $mukonoAddress = Address::query()->firstOrCreate([
-            'city' => 'Mukono',
-            'district' => 'Mukono',
-            'state' => 'Central',
-            'country_id' => $uganda->id,
-        ]);
+        foreach (['RWF', 'UGX', 'KES'] as $currencyCode) {
+            if (! $currencies->has($currencyCode)) {
+                throw new RuntimeException("FacilitySeeder requires currency [{$currencyCode}] to be seeded first.");
+            }
+        }
 
-        $nairobiAddress = Address::query()->firstOrCreate([
-            'city' => 'Nairobi',
-            'district' => 'Nairobi County',
-            'state' => 'Nairobi',
-            'country_id' => $kenya->id,
-        ]);
+        foreach ($this->facilityBlueprints() as $facility) {
+            /** @var Country $country */
+            $country = $countries->get($facility['country_code']);
 
-        $mombasaAddress = Address::query()->firstOrCreate([
-            'city' => 'Mombasa',
-            'district' => 'Mombasa County',
-            'state' => 'Coast',
-            'country_id' => $kenya->id,
-        ]);
+            /** @var Currency $currency */
+            $currency = $currencies->get($facility['currency_code']);
 
-        // Facility 1: Multi-branch Hospital (has_branches = true)
-        $multiBranchTenant = Tenant::query()->firstOrCreate([
-            'name' => 'City General Hospital',
-            'domain' => 'citygeneral',
-        ], [
-            'has_branches' => true,
-            'subscription_package_id' => $package->id,
-            'status' => GeneralStatus::ACTIVE,
-            'country_id' => $uganda->id,
-            'address_id' => $kampalaAddress->id,
-            'facility_level' => FacilityLevel::HOSPITAL->value,
-            'longitude' => 32.5726,
-            'latitude' => 0.3166,
-        ]);
+            $tenantAddress = $this->upsertAddress($facility['address'], $country);
 
-        // Main branch for multi-branch facility
-        FacilityBranch::query()->firstOrCreate([
-            'tenant_id' => $multiBranchTenant->id,
-            'branch_code' => 'CGH-MAIN',
-        ], [
-            'name' => 'City General Hospital - Main Branch',
-            'address_id' => $kampalaAddress->id,
-            'currency_id' => $ugxCurrency->id,
-            'status' => GeneralStatus::ACTIVE,
-            'is_main_branch' => true,
-            'has_store' => true,
-            'main_contact' => '+256 414 123456',
-            'other_contact' => '+256 414 123457',
-            'email' => 'main@citygeneral.ug',
-        ]);
+            $tenant = Tenant::query()->updateOrCreate(
+                ['domain' => $facility['domain']],
+                [
+                    'name' => $facility['name'],
+                    'has_branches' => $facility['has_branches'],
+                    'subscription_package_id' => $package->id,
+                    'status' => GeneralStatus::ACTIVE->value,
+                    'country_id' => $country->id,
+                    'address_id' => $tenantAddress->id,
+                    'facility_level' => $facility['facility_level']->value,
+                    'longitude' => $facility['longitude'],
+                    'latitude' => $facility['latitude'],
+                    'onboarding_completed_at' => $facility['onboarding_completed_at'],
+                    'onboarding_current_step' => $facility['onboarding_current_step'],
+                ],
+            );
 
-        // Branch 1 for multi-branch facility
-        FacilityBranch::query()->firstOrCreate([
-            'tenant_id' => $multiBranchTenant->id,
-            'branch_code' => 'CGH-ENT',
-        ], [
-            'name' => 'City General Hospital - Entebbe Branch',
-            'address_id' => $entebbeAddress->id,
-            'currency_id' => $ugxCurrency->id,
-            'status' => GeneralStatus::ACTIVE,
-            'is_main_branch' => false,
-            'has_store' => true,
-            'main_contact' => '+256 414 234567',
-            'other_contact' => '+256 414 234568',
-            'email' => 'entebbe@citygeneral.ug',
-        ]);
+            $this->upsertSubscription($tenant, $package, $facility['subscription']);
 
-        // Branch 2 for multi-branch facility
-        FacilityBranch::query()->firstOrCreate([
-            'tenant_id' => $multiBranchTenant->id,
-            'branch_code' => 'CGH-MUK',
-        ], [
-            'name' => 'City General Hospital - Mukono Branch',
-            'address_id' => $mukonoAddress->id,
-            'currency_id' => $ugxCurrency->id,
-            'status' => GeneralStatus::ACTIVE,
-            'is_main_branch' => false,
-            'has_store' => false,
-            'main_contact' => '+256 414 345678',
-            'other_contact' => '+256 414 345679',
-            'email' => 'mukono@citygeneral.ug',
-        ]);
+            foreach ($facility['branches'] as $branch) {
+                $branchAddress = $this->upsertAddress($branch['address'], $country);
 
-        // Facility 2: Single-branch Clinic (has_branches = false)
-        $singleBranchTenant = Tenant::query()->firstOrCreate([
-            'name' => 'Nairobi Medical Center',
-            'domain' => 'nairoimedical',
-        ], [
-            'has_branches' => false,
-            'subscription_package_id' => $package->id,
-            'status' => GeneralStatus::ACTIVE,
-            'country_id' => $kenya->id,
-            'address_id' => $nairobiAddress->id,
-            'facility_level' => FacilityLevel::HEALTH_CENTER_III->value,
-            'longitude' => 36.8219,
-            'latitude' => -1.2921,
-        ]);
+                FacilityBranch::query()->updateOrCreate(
+                    [
+                        'tenant_id' => $tenant->id,
+                        'branch_code' => $branch['branch_code'],
+                    ],
+                    [
+                        'name' => $branch['name'],
+                        'address_id' => $branchAddress->id,
+                        'currency_id' => $currency->id,
+                        'status' => GeneralStatus::ACTIVE->value,
+                        'is_main_branch' => $branch['is_main_branch'],
+                        'has_store' => $branch['has_store'],
+                        'main_contact' => $branch['main_contact'],
+                        'other_contact' => $branch['other_contact'],
+                        'email' => $branch['email'],
+                    ],
+                );
+            }
+        }
+    }
 
-        // Single branch facility (main branch)
-        FacilityBranch::query()->firstOrCreate([
-            'tenant_id' => $singleBranchTenant->id,
-            'branch_code' => 'NMC-MAIN',
-        ], [
-            'name' => 'Nairobi Medical Center',
-            'address_id' => $nairobiAddress->id,
-            'currency_id' => $kesCurrency->id,
-            'status' => GeneralStatus::ACTIVE,
-            'is_main_branch' => true,
-            'has_store' => true,
-            'main_contact' => '+254 20 123456',
-            'other_contact' => '+254 20 123457',
-            'email' => 'info@nairoimedical.ke',
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function facilityBlueprints(): array
+    {
+        return [
+            [
+                'name' => 'Kigali Heights Referral Hospital',
+                'domain' => 'kigaliheights',
+                'country_code' => 'RW',
+                'currency_code' => 'RWF',
+                'has_branches' => true,
+                'facility_level' => FacilityLevel::REFERRAL_HOSPITAL,
+                'longitude' => 30.0588,
+                'latitude' => -1.9441,
+                'onboarding_completed_at' => now()->subDays(20),
+                'onboarding_current_step' => 'completed',
+                'subscription' => [
+                    'status' => SubscriptionStatus::ACTIVE,
+                    'starts_at' => now()->subDays(20),
+                    'trial_ends_at' => now()->subDays(6),
+                    'activated_at' => now()->subDays(7),
+                    'current_period_starts_at' => now()->subDays(7),
+                    'current_period_ends_at' => now()->addDays(23),
+                    'meta' => [
+                        'source' => 'facility_seeder',
+                        'seed_scenario' => 'active_multi_branch',
+                    ],
+                ],
+                'address' => [
+                    'city' => 'Kigali',
+                    'district' => 'Gasabo',
+                    'state' => 'Kigali City',
+                ],
+                'branches' => [
+                    [
+                        'branch_code' => 'KHRH-MAIN',
+                        'name' => 'Kigali Heights Main Campus',
+                        'is_main_branch' => true,
+                        'has_store' => true,
+                        'main_contact' => '+250 788 100001',
+                        'other_contact' => '+250 788 100002',
+                        'email' => 'main@kigaliheights.rw',
+                        'address' => [
+                            'city' => 'Kigali',
+                            'district' => 'Gasabo',
+                            'state' => 'Kigali City',
+                        ],
+                    ],
+                    [
+                        'branch_code' => 'KHRH-REM',
+                        'name' => 'Kigali Heights Remera Clinic',
+                        'is_main_branch' => false,
+                        'has_store' => true,
+                        'main_contact' => '+250 788 110001',
+                        'other_contact' => '+250 788 110002',
+                        'email' => 'remera@kigaliheights.rw',
+                        'address' => [
+                            'city' => 'Kigali',
+                            'district' => 'Kicukiro',
+                            'state' => 'Kigali City',
+                        ],
+                    ],
+                    [
+                        'branch_code' => 'KHRH-MUS',
+                        'name' => 'Kigali Heights Musanze Outreach',
+                        'is_main_branch' => false,
+                        'has_store' => false,
+                        'main_contact' => '+250 788 120001',
+                        'other_contact' => '+250 788 120002',
+                        'email' => 'musanze@kigaliheights.rw',
+                        'address' => [
+                            'city' => 'Musanze',
+                            'district' => 'Musanze',
+                            'state' => 'Northern Province',
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'City General Hospital',
+                'domain' => 'citygeneral',
+                'country_code' => 'UG',
+                'currency_code' => 'UGX',
+                'has_branches' => true,
+                'facility_level' => FacilityLevel::HOSPITAL,
+                'longitude' => 32.5726,
+                'latitude' => 0.3166,
+                'onboarding_completed_at' => now()->subDays(12),
+                'onboarding_current_step' => 'completed',
+                'subscription' => [
+                    'status' => SubscriptionStatus::PENDING_ACTIVATION,
+                    'starts_at' => now()->subDays(10),
+                    'trial_ends_at' => now()->addDays(4),
+                    'activated_at' => null,
+                    'current_period_starts_at' => now()->subDays(10),
+                    'current_period_ends_at' => now()->addDays(4),
+                    'meta' => [
+                        'source' => 'facility_seeder',
+                        'seed_scenario' => 'pending_checkout_multi_branch',
+                    ],
+                ],
+                'address' => [
+                    'city' => 'Kampala',
+                    'district' => 'Kampala Central',
+                    'state' => 'Central',
+                ],
+                'branches' => [
+                    [
+                        'branch_code' => 'CGH-MAIN',
+                        'name' => 'City General Hospital - Main Branch',
+                        'is_main_branch' => true,
+                        'has_store' => true,
+                        'main_contact' => '+256 414 123456',
+                        'other_contact' => '+256 414 123457',
+                        'email' => 'main@citygeneral.ug',
+                        'address' => [
+                            'city' => 'Kampala',
+                            'district' => 'Kampala Central',
+                            'state' => 'Central',
+                        ],
+                    ],
+                    [
+                        'branch_code' => 'CGH-ENT',
+                        'name' => 'City General Hospital - Entebbe Branch',
+                        'is_main_branch' => false,
+                        'has_store' => true,
+                        'main_contact' => '+256 414 234567',
+                        'other_contact' => '+256 414 234568',
+                        'email' => 'entebbe@citygeneral.ug',
+                        'address' => [
+                            'city' => 'Entebbe',
+                            'district' => 'Wakiso',
+                            'state' => 'Central',
+                        ],
+                    ],
+                    [
+                        'branch_code' => 'CGH-MUK',
+                        'name' => 'City General Hospital - Mukono Branch',
+                        'is_main_branch' => false,
+                        'has_store' => false,
+                        'main_contact' => '+256 414 345678',
+                        'other_contact' => '+256 414 345679',
+                        'email' => 'mukono@citygeneral.ug',
+                        'address' => [
+                            'city' => 'Mukono',
+                            'district' => 'Mukono',
+                            'state' => 'Central',
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Nairobi Medical Center',
+                'domain' => 'nairoimedical',
+                'country_code' => 'KE',
+                'currency_code' => 'KES',
+                'has_branches' => false,
+                'facility_level' => FacilityLevel::HEALTH_CENTER_III,
+                'longitude' => 36.8219,
+                'latitude' => -1.2921,
+                'onboarding_completed_at' => null,
+                'onboarding_current_step' => 'departments',
+                'subscription' => [
+                    'status' => SubscriptionStatus::TRIAL,
+                    'starts_at' => now()->subDays(3),
+                    'trial_ends_at' => now()->addDays(11),
+                    'activated_at' => null,
+                    'current_period_starts_at' => now()->subDays(3),
+                    'current_period_ends_at' => now()->addDays(11),
+                    'meta' => [
+                        'source' => 'facility_seeder',
+                        'seed_scenario' => 'trial_single_branch_mid_onboarding',
+                    ],
+                ],
+                'address' => [
+                    'city' => 'Nairobi',
+                    'district' => 'Nairobi County',
+                    'state' => 'Nairobi',
+                ],
+                'branches' => [
+                    [
+                        'branch_code' => 'NMC-MAIN',
+                        'name' => 'Nairobi Medical Center',
+                        'is_main_branch' => true,
+                        'has_store' => true,
+                        'main_contact' => '+254 20 123456',
+                        'other_contact' => '+254 20 123457',
+                        'email' => 'info@nairoimedical.ke',
+                        'address' => [
+                            'city' => 'Nairobi',
+                            'district' => 'Nairobi County',
+                            'state' => 'Nairobi',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
 
-        ]);
+    /**
+     * @param array{city: string, district: string, state: string} $address
+     */
+    private function upsertAddress(array $address, Country $country): Address
+    {
+        return Address::query()->updateOrCreate(
+            [
+                'city' => $address['city'],
+                'district' => $address['district'],
+                'country_id' => $country->id,
+            ],
+            [
+                'state' => $address['state'],
+            ],
+        );
+    }
 
-        // Facility 3: Another multi-branch facility (has_branches = true)
-        $multiBranchTenant2 = Tenant::query()->firstOrCreate([
-            'name' => 'Coastal Healthcare Group',
-            'domain' => 'coastalhealth',
-        ], [
-            'has_branches' => true,
-            'subscription_package_id' => $package->id,
-            'status' => GeneralStatus::ACTIVE,
-            'country_id' => $kenya->id,
-            'address_id' => $mombasaAddress->id,
-            'facility_level' => FacilityLevel::HEALTH_CENTER_II->value,
-            'longitude' => 39.6682,
-            'latitude' => -4.0435,
-        ]);
-
-        // Main branch for second multi-branch facility
-        FacilityBranch::query()->firstOrCreate([
-            'tenant_id' => $multiBranchTenant2->id,
-            'branch_code' => 'CHG-MOM',
-        ], [
-            'name' => 'Coastal Healthcare - Mombasa Main',
-            'address_id' => $mombasaAddress->id,
-            'currency_id' => $kesCurrency->id,
-            'status' => GeneralStatus::ACTIVE,
-            'is_main_branch' => true,
-            'has_store' => true,
-            'main_contact' => '+254 41 234567',
-            'other_contact' => '+254 41 234568',
-            'email' => 'info@coastalhealth.ke',
-        ]);
-
-        // Branch for second multi-branch facility
-        FacilityBranch::query()->firstOrCreate([
-            'tenant_id' => $multiBranchTenant2->id,
-            'branch_code' => 'CHG-DIANI',
-        ], [
-            'name' => 'Coastal Healthcare - Diani Branch',
-            'address_id' => $mombasaAddress->id, // Using same city for simplicity
-            'currency_id' => $kesCurrency->id,
-            'status' => GeneralStatus::ACTIVE,
-            'is_main_branch' => false,
-            'has_store' => true,
-            'main_contact' => '+254 41 345678',
-            'other_contact' => '+254 41 345679',
-            'email' => 'diani@coastalhealth.ke',
-        ]);
+    /**
+     * @param array{
+     *     status: SubscriptionStatus,
+     *     starts_at: \Illuminate\Support\Carbon,
+     *     trial_ends_at: \Illuminate\Support\Carbon|null,
+     *     activated_at: \Illuminate\Support\Carbon|null,
+     *     current_period_starts_at: \Illuminate\Support\Carbon|null,
+     *     current_period_ends_at: \Illuminate\Support\Carbon|null,
+     *     meta: array<string, mixed>
+     * } $subscription
+     */
+    private function upsertSubscription(Tenant $tenant, SubscriptionPackage $package, array $subscription): void
+    {
+        TenantSubscription::query()->updateOrCreate(
+            [
+                'tenant_id' => $tenant->id,
+                'subscription_package_id' => $package->id,
+            ],
+            [
+                'status' => $subscription['status']->value,
+                'starts_at' => $subscription['starts_at'],
+                'trial_ends_at' => $subscription['trial_ends_at'],
+                'activated_at' => $subscription['activated_at'],
+                'current_period_starts_at' => $subscription['current_period_starts_at'],
+                'current_period_ends_at' => $subscription['current_period_ends_at'],
+                'meta' => $subscription['meta'],
+            ],
+        );
     }
 }

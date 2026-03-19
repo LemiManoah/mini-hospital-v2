@@ -15,11 +15,23 @@ use App\Models\InsurancePackage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class InsurancePackageController
+final readonly class InsurancePackageController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:insurance_packages.view', only: ['index']),
+            new Middleware('permission:insurance_packages.create', only: ['create', 'store']),
+            new Middleware('permission:insurance_packages.update', only: ['edit', 'update']),
+            new Middleware('permission:insurance_packages.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

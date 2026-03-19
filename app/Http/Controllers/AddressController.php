@@ -15,11 +15,23 @@ use App\Models\Country;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class AddressController
+final readonly class AddressController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:addresses.view', only: ['index']),
+            new Middleware('permission:addresses.create', only: ['create', 'store']),
+            new Middleware('permission:addresses.update', only: ['edit', 'update']),
+            new Middleware('permission:addresses.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

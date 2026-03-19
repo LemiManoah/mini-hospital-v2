@@ -25,6 +25,7 @@ use App\Models\StaffPosition;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,6 +45,8 @@ final class OnboardingController
         if ($user->tenant->isOnboardingComplete()) {
             return to_route('home');
         }
+
+        Gate::authorize('onboard', $user->tenant);
 
         $tenant = $user->tenant->loadMissing(['country', 'address']);
         $ensureTenantStaffPositions->handle($tenant);
@@ -185,6 +188,7 @@ final class OnboardingController
         $user = $request->user();
 
         if ($user instanceof User && $user->tenant !== null) {
+            Gate::authorize('onboard', $user->tenant);
             $updateOnboardingProfile->handle($user->tenant, $request->validated());
         }
 
@@ -199,6 +203,7 @@ final class OnboardingController
         $user = $request->user();
 
         if ($user instanceof User && $user->tenant !== null) {
+            Gate::authorize('onboard', $user->tenant);
             $createOnboardingPrimaryBranch->handle(
                 $user->tenant,
                 $user,
@@ -217,6 +222,7 @@ final class OnboardingController
         $user = $request->user();
 
         if ($user instanceof User && $user->tenant !== null) {
+            Gate::authorize('onboard', $user->tenant);
             $bootstrapOnboardingDepartments->handle(
                 $user->tenant,
                 $user,
@@ -235,6 +241,7 @@ final class OnboardingController
         $user = $request->user();
 
         if ($user instanceof User && $user->tenant !== null) {
+            Gate::authorize('onboard', $user->tenant);
             $bootstrapOnboardingStaffMember->handle(
                 $user->tenant,
                 $user,

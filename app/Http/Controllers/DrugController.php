@@ -16,11 +16,23 @@ use App\Models\Drug;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class DrugController
+final readonly class DrugController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:drugs.view', only: ['index']),
+            new Middleware('permission:drugs.create', only: ['create', 'store']),
+            new Middleware('permission:drugs.update', only: ['edit', 'update']),
+            new Middleware('permission:drugs.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

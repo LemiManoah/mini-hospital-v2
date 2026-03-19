@@ -28,6 +28,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useDateRangeQueryFilters } from '@/hooks/use-date-range-query-filters';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type Appointment,
@@ -136,6 +137,7 @@ export default function AppointmentIndex({
     filters,
     statusOptions,
 }: AppointmentIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: Appointment[] = Array.isArray(appointments)
         ? appointments
         : (appointments.data ?? []);
@@ -170,9 +172,13 @@ export default function AppointmentIndex({
                             Manage bookings, arrivals, and visit handoff.
                         </p>
                     </div>
-                    <Button asChild>
-                        <Link href="/appointments/create">New Appointment</Link>
-                    </Button>
+                    {hasPermission('appointments.create') ? (
+                        <Button asChild>
+                            <Link href="/appointments/create">
+                                New Appointment
+                            </Link>
+                        </Button>
+                    ) : null}
                 </div>
 
                 <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">

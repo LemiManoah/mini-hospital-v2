@@ -24,14 +24,25 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class PatientVisitController
+final class PatientVisitController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:visits.view', only: ['index', 'show']),
+            new Middleware('permission:visits.create', only: ['store']),
+            new Middleware('permission:visits.update', only: ['updateStatus', 'markInProgress']),
+        ];
+    }
+
     public function index(Request $request, AssessPatientVisitCompletion $assessment): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { usePermissions } from '@/lib/permissions';
 import { Building2, Check, ChevronRight, GitBranch } from 'lucide-react';
 
 interface Branch {
@@ -15,6 +16,9 @@ interface Props {
 }
 
 export default function BranchSwitcher({ branches, activeBranchId }: Props) {
+    const { hasPermission } = usePermissions();
+    const canSwitchBranch = hasPermission('facility_branches.update');
+
     return (
         <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-950">
             <Head title="Branch Switcher" />
@@ -69,25 +73,31 @@ export default function BranchSwitcher({ branches, activeBranchId }: Props) {
                             </div>
 
                             <div className="text-primary-600 mt-6 flex items-center justify-between border-t border-neutral-100 pt-6 font-semibold transition-transform group-hover:translate-x-1 dark:border-neutral-800">
-                                <span>Switch to Branch</span>
+                                <span>
+                                    {canSwitchBranch
+                                        ? 'Switch to Branch'
+                                        : 'View Branch'}
+                                </span>
                                 {activeBranchId === branch.id ? (
                                     <Check className="h-5 w-5" />
-                                ) : (
+                                ) : canSwitchBranch ? (
                                     <ChevronRight className="h-5 w-5" />
-                                )}
+                                ) : null}
                             </div>
 
-                            <button
-                                onClick={() =>
-                                    router.post(`/branch-switcher/${branch.id}`)
-                                }
-                                className="absolute inset-0 z-10"
-                                type="button"
-                            >
-                                <span className="sr-only">
-                                    Access {branch.name}
-                                </span>
-                            </button>
+                            {canSwitchBranch ? (
+                                <button
+                                    onClick={() =>
+                                        router.post(`/branch-switcher/${branch.id}`)
+                                    }
+                                    className="absolute inset-0 z-10"
+                                    type="button"
+                                >
+                                    <span className="sr-only">
+                                        Access {branch.name}
+                                    </span>
+                                </button>
+                            ) : null}
                         </div>
                     ))}
                 </div>

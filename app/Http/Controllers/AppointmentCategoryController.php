@@ -15,11 +15,23 @@ use App\Models\Clinic;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class AppointmentCategoryController
+final readonly class AppointmentCategoryController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:appointment_categories.view', only: ['index']),
+            new Middleware('permission:appointment_categories.create', only: ['create', 'store']),
+            new Middleware('permission:appointment_categories.update', only: ['edit', 'update']),
+            new Middleware('permission:appointment_categories.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

@@ -11,6 +11,7 @@ it('shows permission labels without group prefix on the create role page', funct
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);
+    $user->givePermissionTo('roles.create');
 
     $this->actingAs($user);
 

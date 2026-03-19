@@ -24,13 +24,13 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from '@/components/ui/sidebar';
+import { usePermissions } from '@/lib/permissions';
 import { dashboard } from '@/routes';
 import { index as indexAddresses } from '@/routes/addresses';
 import { index as indexAllergens } from '@/routes/allergens';
 import { index as indexClinics } from '@/routes/clinics';
 import { index as indexCurrencies } from '@/routes/currencies';
 import { index as indexDepartments } from '@/routes/departments';
-// import { index as indexFacilityServices } from '@/routes/facility-services';
 import { index as indexFacilitySwitcher } from '@/routes/facility-switcher';
 import { index as indexInsuranceCompanies } from '@/routes/insurance-companies';
 import { index as indexInsurancePackages } from '@/routes/insurance-packages';
@@ -45,12 +45,26 @@ import { index as indexStaffPositions } from '@/routes/staff-positions';
 import { index as indexSubscriptionPackages } from '@/routes/subscription-packages';
 import { index as indexUnits } from '@/routes/units';
 import { create as createUsers, index as indexUsers } from '@/routes/users';
-import { type SharedData } from '@/types';
-import { usePage } from '@inertiajs/react';
+
+type NavChild = {
+    title: string;
+    url: string;
+    permission?: string;
+};
+
+function filterItems(
+    items: NavChild[],
+    hasPermission: (permission: string) => boolean,
+): Array<{ title: string; url: string }> {
+    return items
+        .filter((item) =>
+            item.permission ? hasPermission(item.permission) : true,
+        )
+        .map(({ title, url }) => ({ title, url }));
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-    const { auth } = usePage<SharedData>().props;
-    const user = auth.user;
+    const { user, hasPermission, hasRole } = usePermissions();
 
     if (!user) {
         return null;
@@ -61,229 +75,258 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const activeBranchName = (
         user.active_branch as { name?: string } | null | undefined
     )?.name;
-    const userRoles = Array.isArray(user.roles) ? user.roles : [];
     const canSwitchFacility =
-        Boolean(user.is_support) || userRoles.includes('super_admin');
+        Boolean(user.is_support) || hasRole('super_admin');
 
     const navMain: React.ComponentProps<typeof NavMain>['items'] = [
         {
             title: 'Dashboard',
             url: dashboard(),
             icon: LayoutGrid,
-            items: [
-                {
-                    title: 'Overview',
-                    url: dashboard(),
-                },
-            ],
+            items: filterItems(
+                [{ title: 'Overview', url: dashboard().url }],
+                hasPermission,
+            ),
         },
         {
             title: 'Outpatient',
             url: dashboard(),
             icon: Bot,
-            items: [
-                {
-                    title: 'Register Patient',
-                    url: createPatients(),
-                },
-                {
-                    title: 'All Patients',
-                    url: indexPatients(),
-                },
-                {
-                    title: 'Active Visits',
-                    url: '/visits',
-                },
-                {
-                    title: 'Returning Patients',
-                    url: returningPatients(),
-                },
-            ],
+            items: filterItems(
+                [
+                    {
+                        title: 'Register Patient',
+                        url: createPatients().url,
+                        permission: 'patients.create',
+                    },
+                    {
+                        title: 'All Patients',
+                        url: indexPatients().url,
+                        permission: 'patients.view',
+                    },
+                    {
+                        title: 'Active Visits',
+                        url: '/visits',
+                        permission: 'visits.view',
+                    },
+                    {
+                        title: 'Returning Patients',
+                        url: returningPatients().url,
+                        permission: 'patients.view',
+                    },
+                ],
+                hasPermission,
+            ),
         },
         {
             title: 'Appointments',
             url: '/appointments',
             icon: CalendarDays,
-            items: [
-                {
-                    title: 'Bookings',
-                    url: '/appointments',
-                },
-                {
-                    title: 'Queue',
-                    url: '/appointments/queue',
-                },
-                {
-                    title: 'My Appointments',
-                    url: '/appointments/my',
-                },
-                {
-                    title: 'Schedules',
-                    url: '/appointments/schedules',
-                },
-                {
-                    title: 'Schedule Exceptions',
-                    url: '/appointments/exceptions',
-                },
-                {
-                    title: 'Categories',
-                    url: '/appointment-categories',
-                },
-                {
-                    title: 'Modes',
-                    url: '/appointment-modes',
-                },
-            ],
+            items: filterItems(
+                [
+                    {
+                        title: 'Bookings',
+                        url: '/appointments',
+                        permission: 'appointments.view',
+                    },
+                    {
+                        title: 'Queue',
+                        url: '/appointments/queue',
+                        permission: 'appointments.view',
+                    },
+                    {
+                        title: 'My Appointments',
+                        url: '/appointments/my',
+                        permission: 'appointments.view',
+                    },
+                    {
+                        title: 'Schedules',
+                        url: '/appointments/schedules',
+                        permission: 'doctor_schedules.view',
+                    },
+                    {
+                        title: 'Schedule Exceptions',
+                        url: '/appointments/exceptions',
+                        permission: 'doctor_schedule_exceptions.view',
+                    },
+                    {
+                        title: 'Categories',
+                        url: '/appointment-categories',
+                        permission: 'appointment_categories.view',
+                    },
+                    {
+                        title: 'Modes',
+                        url: '/appointment-modes',
+                        permission: 'appointment_modes.view',
+                    },
+                ],
+                hasPermission,
+            ),
         },
         {
             title: 'Triage',
             url: '/triage',
             icon: HeartPulse,
-            items: [
-                {
-                    title: 'Queue',
-                    url: '/triage',
-                },
-            ],
+            items: filterItems(
+                [{ title: 'Queue', url: '/triage', permission: 'triage.view' }],
+                hasPermission,
+            ),
         },
         {
             title: 'Doctors',
             url: '/doctors/consultations',
             icon: UserRoundSearch,
-            items: [
-                {
-                    title: 'Consultation',
-                    url: '/doctors/consultations',
-                },
-            ],
+            items: filterItems(
+                [
+                    {
+                        title: 'Consultation',
+                        url: '/doctors/consultations',
+                        permission: 'consultations.view',
+                    },
+                ],
+                hasPermission,
+            ),
         },
         {
             title: 'Laboratory',
             url: dashboard(),
             icon: FlaskConical,
-            items: [
-                {
-                    title: 'Lab Queue',
-                    url: dashboard(),
-                },
-                {
-                    title: 'Results',
-                    url: dashboard(),
-                },
-            ],
+            items: filterItems(
+                [
+                    {
+                        title: 'Lab Queue',
+                        url: dashboard().url,
+                        permission: 'dashboard.view',
+                    },
+                    {
+                        title: 'Results',
+                        url: dashboard().url,
+                        permission: 'dashboard.view',
+                    },
+                ],
+                hasPermission,
+            ),
         },
         {
             title: 'User Management',
             url: indexUsers(),
             icon: UserCog,
-            items: [
-                {
-                    title: 'View Users',
-                    url: indexUsers(),
-                },
-                {
-                    title: 'Register User',
-                    url: createUsers(),
-                },
-                {
-                    title: 'Roles',
-                    url: indexRoles(),
-                },
-            ],
+            items: filterItems(
+                [
+                    {
+                        title: 'View Users',
+                        url: indexUsers().url,
+                        permission: 'users.view',
+                    },
+                    {
+                        title: 'Register User',
+                        url: createUsers().url,
+                        permission: 'users.create',
+                    },
+                    {
+                        title: 'Roles',
+                        url: indexRoles().url,
+                        permission: 'roles.view',
+                    },
+                ],
+                hasPermission,
+            ),
         },
         {
             title: 'Staff Management',
             url: indexStaff(),
             icon: Users,
-            items: [
-                {
-                    title: 'View Staff',
-                    url: indexStaff(),
-                },
-                {
-                    title: 'Staff Positions',
-                    url: indexStaffPositions(),
-                },
-                {
-                    title: 'Departments',
-                    url: indexDepartments(),
-                },
-            ],
+            items: filterItems(
+                [
+                    {
+                        title: 'View Staff',
+                        url: indexStaff().url,
+                        permission: 'staff.view',
+                    },
+                    {
+                        title: 'Staff Positions',
+                        url: indexStaffPositions().url,
+                        permission: 'staff_positions.view',
+                    },
+                    {
+                        title: 'Departments',
+                        url: indexDepartments().url,
+                        permission: 'departments.view',
+                    },
+                ],
+                hasPermission,
+            ),
         },
         {
             title: 'Settings',
             url: indexAddresses(),
             icon: Settings2,
-            items: [
-                {
-                    title: 'Addresses',
-                    url: indexAddresses(),
-                },
-                {
-                    title: 'Allergens',
-                    url: indexAllergens(),
-                },
-                {
-                    title: 'Currencies',
-                    url: indexCurrencies(),
-                },
-                {
-                    title: 'Subscription Packages',
-                    url: indexSubscriptionPackages(),
-                },
-                {
-                    title: 'Units',
-                    url: indexUnits(),
-                },
-                {
-                    title: 'Drugs',
-                    url: '/drugs',
-                },
-                {
-                    title: 'Insurance Companies',
-                    url: indexInsuranceCompanies(),
-                },
-                {
-                    title: 'Clinics',
-                    url: indexClinics(),
-                },
-                {
-                    title: 'Insurance Packages',
-                    url: indexInsurancePackages(),
-                },
-                {
-                    title: 'Facility Services',
-                    url: '/facility-services',
-                },
-                ...(canSwitchFacility
-                    ? [
-                          {
-                              title: 'Facility Switcher',
-                              url: indexFacilitySwitcher(),
-                          },
-                      ]
-                    : []),
-            ],
+            items: filterItems(
+                [
+                    {
+                        title: 'Addresses',
+                        url: indexAddresses().url,
+                        permission: 'addresses.view',
+                    },
+                    {
+                        title: 'Allergens',
+                        url: indexAllergens().url,
+                        permission: 'allergens.view',
+                    },
+                    {
+                        title: 'Currencies',
+                        url: indexCurrencies().url,
+                        permission: 'currencies.view',
+                    },
+                    {
+                        title: 'Subscription Packages',
+                        url: indexSubscriptionPackages().url,
+                        permission: 'subscription_packages.view',
+                    },
+                    {
+                        title: 'Units',
+                        url: indexUnits().url,
+                        permission: 'units.view',
+                    },
+                    {
+                        title: 'Drugs',
+                        url: '/drugs',
+                        permission: 'drugs.view',
+                    },
+                    {
+                        title: 'Insurance Companies',
+                        url: indexInsuranceCompanies().url,
+                        permission: 'insurance_companies.view',
+                    },
+                    {
+                        title: 'Clinics',
+                        url: indexClinics().url,
+                        permission: 'clinics.view',
+                    },
+                    {
+                        title: 'Insurance Packages',
+                        url: indexInsurancePackages().url,
+                        permission: 'insurance_packages.view',
+                    },
+                    {
+                        title: 'Facility Services',
+                        url: '/facility-services',
+                        permission: 'facility_services.view',
+                    },
+                    ...(canSwitchFacility
+                        ? [
+                              {
+                                  title: 'Facility Switcher',
+                                  url: indexFacilitySwitcher().url,
+                                  permission: 'tenants.view',
+                              },
+                          ]
+                        : []),
+                ],
+                hasPermission,
+            ),
         },
-    ];
-
-    // const projects: React.ComponentProps<typeof NavProjects>['projects'] = [
-    //     {
-    //         name: 'Clinical Operations',
-    //         url: '/doctors/consultations',
-    //         icon: Stethoscope,
-    //     },
-    //     {
-    //         name: 'HR & Departments',
-    //         url: indexDepartments(),
-    //         icon: Building2,
-    //     },
-    //     {
-    //         name: 'Access Control',
-    //         url: indexRoles(),
-    //         icon: Shield,
-    //     },
-    // ];
+    ].filter((group) => group.items.length > 0);
 
     return (
         <Sidebar collapsible="icon" {...props}>
@@ -304,7 +347,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={navMain} />
-                {/* <NavProjects projects={projects} /> */}
             </SidebarContent>
             <SidebarFooter>
                 <NavUser />

@@ -14,11 +14,23 @@ use App\Models\SubscriptionPackage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class SubscriptionPackageController
+final readonly class SubscriptionPackageController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:subscription_packages.view', only: ['index']),
+            new Middleware('permission:subscription_packages.create', only: ['create', 'store']),
+            new Middleware('permission:subscription_packages.update', only: ['edit', 'update']),
+            new Middleware('permission:subscription_packages.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

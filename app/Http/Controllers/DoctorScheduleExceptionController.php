@@ -18,11 +18,23 @@ use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class DoctorScheduleExceptionController
+final readonly class DoctorScheduleExceptionController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:doctor_schedule_exceptions.view', only: ['index']),
+            new Middleware('permission:doctor_schedule_exceptions.create', only: ['create', 'store']),
+            new Middleware('permission:doctor_schedule_exceptions.update', only: ['edit', 'update']),
+            new Middleware('permission:doctor_schedule_exceptions.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

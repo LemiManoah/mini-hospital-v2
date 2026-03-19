@@ -79,7 +79,7 @@ This means future work should use the codebase and `patient_visit.md` as the sou
 ## Phase 1: Foundation & Base Helper Modules
 
 ### Done
-- countries
+- countries as seeded reference data for dropdowns and onboarding flows
 - currencies
 - addresses
 - allergens
@@ -88,6 +88,7 @@ This means future work should use the codebase and `patient_visit.md` as the sou
 
 ### Partial
 - not every foundation entity appears to have the same level of polished admin UX, but the domain objects and CRUD patterns are broadly present
+- countries are intentionally not exposed as day-to-day CRUD because they function as seeded lookup data rather than tenant-managed records
 
 ### Not Done
 - no major foundation-table gap stands out here relative to the active app surface

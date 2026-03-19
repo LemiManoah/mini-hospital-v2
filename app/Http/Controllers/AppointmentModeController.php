@@ -14,11 +14,23 @@ use App\Models\AppointmentMode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class AppointmentModeController
+final readonly class AppointmentModeController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:appointment_modes.view', only: ['index']),
+            new Middleware('permission:appointment_modes.create', only: ['create', 'store']),
+            new Middleware('permission:appointment_modes.update', only: ['edit', 'update']),
+            new Middleware('permission:appointment_modes.delete', only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));

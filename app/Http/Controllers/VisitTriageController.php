@@ -8,10 +8,19 @@ use App\Actions\CreateTriageRecord;
 use App\Http\Requests\StoreTriageRecordRequest;
 use App\Models\PatientVisit;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 
-final class VisitTriageController
+final class VisitTriageController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:triage.create', only: ['store']),
+        ];
+    }
+
     public function store(
         StoreTriageRecordRequest $request,
         PatientVisit $visit,

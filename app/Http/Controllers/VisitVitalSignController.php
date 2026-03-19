@@ -8,10 +8,19 @@ use App\Actions\CreateVitalSign;
 use App\Http\Requests\StoreVitalSignRequest;
 use App\Models\PatientVisit;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 
-final class VisitVitalSignController
+final class VisitVitalSignController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:triage.update', only: ['store']),
+        ];
+    }
+
     public function store(
         StoreVitalSignRequest $request,
         PatientVisit $visit,

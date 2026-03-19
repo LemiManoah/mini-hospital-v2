@@ -35,11 +35,27 @@ use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final readonly class AppointmentController
+final readonly class AppointmentController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:appointments.view', only: ['index', 'myAppointments', 'queue', 'show']),
+            new Middleware('permission:appointments.create', only: ['create', 'store']),
+            new Middleware('permission:appointments.update', only: ['update']),
+            new Middleware('permission:appointments.confirm', only: ['confirm']),
+            new Middleware('permission:appointments.cancel', only: ['cancel']),
+            new Middleware('permission:appointments.no_show', only: ['markNoShow']),
+            new Middleware('permission:appointments.reschedule', only: ['reschedule']),
+            new Middleware('permission:appointments.check_in', only: ['checkIn']),
+        ];
+    }
+
     public function __construct(
         private ResolveDateRange $resolveDateRange,
     ) {}

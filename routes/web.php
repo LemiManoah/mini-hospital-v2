@@ -72,7 +72,12 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         ->name('facility-switcher.')
         ->group(function (): void {
             Route::get('/', [FacilitySwitcherController::class, 'index'])->name('index');
+            Route::get('/{tenant}', [FacilitySwitcherController::class, 'show'])->name('show');
             Route::post('/{tenantId}', [FacilitySwitcherController::class, 'switch'])->name('switch');
+            Route::post('/{tenant}/activate-subscription', [FacilitySwitcherController::class, 'activateSubscription'])->name('activate-subscription');
+            Route::post('/{tenant}/mark-subscription-past-due', [FacilitySwitcherController::class, 'markSubscriptionPastDue'])->name('mark-subscription-past-due');
+            Route::post('/{tenant}/complete-onboarding', [FacilitySwitcherController::class, 'completeOnboarding'])->name('complete-onboarding');
+            Route::post('/{tenant}/reopen-onboarding', [FacilitySwitcherController::class, 'reopenOnboarding'])->name('reopen-onboarding');
         });
 
     Route::get('branch-switcher', [BranchSwitcherController::class, 'index'])->name('branch-switcher.index');
