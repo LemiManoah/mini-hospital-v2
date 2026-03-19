@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type AppointmentShowPageProps } from '@/types/appointment';
 import { Form, Head, Link } from '@inertiajs/react';
@@ -56,6 +57,7 @@ export default function AppointmentShow({
     insuranceCompanies,
     insurancePackages,
 }: AppointmentShowPageProps) {
+    const { hasPermission } = usePermissions();
     const [doctorId, setDoctorId] = useState(
         toSelectValue(appointment.doctor_id),
     );
@@ -85,6 +87,14 @@ export default function AppointmentShow({
     const canCheckIn =
         !appointment.visit &&
         !['cancelled', 'completed', 'no_show'].includes(appointment.status);
+    const canViewPatient = hasPermission('patients.view');
+    const canViewVisit = hasPermission('visits.view');
+    const canUpdateAppointment = hasPermission('appointments.update');
+    const canConfirmAppointment = hasPermission('appointments.confirm');
+    const canMarkNoShow = hasPermission('appointments.no_show');
+    const canRescheduleAppointment = hasPermission('appointments.reschedule');
+    const canCancelAppointment = hasPermission('appointments.cancel');
+    const canCheckInAppointment = hasPermission('appointments.check_in');
 
     return (
         <AppLayout breadcrumbs={breadcrumbs(appointment.id)}>
@@ -110,12 +120,14 @@ export default function AppointmentShow({
                         <Button variant="outline" asChild>
                             <Link href="/appointments">Back</Link>
                         </Button>
-                        <Button variant="outline" asChild>
-                            <Link href={`/patients/${appointment.patient_id}`}>
-                                Patient Profile
-                            </Link>
-                        </Button>
-                        {appointment.visit ? (
+                        {canViewPatient ? (
+                            <Button variant="outline" asChild>
+                                <Link href={`/patients/${appointment.patient_id}`}>
+                                    Patient Profile
+                                </Link>
+                            </Button>
+                        ) : null}
+                        {appointment.visit && canViewVisit ? (
                             <Button asChild>
                                 <Link href={`/visits/${appointment.visit.id}`}>
                                     Open Visit
@@ -196,22 +208,23 @@ export default function AppointmentShow({
                             </div>
                         </div>
 
-                        <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
-                            <h2 className="text-lg font-semibold">
-                                Update Booking
-                            </h2>
-                            <Form
-                                action={`/appointments/${appointment.id}`}
-                                method="put"
-                                onSuccess={() =>
-                                    toast.success(
-                                        'Appointment updated successfully.',
-                                    )
-                                }
-                                className="mt-4 space-y-4"
-                            >
-                                {({ processing, errors }) => (
-                                    <>
+                        {canUpdateAppointment ? (
+                            <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
+                                <h2 className="text-lg font-semibold">
+                                    Update Booking
+                                </h2>
+                                <Form
+                                    action={`/appointments/${appointment.id}`}
+                                    method="put"
+                                    onSuccess={() =>
+                                        toast.success(
+                                            'Appointment updated successfully.',
+                                        )
+                                    }
+                                    className="mt-4 space-y-4"
+                                >
+                                    {({ processing, errors }) => (
+                                        <>
                                         <input
                                             type="hidden"
                                             name="doctor_id"
@@ -527,72 +540,84 @@ export default function AppointmentShow({
                                             ) : null}
                                             Save Changes
                                         </Button>
-                                    </>
-                                )}
-                            </Form>
-                        </div>
+                                        </>
+                                    )}
+                                </Form>
+                            </div>
+                        ) : null}
                     </div>
 
                     <div className="space-y-6">
-                        <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
+                        {canConfirmAppointment || canMarkNoShow ? (
+                            <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
                             <h2 className="text-lg font-semibold">
                                 Status Actions
                             </h2>
                             <div className="mt-4 flex flex-wrap gap-2">
-                                <Form
-                                    action={`/appointments/${appointment.id}/confirm`}
-                                    method="post"
-                                    onSuccess={() =>
-                                        toast.success(
-                                            'Appointment confirmed successfully.',
-                                        )
-                                    }
-                                >
-                                    {({ processing }) => (
-                                        <Button
-                                            type="submit"
-                                            disabled={
-                                                processing ||
-                                                ![
-                                                    'scheduled',
-                                                    'rescheduled',
-                                                ].includes(appointment.status)
-                                            }
-                                        >
-                                            Confirm
-                                        </Button>
-                                    )}
-                                </Form>
-                                <Form
-                                    action={`/appointments/${appointment.id}/no-show`}
-                                    method="post"
-                                    onSuccess={() =>
-                                        toast.success(
-                                            'Appointment marked as no-show.',
-                                        )
-                                    }
-                                >
-                                    {({ processing }) => (
-                                        <Button
-                                            type="submit"
-                                            variant="outline"
-                                            disabled={
-                                                processing ||
-                                                ![
-                                                    'scheduled',
-                                                    'confirmed',
-                                                    'rescheduled',
-                                                ].includes(appointment.status)
-                                            }
-                                        >
-                                            Mark No-Show
-                                        </Button>
-                                    )}
-                                </Form>
+                                {canConfirmAppointment ? (
+                                    <Form
+                                        action={`/appointments/${appointment.id}/confirm`}
+                                        method="post"
+                                        onSuccess={() =>
+                                            toast.success(
+                                                'Appointment confirmed successfully.',
+                                            )
+                                        }
+                                    >
+                                        {({ processing }) => (
+                                            <Button
+                                                type="submit"
+                                                disabled={
+                                                    processing ||
+                                                    ![
+                                                        'scheduled',
+                                                        'rescheduled',
+                                                    ].includes(
+                                                        appointment.status,
+                                                    )
+                                                }
+                                            >
+                                                Confirm
+                                            </Button>
+                                        )}
+                                    </Form>
+                                ) : null}
+                                {canMarkNoShow ? (
+                                    <Form
+                                        action={`/appointments/${appointment.id}/no-show`}
+                                        method="post"
+                                        onSuccess={() =>
+                                            toast.success(
+                                                'Appointment marked as no-show.',
+                                            )
+                                        }
+                                    >
+                                        {({ processing }) => (
+                                            <Button
+                                                type="submit"
+                                                variant="outline"
+                                                disabled={
+                                                    processing ||
+                                                    ![
+                                                        'scheduled',
+                                                        'confirmed',
+                                                        'rescheduled',
+                                                    ].includes(
+                                                        appointment.status,
+                                                    )
+                                                }
+                                            >
+                                                Mark No-Show
+                                            </Button>
+                                        )}
+                                    </Form>
+                                ) : null}
                             </div>
-                        </div>
+                            </div>
+                        ) : null}
 
-                        <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
+                        {canRescheduleAppointment ? (
+                            <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
                             <h2 className="text-lg font-semibold">
                                 Reschedule
                             </h2>
@@ -672,9 +697,11 @@ export default function AppointmentShow({
                                     </>
                                 )}
                             </Form>
-                        </div>
+                            </div>
+                        ) : null}
 
-                        <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
+                        {canCancelAppointment ? (
+                            <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
                             <h2 className="text-lg font-semibold">
                                 Cancel Appointment
                             </h2>
@@ -719,13 +746,14 @@ export default function AppointmentShow({
                                     </>
                                 )}
                             </Form>
-                        </div>
+                            </div>
+                        ) : null}
 
                         <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
                             <h2 className="text-lg font-semibold">
                                 Check In to Visit
                             </h2>
-                            {appointment.visit ? (
+                            {appointment.visit && canViewVisit ? (
                                 <div className="mt-4 space-y-3">
                                     <p className="text-sm">
                                         Linked visit:{' '}
@@ -739,7 +767,13 @@ export default function AppointmentShow({
                                         </Link>
                                     </Button>
                                 </div>
-                            ) : canCheckIn ? (
+                            ) : appointment.visit ? (
+                                <p className="mt-4 text-sm text-muted-foreground">
+                                    A visit is already linked to this
+                                    appointment, but you do not have permission
+                                    to open it.
+                                </p>
+                            ) : canCheckIn && canCheckInAppointment ? (
                                 <Form
                                     action={`/appointments/${appointment.id}/check-in`}
                                     method="post"
@@ -1010,8 +1044,9 @@ export default function AppointmentShow({
                                 </Form>
                             ) : (
                                 <p className="mt-4 text-sm text-muted-foreground">
-                                    This appointment cannot be checked in in its
-                                    current status.
+                                    {canCheckInAppointment
+                                        ? 'This appointment cannot be checked in in its current status.'
+                                        : 'You can review this appointment, but you do not have permission to check the patient into a visit.'}
                                 </p>
                             )}
                         </div>

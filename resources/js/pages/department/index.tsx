@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { formatIdentifierLabel } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import {
@@ -38,6 +39,7 @@ export default function DepartmentIndex({
     departments,
     filters,
 }: DepartmentIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: Department[] = Array.isArray(departments)
         ? departments
         : (departments.data ?? []);
@@ -80,17 +82,19 @@ export default function DepartmentIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link
-                        href={DepartmentController.create.url()}
-                        className="gap-2"
+                {hasPermission('departments.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                     >
-                        <span>+ Add Department</span>
-                    </Link>
-                </Button>
+                        <Link
+                            href={DepartmentController.create.url()}
+                            className="gap-2"
+                        >
+                            <span>+ Add Department</span>
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -158,46 +162,50 @@ export default function DepartmentIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                                className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
-                                            >
-                                                <Link
-                                                    href={DepartmentController.edit.url(
+                                            {hasPermission('departments.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                    className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
+                                                >
+                                                    <Link
+                                                        href={DepartmentController.edit.url(
+                                                            {
+                                                                department: dept.id,
+                                                            },
+                                                        )}
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+
+                                            {hasPermission('departments.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete Department"
+                                                    description={`Are you sure you want to delete the department "${formatIdentifierLabel(dept.department_name)}"? This action cannot be undone.`}
+                                                    action={DepartmentController.destroy.form(
                                                         {
                                                             department: dept.id,
                                                         },
                                                     )}
-                                                >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-
-                                            <DeleteConfirmationModal
-                                                title="Delete Department"
-                                                description={`Are you sure you want to delete the department "${formatIdentifierLabel(dept.department_name)}"? This action cannot be undone.`}
-                                                action={DepartmentController.destroy.form(
-                                                    {
-                                                        department: dept.id,
-                                                    },
-                                                )}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        `Department "${formatIdentifierLabel(dept.department_name)}" deleted successfully.`,
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="h-8 cursor-pointer px-3 text-xs shadow-sm"
-                                                    >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            `Department "${formatIdentifierLabel(dept.department_name)}" deleted successfully.`,
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            className="h-8 cursor-pointer px-3 text-xs shadow-sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

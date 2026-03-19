@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type DoctorSchedule,
@@ -61,6 +62,7 @@ export default function DoctorScheduleIndex({
     doctorSchedules,
     filters,
 }: DoctorScheduleIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: DoctorSchedule[] = Array.isArray(doctorSchedules)
         ? doctorSchedules
         : (doctorSchedules.data ?? []);
@@ -100,14 +102,16 @@ export default function DoctorScheduleIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link href="/appointments/schedules/create">
-                        + Add Schedule
-                    </Link>
-                </Button>
+                {hasPermission('doctor_schedules.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                    >
+                        <Link href="/appointments/schedules/create">
+                            + Add Schedule
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -180,38 +184,42 @@ export default function DoctorScheduleIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={`/appointments/schedules/${schedule.id}/edit`}
+                                            {hasPermission('doctor_schedules.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
                                                 >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-                                            <DeleteConfirmationModal
-                                                title="Delete Doctor Schedule"
-                                                description="Are you sure you want to delete this schedule? This action cannot be undone."
-                                                action={{
-                                                    method: 'delete',
-                                                    action: `/appointments/schedules/${schedule.id}`,
-                                                }}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        'Doctor schedule deleted successfully.',
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
+                                                    <Link
+                                                        href={`/appointments/schedules/${schedule.id}/edit`}
                                                     >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+                                            {hasPermission('doctor_schedules.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete Doctor Schedule"
+                                                    description="Are you sure you want to delete this schedule? This action cannot be undone."
+                                                    action={{
+                                                        method: 'delete',
+                                                        action: `/appointments/schedules/${schedule.id}`,
+                                                    }}
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            'Doctor schedule deleted successfully.',
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

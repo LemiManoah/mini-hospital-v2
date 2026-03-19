@@ -18,6 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type DoctorConsultationIndexPageProps,
@@ -90,10 +91,12 @@ export default function DoctorConsultationsIndex({
     visits,
     filters,
 }: DoctorConsultationIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: PatientVisit[] = Array.isArray(visits)
         ? visits
         : (visits.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
+    const canViewConsultation = hasPermission('consultations.view');
 
     useEffect(() => {
         if (search === (filters.search ?? '')) {
@@ -257,20 +260,26 @@ export default function DoctorConsultationsIndex({
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                <Button size="sm" asChild>
-                                                    <Link
-                                                        href={`/doctors/consultations/${visit.id}`}
-                                                    >
-                                                        {visit.consultation ? (
-                                                            <FileClock className="mr-2 h-4 w-4" />
-                                                        ) : (
-                                                            <PlayCircle className="mr-2 h-4 w-4" />
-                                                        )}
-                                                        {
-                                                            consultation.actionLabel
-                                                        }
-                                                    </Link>
-                                                </Button>
+                                                {canViewConsultation ? (
+                                                    <Button size="sm" asChild>
+                                                        <Link
+                                                            href={`/doctors/consultations/${visit.id}`}
+                                                        >
+                                                            {visit.consultation ? (
+                                                                <FileClock className="mr-2 h-4 w-4" />
+                                                            ) : (
+                                                                <PlayCircle className="mr-2 h-4 w-4" />
+                                                            )}
+                                                            {
+                                                                consultation.actionLabel
+                                                            }
+                                                        </Link>
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground">
+                                                        No action available
+                                                    </span>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     );

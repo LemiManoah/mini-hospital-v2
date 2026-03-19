@@ -14,6 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import {
@@ -150,8 +151,10 @@ function statusBadgeClasses(status: string): string {
 
 function OrderGuard({
     consultation,
+    canManageOrders,
 }: {
     consultation: Consultation | null | undefined;
+    canManageOrders: boolean;
 }) {
     if (!consultation) {
         return (
@@ -167,6 +170,15 @@ function OrderGuard({
             <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
                 This consultation has been finalized, so orders in this
                 workspace are now read-only.
+            </div>
+        );
+    }
+
+    if (!canManageOrders) {
+        return (
+            <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                Orders are visible here, but you do not have permission to add
+                or change them in this workspace.
             </div>
         );
     }
@@ -187,6 +199,7 @@ export default function DoctorConsultationShow({
     pregnancyStatuses,
     facilityServiceOptions,
 }: DoctorConsultationShowPageProps) {
+    const { hasPermission } = usePermissions();
     const patientName = [
         visit.patient?.first_name,
         visit.patient?.middle_name,
@@ -200,6 +213,12 @@ export default function DoctorConsultationShow({
     const isConsultationFinalized = consultation?.completed_at != null;
     const [selectedTab, setSelectedTab] = useState(activeTab || 'overview');
     const [outcome, setOutcome] = useState(consultation?.outcome ?? '');
+    const canViewVisit = hasPermission('visits.view');
+    const canCreateConsultation = hasPermission('consultations.create');
+    const canUpdateConsultation = hasPermission('consultations.update');
+    const canManageConsultation = consultation
+        ? canUpdateConsultation
+        : canCreateConsultation;
 
     const labCatalogByCategory = useMemo(
         () =>
@@ -258,7 +277,10 @@ export default function DoctorConsultationShow({
         },
     ];
 
-    const canPlaceOrders = consultation != null && !isConsultationFinalized;
+    const canPlaceOrders =
+        consultation != null &&
+        !isConsultationFinalized &&
+        canUpdateConsultation;
     const toggleLabTest = (testId: string, checked: boolean) =>
         labForm.setData(
             'test_ids',
@@ -328,11 +350,13 @@ export default function DoctorConsultationShow({
                                 Back to Consultation Queue
                             </Link>
                         </Button>
-                        <Button variant="outline" asChild>
-                            <Link href={`/visits/${visit.id}`}>
-                                Open Visit Summary
-                            </Link>
-                        </Button>
+                        {canViewVisit ? (
+                            <Button variant="outline" asChild>
+                                <Link href={`/visits/${visit.id}`}>
+                                    Open Visit Summary
+                                </Link>
+                            </Button>
+                        ) : null}
                     </div>
                 </div>
 
@@ -429,19 +453,20 @@ export default function DoctorConsultationShow({
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <Form
-                                                    method={
-                                                        consultation
-                                                            ? 'put'
-                                                            : 'post'
-                                                    }
-                                                    action={`/doctors/consultations/${visit.id}`}
-                                                >
-                                                    {({
-                                                        processing,
-                                                        errors,
-                                                    }) => (
-                                                        <div className="space-y-4 rounded-lg border p-4">
+                                                {canManageConsultation ? (
+                                                    <Form
+                                                        method={
+                                                            consultation
+                                                                ? 'put'
+                                                                : 'post'
+                                                        }
+                                                        action={`/doctors/consultations/${visit.id}`}
+                                                    >
+                                                        {({
+                                                            processing,
+                                                            errors,
+                                                        }) => (
+                                                            <div className="space-y-4 rounded-lg border p-4">
                                                             <input
                                                                 type="hidden"
                                                                 name="outcome"
@@ -923,9 +948,18 @@ export default function DoctorConsultationShow({
                                                                     ) : null}
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                </Form>
+                                                            </div>
+                                                        )}
+                                                    </Form>
+                                                ) : (
+                                                    <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                                        You can review this
+                                                        consultation workspace,
+                                                        but you do not have
+                                                        permission to edit the
+                                                        consultation note.
+                                                    </div>
+                                                )}
                                             </>
                                         )}
                                     </CardContent>
@@ -948,6 +982,9 @@ export default function DoctorConsultationShow({
                                         {!canPlaceOrders ? (
                                             <OrderGuard
                                                 consultation={consultation}
+                                                canManageOrders={
+                                                    canUpdateConsultation
+                                                }
                                             />
                                         ) : (
                                             <form
@@ -1270,6 +1307,9 @@ export default function DoctorConsultationShow({
                                         {!canPlaceOrders ? (
                                             <OrderGuard
                                                 consultation={consultation}
+                                                canManageOrders={
+                                                    canUpdateConsultation
+                                                }
                                             />
                                         ) : (
                                             <form
@@ -1887,6 +1927,9 @@ export default function DoctorConsultationShow({
                                         {!canPlaceOrders ? (
                                             <OrderGuard
                                                 consultation={consultation}
+                                                canManageOrders={
+                                                    canUpdateConsultation
+                                                }
                                             />
                                         ) : (
                                             <form
@@ -2315,6 +2358,9 @@ export default function DoctorConsultationShow({
                                         {!canPlaceOrders ? (
                                             <OrderGuard
                                                 consultation={consultation}
+                                                canManageOrders={
+                                                    canUpdateConsultation
+                                                }
                                             />
                                         ) : facilityServiceOptions.length ===
                                           0 ? (

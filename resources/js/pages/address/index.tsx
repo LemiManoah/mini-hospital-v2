@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type Address, type AddressIndexPageProps } from '@/types/address';
 import { Head, Link, router } from '@inertiajs/react';
@@ -34,6 +35,7 @@ export default function AddressIndex({
     addresses,
     filters,
 }: AddressIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: Address[] = Array.isArray(addresses)
         ? addresses
         : (addresses.data ?? []);
@@ -76,17 +78,19 @@ export default function AddressIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link
-                        href={AddressController.create.url()}
-                        className="gap-2"
+                {hasPermission('addresses.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                     >
-                        <span>+ Add Address</span>
-                    </Link>
-                </Button>
+                        <Link
+                            href={AddressController.create.url()}
+                            className="gap-2"
+                        >
+                            <span>+ Add Address</span>
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -138,42 +142,46 @@ export default function AddressIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                                className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
-                                            >
-                                                <Link
-                                                    href={AddressController.edit.url(
+                                            {hasPermission('addresses.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                    className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
+                                                >
+                                                    <Link
+                                                        href={AddressController.edit.url(
+                                                            { address },
+                                                        )}
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+
+                                            {hasPermission('addresses.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete Address"
+                                                    description={`Are you sure you want to delete this address? This action cannot be undone.`}
+                                                    action={AddressController.destroy.form(
                                                         { address },
                                                     )}
-                                                >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-
-                                            <DeleteConfirmationModal
-                                                title="Delete Address"
-                                                description={`Are you sure you want to delete this address? This action cannot be undone.`}
-                                                action={AddressController.destroy.form(
-                                                    { address },
-                                                )}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        `Address deleted successfully.`,
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="h-8 cursor-pointer px-3 text-xs shadow-sm"
-                                                    >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            `Address deleted successfully.`,
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            className="h-8 cursor-pointer px-3 text-xs shadow-sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

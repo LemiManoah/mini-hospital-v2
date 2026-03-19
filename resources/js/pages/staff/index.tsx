@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { formatIdentifierLabel } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { type Staff, type StaffIndexPageProps } from '@/types/staff';
@@ -32,6 +33,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function StaffIndex({ staff, filters }: StaffIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: Staff[] = Array.isArray(staff) ? staff : (staff.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -72,14 +74,16 @@ export default function StaffIndex({ staff, filters }: StaffIndexPageProps) {
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link href={StaffController.create.url()} className="gap-2">
-                        <span>+ Add Staff Member</span>
-                    </Link>
-                </Button>
+                {hasPermission('staff.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                    >
+                        <Link href={StaffController.create.url()} className="gap-2">
+                            <span>+ Add Staff Member</span>
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -155,42 +159,46 @@ export default function StaffIndex({ staff, filters }: StaffIndexPageProps) {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                                className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
-                                            >
-                                                <Link
-                                                    href={StaffController.edit.url(
+                                            {hasPermission('staff.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                    className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
+                                                >
+                                                    <Link
+                                                        href={StaffController.edit.url(
+                                                            { staff: member.id },
+                                                        )}
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+
+                                            {hasPermission('staff.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete Staff Member"
+                                                    description={`Are you sure you want to delete "${member.first_name} ${member.last_name}"? This action cannot be undone.`}
+                                                    action={StaffController.destroy.form(
                                                         { staff: member.id },
                                                     )}
-                                                >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-
-                                            <DeleteConfirmationModal
-                                                title="Delete Staff Member"
-                                                description={`Are you sure you want to delete "${member.first_name} ${member.last_name}"? This action cannot be undone.`}
-                                                action={StaffController.destroy.form(
-                                                    { staff: member.id },
-                                                )}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        `Staff member "${member.first_name} ${member.last_name}" deleted successfully.`,
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="h-8 cursor-pointer px-3 text-xs shadow-sm"
-                                                    >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            `Staff member "${member.first_name} ${member.last_name}" deleted successfully.`,
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            className="h-8 cursor-pointer px-3 text-xs shadow-sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

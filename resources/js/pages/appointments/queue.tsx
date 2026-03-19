@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { useDateRangeQueryFilters } from '@/hooks/use-date-range-query-filters';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type Appointment,
@@ -74,6 +75,7 @@ export default function AppointmentQueue({
     doctors,
     clinics,
 }: AppointmentQueuePageProps) {
+    const { hasPermission } = usePermissions();
     const { fromDate, setFromDate, toDate, setToDate, values, setValue } =
         useDateRangeQueryFilters({
             route: '/appointments/queue',
@@ -87,6 +89,8 @@ export default function AppointmentQueue({
             only: ['appointments', 'filters'],
         });
     const { doctor_id: doctorId, clinic_id: clinicId } = values;
+    const canViewAppointments = hasPermission('appointments.view');
+    const canViewVisits = hasPermission('visits.view');
 
     const groups = appointments.reduce<Record<string, Appointment[]>>(
         (carry, appointment) => {
@@ -213,17 +217,20 @@ export default function AppointmentQueue({
                                                 </p>
                                             </div>
                                             <div className="flex gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    asChild
-                                                >
-                                                    <Link
-                                                        href={`/appointments/${appointment.id}`}
+                                                {canViewAppointments ? (
+                                                    <Button
+                                                        variant="outline"
+                                                        asChild
                                                     >
-                                                        Open
-                                                    </Link>
-                                                </Button>
-                                                {appointment.visit ? (
+                                                        <Link
+                                                            href={`/appointments/${appointment.id}`}
+                                                        >
+                                                            Open
+                                                        </Link>
+                                                    </Button>
+                                                ) : null}
+                                                {appointment.visit &&
+                                                canViewVisits ? (
                                                     <Button asChild>
                                                         <Link
                                                             href={`/visits/${appointment.visit.id}`}

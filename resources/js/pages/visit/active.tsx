@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import VisitCompletionModal from '@/components/visit-completion-modal';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type ActiveVisitsPageProps, type PatientVisit } from '@/types/patient';
 import { Head, Link, router } from '@inertiajs/react';
@@ -58,10 +59,13 @@ export default function ActiveVisits({
     visits,
     filters,
 }: ActiveVisitsPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: PatientVisit[] = Array.isArray(visits)
         ? visits
         : (visits.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
+    const canOpenVisit = hasPermission('visits.view');
+    const canUpdateVisit = hasPermission('visits.update');
 
     useEffect(() => {
         if (search === (filters.search ?? '')) {
@@ -232,49 +236,55 @@ export default function ActiveVisits({
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        asChild
-                                                    >
-                                                        <Link
-                                                            href={`/visits/${visit.id}`}
-                                                        >
-                                                            <ExternalLink className="mr-2 h-4 w-4" />
-                                                            Open Visit
-                                                        </Link>
-                                                    </Button>
-                                                    {visit.status ===
-                                                        'in_progress' ||
-                                                    visit.status ===
-                                                        'awaiting_payment' ? (
-                                                        <VisitCompletionModal
-                                                            visitId={visit.id}
-                                                            visitNumber={
-                                                                visit.visit_number
-                                                            }
-                                                            completionCheck={
-                                                                completionCheck
-                                                            }
-                                                            redirectTo="index"
-                                                            trigger={
-                                                                <Button size="sm">
-                                                                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                                    Complete
-                                                                    Visit
-                                                                </Button>
-                                                            }
-                                                        />
-                                                    ) : (
+                                                    {canOpenVisit ? (
                                                         <Button
+                                                            variant="outline"
                                                             size="sm"
-                                                            disabled
+                                                            asChild
                                                         >
-                                                            <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                            Mark In Progress
-                                                            First
+                                                            <Link
+                                                                href={`/visits/${visit.id}`}
+                                                            >
+                                                                <ExternalLink className="mr-2 h-4 w-4" />
+                                                                Open Visit
+                                                            </Link>
                                                         </Button>
-                                                    )}
+                                                    ) : null}
+                                                    {canUpdateVisit ? (
+                                                        visit.status ===
+                                                            'in_progress' ||
+                                                        visit.status ===
+                                                            'awaiting_payment' ? (
+                                                            <VisitCompletionModal
+                                                                visitId={
+                                                                    visit.id
+                                                                }
+                                                                visitNumber={
+                                                                    visit.visit_number
+                                                                }
+                                                                completionCheck={
+                                                                    completionCheck
+                                                                }
+                                                                redirectTo="index"
+                                                                trigger={
+                                                                    <Button size="sm">
+                                                                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                                        Complete
+                                                                        Visit
+                                                                    </Button>
+                                                                }
+                                                            />
+                                                        ) : (
+                                                            <Button
+                                                                size="sm"
+                                                                disabled
+                                                            >
+                                                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                                Mark In Progress
+                                                                First
+                                                            </Button>
+                                                        )
+                                                    ) : null}
                                                 </div>
                                             </TableCell>
                                         </TableRow>

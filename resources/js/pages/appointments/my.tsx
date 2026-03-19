@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { useDateRangeQueryFilters } from '@/hooks/use-date-range-query-filters';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type AppointmentMyPageProps } from '@/types/appointment';
 import { Head, Link } from '@inertiajs/react';
@@ -46,6 +47,7 @@ export default function AppointmentMy({
     filters,
     statusOptions,
 }: AppointmentMyPageProps) {
+    const { hasPermission } = usePermissions();
     const { fromDate, setFromDate, toDate, setToDate, values, setValue } =
         useDateRangeQueryFilters({
             route: '/appointments/my',
@@ -58,6 +60,8 @@ export default function AppointmentMy({
             only: ['appointments', 'filters'],
         });
     const { status } = values;
+    const canViewAppointments = hasPermission('appointments.view');
+    const canViewVisits = hasPermission('visits.view');
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -158,14 +162,16 @@ export default function AppointmentMy({
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button variant="outline" asChild>
-                                            <Link
-                                                href={`/appointments/${appointment.id}`}
-                                            >
-                                                Open Appointment
-                                            </Link>
-                                        </Button>
-                                        {appointment.visit ? (
+                                        {canViewAppointments ? (
+                                            <Button variant="outline" asChild>
+                                                <Link
+                                                    href={`/appointments/${appointment.id}`}
+                                                >
+                                                    Open Appointment
+                                                </Link>
+                                            </Button>
+                                        ) : null}
+                                        {appointment.visit && canViewVisits ? (
                                             <Button asChild>
                                                 <Link
                                                     href={`/visits/${appointment.visit.id}`}

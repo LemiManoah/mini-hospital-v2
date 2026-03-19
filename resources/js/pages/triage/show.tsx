@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type Consultation,
@@ -200,6 +201,7 @@ export default function TriageShow({
     temperatureUnits,
     bloodGlucoseUnits,
 }: TriageShowPageProps) {
+    const { hasPermission } = usePermissions();
     const patientName = [
         visit.patient?.first_name,
         visit.patient?.middle_name,
@@ -238,6 +240,11 @@ export default function TriageShow({
     );
     const [temperatureUnit, setTemperatureUnit] = useState('celsius');
     const [bloodGlucoseUnit, setBloodGlucoseUnit] = useState('mg_dl');
+    const canViewVisit = hasPermission('visits.view');
+    const canViewPatient = hasPermission('patients.view');
+    const canCreateTriage = hasPermission('triage.create');
+    const canUpdateTriage = hasPermission('triage.update');
+    const canViewConsultation = hasPermission('consultations.view');
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Triage', href: '/triage' },
@@ -272,19 +279,23 @@ export default function TriageShow({
                                 Back to Queue
                             </Link>
                         </Button>
-                        <Button variant="outline" asChild>
-                            <Link href={`/visits/${visit.id}`}>
-                                <Stethoscope className="mr-2 h-4 w-4" />
-                                Visit Page
-                            </Link>
-                        </Button>
-                        <Button variant="outline" asChild>
-                            <Link href={`/patients/${visit.patient?.id}`}>
-                                <UserRound className="mr-2 h-4 w-4" />
-                                Patient Profile
-                            </Link>
-                        </Button>
-                        {triage ? (
+                        {canViewVisit ? (
+                            <Button variant="outline" asChild>
+                                <Link href={`/visits/${visit.id}`}>
+                                    <Stethoscope className="mr-2 h-4 w-4" />
+                                    Visit Page
+                                </Link>
+                            </Button>
+                        ) : null}
+                        {canViewPatient ? (
+                            <Button variant="outline" asChild>
+                                <Link href={`/patients/${visit.patient?.id}`}>
+                                    <UserRound className="mr-2 h-4 w-4" />
+                                    Patient Profile
+                                </Link>
+                            </Button>
+                        ) : null}
+                        {triage && canViewConsultation ? (
                             <Button asChild>
                                 <Link
                                     href={`/doctors/consultations/${visit.id}`}
@@ -347,12 +358,13 @@ export default function TriageShow({
                                     <CardTitle>Start Triage</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <Form
-                                        method="post"
-                                        action={`/visits/${visit.id}/triage`}
-                                    >
-                                        {({ processing, errors }) => (
-                                            <div className="space-y-4">
+                                    {canCreateTriage ? (
+                                        <Form
+                                            method="post"
+                                            action={`/visits/${visit.id}/triage`}
+                                        >
+                                            {({ processing, errors }) => (
+                                                <div className="space-y-4">
                                                 <input
                                                     type="hidden"
                                                     name="redirect_to"
@@ -718,9 +730,16 @@ export default function TriageShow({
                                                             : 'Save Triage'}
                                                     </Button>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </Form>
+                                                </div>
+                                            )}
+                                        </Form>
+                                    ) : (
+                                        <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                            You can review this visit, but you do
+                                            not have permission to create the
+                                            triage record.
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         ) : (
@@ -742,6 +761,12 @@ export default function TriageShow({
                                     <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
                                         Save triage first to unlock vital sign
                                         capture.
+                                    </div>
+                                ) : !canUpdateTriage ? (
+                                    <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                        Vital history is visible here, but you do
+                                        not have permission to record new vital
+                                        signs.
                                     </div>
                                 ) : (
                                     <>
@@ -901,16 +926,18 @@ export default function TriageShow({
                                                     'Not documented yet'}
                                             </p>
                                         </div>
-                                        <Button className="w-full" asChild>
-                                            <Link
-                                                href={`/doctors/consultations/${visit.id}`}
-                                            >
-                                                <NotebookPen className="mr-2 h-4 w-4" />
-                                                {consultation
-                                                    ? 'Continue Consultation'
-                                                    : 'Start Consultation'}
-                                            </Link>
-                                        </Button>
+                                        {canViewConsultation ? (
+                                            <Button className="w-full" asChild>
+                                                <Link
+                                                    href={`/doctors/consultations/${visit.id}`}
+                                                >
+                                                    <NotebookPen className="mr-2 h-4 w-4" />
+                                                    {consultation
+                                                        ? 'Continue Consultation'
+                                                        : 'Start Consultation'}
+                                                </Link>
+                                            </Button>
+                                        ) : null}
                                     </>
                                 )}
                             </CardContent>

@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type DoctorScheduleException,
@@ -73,6 +74,7 @@ export default function DoctorScheduleExceptionIndex({
     exceptions,
     filters,
 }: DoctorScheduleExceptionIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: DoctorScheduleException[] = Array.isArray(exceptions)
         ? exceptions
         : (exceptions.data ?? []);
@@ -114,14 +116,16 @@ export default function DoctorScheduleExceptionIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link href="/appointments/exceptions/create">
-                        + Add Exception
-                    </Link>
-                </Button>
+                {hasPermission('doctor_schedule_exceptions.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                    >
+                        <Link href="/appointments/exceptions/create">
+                            + Add Exception
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -184,38 +188,42 @@ export default function DoctorScheduleExceptionIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={`/appointments/exceptions/${exception.id}/edit`}
+                                            {hasPermission('doctor_schedule_exceptions.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
                                                 >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-                                            <DeleteConfirmationModal
-                                                title="Delete Schedule Exception"
-                                                description="Are you sure you want to delete this schedule exception? This action cannot be undone."
-                                                action={{
-                                                    method: 'delete',
-                                                    action: `/appointments/exceptions/${exception.id}`,
-                                                }}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        'Schedule exception deleted successfully.',
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
+                                                    <Link
+                                                        href={`/appointments/exceptions/${exception.id}/edit`}
                                                     >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+                                            {hasPermission('doctor_schedule_exceptions.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete Schedule Exception"
+                                                    description="Are you sure you want to delete this schedule exception? This action cannot be undone."
+                                                    action={{
+                                                        method: 'delete',
+                                                        action: `/appointments/exceptions/${exception.id}`,
+                                                    }}
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            'Schedule exception deleted successfully.',
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

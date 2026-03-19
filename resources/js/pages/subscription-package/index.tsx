@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type SubscriptionPackage,
@@ -40,6 +41,7 @@ export default function SubscriptionPackageIndex({
     packages,
     filters,
 }: SubscriptionPackageIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: SubscriptionPackage[] = Array.isArray(packages)
         ? packages
         : (packages.data ?? []);
@@ -82,17 +84,19 @@ export default function SubscriptionPackageIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link
-                        href={SubscriptionPackageController.create.url()}
-                        className="gap-2"
+                {hasPermission('subscription_packages.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                     >
-                        <span>+ Add Package</span>
-                    </Link>
-                </Button>
+                        <Link
+                            href={SubscriptionPackageController.create.url()}
+                            className="gap-2"
+                        >
+                            <span>+ Add Package</span>
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -145,48 +149,52 @@ export default function SubscriptionPackageIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                                className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
-                                            >
-                                                <Link
-                                                    href={SubscriptionPackageController.edit.url(
+                                            {hasPermission('subscription_packages.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                    className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
+                                                >
+                                                    <Link
+                                                        href={SubscriptionPackageController.edit.url(
+                                                            {
+                                                                subscription_package:
+                                                                    pkg.id,
+                                                            },
+                                                        )}
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+
+                                            {hasPermission('subscription_packages.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete Package"
+                                                    description={`Are you sure you want to delete "${pkg.name}"? This action cannot be undone.`}
+                                                    action={SubscriptionPackageController.destroy.form(
                                                         {
                                                             subscription_package:
                                                                 pkg.id,
                                                         },
                                                     )}
-                                                >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-
-                                            <DeleteConfirmationModal
-                                                title="Delete Package"
-                                                description={`Are you sure you want to delete "${pkg.name}"? This action cannot be undone.`}
-                                                action={SubscriptionPackageController.destroy.form(
-                                                    {
-                                                        subscription_package:
-                                                            pkg.id,
-                                                    },
-                                                )}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        `Package deleted successfully.`,
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="h-8 cursor-pointer px-3 text-xs shadow-sm"
-                                                    >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            `Package deleted successfully.`,
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            className="h-8 cursor-pointer px-3 text-xs shadow-sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

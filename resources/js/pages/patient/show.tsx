@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePermissions } from '@/lib/permissions';
 import VisitStartDialog from '@/components/visit-start-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -59,6 +60,7 @@ export default function PatientShow({
     packages,
     hasActiveVisit,
 }: PatientShowPageProps) {
+    const { hasPermission } = usePermissions();
     const fullName = [
         patient.first_name,
         patient.middle_name,
@@ -66,6 +68,9 @@ export default function PatientShow({
     ]
         .filter(Boolean)
         .join(' ');
+    const canStartVisit = hasPermission('visits.create');
+    const canEditPatient = hasPermission('patients.update');
+    const canOpenVisit = hasPermission('visits.view');
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -88,29 +93,33 @@ export default function PatientShow({
                     </div>
 
                     <div className="flex gap-2">
-                        <VisitStartDialog
-                            patientId={patient.id}
-                            patientName={fullName}
-                            visitTypes={visitTypes}
-                            clinics={clinics}
-                            doctors={doctors}
-                            companies={companies}
-                            packages={packages}
-                            disabled={hasActiveVisit}
-                            trigger={
-                                <Button disabled={hasActiveVisit}>
-                                    {hasActiveVisit
-                                        ? 'Active Visit Exists'
-                                        : 'Start Visit'}
-                                </Button>
-                            }
-                        />
-                        <Button variant="outline" asChild>
-                            <Link href={`/patients/${patient.id}/edit`}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Patient
-                            </Link>
-                        </Button>
+                        {canStartVisit ? (
+                            <VisitStartDialog
+                                patientId={patient.id}
+                                patientName={fullName}
+                                visitTypes={visitTypes}
+                                clinics={clinics}
+                                doctors={doctors}
+                                companies={companies}
+                                packages={packages}
+                                disabled={hasActiveVisit}
+                                trigger={
+                                    <Button disabled={hasActiveVisit}>
+                                        {hasActiveVisit
+                                            ? 'Active Visit Exists'
+                                            : 'Start Visit'}
+                                    </Button>
+                                }
+                            />
+                        ) : null}
+                        {canEditPatient ? (
+                            <Button variant="outline" asChild>
+                                <Link href={`/patients/${patient.id}/edit`}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit Patient
+                                </Link>
+                            </Button>
+                        ) : null}
                     </div>
                 </div>
 
@@ -243,17 +252,19 @@ export default function PatientShow({
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            asChild
-                                                        >
-                                                            <Link
-                                                                href={`/visits/${visit.id}`}
+                                                        {canOpenVisit ? (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                asChild
                                                             >
-                                                                Open Visit
-                                                            </Link>
-                                                        </Button>
+                                                                <Link
+                                                                    href={`/visits/${visit.id}`}
+                                                                >
+                                                                    Open Visit
+                                                                </Link>
+                                                            </Button>
+                                                        ) : null}
                                                         <span
                                                             className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses(visit.status)}`}
                                                         >
@@ -273,26 +284,28 @@ export default function PatientShow({
                                         <p className="text-sm text-muted-foreground">
                                             No visits recorded yet.
                                         </p>
-                                        <VisitStartDialog
-                                            patientId={patient.id}
-                                            patientName={fullName}
-                                            visitTypes={visitTypes}
-                                            clinics={clinics}
-                                            doctors={doctors}
-                                            companies={companies}
-                                            packages={packages}
-                                            disabled={hasActiveVisit}
-                                            trigger={
-                                                <Button
-                                                    className="mt-4"
-                                                    size="sm"
-                                                    disabled={hasActiveVisit}
-                                                >
-                                                    <Plus className="mr-2 h-4 w-4" />
-                                                    Start First Visit
-                                                </Button>
-                                            }
-                                        />
+                                        {canStartVisit ? (
+                                            <VisitStartDialog
+                                                patientId={patient.id}
+                                                patientName={fullName}
+                                                visitTypes={visitTypes}
+                                                clinics={clinics}
+                                                doctors={doctors}
+                                                companies={companies}
+                                                packages={packages}
+                                                disabled={hasActiveVisit}
+                                                trigger={
+                                                    <Button
+                                                        className="mt-4"
+                                                        size="sm"
+                                                        disabled={hasActiveVisit}
+                                                    >
+                                                        <Plus className="mr-2 h-4 w-4" />
+                                                        Start First Visit
+                                                    </Button>
+                                                }
+                                            />
+                                        ) : null}
                                     </div>
                                 )}
                             </CardContent>

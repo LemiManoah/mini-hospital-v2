@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type Consultation,
@@ -115,6 +116,7 @@ export default function VisitShow({
     availableTransitions,
     triageGrades,
 }: VisitShowPageProps) {
+    const { hasPermission } = usePermissions();
     const patientName = [
         visit.patient?.first_name,
         visit.patient?.middle_name,
@@ -132,6 +134,10 @@ export default function VisitShow({
     const consultation: Consultation | null | undefined = visit.consultation;
     const vitalSigns = triage?.vitalSigns ?? triage?.vital_signs ?? [];
     const latestVital = vitalSigns[0];
+    const canViewPatient = hasPermission('patients.view');
+    const canViewTriage = hasPermission('triage.view');
+    const canViewConsultation = hasPermission('consultations.view');
+    const canUpdateVisit = hasPermission('visits.update');
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Active Visits', href: '/visits' },
@@ -193,19 +199,25 @@ export default function VisitShow({
                                 Back to Active Visits
                             </Link>
                         </Button>
-                        <Button variant="outline" asChild>
-                            <Link href={`/patients/${visit.patient?.id}`}>
-                                <UserRound className="mr-2 h-4 w-4" />
-                                Patient Profile
-                            </Link>
-                        </Button>
-                        <Button asChild>
-                            <Link href={`/triage/${visit.id}`}>
-                                <HeartPulse className="mr-2 h-4 w-4" />
-                                {triage ? 'Open Triage Page' : 'Start Triage'}
-                            </Link>
-                        </Button>
-                        {triage ? (
+                        {canViewPatient ? (
+                            <Button variant="outline" asChild>
+                                <Link href={`/patients/${visit.patient?.id}`}>
+                                    <UserRound className="mr-2 h-4 w-4" />
+                                    Patient Profile
+                                </Link>
+                            </Button>
+                        ) : null}
+                        {canViewTriage ? (
+                            <Button asChild>
+                                <Link href={`/triage/${visit.id}`}>
+                                    <HeartPulse className="mr-2 h-4 w-4" />
+                                    {triage
+                                        ? 'Open Triage Page'
+                                        : 'Start Triage'}
+                                </Link>
+                            </Button>
+                        ) : null}
+                        {triage && canViewConsultation ? (
                             <Button variant="outline" asChild>
                                 <Link
                                     href={`/doctors/consultations/${visit.id}`}
@@ -483,16 +495,18 @@ export default function VisitShow({
                                         ) : null}
                                     </>
                                 )}
-                                <div className="flex justify-end">
-                                    <Button asChild>
-                                        <Link href={`/triage/${visit.id}`}>
-                                            <HeartPulse className="mr-2 h-4 w-4" />
-                                            {triage
-                                                ? 'Continue in Triage Workspace'
-                                                : 'Open Triage Workspace'}
-                                        </Link>
-                                    </Button>
-                                </div>
+                                {canViewTriage ? (
+                                    <div className="flex justify-end">
+                                        <Button asChild>
+                                            <Link href={`/triage/${visit.id}`}>
+                                                <HeartPulse className="mr-2 h-4 w-4" />
+                                                {triage
+                                                    ? 'Continue in Triage Workspace'
+                                                    : 'Open Triage Workspace'}
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                ) : null}
                             </CardContent>
                         </Card>
 
@@ -532,16 +546,18 @@ export default function VisitShow({
                                                     'Not documented yet'}
                                             </p>
                                         </div>
-                                        <div className="flex justify-end">
-                                            <Button variant="outline" asChild>
-                                                <Link
-                                                    href={`/doctors/consultations/${visit.id}`}
-                                                >
-                                                    <NotebookPen className="mr-2 h-4 w-4" />
-                                                    Continue Consultation
-                                                </Link>
-                                            </Button>
-                                        </div>
+                                        {canViewConsultation ? (
+                                            <div className="flex justify-end">
+                                                <Button variant="outline" asChild>
+                                                    <Link
+                                                        href={`/doctors/consultations/${visit.id}`}
+                                                    >
+                                                        <NotebookPen className="mr-2 h-4 w-4" />
+                                                        Continue Consultation
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        ) : null}
                                     </>
                                 ) : (
                                     <p className="text-muted-foreground">
@@ -598,7 +614,8 @@ export default function VisitShow({
                                 <CardTitle>Quick Actions</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                {availableTransitions.length > 0 ? (
+                                {canUpdateVisit &&
+                                availableTransitions.length > 0 ? (
                                     availableTransitions.map((transition) => (
                                         <Form
                                             key={transition.value}
@@ -627,8 +644,9 @@ export default function VisitShow({
                                     ))
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        No further status actions are available
-                                        for this visit.
+                                        {canUpdateVisit
+                                            ? 'No further status actions are available for this visit.'
+                                            : 'You can review this visit, but you do not have permission to change its workflow status.'}
                                     </p>
                                 )}
                             </CardContent>

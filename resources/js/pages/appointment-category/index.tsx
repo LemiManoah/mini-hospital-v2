@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type AppointmentCategory,
@@ -37,6 +38,7 @@ export default function AppointmentCategoryIndex({
     appointmentCategories,
     filters,
 }: AppointmentCategoryIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: AppointmentCategory[] = Array.isArray(appointmentCategories)
         ? appointmentCategories
         : (appointmentCategories.data ?? []);
@@ -76,14 +78,16 @@ export default function AppointmentCategoryIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link href="/appointment-categories/create">
-                        + Add Category
-                    </Link>
-                </Button>
+                {hasPermission('appointment_categories.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                    >
+                        <Link href="/appointment-categories/create">
+                            + Add Category
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -130,38 +134,42 @@ export default function AppointmentCategoryIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={`/appointment-categories/${category.id}/edit`}
+                                            {hasPermission('appointment_categories.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
                                                 >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-                                            <DeleteConfirmationModal
-                                                title="Delete Appointment Category"
-                                                description={`Are you sure you want to delete "${category.name}"? This action cannot be undone.`}
-                                                action={{
-                                                    method: 'delete',
-                                                    action: `/appointment-categories/${category.id}`,
-                                                }}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        `Appointment category "${category.name}" deleted successfully.`,
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
+                                                    <Link
+                                                        href={`/appointment-categories/${category.id}/edit`}
                                                     >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+                                            {hasPermission('appointment_categories.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete Appointment Category"
+                                                    description={`Are you sure you want to delete "${category.name}"? This action cannot be undone.`}
+                                                    action={{
+                                                        method: 'delete',
+                                                        action: `/appointment-categories/${category.id}`,
+                                                    }}
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            `Appointment category "${category.name}" deleted successfully.`,
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

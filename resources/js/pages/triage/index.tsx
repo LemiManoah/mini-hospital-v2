@@ -18,6 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type PatientVisit, type TriageQueuePageProps } from '@/types/patient';
 import { Head, Link, router } from '@inertiajs/react';
@@ -75,10 +76,13 @@ function triageState(visit: PatientVisit): {
 }
 
 export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
+    const { hasPermission } = usePermissions();
     const rows: PatientVisit[] = Array.isArray(visits)
         ? visits
         : (visits.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
+    const canViewTriage = hasPermission('triage.view');
+    const canCreateTriage = hasPermission('triage.create');
 
     useEffect(() => {
         if (search === (filters.search ?? '')) {
@@ -228,18 +232,27 @@ export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                <Button size="sm" asChild>
-                                                    <Link
-                                                        href={`/triage/${visit.id}`}
-                                                    >
-                                                        {visit.triage ? (
-                                                            <FileClock className="mr-2 h-4 w-4" />
-                                                        ) : (
-                                                            <PlayCircle className="mr-2 h-4 w-4" />
-                                                        )}
-                                                        {state.actionLabel}
-                                                    </Link>
-                                                </Button>
+                                                {canViewTriage ? (
+                                                    <Button size="sm" asChild>
+                                                        <Link
+                                                            href={`/triage/${visit.id}`}
+                                                        >
+                                                            {visit.triage ? (
+                                                                <FileClock className="mr-2 h-4 w-4" />
+                                                            ) : (
+                                                                <PlayCircle className="mr-2 h-4 w-4" />
+                                                            )}
+                                                            {visit.triage ||
+                                                            canCreateTriage
+                                                                ? state.actionLabel
+                                                                : 'Review Triage'}
+                                                        </Link>
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground">
+                                                        No action available
+                                                    </span>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     );

@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type FacilityService,
@@ -42,6 +43,7 @@ export default function FacilityServiceIndex({
     facilityServices,
     filters,
 }: FacilityServiceIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: FacilityService[] = Array.isArray(facilityServices)
         ? facilityServices
         : (facilityServices.data ?? []);
@@ -81,14 +83,16 @@ export default function FacilityServiceIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link href="/facility-services/create">
-                        + Add Facility Service
-                    </Link>
-                </Button>
+                {hasPermission('facility_services.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                    >
+                        <Link href="/facility-services/create">
+                            + Add Facility Service
+                        </Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -156,38 +160,42 @@ export default function FacilityServiceIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={`/facility-services/${facilityService.id}/edit`}
+                                            {hasPermission('facility_services.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
                                                 >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-                                            <DeleteConfirmationModal
-                                                title="Delete Facility Service"
-                                                description={`Are you sure you want to delete "${facilityService.name}"? This action cannot be undone.`}
-                                                action={{
-                                                    method: 'delete',
-                                                    action: `/facility-services/${facilityService.id}`,
-                                                }}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        `Facility service "${facilityService.name}" deleted successfully.`,
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
+                                                    <Link
+                                                        href={`/facility-services/${facilityService.id}/edit`}
                                                     >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+                                            {hasPermission('facility_services.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete Facility Service"
+                                                    description={`Are you sure you want to delete "${facilityService.name}"? This action cannot be undone.`}
+                                                    action={{
+                                                        method: 'delete',
+                                                        action: `/facility-services/${facilityService.id}`,
+                                                    }}
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            `Facility service "${facilityService.name}" deleted successfully.`,
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
     type AppointmentMode,
@@ -37,6 +38,7 @@ export default function AppointmentModeIndex({
     appointmentModes,
     filters,
 }: AppointmentModeIndexPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: AppointmentMode[] = Array.isArray(appointmentModes)
         ? appointmentModes
         : (appointmentModes.data ?? []);
@@ -76,12 +78,14 @@ export default function AppointmentModeIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <Button
-                    asChild
-                    className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                >
-                    <Link href="/appointment-modes/create">+ Add Mode</Link>
-                </Button>
+                {hasPermission('appointment_modes.create') ? (
+                    <Button
+                        asChild
+                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
+                    >
+                        <Link href="/appointment-modes/create">+ Add Mode</Link>
+                    </Button>
+                ) : null}
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -127,38 +131,42 @@ export default function AppointmentModeIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={`/appointment-modes/${mode.id}/edit`}
+                                            {hasPermission('appointment_modes.update') ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
                                                 >
-                                                    Edit
-                                                </Link>
-                                            </Button>
-                                            <DeleteConfirmationModal
-                                                title="Delete Appointment Mode"
-                                                description={`Are you sure you want to delete "${mode.name}"? This action cannot be undone.`}
-                                                action={{
-                                                    method: 'delete',
-                                                    action: `/appointment-modes/${mode.id}`,
-                                                }}
-                                                onSuccess={() =>
-                                                    toast.success(
-                                                        `Appointment mode "${mode.name}" deleted successfully.`,
-                                                    )
-                                                }
-                                                trigger={
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
+                                                    <Link
+                                                        href={`/appointment-modes/${mode.id}/edit`}
                                                     >
-                                                        Delete
-                                                    </Button>
-                                                }
-                                            />
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+                                            {hasPermission('appointment_modes.delete') ? (
+                                                <DeleteConfirmationModal
+                                                    title="Delete Appointment Mode"
+                                                    description={`Are you sure you want to delete "${mode.name}"? This action cannot be undone.`}
+                                                    action={{
+                                                        method: 'delete',
+                                                        action: `/appointment-modes/${mode.id}`,
+                                                    }}
+                                                    onSuccess={() =>
+                                                        toast.success(
+                                                            `Appointment mode "${mode.name}" deleted successfully.`,
+                                                        )
+                                                    }
+                                                    trigger={
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
                                         </div>
                                     </TableCell>
                                 </TableRow>

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import VisitStartDialog from '@/components/visit-start-dialog';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type Patient, type ReturningPatientsPageProps } from '@/types/patient';
 import { Head, Link, router } from '@inertiajs/react';
@@ -48,10 +49,13 @@ export default function ReturningPatients({
     companies,
     packages,
 }: ReturningPatientsPageProps) {
+    const { hasPermission } = usePermissions();
     const rows: Patient[] = Array.isArray(patients)
         ? patients
         : (patients.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
+    const canOpenPatient = hasPermission('patients.view');
+    const canStartVisit = hasPermission('visits.create');
 
     useEffect(() => {
         if (search === (filters.search ?? '')) {
@@ -157,35 +161,39 @@ export default function ReturningPatients({
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        asChild
-                                                    >
-                                                        <Link
-                                                            href={`/patients/${patient.id}`}
+                                                    {canOpenPatient ? (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            asChild
                                                         >
-                                                            Open Patient
-                                                        </Link>
-                                                    </Button>
-                                                    <VisitStartDialog
-                                                        patientId={patient.id}
-                                                        patientName={fullName}
-                                                        visitTypes={visitTypes}
-                                                        clinics={clinics}
-                                                        doctors={doctors}
-                                                        companies={companies}
-                                                        packages={packages}
-                                                        redirectTo="visit"
-                                                        title="Start Return Visit"
-                                                        description="Create a fresh visit for this returning patient without leaving the list."
-                                                        trigger={
-                                                            <Button size="sm">
-                                                                <PlusCircle className="mr-2 h-4 w-4" />
-                                                                New Visit
-                                                            </Button>
-                                                        }
-                                                    />
+                                                            <Link
+                                                                href={`/patients/${patient.id}`}
+                                                            >
+                                                                Open Patient
+                                                            </Link>
+                                                        </Button>
+                                                    ) : null}
+                                                    {canStartVisit ? (
+                                                        <VisitStartDialog
+                                                            patientId={patient.id}
+                                                            patientName={fullName}
+                                                            visitTypes={visitTypes}
+                                                            clinics={clinics}
+                                                            doctors={doctors}
+                                                            companies={companies}
+                                                            packages={packages}
+                                                            redirectTo="visit"
+                                                            title="Start Return Visit"
+                                                            description="Create a fresh visit for this returning patient without leaving the list."
+                                                            trigger={
+                                                                <Button size="sm">
+                                                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                                                    New Visit
+                                                                </Button>
+                                                            }
+                                                        />
+                                                    ) : null}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
