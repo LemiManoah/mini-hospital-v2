@@ -13,12 +13,11 @@ it('may create a user', function (): void {
     $action = resolve(CreateUser::class);
 
     $user = $action->handle([
-        'name' => 'Test User',
         'email' => 'example@email.com',
     ], 'password');
 
     expect($user)->toBeInstanceOf(User::class)
-        ->and($user->name)->toBe('Test User')
+        ->and($user->name)->toBe('example')
         ->and($user->email)->toBe('example@email.com')
         ->and($user->password)->not->toBe('password');
 
