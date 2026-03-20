@@ -304,6 +304,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'clinics.view',
                     },
                     {
+                        title: 'Facility Branches',
+                        url: '/facility-branches',
+                        permission: 'facility_branches.view',
+                    },
+                    {
                         title: 'Insurance Packages',
                         url: indexInsurancePackages().url,
                         permission: 'insurance_packages.view',

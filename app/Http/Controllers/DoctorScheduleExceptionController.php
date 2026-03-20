@@ -14,6 +14,7 @@ use App\Http\Requests\UpdateDoctorScheduleExceptionRequest;
 use App\Models\Clinic;
 use App\Models\DoctorScheduleException;
 use App\Models\Staff;
+use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -35,11 +36,15 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
         ];
     }
 
+    public function __construct(
+        private ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));
 
-        $exceptions = DoctorScheduleException::query()
+        $exceptions = $this->activeBranchWorkspace->apply(DoctorScheduleException::query())
             ->with([
                 'doctor:id,first_name,last_name',
                 'clinic:id,clinic_name',
@@ -85,7 +90,13 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
         StoreDoctorScheduleExceptionRequest $request,
         CreateDoctorScheduleException $action,
     ): RedirectResponse {
-        $action->handle($request->validated());
+        $validated = $request->validated();
+
+        if (! $this->usesActiveBranchAssignments($validated)) {
+            return back()->with('error', 'Select a doctor and clinic from the active branch.');
+        }
+
+        $action->handle($validated);
 
         return to_route('appointments.exceptions.index')
             ->with('success', 'Schedule exception created successfully.');
@@ -93,6 +104,8 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
 
     public function edit(DoctorScheduleException $exception): Response
     {
+        $this->activeBranchWorkspace->authorizeModel($exception);
+
         return Inertia::render('appointments/exceptions/edit', [
             'exception' => $exception->load([
                 'doctor:id,first_name,last_name',
@@ -108,7 +121,15 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
         DoctorScheduleException $exception,
         UpdateDoctorScheduleException $action,
     ): RedirectResponse {
-        $action->handle($exception, $request->validated());
+        $this->activeBranchWorkspace->authorizeModel($exception);
+
+        $validated = $request->validated();
+
+        if (! $this->usesActiveBranchAssignments($validated)) {
+            return back()->with('error', 'Select a doctor and clinic from the active branch.');
+        }
+
+        $action->handle($exception, $validated);
 
         return to_route('appointments.exceptions.index')
             ->with('success', 'Schedule exception updated successfully.');
@@ -119,6 +140,8 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
         DoctorScheduleException $exception,
         DeleteDoctorScheduleException $action,
     ): RedirectResponse {
+        $this->activeBranchWorkspace->authorizeModel($exception);
+
         $action->handle($exception);
 
         return to_route('appointments.exceptions.index')
@@ -154,6 +177,7 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
         }
 
         $clinics = Clinic::query()
+            ->where('branch_id', BranchContext::getActiveBranchId())
             ->orderBy('clinic_name')
             ->get(['id', 'clinic_name'])
             ->map(static fn (Clinic $clinic): array => [
@@ -182,5 +206,40 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
                 ])
                 ->all(),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function usesActiveBranchAssignments(array $attributes): bool
+    {
+        $activeBranchId = BranchContext::getActiveBranchId();
+
+        if (! is_string($activeBranchId) || $activeBranchId === '') {
+            return false;
+        }
+
+        $doctorId = $attributes['doctor_id'] ?? null;
+        if (
+            ! is_string($doctorId)
+            || $doctorId === ''
+            || ! Staff::query()
+                ->whereKey($doctorId)
+                ->whereHas('branches', function (Builder $query) use ($activeBranchId): void {
+                    $query->where('facility_branches.id', $activeBranchId);
+                })
+                ->exists()
+        ) {
+            return false;
+        }
+
+        $clinicId = $attributes['clinic_id'] ?? null;
+
+        return ! is_string($clinicId)
+            || $clinicId === ''
+            || Clinic::query()
+                ->whereKey($clinicId)
+                ->where('branch_id', $activeBranchId)
+                ->exists();
     }
 }

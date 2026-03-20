@@ -10,6 +10,7 @@ use App\Enums\MobilityStatus;
 use App\Enums\TriageGrade;
 use App\Models\Clinic;
 use App\Models\PatientVisit;
+use App\Support\ActiveBranchWorkspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
@@ -21,6 +22,10 @@ use Inertia\Response;
 
 final class TriageController implements HasMiddleware
 {
+    public function __construct(
+        private readonly ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -33,7 +38,7 @@ final class TriageController implements HasMiddleware
         $search = mb_trim((string) $request->query('search', ''));
 
         /** @var LengthAwarePaginator<int, PatientVisit> $visits */
-        $visits = PatientVisit::query()
+        $visits = $this->activeBranchWorkspace->apply(PatientVisit::query())
             ->with([
                 'patient:id,patient_number,first_name,last_name,middle_name,phone_number,gender',
                 'clinic:id,clinic_name',
@@ -72,6 +77,8 @@ final class TriageController implements HasMiddleware
 
     public function show(PatientVisit $visit): Response
     {
+        $this->activeBranchWorkspace->authorizeModel($visit);
+
         $visit->load([
             'patient:id,patient_number,first_name,last_name,middle_name,date_of_birth,age,age_units,gender,phone_number,email,blood_group,next_of_kin_name,next_of_kin_phone,address_id,country_id',
             'patient.address:id,city,district',
@@ -99,7 +106,10 @@ final class TriageController implements HasMiddleware
             'attendanceTypes' => $this->enumOptions(AttendanceType::cases()),
             'consciousLevels' => $this->enumOptions(ConsciousLevel::cases()),
             'mobilityStatuses' => $this->enumOptions(MobilityStatus::cases()),
-            'clinics' => Clinic::query()->select('id')->selectRaw('clinic_name as name')->orderBy('clinic_name')->get(),
+            'clinics' => $this->activeBranchWorkspace
+                ->apply(Clinic::query()->select('id')->selectRaw('clinic_name as name'), 'branch_id')
+                ->orderBy('clinic_name')
+                ->get(),
             'temperatureUnits' => [
                 ['value' => 'celsius', 'label' => 'Celsius'],
                 ['value' => 'fahrenheit', 'label' => 'Fahrenheit'],

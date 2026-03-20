@@ -31,6 +31,7 @@ use App\Models\InsurancePackage;
 use App\Models\Patient;
 use App\Models\Staff;
 use App\Models\User;
+use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -58,6 +59,7 @@ final readonly class AppointmentController implements HasMiddleware
 
     public function __construct(
         private ResolveDateRange $resolveDateRange,
+        private ActiveBranchWorkspace $activeBranchWorkspace,
     ) {}
 
     public function index(Request $request): Response
@@ -206,6 +208,7 @@ final readonly class AppointmentController implements HasMiddleware
                 ->values()
                 ->all(),
             'clinics' => Clinic::query()
+                ->where('branch_id', BranchContext::getActiveBranchId())
                 ->orderBy('clinic_name')
                 ->get(['id', 'clinic_name'])
                 ->map(static fn (Clinic $clinic): array => [
@@ -225,13 +228,21 @@ final readonly class AppointmentController implements HasMiddleware
 
     public function store(StoreAppointmentRequest $request, CreateAppointment $action): RedirectResponse
     {
-        $appointment = $action->handle($request->validated());
+        $validated = $request->validated();
+
+        if (! $this->usesActiveBranchAssignments($validated)) {
+            return back()->with('error', 'Select a doctor and clinic from the active branch.');
+        }
+
+        $appointment = $action->handle($validated);
 
         return to_route('appointments.show', $appointment)->with('success', 'Appointment created successfully.');
     }
 
     public function show(Appointment $appointment): Response
     {
+        $this->activeBranchWorkspace->authorizeModel($appointment);
+
         $appointment->load([
             'patient:id,patient_number,first_name,last_name,middle_name,phone_number,email',
             'doctor:id,first_name,last_name',
@@ -268,7 +279,15 @@ final readonly class AppointmentController implements HasMiddleware
         Appointment $appointment,
         UpdateAppointment $action,
     ): RedirectResponse {
-        $action->handle($appointment, $request->validated());
+        $this->activeBranchWorkspace->authorizeModel($appointment);
+
+        $validated = $request->validated();
+
+        if (! $this->usesActiveBranchAssignments($validated)) {
+            return back()->with('error', 'Select a doctor and clinic from the active branch.');
+        }
+
+        $action->handle($appointment, $validated);
 
         return to_route('appointments.show', $appointment)->with('success', 'Appointment updated successfully.');
     }
@@ -278,6 +297,8 @@ final readonly class AppointmentController implements HasMiddleware
         Appointment $appointment,
         ConfirmAppointment $action,
     ): RedirectResponse {
+        $this->activeBranchWorkspace->authorizeModel($appointment);
+
         $action->handle($appointment);
 
         return to_route('appointments.show', $appointment)->with('success', 'Appointment confirmed successfully.');
@@ -288,6 +309,8 @@ final readonly class AppointmentController implements HasMiddleware
         Appointment $appointment,
         CancelAppointment $action,
     ): RedirectResponse {
+        $this->activeBranchWorkspace->authorizeModel($appointment);
+
         $action->handle($appointment, $request->validated());
 
         return to_route('appointments.show', $appointment)->with('success', 'Appointment cancelled successfully.');
@@ -298,6 +321,8 @@ final readonly class AppointmentController implements HasMiddleware
         Appointment $appointment,
         MarkAppointmentNoShow $action,
     ): RedirectResponse {
+        $this->activeBranchWorkspace->authorizeModel($appointment);
+
         $action->handle($appointment);
 
         return to_route('appointments.show', $appointment)->with('success', 'Appointment marked as no-show.');
@@ -308,6 +333,8 @@ final readonly class AppointmentController implements HasMiddleware
         Appointment $appointment,
         RescheduleAppointment $action,
     ): RedirectResponse {
+        $this->activeBranchWorkspace->authorizeModel($appointment);
+
         $action->handle($appointment, $request->validated());
 
         return to_route('appointments.show', $appointment)->with('success', 'Appointment rescheduled successfully.');
@@ -318,6 +345,8 @@ final readonly class AppointmentController implements HasMiddleware
         Appointment $appointment,
         CheckInAppointment $action,
     ): RedirectResponse {
+        $this->activeBranchWorkspace->authorizeModel($appointment);
+
         $visit = $action->handle($appointment, $request->validated());
 
         return to_route('visits.show', $visit)->with('success', 'Appointment checked in successfully.');
@@ -406,6 +435,7 @@ final readonly class AppointmentController implements HasMiddleware
         }
 
         $clinics = Clinic::query()
+            ->where('branch_id', BranchContext::getActiveBranchId())
             ->orderBy('clinic_name')
             ->get(['id', 'clinic_name'])
             ->map(static fn (Clinic $clinic): array => [
@@ -499,7 +529,7 @@ final readonly class AppointmentController implements HasMiddleware
 
     private function appointmentQuery(): Builder
     {
-        return Appointment::query()->with([
+        return $this->activeBranchWorkspace->apply(Appointment::query())->with([
             'patient:id,patient_number,first_name,last_name,middle_name,phone_number',
             'doctor:id,first_name,last_name',
             'clinic:id,clinic_name',
@@ -507,5 +537,45 @@ final readonly class AppointmentController implements HasMiddleware
             'mode:id,name,is_virtual',
             'visit:id,appointment_id,visit_number,status',
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function usesActiveBranchAssignments(array $attributes): bool
+    {
+        $activeBranchId = BranchContext::getActiveBranchId();
+
+        if (! is_string($activeBranchId) || $activeBranchId === '') {
+            return false;
+        }
+
+        $clinicId = $attributes['clinic_id'] ?? null;
+        if (
+            is_string($clinicId)
+            && $clinicId !== ''
+            && ! Clinic::query()
+                ->whereKey($clinicId)
+                ->where('branch_id', $activeBranchId)
+                ->exists()
+        ) {
+            return false;
+        }
+
+        $doctorId = $attributes['doctor_id'] ?? null;
+        if (
+            is_string($doctorId)
+            && $doctorId !== ''
+            && ! Staff::query()
+                ->whereKey($doctorId)
+                ->whereHas('branches', function (Builder $query) use ($activeBranchId): void {
+                    $query->where('facility_branches.id', $activeBranchId);
+                })
+                ->exists()
+        ) {
+            return false;
+        }
+
+        return true;
     }
 }

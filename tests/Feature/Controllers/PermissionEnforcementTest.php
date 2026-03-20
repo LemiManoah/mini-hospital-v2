@@ -324,6 +324,36 @@ describe('Core permission pages', function (): void {
             ->get(route('dashboard'))
             ->assertOk();
     });
+
+    it('forbids and allows facility branch index based on facility_branches.view permission', function (): void {
+        [$tenant] = createPermissionTenant(withBranch: true);
+
+        $user = createPermissionUser($tenant);
+        $this->actingAs($user)
+            ->get(route('facility-branches.index'))
+            ->assertForbidden();
+
+        $user->givePermissionTo('facility_branches.view');
+
+        $this->actingAs($user)
+            ->get(route('facility-branches.index'))
+            ->assertOk();
+    });
+
+    it('forbids and allows facility branch creation page based on facility_branches.create permission', function (): void {
+        [$tenant] = createPermissionTenant(withBranch: true);
+
+        $user = createPermissionUser($tenant);
+        $this->actingAs($user)
+            ->get(route('facility-branches.create'))
+            ->assertForbidden();
+
+        $user->givePermissionTo('facility_branches.create');
+
+        $this->actingAs($user)
+            ->get(route('facility-branches.create'))
+            ->assertOk();
+    });
 });
 
 describe('Tenant support and onboarding permissions', function (): void {

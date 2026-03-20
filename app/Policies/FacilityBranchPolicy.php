@@ -16,10 +16,28 @@ final class FacilityBranchPolicy
             && $user->hasPermissionTo('facility_branches.view');
     }
 
+    public function create(User $user): bool
+    {
+        return $user->tenant_id !== null
+            && $user->hasPermissionTo('facility_branches.create');
+    }
+
     public function view(User $user, FacilityBranch $facilityBranch): bool
     {
         return $this->belongsToUsersTenant($user, $facilityBranch)
             && $user->hasPermissionTo('facility_branches.view');
+    }
+
+    public function update(User $user, FacilityBranch $facilityBranch): bool
+    {
+        return $this->belongsToUsersTenant($user, $facilityBranch)
+            && $user->hasPermissionTo('facility_branches.update');
+    }
+
+    public function delete(User $user, FacilityBranch $facilityBranch): bool
+    {
+        return $this->belongsToUsersTenant($user, $facilityBranch)
+            && $user->hasPermissionTo('facility_branches.delete');
     }
 
     public function switchTo(User $user, FacilityBranch $facilityBranch): bool

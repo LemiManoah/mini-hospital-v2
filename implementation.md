@@ -115,9 +115,12 @@ This means future work should use the codebase and `patient_visit.md` as the sou
 - active branch middleware exists
 - staff, staff positions, departments, clinics, users, and branch switching are implemented
 - branch isolation test coverage exists
+- facility branch administration exists as a tenant-admin surface
+- active branch guard rails are now applied to the main authenticated operational routes
+- branch isolation is implemented across visits, triage, consultations, appointments, clinics, staff, and doctor scheduling surfaces
 
 ### Partial
-- tenant/facility branch architecture is present in models and context switching, but full tenant/branch administration modules are not exposed as rich day-to-day CRUD in the visible route layer
+- some branch-owned supporting reference modules still need the same active-branch isolation pattern
 - support switching is operational, but onboarding/provisioning still looks developer/admin driven
 
 ### Not Done
@@ -372,3 +375,21 @@ Billing, inventory, and IPD should be treated as subsequent phases rather than b
 ## 8) Bottom Line
 
 This project already has a strong outpatient/admin core. The biggest shift needed in documentation is to stop describing triage, consultations, and queues as future work, because they are already in the application. The biggest actual gaps now are billing, order-fulfillment execution, inventory, IPD, and audit/timeline support.
+
+---
+
+## 9) Next Concrete Slice
+
+The current active slice is **Phase 2.2: Branch-Owned Reference & Operational Surface Completion**.
+
+Why this is the right next slice:
+- Phase 2.1 is now substantially implemented, so the remaining risk is consistency rather than missing architecture
+- the major workflow surfaces are branch-isolated, but a few supporting branch-owned admin modules still need to be brought into the same rule set
+- finishing those surfaces gives a cleaner handoff into billing and execution workflows
+
+This slice should focus on:
+- appointment categories and similar branch-owned supporting references
+- any remaining admin pages that still query tenant-wide despite active branch context
+- final Phase 2 document cleanup so the next development target is unambiguous
+
+See [phase2.md](c:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\phase2.md) for the full breakdown and definition of done.

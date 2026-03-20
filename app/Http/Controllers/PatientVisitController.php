@@ -16,7 +16,9 @@ use App\Models\Clinic;
 use App\Models\FacilityBranch;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\Staff;
 use App\Models\VisitPayer;
+use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -34,6 +36,10 @@ use Inertia\Response;
 
 final class PatientVisitController implements HasMiddleware
 {
+    public function __construct(
+        private readonly ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -48,7 +54,7 @@ final class PatientVisitController implements HasMiddleware
         $search = mb_trim((string) $request->query('search', ''));
 
         /** @var LengthAwarePaginator<int, PatientVisit> $visits */
-        $visits = PatientVisit::query()
+        $visits = $this->activeBranchWorkspace->apply(PatientVisit::query())
             ->with([
                 'patient:id,patient_number,first_name,last_name,middle_name,phone_number',
                 'clinic:id,clinic_name',
@@ -90,6 +96,8 @@ final class PatientVisitController implements HasMiddleware
 
     public function show(PatientVisit $visit, AssessPatientVisitCompletion $assessment): Response
     {
+        $this->activeBranchWorkspace->authorizeModel($visit);
+
         $visit->load([
             'patient:id,patient_number,first_name,last_name,middle_name,date_of_birth,age,age_units,gender,phone_number,email,blood_group,next_of_kin_name,next_of_kin_phone,address_id,country_id',
             'patient.address:id,city,district',
@@ -120,7 +128,12 @@ final class PatientVisitController implements HasMiddleware
             'attendanceTypes' => $this->enumOptions(AttendanceType::cases()),
             'consciousLevels' => $this->enumOptions(ConsciousLevel::cases()),
             'mobilityStatuses' => $this->enumOptions(MobilityStatus::cases()),
-            'clinics' => Clinic::query()->select('id')->selectRaw('clinic_name as name')->orderBy('clinic_name')->get(),
+            'clinics' => Clinic::query()
+                ->select('id')
+                ->selectRaw('clinic_name as name')
+                ->where('branch_id', BranchContext::getActiveBranchId())
+                ->orderBy('clinic_name')
+                ->get(),
             'temperatureUnits' => [
                 ['value' => 'celsius', 'label' => 'Celsius'],
                 ['value' => 'fahrenheit', 'label' => 'Fahrenheit'],
@@ -152,6 +165,31 @@ final class PatientVisitController implements HasMiddleware
             'insurance_package_id' => ['nullable', 'required_if:billing_type,insurance', 'uuid', 'exists:insurance_packages,id'],
             'redirect_to' => ['nullable', Rule::in(['patient', 'visit', 'index'])],
         ]);
+
+        if (
+            isset($validated['clinic_id'])
+            && $validated['clinic_id'] !== null
+            && ! Clinic::query()
+                ->whereKey($validated['clinic_id'])
+                ->where('branch_id', BranchContext::getActiveBranchId())
+                ->exists()
+        ) {
+            return back()->with('error', 'The selected clinic is not available in the active branch.');
+        }
+
+        if (
+            isset($validated['doctor_id'])
+            && is_string($validated['doctor_id'])
+            && $validated['doctor_id'] !== ''
+            && ! Staff::query()
+                ->whereKey($validated['doctor_id'])
+                ->whereHas('branches', function (Builder $query): void {
+                    $query->where('facility_branches.id', BranchContext::getActiveBranchId());
+                })
+                ->exists()
+        ) {
+            return back()->with('error', 'The selected doctor is not available in the active branch.');
+        }
 
         $visit = DB::transaction(static function () use ($patient, $validated): PatientVisit {
             $activeBranch = BranchContext::getActiveBranch();
@@ -218,6 +256,8 @@ final class PatientVisitController implements HasMiddleware
         TransitionPatientVisitStatus $action,
         AssessPatientVisitCompletion $assessment,
     ): RedirectResponse {
+        $this->activeBranchWorkspace->authorizeModel($visit);
+
         $validated = $request->validate([
             'status' => ['required', Rule::in(['in_progress', 'completed', 'cancelled'])],
             'redirect_to' => ['nullable', Rule::in(['show', 'index'])],
@@ -251,6 +291,8 @@ final class PatientVisitController implements HasMiddleware
 
     public function markInProgress(PatientVisit $visit, TransitionPatientVisitStatus $action): JsonResponse
     {
+        $this->activeBranchWorkspace->authorizeModel($visit);
+
         $visit = $action->handle($visit, VisitStatus::IN_PROGRESS);
 
         return response()->json([

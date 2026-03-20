@@ -20,6 +20,7 @@ use App\Models\Drug;
 use App\Models\FacilityService;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
+use App\Support\ActiveBranchWorkspace;
 use App\Support\DoctorConsultationAccess;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -31,7 +32,7 @@ use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class DoctorConsultationController implements HasMiddleware
+final readonly class DoctorConsultationController implements HasMiddleware
 {
     public static function middleware(): array
     {
@@ -42,13 +43,17 @@ final class DoctorConsultationController implements HasMiddleware
         ];
     }
 
+    public function __construct(
+        private ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
+
     public function index(Request $request, DoctorConsultationAccess $consultationAccess): Response
     {
         $staffId = $consultationAccess->resolveStaffId();
         $search = mb_trim((string) $request->query('search', ''));
 
         /** @var LengthAwarePaginator<int, PatientVisit> $visits */
-        $visits = PatientVisit::query()
+        $visits = $this->activeBranchWorkspace->apply(PatientVisit::query())
             ->with([
                 'patient:id,patient_number,first_name,last_name,middle_name,phone_number,gender',
                 'clinic:id,clinic_name',

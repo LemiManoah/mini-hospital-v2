@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\CreateVitalSign;
 use App\Http\Requests\StoreVitalSignRequest;
 use App\Models\PatientVisit;
+use App\Support\ActiveBranchWorkspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -14,6 +15,10 @@ use Illuminate\Support\Facades\Auth;
 
 final class VisitVitalSignController implements HasMiddleware
 {
+    public function __construct(
+        private readonly ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -26,6 +31,8 @@ final class VisitVitalSignController implements HasMiddleware
         PatientVisit $visit,
         CreateVitalSign $createVitalSign,
     ): RedirectResponse {
+        $this->activeBranchWorkspace->authorizeModel($visit);
+
         $redirectTo = $request->input('redirect_to') === 'triage' ? 'triage' : 'visit';
         $triage = $visit->triage;
         if ($triage === null) {

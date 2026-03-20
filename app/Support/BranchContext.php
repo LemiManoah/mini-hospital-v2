@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Enums\GeneralStatus;
 use App\Models\FacilityBranch;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -55,6 +56,7 @@ final class BranchContext
 
         return FacilityBranch::query()
             ->where('tenant_id', $user->tenant_id)
+            ->where('status', GeneralStatus::ACTIVE)
             ->find($branchId);
     }
 
@@ -69,6 +71,7 @@ final class BranchContext
 
         $baseQuery = FacilityBranch::query()
             ->where('tenant_id', $user->tenant_id)
+            ->where('status', GeneralStatus::ACTIVE)
             ->orderByDesc('is_main_branch')
             ->orderBy('name');
 
@@ -95,7 +98,8 @@ final class BranchContext
 
         $query = FacilityBranch::query()
             ->whereKey($branchId)
-            ->where('tenant_id', $user->tenant_id);
+            ->where('tenant_id', $user->tenant_id)
+            ->where('status', GeneralStatus::ACTIVE);
 
         if ($user->is_support) {
             return $query->exists();

@@ -20,6 +20,7 @@ use App\Http\Controllers\DoctorScheduleController;
 use App\Http\Controllers\DoctorScheduleExceptionController;
 use App\Http\Controllers\DrugController;
 use App\Http\Controllers\FacilityServiceController;
+use App\Http\Controllers\FacilityBranchController;
 use App\Http\Controllers\FacilitySwitcherController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\InsurancePackageController;
@@ -63,7 +64,7 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function (): void {
+Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function (): void {
     Route::get('modules', fn () => Inertia::render('modules'))
         ->middleware('permission:dashboard.view')
         ->name('modules');
@@ -115,6 +116,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
     Route::resource('staff-positions', StaffPositionController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::resource('facility-branches', FacilityBranchController::class)->except(['show']);
     Route::resource('clinics', ClinicController::class)->except(['show']);
     Route::resource('insurance-companies', InsuranceCompanyController::class)->except(['show']);
     Route::resource('insurance-packages', InsurancePackageController::class)->except(['show']);

@@ -23,7 +23,11 @@ final class EnsureActiveBranch
             return $next($request);
         }
 
-        if ($request->routeIs('facility-switcher.*') || $request->routeIs('branch-switcher.*')) {
+        if (
+            $request->routeIs('facility-switcher.*')
+            || $request->routeIs('branch-switcher.*')
+            || $request->routeIs('facility-branches.*')
+        ) {
             return $next($request);
         }
 

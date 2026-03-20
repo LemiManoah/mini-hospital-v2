@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 final class DoctorConsultationAccess
 {
+
     public function resolveStaffId(): string
     {
         $staffId = Auth::user()?->staff_id;
@@ -24,6 +25,10 @@ final class DoctorConsultationAccess
 
     public function canAccessVisit(PatientVisit $visit, string $staffId): bool
     {
+        if ($visit->facility_branch_id !== BranchContext::getActiveBranchId()) {
+            return false;
+        }
+
         if ($visit->status->value === 'completed' || $visit->status->value === 'cancelled') {
             return false;
         }

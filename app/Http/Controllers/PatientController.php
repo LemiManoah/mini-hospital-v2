@@ -26,6 +26,7 @@ use App\Models\InsuranceCompany;
 use App\Models\InsurancePackage;
 use App\Models\Patient;
 use App\Models\Staff;
+use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
@@ -128,7 +129,13 @@ final readonly class PatientController implements HasMiddleware
 
     public function store(StorePatientRequest $request, RegisterPatientAndStartVisit $action): RedirectResponse
     {
-        $registration = $action->handle($request->validated());
+        $validated = $request->validated();
+
+        if (! $this->usesActiveBranchAssignments($validated)) {
+            return back()->with('error', 'Select a doctor and clinic from the active branch.');
+        }
+
+        $registration = $action->handle($validated);
         $patient = $registration['patient'];
         $redirectTo = $request->input('redirect_to', 'show');
 
@@ -236,10 +243,18 @@ final readonly class PatientController implements HasMiddleware
         return [
             'companies' => InsuranceCompany::query()->select('id', 'name')->orderBy('name')->get(),
             'packages' => InsurancePackage::query()->select('id', 'name', 'insurance_company_id')->orderBy('name')->get(),
-            'clinics' => Clinic::query()->select('id')->selectRaw('clinic_name as name')->orderBy('clinic_name')->get(),
+            'clinics' => Clinic::query()
+                ->select('id')
+                ->selectRaw('clinic_name as name')
+                ->where('branch_id', BranchContext::getActiveBranchId())
+                ->orderBy('clinic_name')
+                ->get(),
             'doctors' => Staff::query()
                 ->select('id', 'first_name', 'last_name')
                 ->where('type', 'medical')
+                ->whereHas('branches', function (Builder $query): void {
+                    $query->where('facility_branches.id', BranchContext::getActiveBranchId());
+                })
                 ->orderBy('first_name')
                 ->get(),
             'visitTypes' => collect(VisitType::cases())->map(fn ($case): array => [
@@ -247,5 +262,40 @@ final readonly class PatientController implements HasMiddleware
                 'label' => $case->label(),
             ]),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function usesActiveBranchAssignments(array $attributes): bool
+    {
+        $activeBranchId = BranchContext::getActiveBranchId();
+
+        if (! is_string($activeBranchId) || $activeBranchId === '') {
+            return false;
+        }
+
+        $clinicId = $attributes['clinic_id'] ?? null;
+        if (
+            is_string($clinicId)
+            && $clinicId !== ''
+            && ! Clinic::query()
+                ->whereKey($clinicId)
+                ->where('branch_id', $activeBranchId)
+                ->exists()
+        ) {
+            return false;
+        }
+
+        $doctorId = $attributes['doctor_id'] ?? null;
+
+        return ! is_string($doctorId)
+            || $doctorId === ''
+            || Staff::query()
+                ->whereKey($doctorId)
+                ->whereHas('branches', function (Builder $query) use ($activeBranchId): void {
+                    $query->where('facility_branches.id', $activeBranchId);
+                })
+                ->exists();
     }
 }

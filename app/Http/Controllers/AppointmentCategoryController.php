@@ -12,6 +12,8 @@ use App\Http\Requests\StoreAppointmentCategoryRequest;
 use App\Http\Requests\UpdateAppointmentCategoryRequest;
 use App\Models\AppointmentCategory;
 use App\Models\Clinic;
+use App\Support\ActiveBranchWorkspace;
+use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,11 +34,15 @@ final readonly class AppointmentCategoryController implements HasMiddleware
         ];
     }
 
+    public function __construct(
+        private ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
+
     public function index(Request $request): Response
     {
         $search = mb_trim((string) $request->query('search', ''));
 
-        $appointmentCategories = AppointmentCategory::query()
+        $appointmentCategories = $this->activeBranchWorkspace->apply(AppointmentCategory::query())
             ->with('clinic:id,clinic_name')
             ->when($search !== '', static fn (Builder $query) => $query
                 ->where('name', 'like', sprintf('%%%s%%', $search))
@@ -60,13 +66,21 @@ final readonly class AppointmentCategoryController implements HasMiddleware
 
     public function store(StoreAppointmentCategoryRequest $request, CreateAppointmentCategory $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        $validated = $request->validated();
+
+        if (! $this->usesActiveBranchClinic($validated)) {
+            return back()->with('error', 'Select a clinic from the active branch.');
+        }
+
+        $action->handle($validated);
 
         return to_route('appointment-categories.index')->with('success', 'Appointment category created successfully.');
     }
 
     public function edit(AppointmentCategory $appointmentCategory): Response
     {
+        $this->activeBranchWorkspace->authorizeModel($appointmentCategory);
+
         return Inertia::render('appointment-category/edit', [
             'appointmentCategory' => $appointmentCategory->load('clinic:id,clinic_name'),
             ...$this->formOptions(),
@@ -78,7 +92,15 @@ final readonly class AppointmentCategoryController implements HasMiddleware
         AppointmentCategory $appointmentCategory,
         UpdateAppointmentCategory $action,
     ): RedirectResponse {
-        $action->handle($appointmentCategory, $request->validated());
+        $this->activeBranchWorkspace->authorizeModel($appointmentCategory);
+
+        $validated = $request->validated();
+
+        if (! $this->usesActiveBranchClinic($validated)) {
+            return back()->with('error', 'Select a clinic from the active branch.');
+        }
+
+        $action->handle($appointmentCategory, $validated);
 
         return to_route('appointment-categories.index')->with('success', 'Appointment category updated successfully.');
     }
@@ -88,6 +110,8 @@ final readonly class AppointmentCategoryController implements HasMiddleware
         AppointmentCategory $appointmentCategory,
         DeleteAppointmentCategory $action,
     ): RedirectResponse {
+        $this->activeBranchWorkspace->authorizeModel($appointmentCategory);
+
         $action->handle($appointmentCategory);
 
         return to_route('appointment-categories.index')->with('success', 'Appointment category deleted successfully.');
@@ -97,6 +121,7 @@ final readonly class AppointmentCategoryController implements HasMiddleware
     {
         return [
             'clinics' => Clinic::query()
+                ->where('branch_id', BranchContext::getActiveBranchId())
                 ->orderBy('clinic_name')
                 ->get(['id', 'clinic_name'])
                 ->map(static fn (Clinic $clinic): array => [
@@ -105,5 +130,20 @@ final readonly class AppointmentCategoryController implements HasMiddleware
                 ])
                 ->all(),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function usesActiveBranchClinic(array $attributes): bool
+    {
+        $clinicId = $attributes['clinic_id'] ?? null;
+
+        return ! is_string($clinicId)
+            || $clinicId === ''
+            || Clinic::query()
+                ->whereKey($clinicId)
+                ->where('branch_id', BranchContext::getActiveBranchId())
+                ->exists();
     }
 }

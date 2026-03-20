@@ -15,6 +15,7 @@ use App\Models\FacilityBranch;
 use App\Models\Staff;
 use App\Models\StaffPosition;
 use App\Models\User;
+use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +37,10 @@ final readonly class StaffController implements HasMiddleware
             new Middleware('permission:staff.delete', only: ['destroy']),
         ];
     }
+
+    public function __construct(
+        private ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -70,7 +75,9 @@ final readonly class StaffController implements HasMiddleware
 
         $departments = Department::query()->select('id', 'department_name')->get();
         $positions = StaffPosition::query()->select('id', 'name')->get();
-        $branches = BranchContext::getAccessibleBranches($user)->map(fn (FacilityBranch $branch): array => [
+        $branches = BranchContext::getAccessibleBranches($user)
+            ->where('id', BranchContext::getActiveBranchId())
+            ->map(fn (FacilityBranch $branch): array => [
             'id' => $branch->id,
             'name' => $branch->name,
         ]);
@@ -84,7 +91,13 @@ final readonly class StaffController implements HasMiddleware
 
     public function store(StoreStaffRequest $request, CreateStaff $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        $validated = $request->validated();
+
+        if (! $this->usesActiveBranchAssignments($validated)) {
+            return back()->with('error', 'Staff can only be assigned to the active branch from this workspace.');
+        }
+
+        $action->handle($validated);
 
         return to_route('staff.index')->with('success', 'Staff member created successfully.');
     }
@@ -94,10 +107,14 @@ final readonly class StaffController implements HasMiddleware
         /** @var User $user */
         $user = Auth::user();
 
+        $this->authorizeStaff($staff);
+
         $staff->load(['departments', 'position', 'branches']);
         $departments = Department::query()->select('id', 'department_name')->get();
         $positions = StaffPosition::query()->select('id', 'name')->get();
-        $branches = BranchContext::getAccessibleBranches($user)->map(fn (FacilityBranch $branch): array => [
+        $branches = BranchContext::getAccessibleBranches($user)
+            ->where('id', BranchContext::getActiveBranchId())
+            ->map(fn (FacilityBranch $branch): array => [
             'id' => $branch->id,
             'name' => $branch->name,
         ]);
@@ -112,15 +129,54 @@ final readonly class StaffController implements HasMiddleware
 
     public function update(UpdateStaffRequest $request, Staff $staff, UpdateStaff $action): RedirectResponse
     {
-        $action->handle($staff, $request->validated());
+        $this->authorizeStaff($staff);
+
+        $validated = $request->validated();
+
+        if (! $this->usesActiveBranchAssignments($validated)) {
+            return back()->with('error', 'Staff can only be assigned to the active branch from this workspace.');
+        }
+
+        $action->handle($staff, $validated);
 
         return to_route('staff.index')->with('success', 'Staff member updated successfully.');
     }
 
     public function destroy(DeleteStaffRequest $request, Staff $staff, DeleteStaff $action): RedirectResponse
     {
+        $this->authorizeStaff($staff);
+
         $action->handle($staff);
 
         return to_route('staff.index')->with('success', 'Staff member deleted successfully.');
+    }
+
+    private function authorizeStaff(Staff $staff): void
+    {
+        abort_unless(
+            $staff->branches()
+                ->where('facility_branches.id', BranchContext::getActiveBranchId())
+                ->exists(),
+            403,
+            'You do not have access to this staff record in the active branch.',
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function usesActiveBranchAssignments(array $attributes): bool
+    {
+        $activeBranchId = BranchContext::getActiveBranchId();
+        $branchIds = $attributes['branch_ids'] ?? [];
+        $primaryBranchId = $attributes['primary_branch_id'] ?? null;
+
+        return is_string($activeBranchId)
+            && $activeBranchId !== ''
+            && is_array($branchIds)
+            && $branchIds !== []
+            && count(array_unique($branchIds)) === 1
+            && $branchIds[0] === $activeBranchId
+            && $primaryBranchId === $activeBranchId;
     }
 }
