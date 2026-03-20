@@ -15,6 +15,18 @@ final class UpdateConsultationRequest extends FormRequest
     {
         return [
             'intent' => ['required', Rule::in(['save_draft', 'complete'])],
+            'chief_complaint' => ['nullable', 'string', 'max:500'],
+            'history_of_present_illness' => ['nullable', 'string'],
+            'review_of_systems' => ['nullable', 'string'],
+            'past_medical_history_summary' => ['nullable', 'string'],
+            'family_history' => ['nullable', 'string'],
+            'social_history' => ['nullable', 'string'],
+            'subjective_notes' => ['nullable', 'string', 'max:1000'],
+            'objective_findings' => ['nullable', 'string'],
+            'assessment' => ['nullable', 'string'],
+            'plan' => ['nullable', 'string'],
+            'primary_diagnosis' => ['nullable', 'string', 'max:255'],
+            'primary_icd10_code' => ['nullable', 'string', 'max:10'],
             'outcome' => ['nullable', Rule::enum(ConsultationOutcome::class)],
             'follow_up_instructions' => ['nullable', 'string'],
             'follow_up_days' => ['nullable', 'integer', 'min:1', 'max:365'],
@@ -74,6 +86,12 @@ final class UpdateConsultationRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         parent::prepareForValidation();
+
+        if ($this->missing('history_of_present_illness') && $this->filled('history_of_presenting_illness')) {
+            $this->merge([
+                'history_of_present_illness' => $this->input('history_of_presenting_illness'),
+            ]);
+        }
 
         $this->merge([
             'intent' => $this->input('intent') ?: 'save_draft',

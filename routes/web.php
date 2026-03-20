@@ -64,8 +64,12 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
-    Route::get('modules', fn () => Inertia::render('modules'))->name('modules');
-    Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+    Route::get('modules', fn () => Inertia::render('modules'))
+        ->middleware('permission:dashboard.view')
+        ->name('modules');
+    Route::get('dashboard', fn () => Inertia::render('dashboard'))
+        ->middleware('permission:dashboard.view')
+        ->name('dashboard');
 
     Route::middleware('support.only')
         ->prefix('facility-switcher')
