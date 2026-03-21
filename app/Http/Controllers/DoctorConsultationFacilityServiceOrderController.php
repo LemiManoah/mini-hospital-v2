@@ -27,8 +27,13 @@ final class DoctorConsultationFacilityServiceOrderController implements HasMiddl
         DoctorConsultationAccess $consultationAccess,
         CreateFacilityServiceOrder $createFacilityServiceOrder,
     ): RedirectResponse {
-        $staffId = $consultationAccess->resolveStaffId();
+        $staffId = $consultationAccess->resolveStaffId(allowPrivilegedWithoutStaff: true);
         $consultationAccess->authorizeVisit($visit, $staffId);
+
+        if ($staffId === null) {
+            return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services'])
+                ->with('error', 'Clinical service orders require a linked staff profile for audit tracking.');
+        }
 
         $consultation = $visit->consultation;
 

@@ -100,6 +100,8 @@ final readonly class UserController implements HasMiddleware
 
     public function edit(User $user): Response
     {
+        $this->authorizeManagedUser($user);
+
         $user->load('roles');
 
         $roles = Role::query()
@@ -114,6 +116,8 @@ final readonly class UserController implements HasMiddleware
 
     public function update(UpdateManagedUserRequest $request, User $user, UpdateUser $action): RedirectResponse
     {
+        $this->authorizeManagedUser($user);
+
         $action->handle($user, $request->validated());
 
         return to_route('users.index')->with('success', 'User updated successfully.');
@@ -121,6 +125,8 @@ final readonly class UserController implements HasMiddleware
 
     public function destroy(DeleteUserRequest $request, User $user, DeleteUser $action): RedirectResponse
     {
+        $this->authorizeManagedUser($user);
+
         $action->handle($user);
 
         return to_route('users.index')->with('success', 'User deleted successfully.');
@@ -131,5 +137,22 @@ final readonly class UserController implements HasMiddleware
         $action->handle($request->user());
 
         return to_route('login')->with('success', 'Account deleted successfully.');
+    }
+
+    private function authorizeManagedUser(User $user): void
+    {
+        if ($user->staff_id === null) {
+            return;
+        }
+
+        abort_unless(
+            $user->staff()
+                ->whereHas('branches', function (Builder $query): void {
+                    $query->where('facility_branches.id', BranchContext::getActiveBranchId());
+                })
+                ->exists(),
+            403,
+            'You do not have access to this user in the active branch.',
+        );
     }
 }

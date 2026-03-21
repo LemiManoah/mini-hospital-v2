@@ -109,4 +109,19 @@ final class PatientVisit extends Model
     {
         return $this->hasMany(FacilityServiceOrder::class, 'visit_id');
     }
+
+    public function billing(): HasOne
+    {
+        return $this->hasOne(VisitBilling::class, 'patient_visit_id');
+    }
+
+    public function charges(): HasMany
+    {
+        return $this->hasMany(VisitCharge::class, 'patient_visit_id');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'patient_visit_id');
+    }
 }

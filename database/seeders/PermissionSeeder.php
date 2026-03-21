@@ -75,6 +75,10 @@ final class PermissionSeeder extends Seeder
             'insurance_packages' => ['view', 'create', 'update', 'delete'],
             'insurance_claims' => ['view', 'create', 'update', 'delete'],
             'insurance_payments' => ['view', 'create', 'update', 'delete'],
+            'switch_facility' => ['view', 'create', 'update', 'delete'],
+            'visit_billings' => ['view', 'create', 'update', 'delete'],
+            'visit_charges' => ['view', 'create', 'update', 'delete'],
+            'payments' => ['view', 'create', 'update', 'delete'],
         ];
     }
 

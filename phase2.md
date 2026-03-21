@@ -69,6 +69,7 @@ Turn the existing tenant/branch architecture into a complete operational layer b
 - active branch middleware is applied to the operational route group
 - invalid active-branch recovery is standardized through branch switcher and branch admin access
 - branch-sensitive workflow pages and major admin surfaces now enforce active branch context
+- supporting branch-owned admin/reference modules have been brought into the same active-branch rule set
 
 ## Slice 2.2: Branch-Owned Reference & Operational Surface Completion
 
@@ -87,6 +88,12 @@ Finish Phase 2 by bringing the remaining branch-owned supporting modules into th
 - branch-owned admin/reference records cannot be listed, edited, or mutated from another active branch
 - branch-linked dropdowns and forms only offer active-branch selections
 - the next milestone after Phase 2 is obvious from the docs without rereading code
+
+### Status
+
+- completed in implementation shape
+- appointment categories, patient registration visit options, clinics, staff, schedules, schedule exceptions, visits, triage, consultations, and appointments now follow active-branch constraints
+- remaining work is verification and future tenant support/dashboard polish, not missing branch-isolation architecture
 
 ---
 
@@ -205,18 +212,19 @@ Finish Phase 2 by bringing the remaining branch-owned supporting modules into th
 
 ## 6) Suggested Immediate Next Task
 
-The current next implementation task is:
+The next implementation task after Phase 2 is:
 
-### Finish branch isolation on the remaining branch-owned supporting modules
+### Begin Phase 8.1: Billing Foundations
 
 That means:
 
-- harden appointment categories and any similar branch-owned references
-- scan for remaining tenant-wide admin queries that should respect active branch
-- update the docs immediately after each finished slice so the next target stays visible
+- define visit charge and billing records
+- decide when charges are generated from visits and ordered services
+- add the first cashier/billing management surfaces
+- keep billing tenant-safe and branch-aware where required
 
 ---
 
 ## 7) Bottom Line
 
-Phase 2 is now well past the architectural stage. Slice 2.1 is effectively implemented, and the remaining work is consistency cleanup on the last branch-owned surfaces plus verification. Once Slice 2.2 is done, the project can move forward with far less tenant/branch ambiguity.
+Phase 2 is now complete in implementation shape. The remaining Phase 2 work is verification depth, not missing branch/tenant architecture. The next meaningful product step is billing foundations.

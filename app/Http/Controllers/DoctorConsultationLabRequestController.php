@@ -27,8 +27,13 @@ final class DoctorConsultationLabRequestController implements HasMiddleware
         DoctorConsultationAccess $consultationAccess,
         CreateLabRequest $createLabRequest,
     ): RedirectResponse {
-        $staffId = $consultationAccess->resolveStaffId();
+        $staffId = $consultationAccess->resolveStaffId(allowPrivilegedWithoutStaff: true);
         $consultationAccess->authorizeVisit($visit, $staffId);
+
+        if ($staffId === null) {
+            return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'lab'])
+                ->with('error', 'Clinical lab orders require a linked staff profile for audit tracking.');
+        }
 
         $consultation = $visit->consultation;
 

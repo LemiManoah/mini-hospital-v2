@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class VisitPayer extends Model
@@ -43,5 +44,10 @@ final class VisitPayer extends Model
     public function insurancePackage(): BelongsTo
     {
         return $this->belongsTo(InsurancePackage::class);
+    }
+
+    public function billing(): HasOne
+    {
+        return $this->hasOne(VisitBilling::class);
     }
 }

@@ -120,7 +120,7 @@ This means future work should use the codebase and `patient_visit.md` as the sou
 - branch isolation is implemented across visits, triage, consultations, appointments, clinics, staff, and doctor scheduling surfaces
 
 ### Partial
-- some branch-owned supporting reference modules still need the same active-branch isolation pattern
+- runtime verification depth and full feature coverage still need a later pass
 - support switching is operational, but onboarding/provisioning still looks developer/admin driven
 
 ### Not Done
@@ -380,16 +380,19 @@ This project already has a strong outpatient/admin core. The biggest shift neede
 
 ## 9) Next Concrete Slice
 
-The current active slice is **Phase 2.2: Branch-Owned Reference & Operational Surface Completion**.
+The Phase 2 implementation slices are now substantially complete. The next recommended phase is **Phase 8.1: Billing Foundations**.
 
 Why this is the right next slice:
-- Phase 2.1 is now substantially implemented, so the remaining risk is consistency rather than missing architecture
-- the major workflow surfaces are branch-isolated, but a few supporting branch-owned admin modules still need to be brought into the same rule set
-- finishing those surfaces gives a cleaner handoff into billing and execution workflows
+- the OPD workflow is now structurally strong enough that billing is the biggest practical gap
+- consultation orders, appointments, and visits already exist, so billing can attach to real workflow events instead of speculative ones
+- delaying billing further would leave the product clinically useful but commercially incomplete
 
 This slice should focus on:
-- appointment categories and similar branch-owned supporting references
-- any remaining admin pages that still query tenant-wide despite active branch context
-- final Phase 2 document cleanup so the next development target is unambiguous
+- visit charges
+- visit billings
+- payments
+- pricing snapshots and charge generation triggers
+- cashier-ready billing state on visits
 
 See [phase2.md](c:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\phase2.md) for the full breakdown and definition of done.
+See [phase8-plan.md](c:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\phase8-plan.md) for the next implementation plan.

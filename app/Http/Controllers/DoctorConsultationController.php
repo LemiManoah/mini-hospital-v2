@@ -49,8 +49,9 @@ final readonly class DoctorConsultationController implements HasMiddleware
 
     public function index(Request $request, DoctorConsultationAccess $consultationAccess): Response
     {
-        $staffId = $consultationAccess->resolveStaffId();
+        $staffId = $consultationAccess->resolveStaffId(allowPrivilegedWithoutStaff: true);
         $search = mb_trim((string) $request->query('search', ''));
+        $isPrivilegedUser = $consultationAccess->isPrivilegedUser($request->user());
 
         /** @var LengthAwarePaginator<int, PatientVisit> $visits */
         $visits = $this->activeBranchWorkspace->apply(PatientVisit::query())
@@ -64,14 +65,19 @@ final readonly class DoctorConsultationController implements HasMiddleware
             ])
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->whereHas('triage')
-            ->where(function (Builder $query) use ($staffId): void {
-                $query
-                    ->where('doctor_id', $staffId)
-                    ->orWhereNull('doctor_id')
-                    ->orWhereHas('consultation', static function (Builder $consultationQuery) use ($staffId): void {
-                        $consultationQuery->where('doctor_id', $staffId);
+            ->when(
+                ! $isPrivilegedUser,
+                static function (Builder $query) use ($staffId): void {
+                    $query->where(function (Builder $staffScopeQuery) use ($staffId): void {
+                        $staffScopeQuery
+                            ->where('doctor_id', $staffId)
+                            ->orWhereNull('doctor_id')
+                            ->orWhereHas('consultation', static function (Builder $consultationQuery) use ($staffId): void {
+                                $consultationQuery->where('doctor_id', $staffId);
+                            });
                     });
-            })
+                }
+            )
             ->when(
                 $search !== '',
                 static function (Builder $query) use ($search): void {
@@ -104,7 +110,7 @@ final readonly class DoctorConsultationController implements HasMiddleware
 
     public function show(Request $request, PatientVisit $visit, DoctorConsultationAccess $consultationAccess): Response
     {
-        $staffId = $consultationAccess->resolveStaffId();
+        $staffId = $consultationAccess->resolveStaffId(allowPrivilegedWithoutStaff: true);
         $consultationAccess->authorizeVisit($visit, $staffId);
 
         $visit->load([
@@ -251,7 +257,7 @@ final readonly class DoctorConsultationController implements HasMiddleware
         CreateConsultation $createConsultation,
         DoctorConsultationAccess $consultationAccess,
     ): RedirectResponse {
-        $staffId = $consultationAccess->resolveStaffId();
+        $staffId = $consultationAccess->resolveStaffId(allowPrivilegedWithoutStaff: true);
         $consultationAccess->authorizeVisit($visit, $staffId);
 
         if ($visit->triage === null) {
@@ -260,6 +266,11 @@ final readonly class DoctorConsultationController implements HasMiddleware
 
         if ($visit->consultation()->exists()) {
             return to_route('doctors.consultations.show', $visit)->with('error', 'This visit already has a consultation record.');
+        }
+
+        if ($staffId === null && $visit->doctor_id === null) {
+            return to_route('doctors.consultations.show', $visit)
+                ->with('error', 'Assign a doctor or link this user to a staff profile before starting the consultation.');
         }
 
         $createConsultation->handle($visit, $request->validated());
@@ -274,7 +285,7 @@ final readonly class DoctorConsultationController implements HasMiddleware
         CompleteConsultation $completeConsultation,
         DoctorConsultationAccess $consultationAccess,
     ): RedirectResponse {
-        $staffId = $consultationAccess->resolveStaffId();
+        $staffId = $consultationAccess->resolveStaffId(allowPrivilegedWithoutStaff: true);
         $consultationAccess->authorizeVisit($visit, $staffId);
 
         $consultation = $visit->consultation;

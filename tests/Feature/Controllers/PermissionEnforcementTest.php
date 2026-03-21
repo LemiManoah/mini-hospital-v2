@@ -519,6 +519,57 @@ describe('Visit workflow permissions', function (): void {
 });
 
 describe('Consultation workflow permissions', function (): void {
+    it('allows support users with consultation permission to open the consultation queue without a staff profile', function (): void {
+        [$tenant, $branch, , $clinic] = createPermissionTenant(withBranch: true);
+        $supportUser = createPermissionUser($tenant, isSupport: true);
+        $doctorUser = createPermissionUser($tenant, withStaff: true, branch: $branch);
+        $nurseUser = createPermissionUser($tenant, withStaff: true, branch: $branch, staffType: StaffType::NURSING);
+        $patient = createPermissionPatient($tenant, $doctorUser);
+        $visit = createPermissionVisit(
+            $tenant,
+            $patient,
+            $doctorUser,
+            $branch,
+            $clinic,
+            $doctorUser->staff,
+            VisitStatus::IN_PROGRESS,
+        );
+        createPermissionTriage($visit, $nurseUser->staff, $clinic);
+
+        $supportUser->givePermissionTo('consultations.view');
+
+        $this->withSession(['active_branch_id' => $branch->id])
+            ->actingAs($supportUser)
+            ->get(route('doctors.consultations.index'))
+            ->assertOk();
+    });
+
+    it('allows support users with consultation permission to open a consultation workspace without a staff profile', function (): void {
+        [$tenant, $branch, , $clinic] = createPermissionTenant(withBranch: true);
+        $supportUser = createPermissionUser($tenant, isSupport: true);
+        $doctorUser = createPermissionUser($tenant, withStaff: true, branch: $branch);
+        $nurseUser = createPermissionUser($tenant, withStaff: true, branch: $branch, staffType: StaffType::NURSING);
+        $patient = createPermissionPatient($tenant, $doctorUser);
+        $visit = createPermissionVisit(
+            $tenant,
+            $patient,
+            $doctorUser,
+            $branch,
+            $clinic,
+            $doctorUser->staff,
+            VisitStatus::IN_PROGRESS,
+        );
+        createPermissionTriage($visit, $nurseUser->staff, $clinic);
+        createPermissionConsultation($visit, $doctorUser->staff);
+
+        $supportUser->givePermissionTo('consultations.view');
+
+        $this->withSession(['active_branch_id' => $branch->id])
+            ->actingAs($supportUser)
+            ->get(route('doctors.consultations.show', $visit))
+            ->assertOk();
+    });
+
     it('forbids and allows consultation creation based on consultations.create permission', function (): void {
         [$tenant, $branch, , $clinic] = createPermissionTenant(withBranch: true);
         $doctorUser = createPermissionUser($tenant, withStaff: true, branch: $branch);

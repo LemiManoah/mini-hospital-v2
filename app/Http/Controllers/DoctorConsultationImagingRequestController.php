@@ -27,8 +27,13 @@ final class DoctorConsultationImagingRequestController implements HasMiddleware
         DoctorConsultationAccess $consultationAccess,
         CreateImagingRequest $createImagingRequest,
     ): RedirectResponse {
-        $staffId = $consultationAccess->resolveStaffId();
+        $staffId = $consultationAccess->resolveStaffId(allowPrivilegedWithoutStaff: true);
         $consultationAccess->authorizeVisit($visit, $staffId);
+
+        if ($staffId === null) {
+            return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'imaging'])
+                ->with('error', 'Clinical imaging orders require a linked staff profile for audit tracking.');
+        }
 
         $consultation = $visit->consultation;
 

@@ -27,8 +27,13 @@ final class DoctorConsultationPrescriptionController implements HasMiddleware
         DoctorConsultationAccess $consultationAccess,
         CreatePrescription $createPrescription,
     ): RedirectResponse {
-        $staffId = $consultationAccess->resolveStaffId();
+        $staffId = $consultationAccess->resolveStaffId(allowPrivilegedWithoutStaff: true);
         $consultationAccess->authorizeVisit($visit, $staffId);
+
+        if ($staffId === null) {
+            return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'prescriptions'])
+                ->with('error', 'Clinical prescriptions require a linked staff profile for audit tracking.');
+        }
 
         $consultation = $visit->consultation;
 
