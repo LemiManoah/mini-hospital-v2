@@ -226,6 +226,49 @@ export interface VisitPayer {
     insurancePackage?: Pick<InsurancePackage, 'id' | 'name'>;
 }
 
+export interface VisitCharge {
+    id: string;
+    visit_billing_id: string;
+    patient_visit_id: string;
+    source_type: string;
+    source_id: string;
+    charge_code: string | null;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    line_total: number;
+    status: string;
+    charged_at: string | null;
+}
+
+export interface VisitPayment {
+    id: string;
+    visit_billing_id: string;
+    patient_visit_id: string;
+    receipt_number: string | null;
+    payment_date: string | null;
+    amount: number;
+    payment_method: string | null;
+    reference_number: string | null;
+    is_refund: boolean;
+    notes: string | null;
+}
+
+export interface VisitBilling {
+    id: string;
+    patient_visit_id: string;
+    visit_payer_id: string;
+    payer_type: 'cash' | 'insurance';
+    gross_amount: number;
+    discount_amount: number;
+    paid_amount: number;
+    balance_amount: number;
+    status: string;
+    billed_at: string | null;
+    settled_at: string | null;
+    payments?: VisitPayment[] | null;
+}
+
 export interface Patient {
     id: string;
     patient_number: string;
@@ -328,6 +371,9 @@ export interface PatientVisit {
     registered_by?: { id: string; name: string } | null;
     patient?: Patient | null;
     payer?: VisitPayer | null;
+    billing?: VisitBilling | null;
+    charges?: VisitCharge[] | null;
+    payments?: VisitPayment[] | null;
     triage?: TriageRecord | null;
     consultation?: Consultation | null;
     labRequests?: LabRequest[] | null;
@@ -375,6 +421,7 @@ export interface VisitShowPageProps {
     visit: PatientVisit;
     availableTransitions: { value: string; label: string }[];
     completionCheck?: VisitCompletionCheck;
+    paymentMethods: { value: string; label: string }[];
     triageGrades: { value: string; label: string }[];
     attendanceTypes: { value: string; label: string }[];
     consciousLevels: { value: string; label: string }[];

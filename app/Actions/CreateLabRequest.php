@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class CreateLabRequest
 {
+    public function __construct(
+        private SyncLabRequestCharge $syncLabRequestCharge,
+    ) {}
+
     public function handle(Consultation $consultation, array $data, string $staffId): LabRequest
     {
         /** @var array<int, string> $testIds */
@@ -48,10 +52,15 @@ final readonly class CreateLabRequest
                 ]);
             }
 
-            return $request->loadMissing([
+            $request = $request->loadMissing([
+                'visit.payer',
                 'requestedBy:id,first_name,last_name',
                 'items.test:id,test_name,test_code,category',
             ]);
+
+            $this->syncLabRequestCharge->handle($request);
+
+            return $request;
         });
     }
 

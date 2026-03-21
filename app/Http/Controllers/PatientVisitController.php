@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\AssessPatientVisitCompletion;
+use App\Actions\EnsureVisitBilling;
+use App\Actions\RecalculateVisitBilling;
 use App\Actions\TransitionPatientVisitStatus;
 use App\Enums\AttendanceType;
 use App\Enums\ConsciousLevel;
@@ -17,6 +19,7 @@ use App\Models\FacilityBranch;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Staff;
+use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
@@ -98,6 +101,9 @@ final class PatientVisitController implements HasMiddleware
     {
         $this->activeBranchWorkspace->authorizeModel($visit);
 
+        $billing = resolve(EnsureVisitBilling::class)->handle($visit);
+        resolve(RecalculateVisitBilling::class)->handle($billing);
+
         $visit->load([
             'patient:id,patient_number,first_name,last_name,middle_name,date_of_birth,age,age_units,gender,phone_number,email,blood_group,next_of_kin_name,next_of_kin_phone,address_id,country_id',
             'patient.address:id,city,district',
@@ -110,6 +116,13 @@ final class PatientVisitController implements HasMiddleware
             'payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
             'payer.insuranceCompany:id,name',
             'payer.insurancePackage:id,name',
+            'billing:id,patient_visit_id,visit_payer_id,payer_type,gross_amount,discount_amount,paid_amount,balance_amount,status,billed_at,settled_at',
+            'billing.payments' => static fn ($query) => $query
+                ->select('id', 'visit_billing_id', 'patient_visit_id', 'receipt_number', 'payment_date', 'amount', 'payment_method', 'reference_number', 'is_refund', 'notes')
+                ->latest('payment_date'),
+            'charges' => static fn ($query) => $query
+                ->select('id', 'visit_billing_id', 'patient_visit_id', 'source_type', 'source_id', 'charge_code', 'description', 'quantity', 'unit_price', 'line_total', 'status', 'charged_at')
+                ->latest('charged_at'),
             'triage:id,visit_id,nurse_id,triage_datetime,triage_grade,attendance_type,news_score,pews_score,conscious_level,mobility_status,chief_complaint,history_of_presenting_illness,assigned_clinic_id,requires_priority,is_pediatric,poisoning_case,poisoning_agent,snake_bite_case,referred_by,nurse_notes',
             'triage.nurse:id,first_name,last_name',
             'triage.assignedClinic:id,clinic_name',
@@ -141,6 +154,12 @@ final class PatientVisitController implements HasMiddleware
             'bloodGlucoseUnits' => [
                 ['value' => 'mg_dl', 'label' => 'mg/dL'],
                 ['value' => 'mmol_l', 'label' => 'mmol/L'],
+            ],
+            'paymentMethods' => [
+                ['value' => 'cash', 'label' => 'Cash'],
+                ['value' => 'card', 'label' => 'Card'],
+                ['value' => 'mobile_money', 'label' => 'Mobile Money'],
+                ['value' => 'bank_transfer', 'label' => 'Bank Transfer'],
             ],
         ]);
     }
@@ -223,7 +242,7 @@ final class PatientVisitController implements HasMiddleware
                 'updated_by' => $userId,
             ]);
 
-            VisitPayer::query()->create([
+            $payer = VisitPayer::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_visit_id' => $visit->id,
                 'billing_type' => $validated['billing_type'],
@@ -235,6 +254,16 @@ final class PatientVisitController implements HasMiddleware
                     : null,
                 'created_by' => $userId,
                 'updated_by' => $userId,
+            ]);
+
+            VisitBilling::query()->create([
+                'tenant_id' => $patient->tenant_id,
+                'facility_branch_id' => $activeBranch?->id,
+                'patient_visit_id' => $visit->id,
+                'visit_payer_id' => $payer->id,
+                'payer_type' => $payer->billing_type,
+                'insurance_company_id' => $payer->insurance_company_id,
+                'insurance_package_id' => $payer->insurance_package_id,
             ]);
 
             return $visit;

@@ -10,8 +10,12 @@ use App\Enums\LabRequestStatus;
 use App\Enums\PrescriptionStatus;
 use App\Models\PatientVisit;
 
-final class AssessPatientVisitCompletion
+final readonly class AssessPatientVisitCompletion
 {
+    public function __construct(
+        private RecalculateVisitBilling $recalculateVisitBilling,
+    ) {}
+
     /**
      * @return array{
      *     can_complete: bool,
@@ -26,7 +30,7 @@ final class AssessPatientVisitCompletion
     public function handle(PatientVisit $visit): array
     {
         $pendingServicesCount = $this->pendingServicesCount($visit);
-        $unpaidBalance = $this->unpaidBalance();
+        $unpaidBalance = $this->unpaidBalance($visit);
         $consultationBlockingReason = $this->consultationBlockingReason($visit);
 
         $blockingReasons = [];
@@ -96,10 +100,17 @@ final class AssessPatientVisitCompletion
         return $pendingLabRequests + $pendingImagingRequests + $pendingPrescriptions + $pendingFacilityServiceOrders;
     }
 
-    private function unpaidBalance(): float
+    private function unpaidBalance(PatientVisit $visit): float
     {
-        // Visit-level charges and payments are not in the codebase yet, so default to no balance.
-        return 0.0;
+        $visit->loadMissing('billing');
+
+        if ($visit->billing === null) {
+            return 0.0;
+        }
+
+        return (float) $this->recalculateVisitBilling
+            ->handle($visit->billing)
+            ->balance_amount;
     }
 
     private function consultationBlockingReason(PatientVisit $visit): ?string

@@ -305,3 +305,98 @@ it('counts pending facility service orders as blocking downstream work', functio
         ->and($result['pending_services_count'])->toBe(1)
         ->and($result['blocking_reasons'])->toContain('This visit still has 1 pending service.');
 });
+
+it('warns when a visit has an unpaid balance and clears the warning after settlement', function (): void {
+    DB::statement('PRAGMA foreign_keys = OFF');
+
+    $tenantId = (string) Str::uuid();
+    $visitId = (string) Str::uuid();
+    $payerId = (string) Str::uuid();
+    $billingId = (string) Str::uuid();
+
+    DB::table('patient_visits')->insert([
+        'id' => $visitId,
+        'tenant_id' => $tenantId,
+        'patient_id' => (string) Str::uuid(),
+        'visit_number' => 'VIS-006',
+        'visit_type' => 'outpatient',
+        'status' => 'in_progress',
+        'is_emergency' => false,
+        'registered_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('visit_payers')->insert([
+        'id' => $payerId,
+        'tenant_id' => $tenantId,
+        'patient_visit_id' => $visitId,
+        'billing_type' => 'cash',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('visit_billings')->insert([
+        'id' => $billingId,
+        'tenant_id' => $tenantId,
+        'facility_branch_id' => (string) Str::uuid(),
+        'patient_visit_id' => $visitId,
+        'visit_payer_id' => $payerId,
+        'payer_type' => 'cash',
+        'gross_amount' => 0,
+        'discount_amount' => 0,
+        'paid_amount' => 0,
+        'balance_amount' => 0,
+        'status' => 'pending',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('visit_charges')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $tenantId,
+        'facility_branch_id' => (string) Str::uuid(),
+        'visit_billing_id' => $billingId,
+        'patient_visit_id' => $visitId,
+        'source_type' => 'manual',
+        'source_id' => (string) Str::uuid(),
+        'description' => 'Registration fee',
+        'quantity' => 1,
+        'unit_price' => 30,
+        'line_total' => 30,
+        'status' => 'active',
+        'charged_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $visit = PatientVisit::query()->findOrFail($visitId);
+    $result = resolve(AssessPatientVisitCompletion::class)->handle($visit);
+
+    expect($result['can_complete'])->toBeTrue()
+        ->and($result['has_unpaid_balance'])->toBeTrue()
+        ->and($result['unpaid_balance'])->toBe(30.0)
+        ->and($result['warning_messages'])->toContain('This patient still has an unpaid balance of 30.00 for this visit.');
+
+    DB::table('payments')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $tenantId,
+        'facility_branch_id' => (string) Str::uuid(),
+        'visit_billing_id' => $billingId,
+        'patient_visit_id' => $visitId,
+        'receipt_number' => 'RCT-2001',
+        'payment_date' => now(),
+        'amount' => 30,
+        'payment_method' => 'cash',
+        'is_refund' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $visit = PatientVisit::query()->findOrFail($visitId);
+    $result = resolve(AssessPatientVisitCompletion::class)->handle($visit);
+
+    expect($result['has_unpaid_balance'])->toBeFalse()
+        ->and($result['unpaid_balance'])->toBe(0.0)
+        ->and($result['warning_messages'])->toBe([]);
+});

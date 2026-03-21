@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\CreateImagingRequest;
+use App\Actions\CreateFacilityServiceOrder;
 use App\Actions\CreateLabRequest;
 use App\Actions\CreatePrescription;
 use App\Enums\DrugCategory;
@@ -10,18 +11,24 @@ use App\Enums\DrugDosageForm;
 use App\Enums\ImagingModality;
 use App\Enums\Priority;
 use App\Models\Consultation;
+use App\Models\VisitCharge;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-function seedConsultationContext(): array
+function seedConsultationContext(string $billingType = 'cash'): array
 {
     DB::statement('PRAGMA foreign_keys = OFF');
 
     $tenantId = (string) Str::uuid();
+    $branchId = (string) Str::uuid();
     $staffId = (string) Str::uuid();
     $patientId = (string) Str::uuid();
     $visitId = (string) Str::uuid();
     $consultationId = (string) Str::uuid();
+    $payerId = (string) Str::uuid();
+    $insurancePackageId = $billingType === 'insurance'
+        ? (string) Str::uuid()
+        : null;
 
     DB::table('staff')->insert([
         'id' => $staffId,
@@ -37,10 +44,24 @@ function seedConsultationContext(): array
         'updated_at' => now(),
     ]);
 
+    DB::table('facility_branches')->insert([
+        'id' => $branchId,
+        'name' => 'Main Branch',
+        'branch_code' => 'MAIN',
+        'tenant_id' => $tenantId,
+        'currency_id' => (string) Str::uuid(),
+        'status' => 'active',
+        'is_main_branch' => true,
+        'has_store' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     DB::table('patient_visits')->insert([
         'id' => $visitId,
         'tenant_id' => $tenantId,
         'patient_id' => $patientId,
+        'facility_branch_id' => $branchId,
         'visit_number' => 'VIS-ORD-001',
         'visit_type' => 'outpatient',
         'status' => 'in_progress',
@@ -51,9 +72,23 @@ function seedConsultationContext(): array
         'updated_at' => now(),
     ]);
 
+    DB::table('visit_payers')->insert([
+        'id' => $payerId,
+        'tenant_id' => $tenantId,
+        'patient_visit_id' => $visitId,
+        'billing_type' => $billingType,
+        'insurance_company_id' => $insurancePackageId === null
+            ? null
+            : (string) Str::uuid(),
+        'insurance_package_id' => $insurancePackageId,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     DB::table('consultations')->insert([
         'id' => $consultationId,
         'tenant_id' => $tenantId,
+        'facility_branch_id' => $branchId,
         'visit_id' => $visitId,
         'doctor_id' => $staffId,
         'started_at' => now(),
@@ -67,13 +102,16 @@ function seedConsultationContext(): array
 
     return [
         'tenant_id' => $tenantId,
+        'branch_id' => $branchId,
         'staff_id' => $staffId,
         'visit_id' => $visitId,
+        'payer_id' => $payerId,
+        'insurance_package_id' => $insurancePackageId,
         'consultation' => Consultation::query()->findOrFail($consultationId),
     ];
 }
 
-it('creates a lab request with priced items from the consultation context', function (): void {
+it('creates a lab request with priced items from the consultation context and syncs a visit charge', function (): void {
     $context = seedConsultationContext();
     $testId = (string) Str::uuid();
 
@@ -102,6 +140,65 @@ it('creates a lab request with priced items from the consultation context', func
         ->and($request->priority)->toBe(Priority::URGENT)
         ->and($request->items)->toHaveCount(1)
         ->and($request->items->first()?->price)->toBe(25000.0);
+
+    $charge = VisitCharge::query()
+        ->where('patient_visit_id', $context['visit_id'])
+        ->where('source_type', $request->getMorphClass())
+        ->where('source_id', $request->id)
+        ->first();
+
+    expect($charge)->not()->toBeNull()
+        ->and((float) $charge->unit_price)->toBe(25000.0)
+        ->and((float) $charge->line_total)->toBe(25000.0);
+});
+
+it('uses insurance package prices when syncing lab request charges', function (): void {
+    $context = seedConsultationContext('insurance');
+    $testId = (string) Str::uuid();
+
+    DB::table('lab_test_catalogs')->insert([
+        'id' => $testId,
+        'tenant_id' => $context['tenant_id'],
+        'test_code' => 'MPS',
+        'test_name' => 'Malaria Parasite Smear',
+        'category' => 'Parasitology',
+        'base_price' => 18000,
+        'requires_fasting' => false,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('insurance_package_prices')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => $context['branch_id'],
+        'insurance_package_id' => $context['insurance_package_id'],
+        'billable_type' => 'test',
+        'billable_id' => $testId,
+        'price' => 12000,
+        'status' => 'active',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $request = resolve(CreateLabRequest::class)->handle($context['consultation'], [
+        'test_ids' => [$testId],
+        'clinical_notes' => 'Confirm malaria',
+        'priority' => 'routine',
+        'diagnosis_code' => 'B50',
+        'is_stat' => false,
+    ], $context['staff_id']);
+
+    $charge = VisitCharge::query()
+        ->where('patient_visit_id', $context['visit_id'])
+        ->where('source_type', $request->getMorphClass())
+        ->where('source_id', $request->id)
+        ->first();
+
+    expect($charge)->not()->toBeNull()
+        ->and((float) $charge->unit_price)->toBe(12000.0)
+        ->and((float) $charge->line_total)->toBe(12000.0);
 });
 
 it('creates a prescription with multiple drug items', function (): void {
@@ -165,4 +262,55 @@ it('creates an imaging request linked to the consultation', function (): void {
     expect($request->consultation_id)->toBe($context['consultation']->id)
         ->and($request->body_part)->toBe('Chest')
         ->and($request->modality)->toBe(ImagingModality::XRAY);
+});
+
+it('creates a facility service order and syncs an insurance-priced charge', function (): void {
+    $context = seedConsultationContext('insurance');
+    $serviceId = (string) Str::uuid();
+
+    DB::table('facility_services')->insert([
+        'id' => $serviceId,
+        'tenant_id' => $context['tenant_id'],
+        'service_code' => 'SRV-100',
+        'name' => 'Nebulization',
+        'category' => 'other',
+        'is_billable' => true,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('insurance_package_prices')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => $context['branch_id'],
+        'insurance_package_id' => $context['insurance_package_id'],
+        'billable_type' => 'service',
+        'billable_id' => $serviceId,
+        'price' => 9500,
+        'status' => 'active',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $order = resolve(CreateFacilityServiceOrder::class)->handle(
+        $context['consultation'],
+        [
+            'facility_service_id' => $serviceId,
+            'clinical_notes' => 'Give bronchodilator support',
+            'service_instructions' => 'Once now',
+        ],
+        $context['staff_id'],
+    );
+
+    $charge = VisitCharge::query()
+        ->where('patient_visit_id', $context['visit_id'])
+        ->where('source_type', $order->getMorphClass())
+        ->where('source_id', $order->id)
+        ->first();
+
+    expect($charge)->not()->toBeNull()
+        ->and((float) $charge->unit_price)->toBe(9500.0)
+        ->and((float) $charge->line_total)->toBe(9500.0)
+        ->and($charge->description)->toBe('Facility service: Nebulization');
 });

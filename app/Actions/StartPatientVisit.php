@@ -9,6 +9,7 @@ use App\Enums\VisitStatus;
 use App\Models\FacilityBranch;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\BranchContext;
 use Illuminate\Support\Facades\Auth;
@@ -54,7 +55,7 @@ final class StartPatientVisit
                 'updated_by' => $userId,
             ]);
 
-            VisitPayer::query()->create([
+            $payer = VisitPayer::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_visit_id' => $visit->id,
                 'billing_type' => $data['billing_type'],
@@ -66,6 +67,16 @@ final class StartPatientVisit
                     : null,
                 'created_by' => $userId,
                 'updated_by' => $userId,
+            ]);
+
+            VisitBilling::query()->create([
+                'tenant_id' => $patient->tenant_id,
+                'facility_branch_id' => $activeBranch?->id,
+                'patient_visit_id' => $visit->id,
+                'visit_payer_id' => $payer->id,
+                'payer_type' => $payer->billing_type,
+                'insurance_company_id' => $payer->insurance_company_id,
+                'insurance_package_id' => $payer->insurance_package_id,
             ]);
 
             return $visit;

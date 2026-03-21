@@ -43,6 +43,7 @@ use App\Http\Controllers\UserEmailVerificationNotificationController;
 use App\Http\Controllers\UserPasswordController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserTwoFactorAuthenticationController;
+use App\Http\Controllers\VisitPaymentController;
 use App\Http\Controllers\VisitTriageController;
 use App\Http\Controllers\VisitVitalSignController;
 use App\Http\Controllers\WorkspaceRegistrationController;
@@ -124,6 +125,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('patients/returning', [PatientController::class, 'returning'])->name('patients.returning');
     Route::get('visits', [PatientVisitController::class, 'index'])->name('visits.index');
     Route::get('visits/{visit}', [PatientVisitController::class, 'show'])->name('visits.show');
+    Route::post('visits/{visit}/payments', [VisitPaymentController::class, 'store'])->name('visits.payments.store');
     Route::patch('visits/{visit}/status', [PatientVisitController::class, 'updateStatus'])->name('visits.update-status');
     Route::get('doctors/consultations', [DoctorConsultationController::class, 'index'])->name('doctors.consultations.index');
     Route::get('doctors/consultations/{visit}', [DoctorConsultationController::class, 'show'])->name('doctors.consultations.show');

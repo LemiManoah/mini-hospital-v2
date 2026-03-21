@@ -11,6 +11,7 @@ use App\Enums\VisitType;
 use App\Models\Appointment;
 use App\Models\FacilityBranch;
 use App\Models\PatientVisit;
+use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\BranchContext;
 use Illuminate\Support\Facades\Auth;
@@ -80,7 +81,7 @@ final readonly class CheckInAppointment
                 'updated_by' => $userId,
             ]);
 
-            VisitPayer::query()->create([
+            $payer = VisitPayer::query()->create([
                 'tenant_id' => $appointment->tenant_id,
                 'patient_visit_id' => $visit->id,
                 'billing_type' => $attributes['billing_type'],
@@ -92,6 +93,16 @@ final readonly class CheckInAppointment
                     : null,
                 'created_by' => $userId,
                 'updated_by' => $userId,
+            ]);
+
+            VisitBilling::query()->create([
+                'tenant_id' => $appointment->tenant_id,
+                'facility_branch_id' => $visit->facility_branch_id,
+                'patient_visit_id' => $visit->id,
+                'visit_payer_id' => $payer->id,
+                'payer_type' => $payer->billing_type,
+                'insurance_company_id' => $payer->insurance_company_id,
+                'insurance_package_id' => $payer->insurance_package_id,
             ]);
 
             $appointment->update([

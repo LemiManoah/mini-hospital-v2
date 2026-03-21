@@ -10,9 +10,13 @@ use App\Models\FacilityServiceOrder;
 
 final readonly class CreateFacilityServiceOrder
 {
+    public function __construct(
+        private SyncFacilityServiceOrderCharge $syncFacilityServiceOrderCharge,
+    ) {}
+
     public function handle(Consultation $consultation, array $data, string $staffId): FacilityServiceOrder
     {
-        return FacilityServiceOrder::query()->create([
+        $order = FacilityServiceOrder::query()->create([
             'tenant_id' => $consultation->tenant_id,
             'facility_branch_id' => $consultation->facility_branch_id,
             'visit_id' => $consultation->visit_id,
@@ -27,6 +31,10 @@ final readonly class CreateFacilityServiceOrder
             'service:id,name,service_code,category,is_billable',
             'orderedBy:id,first_name,last_name',
         ]);
+
+        $this->syncFacilityServiceOrderCharge->handle($order);
+
+        return $order;
     }
 
     private function nullableText(mixed $value): ?string
