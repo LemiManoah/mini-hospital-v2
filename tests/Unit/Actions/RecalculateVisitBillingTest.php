@@ -8,17 +8,21 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 it('recalculates visit billing totals from charges and payments', function (): void {
-    DB::statement('PRAGMA foreign_keys = OFF');
-
     $tenantId = (string) Str::uuid();
     $visitId = (string) Str::uuid();
     $payerId = (string) Str::uuid();
     $billingId = (string) Str::uuid();
+    $patientId = (string) Str::uuid();
+    $branchId = (string) Str::uuid();
+
+    $tenantContext = seedTenantContext($tenantId);
+    seedPatientRecord($patientId, $tenantId);
+    seedFacilityBranchRecord($branchId, $tenantId, $tenantContext['currency_id']);
 
     DB::table('patient_visits')->insert([
         'id' => $visitId,
         'tenant_id' => $tenantId,
-        'patient_id' => (string) Str::uuid(),
+        'patient_id' => $patientId,
         'visit_number' => 'VIS-101',
         'visit_type' => 'outpatient',
         'status' => 'in_progress',
@@ -40,7 +44,7 @@ it('recalculates visit billing totals from charges and payments', function (): v
     DB::table('visit_billings')->insert([
         'id' => $billingId,
         'tenant_id' => $tenantId,
-        'facility_branch_id' => (string) Str::uuid(),
+        'facility_branch_id' => $branchId,
         'patient_visit_id' => $visitId,
         'visit_payer_id' => $payerId,
         'payer_type' => 'cash',
@@ -57,7 +61,7 @@ it('recalculates visit billing totals from charges and payments', function (): v
         [
             'id' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'facility_branch_id' => (string) Str::uuid(),
+            'facility_branch_id' => $branchId,
             'visit_billing_id' => $billingId,
             'patient_visit_id' => $visitId,
             'source_type' => 'manual',
@@ -74,7 +78,7 @@ it('recalculates visit billing totals from charges and payments', function (): v
         [
             'id' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'facility_branch_id' => (string) Str::uuid(),
+            'facility_branch_id' => $branchId,
             'visit_billing_id' => $billingId,
             'patient_visit_id' => $visitId,
             'source_type' => 'manual',
@@ -93,7 +97,7 @@ it('recalculates visit billing totals from charges and payments', function (): v
     DB::table('payments')->insert([
         'id' => (string) Str::uuid(),
         'tenant_id' => $tenantId,
-        'facility_branch_id' => (string) Str::uuid(),
+        'facility_branch_id' => $branchId,
         'visit_billing_id' => $billingId,
         'patient_visit_id' => $visitId,
         'receipt_number' => 'RCT-1001',
@@ -119,7 +123,7 @@ it('recalculates visit billing totals from charges and payments', function (): v
     DB::table('payments')->insert([
         'id' => (string) Str::uuid(),
         'tenant_id' => $tenantId,
-        'facility_branch_id' => (string) Str::uuid(),
+        'facility_branch_id' => $branchId,
         'visit_billing_id' => $billingId,
         'patient_visit_id' => $visitId,
         'receipt_number' => 'RCT-1002',

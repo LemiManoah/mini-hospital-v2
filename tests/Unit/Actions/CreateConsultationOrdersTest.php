@@ -17,8 +17,6 @@ use Illuminate\Support\Str;
 
 function seedConsultationContext(string $billingType = 'cash'): array
 {
-    DB::statement('PRAGMA foreign_keys = OFF');
-
     $tenantId = (string) Str::uuid();
     $branchId = (string) Str::uuid();
     $staffId = (string) Str::uuid();
@@ -26,9 +24,20 @@ function seedConsultationContext(string $billingType = 'cash'): array
     $visitId = (string) Str::uuid();
     $consultationId = (string) Str::uuid();
     $payerId = (string) Str::uuid();
+    $insuranceCompanyId = $billingType === 'insurance'
+        ? (string) Str::uuid()
+        : null;
     $insurancePackageId = $billingType === 'insurance'
         ? (string) Str::uuid()
         : null;
+
+    $tenantContext = seedTenantContext($tenantId);
+    seedPatientRecord($patientId, $tenantId);
+    seedFacilityBranchRecord($branchId, $tenantId, $tenantContext['currency_id']);
+
+    if ($insuranceCompanyId !== null && $insurancePackageId !== null) {
+        seedInsuranceCoverage($tenantId, $insuranceCompanyId, $insurancePackageId);
+    }
 
     DB::table('staff')->insert([
         'id' => $staffId,
@@ -40,19 +49,6 @@ function seedConsultationContext(string $billingType = 'cash'): array
         'type' => 'medical',
         'hire_date' => now()->toDateString(),
         'is_active' => true,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
-    DB::table('facility_branches')->insert([
-        'id' => $branchId,
-        'name' => 'Main Branch',
-        'branch_code' => 'MAIN',
-        'tenant_id' => $tenantId,
-        'currency_id' => (string) Str::uuid(),
-        'status' => 'active',
-        'is_main_branch' => true,
-        'has_store' => false,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -77,9 +73,7 @@ function seedConsultationContext(string $billingType = 'cash'): array
         'tenant_id' => $tenantId,
         'patient_visit_id' => $visitId,
         'billing_type' => $billingType,
-        'insurance_company_id' => $insurancePackageId === null
-            ? null
-            : (string) Str::uuid(),
+        'insurance_company_id' => $insuranceCompanyId,
         'insurance_package_id' => $insurancePackageId,
         'created_at' => now(),
         'updated_at' => now(),
@@ -121,6 +115,7 @@ it('creates a lab request with priced items from the consultation context and sy
         'test_code' => 'FBC',
         'test_name' => 'Full Blood Count',
         'category' => 'Hematology',
+        'specimen_type' => 'Blood',
         'base_price' => 25000,
         'requires_fasting' => false,
         'is_active' => true,
@@ -162,6 +157,7 @@ it('uses insurance package prices when syncing lab request charges', function ()
         'test_code' => 'MPS',
         'test_name' => 'Malaria Parasite Smear',
         'category' => 'Parasitology',
+        'specimen_type' => 'Blood',
         'base_price' => 18000,
         'requires_fasting' => false,
         'is_active' => true,

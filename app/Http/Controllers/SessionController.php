@@ -40,7 +40,7 @@ final readonly class SessionController
 
         $request->session()->regenerate();
 
-        if ($user->is_support) {
+        if ($user->isSupportUser()) {
             BranchContext::clear();
 
             return to_route('facility-switcher.index');

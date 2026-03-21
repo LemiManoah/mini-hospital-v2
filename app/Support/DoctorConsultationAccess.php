@@ -14,7 +14,7 @@ final class DoctorConsultationAccess
     public function resolveStaffId(bool $allowPrivilegedWithoutStaff = false): ?string
     {
         $user = Auth::user();
-        $staffId = $user?->staff_id;
+        $staffId = $user instanceof User ? $user->staffId() : null;
 
         if ($allowPrivilegedWithoutStaff && $this->isPrivilegedUser($user)) {
             return is_string($staffId) && $staffId !== '' ? $staffId : null;
@@ -67,6 +67,6 @@ final class DoctorConsultationAccess
             return false;
         }
 
-        return $user->is_support || $user->hasRole('super_admin') || $user->hasRole('admin');
+        return $user->isSupportUser() || $user->hasRole('super_admin') || $user->hasRole('admin');
     }
 }

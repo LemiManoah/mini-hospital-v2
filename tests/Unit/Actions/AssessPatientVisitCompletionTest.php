@@ -8,14 +8,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 it('blocks visit completion until a triaged visit has a finalized consultation', function (): void {
-    DB::statement('PRAGMA foreign_keys = OFF');
-
     $tenantId = (string) Str::uuid();
     $staffId = (string) Str::uuid();
     $patientId = (string) Str::uuid();
     $visitId = (string) Str::uuid();
     $triageId = (string) Str::uuid();
     $consultationId = (string) Str::uuid();
+
+    seedTenantContext($tenantId);
+    seedPatientRecord($patientId, $tenantId);
 
     DB::table('staff')->insert([
         'id' => $staffId,
@@ -99,14 +100,15 @@ it('blocks visit completion until a triaged visit has a finalized consultation',
 });
 
 it('blocks visit completion when downstream consultation orders are still pending', function (): void {
-    DB::statement('PRAGMA foreign_keys = OFF');
-
     $tenantId = (string) Str::uuid();
     $staffId = (string) Str::uuid();
     $patientId = (string) Str::uuid();
     $visitId = (string) Str::uuid();
     $consultationId = (string) Str::uuid();
     $labRequestId = (string) Str::uuid();
+
+    seedTenantContext($tenantId);
+    seedPatientRecord($patientId, $tenantId);
 
     DB::table('staff')->insert([
         'id' => $staffId,
@@ -195,14 +197,15 @@ it('blocks visit completion when downstream consultation orders are still pendin
 });
 
 it('counts pending facility service orders as blocking downstream work', function (): void {
-    DB::statement('PRAGMA foreign_keys = OFF');
-
     $tenantId = (string) Str::uuid();
     $staffId = (string) Str::uuid();
     $patientId = (string) Str::uuid();
     $visitId = (string) Str::uuid();
     $consultationId = (string) Str::uuid();
     $facilityServiceId = (string) Str::uuid();
+
+    seedTenantContext($tenantId);
+    seedPatientRecord($patientId, $tenantId);
 
     DB::table('staff')->insert([
         'id' => $staffId,
@@ -276,8 +279,6 @@ it('counts pending facility service orders as blocking downstream work', functio
         'department_name' => 'Treatment Room',
         'is_billable' => false,
         'is_active' => true,
-        'created_by' => $staffId,
-        'updated_by' => $staffId,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -307,17 +308,21 @@ it('counts pending facility service orders as blocking downstream work', functio
 });
 
 it('warns when a visit has an unpaid balance and clears the warning after settlement', function (): void {
-    DB::statement('PRAGMA foreign_keys = OFF');
-
     $tenantId = (string) Str::uuid();
     $visitId = (string) Str::uuid();
     $payerId = (string) Str::uuid();
     $billingId = (string) Str::uuid();
+    $patientId = (string) Str::uuid();
+    $branchId = (string) Str::uuid();
+
+    $tenantContext = seedTenantContext($tenantId);
+    seedPatientRecord($patientId, $tenantId);
+    seedFacilityBranchRecord($branchId, $tenantId, $tenantContext['currency_id']);
 
     DB::table('patient_visits')->insert([
         'id' => $visitId,
         'tenant_id' => $tenantId,
-        'patient_id' => (string) Str::uuid(),
+        'patient_id' => $patientId,
         'visit_number' => 'VIS-006',
         'visit_type' => 'outpatient',
         'status' => 'in_progress',
@@ -339,7 +344,7 @@ it('warns when a visit has an unpaid balance and clears the warning after settle
     DB::table('visit_billings')->insert([
         'id' => $billingId,
         'tenant_id' => $tenantId,
-        'facility_branch_id' => (string) Str::uuid(),
+        'facility_branch_id' => $branchId,
         'patient_visit_id' => $visitId,
         'visit_payer_id' => $payerId,
         'payer_type' => 'cash',
@@ -355,7 +360,7 @@ it('warns when a visit has an unpaid balance and clears the warning after settle
     DB::table('visit_charges')->insert([
         'id' => (string) Str::uuid(),
         'tenant_id' => $tenantId,
-        'facility_branch_id' => (string) Str::uuid(),
+        'facility_branch_id' => $branchId,
         'visit_billing_id' => $billingId,
         'patient_visit_id' => $visitId,
         'source_type' => 'manual',
@@ -381,7 +386,7 @@ it('warns when a visit has an unpaid balance and clears the warning after settle
     DB::table('payments')->insert([
         'id' => (string) Str::uuid(),
         'tenant_id' => $tenantId,
-        'facility_branch_id' => (string) Str::uuid(),
+        'facility_branch_id' => $branchId,
         'visit_billing_id' => $billingId,
         'patient_visit_id' => $visitId,
         'receipt_number' => 'RCT-2001',

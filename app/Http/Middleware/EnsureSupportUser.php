@@ -20,7 +20,7 @@ final class EnsureSupportUser
 
         abort_unless($user instanceof User, 403, 'Unauthorized.');
 
-        abort_if(! $user->is_support && ! $user->hasRole('super_admin'), 403, 'Only support users can switch facilities.');
+        abort_if(! $user->isSupportUser() && ! $user->hasRole('super_admin'), 403, 'Only support users can switch facilities.');
 
         return $next($request);
     }

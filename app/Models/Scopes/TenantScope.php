@@ -35,16 +35,18 @@ final class TenantScope implements Scope
 
             // Support users can access all tenants, so don't filter by tenant_id
             // UNLESS they have a tenant_id set (meaning they've switched to a specific tenant)
-            if ($user->is_support && $user->tenant_id === null) {
+            $tenantId = $user->tenantId();
+
+            if ($user->isSupportUser() && $tenantId === null) {
                 return;
             }
 
-            if ($user->tenant_id !== null) {
+            if ($tenantId !== null) {
                 /** @var Model $modelInstance */
                 $modelInstance = $builder->getModel();
                 $tableName = $modelInstance->getTable();
-                $builder->where(function (Builder $query) use ($tableName, $user): void {
-                    $query->where($tableName.'.tenant_id', $user->tenant_id)
+                $builder->where(function (Builder $query) use ($tableName, $tenantId): void {
+                    $query->where($tableName.'.tenant_id', $tenantId)
                         ->orWhereNull($tableName.'.tenant_id');
                 });
             }

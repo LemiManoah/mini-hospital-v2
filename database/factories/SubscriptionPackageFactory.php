@@ -20,7 +20,7 @@ final class SubscriptionPackageFactory extends Factory
     {
         return [
             'name' => fake()->unique()->word(),
-            'users' => 10,
+            'users' => fake()->unique()->numberBetween(10, 10000),
             'price' => 1000,
             'status' => GeneralStatus::ACTIVE,
         ];

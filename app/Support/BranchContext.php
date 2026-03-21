@@ -44,7 +44,9 @@ final class BranchContext
             $user = $authenticatedUser;
         }
 
-        if ($user->tenant_id === null) {
+        $tenantId = $user->tenantId();
+
+        if ($tenantId === null) {
             return null;
         }
 
@@ -55,7 +57,7 @@ final class BranchContext
         }
 
         return FacilityBranch::query()
-            ->where('tenant_id', $user->tenant_id)
+            ->where('tenant_id', $tenantId)
             ->where('status', GeneralStatus::ACTIVE)
             ->find($branchId);
     }
@@ -65,24 +67,28 @@ final class BranchContext
      */
     public static function getAccessibleBranches(User $user): Collection
     {
-        if ($user->tenant_id === null) {
+        $tenantId = $user->tenantId();
+
+        if ($tenantId === null) {
             return new Collection;
         }
 
         $baseQuery = FacilityBranch::query()
-            ->where('tenant_id', $user->tenant_id)
+            ->where('tenant_id', $tenantId)
             ->where('status', GeneralStatus::ACTIVE)
             ->orderByDesc('is_main_branch')
             ->orderBy('name');
 
-        if ($user->is_support) {
+        if ($user->isSupportUser()) {
             return $baseQuery->get();
         }
 
-        if ($user->staff_id !== null) {
+        $staffId = $user->staffId();
+
+        if ($staffId !== null) {
             return $baseQuery
-                ->whereHas('staff', function (Builder $query) use ($user): void {
-                    $query->where('staff.id', $user->staff_id);
+                ->whereHas('staff', function (Builder $query) use ($staffId): void {
+                    $query->where('staff.id', $staffId);
                 })
                 ->get();
         }
@@ -92,22 +98,26 @@ final class BranchContext
 
     public static function canAccessBranch(User $user, string $branchId): bool
     {
-        if ($user->tenant_id === null) {
+        $tenantId = $user->tenantId();
+
+        if ($tenantId === null) {
             return false;
         }
 
         $query = FacilityBranch::query()
             ->whereKey($branchId)
-            ->where('tenant_id', $user->tenant_id)
+            ->where('tenant_id', $tenantId)
             ->where('status', GeneralStatus::ACTIVE);
 
-        if ($user->is_support) {
+        if ($user->isSupportUser()) {
             return $query->exists();
         }
 
-        if ($user->staff_id !== null) {
-            return $query->whereHas('staff', function (Builder $staffQuery) use ($user): void {
-                $staffQuery->where('staff.id', $user->staff_id);
+        $staffId = $user->staffId();
+
+        if ($staffId !== null) {
+            return $query->whereHas('staff', function (Builder $staffQuery) use ($staffId): void {
+                $staffQuery->where('staff.id', $staffId);
             })->exists();
         }
 

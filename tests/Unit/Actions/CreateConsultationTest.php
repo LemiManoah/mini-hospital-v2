@@ -10,14 +10,15 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 it('creates a consultation using triage context and the authenticated clinician', function (): void {
-    DB::statement('PRAGMA foreign_keys = OFF');
-
     $tenantId = (string) Str::uuid();
     $staffId = (string) Str::uuid();
     $userId = (string) Str::uuid();
     $patientId = (string) Str::uuid();
     $visitId = (string) Str::uuid();
     $triageId = (string) Str::uuid();
+
+    seedTenantContext($tenantId);
+    seedPatientRecord($patientId, $tenantId);
 
     DB::table('staff')->insert([
         'id' => $staffId,
