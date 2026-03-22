@@ -184,7 +184,9 @@ export default function DoctorScheduleIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('doctor_schedules.update') ? (
+                                            {hasPermission(
+                                                'doctor_schedules.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -197,7 +199,9 @@ export default function DoctorScheduleIndex({
                                                     </Link>
                                                 </Button>
                                             ) : null}
-                                            {hasPermission('doctor_schedules.delete') ? (
+                                            {hasPermission(
+                                                'doctor_schedules.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Doctor Schedule"
                                                     description="Are you sure you want to delete this schedule? This action cannot be undone."

@@ -23,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ensure.active.branch' => EnsureActiveBranch::class,
             'permission' => PermissionMiddleware::class,
-            'role'=> RoleMiddleware::class,
+            'role' => RoleMiddleware::class,
             'support.only' => EnsureSupportUser::class,
         ]);
 

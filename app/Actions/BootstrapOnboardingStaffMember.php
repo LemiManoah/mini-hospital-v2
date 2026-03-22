@@ -26,9 +26,7 @@ final readonly class BootstrapOnboardingStaffMember
             ->where('is_main_branch', true)
             ->first();
 
-        if (! $mainBranch instanceof FacilityBranch) {
-            throw new RuntimeException('A primary branch is required before onboarding staff.');
-        }
+        throw_unless($mainBranch instanceof FacilityBranch, RuntimeException::class, 'A primary branch is required before onboarding staff.');
 
         DB::transaction(function () use ($tenant, $user, $data, $mainBranch): void {
             $this->createStaff->handle([

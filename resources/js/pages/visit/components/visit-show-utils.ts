@@ -20,7 +20,9 @@ export function formatDateTime(date: string | null | undefined): string {
     });
 }
 
-export function formatMoney(amount: number | string | null | undefined): string {
+export function formatMoney(
+    amount: number | string | null | undefined,
+): string {
     const value =
         typeof amount === 'number' ? amount : Number.parseFloat(amount ?? '0');
 
@@ -61,7 +63,8 @@ export function triageGradeClasses(grade: string): string {
 export function billingStatusClasses(status: string): string {
     return (
         {
-            pending: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
+            pending:
+                'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
             partial_paid:
                 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200',
             fully_paid:

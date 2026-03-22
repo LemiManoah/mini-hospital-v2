@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\GeneralStatus;
+use Database\Factories\SubscriptionPackageFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,7 +22,7 @@ use Illuminate\Support\Carbon;
  */
 final class SubscriptionPackage extends Model
 {
-    /** @use HasFactory<\Database\Factories\SubscriptionPackageFactory> */
+    /** @use HasFactory<SubscriptionPackageFactory> */
     use HasFactory;
 
     use HasUuids;

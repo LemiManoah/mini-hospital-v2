@@ -82,20 +82,10 @@ export default function FacilityServiceEdit({
                                         <InputError message={errors.name} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="service_code">
-                                            Service Code
-                                        </Label>
-                                        <Input
-                                            id="service_code"
-                                            name="service_code"
-                                            defaultValue={
-                                                facilityService.service_code
-                                            }
-                                            required
-                                        />
-                                        <InputError
-                                            message={errors.service_code}
-                                        />
+                                        <Label>Service Code</Label>
+                                        <div className="rounded-md border bg-zinc-50 px-3 py-2 font-mono text-sm dark:bg-zinc-950">
+                                            {facilityService.service_code}
+                                        </div>
                                     </div>
                                     <div className="grid gap-2">
                                         <Label>Category</Label>
@@ -119,22 +109,6 @@ export default function FacilityServiceEdit({
                                         </Select>
                                         <InputError message={errors.category} />
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="department_name">
-                                            Department
-                                        </Label>
-                                        <Input
-                                            id="department_name"
-                                            name="department_name"
-                                            defaultValue={
-                                                facilityService.department_name ??
-                                                ''
-                                            }
-                                        />
-                                        <InputError
-                                            message={errors.department_name}
-                                        />
-                                    </div>
                                     <div className="grid gap-2 md:col-span-2">
                                         <Label htmlFor="description">
                                             Description
@@ -152,40 +126,50 @@ export default function FacilityServiceEdit({
                                             message={errors.description}
                                         />
                                     </div>
-                                    <div className="grid gap-2 md:col-span-2">
-                                        <Label htmlFor="default_instructions">
-                                            Default Instructions
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="cost_price">
+                                            Cost Price
                                         </Label>
-                                        <Textarea
-                                            id="default_instructions"
-                                            name="default_instructions"
-                                            rows={3}
+                                        <Input
+                                            id="cost_price"
+                                            name="cost_price"
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
                                             defaultValue={
-                                                facilityService.default_instructions ??
-                                                ''
+                                                facilityService.cost_price ?? ''
                                             }
                                         />
                                         <InputError
-                                            message={
-                                                errors.default_instructions
-                                            }
+                                            message={errors.cost_price}
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="charge_master_id">
-                                            Charge Master ID
+                                        <Label htmlFor="selling_price">
+                                            Selling Price
                                         </Label>
                                         <Input
-                                            id="charge_master_id"
-                                            name="charge_master_id"
+                                            id="selling_price"
+                                            name="selling_price"
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
                                             defaultValue={
-                                                facilityService.charge_master_id ??
+                                                facilityService.selling_price ??
                                                 ''
                                             }
                                         />
                                         <InputError
-                                            message={errors.charge_master_id}
+                                            message={errors.selling_price}
                                         />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Billing Mapping</Label>
+                                        <div className="rounded-md border bg-zinc-50 px-3 py-2 text-sm text-muted-foreground dark:bg-zinc-950">
+                                            {facilityService.is_billable
+                                                ? 'Linked automatically for visit billing.'
+                                                : 'Will link automatically once marked billable.'}
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-2 pt-8">
                                         <input

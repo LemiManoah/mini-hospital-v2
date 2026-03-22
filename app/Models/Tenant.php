@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use Carbon\CarbonInterface;
+use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Tenant extends Model
 {
-    /** @use HasFactory<\Database\Factories\TenantFactory> */
+    /** @use HasFactory<TenantFactory> */
     use HasFactory;
 
     use HasUuids;

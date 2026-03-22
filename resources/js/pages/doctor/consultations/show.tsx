@@ -467,487 +467,511 @@ export default function DoctorConsultationShow({
                                                             errors,
                                                         }) => (
                                                             <div className="space-y-4 rounded-lg border p-4">
-                                                            <input
-                                                                type="hidden"
-                                                                name="outcome"
-                                                                value={outcome}
-                                                            />
-                                                            <div className="grid gap-2">
-                                                                <Label htmlFor="chief_complaint">
-                                                                    Chief
-                                                                    Complaint
-                                                                </Label>
-                                                                <Textarea
-                                                                    id="chief_complaint"
-                                                                    name="chief_complaint"
-                                                                    rows={3}
-                                                                    defaultValue={
-                                                                        consultation?.chief_complaint ??
-                                                                        triage.chief_complaint
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="outcome"
+                                                                    value={
+                                                                        outcome
                                                                     }
                                                                 />
-                                                                <InputError
-                                                                    message={
-                                                                        errors.chief_complaint
-                                                                    }
-                                                                />
-                                                            </div>
-                                                            <div className="grid gap-2">
-                                                                <Label htmlFor="history_of_present_illness">
-                                                                    History of
-                                                                    Presenting
-                                                                    Illness
-                                                                </Label>
-                                                                <Textarea
-                                                                    id="history_of_present_illness"
-                                                                    name="history_of_present_illness"
-                                                                    rows={4}
-                                                                    defaultValue={
-                                                                        consultation?.history_of_present_illness ??
-                                                                        triage.history_of_presenting_illness ??
-                                                                        ''
-                                                                    }
-                                                                />
-                                                                <InputError
-                                                                    message={
-                                                                        errors.history_of_present_illness ??
-                                                                        errors.history_of_presenting_illness
-                                                                    }
-                                                                />
-                                                            </div>
-                                                            <div className="grid gap-4 md:grid-cols-2">
                                                                 <div className="grid gap-2">
-                                                                    <Label htmlFor="review_of_systems">
-                                                                        Review
+                                                                    <Label htmlFor="chief_complaint">
+                                                                        Chief
+                                                                        Complaint
+                                                                    </Label>
+                                                                    <Textarea
+                                                                        id="chief_complaint"
+                                                                        name="chief_complaint"
+                                                                        rows={3}
+                                                                        defaultValue={
+                                                                            consultation?.chief_complaint ??
+                                                                            triage.chief_complaint
+                                                                        }
+                                                                    />
+                                                                    <InputError
+                                                                        message={
+                                                                            errors.chief_complaint
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                                <div className="grid gap-2">
+                                                                    <Label htmlFor="history_of_present_illness">
+                                                                        History
                                                                         of
-                                                                        Systems
+                                                                        Presenting
+                                                                        Illness
                                                                     </Label>
                                                                     <Textarea
-                                                                        id="review_of_systems"
-                                                                        name="review_of_systems"
+                                                                        id="history_of_present_illness"
+                                                                        name="history_of_present_illness"
                                                                         rows={4}
                                                                         defaultValue={
-                                                                            consultation?.review_of_systems ??
+                                                                            consultation?.history_of_present_illness ??
+                                                                            triage.history_of_presenting_illness ??
                                                                             ''
                                                                         }
                                                                     />
                                                                     <InputError
                                                                         message={
-                                                                            errors.review_of_systems
+                                                                            errors.history_of_present_illness ??
+                                                                            errors.history_of_presenting_illness
                                                                         }
                                                                     />
-                                                                </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="past_medical_history_summary">
-                                                                        Past
-                                                                        Medical
-                                                                        History
-                                                                        Summary
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        id="past_medical_history_summary"
-                                                                        name="past_medical_history_summary"
-                                                                        rows={4}
-                                                                        defaultValue={
-                                                                            consultation?.past_medical_history_summary ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.past_medical_history_summary
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="grid gap-4 md:grid-cols-2">
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="family_history">
-                                                                        Family
-                                                                        History
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        id="family_history"
-                                                                        name="family_history"
-                                                                        rows={3}
-                                                                        defaultValue={
-                                                                            consultation?.family_history ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.family_history
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="social_history">
-                                                                        Social
-                                                                        History
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        id="social_history"
-                                                                        name="social_history"
-                                                                        rows={3}
-                                                                        defaultValue={
-                                                                            consultation?.social_history ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.social_history
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="grid gap-4 md:grid-cols-2">
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="subjective_notes">
-                                                                        Subjective
-                                                                        Notes
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        id="subjective_notes"
-                                                                        name="subjective_notes"
-                                                                        rows={4}
-                                                                        defaultValue={
-                                                                            consultation?.subjective_notes ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.subjective_notes
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="objective_findings">
-                                                                        Objective
-                                                                        Findings
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        id="objective_findings"
-                                                                        name="objective_findings"
-                                                                        rows={4}
-                                                                        defaultValue={
-                                                                            consultation?.objective_findings ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.objective_findings
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="grid gap-4 md:grid-cols-2">
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="assessment">
-                                                                        Assessment
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        id="assessment"
-                                                                        name="assessment"
-                                                                        rows={4}
-                                                                        defaultValue={
-                                                                            consultation?.assessment ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.assessment
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="plan">
-                                                                        Plan
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        id="plan"
-                                                                        name="plan"
-                                                                        rows={4}
-                                                                        defaultValue={
-                                                                            consultation?.plan ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.plan
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="grid gap-4 md:grid-cols-2">
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="primary_diagnosis">
-                                                                        Primary
-                                                                        Diagnosis
-                                                                    </Label>
-                                                                    <Input
-                                                                        id="primary_diagnosis"
-                                                                        name="primary_diagnosis"
-                                                                        defaultValue={
-                                                                            consultation?.primary_diagnosis ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.primary_diagnosis
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="primary_icd10_code">
-                                                                        Primary
-                                                                        ICD-10
-                                                                        Code
-                                                                    </Label>
-                                                                    <Input
-                                                                        id="primary_icd10_code"
-                                                                        name="primary_icd10_code"
-                                                                        defaultValue={
-                                                                            consultation?.primary_icd10_code ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.primary_icd10_code
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="space-y-4 rounded-lg border p-4">
-                                                                <div>
-                                                                    <h3 className="font-medium">
-                                                                        Disposition
-                                                                    </h3>
-                                                                    <p className="text-sm text-muted-foreground">
-                                                                        Use
-                                                                        these
-                                                                        fields
-                                                                        when
-                                                                        finalizing
-                                                                        the
-                                                                        consultation.
-                                                                    </p>
                                                                 </div>
                                                                 <div className="grid gap-4 md:grid-cols-2">
                                                                     <div className="grid gap-2">
-                                                                        <Label>
-                                                                            Outcome
+                                                                        <Label htmlFor="review_of_systems">
+                                                                            Review
+                                                                            of
+                                                                            Systems
                                                                         </Label>
-                                                                        <Select
-                                                                            value={
-                                                                                outcome
+                                                                        <Textarea
+                                                                            id="review_of_systems"
+                                                                            name="review_of_systems"
+                                                                            rows={
+                                                                                4
                                                                             }
-                                                                            onValueChange={
-                                                                                setOutcome
+                                                                            defaultValue={
+                                                                                consultation?.review_of_systems ??
+                                                                                ''
                                                                             }
-                                                                        >
-                                                                            <SelectTrigger>
-                                                                                <SelectValue placeholder="Select outcome" />
-                                                                            </SelectTrigger>
-                                                                            <SelectContent>
-                                                                                {consultationOutcomes.map(
-                                                                                    (
-                                                                                        option,
-                                                                                    ) => (
-                                                                                        <SelectItem
-                                                                                            key={
-                                                                                                option.value
-                                                                                            }
-                                                                                            value={
-                                                                                                option.value
-                                                                                            }
-                                                                                        >
-                                                                                            {
-                                                                                                option.label
-                                                                                            }
-                                                                                        </SelectItem>
-                                                                                    ),
-                                                                                )}
-                                                                            </SelectContent>
-                                                                        </Select>
+                                                                        />
                                                                         <InputError
                                                                             message={
-                                                                                errors.outcome
+                                                                                errors.review_of_systems
                                                                             }
                                                                         />
                                                                     </div>
                                                                     <div className="grid gap-2">
-                                                                        <Label htmlFor="follow_up_days">
+                                                                        <Label htmlFor="past_medical_history_summary">
+                                                                            Past
+                                                                            Medical
+                                                                            History
+                                                                            Summary
+                                                                        </Label>
+                                                                        <Textarea
+                                                                            id="past_medical_history_summary"
+                                                                            name="past_medical_history_summary"
+                                                                            rows={
+                                                                                4
+                                                                            }
+                                                                            defaultValue={
+                                                                                consultation?.past_medical_history_summary ??
+                                                                                ''
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.past_medical_history_summary
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid gap-4 md:grid-cols-2">
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="family_history">
+                                                                            Family
+                                                                            History
+                                                                        </Label>
+                                                                        <Textarea
+                                                                            id="family_history"
+                                                                            name="family_history"
+                                                                            rows={
+                                                                                3
+                                                                            }
+                                                                            defaultValue={
+                                                                                consultation?.family_history ??
+                                                                                ''
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.family_history
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="social_history">
+                                                                            Social
+                                                                            History
+                                                                        </Label>
+                                                                        <Textarea
+                                                                            id="social_history"
+                                                                            name="social_history"
+                                                                            rows={
+                                                                                3
+                                                                            }
+                                                                            defaultValue={
+                                                                                consultation?.social_history ??
+                                                                                ''
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.social_history
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid gap-4 md:grid-cols-2">
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="subjective_notes">
+                                                                            Subjective
+                                                                            Notes
+                                                                        </Label>
+                                                                        <Textarea
+                                                                            id="subjective_notes"
+                                                                            name="subjective_notes"
+                                                                            rows={
+                                                                                4
+                                                                            }
+                                                                            defaultValue={
+                                                                                consultation?.subjective_notes ??
+                                                                                ''
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.subjective_notes
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="objective_findings">
+                                                                            Objective
+                                                                            Findings
+                                                                        </Label>
+                                                                        <Textarea
+                                                                            id="objective_findings"
+                                                                            name="objective_findings"
+                                                                            rows={
+                                                                                4
+                                                                            }
+                                                                            defaultValue={
+                                                                                consultation?.objective_findings ??
+                                                                                ''
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.objective_findings
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid gap-4 md:grid-cols-2">
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="assessment">
+                                                                            Assessment
+                                                                        </Label>
+                                                                        <Textarea
+                                                                            id="assessment"
+                                                                            name="assessment"
+                                                                            rows={
+                                                                                4
+                                                                            }
+                                                                            defaultValue={
+                                                                                consultation?.assessment ??
+                                                                                ''
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.assessment
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="plan">
+                                                                            Plan
+                                                                        </Label>
+                                                                        <Textarea
+                                                                            id="plan"
+                                                                            name="plan"
+                                                                            rows={
+                                                                                4
+                                                                            }
+                                                                            defaultValue={
+                                                                                consultation?.plan ??
+                                                                                ''
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.plan
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid gap-4 md:grid-cols-2">
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="primary_diagnosis">
+                                                                            Primary
+                                                                            Diagnosis
+                                                                        </Label>
+                                                                        <Input
+                                                                            id="primary_diagnosis"
+                                                                            name="primary_diagnosis"
+                                                                            defaultValue={
+                                                                                consultation?.primary_diagnosis ??
+                                                                                ''
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.primary_diagnosis
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="primary_icd10_code">
+                                                                            Primary
+                                                                            ICD-10
+                                                                            Code
+                                                                        </Label>
+                                                                        <Input
+                                                                            id="primary_icd10_code"
+                                                                            name="primary_icd10_code"
+                                                                            defaultValue={
+                                                                                consultation?.primary_icd10_code ??
+                                                                                ''
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.primary_icd10_code
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="space-y-4 rounded-lg border p-4">
+                                                                    <div>
+                                                                        <h3 className="font-medium">
+                                                                            Disposition
+                                                                        </h3>
+                                                                        <p className="text-sm text-muted-foreground">
+                                                                            Use
+                                                                            these
+                                                                            fields
+                                                                            when
+                                                                            finalizing
+                                                                            the
+                                                                            consultation.
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="grid gap-4 md:grid-cols-2">
+                                                                        <div className="grid gap-2">
+                                                                            <Label>
+                                                                                Outcome
+                                                                            </Label>
+                                                                            <Select
+                                                                                value={
+                                                                                    outcome
+                                                                                }
+                                                                                onValueChange={
+                                                                                    setOutcome
+                                                                                }
+                                                                            >
+                                                                                <SelectTrigger>
+                                                                                    <SelectValue placeholder="Select outcome" />
+                                                                                </SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    {consultationOutcomes.map(
+                                                                                        (
+                                                                                            option,
+                                                                                        ) => (
+                                                                                            <SelectItem
+                                                                                                key={
+                                                                                                    option.value
+                                                                                                }
+                                                                                                value={
+                                                                                                    option.value
+                                                                                                }
+                                                                                            >
+                                                                                                {
+                                                                                                    option.label
+                                                                                                }
+                                                                                            </SelectItem>
+                                                                                        ),
+                                                                                    )}
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                            <InputError
+                                                                                message={
+                                                                                    errors.outcome
+                                                                                }
+                                                                            />
+                                                                        </div>
+                                                                        <div className="grid gap-2">
+                                                                            <Label htmlFor="follow_up_days">
+                                                                                Follow-up
+                                                                                Days
+                                                                            </Label>
+                                                                            <Input
+                                                                                id="follow_up_days"
+                                                                                name="follow_up_days"
+                                                                                type="number"
+                                                                                min={
+                                                                                    1
+                                                                                }
+                                                                                max={
+                                                                                    365
+                                                                                }
+                                                                                defaultValue={
+                                                                                    consultation?.follow_up_days ??
+                                                                                    ''
+                                                                                }
+                                                                            />
+                                                                            <InputError
+                                                                                message={
+                                                                                    errors.follow_up_days
+                                                                                }
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="follow_up_instructions">
                                                                             Follow-up
-                                                                            Days
+                                                                            Instructions
                                                                         </Label>
-                                                                        <Input
-                                                                            id="follow_up_days"
-                                                                            name="follow_up_days"
-                                                                            type="number"
-                                                                            min={
-                                                                                1
-                                                                            }
-                                                                            max={
-                                                                                365
+                                                                        <Textarea
+                                                                            id="follow_up_instructions"
+                                                                            name="follow_up_instructions"
+                                                                            rows={
+                                                                                3
                                                                             }
                                                                             defaultValue={
-                                                                                consultation?.follow_up_days ??
+                                                                                consultation?.follow_up_instructions ??
                                                                                 ''
                                                                             }
                                                                         />
                                                                         <InputError
                                                                             message={
-                                                                                errors.follow_up_days
+                                                                                errors.follow_up_instructions
                                                                             }
                                                                         />
                                                                     </div>
-                                                                </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="follow_up_instructions">
-                                                                        Follow-up
-                                                                        Instructions
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        id="follow_up_instructions"
-                                                                        name="follow_up_instructions"
-                                                                        rows={3}
-                                                                        defaultValue={
-                                                                            consultation?.follow_up_instructions ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.follow_up_instructions
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                                <div className="grid gap-4 md:grid-cols-2">
-                                                                    <div className="grid gap-2">
-                                                                        <Label htmlFor="referred_to_department">
-                                                                            Referred
-                                                                            To
-                                                                            Department
-                                                                        </Label>
-                                                                        <Input
-                                                                            id="referred_to_department"
-                                                                            name="referred_to_department"
-                                                                            defaultValue={
-                                                                                consultation?.referred_to_department ??
-                                                                                ''
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                errors.referred_to_department
-                                                                            }
-                                                                        />
+                                                                    <div className="grid gap-4 md:grid-cols-2">
+                                                                        <div className="grid gap-2">
+                                                                            <Label htmlFor="referred_to_department">
+                                                                                Referred
+                                                                                To
+                                                                                Department
+                                                                            </Label>
+                                                                            <Input
+                                                                                id="referred_to_department"
+                                                                                name="referred_to_department"
+                                                                                defaultValue={
+                                                                                    consultation?.referred_to_department ??
+                                                                                    ''
+                                                                                }
+                                                                            />
+                                                                            <InputError
+                                                                                message={
+                                                                                    errors.referred_to_department
+                                                                                }
+                                                                            />
+                                                                        </div>
+                                                                        <div className="grid gap-2">
+                                                                            <Label htmlFor="referred_to_facility">
+                                                                                Referred
+                                                                                To
+                                                                                Facility
+                                                                            </Label>
+                                                                            <Input
+                                                                                id="referred_to_facility"
+                                                                                name="referred_to_facility"
+                                                                                defaultValue={
+                                                                                    consultation?.referred_to_facility ??
+                                                                                    ''
+                                                                                }
+                                                                            />
+                                                                            <InputError
+                                                                                message={
+                                                                                    errors.referred_to_facility
+                                                                                }
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                     <div className="grid gap-2">
-                                                                        <Label htmlFor="referred_to_facility">
-                                                                            Referred
-                                                                            To
-                                                                            Facility
+                                                                        <Label htmlFor="referral_reason">
+                                                                            Referral
+                                                                            Reason
                                                                         </Label>
-                                                                        <Input
-                                                                            id="referred_to_facility"
-                                                                            name="referred_to_facility"
+                                                                        <Textarea
+                                                                            id="referral_reason"
+                                                                            name="referral_reason"
+                                                                            rows={
+                                                                                3
+                                                                            }
                                                                             defaultValue={
-                                                                                consultation?.referred_to_facility ??
+                                                                                consultation?.referral_reason ??
                                                                                 ''
                                                                             }
                                                                         />
                                                                         <InputError
                                                                             message={
-                                                                                errors.referred_to_facility
+                                                                                errors.referral_reason
                                                                             }
                                                                         />
                                                                     </div>
+                                                                    <label className="flex items-center gap-2 text-sm">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            name="is_referred"
+                                                                            value="1"
+                                                                            defaultChecked={
+                                                                                consultation?.is_referred ??
+                                                                                false
+                                                                            }
+                                                                            className="h-4 w-4"
+                                                                        />
+                                                                        Mark
+                                                                        this
+                                                                        consultation
+                                                                        as a
+                                                                        referral
+                                                                    </label>
                                                                 </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label htmlFor="referral_reason">
-                                                                        Referral
-                                                                        Reason
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        id="referral_reason"
-                                                                        name="referral_reason"
-                                                                        rows={3}
-                                                                        defaultValue={
-                                                                            consultation?.referral_reason ??
-                                                                            ''
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            errors.referral_reason
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                                <label className="flex items-center gap-2 text-sm">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        name="is_referred"
-                                                                        value="1"
-                                                                        defaultChecked={
-                                                                            consultation?.is_referred ??
-                                                                            false
-                                                                        }
-                                                                        className="h-4 w-4"
-                                                                    />
-                                                                    Mark this
-                                                                    consultation
-                                                                    as a
-                                                                    referral
-                                                                </label>
-                                                            </div>
-                                                            <div className="flex items-center justify-between gap-3">
-                                                                <p className="text-sm text-muted-foreground">
-                                                                    {isConsultationFinalized
-                                                                        ? 'This consultation has been finalized and is now read-only from this stage of the workflow.'
-                                                                        : consultation
-                                                                          ? 'Save draft as you work, then use the order tabs and finalize once the plan is complete.'
-                                                                          : 'Start the consultation draft here, then use the other tabs for downstream clinical work.'}
-                                                                </p>
-                                                                <div className="flex gap-2">
-                                                                    <Button
-                                                                        type="submit"
-                                                                        name="intent"
-                                                                        value="save_draft"
-                                                                        disabled={
-                                                                            processing ||
-                                                                            isConsultationFinalized
-                                                                        }
-                                                                    >
-                                                                        {consultation
-                                                                            ? 'Save Draft'
-                                                                            : 'Start Consultation'}
-                                                                    </Button>
-                                                                    {consultation ? (
+                                                                <div className="flex items-center justify-between gap-3">
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        {isConsultationFinalized
+                                                                            ? 'This consultation has been finalized and is now read-only from this stage of the workflow.'
+                                                                            : consultation
+                                                                              ? 'Save draft as you work, then use the order tabs and finalize once the plan is complete.'
+                                                                              : 'Start the consultation draft here, then use the other tabs for downstream clinical work.'}
+                                                                    </p>
+                                                                    <div className="flex gap-2">
                                                                         <Button
                                                                             type="submit"
                                                                             name="intent"
-                                                                            value="complete"
+                                                                            value="save_draft"
                                                                             disabled={
                                                                                 processing ||
                                                                                 isConsultationFinalized
                                                                             }
                                                                         >
-                                                                            {isConsultationFinalized
-                                                                                ? 'Consultation Finalized'
-                                                                                : 'Finalize Consultation'}
+                                                                            {consultation
+                                                                                ? 'Save Draft'
+                                                                                : 'Start Consultation'}
                                                                         </Button>
-                                                                    ) : null}
+                                                                        {consultation ? (
+                                                                            <Button
+                                                                                type="submit"
+                                                                                name="intent"
+                                                                                value="complete"
+                                                                                disabled={
+                                                                                    processing ||
+                                                                                    isConsultationFinalized
+                                                                                }
+                                                                            >
+                                                                                {isConsultationFinalized
+                                                                                    ? 'Consultation Finalized'
+                                                                                    : 'Finalize Consultation'}
+                                                                            </Button>
+                                                                        ) : null}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
                                                             </div>
                                                         )}
                                                     </Form>
@@ -2401,23 +2425,11 @@ export default function DoctorConsultationShow({
                                                             onValueChange={(
                                                                 value,
                                                             ) => {
-                                                                const selectedOption =
-                                                                    facilityServiceOptions.find(
-                                                                        (
-                                                                            option,
-                                                                        ) =>
-                                                                            option.id ===
-                                                                            value,
-                                                                    );
-
                                                                 serviceForm.setData(
                                                                     (data) => ({
                                                                         ...data,
                                                                         facility_service_id:
                                                                             value,
-                                                                        service_instructions:
-                                                                            selectedOption?.default_instructions ??
-                                                                            data.service_instructions,
                                                                     }),
                                                                 );
                                                             }}
@@ -2471,11 +2483,8 @@ export default function DoctorConsultationShow({
                                                         </p>
                                                         <p className="mt-1 text-muted-foreground">
                                                             {selectedFacilityService
-                                                                ? `${selectedFacilityService.name} in ${
-                                                                      selectedFacilityService.department_name ||
-                                                                      'General Services'
-                                                                  }`
-                                                                : 'Select a service to review its department and default instructions.'}
+                                                                ? `${selectedFacilityService.name} is ready to order.`
+                                                                : 'Select a service to review its catalog details.'}
                                                         </p>
                                                         {selectedFacilityService ? (
                                                             <div className="mt-2 flex flex-wrap gap-2">
@@ -2604,12 +2613,6 @@ export default function DoctorConsultationShow({
                                                             {formatDateTime(
                                                                 order.ordered_at,
                                                             )}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Department:{' '}
-                                                            {order.service
-                                                                ?.department_name ||
-                                                                'General Services'}
                                                         </p>
                                                         {order.clinical_notes ? (
                                                             <p className="mt-2 text-sm text-muted-foreground">

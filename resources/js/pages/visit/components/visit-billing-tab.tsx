@@ -101,7 +101,9 @@ export function VisitBillingTab({
                             </p>
                         </div>
                         <div className="rounded-lg border p-3">
-                            <p className="text-sm text-muted-foreground">Paid</p>
+                            <p className="text-sm text-muted-foreground">
+                                Paid
+                            </p>
                             <p className="text-lg font-semibold">
                                 {formatMoney(billing?.paid_amount ?? 0)}
                             </p>
@@ -120,7 +122,9 @@ export function VisitBillingTab({
                             <span className="text-muted-foreground">
                                 Charges
                             </span>
-                            <span className="font-medium">{charges.length}</span>
+                            <span className="font-medium">
+                                {charges.length}
+                            </span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
                             <span className="text-muted-foreground">
@@ -244,7 +248,9 @@ export function VisitBillingTab({
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor={`payment_method_${visitId}`}>
+                                        <Label
+                                            htmlFor={`payment_method_${visitId}`}
+                                        >
                                             Payment Method
                                         </Label>
                                         <Select
@@ -262,14 +268,16 @@ export function VisitBillingTab({
                                                 <SelectValue placeholder="Select payment method" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {paymentMethods.map((method) => (
-                                                    <SelectItem
-                                                        key={method.value}
-                                                        value={method.value}
-                                                    >
-                                                        {method.label}
-                                                    </SelectItem>
-                                                ))}
+                                                {paymentMethods.map(
+                                                    (method) => (
+                                                        <SelectItem
+                                                            key={method.value}
+                                                            value={method.value}
+                                                        >
+                                                            {method.label}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
                                             </SelectContent>
                                         </Select>
                                         <InputError
@@ -366,7 +374,9 @@ export function VisitBillingTab({
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
                                                 <p className="font-medium">
-                                                    {formatMoney(payment.amount)}
+                                                    {formatMoney(
+                                                        payment.amount,
+                                                    )}
                                                 </p>
                                                 <p className="text-sm text-muted-foreground">
                                                     {payment.payment_method?.replaceAll(

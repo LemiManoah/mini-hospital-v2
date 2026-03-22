@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types = 1)
-;
+declare(strict_types=1);
 
 namespace Database\Seeders;
 
@@ -18,7 +17,7 @@ final class AddressSeeder extends Seeder
     {
         $uganda = Country::query()->where('country_code', 'UG')->first();
 
-        if (!$uganda) {
+        if (! $uganda) {
             $this->call(CountrySeeder::class);
             $uganda = Country::query()->where('country_code', 'UG')->first();
         }
@@ -121,7 +120,7 @@ final class AddressSeeder extends Seeder
 
         foreach ($addresses as $address) {
             Address::query()->updateOrCreate(
-            ['city' => $address['city'], 'district' => $address['district']],
+                ['city' => $address['city'], 'district' => $address['district']],
                 $address
             );
         }

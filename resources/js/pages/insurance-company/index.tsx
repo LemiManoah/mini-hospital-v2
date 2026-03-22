@@ -85,7 +85,10 @@ export default function InsuranceCompanyIndex({
                         asChild
                         className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                     >
-                        <Link href="/insurance-companies/create" className="gap-2">
+                        <Link
+                            href="/insurance-companies/create"
+                            className="gap-2"
+                        >
                             <span>+ Add Insurance Company</span>
                         </Link>
                     </Button>
@@ -144,7 +147,9 @@ export default function InsuranceCompanyIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('insurance_companies.update') ? (
+                                            {hasPermission(
+                                                'insurance_companies.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -159,7 +164,9 @@ export default function InsuranceCompanyIndex({
                                                 </Button>
                                             ) : null}
 
-                                            {hasPermission('insurance_companies.delete') ? (
+                                            {hasPermission(
+                                                'insurance_companies.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Insurance Company"
                                                     description={`Are you sure you want to delete "${company.name}"? This action cannot be undone.`}

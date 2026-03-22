@@ -26,7 +26,7 @@ final readonly class SyncFacilityServiceOrderCharge
             $order->visit,
             BillableItemType::SERVICE,
             $order->facility_service_id,
-            null,
+            $order->service->selling_price === null ? null : (float) $order->service->selling_price,
         );
 
         if ($amount === null) {

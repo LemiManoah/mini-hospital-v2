@@ -85,7 +85,10 @@ export default function InsurancePackageIndex({
                         asChild
                         className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                     >
-                        <Link href="/insurance-packages/create" className="gap-2">
+                        <Link
+                            href="/insurance-packages/create"
+                            className="gap-2"
+                        >
                             <span>+ Add Insurance Package</span>
                         </Link>
                     </Button>
@@ -135,7 +138,9 @@ export default function InsurancePackageIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('insurance_packages.update') ? (
+                                            {hasPermission(
+                                                'insurance_packages.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -150,7 +155,9 @@ export default function InsurancePackageIndex({
                                                 </Button>
                                             ) : null}
 
-                                            {hasPermission('insurance_packages.delete') ? (
+                                            {hasPermission(
+                                                'insurance_packages.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Insurance Package"
                                                     description={`Are you sure you want to delete "${insurancePackage.name}"? This action cannot be undone.`}

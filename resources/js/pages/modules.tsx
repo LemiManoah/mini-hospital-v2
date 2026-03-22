@@ -217,9 +217,7 @@ export default function Modules() {
                                                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                                         <module.icon className="h-6 w-6" />
                                                     </div>
-                                                    <Badge
-                                                        variant="secondary"
-                                                    >
+                                                    <Badge variant="secondary">
                                                         Ready
                                                     </Badge>
                                                 </div>

@@ -147,7 +147,9 @@ export default function StaffPositionIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('staff_positions.update') ? (
+                                            {hasPermission(
+                                                'staff_positions.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -167,7 +169,9 @@ export default function StaffPositionIndex({
                                                 </Button>
                                             ) : null}
 
-                                            {hasPermission('staff_positions.delete') ? (
+                                            {hasPermission(
+                                                'staff_positions.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Position"
                                                     description={`Are you sure you want to delete the position "${formatIdentifierLabel(position.name)}"? This action cannot be undone.`}

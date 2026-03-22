@@ -131,7 +131,9 @@ export default function AppointmentModeIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('appointment_modes.update') ? (
+                                            {hasPermission(
+                                                'appointment_modes.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -144,7 +146,9 @@ export default function AppointmentModeIndex({
                                                     </Link>
                                                 </Button>
                                             ) : null}
-                                            {hasPermission('appointment_modes.delete') ? (
+                                            {hasPermission(
+                                                'appointment_modes.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Appointment Mode"
                                                     description={`Are you sure you want to delete "${mode.name}"? This action cannot be undone.`}

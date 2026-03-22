@@ -37,10 +37,10 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class PatientVisitController implements HasMiddleware
+final readonly class PatientVisitController implements HasMiddleware
 {
     public function __construct(
-        private readonly ActiveBranchWorkspace $activeBranchWorkspace,
+        private ActiveBranchWorkspace $activeBranchWorkspace,
     ) {}
 
     public static function middleware(): array

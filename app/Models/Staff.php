@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\StaffType;
 use App\Support\BranchContext;
 use App\Traits\BelongsToTenant;
+use Database\Factories\StaffFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -21,7 +22,7 @@ final class Staff extends Model
 {
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\StaffFactory> */
+    /** @use HasFactory<StaffFactory> */
     use HasFactory;
 
     use HasUuids;

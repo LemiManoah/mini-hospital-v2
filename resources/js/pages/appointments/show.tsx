@@ -122,7 +122,9 @@ export default function AppointmentShow({
                         </Button>
                         {canViewPatient ? (
                             <Button variant="outline" asChild>
-                                <Link href={`/patients/${appointment.patient_id}`}>
+                                <Link
+                                    href={`/patients/${appointment.patient_id}`}
+                                >
                                     Patient Profile
                                 </Link>
                             </Button>
@@ -225,321 +227,340 @@ export default function AppointmentShow({
                                 >
                                     {({ processing, errors }) => (
                                         <>
-                                        <input
-                                            type="hidden"
-                                            name="doctor_id"
-                                            value={
-                                                doctorId === 'none'
-                                                    ? ''
-                                                    : doctorId
-                                            }
-                                        />
-                                        <input
-                                            type="hidden"
-                                            name="clinic_id"
-                                            value={
-                                                clinicId === 'none'
-                                                    ? ''
-                                                    : clinicId
-                                            }
-                                        />
-                                        <input
-                                            type="hidden"
-                                            name="appointment_category_id"
-                                            value={
-                                                categoryId === 'none'
-                                                    ? ''
-                                                    : categoryId
-                                            }
-                                        />
-                                        <input
-                                            type="hidden"
-                                            name="appointment_mode_id"
-                                            value={
-                                                modeId === 'none' ? '' : modeId
-                                            }
-                                        />
-
-                                        <div className="grid gap-4 md:grid-cols-2">
-                                            <div className="grid gap-2">
-                                                <Label>Doctor</Label>
-                                                <Select
-                                                    value={doctorId}
-                                                    onValueChange={setDoctorId}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select doctor" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="none">
-                                                            Unassigned
-                                                        </SelectItem>
-                                                        {doctors.map(
-                                                            (doctor) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        doctor.id
-                                                                    }
-                                                                    value={
-                                                                        doctor.id
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        doctor.name
-                                                                    }
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                                <InputError
-                                                    message={errors.doctor_id}
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Clinic</Label>
-                                                <Select
-                                                    value={clinicId}
-                                                    onValueChange={setClinicId}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select clinic" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="none">
-                                                            Unassigned
-                                                        </SelectItem>
-                                                        {clinics.map(
-                                                            (clinic) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        clinic.id
-                                                                    }
-                                                                    value={
-                                                                        clinic.id
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        clinic.name
-                                                                    }
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                                <InputError
-                                                    message={errors.clinic_id}
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Category</Label>
-                                                <Select
-                                                    value={categoryId}
-                                                    onValueChange={
-                                                        setCategoryId
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select category" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="none">
-                                                            No category
-                                                        </SelectItem>
-                                                        {appointmentCategories.map(
-                                                            (category) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        category.id
-                                                                    }
-                                                                    value={
-                                                                        category.id
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        category.name
-                                                                    }
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                                <InputError
-                                                    message={
-                                                        errors.appointment_category_id
-                                                    }
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Mode</Label>
-                                                <Select
-                                                    value={modeId}
-                                                    onValueChange={setModeId}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select mode" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="none">
-                                                            No mode
-                                                        </SelectItem>
-                                                        {appointmentModes.map(
-                                                            (mode) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        mode.id
-                                                                    }
-                                                                    value={
-                                                                        mode.id
-                                                                    }
-                                                                >
-                                                                    {mode.name}
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                                <InputError
-                                                    message={
-                                                        errors.appointment_mode_id
-                                                    }
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="appointment_date">
-                                                    Appointment Date
-                                                </Label>
-                                                <Input
-                                                    id="appointment_date"
-                                                    name="appointment_date"
-                                                    type="date"
-                                                    defaultValue={toDateValue(
-                                                        appointment.appointment_date,
-                                                    )}
-                                                    required
-                                                />
-                                                <InputError
-                                                    message={
-                                                        errors.appointment_date
-                                                    }
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="start_time">
-                                                    Start Time
-                                                </Label>
-                                                <Input
-                                                    id="start_time"
-                                                    name="start_time"
-                                                    type="time"
-                                                    defaultValue={toTimeValue(
-                                                        appointment.start_time,
-                                                    )}
-                                                    required
-                                                />
-                                                <InputError
-                                                    message={errors.start_time}
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="end_time">
-                                                    End Time
-                                                </Label>
-                                                <Input
-                                                    id="end_time"
-                                                    name="end_time"
-                                                    type="time"
-                                                    defaultValue={toTimeValue(
-                                                        appointment.end_time,
-                                                    )}
-                                                />
-                                                <InputError
-                                                    message={errors.end_time}
-                                                />
-                                            </div>
-                                            <div className="grid gap-2 md:col-span-2">
-                                                <Label htmlFor="reason_for_visit">
-                                                    Reason for Visit
-                                                </Label>
-                                                <Textarea
-                                                    id="reason_for_visit"
-                                                    name="reason_for_visit"
-                                                    rows={4}
-                                                    defaultValue={
-                                                        appointment.reason_for_visit
-                                                    }
-                                                    required
-                                                />
-                                                <InputError
-                                                    message={
-                                                        errors.reason_for_visit
-                                                    }
-                                                />
-                                            </div>
-                                            <div className="grid gap-2 md:col-span-2">
-                                                <Label htmlFor="chief_complaint">
-                                                    Chief Complaint
-                                                </Label>
-                                                <Input
-                                                    id="chief_complaint"
-                                                    name="chief_complaint"
-                                                    defaultValue={
-                                                        appointment.chief_complaint ??
-                                                        ''
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={
-                                                        errors.chief_complaint
-                                                    }
-                                                />
-                                            </div>
-                                            <div className="grid gap-2 md:col-span-2">
-                                                <Label htmlFor="notes">
-                                                    Notes
-                                                </Label>
-                                                <Textarea
-                                                    id="notes"
-                                                    name="notes"
-                                                    rows={3}
-                                                    defaultValue={
-                                                        appointment.notes ?? ''
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={errors.notes}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
                                             <input
-                                                id="is_walk_in"
-                                                name="is_walk_in"
-                                                type="checkbox"
-                                                value="1"
-                                                defaultChecked={
-                                                    appointment.is_walk_in
+                                                type="hidden"
+                                                name="doctor_id"
+                                                value={
+                                                    doctorId === 'none'
+                                                        ? ''
+                                                        : doctorId
                                                 }
-                                                className="h-4 w-4"
                                             />
-                                            <Label
-                                                htmlFor="is_walk_in"
-                                                className="font-normal"
-                                            >
-                                                Walk-in appointment
-                                            </Label>
-                                        </div>
+                                            <input
+                                                type="hidden"
+                                                name="clinic_id"
+                                                value={
+                                                    clinicId === 'none'
+                                                        ? ''
+                                                        : clinicId
+                                                }
+                                            />
+                                            <input
+                                                type="hidden"
+                                                name="appointment_category_id"
+                                                value={
+                                                    categoryId === 'none'
+                                                        ? ''
+                                                        : categoryId
+                                                }
+                                            />
+                                            <input
+                                                type="hidden"
+                                                name="appointment_mode_id"
+                                                value={
+                                                    modeId === 'none'
+                                                        ? ''
+                                                        : modeId
+                                                }
+                                            />
 
-                                        <Button
-                                            type="submit"
-                                            disabled={processing}
-                                        >
-                                            {processing ? (
-                                                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                                            ) : null}
-                                            Save Changes
-                                        </Button>
+                                            <div className="grid gap-4 md:grid-cols-2">
+                                                <div className="grid gap-2">
+                                                    <Label>Doctor</Label>
+                                                    <Select
+                                                        value={doctorId}
+                                                        onValueChange={
+                                                            setDoctorId
+                                                        }
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select doctor" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="none">
+                                                                Unassigned
+                                                            </SelectItem>
+                                                            {doctors.map(
+                                                                (doctor) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            doctor.id
+                                                                        }
+                                                                        value={
+                                                                            doctor.id
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            doctor.name
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError
+                                                        message={
+                                                            errors.doctor_id
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label>Clinic</Label>
+                                                    <Select
+                                                        value={clinicId}
+                                                        onValueChange={
+                                                            setClinicId
+                                                        }
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select clinic" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="none">
+                                                                Unassigned
+                                                            </SelectItem>
+                                                            {clinics.map(
+                                                                (clinic) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            clinic.id
+                                                                        }
+                                                                        value={
+                                                                            clinic.id
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            clinic.name
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError
+                                                        message={
+                                                            errors.clinic_id
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label>Category</Label>
+                                                    <Select
+                                                        value={categoryId}
+                                                        onValueChange={
+                                                            setCategoryId
+                                                        }
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select category" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="none">
+                                                                No category
+                                                            </SelectItem>
+                                                            {appointmentCategories.map(
+                                                                (category) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            category.id
+                                                                        }
+                                                                        value={
+                                                                            category.id
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            category.name
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError
+                                                        message={
+                                                            errors.appointment_category_id
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label>Mode</Label>
+                                                    <Select
+                                                        value={modeId}
+                                                        onValueChange={
+                                                            setModeId
+                                                        }
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select mode" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="none">
+                                                                No mode
+                                                            </SelectItem>
+                                                            {appointmentModes.map(
+                                                                (mode) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            mode.id
+                                                                        }
+                                                                        value={
+                                                                            mode.id
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            mode.name
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError
+                                                        message={
+                                                            errors.appointment_mode_id
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="appointment_date">
+                                                        Appointment Date
+                                                    </Label>
+                                                    <Input
+                                                        id="appointment_date"
+                                                        name="appointment_date"
+                                                        type="date"
+                                                        defaultValue={toDateValue(
+                                                            appointment.appointment_date,
+                                                        )}
+                                                        required
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            errors.appointment_date
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="start_time">
+                                                        Start Time
+                                                    </Label>
+                                                    <Input
+                                                        id="start_time"
+                                                        name="start_time"
+                                                        type="time"
+                                                        defaultValue={toTimeValue(
+                                                            appointment.start_time,
+                                                        )}
+                                                        required
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            errors.start_time
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="end_time">
+                                                        End Time
+                                                    </Label>
+                                                    <Input
+                                                        id="end_time"
+                                                        name="end_time"
+                                                        type="time"
+                                                        defaultValue={toTimeValue(
+                                                            appointment.end_time,
+                                                        )}
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            errors.end_time
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2 md:col-span-2">
+                                                    <Label htmlFor="reason_for_visit">
+                                                        Reason for Visit
+                                                    </Label>
+                                                    <Textarea
+                                                        id="reason_for_visit"
+                                                        name="reason_for_visit"
+                                                        rows={4}
+                                                        defaultValue={
+                                                            appointment.reason_for_visit
+                                                        }
+                                                        required
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            errors.reason_for_visit
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2 md:col-span-2">
+                                                    <Label htmlFor="chief_complaint">
+                                                        Chief Complaint
+                                                    </Label>
+                                                    <Input
+                                                        id="chief_complaint"
+                                                        name="chief_complaint"
+                                                        defaultValue={
+                                                            appointment.chief_complaint ??
+                                                            ''
+                                                        }
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            errors.chief_complaint
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2 md:col-span-2">
+                                                    <Label htmlFor="notes">
+                                                        Notes
+                                                    </Label>
+                                                    <Textarea
+                                                        id="notes"
+                                                        name="notes"
+                                                        rows={3}
+                                                        defaultValue={
+                                                            appointment.notes ??
+                                                            ''
+                                                        }
+                                                    />
+                                                    <InputError
+                                                        message={errors.notes}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    id="is_walk_in"
+                                                    name="is_walk_in"
+                                                    type="checkbox"
+                                                    value="1"
+                                                    defaultChecked={
+                                                        appointment.is_walk_in
+                                                    }
+                                                    className="h-4 w-4"
+                                                />
+                                                <Label
+                                                    htmlFor="is_walk_in"
+                                                    className="font-normal"
+                                                >
+                                                    Walk-in appointment
+                                                </Label>
+                                            </div>
+
+                                            <Button
+                                                type="submit"
+                                                disabled={processing}
+                                            >
+                                                {processing ? (
+                                                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                                ) : null}
+                                                Save Changes
+                                            </Button>
                                         </>
                                     )}
                                 </Form>
@@ -550,202 +571,206 @@ export default function AppointmentShow({
                     <div className="space-y-6">
                         {canConfirmAppointment || canMarkNoShow ? (
                             <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
-                            <h2 className="text-lg font-semibold">
-                                Status Actions
-                            </h2>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                {canConfirmAppointment ? (
-                                    <Form
-                                        action={`/appointments/${appointment.id}/confirm`}
-                                        method="post"
-                                        onSuccess={() =>
-                                            toast.success(
-                                                'Appointment confirmed successfully.',
-                                            )
-                                        }
-                                    >
-                                        {({ processing }) => (
-                                            <Button
-                                                type="submit"
-                                                disabled={
-                                                    processing ||
-                                                    ![
-                                                        'scheduled',
-                                                        'rescheduled',
-                                                    ].includes(
-                                                        appointment.status,
-                                                    )
-                                                }
-                                            >
-                                                Confirm
-                                            </Button>
-                                        )}
-                                    </Form>
-                                ) : null}
-                                {canMarkNoShow ? (
-                                    <Form
-                                        action={`/appointments/${appointment.id}/no-show`}
-                                        method="post"
-                                        onSuccess={() =>
-                                            toast.success(
-                                                'Appointment marked as no-show.',
-                                            )
-                                        }
-                                    >
-                                        {({ processing }) => (
-                                            <Button
-                                                type="submit"
-                                                variant="outline"
-                                                disabled={
-                                                    processing ||
-                                                    ![
-                                                        'scheduled',
-                                                        'confirmed',
-                                                        'rescheduled',
-                                                    ].includes(
-                                                        appointment.status,
-                                                    )
-                                                }
-                                            >
-                                                Mark No-Show
-                                            </Button>
-                                        )}
-                                    </Form>
-                                ) : null}
-                            </div>
+                                <h2 className="text-lg font-semibold">
+                                    Status Actions
+                                </h2>
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    {canConfirmAppointment ? (
+                                        <Form
+                                            action={`/appointments/${appointment.id}/confirm`}
+                                            method="post"
+                                            onSuccess={() =>
+                                                toast.success(
+                                                    'Appointment confirmed successfully.',
+                                                )
+                                            }
+                                        >
+                                            {({ processing }) => (
+                                                <Button
+                                                    type="submit"
+                                                    disabled={
+                                                        processing ||
+                                                        ![
+                                                            'scheduled',
+                                                            'rescheduled',
+                                                        ].includes(
+                                                            appointment.status,
+                                                        )
+                                                    }
+                                                >
+                                                    Confirm
+                                                </Button>
+                                            )}
+                                        </Form>
+                                    ) : null}
+                                    {canMarkNoShow ? (
+                                        <Form
+                                            action={`/appointments/${appointment.id}/no-show`}
+                                            method="post"
+                                            onSuccess={() =>
+                                                toast.success(
+                                                    'Appointment marked as no-show.',
+                                                )
+                                            }
+                                        >
+                                            {({ processing }) => (
+                                                <Button
+                                                    type="submit"
+                                                    variant="outline"
+                                                    disabled={
+                                                        processing ||
+                                                        ![
+                                                            'scheduled',
+                                                            'confirmed',
+                                                            'rescheduled',
+                                                        ].includes(
+                                                            appointment.status,
+                                                        )
+                                                    }
+                                                >
+                                                    Mark No-Show
+                                                </Button>
+                                            )}
+                                        </Form>
+                                    ) : null}
+                                </div>
                             </div>
                         ) : null}
 
                         {canRescheduleAppointment ? (
                             <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
-                            <h2 className="text-lg font-semibold">
-                                Reschedule
-                            </h2>
-                            <Form
-                                action={`/appointments/${appointment.id}/reschedule`}
-                                method="post"
-                                onSuccess={() =>
-                                    toast.success(
-                                        'Appointment rescheduled successfully.',
-                                    )
-                                }
-                                className="mt-4 space-y-4"
-                            >
-                                {({ processing, errors }) => (
-                                    <>
-                                        <div className="grid gap-4">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="reschedule_date">
-                                                    New Date
-                                                </Label>
-                                                <Input
-                                                    id="reschedule_date"
-                                                    name="appointment_date"
-                                                    type="date"
-                                                    defaultValue={toDateValue(
-                                                        appointment.appointment_date,
-                                                    )}
-                                                    required
-                                                />
-                                                <InputError
-                                                    message={
-                                                        errors.appointment_date
-                                                    }
-                                                />
+                                <h2 className="text-lg font-semibold">
+                                    Reschedule
+                                </h2>
+                                <Form
+                                    action={`/appointments/${appointment.id}/reschedule`}
+                                    method="post"
+                                    onSuccess={() =>
+                                        toast.success(
+                                            'Appointment rescheduled successfully.',
+                                        )
+                                    }
+                                    className="mt-4 space-y-4"
+                                >
+                                    {({ processing, errors }) => (
+                                        <>
+                                            <div className="grid gap-4">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="reschedule_date">
+                                                        New Date
+                                                    </Label>
+                                                    <Input
+                                                        id="reschedule_date"
+                                                        name="appointment_date"
+                                                        type="date"
+                                                        defaultValue={toDateValue(
+                                                            appointment.appointment_date,
+                                                        )}
+                                                        required
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            errors.appointment_date
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="reschedule_start_time">
+                                                        Start Time
+                                                    </Label>
+                                                    <Input
+                                                        id="reschedule_start_time"
+                                                        name="start_time"
+                                                        type="time"
+                                                        defaultValue={toTimeValue(
+                                                            appointment.start_time,
+                                                        )}
+                                                        required
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            errors.start_time
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="reschedule_end_time">
+                                                        End Time
+                                                    </Label>
+                                                    <Input
+                                                        id="reschedule_end_time"
+                                                        name="end_time"
+                                                        type="time"
+                                                        defaultValue={toTimeValue(
+                                                            appointment.end_time,
+                                                        )}
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            errors.end_time
+                                                        }
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="reschedule_start_time">
-                                                    Start Time
-                                                </Label>
-                                                <Input
-                                                    id="reschedule_start_time"
-                                                    name="start_time"
-                                                    type="time"
-                                                    defaultValue={toTimeValue(
-                                                        appointment.start_time,
-                                                    )}
-                                                    required
-                                                />
-                                                <InputError
-                                                    message={errors.start_time}
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="reschedule_end_time">
-                                                    End Time
-                                                </Label>
-                                                <Input
-                                                    id="reschedule_end_time"
-                                                    name="end_time"
-                                                    type="time"
-                                                    defaultValue={toTimeValue(
-                                                        appointment.end_time,
-                                                    )}
-                                                />
-                                                <InputError
-                                                    message={errors.end_time}
-                                                />
-                                            </div>
-                                        </div>
-                                        <Button
-                                            type="submit"
-                                            variant="outline"
-                                            disabled={processing}
-                                        >
-                                            Reschedule
-                                        </Button>
-                                    </>
-                                )}
-                            </Form>
+                                            <Button
+                                                type="submit"
+                                                variant="outline"
+                                                disabled={processing}
+                                            >
+                                                Reschedule
+                                            </Button>
+                                        </>
+                                    )}
+                                </Form>
                             </div>
                         ) : null}
 
                         {canCancelAppointment ? (
                             <div className="rounded border bg-white p-6 shadow-sm dark:bg-zinc-900">
-                            <h2 className="text-lg font-semibold">
-                                Cancel Appointment
-                            </h2>
-                            <Form
-                                action={`/appointments/${appointment.id}/cancel`}
-                                method="post"
-                                onSuccess={() =>
-                                    toast.success(
-                                        'Appointment cancelled successfully.',
-                                    )
-                                }
-                                className="mt-4 space-y-4"
-                            >
-                                {({ processing, errors }) => (
-                                    <>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="cancellation_reason">
-                                                Reason
-                                            </Label>
-                                            <Textarea
-                                                id="cancellation_reason"
-                                                name="cancellation_reason"
-                                                rows={3}
-                                                defaultValue={
-                                                    appointment.cancellation_reason ??
-                                                    ''
-                                                }
-                                            />
-                                            <InputError
-                                                message={
-                                                    errors.cancellation_reason
-                                                }
-                                            />
-                                        </div>
-                                        <Button
-                                            type="submit"
-                                            variant="destructive"
-                                            disabled={processing}
-                                        >
-                                            Cancel Appointment
-                                        </Button>
-                                    </>
-                                )}
-                            </Form>
+                                <h2 className="text-lg font-semibold">
+                                    Cancel Appointment
+                                </h2>
+                                <Form
+                                    action={`/appointments/${appointment.id}/cancel`}
+                                    method="post"
+                                    onSuccess={() =>
+                                        toast.success(
+                                            'Appointment cancelled successfully.',
+                                        )
+                                    }
+                                    className="mt-4 space-y-4"
+                                >
+                                    {({ processing, errors }) => (
+                                        <>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="cancellation_reason">
+                                                    Reason
+                                                </Label>
+                                                <Textarea
+                                                    id="cancellation_reason"
+                                                    name="cancellation_reason"
+                                                    rows={3}
+                                                    defaultValue={
+                                                        appointment.cancellation_reason ??
+                                                        ''
+                                                    }
+                                                />
+                                                <InputError
+                                                    message={
+                                                        errors.cancellation_reason
+                                                    }
+                                                />
+                                            </div>
+                                            <Button
+                                                type="submit"
+                                                variant="destructive"
+                                                disabled={processing}
+                                            >
+                                                Cancel Appointment
+                                            </Button>
+                                        </>
+                                    )}
+                                </Form>
                             </div>
                         ) : null}
 

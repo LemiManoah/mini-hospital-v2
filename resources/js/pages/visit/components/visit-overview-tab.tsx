@@ -71,7 +71,9 @@ export function VisitOverviewTab({ visit, timeline }: VisitOverviewTabProps) {
                             Registered At
                         </p>
                         <p className="font-medium">
-                            {formatDateTime(visit.registered_at ?? visit.created_at)}
+                            {formatDateTime(
+                                visit.registered_at ?? visit.created_at,
+                            )}
                         </p>
                     </div>
                     <div>
@@ -102,7 +104,9 @@ export function VisitOverviewTab({ visit, timeline }: VisitOverviewTabProps) {
                 <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <div>
                         <p className="text-sm text-muted-foreground">Patient</p>
-                        <p className="font-medium">{patientName || 'Unknown'}</p>
+                        <p className="font-medium">
+                            {patientName || 'Unknown'}
+                        </p>
                     </div>
                     <div>
                         <p className="text-sm text-muted-foreground">MRN</p>

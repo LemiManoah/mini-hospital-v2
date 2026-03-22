@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePermissions } from '@/lib/permissions';
 import VisitStartDialog from '@/components/visit-start-dialog';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type PatientShowPageProps } from '@/types/patient';
 import { Head, Link } from '@inertiajs/react';
@@ -298,7 +298,9 @@ export default function PatientShow({
                                                     <Button
                                                         className="mt-4"
                                                         size="sm"
-                                                        disabled={hasActiveVisit}
+                                                        disabled={
+                                                            hasActiveVisit
+                                                        }
                                                     >
                                                         <Plus className="mr-2 h-4 w-4" />
                                                         Start First Visit

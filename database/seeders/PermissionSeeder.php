@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types = 1)
-;
+declare(strict_types=1);
 
 namespace Database\Seeders;
 
@@ -30,7 +29,7 @@ final class PermissionSeeder extends Seeder
             ]);
         }
 
-        foreach ($this->resolvedRolePermissions($permissionCatalog, $allPermissions) as $roleName => $permissions) {
+        foreach ($this->resolvedRolePermissions($allPermissions) as $roleName => $permissions) {
             $role = Role::query()->where('name', $roleName)->firstOrFail();
             $role->syncPermissions($permissions);
         }
@@ -162,28 +161,27 @@ final class PermissionSeeder extends Seeder
     {
         return collect($catalog)
             ->flatMap(
-        static fn(array $abilities, string $resource) => collect($abilities)
-        ->map(static fn(string $ability): string => sprintf('%s.%s', $resource, $ability))
-        )
+                static fn (array $abilities, string $resource) => collect($abilities)
+                    ->map(static fn (string $ability): string => sprintf('%s.%s', $resource, $ability))
+            )
             ->values()
             ->all();
     }
 
     /**
-     * @param  array<string, list<string>>  $catalog
      * @param  list<string>  $allPermissions
      * @return array<string, list<string>>
      */
-    private function resolvedRolePermissions(array $catalog, array $allPermissions): array
+    private function resolvedRolePermissions(array $allPermissions): array
     {
         return collect($this->roleDefinitions())
             ->map(function (array $definition, string $role) use ($allPermissions): array {
-            if (in_array($role, ['super_admin', 'admin'], true)) {
-                return $allPermissions;
-            }
+                if (in_array($role, ['super_admin', 'admin'], true)) {
+                    return $allPermissions;
+                }
 
-            return $this->expandPermissions($this->withCommonTenantAccess($definition));
-        })
+                return $this->expandPermissions($this->withCommonTenantAccess($definition));
+            })
             ->all();
     }
 

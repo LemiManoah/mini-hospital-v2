@@ -23,6 +23,8 @@ final class FacilityService extends Model
     protected $casts = [
         'tenant_id' => 'string',
         'category' => FacilityServiceCategory::class,
+        'cost_price' => 'decimal:2',
+        'selling_price' => 'decimal:2',
         'is_billable' => 'boolean',
         'charge_master_id' => 'string',
         'is_active' => 'boolean',

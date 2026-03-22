@@ -176,12 +176,20 @@ export default function ReturningPatients({
                                                     ) : null}
                                                     {canStartVisit ? (
                                                         <VisitStartDialog
-                                                            patientId={patient.id}
-                                                            patientName={fullName}
-                                                            visitTypes={visitTypes}
+                                                            patientId={
+                                                                patient.id
+                                                            }
+                                                            patientName={
+                                                                fullName
+                                                            }
+                                                            visitTypes={
+                                                                visitTypes
+                                                            }
                                                             clinics={clinics}
                                                             doctors={doctors}
-                                                            companies={companies}
+                                                            companies={
+                                                                companies
+                                                            }
                                                             packages={packages}
                                                             redirectTo="visit"
                                                             title="Start Return Visit"

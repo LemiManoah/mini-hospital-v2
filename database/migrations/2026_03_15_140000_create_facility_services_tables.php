@@ -18,9 +18,9 @@ return new class extends Migration
             $table->string('service_code', 50);
             $table->string('name', 150)->index();
             $table->enum('category', array_column(FacilityServiceCategory::cases(), 'value'))->default(FacilityServiceCategory::OTHER->value);
-            $table->string('department_name', 100)->nullable();
             $table->text('description')->nullable();
-            $table->text('default_instructions')->nullable();
+            $table->decimal('cost_price', 10, 2)->nullable();
+            $table->decimal('selling_price', 10, 2)->nullable();
             $table->boolean('is_billable')->default(false);
             $table->uuid('charge_master_id')->nullable()->index();
             $table->boolean('is_active')->default(true)->index();

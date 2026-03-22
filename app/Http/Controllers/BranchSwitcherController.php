@@ -54,8 +54,7 @@ final readonly class BranchSwitcherController implements HasMiddleware
 
     public function switch(Request $request, string $branchId): RedirectResponse
     {
-        /** @var User $user */
-        $user = $request->user();
+        $request->user();
         $branch = FacilityBranch::query()->findOrFail($branchId);
 
         Gate::authorize('switchTo', $branch);

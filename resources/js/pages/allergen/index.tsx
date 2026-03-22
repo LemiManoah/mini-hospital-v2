@@ -154,7 +154,9 @@ export default function AllergenIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('allergens.update') ? (
+                                            {hasPermission(
+                                                'allergens.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -171,7 +173,9 @@ export default function AllergenIndex({
                                                 </Button>
                                             ) : null}
 
-                                            {hasPermission('allergens.delete') ? (
+                                            {hasPermission(
+                                                'allergens.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Allergen"
                                                     description={`Are you sure you want to delete "${allergen.name}"? This action cannot be undone.`}

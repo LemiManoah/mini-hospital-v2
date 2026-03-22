@@ -19,6 +19,11 @@ use Inertia\Response;
 
 final readonly class FacilitySwitcherController implements HasMiddleware
 {
+    public function __construct(
+        private SwitchTenantContext $switchTenantContext,
+        private StartTenantSubscription $startTenantSubscription,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -26,11 +31,6 @@ final readonly class FacilitySwitcherController implements HasMiddleware
             new Middleware('permission:tenants.update', only: ['switch', 'activateSubscription', 'markSubscriptionPastDue', 'completeOnboarding', 'reopenOnboarding']),
         ];
     }
-
-    public function __construct(
-        private SwitchTenantContext $switchTenantContext,
-        private StartTenantSubscription $startTenantSubscription,
-    ) {}
 
     public function index(): Response
     {

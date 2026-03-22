@@ -365,378 +365,384 @@ export default function TriageShow({
                                         >
                                             {({ processing, errors }) => (
                                                 <div className="space-y-4">
-                                                <input
-                                                    type="hidden"
-                                                    name="redirect_to"
-                                                    value="triage"
-                                                />
-                                                <input
-                                                    type="hidden"
-                                                    name="triage_grade"
-                                                    value={triageGrade}
-                                                />
-                                                <input
-                                                    type="hidden"
-                                                    name="attendance_type"
-                                                    value={attendanceType}
-                                                />
-                                                <input
-                                                    type="hidden"
-                                                    name="conscious_level"
-                                                    value={consciousLevel}
-                                                />
-                                                <input
-                                                    type="hidden"
-                                                    name="mobility_status"
-                                                    value={mobilityStatus}
-                                                />
-                                                <input
-                                                    type="hidden"
-                                                    name="assigned_clinic_id"
-                                                    value={
-                                                        assignedClinicId ===
-                                                        'none'
-                                                            ? ''
-                                                            : assignedClinicId
-                                                    }
-                                                />
+                                                    <input
+                                                        type="hidden"
+                                                        name="redirect_to"
+                                                        value="triage"
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="triage_grade"
+                                                        value={triageGrade}
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="attendance_type"
+                                                        value={attendanceType}
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="conscious_level"
+                                                        value={consciousLevel}
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="mobility_status"
+                                                        value={mobilityStatus}
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="assigned_clinic_id"
+                                                        value={
+                                                            assignedClinicId ===
+                                                            'none'
+                                                                ? ''
+                                                                : assignedClinicId
+                                                        }
+                                                    />
 
-                                                <div className="grid gap-4 md:grid-cols-2">
-                                                    <div className="grid gap-2">
-                                                        <Label>
-                                                            Triage Grade
-                                                        </Label>
-                                                        <Select
-                                                            value={triageGrade}
-                                                            onValueChange={
-                                                                setTriageGrade
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select triage grade" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {triageGrades.map(
-                                                                    (
-                                                                        option,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                option.value
-                                                                            }
-                                                                            value={
-                                                                                option.value
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                option.label
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                errors.triage_grade
-                                                            }
-                                                        />
+                                                    <div className="grid gap-4 md:grid-cols-2">
+                                                        <div className="grid gap-2">
+                                                            <Label>
+                                                                Triage Grade
+                                                            </Label>
+                                                            <Select
+                                                                value={
+                                                                    triageGrade
+                                                                }
+                                                                onValueChange={
+                                                                    setTriageGrade
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select triage grade" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {triageGrades.map(
+                                                                        (
+                                                                            option,
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
+                                                                                    option.value
+                                                                                }
+                                                                                value={
+                                                                                    option.value
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    option.label
+                                                                                }
+                                                                            </SelectItem>
+                                                                        ),
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <InputError
+                                                                message={
+                                                                    errors.triage_grade
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label>
+                                                                Attendance Type
+                                                            </Label>
+                                                            <Select
+                                                                value={
+                                                                    attendanceType
+                                                                }
+                                                                onValueChange={
+                                                                    setAttendanceType
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select attendance type" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {attendanceTypes.map(
+                                                                        (
+                                                                            option,
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
+                                                                                    option.value
+                                                                                }
+                                                                                value={
+                                                                                    option.value
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    option.label
+                                                                                }
+                                                                            </SelectItem>
+                                                                        ),
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <InputError
+                                                                message={
+                                                                    errors.attendance_type
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label>
+                                                                Conscious Level
+                                                            </Label>
+                                                            <Select
+                                                                value={
+                                                                    consciousLevel
+                                                                }
+                                                                onValueChange={
+                                                                    setConsciousLevel
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select conscious level" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {consciousLevels.map(
+                                                                        (
+                                                                            option,
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
+                                                                                    option.value
+                                                                                }
+                                                                                value={
+                                                                                    option.value
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    option.label
+                                                                                }
+                                                                            </SelectItem>
+                                                                        ),
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <InputError
+                                                                message={
+                                                                    errors.conscious_level
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label>
+                                                                Mobility Status
+                                                            </Label>
+                                                            <Select
+                                                                value={
+                                                                    mobilityStatus
+                                                                }
+                                                                onValueChange={
+                                                                    setMobilityStatus
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select mobility status" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {mobilityStatuses.map(
+                                                                        (
+                                                                            option,
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
+                                                                                    option.value
+                                                                                }
+                                                                                value={
+                                                                                    option.value
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    option.label
+                                                                                }
+                                                                            </SelectItem>
+                                                                        ),
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <InputError
+                                                                message={
+                                                                    errors.mobility_status
+                                                                }
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <div className="grid gap-2">
-                                                        <Label>
-                                                            Attendance Type
-                                                        </Label>
-                                                        <Select
-                                                            value={
-                                                                attendanceType
-                                                            }
-                                                            onValueChange={
-                                                                setAttendanceType
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select attendance type" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {attendanceTypes.map(
-                                                                    (
-                                                                        option,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                option.value
-                                                                            }
-                                                                            value={
-                                                                                option.value
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                option.label
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                errors.attendance_type
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label>
-                                                            Conscious Level
-                                                        </Label>
-                                                        <Select
-                                                            value={
-                                                                consciousLevel
-                                                            }
-                                                            onValueChange={
-                                                                setConsciousLevel
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select conscious level" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {consciousLevels.map(
-                                                                    (
-                                                                        option,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                option.value
-                                                                            }
-                                                                            value={
-                                                                                option.value
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                option.label
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                errors.conscious_level
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label>
-                                                            Mobility Status
-                                                        </Label>
-                                                        <Select
-                                                            value={
-                                                                mobilityStatus
-                                                            }
-                                                            onValueChange={
-                                                                setMobilityStatus
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select mobility status" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {mobilityStatuses.map(
-                                                                    (
-                                                                        option,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                option.value
-                                                                            }
-                                                                            value={
-                                                                                option.value
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                option.label
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                errors.mobility_status
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
 
-                                                <div className="grid gap-4 md:grid-cols-3">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="news_score">
-                                                            NEWS Score
-                                                        </Label>
+                                                    <div className="grid gap-4 md:grid-cols-3">
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="news_score">
+                                                                NEWS Score
+                                                            </Label>
+                                                            <Input
+                                                                id="news_score"
+                                                                name="news_score"
+                                                                type="number"
+                                                                min={0}
+                                                                max={20}
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="pews_score">
+                                                                PEWS Score
+                                                            </Label>
+                                                            <Input
+                                                                id="pews_score"
+                                                                name="pews_score"
+                                                                type="number"
+                                                                min={0}
+                                                                max={20}
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label>
+                                                                Assigned Clinic
+                                                            </Label>
+                                                            <Select
+                                                                value={
+                                                                    assignedClinicId
+                                                                }
+                                                                onValueChange={
+                                                                    setAssignedClinicId
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select clinic" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="none">
+                                                                        No
+                                                                        clinic
+                                                                    </SelectItem>
+                                                                    {clinics.map(
+                                                                        (
+                                                                            clinic,
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
+                                                                                    clinic.id
+                                                                                }
+                                                                                value={
+                                                                                    clinic.id
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    clinic.name
+                                                                                }
+                                                                            </SelectItem>
+                                                                        ),
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid gap-4 md:grid-cols-2">
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="chief_complaint">
+                                                                Chief Complaint
+                                                            </Label>
+                                                            <Textarea
+                                                                id="chief_complaint"
+                                                                name="chief_complaint"
+                                                                rows={4}
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    errors.chief_complaint
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="history_of_presenting_illness">
+                                                                History of
+                                                                Presenting
+                                                                Illness
+                                                            </Label>
+                                                            <Textarea
+                                                                id="history_of_presenting_illness"
+                                                                name="history_of_presenting_illness"
+                                                                rows={4}
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid gap-4 md:grid-cols-3">
                                                         <Input
-                                                            id="news_score"
-                                                            name="news_score"
-                                                            type="number"
-                                                            min={0}
-                                                            max={20}
+                                                            id="poisoning_agent"
+                                                            name="poisoning_agent"
+                                                            placeholder="Poisoning agent"
                                                         />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="pews_score">
-                                                            PEWS Score
-                                                        </Label>
                                                         <Input
-                                                            id="pews_score"
-                                                            name="pews_score"
-                                                            type="number"
-                                                            min={0}
-                                                            max={20}
+                                                            id="referred_by"
+                                                            name="referred_by"
+                                                            placeholder="Referred by"
+                                                        />
+                                                        <Textarea
+                                                            id="nurse_notes"
+                                                            name="nurse_notes"
+                                                            rows={3}
+                                                            placeholder="Nurse notes"
                                                         />
                                                     </div>
-                                                    <div className="grid gap-2">
-                                                        <Label>
-                                                            Assigned Clinic
-                                                        </Label>
-                                                        <Select
-                                                            value={
-                                                                assignedClinicId
-                                                            }
-                                                            onValueChange={
-                                                                setAssignedClinicId
+
+                                                    <div className="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+                                                        <label className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="requires_priority"
+                                                                value="1"
+                                                            />
+                                                            Requires priority
+                                                        </label>
+                                                        <label className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="is_pediatric"
+                                                                value="1"
+                                                            />
+                                                            Pediatric patient
+                                                        </label>
+                                                        <label className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="poisoning_case"
+                                                                value="1"
+                                                            />
+                                                            Poisoning case
+                                                        </label>
+                                                        <label className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="snake_bite_case"
+                                                                value="1"
+                                                            />
+                                                            Snake bite case
+                                                        </label>
+                                                    </div>
+
+                                                    <div className="flex justify-end">
+                                                        <Button
+                                                            type="submit"
+                                                            disabled={
+                                                                processing
                                                             }
                                                         >
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select clinic" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="none">
-                                                                    No clinic
-                                                                </SelectItem>
-                                                                {clinics.map(
-                                                                    (
-                                                                        clinic,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                clinic.id
-                                                                            }
-                                                                            value={
-                                                                                clinic.id
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                clinic.name
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
+                                                            {processing
+                                                                ? 'Saving...'
+                                                                : 'Save Triage'}
+                                                        </Button>
                                                     </div>
-                                                </div>
-
-                                                <div className="grid gap-4 md:grid-cols-2">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="chief_complaint">
-                                                            Chief Complaint
-                                                        </Label>
-                                                        <Textarea
-                                                            id="chief_complaint"
-                                                            name="chief_complaint"
-                                                            rows={4}
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                errors.chief_complaint
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="history_of_presenting_illness">
-                                                            History of
-                                                            Presenting Illness
-                                                        </Label>
-                                                        <Textarea
-                                                            id="history_of_presenting_illness"
-                                                            name="history_of_presenting_illness"
-                                                            rows={4}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid gap-4 md:grid-cols-3">
-                                                    <Input
-                                                        id="poisoning_agent"
-                                                        name="poisoning_agent"
-                                                        placeholder="Poisoning agent"
-                                                    />
-                                                    <Input
-                                                        id="referred_by"
-                                                        name="referred_by"
-                                                        placeholder="Referred by"
-                                                    />
-                                                    <Textarea
-                                                        id="nurse_notes"
-                                                        name="nurse_notes"
-                                                        rows={3}
-                                                        placeholder="Nurse notes"
-                                                    />
-                                                </div>
-
-                                                <div className="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
-                                                    <label className="flex items-center gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            name="requires_priority"
-                                                            value="1"
-                                                        />
-                                                        Requires priority
-                                                    </label>
-                                                    <label className="flex items-center gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            name="is_pediatric"
-                                                            value="1"
-                                                        />
-                                                        Pediatric patient
-                                                    </label>
-                                                    <label className="flex items-center gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            name="poisoning_case"
-                                                            value="1"
-                                                        />
-                                                        Poisoning case
-                                                    </label>
-                                                    <label className="flex items-center gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            name="snake_bite_case"
-                                                            value="1"
-                                                        />
-                                                        Snake bite case
-                                                    </label>
-                                                </div>
-
-                                                <div className="flex justify-end">
-                                                    <Button
-                                                        type="submit"
-                                                        disabled={processing}
-                                                    >
-                                                        {processing
-                                                            ? 'Saving...'
-                                                            : 'Save Triage'}
-                                                    </Button>
-                                                </div>
                                                 </div>
                                             )}
                                         </Form>
                                     ) : (
                                         <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-                                            You can review this visit, but you do
-                                            not have permission to create the
+                                            You can review this visit, but you
+                                            do not have permission to create the
                                             triage record.
                                         </div>
                                     )}
@@ -764,9 +770,9 @@ export default function TriageShow({
                                     </div>
                                 ) : !canUpdateTriage ? (
                                     <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-                                        Vital history is visible here, but you do
-                                        not have permission to record new vital
-                                        signs.
+                                        Vital history is visible here, but you
+                                        do not have permission to record new
+                                        vital signs.
                                     </div>
                                 ) : (
                                     <>

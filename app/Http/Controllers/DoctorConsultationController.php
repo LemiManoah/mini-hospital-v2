@@ -15,7 +15,6 @@ use App\Enums\PregnancyStatus;
 use App\Enums\Priority;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
-use App\Models\Consultation;
 use App\Models\Drug;
 use App\Models\FacilityService;
 use App\Models\LabTestCatalog;
@@ -34,6 +33,10 @@ use Inertia\Response;
 
 final readonly class DoctorConsultationController implements HasMiddleware
 {
+    public function __construct(
+        private ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -42,10 +45,6 @@ final readonly class DoctorConsultationController implements HasMiddleware
             new Middleware('permission:consultations.update', only: ['update']),
         ];
     }
-
-    public function __construct(
-        private ActiveBranchWorkspace $activeBranchWorkspace,
-    ) {}
 
     public function index(Request $request, DoctorConsultationAccess $consultationAccess): Response
     {
@@ -237,14 +236,12 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 ->where('is_active', true)
                 ->orderBy('category')
                 ->orderBy('name')
-                ->get(['id', 'service_code', 'name', 'category', 'department_name', 'default_instructions', 'is_billable'])
+                ->get(['id', 'service_code', 'name', 'category', 'is_billable'])
                 ->map(static fn (FacilityService $service): array => [
                     'id' => $service->id,
                     'service_code' => $service->service_code,
                     'name' => $service->name,
                     'category' => $service->category->value,
-                    'department_name' => $service->department_name,
-                    'default_instructions' => $service->default_instructions,
                     'is_billable' => $service->is_billable,
                 ])
                 ->all(),

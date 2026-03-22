@@ -142,7 +142,9 @@ export default function AddressIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('addresses.update') ? (
+                                            {hasPermission(
+                                                'addresses.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -159,7 +161,9 @@ export default function AddressIndex({
                                                 </Button>
                                             ) : null}
 
-                                            {hasPermission('addresses.delete') ? (
+                                            {hasPermission(
+                                                'addresses.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Address"
                                                     description={`Are you sure you want to delete this address? This action cannot be undone.`}

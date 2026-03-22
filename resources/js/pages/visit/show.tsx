@@ -9,8 +9,8 @@ import { VisitBillingTab } from './components/visit-billing-tab';
 import { VisitClinicalTab } from './components/visit-clinical-tab';
 import { VisitHeader } from './components/visit-header';
 import { VisitOverviewTab } from './components/visit-overview-tab';
-import { VisitSidebar } from './components/visit-sidebar';
 import { formatDateTime } from './components/visit-show-utils';
+import { VisitSidebar } from './components/visit-sidebar';
 
 export default function VisitShow({
     visit,

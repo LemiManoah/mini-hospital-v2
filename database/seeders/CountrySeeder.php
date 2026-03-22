@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types = 1)
-;
+declare(strict_types=1);
 
 namespace Database\Seeders;
 
@@ -67,7 +66,7 @@ final class CountrySeeder extends Seeder
 
         foreach ($countries as $country) {
             Country::query()->updateOrCreate(
-            ['country_code' => $country['country_code']],
+                ['country_code' => $country['country_code']],
                 $country
             );
         }

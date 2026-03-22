@@ -276,7 +276,6 @@ it('counts pending facility service orders as blocking downstream work', functio
         'service_code' => 'SRV-001',
         'name' => 'Wound Dressing',
         'category' => 'dressing',
-        'department_name' => 'Treatment Room',
         'is_billable' => false,
         'is_active' => true,
         'created_at' => now(),

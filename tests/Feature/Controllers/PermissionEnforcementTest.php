@@ -136,7 +136,7 @@ function createPermissionUser(
             'is_active' => true,
         ]);
 
-        if ($branch !== null) {
+        if ($branch instanceof FacilityBranch) {
             $staff->branches()->sync([
                 $branch->id => ['is_primary_location' => true],
             ]);

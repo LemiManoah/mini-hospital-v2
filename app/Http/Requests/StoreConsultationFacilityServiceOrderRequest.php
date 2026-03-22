@@ -41,9 +41,6 @@ final class StoreConsultationFacilityServiceOrderRequest extends FormRequest
                 $validator->errors()->add('facility_service_id', 'Only active facility services can be ordered.');
             }
 
-            if ($service->is_billable && ($service->charge_master_id === null || $service->charge_master_id === '')) {
-                $validator->errors()->add('facility_service_id', 'This billable facility service is missing a charge master mapping.');
-            }
         });
     }
 }

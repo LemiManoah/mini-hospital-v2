@@ -134,7 +134,9 @@ export default function AppointmentCategoryIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('appointment_categories.update') ? (
+                                            {hasPermission(
+                                                'appointment_categories.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -147,7 +149,9 @@ export default function AppointmentCategoryIndex({
                                                     </Link>
                                                 </Button>
                                             ) : null}
-                                            {hasPermission('appointment_categories.delete') ? (
+                                            {hasPermission(
+                                                'appointment_categories.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Appointment Category"
                                                     description={`Are you sure you want to delete "${category.name}"? This action cannot be undone.`}

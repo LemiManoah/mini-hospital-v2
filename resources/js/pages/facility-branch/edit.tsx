@@ -55,9 +55,7 @@ export default function FacilityBranchEdit({
                     action={`/facility-branches/${branch.id}`}
                     method="put"
                     onSuccess={() =>
-                        toast.success(
-                            'Facility branch updated successfully.',
-                        )
+                        toast.success('Facility branch updated successfully.')
                     }
                     className="space-y-6 p-6"
                 >
@@ -85,9 +83,7 @@ export default function FacilityBranchEdit({
                                         defaultValue={branch.branch_code}
                                         required
                                     />
-                                    <InputError
-                                        message={errors.branch_code}
-                                    />
+                                    <InputError message={errors.branch_code} />
                                 </div>
                             </div>
 
@@ -120,9 +116,7 @@ export default function FacilityBranchEdit({
                                         name="currency_id"
                                         value={currencyId}
                                     />
-                                    <InputError
-                                        message={errors.currency_id}
-                                    />
+                                    <InputError message={errors.currency_id} />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -171,9 +165,7 @@ export default function FacilityBranchEdit({
                                         name="main_contact"
                                         defaultValue={branch.main_contact ?? ''}
                                     />
-                                    <InputError
-                                        message={errors.main_contact}
-                                    />
+                                    <InputError message={errors.main_contact} />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -218,9 +210,7 @@ export default function FacilityBranchEdit({
                                         value="1"
                                         checked={hasStore}
                                         onChange={(event) =>
-                                            setHasStore(
-                                                event.target.checked,
-                                            )
+                                            setHasStore(event.target.checked)
                                         }
                                         className="h-4 w-4"
                                     />

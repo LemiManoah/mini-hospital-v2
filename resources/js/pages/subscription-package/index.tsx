@@ -149,7 +149,9 @@ export default function SubscriptionPackageIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('subscription_packages.update') ? (
+                                            {hasPermission(
+                                                'subscription_packages.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -169,7 +171,9 @@ export default function SubscriptionPackageIndex({
                                                 </Button>
                                             ) : null}
 
-                                            {hasPermission('subscription_packages.delete') ? (
+                                            {hasPermission(
+                                                'subscription_packages.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Package"
                                                     description={`Are you sure you want to delete "${pkg.name}"? This action cannot be undone.`}

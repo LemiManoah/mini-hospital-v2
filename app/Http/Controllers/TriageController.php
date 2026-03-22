@@ -20,10 +20,10 @@ use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class TriageController implements HasMiddleware
+final readonly class TriageController implements HasMiddleware
 {
     public function __construct(
-        private readonly ActiveBranchWorkspace $activeBranchWorkspace,
+        private ActiveBranchWorkspace $activeBranchWorkspace,
     ) {}
 
     public static function middleware(): array

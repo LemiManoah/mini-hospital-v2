@@ -79,7 +79,10 @@ export default function UserIndex({ users, filters }: UserIndexPageProps) {
                         asChild
                         className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                     >
-                        <Link href={UserController.create.url()} className="gap-2">
+                        <Link
+                            href={UserController.create.url()}
+                            className="gap-2"
+                        >
                             <span>+ Add User</span>
                         </Link>
                     </Button>

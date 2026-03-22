@@ -162,7 +162,9 @@ export default function DepartmentIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('departments.update') ? (
+                                            {hasPermission(
+                                                'departments.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -172,7 +174,8 @@ export default function DepartmentIndex({
                                                     <Link
                                                         href={DepartmentController.edit.url(
                                                             {
-                                                                department: dept.id,
+                                                                department:
+                                                                    dept.id,
                                                             },
                                                         )}
                                                     >
@@ -181,7 +184,9 @@ export default function DepartmentIndex({
                                                 </Button>
                                             ) : null}
 
-                                            {hasPermission('departments.delete') ? (
+                                            {hasPermission(
+                                                'departments.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Department"
                                                     description={`Are you sure you want to delete the department "${formatIdentifierLabel(dept.department_name)}"? This action cannot be undone.`}

@@ -1,5 +1,5 @@
-import { Head, router } from '@inertiajs/react';
 import { usePermissions } from '@/lib/permissions';
+import { Head, router } from '@inertiajs/react';
 import { Building2, Check, ChevronRight, GitBranch } from 'lucide-react';
 
 interface Branch {
@@ -88,7 +88,9 @@ export default function BranchSwitcher({ branches, activeBranchId }: Props) {
                             {canSwitchBranch ? (
                                 <button
                                     onClick={() =>
-                                        router.post(`/branch-switcher/${branch.id}`)
+                                        router.post(
+                                            `/branch-switcher/${branch.id}`,
+                                        )
                                     }
                                     className="absolute inset-0 z-10"
                                     type="button"

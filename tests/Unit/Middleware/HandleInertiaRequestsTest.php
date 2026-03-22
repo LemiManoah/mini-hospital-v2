@@ -31,7 +31,6 @@ it('shares null user when guest', function (): void {
 
 it('shares authenticated user data', function (): void {
     $user = User::factory()->create([
-        'name' => 'Test User',
         'email' => 'test@example.com',
     ]);
 

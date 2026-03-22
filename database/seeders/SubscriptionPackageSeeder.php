@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types = 1)
-;
+declare(strict_types=1);
 
 namespace Database\Seeders;
 
@@ -27,11 +26,11 @@ final class SubscriptionPackageSeeder extends Seeder
 
         foreach ($packages as $package) {
             SubscriptionPackage::query()->updateOrCreate(
-            ['name' => $package['name']],
-            [
-                ...$package,
-                'status' => GeneralStatus::ACTIVE,
-            ]
+                ['name' => $package['name']],
+                [
+                    ...$package,
+                    'status' => GeneralStatus::ACTIVE,
+                ]
             );
         }
     }

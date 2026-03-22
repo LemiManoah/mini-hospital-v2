@@ -138,7 +138,9 @@ export default function PatientIndex({
                                                         Select
                                                     </Link>
                                                 </Button>
-                                                {hasPermission('patients.update') ? (
+                                                {hasPermission(
+                                                    'patients.update',
+                                                ) ? (
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
@@ -151,7 +153,9 @@ export default function PatientIndex({
                                                         </Link>
                                                     </Button>
                                                 ) : null}
-                                                {hasPermission('patients.delete') ? (
+                                                {hasPermission(
+                                                    'patients.delete',
+                                                ) ? (
                                                     <DeleteConfirmationModal
                                                         title="Delete Patient"
                                                         description={`Are you sure you want to delete "${fullName}"? This action cannot be undone.`}

@@ -15,7 +15,6 @@ use App\Models\FacilityBranch;
 use App\Models\Staff;
 use App\Models\StaffPosition;
 use App\Models\User;
-use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -37,10 +36,6 @@ final readonly class StaffController implements HasMiddleware
             new Middleware('permission:staff.delete', only: ['destroy']),
         ];
     }
-
-    public function __construct(
-        private ActiveBranchWorkspace $activeBranchWorkspace,
-    ) {}
 
     public function index(Request $request): Response
     {
@@ -78,9 +73,9 @@ final readonly class StaffController implements HasMiddleware
         $branches = BranchContext::getAccessibleBranches($user)
             ->where('id', BranchContext::getActiveBranchId())
             ->map(fn (FacilityBranch $branch): array => [
-            'id' => $branch->id,
-            'name' => $branch->name,
-        ]);
+                'id' => $branch->id,
+                'name' => $branch->name,
+            ]);
 
         return Inertia::render('staff/create', [
             'departments' => $departments,
@@ -115,9 +110,9 @@ final readonly class StaffController implements HasMiddleware
         $branches = BranchContext::getAccessibleBranches($user)
             ->where('id', BranchContext::getActiveBranchId())
             ->map(fn (FacilityBranch $branch): array => [
-            'id' => $branch->id,
-            'name' => $branch->name,
-        ]);
+                'id' => $branch->id,
+                'name' => $branch->name,
+            ]);
 
         return Inertia::render('staff/edit', [
             'staff' => $staff,

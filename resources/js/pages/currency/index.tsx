@@ -149,7 +149,9 @@ export default function CurrencyIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('currencies.update') ? (
+                                            {hasPermission(
+                                                'currencies.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -167,7 +169,9 @@ export default function CurrencyIndex({
                                             ) : null}
 
                                             {currency.modifiable &&
-                                            hasPermission('currencies.delete') ? (
+                                            hasPermission(
+                                                'currencies.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Currency"
                                                     description={`Are you sure you want to delete "${currency.name}" (${currency.code})? This action cannot be undone.`}

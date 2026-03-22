@@ -43,6 +43,11 @@ use Inertia\Response;
 
 final readonly class AppointmentController implements HasMiddleware
 {
+    public function __construct(
+        private ResolveDateRange $resolveDateRange,
+        private ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -56,11 +61,6 @@ final readonly class AppointmentController implements HasMiddleware
             new Middleware('permission:appointments.check_in', only: ['checkIn']),
         ];
     }
-
-    public function __construct(
-        private ResolveDateRange $resolveDateRange,
-        private ActiveBranchWorkspace $activeBranchWorkspace,
-    ) {}
 
     public function index(Request $request): Response
     {

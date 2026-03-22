@@ -79,7 +79,10 @@ export default function StaffIndex({ staff, filters }: StaffIndexPageProps) {
                         asChild
                         className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                     >
-                        <Link href={StaffController.create.url()} className="gap-2">
+                        <Link
+                            href={StaffController.create.url()}
+                            className="gap-2"
+                        >
                             <span>+ Add Staff Member</span>
                         </Link>
                     </Button>
@@ -168,7 +171,9 @@ export default function StaffIndex({ staff, filters }: StaffIndexPageProps) {
                                                 >
                                                     <Link
                                                         href={StaffController.edit.url(
-                                                            { staff: member.id },
+                                                            {
+                                                                staff: member.id,
+                                                            },
                                                         )}
                                                     >
                                                         Edit

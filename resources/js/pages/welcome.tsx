@@ -59,20 +59,32 @@ export default function Welcome() {
                                     QROO
                                 </p>
                                 <p className="text-sm font-medium text-zinc-700">
-                                    QrooEMR on <span className="text-zinc-950">qroo.rw</span>
+                                    QrooEMR on{' '}
+                                    <span className="text-zinc-950">
+                                        qroo.rw
+                                    </span>
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
                             <nav className="flex flex-wrap items-center gap-3 text-sm font-medium text-zinc-700">
-                                <a href="#about" className="transition hover:text-zinc-950">
+                                <a
+                                    href="#about"
+                                    className="transition hover:text-zinc-950"
+                                >
                                     About Us
                                 </a>
-                                <a href="#press" className="transition hover:text-zinc-950">
+                                <a
+                                    href="#press"
+                                    className="transition hover:text-zinc-950"
+                                >
                                     Press
                                 </a>
-                                <a href="#careers" className="transition hover:text-zinc-950">
+                                <a
+                                    href="#careers"
+                                    className="transition hover:text-zinc-950"
+                                >
                                     Join Us
                                 </a>
                             </nav>
@@ -128,8 +140,9 @@ export default function Welcome() {
                                             Inspire Creativity, Enrich Life
                                         </h1>
                                         <p className="max-w-2xl text-lg leading-8 text-zinc-300">
-                                            Our mission guides everything we do. We build platforms that help
-                                            people connect, create, and discover.
+                                            Our mission guides everything we do.
+                                            We build platforms that help people
+                                            connect, create, and discover.
                                         </p>
                                     </div>
 
@@ -172,10 +185,14 @@ export default function Welcome() {
                                         <p className="text-sm font-semibold tracking-[0.24em] text-zinc-500 uppercase">
                                             Culture
                                         </p>
-                                        <h2 className="text-2xl font-semibold text-zinc-950">Grow Together</h2>
+                                        <h2 className="text-2xl font-semibold text-zinc-950">
+                                            Grow Together
+                                        </h2>
                                         <p className="text-sm leading-7 text-zinc-600">
-                                            Live and be driven by our mission and vision. Show patience and
-                                            resilience. Solve problems together. Keep learning, keep pushing
+                                            Live and be driven by our mission
+                                            and vision. Show patience and
+                                            resilience. Solve problems together.
+                                            Keep learning, keep pushing
                                             boundaries.
                                         </p>
                                     </div>
@@ -232,7 +249,9 @@ export default function Welcome() {
                                                     <h3 className="text-lg font-semibold text-zinc-950">
                                                         {member.name}
                                                     </h3>
-                                                    <p className="text-sm text-zinc-600">{member.role}</p>
+                                                    <p className="text-sm text-zinc-600">
+                                                        {member.role}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -277,13 +296,17 @@ export default function Welcome() {
                                             <p className="text-sm font-semibold tracking-[0.24em] text-zinc-400 uppercase">
                                                 Product
                                             </p>
-                                            <h2 className="text-2xl font-semibold">QrooEMR</h2>
+                                            <h2 className="text-2xl font-semibold">
+                                                QrooEMR
+                                            </h2>
                                         </div>
                                     </div>
 
                                     <p className="mt-4 text-sm leading-7 text-zinc-300">
-                                        QrooEMR is QROO&apos;s first launched product, built to deliver modern
-                                        healthcare operations through a clear, approachable experience.
+                                        QrooEMR is QROO&apos;s first launched
+                                        product, built to deliver modern
+                                        healthcare operations through a clear,
+                                        approachable experience.
                                     </p>
                                 </div>
                             </div>
@@ -321,12 +344,15 @@ export default function Welcome() {
                                         Mission
                                     </p>
                                     <h2 className="text-3xl font-semibold tracking-tight text-zinc-950">
-                                        Building products that help people move forward
+                                        Building products that help people move
+                                        forward
                                     </h2>
                                     <p className="max-w-2xl text-base leading-8 text-zinc-700">
-                                        QROO is growing a portfolio of products led by QrooEMR. The company is
-                                        focused on connection, creativity, and discovery, with healthcare as the
-                                        first expression of that broader vision.
+                                        QROO is growing a portfolio of products
+                                        led by QrooEMR. The company is focused
+                                        on connection, creativity, and
+                                        discovery, with healthcare as the first
+                                        expression of that broader vision.
                                     </p>
                                 </div>
                             </div>
@@ -338,42 +364,76 @@ export default function Welcome() {
                             <div className="flex flex-col gap-4">
                                 <p className="text-lg font-semibold">QROO</p>
                                 <p className="text-sm leading-7 text-zinc-300">
-                                    QrooEMR is live at qroo.rw as the first product in the QROO ecosystem.
+                                    QrooEMR is live at qroo.rw as the first
+                                    product in the QROO ecosystem.
                                 </p>
                             </div>
 
-                            <div id="press" className="flex flex-col gap-3 text-sm text-zinc-300">
-                                <p className="font-semibold text-zinc-50">About</p>
-                                <a href="#about" className="transition hover:text-white">
+                            <div
+                                id="press"
+                                className="flex flex-col gap-3 text-sm text-zinc-300"
+                            >
+                                <p className="font-semibold text-zinc-50">
+                                    About
+                                </p>
+                                <a
+                                    href="#about"
+                                    className="transition hover:text-white"
+                                >
                                     About Us
                                 </a>
-                                <a href="#press" className="transition hover:text-white">
+                                <a
+                                    href="#press"
+                                    className="transition hover:text-white"
+                                >
                                     Press
                                 </a>
-                                <a href="#careers" className="transition hover:text-white">
+                                <a
+                                    href="#careers"
+                                    className="transition hover:text-white"
+                                >
                                     Join Us
                                 </a>
                             </div>
 
-                            <div id="careers" className="flex flex-col gap-3 text-sm text-zinc-300">
-                                <p className="font-semibold text-zinc-50">Resources</p>
-                                <a href="#press" className="transition hover:text-white">
+                            <div
+                                id="careers"
+                                className="flex flex-col gap-3 text-sm text-zinc-300"
+                            >
+                                <p className="font-semibold text-zinc-50">
+                                    Resources
+                                </p>
+                                <a
+                                    href="#press"
+                                    className="transition hover:text-white"
+                                >
                                     Press
                                 </a>
-                                <a href="#" className="transition hover:text-white">
+                                <a
+                                    href="#"
+                                    className="transition hover:text-white"
+                                >
                                     Blog
                                 </a>
-                                <a href="#careers" className="transition hover:text-white">
+                                <a
+                                    href="#careers"
+                                    className="transition hover:text-white"
+                                >
                                     Careers
                                 </a>
-                                <a href="#careers" className="transition hover:text-white">
+                                <a
+                                    href="#careers"
+                                    className="transition hover:text-white"
+                                >
                                     Join Us
                                 </a>
                             </div>
 
                             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
                                 <div className="flex flex-col gap-2 text-sm text-zinc-300">
-                                    <p className="font-semibold text-zinc-50">Contact</p>
+                                    <p className="font-semibold text-zinc-50">
+                                        Contact
+                                    </p>
                                     <p>Media: press@qroo.rw</p>
                                     <p>Careers: hr@qroo.rw</p>
                                     <p>Advertising: advertise@qroo.rw</p>
@@ -382,14 +442,25 @@ export default function Welcome() {
                                 </div>
 
                                 <div className="flex flex-col gap-2 text-sm text-zinc-300">
-                                    <p className="font-semibold text-zinc-50">Our Socials</p>
-                                    <a href="#" className="transition hover:text-white">
+                                    <p className="font-semibold text-zinc-50">
+                                        Our Socials
+                                    </p>
+                                    <a
+                                        href="#"
+                                        className="transition hover:text-white"
+                                    >
                                         X
                                     </a>
-                                    <a href="#" className="transition hover:text-white">
+                                    <a
+                                        href="#"
+                                        className="transition hover:text-white"
+                                    >
                                         Reddit
                                     </a>
-                                    <a href="#" className="transition hover:text-white">
+                                    <a
+                                        href="#"
+                                        className="transition hover:text-white"
+                                    >
                                         LinkedIn
                                     </a>
                                 </div>
@@ -398,7 +469,10 @@ export default function Welcome() {
 
                         <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
                             <p>(c) 2026 Qroo. All rights reserved.</p>
-                            <a href="#" className="inline-flex items-center gap-2 transition hover:text-white">
+                            <a
+                                href="#"
+                                className="inline-flex items-center gap-2 transition hover:text-white"
+                            >
                                 <Newspaper className="h-4 w-4" />
                                 Privacy Policy
                             </a>

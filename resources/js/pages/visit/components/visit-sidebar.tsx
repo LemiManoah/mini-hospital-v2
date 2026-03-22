@@ -55,17 +55,13 @@ export function VisitSidebar({
                         </div>
                     </div>
                     <div>
-                        <p className="text-sm text-muted-foreground">
-                            Insurer
-                        </p>
+                        <p className="text-sm text-muted-foreground">Insurer</p>
                         <p className="font-medium">
                             {insurer || 'Not applicable'}
                         </p>
                     </div>
                     <div>
-                        <p className="text-sm text-muted-foreground">
-                            Package
-                        </p>
+                        <p className="text-sm text-muted-foreground">Package</p>
                         <p className="font-medium">
                             {packageName || 'Not applicable'}
                         </p>
@@ -80,19 +76,22 @@ export function VisitSidebar({
                 <CardContent className="space-y-3 text-sm">
                     {completionCheck?.has_pending_services ? (
                         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
-                            Pending services: {completionCheck.pending_services_count}
+                            Pending services:{' '}
+                            {completionCheck.pending_services_count}
                         </div>
                     ) : null}
                     {completionCheck?.has_unpaid_balance ? (
                         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
-                            Unpaid balance: {formatMoney(completionCheck.unpaid_balance)}
+                            Unpaid balance:{' '}
+                            {formatMoney(completionCheck.unpaid_balance)}
                         </div>
                     ) : null}
                     {completionCheck &&
                     !completionCheck.has_pending_services &&
                     !completionCheck.has_unpaid_balance ? (
                         <p className="text-muted-foreground">
-                            This visit has no pending service or billing warnings.
+                            This visit has no pending service or billing
+                            warnings.
                         </p>
                     ) : null}
                 </CardContent>

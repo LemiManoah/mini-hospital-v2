@@ -91,6 +91,25 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Address::class);
     }
 
+    public function staffId(): ?string
+    {
+        $staffId = $this->getAttributes()['staff_id'] ?? null;
+
+        return is_string($staffId) && $staffId !== '' ? $staffId : null;
+    }
+
+    public function tenantId(): ?string
+    {
+        $tenantId = $this->getAttributes()['tenant_id'] ?? null;
+
+        return is_string($tenantId) && $tenantId !== '' ? $tenantId : null;
+    }
+
+    public function isSupportUser(): bool
+    {
+        return (bool) ($this->getAttributes()['is_support'] ?? false);
+    }
+
     /**
      * Get the user's full name.
      */
@@ -115,24 +134,5 @@ final class User extends Authenticatable implements MustVerifyEmail
 
             return sprintf('https://ui-avatars.com/api/?name=%s&color=7F9CF5&background=EBF4FF', $name);
         });
-    }
-
-    public function staffId(): ?string
-    {
-        $staffId = $this->getAttributes()['staff_id'] ?? null;
-
-        return is_string($staffId) && $staffId !== '' ? $staffId : null;
-    }
-
-    public function tenantId(): ?string
-    {
-        $tenantId = $this->getAttributes()['tenant_id'] ?? null;
-
-        return is_string($tenantId) && $tenantId !== '' ? $tenantId : null;
-    }
-
-    public function isSupportUser(): bool
-    {
-        return (bool) ($this->getAttributes()['is_support'] ?? false);
     }
 }

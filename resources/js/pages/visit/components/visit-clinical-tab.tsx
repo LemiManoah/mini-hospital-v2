@@ -134,8 +134,7 @@ export function VisitClinicalTab({
                                         Notes
                                     </p>
                                     <p className="font-medium">
-                                        {triage.nurse_notes ||
-                                            'Not documented'}
+                                        {triage.nurse_notes || 'Not documented'}
                                     </p>
                                 </div>
                             </div>
@@ -183,9 +182,7 @@ export function VisitClinicalTab({
                     {consultation ? (
                         <>
                             <div>
-                                <p className="text-muted-foreground">
-                                    Started
-                                </p>
+                                <p className="text-muted-foreground">Started</p>
                                 <p className="font-medium">
                                     {formatDateTime(consultation.started_at)}
                                 </p>

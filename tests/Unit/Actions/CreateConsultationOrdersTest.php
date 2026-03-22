@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Actions\CreateImagingRequest;
 use App\Actions\CreateFacilityServiceOrder;
+use App\Actions\CreateImagingRequest;
 use App\Actions\CreateLabRequest;
 use App\Actions\CreatePrescription;
 use App\Enums\DrugCategory;
@@ -270,6 +270,7 @@ it('creates a facility service order and syncs an insurance-priced charge', func
         'service_code' => 'SRV-100',
         'name' => 'Nebulization',
         'category' => 'other',
+        'selling_price' => 7000,
         'is_billable' => true,
         'is_active' => true,
         'created_at' => now(),
@@ -309,4 +310,43 @@ it('creates a facility service order and syncs an insurance-priced charge', func
         ->and((float) $charge->unit_price)->toBe(9500.0)
         ->and((float) $charge->line_total)->toBe(9500.0)
         ->and($charge->description)->toBe('Facility service: Nebulization');
+});
+
+it('creates a facility service order with the service selling price for cash visits', function (): void {
+    $context = seedConsultationContext('cash');
+    $serviceId = (string) Str::uuid();
+
+    DB::table('facility_services')->insert([
+        'id' => $serviceId,
+        'tenant_id' => $context['tenant_id'],
+        'service_code' => 'SRV-101',
+        'name' => 'Oxygen Therapy',
+        'category' => 'other',
+        'selling_price' => 12000,
+        'is_billable' => true,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $order = resolve(CreateFacilityServiceOrder::class)->handle(
+        $context['consultation'],
+        [
+            'facility_service_id' => $serviceId,
+            'clinical_notes' => 'Shortness of breath support',
+            'service_instructions' => 'Give by nasal prongs',
+        ],
+        $context['staff_id'],
+    );
+
+    $charge = VisitCharge::query()
+        ->where('patient_visit_id', $context['visit_id'])
+        ->where('source_type', $order->getMorphClass())
+        ->where('source_id', $order->id)
+        ->first();
+
+    expect($charge)->not()->toBeNull()
+        ->and((float) $charge->unit_price)->toBe(12000.0)
+        ->and((float) $charge->line_total)->toBe(12000.0)
+        ->and($charge->charge_code)->toBe('SRV-101');
 });

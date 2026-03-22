@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types = 1)
-;
+declare(strict_types=1);
 
 namespace App\Policies;
 
@@ -16,12 +15,12 @@ final class TenantPolicy
             && $user->hasPermissionTo('tenants.view');
     }
 
-    public function view(User $user, Tenant $tenant): bool
+    public function view(User $user): bool
     {
         return $this->viewAny($user);
     }
 
-    public function update(User $user, Tenant $tenant): bool
+    public function update(User $user): bool
     {
         return ($user->is_support || $user->hasRole('super_admin'))
             && $user->hasPermissionTo('tenants.update');

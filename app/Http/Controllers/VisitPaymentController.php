@@ -12,10 +12,10 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 
-final class VisitPaymentController implements HasMiddleware
+final readonly class VisitPaymentController implements HasMiddleware
 {
     public function __construct(
-        private readonly ActiveBranchWorkspace $activeBranchWorkspace,
+        private ActiveBranchWorkspace $activeBranchWorkspace,
     ) {}
 
     public static function middleware(): array

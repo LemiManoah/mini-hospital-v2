@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Enums\GeneralStatus;
+use App\Models\Address;
 use App\Models\InsuranceCompany;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
@@ -48,7 +49,7 @@ final class InsuranceCompanySeeder extends Seeder
 
         foreach ($tenants as $tenant) {
             // Get an address to use for this tenant's insurance companies
-            $address = \App\Models\Address::query()->inRandomOrder()->first();
+            $address = Address::query()->inRandomOrder()->first();
 
             foreach ($companies as $company) {
                 InsuranceCompany::query()->updateOrCreate(

@@ -193,8 +193,6 @@ export interface FacilityServiceOption {
     service_code: string;
     name: string;
     category: string;
-    department_name: string | null;
-    default_instructions: string | null;
     is_billable: boolean;
 }
 
@@ -314,7 +312,7 @@ export interface PaginatedList<T> {
 export interface VisitFormOptions {
     companies: Pick<InsuranceCompany, 'id' | 'name'>[];
     packages: Pick<InsurancePackage, 'id' | 'name' | 'insurance_company_id'>[];
-    clinics: { id: string; name: string, clinic_name: string }[];
+    clinics: { id: string; name: string; clinic_name: string }[];
     doctors: { id: string; first_name: string; last_name: string }[];
     visitTypes: { value: string; label: string }[];
 }

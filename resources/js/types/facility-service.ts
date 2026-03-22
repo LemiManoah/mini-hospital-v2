@@ -3,9 +3,9 @@ export interface FacilityService {
     service_code: string;
     name: string;
     category: string;
-    department_name: string | null;
     description: string | null;
-    default_instructions: string | null;
+    cost_price: number | null;
+    selling_price: number | null;
     is_billable: boolean;
     charge_master_id: string | null;
     is_active: boolean;

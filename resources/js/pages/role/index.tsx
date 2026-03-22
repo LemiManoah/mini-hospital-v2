@@ -79,7 +79,10 @@ export default function RoleIndex({ roles, filters }: RoleIndexPageProps) {
                         asChild
                         className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
                     >
-                        <Link href={RoleController.create.url()} className="gap-2">
+                        <Link
+                            href={RoleController.create.url()}
+                            className="gap-2"
+                        >
                             <span>+ Add Role</span>
                         </Link>
                     </Button>

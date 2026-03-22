@@ -40,7 +40,9 @@ export default function PatientEdit({
     const [ageInputMode, setAgeInputMode] = useState<'dob' | 'age'>(
         patient.date_of_birth ? 'dob' : 'age',
     );
-    const [gender, setGender] = useState(patient.gender || genderOptions[0]?.value || '');
+    const [gender, setGender] = useState(
+        patient.gender || genderOptions[0]?.value || '',
+    );
     const [ageUnits, setAgeUnits] = useState<'year' | 'month' | 'day'>(
         patient.age_units || 'year',
     );

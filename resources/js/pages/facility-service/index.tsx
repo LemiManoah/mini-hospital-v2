@@ -102,9 +102,9 @@ export default function FacilityServiceIndex({
                             <TableHead>Name</TableHead>
                             <TableHead>Code</TableHead>
                             <TableHead>Category</TableHead>
-                            <TableHead>Department</TableHead>
+                            <TableHead>Selling Price</TableHead>
                             <TableHead>Billing</TableHead>
-                            <TableHead>Charge Master</TableHead>
+                            <TableHead>Billing Mapping</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">
                                 Actions
@@ -133,10 +133,13 @@ export default function FacilityServiceIndex({
                                         {labelize(facilityService.category)}
                                     </TableCell>
                                     <TableCell>
-                                        {facilityService.department_name || (
+                                        {facilityService.selling_price ===
+                                        null ? (
                                             <span className="italic opacity-50">
-                                                Unassigned
+                                                Not set
                                             </span>
+                                        ) : (
+                                            facilityService.selling_price
                                         )}
                                     </TableCell>
                                     <TableCell>
@@ -147,9 +150,11 @@ export default function FacilityServiceIndex({
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        {facilityService.charge_master_id || (
+                                        {facilityService.is_billable ? (
+                                            'Auto-linked'
+                                        ) : (
                                             <span className="italic opacity-50">
-                                                Not linked
+                                                Not billable
                                             </span>
                                         )}
                                     </TableCell>
@@ -160,7 +165,9 @@ export default function FacilityServiceIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('facility_services.update') ? (
+                                            {hasPermission(
+                                                'facility_services.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -173,7 +180,9 @@ export default function FacilityServiceIndex({
                                                     </Link>
                                                 </Button>
                                             ) : null}
-                                            {hasPermission('facility_services.delete') ? (
+                                            {hasPermission(
+                                                'facility_services.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Facility Service"
                                                     description={`Are you sure you want to delete "${facilityService.name}"? This action cannot be undone.`}

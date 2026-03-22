@@ -73,9 +73,7 @@ export default function FacilityBranchCreate({
                     action="/facility-branches"
                     method="post"
                     onSuccess={() =>
-                        toast.success(
-                            'Facility branch created successfully.',
-                        )
+                        toast.success('Facility branch created successfully.')
                     }
                     className="space-y-6 p-6"
                 >
@@ -89,9 +87,7 @@ export default function FacilityBranchCreate({
                                         name="name"
                                         value={name}
                                         onChange={(event) =>
-                                            handleNameChange(
-                                                event.target.value,
-                                            )
+                                            handleNameChange(event.target.value)
                                         }
                                         placeholder="e.g. Nyagatare Branch"
                                         autoFocus
@@ -114,9 +110,7 @@ export default function FacilityBranchCreate({
                                         placeholder="e.g. NYG-01"
                                         required
                                     />
-                                    <InputError
-                                        message={errors.branch_code}
-                                    />
+                                    <InputError message={errors.branch_code} />
                                 </div>
                             </div>
 
@@ -149,9 +143,7 @@ export default function FacilityBranchCreate({
                                         name="currency_id"
                                         value={currencyId}
                                     />
-                                    <InputError
-                                        message={errors.currency_id}
-                                    />
+                                    <InputError message={errors.currency_id} />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -197,9 +189,7 @@ export default function FacilityBranchCreate({
                                         name="main_contact"
                                         placeholder="e.g. +2507..."
                                     />
-                                    <InputError
-                                        message={errors.main_contact}
-                                    />
+                                    <InputError message={errors.main_contact} />
                                 </div>
 
                                 <div className="grid gap-2">

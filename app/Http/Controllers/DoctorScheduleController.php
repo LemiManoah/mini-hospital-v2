@@ -26,6 +26,10 @@ use Inertia\Response;
 
 final readonly class DoctorScheduleController implements HasMiddleware
 {
+    public function __construct(
+        private ActiveBranchWorkspace $activeBranchWorkspace,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -35,10 +39,6 @@ final readonly class DoctorScheduleController implements HasMiddleware
             new Middleware('permission:doctor_schedules.delete', only: ['destroy']),
         ];
     }
-
-    public function __construct(
-        private ActiveBranchWorkspace $activeBranchWorkspace,
-    ) {}
 
     public function index(Request $request): Response
     {

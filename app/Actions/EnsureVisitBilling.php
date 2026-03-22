@@ -8,6 +8,7 @@ use App\Enums\BillingStatus;
 use App\Models\PatientVisit;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
+use RuntimeException;
 
 final class EnsureVisitBilling
 {
@@ -20,7 +21,7 @@ final class EnsureVisitBilling
         }
 
         /** @var VisitPayer $payer */
-        $payer = $visit->payer ?? throw new \RuntimeException('Visit payer is required before billing can be created.');
+        $payer = $visit->payer ?? throw new RuntimeException('Visit payer is required before billing can be created.');
 
         return VisitBilling::query()->create([
             'tenant_id' => $visit->tenant_id,

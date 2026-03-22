@@ -15,6 +15,7 @@ use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use RuntimeException;
 
 final class FacilitySeeder extends Seeder
@@ -23,9 +24,7 @@ final class FacilitySeeder extends Seeder
     {
         $package = SubscriptionPackage::query()->first();
 
-        if (! $package instanceof SubscriptionPackage) {
-            throw new RuntimeException('FacilitySeeder requires at least one subscription package.');
-        }
+        throw_unless($package instanceof SubscriptionPackage, RuntimeException::class, 'FacilitySeeder requires at least one subscription package.');
 
         $countries = Country::query()
             ->whereIn('country_code', ['RW', 'UG', 'KE'])
@@ -38,15 +37,11 @@ final class FacilitySeeder extends Seeder
             ->keyBy('code');
 
         foreach (['RW', 'UG', 'KE'] as $countryCode) {
-            if (! $countries->has($countryCode)) {
-                throw new RuntimeException("FacilitySeeder requires country [{$countryCode}] to be seeded first.");
-            }
+            throw_unless($countries->has($countryCode), RuntimeException::class, sprintf('FacilitySeeder requires country [%s] to be seeded first.', $countryCode));
         }
 
         foreach (['RWF', 'UGX', 'KES'] as $currencyCode) {
-            if (! $currencies->has($currencyCode)) {
-                throw new RuntimeException("FacilitySeeder requires currency [{$currencyCode}] to be seeded first.");
-            }
+            throw_unless($currencies->has($currencyCode), RuntimeException::class, sprintf('FacilitySeeder requires currency [%s] to be seeded first.', $currencyCode));
         }
 
         foreach ($this->facilityBlueprints() as $facility) {
@@ -302,7 +297,7 @@ final class FacilitySeeder extends Seeder
     }
 
     /**
-     * @param array{city: string, district: string, state: string} $address
+     * @param  array{city: string, district: string, state: string}  $address
      */
     private function upsertAddress(array $address, Country $country): Address
     {
@@ -319,15 +314,7 @@ final class FacilitySeeder extends Seeder
     }
 
     /**
-     * @param array{
-     *     status: SubscriptionStatus,
-     *     starts_at: \Illuminate\Support\Carbon,
-     *     trial_ends_at: \Illuminate\Support\Carbon|null,
-     *     activated_at: \Illuminate\Support\Carbon|null,
-     *     current_period_starts_at: \Illuminate\Support\Carbon|null,
-     *     current_period_ends_at: \Illuminate\Support\Carbon|null,
-     *     meta: array<string, mixed>
-     * } $subscription
+     * @param  array{status: SubscriptionStatus, starts_at: Carbon, trial_ends_at: Carbon|null, activated_at: Carbon|null, current_period_starts_at: Carbon|null, current_period_ends_at: Carbon|null, meta: array<string, mixed>}  $subscription
      */
     private function upsertSubscription(Tenant $tenant, SubscriptionPackage $package, array $subscription): void
     {

@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 use App\Enums\GeneralStatus;
+use App\Enums\StaffType;
 use App\Enums\VisitStatus;
 use App\Models\Appointment;
 use App\Models\Clinic;
-use App\Enums\StaffType;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Department;

@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types = 1)
-;
+declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
@@ -34,11 +33,10 @@ final class OnboardingController
     public function show(
         Request $request,
         EnsureTenantStaffPositions $ensureTenantStaffPositions,
-    ): Response|RedirectResponse
-    {
+    ): Response|RedirectResponse {
         $user = $request->user();
 
-        if (!$user instanceof User || $user->tenant === null) {
+        if (! $user instanceof User || $user->tenant === null) {
             return to_route('home');
         }
 
@@ -82,57 +80,57 @@ final class OnboardingController
             'currentStep' => $currentStep,
             'steps' => $this->steps($currentStep),
             'facilityLevels' => collect(FacilityLevel::cases())
-            ->map(static fn(FacilityLevel $level): array => [
-        'value' => $level->value,
-        'label' => $level->label(),
-        ])
-            ->values()
-            ->all(),
+                ->map(static fn (FacilityLevel $level): array => [
+                    'value' => $level->value,
+                    'label' => $level->label(),
+                ])
+                ->values()
+                ->all(),
             'countries' => Country::query()
-            ->orderBy('country_name')
-            ->get(['id', 'country_name'])
-            ->map(static fn(Country $country): array => [
-        'id' => $country->id,
-        'name' => $country->country_name,
-        ])
-            ->values()
-            ->all(),
+                ->orderBy('country_name')
+                ->get(['id', 'country_name'])
+                ->map(static fn (Country $country): array => [
+                    'id' => $country->id,
+                    'name' => $country->country_name,
+                ])
+                ->values()
+                ->all(),
             'staff_positions' => StaffPosition::query()
-            ->where('tenant_id', $tenant->id)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(static fn(StaffPosition $position): array => [
-        'id' => $position->id,
-        'name' => $position->name,
-        ])
-            ->values()
-            ->all(),
+                ->where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(static fn (StaffPosition $position): array => [
+                    'id' => $position->id,
+                    'name' => $position->name,
+                ])
+                ->values()
+                ->all(),
             'currencies' => Currency::query()
-            ->orderBy('name')
-            ->get(['id', 'name', 'code', 'symbol'])
-            ->map(static fn(Currency $currency): array => [
-        'id' => $currency->id,
-        'name' => $currency->name,
-        'code' => $currency->code,
-        'symbol' => $currency->symbol,
-        ])
-            ->values()
-            ->all(),
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'symbol'])
+                ->map(static fn (Currency $currency): array => [
+                    'id' => $currency->id,
+                    'name' => $currency->name,
+                    'code' => $currency->code,
+                    'symbol' => $currency->symbol,
+                ])
+                ->values()
+                ->all(),
             'addresses' => Address::query()
-            ->orderBy('city')
-            ->orderBy('district')
-            ->orderBy('state')
-            ->get(['id', 'city', 'district', 'state', 'country_id'])
-            ->map(static fn(Address $address): array => [
-        'id' => $address->id,
-        'city' => $address->city,
-        'district' => $address->district,
-        'state' => $address->state,
-        'country_id' => $address->country_id,
-        ])
-            ->values()
-            ->all(),
+                ->orderBy('city')
+                ->orderBy('district')
+                ->orderBy('state')
+                ->get(['id', 'city', 'district', 'state', 'country_id'])
+                ->map(static fn (Address $address): array => [
+                    'id' => $address->id,
+                    'city' => $address->city,
+                    'district' => $address->district,
+                    'state' => $address->state,
+                    'country_id' => $address->country_id,
+                ])
+                ->values()
+                ->all(),
             'branch' => $branch ? [
                 'name' => $branch->name,
                 'branch_code' => $branch->branch_code,
@@ -151,40 +149,39 @@ final class OnboardingController
                 ] : null,
             ] : null,
             'departments' => $departments
-            ->map(static fn(Department $department): array => [
-        'id' => $department->id,
-        'name' => $department->department_name,
-        'location' => $department->location,
-        'is_clinical' => $department->is_clinical,
-        ])
-            ->values()
-            ->all(),
+                ->map(static fn (Department $department): array => [
+                    'id' => $department->id,
+                    'name' => $department->department_name,
+                    'location' => $department->location,
+                    'is_clinical' => $department->is_clinical,
+                ])
+                ->values()
+                ->all(),
             'staffPositions' => StaffPosition::query()
-            ->where('tenant_id', $tenant->id)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(static fn(StaffPosition $position): array => [
-        'id' => $position->id,
-        'name' => $position->name,
-        ])
-            ->values()
-            ->all(),
+                ->where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(static fn (StaffPosition $position): array => [
+                    'id' => $position->id,
+                    'name' => $position->name,
+                ])
+                ->values()
+                ->all(),
             'staffTypes' => collect(StaffType::cases())
-            ->map(static fn(StaffType $type): array => [
-        'value' => $type->value,
-        'label' => $type->label(),
-        ])
-            ->values()
-            ->all(),
+                ->map(static fn (StaffType $type): array => [
+                    'value' => $type->value,
+                    'label' => $type->label(),
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 
     public function updateProfile(
         UpdateOnboardingProfileRequest $request,
         UpdateOnboardingProfile $updateOnboardingProfile,
-        ): RedirectResponse
-    {
+    ): RedirectResponse {
         $user = $request->user();
 
         if ($user instanceof User && $user->tenant !== null) {
@@ -198,8 +195,7 @@ final class OnboardingController
     public function storeBranch(
         StoreOnboardingBranchRequest $request,
         CreateOnboardingPrimaryBranch $createOnboardingPrimaryBranch,
-        ): RedirectResponse
-    {
+    ): RedirectResponse {
         $user = $request->user();
 
         if ($user instanceof User && $user->tenant !== null) {
@@ -217,8 +213,7 @@ final class OnboardingController
     public function storeDepartments(
         StoreOnboardingDepartmentsRequest $request,
         BootstrapOnboardingDepartments $bootstrapOnboardingDepartments,
-        ): RedirectResponse
-    {
+    ): RedirectResponse {
         $user = $request->user();
 
         if ($user instanceof User && $user->tenant !== null) {
@@ -236,8 +231,7 @@ final class OnboardingController
     public function storeStaff(
         StoreOnboardingStaffRequest $request,
         BootstrapOnboardingStaffMember $bootstrapOnboardingStaffMember,
-        ): RedirectResponse
-    {
+    ): RedirectResponse {
         $user = $request->user();
 
         if ($user instanceof User && $user->tenant !== null) {

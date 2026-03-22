@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types = 1)
-;
+declare(strict_types=1);
 
 namespace App\Models;
 
@@ -32,7 +31,7 @@ final class Appointment extends Model
         'clinic_id' => 'string',
         'appointment_category_id' => 'string',
         'appointment_mode_id' => 'string',
-        'status' => AppointmentStatus::class ,
+        'status' => AppointmentStatus::class,
         'appointment_date' => 'date',
         'is_walk_in' => 'boolean',
         'checked_in_at' => 'datetime',
@@ -50,7 +49,7 @@ final class Appointment extends Model
 
     public function doctor(): BelongsTo
     {
-        return $this->belongsTo(Staff::class , 'doctor_id');
+        return $this->belongsTo(Staff::class, 'doctor_id');
     }
 
     public function clinic(): BelongsTo
@@ -60,27 +59,27 @@ final class Appointment extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(AppointmentCategory::class , 'appointment_category_id');
+        return $this->belongsTo(AppointmentCategory::class, 'appointment_category_id');
     }
 
     public function mode(): BelongsTo
     {
-        return $this->belongsTo(AppointmentMode::class , 'appointment_mode_id');
+        return $this->belongsTo(AppointmentMode::class, 'appointment_mode_id');
     }
 
     public function branch(): BelongsTo
     {
-        return $this->belongsTo(FacilityBranch::class , 'facility_branch_id');
+        return $this->belongsTo(FacilityBranch::class, 'facility_branch_id');
     }
 
     public function visit(): HasOne
     {
-        return $this->hasOne(PatientVisit::class , 'appointment_id');
+        return $this->hasOne(PatientVisit::class, 'appointment_id');
     }
 
     public function rescheduledFrom(): BelongsTo
     {
-        return $this->belongsTo(self::class , 'rescheduled_from_appointment_id');
+        return $this->belongsTo(self::class, 'rescheduled_from_appointment_id');
     }
 
     public function isTerminal(): bool

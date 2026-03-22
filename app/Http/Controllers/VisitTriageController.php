@@ -13,10 +13,10 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 
-final class VisitTriageController implements HasMiddleware
+final readonly class VisitTriageController implements HasMiddleware
 {
     public function __construct(
-        private readonly ActiveBranchWorkspace $activeBranchWorkspace,
+        private ActiveBranchWorkspace $activeBranchWorkspace,
     ) {}
 
     public static function middleware(): array

@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 
 final class DoctorConsultationAccess
 {
-
     public function resolveStaffId(bool $allowPrivilegedWithoutStaff = false): ?string
     {
         $user = Auth::user();
@@ -66,7 +65,13 @@ final class DoctorConsultationAccess
         if (! $user instanceof User) {
             return false;
         }
+        if ($user->isSupportUser()) {
+            return true;
+        }
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
 
-        return $user->isSupportUser() || $user->hasRole('super_admin') || $user->hasRole('admin');
+        return $user->hasRole('admin');
     }
 }

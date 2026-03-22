@@ -188,7 +188,9 @@ export default function DoctorScheduleExceptionIndex({
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {hasPermission('doctor_schedule_exceptions.update') ? (
+                                            {hasPermission(
+                                                'doctor_schedule_exceptions.update',
+                                            ) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -201,7 +203,9 @@ export default function DoctorScheduleExceptionIndex({
                                                     </Link>
                                                 </Button>
                                             ) : null}
-                                            {hasPermission('doctor_schedule_exceptions.delete') ? (
+                                            {hasPermission(
+                                                'doctor_schedule_exceptions.delete',
+                                            ) ? (
                                                 <DeleteConfirmationModal
                                                     title="Delete Schedule Exception"
                                                     description="Are you sure you want to delete this schedule exception? This action cannot be undone."
