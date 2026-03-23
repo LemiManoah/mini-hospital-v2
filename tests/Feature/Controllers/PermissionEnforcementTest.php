@@ -763,6 +763,55 @@ describe('Consultation workflow permissions', function (): void {
         $response->assertSessionHas('success', 'Facility service order created successfully.');
     });
 
+    it('forbids and allows pending facility service order removal based on consultations.update permission', function (): void {
+        [$tenant, $branch, , $clinic] = createPermissionTenant(withBranch: true);
+        $doctorUser = createPermissionUser($tenant, withStaff: true, branch: $branch);
+        $nurseUser = createPermissionUser($tenant, withStaff: true, branch: $branch, staffType: StaffType::NURSING);
+        $patient = createPermissionPatient($tenant, $doctorUser);
+        $visit = createPermissionVisit(
+            $tenant,
+            $patient,
+            $doctorUser,
+            $branch,
+            $clinic,
+            $doctorUser->staff,
+            VisitStatus::IN_PROGRESS,
+        );
+        createPermissionTriage($visit, $nurseUser->staff, $clinic);
+        $consultation = createPermissionConsultation($visit, $doctorUser->staff);
+        $service = createPermissionFacilityService($tenant, $doctorUser);
+
+        $order = FacilityServiceOrder::query()->create([
+            'tenant_id' => $tenant->id,
+            'facility_branch_id' => $branch?->id,
+            'visit_id' => $visit->id,
+            'consultation_id' => $consultation->id,
+            'facility_service_id' => $service->id,
+            'ordered_by' => $doctorUser->staff_id,
+            'status' => 'pending',
+            'ordered_at' => now(),
+        ]);
+
+        $this->actingAs($doctorUser)
+            ->delete(route('doctors.consultations.facility-service-orders.destroy', [
+                'visit' => $visit,
+                'facilityServiceOrder' => $order,
+            ]))
+            ->assertForbidden();
+
+        $doctorUser->givePermissionTo('consultations.update');
+
+        $response = $this->actingAs($doctorUser)
+            ->delete(route('doctors.consultations.facility-service-orders.destroy', [
+                'visit' => $visit,
+                'facilityServiceOrder' => $order,
+            ]));
+
+        $response->assertRedirect(route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services']));
+        $response->assertSessionHas('success', 'Facility service order removed successfully.');
+        $this->assertDatabaseMissing('facility_service_orders', ['id' => $order->id]);
+    });
+
     it('blocks facility service deletion when service orders exist', function (): void {
         [$tenant, $branch, , $clinic] = createPermissionTenant(withBranch: true);
         $doctorUser = createPermissionUser($tenant, withStaff: true, branch: $branch);

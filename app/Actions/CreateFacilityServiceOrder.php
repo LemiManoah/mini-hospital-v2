@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Enums\FacilityServiceOrderStatus;
 use App\Models\Consultation;
 use App\Models\FacilityServiceOrder;
+use Illuminate\Validation\ValidationException;
 
 final readonly class CreateFacilityServiceOrder
 {
@@ -16,6 +17,18 @@ final readonly class CreateFacilityServiceOrder
 
     public function handle(Consultation $consultation, array $data, string $staffId): FacilityServiceOrder
     {
+        $hasPendingDuplicate = FacilityServiceOrder::query()
+            ->where('visit_id', $consultation->visit_id)
+            ->where('facility_service_id', $data['facility_service_id'])
+            ->where('status', FacilityServiceOrderStatus::PENDING->value)
+            ->exists();
+
+        if ($hasPendingDuplicate) {
+            throw ValidationException::withMessages([
+                'facility_service_id' => 'This facility service already has a pending order for this visit. Remove or complete the existing order first.',
+            ]);
+        }
+
         $order = FacilityServiceOrder::query()->create([
             'tenant_id' => $consultation->tenant_id,
             'facility_branch_id' => $consultation->facility_branch_id,

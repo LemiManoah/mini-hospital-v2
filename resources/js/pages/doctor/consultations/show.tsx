@@ -23,7 +23,7 @@ import {
     type TriageRecord,
     type VitalSign,
 } from '@/types/patient';
-import { Form, Head, Link, useForm } from '@inertiajs/react';
+import { Form, Head, Link, router, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     ClipboardPen,
@@ -218,6 +218,12 @@ export default function DoctorConsultationShow({
     const triage: TriageRecord | null | undefined = visit.triage;
     const consultation: Consultation | null | undefined = visit.consultation;
     const latestVital = (triage?.vitalSigns ?? triage?.vital_signs ?? [])[0];
+    const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
+    const imagingRequests =
+        visit.imagingRequests ?? visit.imaging_requests ?? [];
+    const prescriptions = visit.prescriptions ?? [];
+    const facilityServiceOrders =
+        visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
     const isConsultationFinalized = consultation?.completed_at != null;
     const [selectedTab, setSelectedTab] = useState(activeTab || 'overview');
     const [outcome, setOutcome] = useState(consultation?.outcome ?? '');
@@ -300,6 +306,14 @@ export default function DoctorConsultationShow({
     const selectedFacilityService = facilityServiceOptions.find(
         (option) => option.id === serviceForm.data.facility_service_id,
     );
+    const pendingFacilityServiceIds = new Set(
+        facilityServiceOrders
+            .filter((order) => order.status === 'pending')
+            .map((order) => order.facility_service_id),
+    );
+    const hasPendingSelectedFacilityService =
+        serviceForm.data.facility_service_id !== '' &&
+        pendingFacilityServiceIds.has(serviceForm.data.facility_service_id);
     const selectedDrugOptions = prescriptionForm.data.items.map((item) =>
         drugOptions.find((drug) => drug.id === item.drug_id),
     );
@@ -1137,16 +1151,14 @@ export default function DoctorConsultationShow({
                                             </form>
                                         )}
 
-                                        {(visit.labRequests ?? []).length ===
-                                        0 ? (
+                                        {labRequests.length === 0 ? (
                                             <p className="text-sm text-muted-foreground">
                                                 No laboratory requests have been
                                                 placed yet.
                                             </p>
                                         ) : (
                                             <div className="space-y-4">
-                                                {(visit.labRequests ?? []).map(
-                                                    (request) => (
+                                                {labRequests.map((request) => (
                                                         <div
                                                             key={request.id}
                                                             className="rounded-lg border p-4"
@@ -1212,8 +1224,7 @@ export default function DoctorConsultationShow({
                                                                 </p>
                                                             ) : null}
                                                         </div>
-                                                    ),
-                                                )}
+                                                ))}
                                             </div>
                                         )}
                                     </CardContent>
@@ -1684,17 +1695,15 @@ export default function DoctorConsultationShow({
                                             </form>
                                         )}
 
-                                        {(visit.prescriptions ?? []).length ===
-                                        0 ? (
+                                        {prescriptions.length === 0 ? (
                                             <p className="text-sm text-muted-foreground">
                                                 No prescriptions have been
                                                 written yet.
                                             </p>
                                         ) : (
                                             <div className="space-y-4">
-                                                {(
-                                                    visit.prescriptions ?? []
-                                                ).map((prescription) => (
+                                                {prescriptions.map(
+                                                    (prescription) => (
                                                     <div
                                                         key={prescription.id}
                                                         className="rounded-lg border p-4"
@@ -2150,17 +2159,15 @@ export default function DoctorConsultationShow({
                                             </form>
                                         )}
 
-                                        {(visit.imagingRequests ?? [])
-                                            .length === 0 ? (
+                                        {imagingRequests.length === 0 ? (
                                             <p className="text-sm text-muted-foreground">
                                                 No imaging requests have been
                                                 placed yet.
                                             </p>
                                         ) : (
                                             <div className="space-y-4">
-                                                {(
-                                                    visit.imagingRequests ?? []
-                                                ).map((request) => (
+                                                {imagingRequests.map(
+                                                    (request) => (
                                                     <div
                                                         key={request.id}
                                                         className="rounded-lg border p-4"
@@ -2299,6 +2306,9 @@ export default function DoctorConsultationShow({
                                                                             value={
                                                                                 option.id
                                                                             }
+                                                                            disabled={pendingFacilityServiceIds.has(
+                                                                                option.id,
+                                                                            )}
                                                                         >
                                                                             {
                                                                                 option.name
@@ -2333,7 +2343,9 @@ export default function DoctorConsultationShow({
                                                         </p>
                                                         <p className="mt-1 text-muted-foreground">
                                                             {selectedFacilityService
-                                                                ? `${selectedFacilityService.name} is ready to order.`
+                                                                ? hasPendingSelectedFacilityService
+                                                                    ? `${selectedFacilityService.name} already has a pending order for this visit.`
+                                                                    : `${selectedFacilityService.name} is ready to order.`
                                                                 : 'Select a service to review its catalog details.'}
                                                         </p>
                                                         {selectedFacilityService ? (
@@ -2370,7 +2382,11 @@ export default function DoctorConsultationShow({
                                                     <Button
                                                         type="submit"
                                                         disabled={
-                                                            serviceForm.processing
+                                                            serviceForm.processing ||
+                                                            serviceForm.data
+                                                                .facility_service_id ===
+                                                                '' ||
+                                                            hasPendingSelectedFacilityService
                                                         }
                                                     >
                                                         Order Facility Service
@@ -2379,18 +2395,15 @@ export default function DoctorConsultationShow({
                                             </form>
                                         )}
 
-                                        {(visit.facilityServiceOrders ?? [])
-                                            .length === 0 ? (
+                                        {facilityServiceOrders.length === 0 ? (
                                             <p className="text-sm text-muted-foreground">
                                                 No facility services have been
                                                 ordered yet.
                                             </p>
                                         ) : (
                                             <div className="space-y-4">
-                                                {(
-                                                    visit.facilityServiceOrders ??
-                                                    []
-                                                ).map((order) => (
+                                                {facilityServiceOrders.map(
+                                                    (order) => (
                                                     <div
                                                         key={order.id}
                                                         className="rounded-lg border p-4"
@@ -2431,6 +2444,35 @@ export default function DoctorConsultationShow({
                                                                     order.completed_at,
                                                                 )}
                                                             </p>
+                                                                ) : null}
+                                                        {order.status ===
+                                                        'pending' ? (
+                                                            <div className="mt-3 flex justify-end">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        router.delete(
+                                                                            `/doctors/consultations/${visit.id}/facility-service-orders/${order.id}`,
+                                                                            {
+                                                                                preserveState:
+                                                                                    true,
+                                                                                preserveScroll:
+                                                                                    true,
+                                                                                onSuccess:
+                                                                                    () =>
+                                                                                        setSelectedTab(
+                                                                                            'services',
+                                                                                        ),
+                                                                            },
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    Remove Pending Order
+                                                                </Button>
+                                                            </div>
                                                         ) : null}
                                                     </div>
                                                 ))}
@@ -2591,15 +2633,12 @@ export default function DoctorConsultationShow({
                                         Orders
                                     </p>
                                     <p className="font-medium">
-                                        {(visit.labRequests ?? []).length} lab |{' '}
-                                        {(visit.imagingRequests ?? []).length}{' '}
+                                        {labRequests.length} lab |{' '}
+                                        {imagingRequests.length}{' '}
                                         imaging |{' '}
-                                        {(visit.prescriptions ?? []).length}{' '}
+                                        {prescriptions.length}{' '}
                                         prescription set(s) |{' '}
-                                        {
-                                            (visit.facilityServiceOrders ?? [])
-                                                .length
-                                        }{' '}
+                                        {facilityServiceOrders.length}{' '}
                                         services
                                     </p>
                                 </div>

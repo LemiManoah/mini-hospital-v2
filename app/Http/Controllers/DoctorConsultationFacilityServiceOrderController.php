@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\CreateFacilityServiceOrder;
+use App\Actions\DeletePendingFacilityServiceOrder;
+use App\Enums\FacilityServiceOrderStatus;
+use App\Models\FacilityServiceOrder;
 use App\Http\Requests\StoreConsultationFacilityServiceOrderRequest;
 use App\Models\PatientVisit;
 use App\Support\DoctorConsultationAccess;
@@ -17,7 +20,7 @@ final class DoctorConsultationFacilityServiceOrderController implements HasMiddl
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:consultations.update', only: ['store']),
+            new Middleware('permission:consultations.update', only: ['store', 'destroy']),
         ];
     }
 
@@ -51,5 +54,27 @@ final class DoctorConsultationFacilityServiceOrderController implements HasMiddl
 
         return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services'])
             ->with('success', 'Facility service order created successfully.');
+    }
+
+    public function destroy(
+        PatientVisit $visit,
+        FacilityServiceOrder $facilityServiceOrder,
+        DoctorConsultationAccess $consultationAccess,
+        DeletePendingFacilityServiceOrder $deletePendingFacilityServiceOrder,
+    ): RedirectResponse {
+        $staffId = $consultationAccess->resolveStaffId(allowPrivilegedWithoutStaff: true);
+        $consultationAccess->authorizeVisit($visit, $staffId);
+
+        abort_unless($facilityServiceOrder->visit_id === $visit->id, 404);
+
+        if ($facilityServiceOrder->status !== FacilityServiceOrderStatus::PENDING) {
+            return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services'])
+                ->with('error', 'Only pending facility service orders can be removed.');
+        }
+
+        $deletePendingFacilityServiceOrder->handle($facilityServiceOrder);
+
+        return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services'])
+            ->with('success', 'Facility service order removed successfully.');
     }
 }

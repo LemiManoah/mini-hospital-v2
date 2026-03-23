@@ -137,6 +137,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('doctors/consultations/{visit}/imaging-requests', [DoctorConsultationImagingRequestController::class, 'store'])->name('doctors.consultations.imaging-requests.store');
     Route::post('doctors/consultations/{visit}/prescriptions', [DoctorConsultationPrescriptionController::class, 'store'])->name('doctors.consultations.prescriptions.store');
     Route::post('doctors/consultations/{visit}/facility-service-orders', [DoctorConsultationFacilityServiceOrderController::class, 'store'])->name('doctors.consultations.facility-service-orders.store');
+    Route::delete('doctors/consultations/{visit}/facility-service-orders/{facilityServiceOrder}', [DoctorConsultationFacilityServiceOrderController::class, 'destroy'])->name('doctors.consultations.facility-service-orders.destroy');
     Route::post('visits/{visit}/triage', [VisitTriageController::class, 'store'])->name('visits.triage.store');
     Route::post('visits/{visit}/vitals', [VisitVitalSignController::class, 'store'])->name('visits.vitals.store');
     Route::resource('patients', PatientController::class);

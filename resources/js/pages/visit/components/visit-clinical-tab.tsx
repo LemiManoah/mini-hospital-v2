@@ -33,9 +33,12 @@ type VisitClinicalTabProps = {
     visit: {
         id: string;
         labRequests?: LabRequest[] | null;
+        lab_requests?: LabRequest[] | null;
         prescriptions?: Prescription[] | null;
         imagingRequests?: ImagingRequest[] | null;
+        imaging_requests?: ImagingRequest[] | null;
         facilityServiceOrders?: FacilityServiceOrder[] | null;
+        facility_service_orders?: FacilityServiceOrder[] | null;
     };
     triage: ClinicalTriage | null | undefined;
     consultation:
@@ -69,6 +72,12 @@ export function VisitClinicalTab({
     canViewConsultation,
 }: VisitClinicalTabProps) {
     const latestVital = (triage?.vitalSigns ?? triage?.vital_signs ?? [])[0];
+    const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
+    const prescriptions = visit.prescriptions ?? [];
+    const imagingRequests =
+        visit.imagingRequests ?? visit.imaging_requests ?? [];
+    const facilityServiceOrders =
+        visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
 
     return (
         <div className="space-y-6">
@@ -254,8 +263,8 @@ export function VisitClinicalTab({
                     <CardTitle>Ordered Labs</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                    {visit.labRequests?.length ? (
-                        visit.labRequests.map((request) => (
+                    {labRequests.length ? (
+                        labRequests.map((request) => (
                             <div key={request.id} className="rounded-lg border p-3">
                                 <p className="font-medium">
                                     {request.items
@@ -290,8 +299,8 @@ export function VisitClinicalTab({
                     <CardTitle>Prescriptions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                    {visit.prescriptions?.length ? (
-                        visit.prescriptions.map((prescription) => (
+                    {prescriptions.length ? (
+                        prescriptions.map((prescription) => (
                             <div
                                 key={prescription.id}
                                 className="rounded-lg border p-3"
@@ -327,8 +336,8 @@ export function VisitClinicalTab({
                     <CardTitle>Imaging Requests</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                    {visit.imagingRequests?.length ? (
-                        visit.imagingRequests.map((request) => (
+                    {imagingRequests.length ? (
+                        imagingRequests.map((request) => (
                             <div key={request.id} className="rounded-lg border p-3">
                                 <p className="font-medium">
                                     {request.modality.toUpperCase()}{' '}
@@ -356,8 +365,8 @@ export function VisitClinicalTab({
                     <CardTitle>Facility Services</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                    {visit.facilityServiceOrders?.length ? (
-                        visit.facilityServiceOrders.map((order) => (
+                    {facilityServiceOrders.length ? (
+                        facilityServiceOrders.map((order) => (
                             <div key={order.id} className="rounded-lg border p-3">
                                 <p className="font-medium">
                                     {order.service?.name || 'Facility service'}

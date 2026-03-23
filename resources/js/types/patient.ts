@@ -380,9 +380,12 @@ export interface PatientVisit {
     triage?: TriageRecord | null;
     consultation?: Consultation | null;
     labRequests?: LabRequest[] | null;
+    lab_requests?: LabRequest[] | null;
     imagingRequests?: ImagingRequest[] | null;
+    imaging_requests?: ImagingRequest[] | null;
     prescriptions?: Prescription[] | null;
     facilityServiceOrders?: FacilityServiceOrder[] | null;
+    facility_service_orders?: FacilityServiceOrder[] | null;
     completion_check?: VisitCompletionCheck | null;
 }
 

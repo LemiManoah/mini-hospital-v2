@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\CreateFacilityServiceOrder;
+use App\Actions\DeletePendingFacilityServiceOrder;
 use App\Actions\CreateImagingRequest;
 use App\Actions\CreateLabRequest;
 use App\Actions\CreatePrescription;
@@ -15,6 +16,7 @@ use App\Models\Consultation;
 use App\Models\VisitCharge;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 function seedConsultationContext(string $billingType = 'cash'): array
 {
@@ -411,5 +413,83 @@ it('creates a facility service order without syncing a charge for non-billable s
         'patient_visit_id' => $context['visit_id'],
         'source_type' => $order->getMorphClass(),
         'source_id' => $order->id,
+    ]);
+});
+
+it('prevents duplicate pending facility service orders for the same visit', function (): void {
+    $context = seedConsultationContext('cash');
+    $serviceId = (string) Str::uuid();
+
+    DB::table('facility_services')->insert([
+        'id' => $serviceId,
+        'tenant_id' => $context['tenant_id'],
+        'service_code' => 'SRV-103',
+        'name' => 'Nebulization',
+        'category' => 'other',
+        'selling_price' => 7000,
+        'is_billable' => true,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    resolve(CreateFacilityServiceOrder::class)->handle(
+        $context['consultation'],
+        [
+            'facility_service_id' => $serviceId,
+        ],
+        $context['staff_id'],
+    );
+
+    expect(fn () => resolve(CreateFacilityServiceOrder::class)->handle(
+        $context['consultation'],
+        [
+            'facility_service_id' => $serviceId,
+        ],
+        $context['staff_id'],
+    ))->toThrow(ValidationException::class);
+
+    expect(DB::table('facility_service_orders')
+        ->where('visit_id', $context['visit_id'])
+        ->where('facility_service_id', $serviceId)
+        ->count())->toBe(1);
+});
+
+it('deletes a pending facility service order and its synced charge', function (): void {
+    $context = seedConsultationContext('cash');
+    $serviceId = (string) Str::uuid();
+
+    DB::table('facility_services')->insert([
+        'id' => $serviceId,
+        'tenant_id' => $context['tenant_id'],
+        'service_code' => 'SRV-104',
+        'name' => 'Wound Dressing',
+        'category' => 'other',
+        'selling_price' => 8000,
+        'is_billable' => true,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $order = resolve(CreateFacilityServiceOrder::class)->handle(
+        $context['consultation'],
+        [
+            'facility_service_id' => $serviceId,
+        ],
+        $context['staff_id'],
+    );
+
+    resolve(DeletePendingFacilityServiceOrder::class)->handle($order);
+
+    $this->assertDatabaseMissing('facility_service_orders', [
+        'id' => $order->id,
+    ]);
+
+    $this->assertDatabaseMissing('visit_charges', [
+        'patient_visit_id' => $context['visit_id'],
+        'source_type' => $order->getMorphClass(),
+        'source_id' => $order->id,
+        'deleted_at' => null,
     ]);
 });
