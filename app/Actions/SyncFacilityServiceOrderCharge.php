@@ -16,7 +16,16 @@ final readonly class SyncFacilityServiceOrderCharge
 
     public function handle(FacilityServiceOrder $order): void
     {
-        $order->loadMissing(['visit.payer', 'service']);
+        $order->loadMissing(['visit.payer']);
+        $order->load([
+            'service' => static fn ($query) => $query->select([
+                'id',
+                'name',
+                'service_code',
+                'is_billable',
+                'selling_price',
+            ]),
+        ]);
 
         if ($order->service === null || ! $order->service->is_billable) {
             return;

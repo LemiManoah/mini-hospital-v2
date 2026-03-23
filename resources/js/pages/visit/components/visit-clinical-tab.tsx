@@ -1,6 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { type VitalSign } from '@/types/patient';
+import {
+    type FacilityServiceOrder,
+    type ImagingRequest,
+    type LabRequest,
+    type Prescription,
+    type VitalSign,
+} from '@/types/patient';
 import { Link } from '@inertiajs/react';
 import { HeartPulse, NotebookPen } from 'lucide-react';
 import {
@@ -24,7 +30,13 @@ type ClinicalTriage = {
 };
 
 type VisitClinicalTabProps = {
-    visit: { id: string };
+    visit: {
+        id: string;
+        labRequests?: LabRequest[] | null;
+        prescriptions?: Prescription[] | null;
+        imagingRequests?: ImagingRequest[] | null;
+        facilityServiceOrders?: FacilityServiceOrder[] | null;
+    };
     triage: ClinicalTriage | null | undefined;
     consultation:
         | {
@@ -38,6 +50,15 @@ type VisitClinicalTabProps = {
     canViewTriage: boolean;
     canViewConsultation: boolean;
 };
+
+const formatMoney = (amount: number | null | undefined): string =>
+    amount === null || amount === undefined
+        ? 'Not priced'
+        : new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'UGX',
+              maximumFractionDigits: 0,
+          }).format(amount);
 
 export function VisitClinicalTab({
     visit,
@@ -223,6 +244,139 @@ export function VisitClinicalTab({
                         <p className="text-muted-foreground">
                             Consultation has not been started yet. Use the
                             dedicated doctors workspace after triage.
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Ordered Labs</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                    {visit.labRequests?.length ? (
+                        visit.labRequests.map((request) => (
+                            <div key={request.id} className="rounded-lg border p-3">
+                                <p className="font-medium">
+                                    {request.items
+                                        .map((item) => item.test?.test_name)
+                                        .filter(Boolean)
+                                        .join(', ') || 'Lab request'}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Requested {formatDateTime(request.request_date)}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Estimated total:{' '}
+                                    {formatMoney(
+                                        request.items.reduce(
+                                            (total, item) => total + (item.price ?? 0),
+                                            0,
+                                        ),
+                                    )}
+                                </p>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-muted-foreground">
+                            No lab requests recorded for this visit yet.
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Prescriptions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                    {visit.prescriptions?.length ? (
+                        visit.prescriptions.map((prescription) => (
+                            <div
+                                key={prescription.id}
+                                className="rounded-lg border p-3"
+                            >
+                                <p className="font-medium">
+                                    {prescription.primary_diagnosis ||
+                                        'Prescription'}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Written{' '}
+                                    {formatDateTime(
+                                        prescription.prescription_date,
+                                    )}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    {prescription.items
+                                        .map((item) => item.drug?.generic_name)
+                                        .filter(Boolean)
+                                        .join(', ') || 'No items'}
+                                </p>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-muted-foreground">
+                            No prescriptions recorded for this visit yet.
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Imaging Requests</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                    {visit.imagingRequests?.length ? (
+                        visit.imagingRequests.map((request) => (
+                            <div key={request.id} className="rounded-lg border p-3">
+                                <p className="font-medium">
+                                    {request.modality.toUpperCase()}{' '}
+                                    {request.body_part}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Scheduled:{' '}
+                                    {formatDateTime(request.scheduled_date)}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Indication: {request.indication}
+                                </p>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-muted-foreground">
+                            No imaging requests recorded for this visit yet.
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Facility Services</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                    {visit.facilityServiceOrders?.length ? (
+                        visit.facilityServiceOrders.map((order) => (
+                            <div key={order.id} className="rounded-lg border p-3">
+                                <p className="font-medium">
+                                    {order.service?.name || 'Facility service'}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Ordered {formatDateTime(order.ordered_at)}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Catalog price:{' '}
+                                    {formatMoney(
+                                        order.service?.selling_price ?? null,
+                                    )}
+                                </p>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-muted-foreground">
+                            No facility service orders recorded for this visit
+                            yet.
                         </p>
                     )}
                 </CardContent>

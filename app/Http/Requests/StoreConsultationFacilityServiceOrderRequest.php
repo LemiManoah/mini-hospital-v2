@@ -19,8 +19,6 @@ final class StoreConsultationFacilityServiceOrderRequest extends FormRequest
     {
         return [
             'facility_service_id' => ['required', 'string', 'exists:facility_services,id'],
-            'clinical_notes' => ['nullable', 'string'],
-            'service_instructions' => ['nullable', 'string'],
         ];
     }
 

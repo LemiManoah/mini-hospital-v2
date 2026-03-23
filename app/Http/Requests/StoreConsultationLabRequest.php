@@ -26,7 +26,7 @@ final class StoreConsultationLabRequest extends FormRequest
                 Rule::exists('lab_test_catalogs', 'id')->where('is_active', true),
             ],
             'clinical_notes' => ['nullable', 'string'],
-            'priority' => ['required', Rule::enum(Priority::class)],
+            'priority' => ['nullable', Rule::enum(Priority::class)],
             'diagnosis_code' => ['nullable', 'string', 'max:10'],
             'is_stat' => ['nullable', 'boolean'],
         ];
@@ -35,6 +35,7 @@ final class StoreConsultationLabRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'priority' => $this->input('priority', Priority::ROUTINE->value),
             'is_stat' => $this->boolean('is_stat'),
         ]);
     }

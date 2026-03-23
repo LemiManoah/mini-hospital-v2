@@ -24,27 +24,14 @@ final readonly class CreateFacilityServiceOrder
             'facility_service_id' => $data['facility_service_id'],
             'ordered_by' => $staffId,
             'status' => FacilityServiceOrderStatus::PENDING,
-            'clinical_notes' => $this->nullableText($data['clinical_notes'] ?? null),
-            'service_instructions' => $this->nullableText($data['service_instructions'] ?? null),
             'ordered_at' => now(),
         ])->loadMissing([
-            'service:id,name,service_code,category,is_billable',
+            'service:id,name,service_code,category,is_billable,selling_price',
             'orderedBy:id,first_name,last_name',
         ]);
 
         $this->syncFacilityServiceOrderCharge->handle($order);
 
         return $order;
-    }
-
-    private function nullableText(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $trimmed = mb_trim($value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 }

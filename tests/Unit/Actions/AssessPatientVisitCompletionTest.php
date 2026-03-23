@@ -291,8 +291,6 @@ it('counts pending facility service orders as blocking downstream work', functio
         'facility_service_id' => $facilityServiceId,
         'ordered_by' => $staffId,
         'status' => 'pending',
-        'clinical_notes' => 'Daily dressing required',
-        'service_instructions' => 'Use sterile pack',
         'ordered_at' => now(),
         'created_at' => now(),
         'updated_at' => now(),

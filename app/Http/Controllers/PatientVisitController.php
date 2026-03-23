@@ -131,6 +131,31 @@ final readonly class PatientVisitController implements HasMiddleware
                 ->latest('recorded_at'),
             'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code',
             'consultation.doctor:id,first_name,last_name',
+            'labRequests' => static fn ($query) => $query
+                ->with([
+                    'requestedBy:id,first_name,last_name',
+                    'items.test:id,test_name,test_code,category',
+                ])
+                ->latest('request_date'),
+            'imagingRequests' => static fn ($query) => $query
+                ->with([
+                    'requestedBy:id,first_name,last_name',
+                    'scheduledBy:id,first_name,last_name',
+                ])
+                ->latest(),
+            'prescriptions' => static fn ($query) => $query
+                ->with([
+                    'prescribedBy:id,first_name,last_name',
+                    'items.drug:id,generic_name,brand_name,strength,dosage_form',
+                ])
+                ->latest('prescription_date'),
+            'facilityServiceOrders' => static fn ($query) => $query
+                ->with([
+                    'service:id,name,service_code,category,selling_price,is_billable',
+                    'orderedBy:id,first_name,last_name',
+                    'performedBy:id,first_name,last_name',
+                ])
+                ->latest('ordered_at'),
         ]);
 
         return Inertia::render('visit/show', [

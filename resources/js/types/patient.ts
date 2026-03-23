@@ -99,6 +99,8 @@ export interface LabTestOption {
     test_name: string;
     category: string | null;
     base_price: number | null;
+    quoted_price?: number | null;
+    price_source?: string | null;
 }
 
 export interface LabRequestItem {
@@ -134,6 +136,8 @@ export interface DrugOption {
     brand_name: string | null;
     strength: string | null;
     dosage_form: string | null;
+    quoted_price?: number | null;
+    price_source?: string | null;
 }
 
 export interface PrescriptionItem {
@@ -193,6 +197,9 @@ export interface FacilityServiceOption {
     service_code: string;
     name: string;
     category: string;
+    selling_price?: number | null;
+    quoted_price?: number | null;
+    price_source?: string | null;
     is_billable: boolean;
 }
 
@@ -203,8 +210,6 @@ export interface FacilityServiceOrder {
     facility_service_id: string;
     ordered_by: string;
     status: string;
-    clinical_notes: string | null;
-    service_instructions: string | null;
     ordered_at: string;
     completed_at: string | null;
     service?: FacilityServiceOption | null;

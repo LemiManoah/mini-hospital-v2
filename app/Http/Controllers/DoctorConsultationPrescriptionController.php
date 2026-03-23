@@ -38,11 +38,13 @@ final class DoctorConsultationPrescriptionController implements HasMiddleware
         $consultation = $visit->consultation;
 
         if ($consultation === null) {
-            return to_route('doctors.consultations.show', $visit)->with('error', 'Start the consultation note before writing prescriptions.');
+            return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'prescriptions'])
+                ->with('error', 'Start the consultation note before writing prescriptions.');
         }
 
         if ($consultation->isCompleted()) {
-            return to_route('doctors.consultations.show', $visit)->with('error', 'This consultation has already been finalized and can no longer accept prescriptions.');
+            return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'prescriptions'])
+                ->with('error', 'This consultation has already been finalized and can no longer accept prescriptions.');
         }
 
         $createPrescription->handle($consultation, $request->validated(), $staffId);

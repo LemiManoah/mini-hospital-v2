@@ -40,8 +40,6 @@ return new class extends Migration
             $table->foreignUuid('facility_service_id')->constrained('facility_services')->onDelete('restrict');
             $table->foreignUuid('ordered_by')->constrained('staff')->onDelete('restrict');
             $table->enum('status', array_column(FacilityServiceOrderStatus::cases(), 'value'))->default(FacilityServiceOrderStatus::PENDING->value)->index();
-            $table->text('clinical_notes')->nullable();
-            $table->text('service_instructions')->nullable();
             $table->timestamp('ordered_at')->useCurrent();
             $table->foreignUuid('performed_by')->nullable()->constrained('staff')->nullOnDelete();
             $table->timestamp('completed_at')->nullable();

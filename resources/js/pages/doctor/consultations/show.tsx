@@ -78,6 +78,14 @@ const formatDateTime = (date: string | null | undefined): string =>
               minute: '2-digit',
           })
         : 'N/A';
+const formatMoney = (amount: number | null | undefined): string =>
+    amount === null || amount === undefined
+        ? 'Not priced'
+        : new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'UGX',
+              maximumFractionDigits: 0,
+          }).format(amount);
 const labelize = (value: string | null | undefined): string =>
     value
         ? value
@@ -236,10 +244,6 @@ export default function DoctorConsultationShow({
 
     const labForm = useForm({
         test_ids: [] as string[],
-        clinical_notes: consultation?.assessment ?? '',
-        priority: labPriorities[0]?.value ?? 'routine',
-        diagnosis_code: consultation?.primary_icd10_code ?? '',
-        is_stat: false,
     });
     const imagingForm = useForm({
         modality: imagingModalities[0]?.value ?? 'xray',
@@ -256,16 +260,10 @@ export default function DoctorConsultationShow({
         pregnancy_status: 'unknown',
     });
     const prescriptionForm = useForm({
-        primary_diagnosis: consultation?.primary_diagnosis ?? '',
-        pharmacy_notes: '',
-        is_discharge_medication: false,
-        is_long_term: false,
         items: [createPrescriptionItem()],
     });
     const serviceForm = useForm({
         facility_service_id: '',
-        clinical_notes: consultation?.assessment ?? '',
-        service_instructions: '',
     });
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -301,6 +299,9 @@ export default function DoctorConsultationShow({
         );
     const selectedFacilityService = facilityServiceOptions.find(
         (option) => option.id === serviceForm.data.facility_service_id,
+    );
+    const selectedDrugOptions = prescriptionForm.data.items.map((item) =>
+        drugOptions.find((drug) => drug.id === item.drug_id),
     );
 
     return (
@@ -1017,126 +1018,25 @@ export default function DoctorConsultationShow({
                                                     event.preventDefault();
                                                     labForm.post(
                                                         `/doctors/consultations/${visit.id}/lab-requests`,
+                                                        {
+                                                            preserveState: true,
+                                                            preserveScroll: true,
+                                                            onError: () =>
+                                                                setSelectedTab(
+                                                                    'lab',
+                                                                ),
+                                                            onSuccess: () => {
+                                                                setSelectedTab(
+                                                                    'lab',
+                                                                );
+                                                                labForm.reset(
+                                                                    'test_ids',
+                                                                );
+                                                            },
+                                                        },
                                                     );
                                                 }}
                                             >
-                                                <div className="grid gap-4 md:grid-cols-2">
-                                                    <div className="grid gap-2">
-                                                        <Label>Priority</Label>
-                                                        <Select
-                                                            value={
-                                                                labForm.data
-                                                                    .priority
-                                                            }
-                                                            onValueChange={(
-                                                                value,
-                                                            ) =>
-                                                                labForm.setData(
-                                                                    'priority',
-                                                                    value,
-                                                                )
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {labPriorities.map(
-                                                                    (
-                                                                        priority,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                priority.value
-                                                                            }
-                                                                            value={
-                                                                                priority.value
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                priority.label
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                labForm.errors
-                                                                    .priority
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="lab_diagnosis_code">
-                                                            Diagnosis Code
-                                                        </Label>
-                                                        <Input
-                                                            id="lab_diagnosis_code"
-                                                            value={
-                                                                labForm.data
-                                                                    .diagnosis_code
-                                                            }
-                                                            onChange={(event) =>
-                                                                labForm.setData(
-                                                                    'diagnosis_code',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                labForm.errors
-                                                                    .diagnosis_code
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="lab_clinical_notes">
-                                                        Clinical Notes
-                                                    </Label>
-                                                    <Textarea
-                                                        id="lab_clinical_notes"
-                                                        rows={3}
-                                                        value={
-                                                            labForm.data
-                                                                .clinical_notes
-                                                        }
-                                                        onChange={(event) =>
-                                                            labForm.setData(
-                                                                'clinical_notes',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            labForm.errors
-                                                                .clinical_notes
-                                                        }
-                                                    />
-                                                </div>
-                                                <label className="flex items-center gap-2 text-sm">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={
-                                                            labForm.data.is_stat
-                                                        }
-                                                        onChange={(event) =>
-                                                            labForm.setData(
-                                                                'is_stat',
-                                                                event.target
-                                                                    .checked,
-                                                            )
-                                                        }
-                                                        className="h-4 w-4"
-                                                    />
-                                                    Mark request as STAT
-                                                </label>
                                                 <div className="space-y-3">
                                                     <div>
                                                         <Label>
@@ -1198,10 +1098,16 @@ export default function DoctorConsultationShow({
                                                                                             : ''}
                                                                                     </span>
                                                                                     <span className="block text-muted-foreground">
-                                                                                        Base
+                                                                                        Quoted
                                                                                         price:{' '}
-                                                                                        {test.base_price ??
-                                                                                            0}
+                                                                                        {formatMoney(
+                                                                                            test.quoted_price ??
+                                                                                                test.base_price,
+                                                                                        )}
+                                                                                        {test.price_source ===
+                                                                                        'insurance_package'
+                                                                                            ? ' (insurance package)'
+                                                                                            : ' (catalog)'}
                                                                                     </span>
                                                                                 </span>
                                                                             </label>
@@ -1342,106 +1248,23 @@ export default function DoctorConsultationShow({
                                                     event.preventDefault();
                                                     prescriptionForm.post(
                                                         `/doctors/consultations/${visit.id}/prescriptions`,
+                                                        {
+                                                            preserveState: true,
+                                                            preserveScroll: true,
+                                                            onError: () =>
+                                                                setSelectedTab(
+                                                                    'prescriptions',
+                                                                ),
+                                                            onSuccess: () => {
+                                                                setSelectedTab(
+                                                                    'prescriptions',
+                                                                );
+                                                                prescriptionForm.reset();
+                                                            },
+                                                        },
                                                     );
                                                 }}
                                             >
-                                                <div className="grid gap-4 md:grid-cols-2">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="prescription_primary_diagnosis">
-                                                            Primary Diagnosis
-                                                        </Label>
-                                                        <Input
-                                                            id="prescription_primary_diagnosis"
-                                                            value={
-                                                                prescriptionForm
-                                                                    .data
-                                                                    .primary_diagnosis
-                                                            }
-                                                            onChange={(event) =>
-                                                                prescriptionForm.setData(
-                                                                    'primary_diagnosis',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                prescriptionForm
-                                                                    .errors
-                                                                    .primary_diagnosis
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="prescription_pharmacy_notes">
-                                                            Pharmacy Notes
-                                                        </Label>
-                                                        <Textarea
-                                                            id="prescription_pharmacy_notes"
-                                                            rows={2}
-                                                            value={
-                                                                prescriptionForm
-                                                                    .data
-                                                                    .pharmacy_notes
-                                                            }
-                                                            onChange={(event) =>
-                                                                prescriptionForm.setData(
-                                                                    'pharmacy_notes',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                prescriptionForm
-                                                                    .errors
-                                                                    .pharmacy_notes
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-wrap gap-4">
-                                                    <label className="flex items-center gap-2 text-sm">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={
-                                                                prescriptionForm
-                                                                    .data
-                                                                    .is_discharge_medication
-                                                            }
-                                                            onChange={(event) =>
-                                                                prescriptionForm.setData(
-                                                                    'is_discharge_medication',
-                                                                    event.target
-                                                                        .checked,
-                                                                )
-                                                            }
-                                                            className="h-4 w-4"
-                                                        />
-                                                        Discharge drug
-                                                    </label>
-                                                    <label className="flex items-center gap-2 text-sm">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={
-                                                                prescriptionForm
-                                                                    .data
-                                                                    .is_long_term
-                                                            }
-                                                            onChange={(event) =>
-                                                                prescriptionForm.setData(
-                                                                    'is_long_term',
-                                                                    event.target
-                                                                        .checked,
-                                                                )
-                                                            }
-                                                            className="h-4 w-4"
-                                                        />
-                                                        Long-term drug
-                                                    </label>
-                                                </div>
                                                 <div className="space-y-4">
                                                     {prescriptionForm.data.items.map(
                                                         (item, index) => (
@@ -1537,6 +1360,28 @@ export default function DoctorConsultationShow({
                                                                                 ]
                                                                             }
                                                                         />
+                                                                        {selectedDrugOptions[
+                                                                            index
+                                                                        ] ? (
+                                                                            <p className="text-xs text-muted-foreground">
+                                                                                Quoted
+                                                                                price:{' '}
+                                                                                {formatMoney(
+                                                                                    selectedDrugOptions[
+                                                                                        index
+                                                                                    ]
+                                                                                        ?.quoted_price ??
+                                                                                        null,
+                                                                                )}
+                                                                                {selectedDrugOptions[
+                                                                                    index
+                                                                                ]
+                                                                                    ?.price_source ===
+                                                                                'insurance_package'
+                                                                                    ? ' (insurance package)'
+                                                                                    : ' (no catalog price configured)'}
+                                                                            </p>
+                                                                        ) : null}
                                                                     </div>
                                                                     <div className="grid gap-2">
                                                                         <Label>
@@ -2402,12 +2247,20 @@ export default function DoctorConsultationShow({
                                                     serviceForm.post(
                                                         `/doctors/consultations/${visit.id}/facility-service-orders`,
                                                         {
+                                                            preserveState: true,
                                                             preserveScroll: true,
-                                                            onSuccess: () =>
+                                                            onError: () =>
+                                                                setSelectedTab(
+                                                                    'services',
+                                                                ),
+                                                            onSuccess: () => {
+                                                                setSelectedTab(
+                                                                    'services',
+                                                                );
                                                                 serviceForm.reset(
                                                                     'facility_service_id',
-                                                                    'service_instructions',
-                                                                ),
+                                                                );
+                                                            },
                                                         },
                                                     );
                                                 }}
@@ -2424,15 +2277,12 @@ export default function DoctorConsultationShow({
                                                             }
                                                             onValueChange={(
                                                                 value,
-                                                            ) => {
+                                                            ) =>
                                                                 serviceForm.setData(
-                                                                    (data) => ({
-                                                                        ...data,
-                                                                        facility_service_id:
-                                                                            value,
-                                                                    }),
-                                                                );
-                                                            }}
+                                                                    'facility_service_id',
+                                                                    value,
+                                                                )
+                                                            }
                                                         >
                                                             <SelectTrigger>
                                                                 <SelectValue placeholder="Select service" />
@@ -2487,6 +2337,20 @@ export default function DoctorConsultationShow({
                                                                 : 'Select a service to review its catalog details.'}
                                                         </p>
                                                         {selectedFacilityService ? (
+                                                            <p className="mt-2 text-muted-foreground">
+                                                                Quoted price:{' '}
+                                                                {formatMoney(
+                                                                    selectedFacilityService.quoted_price ??
+                                                                        selectedFacilityService.selling_price ??
+                                                                        null,
+                                                                )}
+                                                                {selectedFacilityService.price_source ===
+                                                                'insurance_package'
+                                                                    ? ' (insurance package)'
+                                                                    : ' (catalog)'}
+                                                            </p>
+                                                        ) : null}
+                                                        {selectedFacilityService ? (
                                                             <div className="mt-2 flex flex-wrap gap-2">
                                                                 <Badge variant="outline">
                                                                     {labelize(
@@ -2500,60 +2364,6 @@ export default function DoctorConsultationShow({
                                                                 </Badge>
                                                             </div>
                                                         ) : null}
-                                                    </div>
-                                                    <div className="grid gap-2 lg:col-span-2">
-                                                        <Label htmlFor="service_clinical_notes">
-                                                            Clinical Notes
-                                                        </Label>
-                                                        <Textarea
-                                                            id="service_clinical_notes"
-                                                            rows={3}
-                                                            value={
-                                                                serviceForm.data
-                                                                    .clinical_notes
-                                                            }
-                                                            onChange={(event) =>
-                                                                serviceForm.setData(
-                                                                    'clinical_notes',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                serviceForm
-                                                                    .errors
-                                                                    .clinical_notes
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2 lg:col-span-2">
-                                                        <Label htmlFor="service_instructions">
-                                                            Service Instructions
-                                                        </Label>
-                                                        <Textarea
-                                                            id="service_instructions"
-                                                            rows={3}
-                                                            value={
-                                                                serviceForm.data
-                                                                    .service_instructions
-                                                            }
-                                                            onChange={(event) =>
-                                                                serviceForm.setData(
-                                                                    'service_instructions',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                serviceForm
-                                                                    .errors
-                                                                    .service_instructions
-                                                            }
-                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="flex justify-end">
@@ -2614,22 +2424,6 @@ export default function DoctorConsultationShow({
                                                                 order.ordered_at,
                                                             )}
                                                         </p>
-                                                        {order.clinical_notes ? (
-                                                            <p className="mt-2 text-sm text-muted-foreground">
-                                                                Clinical notes:{' '}
-                                                                {
-                                                                    order.clinical_notes
-                                                                }
-                                                            </p>
-                                                        ) : null}
-                                                        {order.service_instructions ? (
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Instructions:{' '}
-                                                                {
-                                                                    order.service_instructions
-                                                                }
-                                                            </p>
-                                                        ) : null}
                                                         {order.completed_at ? (
                                                             <p className="text-sm text-muted-foreground">
                                                                 Completed:{' '}

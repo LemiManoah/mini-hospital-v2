@@ -8,6 +8,7 @@ use App\Actions\CreateLabRequest;
 use App\Actions\CreatePrescription;
 use App\Enums\DrugCategory;
 use App\Enums\DrugDosageForm;
+use App\Enums\FacilityServiceOrderStatus;
 use App\Enums\ImagingModality;
 use App\Enums\Priority;
 use App\Models\Consultation;
@@ -260,7 +261,7 @@ it('creates an imaging request linked to the consultation', function (): void {
         ->and($request->modality)->toBe(ImagingModality::XRAY);
 });
 
-it('creates a facility service order and syncs an insurance-priced charge', function (): void {
+it('creates a facility service order with consultation context and syncs an insurance-priced charge', function (): void {
     $context = seedConsultationContext('insurance');
     $serviceId = (string) Str::uuid();
 
@@ -294,11 +295,34 @@ it('creates a facility service order and syncs an insurance-priced charge', func
         $context['consultation'],
         [
             'facility_service_id' => $serviceId,
-            'clinical_notes' => 'Give bronchodilator support',
-            'service_instructions' => 'Once now',
         ],
         $context['staff_id'],
     );
+
+    expect($order->tenant_id)->toBe($context['tenant_id'])
+        ->and($order->facility_branch_id)->toBe($context['branch_id'])
+        ->and($order->visit_id)->toBe($context['visit_id'])
+        ->and($order->consultation_id)->toBe($context['consultation']->id)
+        ->and($order->facility_service_id)->toBe($serviceId)
+        ->and($order->ordered_by)->toBe($context['staff_id'])
+        ->and($order->status)->toBe(FacilityServiceOrderStatus::PENDING)
+        ->and($order->ordered_at?->toDateTimeString())->toBe(now()->toDateTimeString())
+        ->and($order->relationLoaded('service'))->toBeTrue()
+        ->and($order->relationLoaded('orderedBy'))->toBeTrue()
+        ->and($order->service?->name)->toBe('Nebulization')
+        ->and($order->service?->service_code)->toBe('SRV-100')
+        ->and($order->orderedBy?->id)->toBe($context['staff_id']);
+
+    $this->assertDatabaseHas('facility_service_orders', [
+        'id' => $order->id,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => $context['branch_id'],
+        'visit_id' => $context['visit_id'],
+        'consultation_id' => $context['consultation']->id,
+        'facility_service_id' => $serviceId,
+        'ordered_by' => $context['staff_id'],
+        'status' => FacilityServiceOrderStatus::PENDING->value,
+    ]);
 
     $charge = VisitCharge::query()
         ->where('patient_visit_id', $context['visit_id'])
@@ -333,8 +357,6 @@ it('creates a facility service order with the service selling price for cash vis
         $context['consultation'],
         [
             'facility_service_id' => $serviceId,
-            'clinical_notes' => 'Shortness of breath support',
-            'service_instructions' => 'Give by nasal prongs',
         ],
         $context['staff_id'],
     );
@@ -349,4 +371,45 @@ it('creates a facility service order with the service selling price for cash vis
         ->and((float) $charge->unit_price)->toBe(12000.0)
         ->and((float) $charge->line_total)->toBe(12000.0)
         ->and($charge->charge_code)->toBe('SRV-101');
+});
+
+it('creates a facility service order without syncing a charge for non-billable services', function (): void {
+    $context = seedConsultationContext('cash');
+    $serviceId = (string) Str::uuid();
+
+    DB::table('facility_services')->insert([
+        'id' => $serviceId,
+        'tenant_id' => $context['tenant_id'],
+        'service_code' => 'SRV-102',
+        'name' => 'Wound Review',
+        'category' => 'other',
+        'selling_price' => 5000,
+        'is_billable' => false,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $order = resolve(CreateFacilityServiceOrder::class)->handle(
+        $context['consultation'],
+        [
+            'facility_service_id' => $serviceId,
+        ],
+        $context['staff_id'],
+    );
+
+    expect($order->status)->toBe(FacilityServiceOrderStatus::PENDING)
+        ->and($order->service?->is_billable)->toBeFalse();
+
+    $this->assertDatabaseHas('facility_service_orders', [
+        'id' => $order->id,
+        'facility_service_id' => $serviceId,
+        'status' => FacilityServiceOrderStatus::PENDING->value,
+    ]);
+
+    $this->assertDatabaseMissing('visit_charges', [
+        'patient_visit_id' => $context['visit_id'],
+        'source_type' => $order->getMorphClass(),
+        'source_id' => $order->id,
+    ]);
 });

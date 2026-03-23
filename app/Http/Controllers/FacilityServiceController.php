@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -79,7 +80,12 @@ final readonly class FacilityServiceController implements HasMiddleware
 
     public function destroy(DeleteFacilityServiceRequest $request, FacilityService $facilityService, DeleteFacilityService $action): RedirectResponse
     {
-        $action->handle($facilityService);
+        try {
+            $action->handle($facilityService);
+        } catch (ValidationException $exception) {
+            return to_route('facility-services.index')
+                ->with('error', $exception->validator->errors()->first() ?: 'This facility service could not be deleted.');
+        }
 
         return to_route('facility-services.index')->with('success', 'Facility service deleted successfully.');
     }

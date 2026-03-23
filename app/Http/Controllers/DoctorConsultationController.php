@@ -7,7 +7,9 @@ namespace App\Http\Controllers;
 use App\Actions\CompleteConsultation;
 use App\Actions\CreateConsultation;
 use App\Actions\UpdateConsultation;
+use App\Enums\BillableItemType;
 use App\Enums\ConsultationOutcome;
+use App\Enums\GeneralStatus;
 use App\Enums\ImagingLaterality;
 use App\Enums\ImagingModality;
 use App\Enums\ImagingPriority;
@@ -17,6 +19,7 @@ use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
 use App\Models\Drug;
 use App\Models\FacilityService;
+use App\Models\InsurancePackagePrice;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
 use App\Support\ActiveBranchWorkspace;
@@ -162,6 +165,27 @@ final readonly class DoctorConsultationController implements HasMiddleware
             },
         ]);
 
+        $labTests = LabTestCatalog::query()
+            ->where('is_active', true)
+            ->orderBy('category')
+            ->orderBy('test_name')
+            ->get(['id', 'test_code', 'test_name', 'category', 'base_price']);
+
+        $drugs = Drug::query()
+            ->where('is_active', true)
+            ->orderBy('generic_name')
+            ->get(['id', 'generic_name', 'brand_name', 'strength', 'dosage_form']);
+
+        $facilityServices = FacilityService::query()
+            ->where('is_active', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get(['id', 'service_code', 'name', 'category', 'selling_price', 'is_billable']);
+
+        $labPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::TEST, $labTests->pluck('id')->all());
+        $drugPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::DRUG, $drugs->pluck('id')->all());
+        $servicePriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::SERVICE, $facilityServices->pluck('id')->all());
+
         return Inertia::render('doctor/consultations/show', [
             'visit' => $visit,
             'activeTab' => $request->query('tab', 'overview'),
@@ -172,29 +196,26 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 ])
                 ->values()
                 ->all(),
-            'labTestOptions' => LabTestCatalog::query()
-                ->where('is_active', true)
-                ->orderBy('category')
-                ->orderBy('test_name')
-                ->get(['id', 'test_code', 'test_name', 'category', 'base_price'])
+            'labTestOptions' => $labTests
                 ->map(static fn (LabTestCatalog $test): array => [
                     'id' => $test->id,
                     'test_code' => $test->test_code,
                     'test_name' => $test->test_name,
                     'category' => $test->category,
                     'base_price' => $test->base_price,
+                    'quoted_price' => $labPriceMap[$test->id] ?? $test->base_price,
+                    'price_source' => isset($labPriceMap[$test->id]) ? 'insurance_package' : 'catalog_base',
                 ])
                 ->all(),
-            'drugOptions' => Drug::query()
-                ->where('is_active', true)
-                ->orderBy('generic_name')
-                ->get(['id', 'generic_name', 'brand_name', 'strength', 'dosage_form'])
+            'drugOptions' => $drugs
                 ->map(static fn (Drug $drug): array => [
                     'id' => $drug->id,
                     'generic_name' => $drug->generic_name,
                     'brand_name' => $drug->brand_name,
                     'strength' => $drug->strength,
                     'dosage_form' => $drug->dosage_form->value,
+                    'quoted_price' => $drugPriceMap[$drug->id] ?? null,
+                    'price_source' => isset($drugPriceMap[$drug->id]) ? 'insurance_package' : null,
                 ])
                 ->all(),
             'labPriorities' => collect(Priority::cases())
@@ -232,16 +253,15 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 ])
                 ->values()
                 ->all(),
-            'facilityServiceOptions' => FacilityService::query()
-                ->where('is_active', true)
-                ->orderBy('category')
-                ->orderBy('name')
-                ->get(['id', 'service_code', 'name', 'category', 'is_billable'])
+            'facilityServiceOptions' => $facilityServices
                 ->map(static fn (FacilityService $service): array => [
                     'id' => $service->id,
                     'service_code' => $service->service_code,
                     'name' => $service->name,
                     'category' => $service->category->value,
+                    'selling_price' => $service->selling_price,
+                    'quoted_price' => $servicePriceMap[$service->id] ?? $service->selling_price,
+                    'price_source' => isset($servicePriceMap[$service->id]) ? 'insurance_package' : 'catalog_base',
                     'is_billable' => $service->is_billable,
                 ])
                 ->all(),
@@ -306,5 +326,44 @@ final readonly class DoctorConsultationController implements HasMiddleware
         $updateConsultation->handle($consultation, $validated);
 
         return to_route('doctors.consultations.show', $visit)->with('success', 'Consultation saved successfully.');
+    }
+
+    /**
+     * @param  array<int, string>  $billableIds
+     * @return array<string, float>
+     */
+    private function activeInsurancePriceMap(PatientVisit $visit, BillableItemType $type, array $billableIds): array
+    {
+        $insurancePackageId = $visit->payer?->insurance_package_id;
+        $branchId = $visit->facility_branch_id;
+
+        if ($insurancePackageId === null || $branchId === null || $billableIds === []) {
+            return [];
+        }
+
+        $today = now()->toDateString();
+
+        return InsurancePackagePrice::query()
+            ->where('tenant_id', $visit->tenant_id)
+            ->where('facility_branch_id', $branchId)
+            ->where('insurance_package_id', $insurancePackageId)
+            ->where('billable_type', $type->value)
+            ->whereIn('billable_id', $billableIds)
+            ->where('status', GeneralStatus::ACTIVE->value)
+            ->where(function ($query) use ($today): void {
+                $query->whereNull('effective_from')
+                    ->orWhere('effective_from', '<=', $today);
+            })
+            ->where(function ($query) use ($today): void {
+                $query->whereNull('effective_to')
+                    ->orWhere('effective_to', '>=', $today);
+            })
+            ->orderByDesc('effective_from')
+            ->get(['billable_id', 'price'])
+            ->unique('billable_id')
+            ->mapWithKeys(static fn (InsurancePackagePrice $price): array => [
+                $price->billable_id => (float) $price->price,
+            ])
+            ->all();
     }
 }

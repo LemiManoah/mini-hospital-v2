@@ -38,11 +38,13 @@ final class DoctorConsultationFacilityServiceOrderController implements HasMiddl
         $consultation = $visit->consultation;
 
         if ($consultation === null) {
-            return to_route('doctors.consultations.show', $visit)->with('error', 'Start the consultation note before ordering facility services.');
+            return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services'])
+                ->with('error', 'Start the consultation note before ordering facility services.');
         }
 
         if ($consultation->isCompleted()) {
-            return to_route('doctors.consultations.show', $visit)->with('error', 'This consultation has already been finalized and can no longer accept facility service orders.');
+            return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services'])
+                ->with('error', 'This consultation has already been finalized and can no longer accept facility service orders.');
         }
 
         $createFacilityServiceOrder->handle($consultation, $request->validated(), $staffId);

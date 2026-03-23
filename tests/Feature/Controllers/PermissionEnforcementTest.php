@@ -21,6 +21,7 @@ use App\Models\Department;
 use App\Models\Drug;
 use App\Models\FacilityBranch;
 use App\Models\FacilityService;
+use App\Models\FacilityServiceOrder;
 use App\Models\LabTestCatalog;
 use App\Models\Patient;
 use App\Models\PatientVisit;
@@ -747,7 +748,6 @@ describe('Consultation workflow permissions', function (): void {
 
         $payload = [
             'facility_service_id' => $service->id,
-            'clinical_notes' => 'Needs ECG review',
         ];
 
         $this->actingAs($doctorUser)
@@ -761,6 +761,50 @@ describe('Consultation workflow permissions', function (): void {
 
         $response->assertRedirect(route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services']));
         $response->assertSessionHas('success', 'Facility service order created successfully.');
+    });
+
+    it('blocks facility service deletion when service orders exist', function (): void {
+        [$tenant, $branch, , $clinic] = createPermissionTenant(withBranch: true);
+        $doctorUser = createPermissionUser($tenant, withStaff: true, branch: $branch);
+        $patient = createPermissionPatient($tenant, $doctorUser);
+        $visit = createPermissionVisit($tenant, $patient, $doctorUser, $branch, $clinic);
+        $service = createPermissionFacilityService($tenant, $doctorUser);
+
+        FacilityServiceOrder::query()->create([
+            'tenant_id' => $tenant->id,
+            'facility_branch_id' => $branch?->id,
+            'visit_id' => $visit->id,
+            'facility_service_id' => $service->id,
+            'ordered_by' => $doctorUser->staff_id,
+            'status' => 'pending',
+            'ordered_at' => now(),
+        ]);
+
+        $doctorUser->givePermissionTo('facility_services.delete');
+
+        $response = $this->withSession(['active_branch_id' => $branch?->id])
+            ->actingAs($doctorUser)
+            ->delete(route('facility-services.destroy', $service));
+
+        $response->assertRedirectToRoute('facility-services.index');
+        $response->assertSessionHas('error', 'This facility service cannot be deleted because it has existing service orders.');
+        $this->assertDatabaseHas('facility_services', ['id' => $service->id]);
+    });
+
+    it('allows facility service deletion when no service orders exist', function (): void {
+        [$tenant, $branch] = createPermissionTenant(withBranch: true);
+        $doctorUser = createPermissionUser($tenant, withStaff: true, branch: $branch);
+        $service = createPermissionFacilityService($tenant, $doctorUser);
+
+        $doctorUser->givePermissionTo('facility_services.delete');
+
+        $response = $this->withSession(['active_branch_id' => $branch?->id])
+            ->actingAs($doctorUser)
+            ->delete(route('facility-services.destroy', $service));
+
+        $response->assertRedirectToRoute('facility-services.index');
+        $response->assertSessionHas('success', 'Facility service deleted successfully.');
+        $this->assertDatabaseMissing('facility_services', ['id' => $service->id]);
     });
 });
 

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Staff;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\BranchContext;
+use Database\Seeders\SupportUserSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,8 +25,16 @@ final class SwitchTenantContext
 
         $tenant = Tenant::query()->findOrFail($tenantId);
 
+        $supportStaffId = $actor->isSupportUser()
+            ? Staff::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('email', sprintf('support+%s@mini-hospital.com', $tenant->domain))
+                ->value('id')
+            : $actor->staff_id;
+
         $actor->forceFill([
             'tenant_id' => $tenant->id,
+            'staff_id' => $supportStaffId,
         ])->save();
 
         $freshUser = $actor->fresh();
