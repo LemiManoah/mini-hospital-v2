@@ -24,7 +24,6 @@ use App\Models\VisitPayer;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -69,7 +68,7 @@ final readonly class PatientVisitController implements HasMiddleware
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->when(
                 $search !== '',
-                static fn (HasMany $query) => $query->where(function (Builder $searchQuery) use ($search): void {
+                static fn (Builder $query) => $query->where(function (Builder $searchQuery) use ($search): void {
                     $searchQuery
                         ->where('visit_number', 'like', sprintf('%%%s%%', $search))
                         ->orWhereHas('patient', static function (Builder $patientQuery) use ($search): void {

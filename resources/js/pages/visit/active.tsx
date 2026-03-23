@@ -31,12 +31,18 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Active Visits', href: '/visits' },
 ];
 
-function formatDateTime(date: string | null): string {
+function formatDate(date: string | null): string {
     if (!date) return 'N/A';
-    return new Date(date).toLocaleString('en-US', {
+    return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
+    });
+}
+
+function formatTime(date: string | null): string {
+    if (!date) return '';
+    return new Date(date).toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
     });
@@ -118,7 +124,6 @@ export default function ActiveVisits({
                                 <TableHead>Patient</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Clinic</TableHead>
-                                <TableHead>Doctor</TableHead>
                                 <TableHead>Payer</TableHead>
                                 <TableHead>Completion Check</TableHead>
                                 <TableHead>Registered</TableHead>
@@ -188,13 +193,17 @@ export default function ActiveVisits({
                                                 </span>
                                             </TableCell>
                                             <TableCell>
-                                                {visit.clinic?.name ||
-                                                    'Not assigned'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {visit.doctor
-                                                    ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
-                                                    : 'Not assigned'}
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {visit.clinic?.name ||
+                                                            'Not assigned'}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {visit.doctor
+                                                            ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
+                                                            : 'Not assigned'}
+                                                    </p>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div>
@@ -229,10 +238,20 @@ export default function ActiveVisits({
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                {formatDateTime(
-                                                    visit.registered_at ??
-                                                        visit.created_at,
-                                                )}
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {formatDate(
+                                                            visit.registered_at ??
+                                                                visit.created_at,
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {formatTime(
+                                                            visit.registered_at ??
+                                                                visit.created_at,
+                                                        )}
+                                                    </p>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-2">
@@ -293,7 +312,7 @@ export default function ActiveVisits({
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={9}
+                                        colSpan={8}
                                         className="py-12 text-center text-zinc-500 italic"
                                     >
                                         No active visits found.
