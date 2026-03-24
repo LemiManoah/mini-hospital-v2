@@ -146,6 +146,9 @@ This means future work should use the codebase and `patient_visit.md` as the sou
 - charge masters
 - medication stock / inventory catalog beyond the drug master
 
+Planning note:
+- if the team chooses to finish Phase 3 before deeper billing work, use [phase3.md](c:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\phase3.md) as the implementation plan
+
 ## Phase 4: Patient Registration & Demographics
 
 ### Done
