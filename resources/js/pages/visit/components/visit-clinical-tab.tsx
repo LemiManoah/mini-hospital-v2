@@ -265,7 +265,10 @@ export function VisitClinicalTab({
                 <CardContent className="space-y-3 text-sm">
                     {labRequests.length ? (
                         labRequests.map((request) => (
-                            <div key={request.id} className="rounded-lg border p-3">
+                            <div
+                                key={request.id}
+                                className="rounded-lg border p-3"
+                            >
                                 <p className="font-medium">
                                     {request.items
                                         .map((item) => item.test?.test_name)
@@ -273,13 +276,15 @@ export function VisitClinicalTab({
                                         .join(', ') || 'Lab request'}
                                 </p>
                                 <p className="text-muted-foreground">
-                                    Requested {formatDateTime(request.request_date)}
+                                    Requested{' '}
+                                    {formatDateTime(request.request_date)}
                                 </p>
                                 <p className="text-muted-foreground">
                                     Estimated total:{' '}
                                     {formatMoney(
                                         request.items.reduce(
-                                            (total, item) => total + (item.price ?? 0),
+                                            (total, item) =>
+                                                total + (item.price ?? 0),
                                             0,
                                         ),
                                     )}
@@ -338,7 +343,10 @@ export function VisitClinicalTab({
                 <CardContent className="space-y-3 text-sm">
                     {imagingRequests.length ? (
                         imagingRequests.map((request) => (
-                            <div key={request.id} className="rounded-lg border p-3">
+                            <div
+                                key={request.id}
+                                className="rounded-lg border p-3"
+                            >
                                 <p className="font-medium">
                                     {request.modality.toUpperCase()}{' '}
                                     {request.body_part}
@@ -367,7 +375,10 @@ export function VisitClinicalTab({
                 <CardContent className="space-y-3 text-sm">
                     {facilityServiceOrders.length ? (
                         facilityServiceOrders.map((order) => (
-                            <div key={order.id} className="rounded-lg border p-3">
+                            <div
+                                key={order.id}
+                                className="rounded-lg border p-3"
+                            >
                                 <p className="font-medium">
                                     {order.service?.name || 'Facility service'}
                                 </p>

@@ -1159,71 +1159,70 @@ export default function DoctorConsultationShow({
                                         ) : (
                                             <div className="space-y-4">
                                                 {labRequests.map((request) => (
-                                                        <div
-                                                            key={request.id}
-                                                            className="rounded-lg border p-4"
-                                                        >
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <h3 className="font-medium">
-                                                                    {request.items
-                                                                        .map(
-                                                                            (
-                                                                                item,
-                                                                            ) =>
-                                                                                item
-                                                                                    .test
-                                                                                    ?.test_name,
-                                                                        )
-                                                                        .filter(
-                                                                            Boolean,
-                                                                        )
-                                                                        .join(
-                                                                            ', ',
-                                                                        ) ||
-                                                                        'Lab request'}
-                                                                </h3>
-                                                                <Badge
-                                                                    className={cn(
-                                                                        'border-0',
-                                                                        statusBadgeClasses(
-                                                                            request.status,
-                                                                        ),
-                                                                    )}
-                                                                >
-                                                                    {labelize(
+                                                    <div
+                                                        key={request.id}
+                                                        className="rounded-lg border p-4"
+                                                    >
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h3 className="font-medium">
+                                                                {request.items
+                                                                    .map(
+                                                                        (
+                                                                            item,
+                                                                        ) =>
+                                                                            item
+                                                                                .test
+                                                                                ?.test_name,
+                                                                    )
+                                                                    .filter(
+                                                                        Boolean,
+                                                                    )
+                                                                    .join(
+                                                                        ', ',
+                                                                    ) ||
+                                                                    'Lab request'}
+                                                            </h3>
+                                                            <Badge
+                                                                className={cn(
+                                                                    'border-0',
+                                                                    statusBadgeClasses(
                                                                         request.status,
-                                                                    )}
-                                                                </Badge>
-                                                            </div>
-                                                            <p className="mt-1 text-sm text-muted-foreground">
-                                                                Ordered by{' '}
-                                                                {staffName(
-                                                                    request.requestedBy,
-                                                                )}{' '}
-                                                                on{' '}
-                                                                {formatDateTime(
-                                                                    request.request_date,
+                                                                    ),
                                                                 )}
-                                                            </p>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Priority:{' '}
+                                                            >
                                                                 {labelize(
-                                                                    request.priority,
+                                                                    request.status,
                                                                 )}
-                                                                {request.is_stat
-                                                                    ? ' | STAT'
-                                                                    : ''}
-                                                            </p>
-                                                            {request.clinical_notes ? (
-                                                                <p className="mt-2 text-sm text-muted-foreground">
-                                                                    Clinical
-                                                                    notes:{' '}
-                                                                    {
-                                                                        request.clinical_notes
-                                                                    }
-                                                                </p>
-                                                            ) : null}
+                                                            </Badge>
                                                         </div>
+                                                        <p className="mt-1 text-sm text-muted-foreground">
+                                                            Ordered by{' '}
+                                                            {staffName(
+                                                                request.requestedBy,
+                                                            )}{' '}
+                                                            on{' '}
+                                                            {formatDateTime(
+                                                                request.request_date,
+                                                            )}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Priority:{' '}
+                                                            {labelize(
+                                                                request.priority,
+                                                            )}
+                                                            {request.is_stat
+                                                                ? ' | STAT'
+                                                                : ''}
+                                                        </p>
+                                                        {request.clinical_notes ? (
+                                                            <p className="mt-2 text-sm text-muted-foreground">
+                                                                Clinical notes:{' '}
+                                                                {
+                                                                    request.clinical_notes
+                                                                }
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}
@@ -1704,87 +1703,90 @@ export default function DoctorConsultationShow({
                                             <div className="space-y-4">
                                                 {prescriptions.map(
                                                     (prescription) => (
-                                                    <div
-                                                        key={prescription.id}
-                                                        className="rounded-lg border p-4"
-                                                    >
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <h3 className="font-medium">
-                                                                {prescription.primary_diagnosis ||
-                                                                    'Prescription'}
-                                                            </h3>
-                                                            <Badge
-                                                                className={cn(
-                                                                    'border-0',
-                                                                    statusBadgeClasses(
+                                                        <div
+                                                            key={
+                                                                prescription.id
+                                                            }
+                                                            className="rounded-lg border p-4"
+                                                        >
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <h3 className="font-medium">
+                                                                    {prescription.primary_diagnosis ||
+                                                                        'Prescription'}
+                                                                </h3>
+                                                                <Badge
+                                                                    className={cn(
+                                                                        'border-0',
+                                                                        statusBadgeClasses(
+                                                                            prescription.status,
+                                                                        ),
+                                                                    )}
+                                                                >
+                                                                    {labelize(
                                                                         prescription.status,
+                                                                    )}
+                                                                </Badge>
+                                                            </div>
+                                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                                Prescribed by{' '}
+                                                                {staffName(
+                                                                    prescription.prescribedBy,
+                                                                )}{' '}
+                                                                on{' '}
+                                                                {formatDateTime(
+                                                                    prescription.prescription_date,
+                                                                )}
+                                                            </p>
+                                                            <div className="mt-3 space-y-2 text-sm">
+                                                                {prescription.items.map(
+                                                                    (item) => (
+                                                                        <div
+                                                                            key={
+                                                                                item.id
+                                                                            }
+                                                                            className="rounded-md bg-muted/40 px-3 py-2"
+                                                                        >
+                                                                            <p className="font-medium">
+                                                                                {item
+                                                                                    .drug
+                                                                                    ?.generic_name ??
+                                                                                    'Drug'}
+                                                                                {item
+                                                                                    .drug
+                                                                                    ?.brand_name
+                                                                                    ? ` (${item.drug.brand_name})`
+                                                                                    : ''}
+                                                                            </p>
+                                                                            <p className="text-muted-foreground">
+                                                                                {
+                                                                                    item.dosage
+                                                                                }{' '}
+                                                                                |{' '}
+                                                                                {
+                                                                                    item.frequency
+                                                                                }{' '}
+                                                                                |{' '}
+                                                                                {
+                                                                                    item.route
+                                                                                }{' '}
+                                                                                |{' '}
+                                                                                {
+                                                                                    item.duration_days
+                                                                                }{' '}
+                                                                                day(s)
+                                                                                |
+                                                                                Qty{' '}
+                                                                                {
+                                                                                    item.quantity
+                                                                                }
+                                                                            </p>
+                                                                        </div>
                                                                     ),
                                                                 )}
-                                                            >
-                                                                {labelize(
-                                                                    prescription.status,
-                                                                )}
-                                                            </Badge>
+                                                            </div>
                                                         </div>
-                                                        <p className="mt-1 text-sm text-muted-foreground">
-                                                            Prescribed by{' '}
-                                                            {staffName(
-                                                                prescription.prescribedBy,
-                                                            )}{' '}
-                                                            on{' '}
-                                                            {formatDateTime(
-                                                                prescription.prescription_date,
-                                                            )}
-                                                        </p>
-                                                        <div className="mt-3 space-y-2 text-sm">
-                                                            {prescription.items.map(
-                                                                (item) => (
-                                                                    <div
-                                                                        key={
-                                                                            item.id
-                                                                        }
-                                                                        className="rounded-md bg-muted/40 px-3 py-2"
-                                                                    >
-                                                                        <p className="font-medium">
-                                                                            {item
-                                                                                .drug
-                                                                                ?.generic_name ??
-                                                                                'Drug'}
-                                                                            {item
-                                                                                .drug
-                                                                                ?.brand_name
-                                                                                ? ` (${item.drug.brand_name})`
-                                                                                : ''}
-                                                                        </p>
-                                                                        <p className="text-muted-foreground">
-                                                                            {
-                                                                                item.dosage
-                                                                            }{' '}
-                                                                            |{' '}
-                                                                            {
-                                                                                item.frequency
-                                                                            }{' '}
-                                                                            |{' '}
-                                                                            {
-                                                                                item.route
-                                                                            }{' '}
-                                                                            |{' '}
-                                                                            {
-                                                                                item.duration_days
-                                                                            }{' '}
-                                                                            day(s)
-                                                                            |
-                                                                            Qty{' '}
-                                                                            {
-                                                                                item.quantity
-                                                                            }
-                                                                        </p>
-                                                                    </div>
-                                                                ),
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    ),
+                                                )}
                                             </div>
                                         )}
                                     </CardContent>
@@ -2168,54 +2170,58 @@ export default function DoctorConsultationShow({
                                             <div className="space-y-4">
                                                 {imagingRequests.map(
                                                     (request) => (
-                                                    <div
-                                                        key={request.id}
-                                                        className="rounded-lg border p-4"
-                                                    >
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <h3 className="font-medium">
-                                                                {labelize(
-                                                                    request.modality,
-                                                                )}{' '}
-                                                                {
-                                                                    request.body_part
-                                                                }
-                                                            </h3>
-                                                            <Badge
-                                                                className={cn(
-                                                                    'border-0',
-                                                                    statusBadgeClasses(
+                                                        <div
+                                                            key={request.id}
+                                                            className="rounded-lg border p-4"
+                                                        >
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <h3 className="font-medium">
+                                                                    {labelize(
+                                                                        request.modality,
+                                                                    )}{' '}
+                                                                    {
+                                                                        request.body_part
+                                                                    }
+                                                                </h3>
+                                                                <Badge
+                                                                    className={cn(
+                                                                        'border-0',
+                                                                        statusBadgeClasses(
+                                                                            request.status,
+                                                                        ),
+                                                                    )}
+                                                                >
+                                                                    {labelize(
                                                                         request.status,
-                                                                    ),
-                                                                )}
-                                                            >
+                                                                    )}
+                                                                </Badge>
+                                                            </div>
+                                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                                Ordered by{' '}
+                                                                {staffName(
+                                                                    request.requestedBy,
+                                                                )}{' '}
+                                                                | Priority{' '}
                                                                 {labelize(
-                                                                    request.status,
+                                                                    request.priority,
                                                                 )}
-                                                            </Badge>
+                                                            </p>
+                                                            <p className="mt-2 text-sm text-muted-foreground">
+                                                                Clinical
+                                                                history:{' '}
+                                                                {
+                                                                    request.clinical_history
+                                                                }
+                                                            </p>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                Indication:{' '}
+                                                                {
+                                                                    request.indication
+                                                                }
+                                                            </p>
                                                         </div>
-                                                        <p className="mt-1 text-sm text-muted-foreground">
-                                                            Ordered by{' '}
-                                                            {staffName(
-                                                                request.requestedBy,
-                                                            )}{' '}
-                                                            | Priority{' '}
-                                                            {labelize(
-                                                                request.priority,
-                                                            )}
-                                                        </p>
-                                                        <p className="mt-2 text-sm text-muted-foreground">
-                                                            Clinical history:{' '}
-                                                            {
-                                                                request.clinical_history
-                                                            }
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Indication:{' '}
-                                                            {request.indication}
-                                                        </p>
-                                                    </div>
-                                                ))}
+                                                    ),
+                                                )}
                                             </div>
                                         )}
                                     </CardContent>
@@ -2404,78 +2410,80 @@ export default function DoctorConsultationShow({
                                             <div className="space-y-4">
                                                 {facilityServiceOrders.map(
                                                     (order) => (
-                                                    <div
-                                                        key={order.id}
-                                                        className="rounded-lg border p-4"
-                                                    >
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <h3 className="font-medium">
-                                                                {order.service
-                                                                    ?.name ??
-                                                                    'Facility Service'}
-                                                            </h3>
-                                                            <Badge
-                                                                className={cn(
-                                                                    'border-0',
-                                                                    statusBadgeClasses(
+                                                        <div
+                                                            key={order.id}
+                                                            className="rounded-lg border p-4"
+                                                        >
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <h3 className="font-medium">
+                                                                    {order
+                                                                        .service
+                                                                        ?.name ??
+                                                                        'Facility Service'}
+                                                                </h3>
+                                                                <Badge
+                                                                    className={cn(
+                                                                        'border-0',
+                                                                        statusBadgeClasses(
+                                                                            order.status,
+                                                                        ),
+                                                                    )}
+                                                                >
+                                                                    {labelize(
                                                                         order.status,
-                                                                    ),
-                                                                )}
-                                                            >
-                                                                {labelize(
-                                                                    order.status,
-                                                                )}
-                                                            </Badge>
-                                                        </div>
-                                                        <p className="mt-1 text-sm text-muted-foreground">
-                                                            Ordered by{' '}
-                                                            {staffName(
-                                                                order.orderedBy,
-                                                            )}{' '}
-                                                            on{' '}
-                                                            {formatDateTime(
-                                                                order.ordered_at,
-                                                            )}
-                                                        </p>
-                                                        {order.completed_at ? (
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Completed:{' '}
+                                                                    )}
+                                                                </Badge>
+                                                            </div>
+                                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                                Ordered by{' '}
+                                                                {staffName(
+                                                                    order.orderedBy,
+                                                                )}{' '}
+                                                                on{' '}
                                                                 {formatDateTime(
-                                                                    order.completed_at,
+                                                                    order.ordered_at,
                                                                 )}
                                                             </p>
-                                                                ) : null}
-                                                        {order.status ===
-                                                        'pending' ? (
-                                                            <div className="mt-3 flex justify-end">
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() =>
-                                                                        router.delete(
-                                                                            `/doctors/consultations/${visit.id}/facility-service-orders/${order.id}`,
-                                                                            {
-                                                                                preserveState:
-                                                                                    true,
-                                                                                preserveScroll:
-                                                                                    true,
-                                                                                onSuccess:
-                                                                                    () =>
-                                                                                        setSelectedTab(
-                                                                                            'services',
-                                                                                        ),
-                                                                            },
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Remove Pending Order
-                                                                </Button>
-                                                            </div>
-                                                        ) : null}
-                                                    </div>
-                                                ))}
+                                                            {order.completed_at ? (
+                                                                <p className="text-sm text-muted-foreground">
+                                                                    Completed:{' '}
+                                                                    {formatDateTime(
+                                                                        order.completed_at,
+                                                                    )}
+                                                                </p>
+                                                            ) : null}
+                                                            {order.status ===
+                                                            'pending' ? (
+                                                                <div className="mt-3 flex justify-end">
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() =>
+                                                                            router.delete(
+                                                                                `/doctors/consultations/${visit.id}/facility-service-orders/${order.id}`,
+                                                                                {
+                                                                                    preserveState: true,
+                                                                                    preserveScroll: true,
+                                                                                    onSuccess:
+                                                                                        () =>
+                                                                                            setSelectedTab(
+                                                                                                'services',
+                                                                                            ),
+                                                                                },
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        Remove
+                                                                        Pending
+                                                                        Order
+                                                                    </Button>
+                                                                </div>
+                                                            ) : null}
+                                                        </div>
+                                                    ),
+                                                )}
                                             </div>
                                         )}
                                     </CardContent>
@@ -2634,11 +2642,9 @@ export default function DoctorConsultationShow({
                                     </p>
                                     <p className="font-medium">
                                         {labRequests.length} lab |{' '}
-                                        {imagingRequests.length}{' '}
-                                        imaging |{' '}
-                                        {prescriptions.length}{' '}
-                                        prescription set(s) |{' '}
-                                        {facilityServiceOrders.length}{' '}
+                                        {imagingRequests.length} imaging |{' '}
+                                        {prescriptions.length} prescription
+                                        set(s) | {facilityServiceOrders.length}{' '}
                                         services
                                     </p>
                                 </div>

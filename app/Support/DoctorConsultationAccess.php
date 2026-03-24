@@ -65,9 +65,11 @@ final class DoctorConsultationAccess
         if (! $user instanceof User) {
             return false;
         }
+
         if ($user->isSupportUser()) {
             return true;
         }
+
         if ($user->hasRole('super_admin')) {
             return true;
         }

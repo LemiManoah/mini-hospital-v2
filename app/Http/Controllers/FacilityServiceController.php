@@ -82,9 +82,9 @@ final readonly class FacilityServiceController implements HasMiddleware
     {
         try {
             $action->handle($facilityService);
-        } catch (ValidationException $exception) {
+        } catch (ValidationException $validationException) {
             return to_route('facility-services.index')
-                ->with('error', $exception->validator->errors()->first() ?: 'This facility service could not be deleted.');
+                ->with('error', $validationException->validator->errors()->first() ?: 'This facility service could not be deleted.');
         }
 
         return to_route('facility-services.index')->with('success', 'Facility service deleted successfully.');

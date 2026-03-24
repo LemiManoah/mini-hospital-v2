@@ -8,7 +8,6 @@ use App\Models\Staff;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\BranchContext;
-use Database\Seeders\SupportUserSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

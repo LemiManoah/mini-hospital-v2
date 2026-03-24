@@ -21,14 +21,14 @@ final readonly class DeleteFacilityService
 
         try {
             DB::transaction(fn () => $service->delete());
-        } catch (QueryException $exception) {
+        } catch (QueryException $queryException) {
             if ($service->orders()->exists()) {
                 throw ValidationException::withMessages([
                     'delete' => 'This facility service cannot be deleted because it has existing service orders.',
                 ]);
             }
 
-            throw $exception;
+            throw $queryException;
         }
     }
 }

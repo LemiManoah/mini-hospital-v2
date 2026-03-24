@@ -32,7 +32,7 @@ final class TenantPolicy
             return true;
         }
 
-        return $this->update($user, $tenant);
+        return $this->update($user);
     }
 
     public function manageSubscription(User $user, Tenant $tenant): bool
@@ -41,6 +41,6 @@ final class TenantPolicy
             return true;
         }
 
-        return $this->update($user, $tenant);
+        return $this->update($user);
     }
 }

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Hash;
 
 final class SupportUserSeeder extends Seeder
 {
-    public const SUPPORT_EMAIL = 'support@mini-hospital.com';
+    public const string SUPPORT_EMAIL = 'support@mini-hospital.com';
 
     /**
      * Run the database seeds.
