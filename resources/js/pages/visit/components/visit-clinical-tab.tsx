@@ -63,6 +63,9 @@ const formatMoney = (amount: number | null | undefined): string =>
               maximumFractionDigits: 0,
           }).format(amount);
 
+const releasedLabValues = (item: LabRequest['items'][number]) =>
+    item.resultEntry?.values ?? item.result_entry?.values ?? [];
+
 export function VisitClinicalTab({
     visit,
     triage,
@@ -289,6 +292,57 @@ export function VisitClinicalTab({
                                         ),
                                     )}
                                 </p>
+                                <div className="mt-3 space-y-2">
+                                    {request.items.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            className="rounded-md border bg-muted/30 p-3"
+                                        >
+                                            <p className="font-medium">
+                                                {item.test?.test_name ??
+                                                    'Lab test'}
+                                            </p>
+                                            {item.result_visible &&
+                                            releasedLabValues(item).length ? (
+                                                <div className="mt-2 space-y-2">
+                                                    {releasedLabValues(item).map(
+                                                        (value) => (
+                                                            <div
+                                                                key={value.id}
+                                                            >
+                                                                <p className="text-sm text-muted-foreground">
+                                                                    {
+                                                                        value.label
+                                                                    }
+                                                                </p>
+                                                                <p className="font-medium">
+                                                                    {value.display_value ??
+                                                                        value.value_text ??
+                                                                        value.value_numeric}
+                                                                    {value.unit
+                                                                        ? ` ${value.unit}`
+                                                                        : ''}
+                                                                </p>
+                                                                {value.reference_range ? (
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        Reference:{' '}
+                                                                        {
+                                                                            value.reference_range
+                                                                        }
+                                                                    </p>
+                                                                ) : null}
+                                                            </div>
+                                                        ),
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="mt-2 text-muted-foreground">
+                                                    Result not yet released.
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         ))
                     ) : (

@@ -55,7 +55,10 @@ final readonly class CreateLabRequest
             $request = $request->loadMissing([
                 'visit.payer',
                 'requestedBy:id,first_name,last_name',
-                'items.test:id,test_name,test_code,category',
+                'items.test:id,test_name,test_code,lab_test_category_id,result_type_id',
+                'items.test.labCategory:id,name',
+                'items.test.specimenTypes:id,name',
+                'items.test.resultTypeDefinition:id,code,name',
             ]);
 
             $this->syncLabRequestCharge->handle($request);

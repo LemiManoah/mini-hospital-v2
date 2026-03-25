@@ -189,19 +189,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
         {
             title: 'Laboratory',
-            url: dashboard(),
+            url: '/laboratory/dashboard',
             icon: FlaskConical,
             items: filterItems(
                 [
                     {
-                        title: 'Lab Queue',
-                        url: dashboard().url,
-                        permission: 'dashboard.view',
+                        title: 'Dashboard',
+                        url: '/laboratory/dashboard',
+                        permission: 'lab_requests.view',
                     },
                     {
-                        title: 'Results',
-                        url: dashboard().url,
-                        permission: 'dashboard.view',
+                        title: 'Lab Worklist',
+                        url: '/laboratory/worklist',
+                        permission: 'lab_requests.view',
+                    },
+                    {
+                        title: 'Test Categories',
+                        url: '/lab-test-categories',
+                        permission: 'lab_test_categories.view',
+                    },
+                    {
+                        title: 'Specimen Types',
+                        url: '/specimen-types',
+                        permission: 'specimen_types.view',
+                    },
+                    {
+                        title: 'Result Types',
+                        url: '/result-types',
+                        permission: 'result_types.view',
+                    },
+                    {
+                        title: 'Test Catalog',
+                        url: '/lab-test-catalogs',
+                        permission: 'lab_test_catalogs.view',
                     },
                 ],
                 hasPermission,

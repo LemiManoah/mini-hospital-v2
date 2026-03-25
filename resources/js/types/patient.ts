@@ -98,9 +98,37 @@ export interface LabTestOption {
     test_code: string;
     test_name: string;
     category: string | null;
+    specimen_type?: string | null;
+    result_type_name?: string | null;
+    result_capture_type?: string | null;
     base_price: number | null;
     quoted_price?: number | null;
     price_source?: string | null;
+}
+
+export interface LabResultValue {
+    id: string;
+    lab_test_result_parameter_id?: string | null;
+    label: string;
+    value_numeric: number | null;
+    value_text: string | null;
+    display_value?: string | null;
+    unit: string | null;
+    reference_range: string | null;
+}
+
+export interface LabResultEntry {
+    id: string;
+    result_notes: string | null;
+    review_notes: string | null;
+    approval_notes: string | null;
+    entered_at: string | null;
+    reviewed_at: string | null;
+    approved_at: string | null;
+    released_at: string | null;
+    approvedBy?: { id: string; first_name: string; last_name: string } | null;
+    approved_by?: { id: string; first_name: string; last_name: string } | null;
+    values?: LabResultValue[] | null;
 }
 
 export interface LabRequestItem {
@@ -109,7 +137,11 @@ export interface LabRequestItem {
     price: number;
     is_external: boolean;
     external_lab_name: string | null;
+    workflow_stage?: string;
+    result_visible?: boolean;
     completed_at: string | null;
+    resultEntry?: LabResultEntry | null;
+    result_entry?: LabResultEntry | null;
     test?: LabTestOption | null;
 }
 

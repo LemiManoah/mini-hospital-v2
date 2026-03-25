@@ -133,7 +133,13 @@ final readonly class PatientVisitController implements HasMiddleware
             'labRequests' => static fn ($query) => $query
                 ->with([
                     'requestedBy:id,first_name,last_name',
-                    'items.test:id,test_name,test_code,category',
+                    'items.test:id,test_name,test_code,lab_test_category_id,result_type_id',
+                    'items.test.labCategory:id,name',
+                    'items.test.specimenTypes:id,name',
+                    'items.test.resultTypeDefinition:id,code,name',
+                    'items.resultEntry:id,lab_request_item_id,approved_by,approved_at,released_at,result_notes',
+                    'items.resultEntry.approvedBy:id,first_name,last_name',
+                    'items.resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,reference_range,sort_order',
                 ])
                 ->latest('request_date'),
             'imagingRequests' => static fn ($query) => $query

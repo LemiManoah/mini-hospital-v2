@@ -37,7 +37,16 @@ Phase 3 should be considered complete when all of the following are true:
 
 ---
 
-## 3) Concrete Build Slices
+## 3) Milestone Checklist
+
+- [x] Milestone 3.1 completed: lab test catalog administration is live
+- [ ] Milestone 3.2 completed: pricing and catalog alignment is documented and agreed
+- [ ] Milestone 3.3 completed: wards and beds foundations are implemented
+- [ ] Milestone 3.4 completed: verification, permissions, and documentation are complete
+
+---
+
+## 4) Concrete Build Slices
 
 ## Slice 3.1: Lab Test Catalog Administration
 
@@ -73,6 +82,16 @@ Promote lab tests from a model-only/order-only dependency into a first-class man
 - consultation ordering reads from the same managed catalog
 - tests cover CRUD access and obvious invalid-state cases
 
+### Milestone Checklist
+
+- [x] Add `LabTestCatalogController`
+- [x] Add store/update/delete request classes and validation rules
+- [x] Add routes for lab test catalog management
+- [x] Add Inertia index/create/edit pages
+- [x] Add permission enforcement for lab test catalog actions
+- [x] Add safe disable/delete behavior for referenced tests
+- [x] Add feature tests for CRUD and access control
+
 ## Slice 3.2: Pricing & Catalog Alignment
 
 ### Objective
@@ -104,8 +123,18 @@ Align Phase 3 catalog data with the billing foundation that already exists, inst
 
 ### Definition Of Done
 
-- the team can answer "where does this item’s price come from?" for each active catalog type
+- the team can answer "where does this item's price come from?" for each active catalog type
 - Phase 3 docs no longer point toward a pricing design that the app has already outgrown
+
+### Milestone Checklist
+
+- [ ] Confirm `charge_masters` remains deferred for this phase
+- [ ] Document active pricing sources for lab tests
+- [ ] Document active pricing sources for facility services
+- [ ] Document current position for drugs pricing
+- [ ] Document future position for bed-day charging
+- [ ] Reconcile Phase 3 notes with Phase 8 billing notes
+- [ ] Update implementation docs to reflect the chosen pricing direction
 
 ## Slice 3.3: Wards & Beds Foundations
 
@@ -145,6 +174,20 @@ Wards and beds are infrastructure, not full IPD workflow. They should exist befo
 - data shape is ready for later admission and bed-allocation work
 - branch isolation is enforced in both data access and form options
 
+### Milestone Checklist
+
+- [ ] Create `wards` migration
+- [ ] Create `beds` migration
+- [ ] Add ward and bed models
+- [ ] Add ward and bed CRUD controllers
+- [ ] Add ward and bed request validation
+- [ ] Add ward and bed routes
+- [ ] Add Inertia pages for ward management
+- [ ] Add Inertia pages for bed management
+- [ ] Enforce branch ownership and branch-scoped form options
+- [ ] Add feature tests for ward and bed CRUD
+- [ ] Add branch isolation tests for wards and beds
+
 ## Slice 3.4: Verification, Permissions, and Documentation
 
 ### Objective
@@ -164,9 +207,19 @@ Finish Phase 3 with confidence instead of leaving the new admin surface lightly 
 - critical Phase 3 boundaries are covered by automated tests
 - docs accurately describe what is now implemented and what remains deferred
 
+### Milestone Checklist
+
+- [x] Add permission tests for lab test catalog administration
+- [ ] Add permission tests for ward administration
+- [ ] Add permission tests for bed administration
+- [ ] Add branch isolation coverage for all new branch-owned Phase 3 records
+- [ ] Update `implementation.md` after Phase 3 code lands
+- [ ] Review `hospital_database_schema.md` for Phase 3 alignment
+- [ ] Mark completed milestones in this file
+
 ---
 
-## 4) Recommended Implementation Order
+## 5) Recommended Implementation Order
 
 1. build `phase3.md` and align the docs around the actual current state
 2. add lab test catalog administration because consultation already depends on it
@@ -177,24 +230,24 @@ Finish Phase 3 with confidence instead of leaving the new admin surface lightly 
 
 ---
 
-## 5) Suggested Immediate Implementation Task
+## 6) Suggested Immediate Implementation Task
 
-The first code slice for Phase 3 should be:
+The next code slice for Phase 3 should be:
 
-### Build Lab Test Catalog Administration
+### Begin Slice 3.2: Pricing & Catalog Alignment
 
 That means:
 
-- add the controller, requests, routes, and pages
-- match the CRUD and permission pattern already used by drugs and facility services
-- keep the catalog tenant-safe
-- decide whether lab tests should be tenant-wide or branch-filtered and document that choice in the implementation
+- document the active pricing source for lab tests
+- align facility service pricing notes with the current billing foundation
+- confirm `charge_masters` remains deferred in this phase
+- update the implementation notes so the pricing direction is explicit before wards and beds are added
 
-This is the highest-leverage Phase 3 gap because the consultation workflow already depends on lab tests operationally.
+This is the clean next step now that the missing lab catalog admin surface has been implemented.
 
 ---
 
-## 6) Bottom Line
+## 7) Bottom Line
 
 Phase 3 is not a greenfield phase anymore. Most outpatient service catalogs already exist, and early billing foundations have started. The cleanest way to finish Phase 3 is to:
 

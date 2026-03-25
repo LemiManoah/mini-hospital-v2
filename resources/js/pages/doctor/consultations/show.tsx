@@ -96,6 +96,11 @@ const staffName = (
     staff?: { first_name: string; last_name: string } | null,
 ): string => (staff ? `${staff.first_name} ${staff.last_name}` : 'Unknown');
 
+const labItemResultValues = (item: {
+    resultEntry?: { values?: Array<{ id: string; label: string; display_value?: string | null; value_text: string | null; value_numeric: number | null; unit: string | null; reference_range: string | null }> | null } | null;
+    result_entry?: { values?: Array<{ id: string; label: string; display_value?: string | null; value_text: string | null; value_numeric: number | null; unit: string | null; reference_range: string | null }> | null } | null;
+}) => item.resultEntry?.values ?? item.result_entry?.values ?? [];
+
 function vitalSummaryItems(
     vital: VitalSign | undefined,
 ): { label: string; value: string }[] {
@@ -1222,6 +1227,90 @@ export default function DoctorConsultationShow({
                                                                 }
                                                             </p>
                                                         ) : null}
+                                                        <div className="mt-4 space-y-3">
+                                                            {request.items.map(
+                                                                (item) => {
+                                                                    const releasedValues =
+                                                                        labItemResultValues(
+                                                                            item,
+                                                                        );
+
+                                                                    return (
+                                                                        <div
+                                                                            key={
+                                                                                item.id
+                                                                            }
+                                                                            className="rounded-lg border bg-muted/30 p-3"
+                                                                        >
+                                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                                <p className="font-medium">
+                                                                                    {item
+                                                                                        .test
+                                                                                        ?.test_name ??
+                                                                                        'Lab test'}
+                                                                                </p>
+                                                                                <Badge
+                                                                                    className={cn(
+                                                                                        'border-0',
+                                                                                        statusBadgeClasses(
+                                                                                            item.status,
+                                                                                        ),
+                                                                                    )}
+                                                                                >
+                                                                                    {labelize(
+                                                                                        item.workflow_stage ??
+                                                                                            item.status,
+                                                                                    )}
+                                                                                </Badge>
+                                                                            </div>
+                                                                            {item.result_visible &&
+                                                                            releasedValues.length ? (
+                                                                                <div className="mt-3 space-y-2">
+                                                                                    {releasedValues.map(
+                                                                                        (
+                                                                                            value,
+                                                                                        ) => (
+                                                                                            <div
+                                                                                                key={
+                                                                                                    value.id
+                                                                                                }
+                                                                                                className="rounded-md border bg-background p-3"
+                                                                                            >
+                                                                                                <p className="text-sm text-muted-foreground">
+                                                                                                    {
+                                                                                                        value.label
+                                                                                                    }
+                                                                                                </p>
+                                                                                                <p className="font-medium">
+                                                                                                    {value.display_value ??
+                                                                                                        value.value_text ??
+                                                                                                        value.value_numeric}
+                                                                                                    {value.unit
+                                                                                                        ? ` ${value.unit}`
+                                                                                                        : ''}
+                                                                                                </p>
+                                                                                                {value.reference_range ? (
+                                                                                                    <p className="text-xs text-muted-foreground">
+                                                                                                        Reference:{' '}
+                                                                                                        {
+                                                                                                            value.reference_range
+                                                                                                        }
+                                                                                                    </p>
+                                                                                                ) : null}
+                                                                                            </div>
+                                                                                        ),
+                                                                                    )}
+                                                                                </div>
+                                                                            ) : (
+                                                                                <p className="mt-2 text-sm text-muted-foreground">
+                                                                                    Result not yet released.
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                },
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>

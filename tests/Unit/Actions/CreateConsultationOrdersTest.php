@@ -18,6 +18,46 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
+function seedLabCatalogRefs(): array
+{
+    $categoryId = (string) Str::uuid();
+    $specimenTypeId = (string) Str::uuid();
+    $resultTypeId = (string) Str::uuid();
+
+    DB::table('lab_test_categories')->insert([
+        'id' => $categoryId,
+        'tenant_id' => null,
+        'name' => 'Test Category '.Str::lower(Str::random(5)),
+        'description' => null,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('specimen_types')->insert([
+        'id' => $specimenTypeId,
+        'tenant_id' => null,
+        'name' => 'Test Specimen '.Str::lower(Str::random(5)),
+        'description' => null,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('result_types')->insert([
+        'id' => $resultTypeId,
+        'tenant_id' => null,
+        'code' => 'free_entry_'.Str::lower(Str::random(5)),
+        'name' => 'Free Entry Test',
+        'description' => null,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return [$categoryId, $specimenTypeId, $resultTypeId];
+}
+
 function seedConsultationContext(string $billingType = 'cash'): array
 {
     $tenantId = (string) Str::uuid();
@@ -111,17 +151,23 @@ function seedConsultationContext(string $billingType = 'cash'): array
 it('creates a lab request with priced items from the consultation context and syncs a visit charge', function (): void {
     $context = seedConsultationContext();
     $testId = (string) Str::uuid();
+    [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
 
     DB::table('lab_test_catalogs')->insert([
         'id' => $testId,
         'tenant_id' => $context['tenant_id'],
         'test_code' => 'FBC',
         'test_name' => 'Full Blood Count',
-        'category' => 'Hematology',
-        'specimen_type' => 'Blood',
+        'lab_test_category_id' => $categoryId,
+        'result_type_id' => $resultTypeId,
         'base_price' => 25000,
-        'requires_fasting' => false,
         'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    DB::table('lab_test_catalog_specimen_type')->insert([
+        'lab_test_catalog_id' => $testId,
+        'specimen_type_id' => $specimenTypeId,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -153,17 +199,23 @@ it('creates a lab request with priced items from the consultation context and sy
 it('uses insurance package prices when syncing lab request charges', function (): void {
     $context = seedConsultationContext('insurance');
     $testId = (string) Str::uuid();
+    [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
 
     DB::table('lab_test_catalogs')->insert([
         'id' => $testId,
         'tenant_id' => $context['tenant_id'],
         'test_code' => 'MPS',
         'test_name' => 'Malaria Parasite Smear',
-        'category' => 'Parasitology',
-        'specimen_type' => 'Blood',
+        'lab_test_category_id' => $categoryId,
+        'result_type_id' => $resultTypeId,
         'base_price' => 18000,
-        'requires_fasting' => false,
         'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    DB::table('lab_test_catalog_specimen_type')->insert([
+        'lab_test_catalog_id' => $testId,
+        'specimen_type_id' => $specimenTypeId,
         'created_at' => now(),
         'updated_at' => now(),
     ]);

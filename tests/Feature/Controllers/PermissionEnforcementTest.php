@@ -22,14 +22,19 @@ use App\Models\Drug;
 use App\Models\FacilityBranch;
 use App\Models\FacilityService;
 use App\Models\FacilityServiceOrder;
+use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
+use App\Models\LabTestCategory;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\SpecimenType;
 use App\Models\Staff;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\TriageRecord;
 use App\Models\User;
+use App\Models\VisitBilling;
+use App\Models\VisitPayer;
 use Database\Seeders\PermissionSeeder;
 
 beforeEach(function (): void {
@@ -179,7 +184,7 @@ function createPermissionVisit(
 ): PatientVisit {
     $sequence = nextPermissionTestSequence();
 
-    return PatientVisit::query()->create([
+    $visit = PatientVisit::query()->create([
         'tenant_id' => $tenant->id,
         'patient_id' => $patient->id,
         'facility_branch_id' => $branch?->id,
@@ -193,6 +198,24 @@ function createPermissionVisit(
         'created_by' => $user->id,
         'updated_by' => $user->id,
     ]);
+
+    $payer = VisitPayer::query()->create([
+        'tenant_id' => $tenant->id,
+        'patient_visit_id' => $visit->id,
+        'billing_type' => 'cash',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    VisitBilling::query()->create([
+        'tenant_id' => $tenant->id,
+        'facility_branch_id' => $branch?->id,
+        'patient_visit_id' => $visit->id,
+        'visit_payer_id' => $payer->id,
+        'payer_type' => $payer->billing_type,
+    ]);
+
+    return $visit;
 }
 
 function createPermissionTriage(
@@ -248,17 +271,23 @@ function createPermissionAppointment(
 function createPermissionLabTest(Tenant $tenant, Department $department): LabTestCatalog
 {
     $sequence = nextPermissionTestSequence();
+    $category = LabTestCategory::query()->where('name', 'Hematology')->firstOrFail();
+    $specimenType = SpecimenType::query()->where('name', 'Blood')->firstOrFail();
+    $resultType = LabResultType::query()->where('code', 'free_entry')->firstOrFail();
 
-    return LabTestCatalog::query()->create([
+    $labTest = LabTestCatalog::query()->create([
         'tenant_id' => $tenant->id,
         'test_code' => 'LAB-'.$sequence,
         'test_name' => 'Full Blood Count '.$sequence,
-        'category' => 'Hematology',
-        'department_id' => $department->id,
-        'specimen_type' => 'Blood',
+        'lab_test_category_id' => $category->id,
+        'result_type_id' => $resultType->id,
         'base_price' => 0,
         'is_active' => true,
     ]);
+
+    $labTest->specimenTypes()->sync([$specimenType->id]);
+
+    return $labTest->refresh();
 }
 
 function createPermissionDrug(Tenant $tenant, User $user): Drug

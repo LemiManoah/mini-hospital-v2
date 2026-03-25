@@ -52,10 +52,11 @@ const modules: Module[] = [
     },
     {
         name: 'Laboratory',
-        description: 'Lab test requests, specimen tracking and results.',
+        description:
+            'Lab test catalog, specimen workflow, and results operations.',
         icon: FlaskConical,
-        permission: 'dashboard.view',
-        href: dashboard().url,
+        permission: 'lab_requests.view',
+        href: '/laboratory/dashboard',
         category: 'Clinical',
     },
     {

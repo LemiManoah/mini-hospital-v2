@@ -135,9 +135,9 @@ This means future work should use the codebase and `patient_visit.md` as the sou
 - facility services
 - drugs
 - lab test catalog model usage in consultation ordering
+- lab test catalog administration surface
 
 ### Partial
-- lab test catalogs are used by doctor consultation order entry, but there is no complete visible lab-catalog admin module in the current route surface
 - infrastructure for chargeable service ordering exists through facility service orders, but full billing catalog implementation does not
 
 ### Not Done
