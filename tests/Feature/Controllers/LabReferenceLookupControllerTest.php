@@ -106,7 +106,7 @@ it('creates and lists tenant lab test categories', function (): void {
         ->get(route('lab-test-categories.index', ['search' => 'Molecular']));
 
     $indexResponse->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('lab-test-category/index')
             ->where('filters.search', 'Molecular')
             ->has('categories.data', 1)
@@ -155,6 +155,7 @@ it('updates and deletes a tenant specimen type', function (): void {
 
     $updateResponse->assertRedirectToRoute('specimen-types.index');
     $updateResponse->assertSessionHas('success', 'Specimen type updated successfully.');
+
     expect($specimenType->fresh()->name)->toBe('Pleural Fluid');
 
     $deleteResponse = $this->withSession(['active_branch_id' => $branch->id])
@@ -191,7 +192,7 @@ it('creates and lists result types with code search', function (): void {
         ->get(route('result-types.index', ['search' => 'semi_quantitative']));
 
     $indexResponse->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('result-type/index')
             ->where('filters.search', 'semi_quantitative')
             ->has('resultTypes.data', 1)

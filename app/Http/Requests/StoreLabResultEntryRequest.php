@@ -27,14 +27,6 @@ final class StoreLabResultEntryRequest extends FormRequest
         ];
     }
 
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'result_notes' => $this->filled('result_notes') ? $this->input('result_notes') : null,
-            'parameter_values' => is_array($this->input('parameter_values')) ? $this->input('parameter_values') : [],
-        ]);
-    }
-
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
@@ -101,6 +93,14 @@ final class StoreLabResultEntryRequest extends FormRequest
                 }
             }
         });
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'result_notes' => $this->filled('result_notes') ? $this->input('result_notes') : null,
+            'parameter_values' => is_array($this->input('parameter_values')) ? $this->input('parameter_values') : [],
+        ]);
     }
 
     private function labRequestItem(): mixed

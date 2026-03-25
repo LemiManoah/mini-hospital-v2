@@ -75,7 +75,6 @@ export interface LabTestCatalogFormPageProps {
     resultTypes: LabTestCatalogOption[];
 }
 
-export interface LabTestCatalogEditPageProps
-    extends LabTestCatalogFormPageProps {
+export interface LabTestCatalogEditPageProps extends LabTestCatalogFormPageProps {
     labTestCatalog: LabTestCatalog;
 }

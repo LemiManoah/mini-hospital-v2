@@ -40,7 +40,6 @@ final readonly class SyncLabTestCatalogConfiguration
     }
 
     /**
-     * @param  mixed  $value
      * @return array<int, string>
      */
     private function normalizedSpecimenTypeIds(mixed $value): array
@@ -57,7 +56,6 @@ final readonly class SyncLabTestCatalogConfiguration
     }
 
     /**
-     * @param  mixed  $value
      * @return array<int, array{label: string, sort_order: int, is_active: bool}>
      */
     private function normalizedResultOptions(mixed $value): array
@@ -87,7 +85,6 @@ final readonly class SyncLabTestCatalogConfiguration
     }
 
     /**
-     * @param  mixed  $value
      * @return array<int, array{label: string, unit: ?string, reference_range: ?string, value_type: string, sort_order: int, is_active: bool}>
      */
     private function normalizedResultParameters(mixed $value): array
@@ -127,9 +124,6 @@ final readonly class SyncLabTestCatalogConfiguration
             ->all();
     }
 
-    /**
-     * @param  mixed  $value
-     */
     private function syncResultOptions(LabTestCatalog $labTestCatalog, mixed $value): void
     {
         $labTestCatalog->resultOptions()->delete();
@@ -143,9 +137,6 @@ final readonly class SyncLabTestCatalogConfiguration
         $labTestCatalog->resultOptions()->createMany($payload);
     }
 
-    /**
-     * @param  mixed  $value
-     */
     private function syncResultParameters(LabTestCatalog $labTestCatalog, mixed $value): void
     {
         $labTestCatalog->resultParameters()->delete();

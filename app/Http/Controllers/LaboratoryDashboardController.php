@@ -145,7 +145,7 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
     {
         return LabRequestItem::query()->whereHas(
             'request',
-            fn (Builder $query) => $this->activeBranchWorkspace->apply($query),
+            fn (Builder $query): Builder => $this->activeBranchWorkspace->apply($query),
         );
     }
 }

@@ -13,9 +13,7 @@ export default function SpecimenTypeIndex({
             baseHref="/specimen-types"
             editBaseHref="/specimen-types"
             deleteResourceName="Specimen type"
-            breadcrumbs={[
-                { title: 'Specimen Types', href: '/specimen-types' },
-            ]}
+            breadcrumbs={[{ title: 'Specimen Types', href: '/specimen-types' }]}
             records={specimenTypes}
             filters={filters}
             createPermission="specimen_types.create"

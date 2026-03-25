@@ -22,7 +22,10 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
-import { type LabLookupRecord, type PaginatedLabLookupList } from '@/types/lab-reference';
+import {
+    type LabLookupRecord,
+    type PaginatedLabLookupList,
+} from '@/types/lab-reference';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -149,7 +152,9 @@ export function LookupIndex({
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="outline">
-                                                {isDefault ? 'Default' : 'Custom'}
+                                                {isDefault
+                                                    ? 'Default'
+                                                    : 'Custom'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
@@ -161,8 +166,9 @@ export function LookupIndex({
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                {hasPermission(updatePermission) &&
-                                                !isDefault ? (
+                                                {hasPermission(
+                                                    updatePermission,
+                                                ) && !isDefault ? (
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
@@ -175,8 +181,9 @@ export function LookupIndex({
                                                         </Link>
                                                     </Button>
                                                 ) : null}
-                                                {hasPermission(deletePermission) &&
-                                                !isDefault ? (
+                                                {hasPermission(
+                                                    deletePermission,
+                                                ) && !isDefault ? (
                                                     <DeleteConfirmationModal
                                                         title={`Delete ${deleteResourceName}`}
                                                         description={`Are you sure you want to delete "${record.name}"? This action cannot be undone.`}
@@ -223,7 +230,9 @@ export function LookupIndex({
                             <PaginationContent>
                                 <PaginationItem>
                                     <PaginationPrevious
-                                        href={records.prev_page_url ?? undefined}
+                                        href={
+                                            records.prev_page_url ?? undefined
+                                        }
                                     />
                                 </PaginationItem>
                                 {records.links.map((link, idx) => {
@@ -258,7 +267,9 @@ export function LookupIndex({
                                 })}
                                 <PaginationItem>
                                     <PaginationNext
-                                        href={records.next_page_url ?? undefined}
+                                        href={
+                                            records.next_page_url ?? undefined
+                                        }
                                     />
                                 </PaginationItem>
                             </PaginationContent>

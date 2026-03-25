@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Models\LabTestCatalog;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateLabTestCatalog
 {

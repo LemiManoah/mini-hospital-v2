@@ -27,8 +27,7 @@ export interface LabLookupIndexPageProps<T = LabLookupRecord> {
     };
 }
 
-export interface LabTestCategoryIndexPageProps
-    extends LabLookupIndexPageProps {
+export interface LabTestCategoryIndexPageProps extends LabLookupIndexPageProps {
     categories: PaginatedLabLookupList<LabLookupRecord> | LabLookupRecord[];
 }
 

@@ -12,7 +12,6 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import {
     Select,
     SelectContent,
@@ -21,6 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
     type LabTestCatalog,
@@ -88,7 +88,9 @@ export default function LabTestCatalogForm({
             labTestCatalog?.lab_test_category_id ?? categories[0]?.value ?? '',
         specimen_type_ids:
             labTestCatalog?.specimen_type_ids ??
-            labTestCatalog?.specimen_types?.map((specimenType) => specimenType.id) ??
+            labTestCatalog?.specimen_types?.map(
+                (specimenType) => specimenType.id,
+            ) ??
             [],
         result_type_id:
             labTestCatalog?.result_type_id ?? resultTypes[0]?.value ?? '',
@@ -118,8 +120,9 @@ export default function LabTestCatalogForm({
     });
 
     const selectedResultType =
-        resultTypes.find((resultType) => resultType.value === form.data.result_type_id) ??
-        null;
+        resultTypes.find(
+            (resultType) => resultType.value === form.data.result_type_id,
+        ) ?? null;
     const selectedResultTypeCode = selectedResultType?.code ?? null;
 
     const toggleSpecimenType = (
@@ -185,7 +188,9 @@ export default function LabTestCatalogForm({
         );
         form.setData(
             'result_parameters',
-            nextParameters.length > 0 ? nextParameters : [blankResultParameter()],
+            nextParameters.length > 0
+                ? nextParameters
+                : [blankResultParameter()],
         );
     };
 
@@ -267,7 +272,9 @@ export default function LabTestCatalogForm({
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
-                        <InputError message={form.errors.lab_test_category_id} />
+                        <InputError
+                            message={form.errors.lab_test_category_id}
+                        />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="base_price">Base Price</Label>
@@ -330,9 +337,10 @@ export default function LabTestCatalogForm({
                     </div>
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         {specimenTypes.map((specimenType) => {
-                            const checked = form.data.specimen_type_ids.includes(
-                                specimenType.value,
-                            );
+                            const checked =
+                                form.data.specimen_type_ids.includes(
+                                    specimenType.value,
+                                );
 
                             return (
                                 <label
@@ -379,7 +387,9 @@ export default function LabTestCatalogForm({
                             }
                         >
                             <SelectTrigger
-                                aria-invalid={Boolean(form.errors.result_type_id)}
+                                aria-invalid={Boolean(
+                                    form.errors.result_type_id,
+                                )}
                             >
                                 <SelectValue placeholder="Select result type" />
                             </SelectTrigger>
@@ -423,53 +433,57 @@ export default function LabTestCatalogForm({
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-4">
-                                {form.data.result_options.map((option, index) => (
-                                    <div
-                                        key={option.id ?? `option-${index}`}
-                                        className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-end"
-                                    >
-                                        <div className="grid flex-1 gap-2">
-                                            <Label
-                                                htmlFor={`result-option-${index}`}
-                                            >
-                                                Option Label
-                                            </Label>
-                                            <Input
-                                                id={`result-option-${index}`}
-                                                value={option.label}
-                                                onChange={(event) =>
-                                                    updateResultOption(
-                                                        index,
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="e.g. Positive"
-                                                aria-invalid={Boolean(
-                                                    form.errors[
-                                                        `result_options.${index}.label`
-                                                    ],
-                                                )}
-                                            />
-                                            <InputError
-                                                message={
-                                                    form.errors[
-                                                        `result_options.${index}.label`
-                                                    ]
-                                                }
-                                            />
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() =>
-                                                removeResultOption(index)
-                                            }
+                                {form.data.result_options.map(
+                                    (option, index) => (
+                                        <div
+                                            key={option.id ?? `option-${index}`}
+                                            className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-end"
                                         >
-                                            Remove
-                                        </Button>
-                                    </div>
-                                ))}
-                                <InputError message={form.errors.result_options} />
+                                            <div className="grid flex-1 gap-2">
+                                                <Label
+                                                    htmlFor={`result-option-${index}`}
+                                                >
+                                                    Option Label
+                                                </Label>
+                                                <Input
+                                                    id={`result-option-${index}`}
+                                                    value={option.label}
+                                                    onChange={(event) =>
+                                                        updateResultOption(
+                                                            index,
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="e.g. Positive"
+                                                    aria-invalid={Boolean(
+                                                        form.errors[
+                                                            `result_options.${index}.label`
+                                                        ],
+                                                    )}
+                                                />
+                                                <InputError
+                                                    message={
+                                                        form.errors[
+                                                            `result_options.${index}.label`
+                                                        ]
+                                                    }
+                                                />
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    removeResultOption(index)
+                                                }
+                                            >
+                                                Remove
+                                            </Button>
+                                        </div>
+                                    ),
+                                )}
+                                <InputError
+                                    message={form.errors.result_options}
+                                />
                             </CardContent>
                             <CardFooter>
                                 <Button
@@ -580,9 +594,7 @@ export default function LabTestCatalogForm({
                                                     <SelectContent>
                                                         <SelectGroup>
                                                             {resultParameterValueTypes.map(
-                                                                (
-                                                                    valueType,
-                                                                ) => (
+                                                                (valueType) => (
                                                                     <SelectItem
                                                                         key={
                                                                             valueType.value

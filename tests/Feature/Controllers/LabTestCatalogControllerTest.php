@@ -263,7 +263,7 @@ it('lists lab tests for authorized users and supports search', function (): void
         ->get(route('lab-test-catalogs.index', ['search' => 'LAB-001']));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('lab-test-catalog/index')
             ->where('filters.search', 'LAB-001')
             ->has('labTests.data', 1)

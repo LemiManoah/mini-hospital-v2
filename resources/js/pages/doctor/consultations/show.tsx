@@ -97,8 +97,28 @@ const staffName = (
 ): string => (staff ? `${staff.first_name} ${staff.last_name}` : 'Unknown');
 
 const labItemResultValues = (item: {
-    resultEntry?: { values?: Array<{ id: string; label: string; display_value?: string | null; value_text: string | null; value_numeric: number | null; unit: string | null; reference_range: string | null }> | null } | null;
-    result_entry?: { values?: Array<{ id: string; label: string; display_value?: string | null; value_text: string | null; value_numeric: number | null; unit: string | null; reference_range: string | null }> | null } | null;
+    resultEntry?: {
+        values?: Array<{
+            id: string;
+            label: string;
+            display_value?: string | null;
+            value_text: string | null;
+            value_numeric: number | null;
+            unit: string | null;
+            reference_range: string | null;
+        }> | null;
+    } | null;
+    result_entry?: {
+        values?: Array<{
+            id: string;
+            label: string;
+            display_value?: string | null;
+            value_text: string | null;
+            value_numeric: number | null;
+            unit: string | null;
+            reference_range: string | null;
+        }> | null;
+    } | null;
 }) => item.resultEntry?.values ?? item.result_entry?.values ?? [];
 
 function vitalSummaryItems(
@@ -1303,7 +1323,10 @@ export default function DoctorConsultationShow({
                                                                                 </div>
                                                                             ) : (
                                                                                 <p className="mt-2 text-sm text-muted-foreground">
-                                                                                    Result not yet released.
+                                                                                    Result
+                                                                                    not
+                                                                                    yet
+                                                                                    released.
                                                                                 </p>
                                                                             )}
                                                                         </div>

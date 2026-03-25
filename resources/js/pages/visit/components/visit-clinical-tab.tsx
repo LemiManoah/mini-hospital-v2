@@ -305,35 +305,31 @@ export function VisitClinicalTab({
                                             {item.result_visible &&
                                             releasedLabValues(item).length ? (
                                                 <div className="mt-2 space-y-2">
-                                                    {releasedLabValues(item).map(
-                                                        (value) => (
-                                                            <div
-                                                                key={value.id}
-                                                            >
-                                                                <p className="text-sm text-muted-foreground">
+                                                    {releasedLabValues(
+                                                        item,
+                                                    ).map((value) => (
+                                                        <div key={value.id}>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                {value.label}
+                                                            </p>
+                                                            <p className="font-medium">
+                                                                {value.display_value ??
+                                                                    value.value_text ??
+                                                                    value.value_numeric}
+                                                                {value.unit
+                                                                    ? ` ${value.unit}`
+                                                                    : ''}
+                                                            </p>
+                                                            {value.reference_range ? (
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    Reference:{' '}
                                                                     {
-                                                                        value.label
+                                                                        value.reference_range
                                                                     }
                                                                 </p>
-                                                                <p className="font-medium">
-                                                                    {value.display_value ??
-                                                                        value.value_text ??
-                                                                        value.value_numeric}
-                                                                    {value.unit
-                                                                        ? ` ${value.unit}`
-                                                                        : ''}
-                                                                </p>
-                                                                {value.reference_range ? (
-                                                                    <p className="text-xs text-muted-foreground">
-                                                                        Reference:{' '}
-                                                                        {
-                                                                            value.reference_range
-                                                                        }
-                                                                    </p>
-                                                                ) : null}
-                                                            </div>
-                                                        ),
-                                                    )}
+                                                            ) : null}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             ) : (
                                                 <p className="mt-2 text-muted-foreground">

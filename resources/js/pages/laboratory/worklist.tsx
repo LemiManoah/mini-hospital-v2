@@ -251,7 +251,8 @@ function QueueCard({ request }: { request: LaboratoryQueueRequest }) {
                                 <p className="text-sm text-muted-foreground">
                                     {item.test?.test_code ?? 'N/A'} |{' '}
                                     {item.test?.category ?? 'Uncategorized'} |{' '}
-                                    {item.test?.specimen_type ?? 'Specimen not set'}
+                                    {item.test?.specimen_type ??
+                                        'Specimen not set'}
                                 </p>
                             </div>
 
@@ -273,4 +274,3 @@ function QueueCard({ request }: { request: LaboratoryQueueRequest }) {
         </Card>
     );
 }
-

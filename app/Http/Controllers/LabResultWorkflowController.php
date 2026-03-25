@@ -13,6 +13,7 @@ use App\Http\Requests\ReviewLabResultEntryRequest;
 use App\Http\Requests\StoreLabResultEntryRequest;
 use App\Models\LabRequestItem;
 use App\Support\ActiveBranchWorkspace;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -40,7 +41,7 @@ final readonly class LabResultWorkflowController implements HasMiddleware
         return $this->handleAction(
             $request,
             $labRequestItem,
-            fn (string $staffId) => $action->handle($labRequestItem, $staffId),
+            fn (string $staffId): LabRequestItem => $action->handle($labRequestItem, $staffId),
             'Lab request item received successfully.',
         );
     }
@@ -53,7 +54,7 @@ final readonly class LabResultWorkflowController implements HasMiddleware
         return $this->handleAction(
             $request,
             $labRequestItem,
-            fn (string $staffId) => $action->handle($labRequestItem, $request->validated(), $staffId),
+            fn (string $staffId): LabRequestItem => $action->handle($labRequestItem, $request->validated(), $staffId),
             'Lab results saved successfully.',
         );
     }
@@ -66,7 +67,7 @@ final readonly class LabResultWorkflowController implements HasMiddleware
         return $this->handleAction(
             $request,
             $labRequestItem,
-            fn (string $staffId) => $action->handle(
+            fn (string $staffId): LabRequestItem => $action->handle(
                 $labRequestItem,
                 $staffId,
                 $this->nullableText($request->input('review_notes')),
@@ -83,7 +84,7 @@ final readonly class LabResultWorkflowController implements HasMiddleware
         return $this->handleAction(
             $request,
             $labRequestItem,
-            fn (string $staffId) => $action->handle(
+            fn (string $staffId): LabRequestItem => $action->handle(
                 $labRequestItem,
                 $staffId,
                 $this->nullableText($request->input('approval_notes')),
@@ -93,12 +94,12 @@ final readonly class LabResultWorkflowController implements HasMiddleware
     }
 
     /**
-     * @param  \Closure(string): mixed  $callback
+     * @param  Closure(string):mixed  $callback
      */
     private function handleAction(
         Request $request,
         LabRequestItem $labRequestItem,
-        \Closure $callback,
+        Closure $callback,
         string $successMessage,
     ): RedirectResponse {
         $labRequest = $labRequestItem->request()->firstOrFail();

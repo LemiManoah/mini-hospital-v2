@@ -52,7 +52,8 @@ const labelize = (value: string | null | undefined): string =>
 
 const actorName = (
     actor?: { first_name: string; last_name: string } | null,
-): string => (actor ? `${actor.first_name} ${actor.last_name}` : 'Not recorded');
+): string =>
+    actor ? `${actor.first_name} ${actor.last_name}` : 'Not recorded';
 
 const workflowVariant = (
     workflowStage: string,
@@ -123,7 +124,9 @@ export default function LaboratoryRequestItemShow({
         ),
     });
 
-    const reviewForm = useForm({ review_notes: resultEntry?.review_notes ?? '' });
+    const reviewForm = useForm({
+        review_notes: resultEntry?.review_notes ?? '',
+    });
     const approvalForm = useForm({
         approval_notes: resultEntry?.approval_notes ?? '',
     });
@@ -138,7 +141,9 @@ export default function LaboratoryRequestItemShow({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Lab Workflow ${labRequestItem.test?.test_name ?? ''}`} />
+            <Head
+                title={`Lab Workflow ${labRequestItem.test?.test_name ?? ''}`}
+            />
             <div className="m-4 flex flex-col gap-6">
                 <Card>
                     <CardHeader>
@@ -746,9 +751,7 @@ export default function LaboratoryRequestItemShow({
                                     <div className="flex justify-end md:col-span-2">
                                         <Button
                                             type="submit"
-                                            disabled={
-                                                consumableForm.processing
-                                            }
+                                            disabled={consumableForm.processing}
                                         >
                                             Add Consumable Usage
                                         </Button>
@@ -790,7 +793,9 @@ export default function LaboratoryRequestItemShow({
                                                             </p>
                                                             {usage.notes ? (
                                                                 <p className="text-sm">
-                                                                    {usage.notes}
+                                                                    {
+                                                                        usage.notes
+                                                                    }
                                                                 </p>
                                                             ) : null}
                                                         </div>
@@ -940,4 +945,3 @@ export default function LaboratoryRequestItemShow({
         </AppLayout>
     );
 }
-

@@ -9,9 +9,9 @@ use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
 use App\Models\LabRequestItem;
+use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
 use App\Models\LabTestCategory;
-use App\Models\LabResultType;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\SpecimenType;
@@ -176,7 +176,7 @@ it('shows the laboratory worklist to authorized users', function (): void {
         ->get(route('laboratory.worklist.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('laboratory/worklist')
             ->has('requests.data', 1)
             ->has('requests.data.0.items', 1));
@@ -192,7 +192,7 @@ it('shows the laboratory dashboard to authorized users', function (): void {
         ->get(route('laboratory.dashboard.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('laboratory/dashboard')
             ->has('metrics', 4)
             ->has('request_status_counts')

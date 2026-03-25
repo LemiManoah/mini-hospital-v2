@@ -72,21 +72,6 @@ final class StoreLabTestCatalogRequest extends FormRequest
         ];
     }
 
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'description' => $this->filled('description') ? $this->input('description') : null,
-            'specimen_type_ids' => collect($this->input('specimen_type_ids', []))
-                ->filter(static fn (mixed $value): bool => is_string($value) && $value !== '')
-                ->unique()
-                ->values()
-                ->all(),
-            'is_active' => $this->boolean('is_active', true),
-            'result_options' => is_array($this->input('result_options')) ? $this->input('result_options') : [],
-            'result_parameters' => is_array($this->input('result_parameters')) ? $this->input('result_parameters') : [],
-        ]);
-    }
-
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
@@ -100,6 +85,21 @@ final class StoreLabTestCatalogRequest extends FormRequest
                 $validator->errors()->add('result_parameters', 'Add at least one result parameter for parameter panel tests.');
             }
         });
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'description' => $this->filled('description') ? $this->input('description') : null,
+            'specimen_type_ids' => collect($this->input('specimen_type_ids', []))
+                ->filter(static fn (mixed $value): bool => is_string($value) && $value !== '')
+                ->unique()
+                ->values()
+                ->all(),
+            'is_active' => $this->boolean('is_active', true),
+            'result_options' => is_array($this->input('result_options')) ? $this->input('result_options') : [],
+            'result_parameters' => is_array($this->input('result_parameters')) ? $this->input('result_parameters') : [],
+        ]);
     }
 
     private function selectedResultTypeCode(): ?string
