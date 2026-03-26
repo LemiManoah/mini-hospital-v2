@@ -1,4 +1,13 @@
 import InputError from '@/components/input-error';
+import { VisitOrderDialog } from '@/components/visit-order-dialog';
+import {
+    FacilityServiceOrdersList,
+    ImagingOrdersList,
+    LabOrdersList,
+    type OrderTabValue,
+    OrderAccessMessage,
+    PrescriptionOrdersList,
+} from '@/components/visit-ordering';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -275,6 +284,7 @@ export default function DoctorConsultationShow({
 
     const labForm = useForm({
         test_ids: [] as string[],
+        redirect_to: 'consultation',
     });
     const imagingForm = useForm({
         modality: imagingModalities[0]?.value ?? 'xray',
@@ -289,12 +299,15 @@ export default function DoctorConsultationShow({
         requires_contrast: false,
         contrast_allergy_status: '',
         pregnancy_status: 'unknown',
+        redirect_to: 'consultation',
     });
     const prescriptionForm = useForm({
         items: [createPrescriptionItem()],
+        redirect_to: 'consultation',
     });
     const serviceForm = useForm({
         facility_service_id: '',
+        redirect_to: 'consultation',
     });
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -307,9 +320,14 @@ export default function DoctorConsultationShow({
     ];
 
     const canPlaceOrders =
-        consultation != null &&
-        !isConsultationFinalized &&
-        canUpdateConsultation;
+        !isConsultationFinalized && canUpdateConsultation;
+    const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+    const [orderDialogTab, setOrderDialogTab] =
+        useState<OrderTabValue>('lab');
+    const openOrderDialog = (tab: OrderTabValue) => {
+        setOrderDialogTab(tab);
+        setOrderDialogOpen(true);
+    };
     const toggleLabTest = (testId: string, checked: boolean) =>
         labForm.setData(
             'test_ids',
@@ -390,6 +408,15 @@ export default function DoctorConsultationShow({
                                 Back to Consultation Queue
                             </Link>
                         </Button>
+                        {canPlaceOrders ? (
+                            <Button
+                                variant="outline"
+                                onClick={() => openOrderDialog('lab')}
+                            >
+                                <Plus data-icon="inline-start" />
+                                Open Order Center
+                            </Button>
+                        ) : null}
                         {canViewVisit ? (
                             <Button variant="outline" asChild>
                                 <Link href={`/visits/${visit.id}`}>
@@ -1056,7 +1083,7 @@ export default function DoctorConsultationShow({
                                                 onSubmit={(event) => {
                                                     event.preventDefault();
                                                     labForm.post(
-                                                        `/doctors/consultations/${visit.id}/lab-requests`,
+                                                        `/visits/${visit.id}/lab-requests`,
                                                         {
                                                             preserveState: true,
                                                             preserveScroll: true,
@@ -1369,7 +1396,7 @@ export default function DoctorConsultationShow({
                                                 onSubmit={(event) => {
                                                     event.preventDefault();
                                                     prescriptionForm.post(
-                                                        `/doctors/consultations/${visit.id}/prescriptions`,
+                                                        `/visits/${visit.id}/prescriptions`,
                                                         {
                                                             preserveState: true,
                                                             preserveScroll: true,
@@ -1929,7 +1956,7 @@ export default function DoctorConsultationShow({
                                                 onSubmit={(event) => {
                                                     event.preventDefault();
                                                     imagingForm.post(
-                                                        `/doctors/consultations/${visit.id}/imaging-requests`,
+                                                        `/visits/${visit.id}/imaging-requests`,
                                                     );
                                                 }}
                                             >
@@ -2370,7 +2397,7 @@ export default function DoctorConsultationShow({
                                                 onSubmit={(event) => {
                                                     event.preventDefault();
                                                     serviceForm.post(
-                                                        `/doctors/consultations/${visit.id}/facility-service-orders`,
+                                                        `/visits/${visit.id}/facility-service-orders`,
                                                         {
                                                             preserveState: true,
                                                             preserveScroll: true,
@@ -2573,8 +2600,12 @@ export default function DoctorConsultationShow({
                                                                         size="sm"
                                                                         onClick={() =>
                                                                             router.delete(
-                                                                                `/doctors/consultations/${visit.id}/facility-service-orders/${order.id}`,
+                                                                                `/visits/${visit.id}/facility-service-orders/${order.id}`,
                                                                                 {
+                                                                                    data: {
+                                                                                        redirect_to:
+                                                                                            'consultation',
+                                                                                    },
                                                                                     preserveState: true,
                                                                                     preserveScroll: true,
                                                                                     onSuccess:
@@ -2789,6 +2820,22 @@ export default function DoctorConsultationShow({
                         </Card>
                     </div>
                 </div>
+
+                <VisitOrderDialog
+                    open={orderDialogOpen}
+                    onOpenChange={setOrderDialogOpen}
+                    initialTab={orderDialogTab}
+                    redirectTo="consultation"
+                    visit={visit}
+                    labTestOptions={labTestOptions}
+                    drugOptions={drugOptions}
+                    labPriorities={labPriorities}
+                    imagingModalities={imagingModalities}
+                    imagingPriorities={imagingPriorities}
+                    imagingLateralities={imagingLateralities}
+                    pregnancyStatuses={pregnancyStatuses}
+                    facilityServiceOptions={facilityServiceOptions}
+                />
             </div>
         </AppLayout>
     );

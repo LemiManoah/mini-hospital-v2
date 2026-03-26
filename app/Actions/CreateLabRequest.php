@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Models\Consultation;
 use App\Models\LabRequest;
 use App\Models\LabTestCatalog;
+use App\Models\PatientVisit;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -16,8 +17,10 @@ final readonly class CreateLabRequest
         private SyncLabRequestCharge $syncLabRequestCharge,
     ) {}
 
-    public function handle(Consultation $consultation, array $data, string $staffId): LabRequest
+    public function handle(Consultation|PatientVisit $context, array $data, string $staffId): LabRequest
     {
+        [$visit, $consultation] = $this->resolveContext($context);
+
         /** @var array<int, string> $testIds */
         $testIds = array_values(array_unique(array_filter($data['test_ids'] ?? [], is_string(...))));
 
@@ -27,18 +30,18 @@ final readonly class CreateLabRequest
             ->where('is_active', true)
             ->get(['id', 'base_price']);
 
-        return DB::transaction(function () use ($consultation, $data, $staffId, $tests): LabRequest {
+        return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $tests): LabRequest {
             $request = LabRequest::query()->create([
-                'tenant_id' => $consultation->tenant_id,
-                'facility_branch_id' => $consultation->facility_branch_id,
-                'visit_id' => $consultation->visit_id,
-                'consultation_id' => $consultation->id,
+                'tenant_id' => $visit->tenant_id,
+                'facility_branch_id' => $visit->facility_branch_id,
+                'visit_id' => $visit->id,
+                'consultation_id' => $consultation?->id,
                 'requested_by' => $staffId,
                 'request_date' => now(),
                 'clinical_notes' => $this->nullableText($data['clinical_notes'] ?? null),
                 'priority' => $data['priority'],
                 'status' => 'requested',
-                'diagnosis_code' => $this->nullableText($data['diagnosis_code'] ?? $consultation->primary_icd10_code),
+                'diagnosis_code' => $this->nullableText($data['diagnosis_code'] ?? $consultation?->primary_icd10_code),
                 'is_stat' => (bool) ($data['is_stat'] ?? false),
                 'billing_status' => 'pending',
             ]);
@@ -65,6 +68,18 @@ final readonly class CreateLabRequest
 
             return $request;
         });
+    }
+
+    /**
+     * @return array{0: PatientVisit, 1: Consultation|null}
+     */
+    private function resolveContext(Consultation|PatientVisit $context): array
+    {
+        if ($context instanceof Consultation) {
+            return [$context->visit()->firstOrFail(), $context];
+        }
+
+        return [$context, $context->consultation];
     }
 
     private function nullableText(mixed $value): ?string

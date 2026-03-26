@@ -24,12 +24,12 @@ final class DoctorConsultationAccess
         return $staffId;
     }
 
-    public function authorizeVisit(PatientVisit $visit, ?string $staffId): void
+    public function authorizeVisit(PatientVisit $visit, ?string $staffId, bool $requireTriage = true): void
     {
-        abort_unless($this->canAccessVisit($visit, $staffId), 403, 'You do not have access to this consultation workspace.');
+        abort_unless($this->canAccessVisit($visit, $staffId, $requireTriage), 403, 'You do not have access to this consultation workspace.');
     }
 
-    public function canAccessVisit(PatientVisit $visit, ?string $staffId): bool
+    public function canAccessVisit(PatientVisit $visit, ?string $staffId, bool $requireTriage = true): bool
     {
         if ($visit->facility_branch_id !== BranchContext::getActiveBranchId()) {
             return false;
@@ -39,7 +39,7 @@ final class DoctorConsultationAccess
             return false;
         }
 
-        if (! $visit->triage()->exists()) {
+        if ($requireTriage && ! $visit->triage()->exists()) {
             return false;
         }
 

@@ -14,13 +14,23 @@ import { VisitSidebar } from './components/visit-sidebar';
 
 export default function VisitShow({
     visit,
+    activeTab,
+    activeClinicalTab,
+    labTestOptions,
+    drugOptions,
+    labPriorities,
+    imagingModalities,
+    imagingPriorities,
+    imagingLateralities,
+    pregnancyStatuses,
+    facilityServiceOptions,
     availableTransitions,
     paymentMethods,
     completionCheck,
     triageGrades,
 }: VisitShowPageProps) {
     const { hasPermission } = usePermissions();
-    const [selectedTab, setSelectedTab] = useState('overview');
+    const [selectedTab, setSelectedTab] = useState(activeTab || 'overview');
     const canViewPatient = hasPermission('patients.view');
     const canViewTriage = hasPermission('triage.view');
     const canViewConsultation = hasPermission('consultations.view');
@@ -100,6 +110,22 @@ export default function VisitShow({
                                     triageGrades={triageGrades}
                                     canViewTriage={canViewTriage}
                                     canViewConsultation={canViewConsultation}
+                                    canManageOrders={hasPermission(
+                                        'consultations.update',
+                                    )}
+                                    activeOrderTab={activeClinicalTab}
+                                    labTestOptions={labTestOptions}
+                                    drugOptions={drugOptions}
+                                    labPriorities={labPriorities}
+                                    imagingModalities={imagingModalities}
+                                    imagingPriorities={imagingPriorities}
+                                    imagingLateralities={
+                                        imagingLateralities
+                                    }
+                                    pregnancyStatuses={pregnancyStatuses}
+                                    facilityServiceOptions={
+                                        facilityServiceOptions
+                                    }
                                 />
                             </TabsContent>
 

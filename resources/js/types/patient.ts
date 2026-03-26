@@ -191,7 +191,7 @@ export interface PrescriptionItem {
 export interface Prescription {
     id: string;
     visit_id: string;
-    consultation_id: string;
+    consultation_id: string | null;
     prescribed_by: string;
     prescription_date: string;
     is_discharge_medication: boolean;
@@ -457,6 +457,8 @@ export interface ReturningPatientsPageProps extends VisitFormOptions {
 
 export interface VisitShowPageProps {
     visit: PatientVisit;
+    activeTab: string;
+    activeClinicalTab: string;
     availableTransitions: { value: string; label: string }[];
     completionCheck?: VisitCompletionCheck;
     paymentMethods: { value: string; label: string }[];
@@ -467,6 +469,14 @@ export interface VisitShowPageProps {
     clinics: { id: string; name: string }[];
     temperatureUnits: { value: string; label: string }[];
     bloodGlucoseUnits: { value: string; label: string }[];
+    labTestOptions: LabTestOption[];
+    drugOptions: DrugOption[];
+    labPriorities: { value: string; label: string }[];
+    imagingModalities: { value: string; label: string }[];
+    imagingPriorities: { value: string; label: string }[];
+    imagingLateralities: { value: string; label: string }[];
+    pregnancyStatuses: { value: string; label: string }[];
+    facilityServiceOptions: FacilityServiceOption[];
 }
 
 export interface DoctorConsultationIndexPageProps {

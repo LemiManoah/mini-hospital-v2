@@ -23,6 +23,7 @@ use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
+use App\Support\VisitOrderOptions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -40,6 +41,7 @@ final readonly class PatientVisitController implements HasMiddleware
 {
     public function __construct(
         private ActiveBranchWorkspace $activeBranchWorkspace,
+        private VisitOrderOptions $visitOrderOptions,
     ) {}
 
     public static function middleware(): array
@@ -96,7 +98,7 @@ final readonly class PatientVisitController implements HasMiddleware
         ]);
     }
 
-    public function show(PatientVisit $visit, AssessPatientVisitCompletion $assessment): Response
+    public function show(Request $request, PatientVisit $visit, AssessPatientVisitCompletion $assessment): Response
     {
         $this->activeBranchWorkspace->authorizeModel($visit);
 
@@ -165,6 +167,8 @@ final readonly class PatientVisitController implements HasMiddleware
 
         return Inertia::render('visit/show', [
             'visit' => $visit,
+            'activeTab' => $request->query('tab', 'overview'),
+            'activeClinicalTab' => $request->query('clinical_tab', 'lab'),
             'availableTransitions' => $this->availableTransitions($visit),
             'completionCheck' => $assessment->handle($visit),
             'triageGrades' => $this->enumOptions(TriageGrade::cases()),
@@ -191,6 +195,7 @@ final readonly class PatientVisitController implements HasMiddleware
                 ['value' => 'mobile_money', 'label' => 'Mobile Money'],
                 ['value' => 'bank_transfer', 'label' => 'Bank Transfer'],
             ],
+            ...$this->visitOrderOptions->forVisit($visit),
         ]);
     }
 

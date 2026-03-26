@@ -1,14 +1,28 @@
+import { VisitOrderDialog } from '@/components/visit-order-dialog';
+import {
+    FacilityServiceOrdersList,
+    ImagingOrdersList,
+    LabOrdersList,
+    type OrderTabValue,
+    OrderAccessMessage,
+    OrderSectionHeader,
+    PrescriptionOrdersList,
+} from '@/components/visit-ordering';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+    type DrugOption,
+    type FacilityServiceOption,
     type FacilityServiceOrder,
     type ImagingRequest,
     type LabRequest,
     type Prescription,
     type VitalSign,
 } from '@/types/patient';
-import { Link } from '@inertiajs/react';
-import { HeartPulse, NotebookPen } from 'lucide-react';
+import { router, Link } from '@inertiajs/react';
+import { ClipboardPlus, HeartPulse, NotebookPen, Plus } from 'lucide-react';
+import { useState } from 'react';
 import {
     findLabel,
     formatDateTime,
@@ -32,6 +46,8 @@ type ClinicalTriage = {
 type VisitClinicalTabProps = {
     visit: {
         id: string;
+        triage?: ClinicalTriage | null;
+        consultation?: { completed_at?: string | null } | null;
         labRequests?: LabRequest[] | null;
         lab_requests?: LabRequest[] | null;
         prescriptions?: Prescription[] | null;
@@ -44,6 +60,7 @@ type VisitClinicalTabProps = {
     consultation:
         | {
               started_at: string;
+              completed_at?: string | null;
               primary_diagnosis?: string | null;
               doctor?: { first_name: string; last_name: string } | null;
           }
@@ -52,19 +69,30 @@ type VisitClinicalTabProps = {
     triageGrades: { value: string; label: string }[];
     canViewTriage: boolean;
     canViewConsultation: boolean;
+    canManageOrders: boolean;
+    activeOrderTab: string;
+    labTestOptions: Array<{
+        id: string;
+        test_code: string;
+        test_name: string;
+        category: string | null;
+        base_price: number | null;
+        quoted_price?: number | null;
+        price_source?: string | null;
+    }>;
+    drugOptions: DrugOption[];
+    labPriorities: { value: string; label: string }[];
+    imagingModalities: { value: string; label: string }[];
+    imagingPriorities: { value: string; label: string }[];
+    imagingLateralities: { value: string; label: string }[];
+    pregnancyStatuses: { value: string; label: string }[];
+    facilityServiceOptions: FacilityServiceOption[];
 };
 
-const formatMoney = (amount: number | null | undefined): string =>
-    amount === null || amount === undefined
-        ? 'Not priced'
-        : new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'UGX',
-              maximumFractionDigits: 0,
-          }).format(amount);
-
-const releasedLabValues = (item: LabRequest['items'][number]) =>
-    item.resultEntry?.values ?? item.result_entry?.values ?? [];
+const toOrderTab = (value: string): OrderTabValue =>
+    ['lab', 'prescriptions', 'imaging', 'services'].includes(value)
+        ? (value as OrderTabValue)
+        : 'lab';
 
 export function VisitClinicalTab({
     visit,
@@ -73,6 +101,16 @@ export function VisitClinicalTab({
     triageGrades,
     canViewTriage,
     canViewConsultation,
+    canManageOrders,
+    activeOrderTab,
+    labTestOptions,
+    drugOptions,
+    labPriorities,
+    imagingModalities,
+    imagingPriorities,
+    imagingLateralities,
+    pregnancyStatuses,
+    facilityServiceOptions,
 }: VisitClinicalTabProps) {
     const latestVital = (triage?.vitalSigns ?? triage?.vital_signs ?? [])[0];
     const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
@@ -81,6 +119,15 @@ export function VisitClinicalTab({
         visit.imagingRequests ?? visit.imaging_requests ?? [];
     const facilityServiceOrders =
         visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
+    const isConsultationFinalized = consultation?.completed_at != null;
+    const [selectedOrderTab, setSelectedOrderTab] = useState<OrderTabValue>(
+        toOrderTab(activeOrderTab),
+    );
+    const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+    const openOrderDialog = (tab: OrderTabValue) => {
+        setSelectedOrderTab(tab);
+        setOrderDialogOpen(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -196,7 +243,7 @@ export function VisitClinicalTab({
                         <div className="flex justify-end">
                             <Button asChild>
                                 <Link href={`/triage/${visit.id}`}>
-                                    <HeartPulse className="mr-2 h-4 w-4" />
+                                    <HeartPulse data-icon="inline-start" />
                                     {triage
                                         ? 'Continue in Triage Workspace'
                                         : 'Open Triage Workspace'}
@@ -245,7 +292,7 @@ export function VisitClinicalTab({
                                         <Link
                                             href={`/doctors/consultations/${visit.id}`}
                                         >
-                                            <NotebookPen className="mr-2 h-4 w-4" />
+                                            <NotebookPen data-icon="inline-start" />
                                             Continue Consultation
                                         </Link>
                                     </Button>
@@ -253,204 +300,154 @@ export function VisitClinicalTab({
                             ) : null}
                         </>
                     ) : (
-                        <p className="text-muted-foreground">
-                            Consultation has not been started yet. Use the
-                            dedicated doctors workspace after triage.
-                        </p>
-                    )}
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Ordered Labs</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                    {labRequests.length ? (
-                        labRequests.map((request) => (
-                            <div
-                                key={request.id}
-                                className="rounded-lg border p-3"
-                            >
-                                <p className="font-medium">
-                                    {request.items
-                                        .map((item) => item.test?.test_name)
-                                        .filter(Boolean)
-                                        .join(', ') || 'Lab request'}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    Requested{' '}
-                                    {formatDateTime(request.request_date)}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    Estimated total:{' '}
-                                    {formatMoney(
-                                        request.items.reduce(
-                                            (total, item) =>
-                                                total + (item.price ?? 0),
-                                            0,
-                                        ),
-                                    )}
-                                </p>
-                                <div className="mt-3 space-y-2">
-                                    {request.items.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            className="rounded-md border bg-muted/30 p-3"
+                        <div className="space-y-3">
+                            <p className="text-muted-foreground">
+                                Consultation has not been started yet. You can
+                                still place visit orders from here for test-only
+                                or procedure-only visits.
+                            </p>
+                            {canViewConsultation ? (
+                                <div className="flex justify-end">
+                                    <Button variant="outline" asChild>
+                                        <Link
+                                            href={`/doctors/consultations/${visit.id}`}
                                         >
-                                            <p className="font-medium">
-                                                {item.test?.test_name ??
-                                                    'Lab test'}
-                                            </p>
-                                            {item.result_visible &&
-                                            releasedLabValues(item).length ? (
-                                                <div className="mt-2 space-y-2">
-                                                    {releasedLabValues(
-                                                        item,
-                                                    ).map((value) => (
-                                                        <div key={value.id}>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                {value.label}
-                                                            </p>
-                                                            <p className="font-medium">
-                                                                {value.display_value ??
-                                                                    value.value_text ??
-                                                                    value.value_numeric}
-                                                                {value.unit
-                                                                    ? ` ${value.unit}`
-                                                                    : ''}
-                                                            </p>
-                                                            {value.reference_range ? (
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    Reference:{' '}
-                                                                    {
-                                                                        value.reference_range
-                                                                    }
-                                                                </p>
-                                                            ) : null}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <p className="mt-2 text-muted-foreground">
-                                                    Result not yet released.
-                                                </p>
-                                            )}
-                                        </div>
-                                    ))}
+                                            <ClipboardPlus data-icon="inline-start" />
+                                            Open Consultation Workspace
+                                        </Link>
+                                    </Button>
                                 </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-muted-foreground">
-                            No lab requests recorded for this visit yet.
-                        </p>
+                            ) : null}
+                        </div>
                     )}
                 </CardContent>
             </Card>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Prescriptions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                    {prescriptions.length ? (
-                        prescriptions.map((prescription) => (
-                            <div
-                                key={prescription.id}
-                                className="rounded-lg border p-3"
-                            >
-                                <p className="font-medium">
-                                    {prescription.primary_diagnosis ||
-                                        'Prescription'}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    Written{' '}
-                                    {formatDateTime(
-                                        prescription.prescription_date,
-                                    )}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    {prescription.items
-                                        .map((item) => item.drug?.generic_name)
-                                        .filter(Boolean)
-                                        .join(', ') || 'No items'}
-                                </p>
+                <OrderSectionHeader
+                    title="Visit Orders"
+                    description="Use the order center to add lab tests, imaging, prescriptions, or services during this visit."
+                    action={
+                        canManageOrders && !isConsultationFinalized ? (
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openOrderDialog('lab')}
+                                >
+                                    <Plus data-icon="inline-start" />
+                                    Order Lab
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        openOrderDialog('prescriptions')
+                                    }
+                                >
+                                    <Plus data-icon="inline-start" />
+                                    Add Prescription
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openOrderDialog('imaging')}
+                                >
+                                    <Plus data-icon="inline-start" />
+                                    Order Imaging
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openOrderDialog('services')}
+                                >
+                                    <Plus data-icon="inline-start" />
+                                    Order Service
+                                </Button>
                             </div>
-                        ))
-                    ) : (
-                        <p className="text-muted-foreground">
-                            No prescriptions recorded for this visit yet.
-                        </p>
-                    )}
+                        ) : null
+                    }
+                />
+                <CardContent className="space-y-6">
+                    <OrderAccessMessage
+                        canManageOrders={canManageOrders}
+                        isConsultationFinalized={isConsultationFinalized}
+                    />
+
+                    <Tabs
+                        value={selectedOrderTab}
+                        onValueChange={(value) =>
+                            setSelectedOrderTab(value as OrderTabValue)
+                        }
+                        className="space-y-4"
+                    >
+                        <TabsList variant="line" className="w-full justify-start">
+                            <TabsTrigger value="lab">Lab</TabsTrigger>
+                            <TabsTrigger value="prescriptions">
+                                Prescriptions
+                            </TabsTrigger>
+                            <TabsTrigger value="imaging">Imaging</TabsTrigger>
+                            <TabsTrigger value="services">Services</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="lab">
+                            <LabOrdersList
+                                labRequests={labRequests}
+                                emptyMessage="No lab requests recorded for this visit yet."
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="prescriptions">
+                            <PrescriptionOrdersList
+                                prescriptions={prescriptions}
+                                emptyMessage="No prescriptions recorded for this visit yet."
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="imaging">
+                            <ImagingOrdersList
+                                imagingRequests={imagingRequests}
+                                emptyMessage="No imaging requests recorded for this visit yet."
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="services">
+                            <FacilityServiceOrdersList
+                                orders={facilityServiceOrders}
+                                emptyMessage="No facility service orders recorded for this visit yet."
+                                canRemovePending={
+                                    canManageOrders && !isConsultationFinalized
+                                }
+                                onRemovePending={(order) =>
+                                    router.delete(
+                                        `/visits/${visit.id}/facility-service-orders/${order.id}`,
+                                        {
+                                            data: { redirect_to: 'visit' },
+                                            preserveScroll: true,
+                                        },
+                                    )
+                                }
+                            />
+                        </TabsContent>
+                    </Tabs>
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Imaging Requests</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                    {imagingRequests.length ? (
-                        imagingRequests.map((request) => (
-                            <div
-                                key={request.id}
-                                className="rounded-lg border p-3"
-                            >
-                                <p className="font-medium">
-                                    {request.modality.toUpperCase()}{' '}
-                                    {request.body_part}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    Scheduled:{' '}
-                                    {formatDateTime(request.scheduled_date)}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    Indication: {request.indication}
-                                </p>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-muted-foreground">
-                            No imaging requests recorded for this visit yet.
-                        </p>
-                    )}
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Facility Services</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                    {facilityServiceOrders.length ? (
-                        facilityServiceOrders.map((order) => (
-                            <div
-                                key={order.id}
-                                className="rounded-lg border p-3"
-                            >
-                                <p className="font-medium">
-                                    {order.service?.name || 'Facility service'}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    Ordered {formatDateTime(order.ordered_at)}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    Catalog price:{' '}
-                                    {formatMoney(
-                                        order.service?.selling_price ?? null,
-                                    )}
-                                </p>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-muted-foreground">
-                            No facility service orders recorded for this visit
-                            yet.
-                        </p>
-                    )}
-                </CardContent>
-            </Card>
+            <VisitOrderDialog
+                open={orderDialogOpen}
+                onOpenChange={setOrderDialogOpen}
+                initialTab={selectedOrderTab}
+                redirectTo="visit"
+                visit={visit}
+                labTestOptions={labTestOptions}
+                drugOptions={drugOptions}
+                labPriorities={labPriorities}
+                imagingModalities={imagingModalities}
+                imagingPriorities={imagingPriorities}
+                imagingLateralities={imagingLateralities}
+                pregnancyStatuses={pregnancyStatuses}
+                facilityServiceOptions={facilityServiceOptions}
+            />
         </div>
     );
 }

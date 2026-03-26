@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Enums\FacilityServiceOrderStatus;
 use App\Models\Consultation;
 use App\Models\FacilityServiceOrder;
+use App\Models\PatientVisit;
 use Illuminate\Validation\ValidationException;
 
 final readonly class CreateFacilityServiceOrder
@@ -15,10 +16,12 @@ final readonly class CreateFacilityServiceOrder
         private SyncFacilityServiceOrderCharge $syncFacilityServiceOrderCharge,
     ) {}
 
-    public function handle(Consultation $consultation, array $data, string $staffId): FacilityServiceOrder
+    public function handle(Consultation|PatientVisit $context, array $data, string $staffId): FacilityServiceOrder
     {
+        [$visit, $consultation] = $this->resolveContext($context);
+
         $hasPendingDuplicate = FacilityServiceOrder::query()
-            ->where('visit_id', $consultation->visit_id)
+            ->where('visit_id', $visit->id)
             ->where('facility_service_id', $data['facility_service_id'])
             ->where('status', FacilityServiceOrderStatus::PENDING->value)
             ->exists();
@@ -30,10 +33,10 @@ final readonly class CreateFacilityServiceOrder
         }
 
         $order = FacilityServiceOrder::query()->create([
-            'tenant_id' => $consultation->tenant_id,
-            'facility_branch_id' => $consultation->facility_branch_id,
-            'visit_id' => $consultation->visit_id,
-            'consultation_id' => $consultation->id,
+            'tenant_id' => $visit->tenant_id,
+            'facility_branch_id' => $visit->facility_branch_id,
+            'visit_id' => $visit->id,
+            'consultation_id' => $consultation?->id,
             'facility_service_id' => $data['facility_service_id'],
             'ordered_by' => $staffId,
             'status' => FacilityServiceOrderStatus::PENDING,
@@ -46,5 +49,17 @@ final readonly class CreateFacilityServiceOrder
         $this->syncFacilityServiceOrderCharge->handle($order);
 
         return $order;
+    }
+
+    /**
+     * @return array{0: PatientVisit, 1: Consultation|null}
+     */
+    private function resolveContext(Consultation|PatientVisit $context): array
+    {
+        if ($context instanceof Consultation) {
+            return [$context->visit()->firstOrFail(), $context];
+        }
+
+        return [$context, $context->consultation];
     }
 }

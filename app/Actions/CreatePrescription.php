@@ -6,14 +6,17 @@ namespace App\Actions;
 
 use App\Models\Consultation;
 use App\Models\Drug;
+use App\Models\PatientVisit;
 use App\Models\Prescription;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreatePrescription
 {
-    public function handle(Consultation $consultation, array $data, string $staffId): Prescription
+    public function handle(Consultation|PatientVisit $context, array $data, string $staffId): Prescription
     {
+        [$visit, $consultation] = $this->resolveContext($context);
+
         /** @var array<int, array<string, mixed>> $items */
         $items = $data['items'] ?? [];
 
@@ -24,15 +27,15 @@ final readonly class CreatePrescription
             ->get()
             ->keyBy('id');
 
-        return DB::transaction(function () use ($consultation, $data, $staffId, $items, $drugs): Prescription {
+        return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $items, $drugs): Prescription {
             $prescription = Prescription::query()->create([
-                'visit_id' => $consultation->visit_id,
-                'consultation_id' => $consultation->id,
+                'visit_id' => $visit->id,
+                'consultation_id' => $consultation?->id,
                 'prescribed_by' => $staffId,
                 'prescription_date' => now(),
                 'is_discharge_medication' => (bool) ($data['is_discharge_medication'] ?? false),
                 'is_long_term' => (bool) ($data['is_long_term'] ?? false),
-                'primary_diagnosis' => $this->nullableText($data['primary_diagnosis'] ?? $consultation->primary_diagnosis),
+                'primary_diagnosis' => $this->nullableText($data['primary_diagnosis'] ?? $consultation?->primary_diagnosis),
                 'pharmacy_notes' => $this->nullableText($data['pharmacy_notes'] ?? null),
                 'status' => 'pending',
             ]);
@@ -63,6 +66,18 @@ final readonly class CreatePrescription
                 'items.drug:id,generic_name,brand_name,strength,dosage_form',
             ]);
         });
+    }
+
+    /**
+     * @return array{0: PatientVisit, 1: Consultation|null}
+     */
+    private function resolveContext(Consultation|PatientVisit $context): array
+    {
+        if ($context instanceof Consultation) {
+            return [$context->visit()->firstOrFail(), $context];
+        }
+
+        return [$context, $context->consultation];
     }
 
     private function stringValue(mixed $value): string
