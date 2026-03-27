@@ -1,100 +1,148 @@
-- Inertia & React (this project) version: **[github.com/nunomaduro/laravel-starter-kit-inertia-react](https://github.com/nunomaduro/laravel-starter-kit-inertia-react)**
-- Blade version: **[github.com/nunomaduro/laravel-starter-kit](https://github.com/nunomaduro/laravel-starter-kit)**
-- Inertia & Vue version: **[github.com/grnspc/laravel-starter-kit-inertia-vue](https://github.com/grnspc/laravel-starter-kit-inertia-vue)**
+# Mini-Hospital v2
 
-<p align="center">
-    <a href="https://youtu.be/VhzP0XWGTC4" target="_blank">
-        <img src="https://github.com/nunomaduro/laravel-starter-kit/blob/main/art/banner.png" alt="Overview Laravel Starter Kit" style="width:70%;">
-    </a>
-</p>
+A multi-tenant hospital management system built with Laravel 12, Inertia.js v2, and React 19. Focused on outpatient (OPD) operations with a complete clinical workflow from patient registration through billing.
 
-<p>
-    <a href="https://github.com/nunomaduro/laravel-starter-kit-inertia-react/actions"><img src="https://github.com/nunomaduro/laravel-starter-kit-inertia-react/actions/workflows/tests.yml/badge.svg" alt="Build Status"></a>
-    <a href="https://packagist.org/packages/nunomaduro/laravel-starter-kit-inertia-react"><img src="https://img.shields.io/packagist/dt/nunomaduro/laravel-starter-kit-inertia-react" alt="Total Downloads"></a>
-    <a href="https://packagist.org/packages/nunomaduro/laravel-starter-kit-inertia-react"><img src="https://img.shields.io/packagist/v/nunomaduro/laravel-starter-kit-inertia-react" alt="Latest Stable Version"></a>
-    <a href="https://packagist.org/packages/nunomaduro/laravel-starter-kit-inertia-react"><img src="https://img.shields.io/packagist/l/nunomaduro/laravel-starter-kit-inertia-react" alt="License"></a>
-</p>
+## Tech Stack
 
-**Laravel Starter Kit (Inertia & React)** is an ultra-strict, type-safe [Laravel](https://laravel.com) skeleton engineered for developers who refuse to compromise on code quality. This opinionated starter kit enforces rigorous development standards through meticulous tooling configuration and architectural decisions that prioritize type safety, immutability, and fail-fast principles.
+- **Backend**: Laravel 12, PHP 8.4+
+- **Frontend**: React 19, Inertia.js v2, TypeScript
+- **Styling**: Tailwind CSS v4, shadcn/ui components
+- **Database**: MySQL/PostgreSQL (multi-tenant with branch isolation)
+- **Authentication**: Laravel Fortify
+- **Permissions**: Spatie Permissions
 
-## Why This Starter Kit?
+## Features
 
-Modern PHP has evolved into a mature, type-safe language, yet many Laravel projects still operate with loose conventions and optional typing. This starter kit changes that paradigm by enforcing:
+### Implemented Modules
 
-- **Fully Actions-Oriented Architecture**: Every operation is encapsulated in a single-action class
-- **Cruddy by Design**: Standardized CRUD operations for all controllers, actions, and Inertia & React pages
-- **100% Type Coverage**: Every method, property, and parameter is explicitly typed
-- **Zero Tolerance for Code Smells**: Rector, PHPStan, OxLint, and Prettier at maximum strictness catch issues before they become bugs
-- **Immutable-First Architecture**: Data structures favor immutability to prevent unexpected mutations
-- **Fail-Fast Philosophy**: Errors are caught at compile-time, not runtime
-- **Automated Code Quality**: Pre-configured tools ensure consistent, pristine code across your entire team
-- **Just Better Laravel Defaults**: Thanks to **[Essentials](https://github.com/nunomaduro/essentials)** / strict models, auto eager loading, immutable dates, and more...
-- **AI Guidelines**: Integrated AI Guidelines to assist in maintaining code quality and consistency
-- **Full Testing Suite**: More than 150 tests with 100% code coverage using Pest
-- 
-This isn't just another Laravel boilerplate—it's a statement that PHP applications can and should be built with the same rigor as strongly-typed languages like Rust or TypeScript.
+| Module                    | Status | Description                                             |
+| ------------------------- | ------ | ------------------------------------------------------- |
+| Authentication & Users    | ✅     | Login, password reset, 2FA, user management             |
+| Roles & Permissions       | ✅     | Role-based access control                               |
+| Multi-Tenant & Branches   | ✅     | Tenant management, branch switching                     |
+| Foundation Data           | ✅     | Countries, currencies, allergens, units                 |
+| Administration            | ✅     | Departments, staff, clinics, facility services, drugs   |
+| Insurance Management      | ✅     | Insurance companies and packages (master data)          |
+| Patient Management        | ✅     | Patient CRUD, allergies, MRN generation                 |
+| Scheduling & Appointments | ✅     | Appointments, doctor schedules, queue management        |
+| Patient Visits            | ✅     | Visit workflow, status transitions, payer snapshot      |
+| Triage & Vital Signs      | ✅     | Triage assessment, vital signs capture                  |
+| Consultation              | ✅     | SOAP notes, diagnoses, outcomes                         |
+| Consultation Orders       | ✅     | Lab requests, imaging, prescriptions, facility services |
+| Laboratory Workflow       | 🟡     | Test catalog, result entry, workflow stages             |
+| Billing & Payments        | 🟡     | Visit billing, charges, payment recording               |
+| Dashboard                 | ✅     | Real-time metrics and overview                          |
+
+### Architecture
+
+- **Action-Based Pattern**: Business logic encapsulated in single-action classes
+- **Multi-Tenant**: Global tenant scope with branch isolation
+- **Event-Driven**: Designed for automatic charge generation from orders
 
 ## Getting Started
 
-> **Requires [PHP 8.5+](https://php.net/releases/) and a code coverage driver like [xdebug](https://xdebug.org/docs/install)**.
+### Prerequisites
 
-Create your type-safe Laravel application using [Composer](https://getcomposer.org):
+- PHP 8.4+
+- Node.js 18+
+- Composer
+- Bun (recommended) or npm
+- MySQL or PostgreSQL
+
+### Installation
 
 ```bash
-composer create-project nunomaduro/laravel-starter-kit-inertia-react --prefer-dist example-app
+# Install PHP dependencies
+composer install
+
+# Install Node dependencies
+bun install
+
+# Setup environment
+cp .env.example .env
+php artisan key:generate
+
+# Run migrations
+php artisan migrate
+
+# Seed database (optional)
+php artisan db:seed
+
+# Start development server
+bun run dev
 ```
 
-### Initial Setup
-
-Navigate to your project and complete the setup:
+### Development Commands
 
 ```bash
-cd example-app
-
-# Setup the project
-composer setup
-
-# Start the development server
+# Start development server (concurrent)
 composer dev
-```
 
-### Optional: Browser Testing Setup
-
-If you plan to use Pest's browser testing capabilities:
-
-```bash
-bun add playwright
-bunx playwright install
-```
-
-### Verify Installation
-
-Run the test suite to ensure everything is configured correctly:
-
-```bash
+# Run tests
 composer test
+
+# Code formatting
+composer lint
+
+# Type checking
+composer test:types
 ```
 
-You should see 100% test coverage and all quality checks passing.
+## Project Structure
 
-## Available Tooling
+```
+app/
+├── Actions/              # Single-action classes
+├── Enums/                # Enum definitions
+├── Http/
+│   ├── Controllers/      # HTTP controllers
+│   └── Middleware/       # Custom middleware
+├── Models/               # Eloquent models
+├── Services/             # Service classes
+│   └── Billing/          # Billing service
+└── Support/              # Support classes
+resources/
+├── js/
+│   ├── components/       # React components
+│   ├── layouts/           # Layout components
+│   ├── pages/            # Page components
+│   └── routes/           # Wayfinder route definitions
+routes/
+├── api.php               # API routes
+├── console.php           # Console routes
+└── web.php               # Web routes
+database/
+├── factories/            # Model factories
+├── migrations/           # Database migrations
+└── seeders/              # Database seeders
+```
 
-### Development
-- `composer dev` - Starts Laravel server, queue worker, log monitoring, and Vite dev server concurrently
+## Key Models
 
-### Code Quality
-- `composer lint` - Runs Rector (refactoring), Pint (PHP formatting), and Prettier (JS/TS formatting)
-- `composer test:lint` - Dry-run mode for CI/CD pipelines
+- `Patient` - Patient records with demographics
+- `PatientVisit` - Visit records linked to patients
+- `Consultation` - Clinical consultation notes
+- `LabRequest` / `LabRequestItem` - Laboratory orders
+- `ImagingRequest` - Imaging study orders
+- `Prescription` - Medication prescriptions
+- `FacilityServiceOrder` - Service/procedure orders
+- `VisitBilling` - Visit billing summary
+- `VisitCharge` - Billable charge lines
 
-### Testing
-- `composer test:type-coverage` - Ensures 100% type coverage with Pest
-- `composer test:types` - Runs PHPStan at level 9 (maximum strictness)
-- `composer test:unit` - Runs Pest tests with 100% code coverage requirement
-- `composer test` - Runs the complete test suite (type coverage, unit tests, linting, static analysis)
+## Key Enums
 
-### Maintenance
-- `composer update:requirements` - Updates all PHP and Bun dependencies to latest versions
+- `VisitStatus` - Visit workflow states
+- `AppointmentStatus` - Appointment states
+- `BillingStatus` - Billing settlement states
+- `PayerType` - Cash/Insurance/Sponsor
+- `LabRequestStatus` - Lab workflow states
+- `VisitChargeStatus` - Charge lifecycle states
+
+## Documentation
+
+- [Billing Schema](./billing-schema.md) - Billing foundation design
+- [System Overview](./system.md) - Complete module documentation
 
 ## License
 
-**Laravel Starter Kit Inertia React** was created by **[Nuno Maduro](https://x.com/enunomaduro)** under the **[MIT license](https://opensource.org/licenses/MIT)**.
+MIT License
