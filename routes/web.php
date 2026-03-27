@@ -10,6 +10,7 @@ use App\Http\Controllers\AppointmentModeController;
 use App\Http\Controllers\BranchSwitcherController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DoctorConsultationController;
 use App\Http\Controllers\DoctorConsultationFacilityServiceOrderController;
@@ -78,7 +79,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('modules', fn () => Inertia::render('modules'))
         ->middleware('permission:dashboard.view')
         ->name('modules');
-    Route::get('dashboard', fn () => Inertia::render('dashboard'))
+    Route::get('dashboard', [DashboardController::class, 'index'])
         ->middleware('permission:dashboard.view')
         ->name('dashboard');
 
