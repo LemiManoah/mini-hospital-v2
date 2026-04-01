@@ -13,7 +13,7 @@ final readonly class SyncLabRequestProgress
     public function handle(LabRequest $labRequest): LabRequest
     {
         $items = $labRequest->items()
-            ->get(['status', 'completed_at']);
+            ->get(['status', 'completed_at', 'received_at', 'result_entered_at', 'reviewed_at', 'approved_at']);
 
         if ($items->isEmpty()) {
             return $labRequest;
@@ -37,9 +37,22 @@ final readonly class SyncLabRequestProgress
             return $labRequest->refresh();
         }
 
-        if ($items->contains(static fn ($item): bool => $item->status === LabRequestItemStatus::IN_PROGRESS || $item->status === LabRequestItemStatus::COMPLETED)) {
+        if ($items->contains(static fn ($item): bool => $item->status === LabRequestItemStatus::IN_PROGRESS
+            || $item->status === LabRequestItemStatus::COMPLETED
+            || $item->result_entered_at !== null
+            || $item->reviewed_at !== null
+            || $item->approved_at !== null)) {
             $labRequest->forceFill([
                 'status' => LabRequestStatus::IN_PROGRESS,
+                'completed_at' => null,
+            ])->save();
+
+            return $labRequest->refresh();
+        }
+
+        if ($items->contains(static fn ($item): bool => $item->received_at !== null)) {
+            $labRequest->forceFill([
+                'status' => LabRequestStatus::SAMPLE_COLLECTED,
                 'completed_at' => null,
             ])->save();
 

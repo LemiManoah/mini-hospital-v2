@@ -199,27 +199,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'lab_requests.view',
                     },
                     {
-                        title: 'Lab Worklist',
-                        url: '/laboratory/worklist',
+                        title: 'Incoming Lab Investigations Queue',
+                        url: '/laboratory/incoming-investigations',
                         permission: 'lab_requests.view',
                     },
                     {
-                        title: 'Test Categories',
+                        title: 'Enter Results',
+                        url: '/laboratory/enter-results',
+                        permission: 'lab_requests.view',
+                    },
+                    {
+                        title: 'Reviewing Results',
+                        url: '/laboratory/review-results',
+                        permission: 'lab_requests.view',
+                    },
+                    {
+                        title: 'View Results',
+                        url: '/laboratory/view-results',
+                        permission: 'lab_requests.view',
+                    },
+                    {
+                        title: 'Service Categories',
                         url: '/lab-test-categories',
                         permission: 'lab_test_categories.view',
                     },
                     {
-                        title: 'Specimen Types',
-                        url: '/specimen-types',
-                        permission: 'specimen_types.view',
-                    },
-                    {
-                        title: 'Result Types',
-                        url: '/result-types',
-                        permission: 'result_types.view',
-                    },
-                    {
-                        title: 'Test Catalog',
+                        title: 'Laboratory Services',
                         url: '/lab-test-catalogs',
                         permission: 'lab_test_catalogs.view',
                     },

@@ -27,6 +27,12 @@ final readonly class StoreLabResultEntry
             ]);
         }
 
+        if ($labRequestItem->received_at === null && ! $labRequestItem->specimen()->exists()) {
+            throw ValidationException::withMessages([
+                'result' => 'Pick a sample before entering results.',
+            ]);
+        }
+
         return DB::transaction(function () use ($labRequestItem, $payload, $staffId): LabRequestItem {
             $resultEntry = $labRequestItem->resultEntry()->firstOrCreate([]);
             $resultEntry->forceFill([

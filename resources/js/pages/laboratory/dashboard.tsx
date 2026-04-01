@@ -70,8 +70,8 @@ export default function LaboratoryDashboard({
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" asChild>
-                            <Link href="/laboratory/worklist">
-                                Open Worklist
+                            <Link href="/laboratory/incoming-investigations">
+                                Open Incoming Queue
                             </Link>
                         </Button>
                         <Button variant="outline" asChild>
@@ -110,10 +110,10 @@ export default function LaboratoryDashboard({
                                     </div>
                                     <p className="mt-2 text-sm text-muted-foreground">
                                         <Link
-                                            href={`/laboratory/worklist?status=${status.value}`}
+                                            href="/laboratory/incoming-investigations"
                                             className="underline underline-offset-4"
                                         >
-                                            View matching requests
+                                            Open lab queues
                                         </Link>
                                     </p>
                                 </div>
@@ -166,8 +166,8 @@ export default function LaboratoryDashboard({
                                 </CardDescription>
                             </div>
                             <Button variant="outline" asChild>
-                                <Link href="/laboratory/worklist">
-                                    See Full Queue
+                                <Link href="/laboratory/incoming-investigations">
+                                    See Incoming Queue
                                 </Link>
                             </Button>
                         </div>
@@ -259,10 +259,21 @@ function RecentRequestCard({ request }: { request: LaboratoryQueueRequest }) {
                             </p>
                         </div>
                         <Button variant="outline" asChild>
-                            <Link href={`/laboratory/request-items/${item.id}`}>
-                                {item.workflow_stage === 'pending'
-                                    ? 'Receive and Open'
-                                    : 'Open Workflow'}
+                            <Link
+                                href={
+                                    item.workflow_stage === 'approved'
+                                        ? '/laboratory/view-results'
+                                        : item.workflow_stage ===
+                                                'result_entered' ||
+                                            item.workflow_stage === 'reviewed'
+                                          ? '/laboratory/review-results'
+                                          : item.workflow_stage ===
+                                              'sample_collected'
+                                            ? '/laboratory/enter-results'
+                                            : '/laboratory/incoming-investigations'
+                                }
+                            >
+                                Open Queue
                             </Link>
                         </Button>
                     </div>

@@ -82,12 +82,11 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
                 'count' => $this->itemQuery()->whereNull('received_at')->where('status', 'pending')->count(),
             ],
             [
-                'label' => 'Received',
-                'value' => 'received',
+                'label' => 'Sample Picked',
+                'value' => 'sample_collected',
                 'count' => $this->itemQuery()
                     ->whereNotNull('received_at')
                     ->whereNull('result_entered_at')
-                    ->where('status', 'in_progress')
                     ->count(),
             ],
             [

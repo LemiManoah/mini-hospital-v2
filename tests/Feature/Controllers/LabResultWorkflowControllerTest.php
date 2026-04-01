@@ -176,29 +176,42 @@ function createLabResultWorkflowContext(): array
     return [$branch, $user, $requestItem, $parameter];
 }
 
-it('receives a laboratory request item from the queue', function (): void {
+it('picks a sample for a laboratory request item from the incoming queue', function (): void {
     [$branch, $user, $requestItem] = createLabResultWorkflowContext();
 
     $user->givePermissionTo('lab_requests.update');
+    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.receive', $requestItem));
+        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+            'specimen_type_id' => $specimenType->id,
+            'outside_sample_origin' => 'Referral clinic',
+        ]);
 
     $response->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
-    $response->assertSessionHas('success', 'Lab request item received successfully.');
+    $response->assertSessionHas('success', 'Sample picked successfully.');
 
     $requestItem->refresh();
 
-    expect($requestItem->status->value)->toBe('in_progress')
+    expect($requestItem->status->value)->toBe('pending')
         ->and($requestItem->received_at)->not()->toBeNull()
-        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('in_progress');
+        ->and(DB::table('lab_specimens')->where('lab_request_item_id', $requestItem->id)->value('outside_sample'))->toBe(1)
+        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('sample_collected');
 });
 
 it('stores reviews and approves parameter-panel lab results', function (): void {
     [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
 
     $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
+    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+            'specimen_type_id' => $specimenType->id,
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -248,4 +261,38 @@ it('stores reviews and approves parameter-panel lab results', function (): void 
             ->where('labRequestItem.result_visible', true)
             ->where('labRequestItem.workflow_stage', 'approved')
             ->has('labRequestItem.result_entry.values', 1));
+});
+
+it('moves a request item between the incoming and enter-results queues after sample picking', function (): void {
+    [$branch, $user, $requestItem] = createLabResultWorkflowContext();
+
+    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
+    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('laboratory.incoming.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('laboratory/queue')
+            ->where('page.stage', 'incoming')
+            ->has('requests.data', 1)
+            ->has('requests.data.0.items', 1));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+            'specimen_type_id' => $specimenType->id,
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('laboratory.enter-results.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('laboratory/queue')
+            ->where('page.stage', 'enter_results')
+            ->has('requests.data', 1)
+            ->has('requests.data.0.items', 1));
 });

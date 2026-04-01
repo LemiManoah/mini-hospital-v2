@@ -64,6 +64,11 @@ final class LabRequestItem extends Model
         return $this->hasOne(LabResultEntry::class, 'lab_request_item_id');
     }
 
+    public function specimen(): HasOne
+    {
+        return $this->hasOne(LabSpecimen::class, 'lab_request_item_id');
+    }
+
     public function receivedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'received_by');
@@ -103,8 +108,12 @@ final class LabRequestItem extends Model
                 return 'result_entered';
             }
 
-            if ($this->received_at !== null) {
-                return 'received';
+            $hasCollectedSample = $this->relationLoaded('specimen')
+                ? $this->specimen?->collected_at !== null
+                : $this->specimen()->whereNotNull('collected_at')->exists();
+
+            if ($hasCollectedSample || $this->received_at !== null) {
+                return 'sample_collected';
             }
 
             return 'pending';

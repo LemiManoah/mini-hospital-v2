@@ -32,6 +32,7 @@ final class LabTestCatalog extends Model
 
     protected $appends = [
         'category',
+        'available_specimens',
         'specimen_type',
         'specimen_type_ids',
         'result_capture_type',
@@ -100,6 +101,21 @@ final class LabTestCatalog extends Model
 
                 return implode(', ', $specimenNames);
             }
+        );
+    }
+
+    protected function availableSpecimens(): Attribute
+    {
+        return Attribute::get(
+            fn (): array => ($this->relationLoaded('specimenTypes')
+                ? $this->specimenTypes
+                : $this->specimenTypes()->get(['specimen_types.id', 'specimen_types.name']))
+                ->map(static fn (SpecimenType $specimenType): array => [
+                    'id' => $specimenType->id,
+                    'label' => $specimenType->name,
+                ])
+                ->values()
+                ->all()
         );
     }
 

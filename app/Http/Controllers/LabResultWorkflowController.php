@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\CollectLabSpecimen;
 use App\Actions\ApproveLabResultEntry;
 use App\Actions\ReceiveLabRequestItem;
 use App\Actions\ReviewLabResultEntry;
 use App\Actions\StoreLabResultEntry;
+use App\Http\Requests\CollectLabSpecimenRequest;
 use App\Http\Requests\ApproveLabResultEntryRequest;
 use App\Http\Requests\ReviewLabResultEntryRequest;
 use App\Http\Requests\StoreLabResultEntryRequest;
@@ -29,8 +31,21 @@ final readonly class LabResultWorkflowController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:lab_requests.update', only: ['receive', 'store', 'review', 'approve']),
+            new Middleware('permission:lab_requests.update', only: ['collectSample', 'receive', 'store', 'review', 'approve']),
         ];
+    }
+
+    public function collectSample(
+        CollectLabSpecimenRequest $request,
+        LabRequestItem $labRequestItem,
+        CollectLabSpecimen $action,
+    ): RedirectResponse {
+        return $this->handleAction(
+            $request,
+            $labRequestItem,
+            fn (string $staffId): LabRequestItem => $action->handle($labRequestItem, $request->validated(), $staffId),
+            'Sample picked successfully.',
+        );
     }
 
     public function receive(
@@ -108,19 +123,30 @@ final readonly class LabResultWorkflowController implements HasMiddleware
         $staffId = $request->user()?->staff_id;
 
         if (! is_string($staffId) || $staffId === '') {
-            return to_route('laboratory.request-items.show', $labRequestItem)
+            return $this->redirectToTarget($request, $labRequestItem)
                 ->with('error', 'This action needs a linked staff profile for audit tracking.');
         }
 
         try {
             $callback($staffId);
         } catch (ValidationException $validationException) {
-            return to_route('laboratory.request-items.show', $labRequestItem)
+            return $this->redirectToTarget($request, $labRequestItem)
                 ->with('error', $validationException->validator->errors()->first() ?: 'The lab workflow action could not be completed.');
         }
 
-        return to_route('laboratory.request-items.show', $labRequestItem)
+        return $this->redirectToTarget($request, $labRequestItem)
             ->with('success', $successMessage);
+    }
+
+    private function redirectToTarget(Request $request, LabRequestItem $labRequestItem): RedirectResponse
+    {
+        $redirectTo = $request->input('redirect_to');
+
+        if (is_string($redirectTo) && $redirectTo !== '' && str_starts_with($redirectTo, '/')) {
+            return redirect()->to($redirectTo);
+        }
+
+        return to_route('laboratory.request-items.show', $labRequestItem);
     }
 
     private function nullableText(mixed $value): ?string

@@ -64,6 +64,19 @@ export interface LaboratoryResultEntry {
     values?: LaboratoryResultValue[] | null;
 }
 
+export interface LaboratorySpecimen {
+    id: string;
+    accession_number: string;
+    specimen_type_id: string;
+    specimen_type_name: string;
+    status: string;
+    collected_at: string | null;
+    outside_sample: boolean;
+    outside_sample_origin: string | null;
+    notes: string | null;
+    collectedBy?: { id: string; first_name: string; last_name: string } | null;
+}
+
 export interface LaboratoryRequestItem {
     id: string;
     status: string;
@@ -77,12 +90,14 @@ export interface LaboratoryRequestItem {
     reviewed_at: string | null;
     approved_at: string | null;
     completed_at: string | null;
+    specimen?: LaboratorySpecimen | null;
     test?: {
         id: string;
         test_code: string;
         test_name: string;
         category?: string | null;
         specimen_type?: string | null;
+        available_specimens?: { id: string; label: string }[] | null;
         result_capture_type?: string | null;
         result_type_name?: string | null;
         description?: string | null;
@@ -157,4 +172,20 @@ export interface LaboratoryDashboardPageProps {
     request_status_counts: { label: string; value: string; count: number }[];
     workflow_stage_counts: { label: string; value: string; count: number }[];
     recent_requests: LaboratoryQueueRequest[];
+}
+
+export interface LaboratoryQueuePageMeta {
+    stage: 'incoming' | 'enter_results' | 'review_results' | 'view_results';
+    title: string;
+    description: string;
+    action_label: string;
+    route: string;
+}
+
+export interface LaboratoryQueuePageProps {
+    page: LaboratoryQueuePageMeta;
+    requests: PaginatedLaboratoryItemList<LaboratoryQueueRequest>;
+    filters: {
+        search: string | null;
+    };
 }

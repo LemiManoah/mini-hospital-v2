@@ -98,8 +98,11 @@ export default function LaboratoryRequestItemShow({
         labRequestItem.workflow_stage === 'approved';
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Laboratory', href: '/laboratory/worklist' },
-        { title: 'Worklist', href: '/laboratory/worklist' },
+        { title: 'Laboratory', href: '/laboratory/incoming-investigations' },
+        {
+            title: 'Incoming Lab Investigations Queue',
+            href: '/laboratory/incoming-investigations',
+        },
         {
             title: labRequestItem.test?.test_name ?? 'Request Item',
             href: `/laboratory/request-items/${labRequestItem.id}`,
@@ -189,22 +192,19 @@ export default function LaboratoryRequestItemShow({
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 <Button variant="outline" asChild>
-                                    <Link href="/laboratory/worklist">
+                                    <Link href="/laboratory/incoming-investigations">
                                         Back to Queue
                                     </Link>
                                 </Button>
                                 {labRequestItem.workflow_stage === 'pending' ? (
                                     <Button
                                         type="button"
-                                        onClick={() =>
-                                            router.post(
-                                                `/laboratory/request-items/${labRequestItem.id}/receive`,
-                                                {},
-                                                { preserveScroll: true },
-                                            )
-                                        }
+                                        variant="outline"
+                                        asChild
                                     >
-                                        Receive Test
+                                        <Link href="/laboratory/incoming-investigations">
+                                            Pick Sample in Queue
+                                        </Link>
                                     </Button>
                                 ) : null}
                             </div>
@@ -212,7 +212,7 @@ export default function LaboratoryRequestItemShow({
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                         <SummaryRow
-                            label="Received"
+                            label="Sample Picked"
                             value={formatDateTime(labRequestItem.received_at)}
                         />
                         <SummaryRow

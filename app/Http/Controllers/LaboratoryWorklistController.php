@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Support\ActiveBranchWorkspace;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -27,62 +26,11 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
         ];
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): RedirectResponse
     {
-        $search = mb_trim((string) $request->query('search', ''));
-        $status = mb_trim((string) $request->query('status', ''));
+        $query = $request->query();
 
-        $requests = $this->activeBranchWorkspace->apply(LabRequest::query())
-            ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))
-            ->when($search !== '', static function (Builder $query) use ($search): void {
-                $query->where(function (Builder $searchQuery) use ($search): void {
-                    $searchQuery
-                        ->whereHas('visit.patient', static function (Builder $patientQuery) use ($search): void {
-                            $patientQuery
-                                ->where('patient_number', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('last_name', 'like', sprintf('%%%s%%', $search));
-                        })
-                        ->orWhereHas('visit', static fn (Builder $visitQuery) => $visitQuery
-                            ->where('visit_number', 'like', sprintf('%%%s%%', $search)))
-                        ->orWhereHas('items.test', static function (Builder $testQuery) use ($search): void {
-                            $testQuery
-                                ->where('test_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('test_code', 'like', sprintf('%%%s%%', $search));
-                        });
-                });
-            })
-            ->with([
-                'requestedBy:id,first_name,last_name',
-                'visit:id,visit_number,patient_id',
-                'visit.patient:id,patient_number,first_name,last_name',
-                'items' => static fn ($query) => $query
-                    ->with([
-                        'test:id,test_code,test_name,lab_test_category_id,result_type_id',
-                        'test.labCategory:id,name',
-                        'test.specimenTypes:id,name',
-                        'test.resultTypeDefinition:id,code,name',
-                    ])
-                    ->orderBy('created_at'),
-            ])
-            ->orderByRaw("case when priority = 'urgent' then 0 else 1 end")
-            ->latest('request_date')
-            ->paginate(12)
-            ->withQueryString();
-
-        return Inertia::render('laboratory/worklist', [
-            'requests' => $requests,
-            'filters' => [
-                'search' => $search,
-                'status' => $status,
-            ],
-            'statuses' => [
-                ['value' => 'requested', 'label' => 'Requested'],
-                ['value' => 'in_progress', 'label' => 'In Progress'],
-                ['value' => 'completed', 'label' => 'Completed'],
-                ['value' => 'cancelled', 'label' => 'Cancelled'],
-            ],
-        ]);
+        return to_route('laboratory.incoming.index', $query === [] ? [] : $query);
     }
 
     public function show(LabRequestItem $labRequestItem): Response
@@ -100,6 +48,8 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
             'test.resultTypeDefinition:id,code,name',
             'test.resultOptions:id,lab_test_catalog_id,label,sort_order',
             'test.resultParameters:id,lab_test_catalog_id,label,unit,reference_range,value_type,sort_order',
+            'specimen:id,lab_request_item_id,accession_number,specimen_type_id,specimen_type_name,status,collected_by,collected_at,outside_sample,outside_sample_origin,notes',
+            'specimen.collectedBy:id,first_name,last_name',
             'resultEntry:id,lab_request_item_id,entered_by,entered_at,reviewed_by,reviewed_at,approved_by,approved_at,released_by,released_at,result_notes,review_notes,approval_notes',
             'resultEntry.enteredBy:id,first_name,last_name',
             'resultEntry.reviewedBy:id,first_name,last_name',
