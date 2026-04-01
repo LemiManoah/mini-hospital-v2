@@ -354,8 +354,19 @@ export default function LaboratoryRequestItemShow({
                                                                 : 'No unit'}
                                                             {' | '}
                                                             {parameter.reference_range
-                                                                ? `Reference: ${parameter.reference_range}`
-                                                                : 'No reference'}
+                                                                ? `Ref: ${parameter.reference_range}`
+                                                                : 'No ref'}
+                                                            {parameter.gender &&
+                                                            parameter.gender !==
+                                                                'both'
+                                                                ? ` | Gender: ${labelize(parameter.gender)}`
+                                                                : ''}
+                                                            {parameter.age_min !==
+                                                                null ||
+                                                            parameter.age_max !==
+                                                                null
+                                                                ? ` | Age: ${parameter.age_min ?? 0}-${parameter.age_max ?? '+'}`
+                                                                : ''}
                                                         </p>
                                                         <Input
                                                             type={
@@ -578,8 +589,15 @@ export default function LaboratoryRequestItemShow({
                                             </p>
                                             {value.reference_range ? (
                                                 <p className="text-sm text-muted-foreground">
-                                                    Reference:{' '}
-                                                    {value.reference_range}
+                                                    Ref: {value.reference_range}
+                                                    {value.gender &&
+                                                    value.gender !== 'both'
+                                                        ? ` | Gender: ${labelize(value.gender)}`
+                                                        : ''}
+                                                    {value.age_min !== null ||
+                                                    value.age_max !== null
+                                                        ? ` | Age: ${value.age_min ?? 0}-${value.age_max ?? '+'}`
+                                                        : ''}
                                                 </p>
                                             ) : null}
                                         </div>

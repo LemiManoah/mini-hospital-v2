@@ -68,6 +68,9 @@ final readonly class StoreLabResultEntry
                         'value_numeric' => $numericValue,
                         'value_text' => $parameter?->value_type === 'numeric' ? null : $rawValue,
                         'unit' => $parameter?->unit,
+                        'gender' => $parameter?->gender,
+                        'age_min' => $parameter?->age_min,
+                        'age_max' => $parameter?->age_max,
                         'reference_range' => $parameter?->reference_range,
                         'sort_order' => $index + 1,
                     ]);

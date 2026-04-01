@@ -21,6 +21,9 @@ export interface LabTestCatalogResultParameter {
     id?: string;
     label: string;
     unit: string | null;
+    gender: string | null;
+    age_min: number | null;
+    age_max: number | null;
     reference_range: string | null;
     value_type: 'numeric' | 'text';
     sort_order?: number;

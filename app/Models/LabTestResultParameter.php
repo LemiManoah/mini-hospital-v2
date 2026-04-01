@@ -20,6 +20,8 @@ final class LabTestResultParameter extends Model
         'lab_test_catalog_id' => 'string',
         'sort_order' => 'integer',
         'is_active' => 'boolean',
+        'age_min' => 'integer',
+        'age_max' => 'integer',
     ];
 
     public function labTest(): BelongsTo

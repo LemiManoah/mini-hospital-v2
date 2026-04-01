@@ -43,6 +43,9 @@ export interface LaboratoryResultValue {
     value_text: string | null;
     display_value?: string | null;
     unit: string | null;
+    gender?: string | null;
+    age_min?: number | null;
+    age_max?: number | null;
     reference_range: string | null;
 }
 
@@ -90,6 +93,9 @@ export interface LaboratoryRequestItem {
                   id?: string;
                   label: string;
                   unit: string | null;
+                  gender?: string | null;
+                  age_min?: number | null;
+                  age_max?: number | null;
                   reference_range: string | null;
                   value_type: 'numeric' | 'text';
               }[]

@@ -22,6 +22,8 @@ final class LabResultValue extends Model
         'lab_test_result_parameter_id' => 'string',
         'value_numeric' => 'float',
         'sort_order' => 'integer',
+        'age_min' => 'integer',
+        'age_max' => 'integer',
     ];
 
     protected $appends = [

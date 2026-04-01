@@ -85,7 +85,7 @@ final readonly class SyncLabTestCatalogConfiguration
     }
 
     /**
-     * @return array<int, array{label: string, unit: ?string, reference_range: ?string, value_type: string, sort_order: int, is_active: bool}>
+     * @return array<int, array{label: string, unit: ?string, gender: ?string, age_min: ?int, age_max: ?int, reference_range: ?string, value_type: string, sort_order: int, is_active: bool}>
      */
     private function normalizedResultParameters(mixed $value): array
     {
@@ -103,6 +103,9 @@ final readonly class SyncLabTestCatalogConfiguration
                 }
 
                 $unit = mb_trim((string) Arr::get($item, 'unit', ''));
+                $gender = mb_trim((string) Arr::get($item, 'gender', ''));
+                $ageMin = Arr::get($item, 'age_min');
+                $ageMax = Arr::get($item, 'age_max');
                 $referenceRange = mb_trim((string) Arr::get($item, 'reference_range', ''));
                 $valueType = mb_trim((string) Arr::get($item, 'value_type', 'numeric'));
 
@@ -113,6 +116,9 @@ final readonly class SyncLabTestCatalogConfiguration
                 return [
                     'label' => $label,
                     'unit' => $unit === '' ? null : $unit,
+                    'gender' => $gender === '' ? null : $gender,
+                    'age_min' => $ageMin === '' || $ageMin === null ? null : (int) $ageMin,
+                    'age_max' => $ageMax === '' || $ageMax === null ? null : (int) $ageMax,
                     'reference_range' => $referenceRange === '' ? null : $referenceRange,
                     'value_type' => $valueType,
                     'sort_order' => $index + 1,

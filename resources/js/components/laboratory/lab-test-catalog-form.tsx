@@ -61,6 +61,9 @@ const blankResultOption = (): LabTestCatalogResultOption => ({
 const blankResultParameter = (): LabTestCatalogResultParameter => ({
     label: '',
     unit: '',
+    gender: 'both',
+    age_min: null,
+    age_max: null,
     reference_range: '',
     value_type: 'numeric',
 });
@@ -68,6 +71,12 @@ const blankResultParameter = (): LabTestCatalogResultParameter => ({
 const resultParameterValueTypes = [
     { value: 'numeric', label: 'Numeric' },
     { value: 'text', label: 'Text' },
+] as const;
+
+const genderOptions = [
+    { value: 'both', label: 'Both' },
+    { value: 'male', label: 'Male' },
+    { value: 'female', label: 'Female' },
 ] as const;
 
 export default function LabTestCatalogForm({
@@ -113,6 +122,9 @@ export default function LabTestCatalogForm({
                       id: parameter.id,
                       label: parameter.label,
                       unit: parameter.unit ?? '',
+                      gender: parameter.gender ?? 'both',
+                      age_min: parameter.age_min ?? null,
+                      age_max: parameter.age_max ?? null,
                       reference_range: parameter.reference_range ?? '',
                       value_type: parameter.value_type ?? 'numeric',
                   }))
@@ -165,7 +177,7 @@ export default function LabTestCatalogForm({
     const updateResultParameter = (
         index: number,
         field: keyof LabTestCatalogResultParameter,
-        value: string,
+        value: string | number | null,
     ): void => {
         const nextParameters = [...form.data.result_parameters];
         nextParameters[index] = {
@@ -574,6 +586,104 @@ export default function LabTestCatalogForm({
                                                 />
                                             </div>
                                             <div className="grid gap-2">
+                                                <Label>Gender</Label>
+                                                <Select
+                                                    value={
+                                                        parameter.gender ??
+                                                        'both'
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        updateResultParameter(
+                                                            index,
+                                                            'gender',
+                                                            value,
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select gender" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            {genderOptions.map(
+                                                                (option) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            option.value
+                                                                        }
+                                                                        value={
+                                                                            option.value
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            option.label
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label
+                                                    htmlFor={`parameter-age-min-${index}`}
+                                                >
+                                                    Min Age
+                                                </Label>
+                                                <Input
+                                                    id={`parameter-age-min-${index}`}
+                                                    type="number"
+                                                    value={
+                                                        parameter.age_min ?? ''
+                                                    }
+                                                    onChange={(event) =>
+                                                        updateResultParameter(
+                                                            index,
+                                                            'age_min',
+                                                            event.target
+                                                                .value === ''
+                                                                ? null
+                                                                : parseInt(
+                                                                      event
+                                                                          .target
+                                                                          .value,
+                                                                  ),
+                                                        )
+                                                    }
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label
+                                                    htmlFor={`parameter-age-max-${index}`}
+                                                >
+                                                    Max Age
+                                                </Label>
+                                                <Input
+                                                    id={`parameter-age-max-${index}`}
+                                                    type="number"
+                                                    value={
+                                                        parameter.age_max ?? ''
+                                                    }
+                                                    onChange={(event) =>
+                                                        updateResultParameter(
+                                                            index,
+                                                            'age_max',
+                                                            event.target
+                                                                .value === ''
+                                                                ? null
+                                                                : parseInt(
+                                                                      event
+                                                                          .target
+                                                                          .value,
+                                                                  ),
+                                                        )
+                                                    }
+                                                    placeholder="120"
+                                                />
+                                            </div>
+                                            <div className="grid gap-2">
                                                 <Label>Value Type</Label>
                                                 <Select
                                                     value={
@@ -624,7 +734,7 @@ export default function LabTestCatalogForm({
                                                 <Label
                                                     htmlFor={`parameter-reference-range-${index}`}
                                                 >
-                                                    Reference Range
+                                                    Reference Range (Label)
                                                 </Label>
                                                 <Input
                                                     id={`parameter-reference-range-${index}`}
