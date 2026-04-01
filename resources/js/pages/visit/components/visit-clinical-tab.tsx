@@ -1,12 +1,31 @@
-import { VisitOrderDialog } from '@/components/visit-order-dialog';
 import {
-    FacilityServiceOrdersList,
-    ImagingOrdersList,
-    LabOrdersList,
+    LabOrderModal,
+} from '@/components/orders/lab-order-modal';
+import {
+    LabOrdersTable,
+} from '@/components/orders/lab-orders-table';
+import {
+    PrescriptionOrderModal,
+} from '@/components/orders/prescription-order-modal';
+import {
+    PrescriptionOrdersTable,
+} from '@/components/orders/prescription-orders-table';
+import {
+    ImagingOrderModal,
+} from '@/components/orders/imaging-order-modal';
+import {
+    ImagingOrdersTable,
+} from '@/components/orders/imaging-orders-table';
+import {
+    ServiceOrderModal,
+} from '@/components/orders/service-order-modal';
+import {
+    ServiceOrdersTable,
+} from '@/components/orders/service-orders-table';
+import {
     type OrderTabValue,
     OrderAccessMessage,
     OrderSectionHeader,
-    PrescriptionOrdersList,
 } from '@/components/visit-ordering';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -123,10 +142,22 @@ export function VisitClinicalTab({
     const [selectedOrderTab, setSelectedOrderTab] = useState<OrderTabValue>(
         toOrderTab(activeOrderTab),
     );
-    const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+
+    const [labModalOpen, setLabModalOpen] = useState(false);
+    const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+    const [imagingModalOpen, setImagingModalOpen] = useState(false);
+    const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
+
+    const [editingLabRequest, setEditingLabRequest] = useState<LabRequest | null>(null);
+    const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
+    const [editingImagingRequest, setEditingImagingRequest] = useState<ImagingRequest | null>(null);
+    const [editingServiceOrder, setEditingServiceOrder] = useState<FacilityServiceOrder | null>(null);
+
     const openOrderDialog = (tab: OrderTabValue) => {
-        setSelectedOrderTab(tab);
-        setOrderDialogOpen(true);
+        if (tab === 'lab') setLabModalOpen(true);
+        if (tab === 'prescriptions') setPrescriptionModalOpen(true);
+        if (tab === 'imaging') setImagingModalOpen(true);
+        if (tab === 'services') setServiceOrderModalOpen(true);
     };
 
     return (
@@ -391,62 +422,119 @@ export function VisitClinicalTab({
                         </TabsList>
 
                         <TabsContent value="lab">
-                            <LabOrdersList
+                            <LabOrdersTable
                                 labRequests={labRequests}
-                                emptyMessage="No lab requests recorded for this visit yet."
+                                canManageOrders={canManageOrders && !isConsultationFinalized}
+                                onEdit={(request) => {
+                                    setEditingLabRequest(request);
+                                    setLabModalOpen(true);
+                                }}
+                                onDelete={(request) => {
+                                    if (confirm('Are you sure you want to remove this lab request?')) {
+                                        router.delete(`/visits/${visit.id}/lab-requests/${request.id}`, {
+                                            data: { redirect_to: 'visit' },
+                                            preserveScroll: true,
+                                        });
+                                    }
+                                }}
                             />
                         </TabsContent>
 
                         <TabsContent value="prescriptions">
-                            <PrescriptionOrdersList
+                            <PrescriptionOrdersTable
                                 prescriptions={prescriptions}
-                                emptyMessage="No prescriptions recorded for this visit yet."
+                                canManageOrders={canManageOrders && !isConsultationFinalized}
+                                onEdit={(prescription) => {
+                                    setEditingPrescription(prescription);
+                                    setPrescriptionModalOpen(true);
+                                }}
+                                onDelete={(prescription) => {
+                                    if (confirm('Are you sure you want to remove this prescription?')) {
+                                        router.delete(`/visits/${visit.id}/prescriptions/${prescription.id}`, {
+                                            data: { redirect_to: 'visit' },
+                                            preserveScroll: true,
+                                        });
+                                    }
+                                }}
                             />
                         </TabsContent>
 
                         <TabsContent value="imaging">
-                            <ImagingOrdersList
+                            <ImagingOrdersTable
                                 imagingRequests={imagingRequests}
-                                emptyMessage="No imaging requests recorded for this visit yet."
+                                canManageOrders={canManageOrders && !isConsultationFinalized}
+                                onEdit={(request) => {
+                                    setEditingImagingRequest(request);
+                                    setImagingModalOpen(true);
+                                }}
+                                onDelete={(request) => {
+                                    if (confirm('Are you sure you want to remove this imaging request?')) {
+                                        router.delete(`/visits/${visit.id}/imaging-requests/${request.id}`, {
+                                            data: { redirect_to: 'visit' },
+                                            preserveScroll: true,
+                                        });
+                                    }
+                                }}
                             />
                         </TabsContent>
 
                         <TabsContent value="services">
-                            <FacilityServiceOrdersList
+                            <ServiceOrdersTable
                                 orders={facilityServiceOrders}
-                                emptyMessage="No facility service orders recorded for this visit yet."
-                                canRemovePending={
-                                    canManageOrders && !isConsultationFinalized
-                                }
-                                onRemovePending={(order) =>
-                                    router.delete(
-                                        `/visits/${visit.id}/facility-service-orders/${order.id}`,
-                                        {
+                                canManageOrders={canManageOrders && !isConsultationFinalized}
+                                onEdit={(order) => {
+                                    setEditingServiceOrder(order);
+                                    setServiceOrderModalOpen(true);
+                                }}
+                                onDelete={(order) => {
+                                    if (confirm('Are you sure you want to remove this service order?')) {
+                                        router.delete(`/visits/${visit.id}/facility-service-orders/${order.id}`, {
                                             data: { redirect_to: 'visit' },
                                             preserveScroll: true,
-                                        },
-                                    )
-                                }
+                                        });
+                                    }
+                                }}
                             />
                         </TabsContent>
                     </Tabs>
                 </CardContent>
             </Card>
 
-            <VisitOrderDialog
-                open={orderDialogOpen}
-                onOpenChange={setOrderDialogOpen}
-                initialTab={selectedOrderTab}
-                redirectTo="visit"
-                visit={visit}
+            <LabOrderModal
+                open={labModalOpen}
+                onOpenChange={setLabModalOpen}
+                visit={visit as any}
+                labRequest={editingLabRequest}
                 labTestOptions={labTestOptions}
-                drugOptions={drugOptions}
                 labPriorities={labPriorities}
+                redirectTo="visit"
+            />
+            <PrescriptionOrderModal
+                open={prescriptionModalOpen}
+                onOpenChange={setPrescriptionModalOpen}
+                visit={visit as any}
+                prescription={editingPrescription}
+                drugOptions={drugOptions}
+                redirectTo="visit"
+            />
+            <ImagingOrderModal
+                open={imagingModalOpen}
+                onOpenChange={setImagingModalOpen}
+                visit={visit as any}
+                imagingRequest={editingImagingRequest}
                 imagingModalities={imagingModalities}
                 imagingPriorities={imagingPriorities}
                 imagingLateralities={imagingLateralities}
                 pregnancyStatuses={pregnancyStatuses}
+                redirectTo="visit"
+            />
+            <ServiceOrderModal
+                open={serviceOrderModalOpen}
+                onOpenChange={setServiceOrderModalOpen}
+                visit={visit as any}
+                serviceOrder={editingServiceOrder}
                 facilityServiceOptions={facilityServiceOptions}
+                redirectTo="visit"
             />
         </div>
     );

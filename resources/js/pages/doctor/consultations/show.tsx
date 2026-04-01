@@ -1,12 +1,30 @@
 import InputError from '@/components/input-error';
-import { VisitOrderDialog } from '@/components/visit-order-dialog';
 import {
-    FacilityServiceOrdersList,
-    ImagingOrdersList,
-    LabOrdersList,
+    LabOrderModal,
+} from '@/components/orders/lab-order-modal';
+import {
+    LabOrdersTable,
+} from '@/components/orders/lab-orders-table';
+import {
+    PrescriptionOrderModal,
+} from '@/components/orders/prescription-order-modal';
+import {
+    PrescriptionOrdersTable,
+} from '@/components/orders/prescription-orders-table';
+import {
+    ImagingOrderModal,
+} from '@/components/orders/imaging-order-modal';
+import {
+    ImagingOrdersTable,
+} from '@/components/orders/imaging-orders-table';
+import {
+    ServiceOrderModal,
+} from '@/components/orders/service-order-modal';
+import {
+    ServiceOrdersTable,
+} from '@/components/orders/service-orders-table';
+import {
     type OrderTabValue,
-    OrderAccessMessage,
-    PrescriptionOrdersList,
 } from '@/components/visit-ordering';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,8 +49,12 @@ import {
     type DoctorConsultationShowPageProps,
     type TriageRecord,
     type VitalSign,
+    type LabRequest,
+    type Prescription,
+    type ImagingRequest,
+    type FacilityServiceOrder,
 } from '@/types/patient';
-import { Form, Head, Link, router, useForm } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     ClipboardPen,
@@ -42,32 +64,6 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-
-type PrescriptionDraftItem = {
-    drug_id: string;
-    dosage: string;
-    frequency: string;
-    route: string;
-    duration_days: string;
-    quantity: string;
-    instructions: string;
-    is_prn: boolean;
-    prn_reason: string;
-    is_external_pharmacy: boolean;
-};
-
-const createPrescriptionItem = (): PrescriptionDraftItem => ({
-    drug_id: '',
-    dosage: '',
-    frequency: '',
-    route: '',
-    duration_days: '5',
-    quantity: '1',
-    instructions: '',
-    is_prn: false,
-    prn_reason: '',
-    is_external_pharmacy: false,
-});
 
 const formatDate = (date: string | null | undefined): string =>
     date
@@ -268,48 +264,6 @@ export default function DoctorConsultationShow({
         ? canUpdateConsultation
         : canCreateConsultation;
 
-    const labCatalogByCategory = useMemo(
-        () =>
-            labTestOptions.reduce<Record<string, typeof labTestOptions>>(
-                (groups, option) => {
-                    const key = option.category || 'Other';
-                    groups[key] ??= [];
-                    groups[key].push(option);
-                    return groups;
-                },
-                {},
-            ),
-        [labTestOptions],
-    );
-
-    const labForm = useForm({
-        test_ids: [] as string[],
-        redirect_to: 'consultation',
-    });
-    const imagingForm = useForm({
-        modality: imagingModalities[0]?.value ?? 'xray',
-        body_part: '',
-        laterality: 'na',
-        clinical_history:
-            consultation?.history_of_present_illness ??
-            triage?.history_of_presenting_illness ??
-            '',
-        indication: consultation?.primary_diagnosis ?? '',
-        priority: imagingPriorities[0]?.value ?? 'routine',
-        requires_contrast: false,
-        contrast_allergy_status: '',
-        pregnancy_status: 'unknown',
-        redirect_to: 'consultation',
-    });
-    const prescriptionForm = useForm({
-        items: [createPrescriptionItem()],
-        redirect_to: 'consultation',
-    });
-    const serviceForm = useForm({
-        facility_service_id: '',
-        redirect_to: 'consultation',
-    });
-
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Doctors', href: '/doctors/consultations' },
         { title: 'Consultation', href: '/doctors/consultations' },
@@ -321,45 +275,23 @@ export default function DoctorConsultationShow({
 
     const canPlaceOrders =
         !isConsultationFinalized && canUpdateConsultation;
-    const [orderDialogOpen, setOrderDialogOpen] = useState(false);
-    const [orderDialogTab, setOrderDialogTab] =
-        useState<OrderTabValue>('lab');
+
+    const [labModalOpen, setLabModalOpen] = useState(false);
+    const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+    const [imagingModalOpen, setImagingModalOpen] = useState(false);
+    const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
+
+    const [editingLabRequest, setEditingLabRequest] = useState<LabRequest | null>(null);
+    const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
+    const [editingImagingRequest, setEditingImagingRequest] = useState<ImagingRequest | null>(null);
+    const [editingServiceOrder, setEditingServiceOrder] = useState<FacilityServiceOrder | null>(null);
+
     const openOrderDialog = (tab: OrderTabValue) => {
-        setOrderDialogTab(tab);
-        setOrderDialogOpen(true);
+        if (tab === 'lab') setLabModalOpen(true);
+        if (tab === 'prescriptions') setPrescriptionModalOpen(true);
+        if (tab === 'imaging') setImagingModalOpen(true);
+        if (tab === 'services') setServiceOrderModalOpen(true);
     };
-    const toggleLabTest = (testId: string, checked: boolean) =>
-        labForm.setData(
-            'test_ids',
-            checked
-                ? [...labForm.data.test_ids, testId]
-                : labForm.data.test_ids.filter((value) => value !== testId),
-        );
-    const updatePrescriptionItem = <K extends keyof PrescriptionDraftItem>(
-        index: number,
-        field: K,
-        value: PrescriptionDraftItem[K],
-    ) =>
-        prescriptionForm.setData(
-            'items',
-            prescriptionForm.data.items.map((item, itemIndex) =>
-                itemIndex === index ? { ...item, [field]: value } : item,
-            ),
-        );
-    const selectedFacilityService = facilityServiceOptions.find(
-        (option) => option.id === serviceForm.data.facility_service_id,
-    );
-    const pendingFacilityServiceIds = new Set(
-        facilityServiceOrders
-            .filter((order) => order.status === 'pending')
-            .map((order) => order.facility_service_id),
-    );
-    const hasPendingSelectedFacilityService =
-        serviceForm.data.facility_service_id !== '' &&
-        pendingFacilityServiceIds.has(serviceForm.data.facility_service_id);
-    const selectedDrugOptions = prescriptionForm.data.items.map((item) =>
-        drugOptions.find((drug) => drug.id === item.drug_id),
-    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -1059,312 +991,55 @@ export default function DoctorConsultationShow({
 
                             <TabsContent value="lab" className="space-y-6">
                                 <Card>
-                                    <CardHeader>
-                                        <CardTitle>
-                                            Laboratory Requests
-                                        </CardTitle>
-                                        <p className="text-sm text-muted-foreground">
-                                            Order lab tests against this
-                                            consultation and keep the running
-                                            request history together.
-                                        </p>
+                                    <CardHeader className="flex flex-row items-center justify-between">
+                                        <div>
+                                            <CardTitle>
+                                                Laboratory Requests
+                                            </CardTitle>
+                                            <p className="text-sm text-muted-foreground">
+                                                Order lab tests against this
+                                                consultation and keep the running
+                                                request history together.
+                                            </p>
+                                        </div>
+                                        {canPlaceOrders && (
+                                            <Button
+                                                onClick={() => {
+                                                    setEditingLabRequest(null);
+                                                    setLabModalOpen(true);
+                                                }}
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                New Lab Request
+                                            </Button>
+                                        )}
                                     </CardHeader>
                                     <CardContent className="space-y-6">
-                                        {!canPlaceOrders ? (
+                                        {!canPlaceOrders && (
                                             <OrderGuard
                                                 consultation={consultation}
                                                 canManageOrders={
                                                     canUpdateConsultation
                                                 }
                                             />
-                                        ) : (
-                                            <form
-                                                className="space-y-4 rounded-lg border p-4"
-                                                onSubmit={(event) => {
-                                                    event.preventDefault();
-                                                    labForm.post(
-                                                        `/visits/${visit.id}/lab-requests`,
-                                                        {
-                                                            preserveState: true,
-                                                            preserveScroll: true,
-                                                            onError: () =>
-                                                                setSelectedTab(
-                                                                    'lab',
-                                                                ),
-                                                            onSuccess: () => {
-                                                                setSelectedTab(
-                                                                    'lab',
-                                                                );
-                                                                labForm.reset(
-                                                                    'test_ids',
-                                                                );
-                                                            },
-                                                        },
-                                                    );
-                                                }}
-                                            >
-                                                <div className="space-y-3">
-                                                    <div>
-                                                        <Label>
-                                                            Select Tests
-                                                        </Label>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Choose one or more
-                                                            active laboratory
-                                                            tests for this
-                                                            patient.
-                                                        </p>
-                                                    </div>
-                                                    {Object.entries(
-                                                        labCatalogByCategory,
-                                                    ).map(
-                                                        ([category, tests]) => (
-                                                            <div
-                                                                key={category}
-                                                                className="rounded-lg border p-3"
-                                                            >
-                                                                <p className="mb-3 text-sm font-medium">
-                                                                    {category}
-                                                                </p>
-                                                                <div className="grid gap-2 md:grid-cols-2">
-                                                                    {tests.map(
-                                                                        (
-                                                                            test,
-                                                                        ) => (
-                                                                            <label
-                                                                                key={
-                                                                                    test.id
-                                                                                }
-                                                                                className="flex items-start gap-3 rounded-md border px-3 py-2 text-sm"
-                                                                            >
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    checked={labForm.data.test_ids.includes(
-                                                                                        test.id,
-                                                                                    )}
-                                                                                    onChange={(
-                                                                                        event,
-                                                                                    ) =>
-                                                                                        toggleLabTest(
-                                                                                            test.id,
-                                                                                            event
-                                                                                                .target
-                                                                                                .checked,
-                                                                                        )
-                                                                                    }
-                                                                                    className="mt-1 h-4 w-4"
-                                                                                />
-                                                                                <span>
-                                                                                    <span className="block font-medium">
-                                                                                        {
-                                                                                            test.test_name
-                                                                                        }
-                                                                                        {test.test_code
-                                                                                            ? ` (${test.test_code})`
-                                                                                            : ''}
-                                                                                    </span>
-                                                                                    <span className="block text-muted-foreground">
-                                                                                        Quoted
-                                                                                        price:{' '}
-                                                                                        {formatMoney(
-                                                                                            test.quoted_price ??
-                                                                                                test.base_price,
-                                                                                        )}
-                                                                                        {test.price_source ===
-                                                                                        'insurance_package'
-                                                                                            ? ' (insurance package)'
-                                                                                            : ' (catalog)'}
-                                                                                    </span>
-                                                                                </span>
-                                                                            </label>
-                                                                        ),
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        ),
-                                                    )}
-                                                    <InputError
-                                                        message={
-                                                            labForm.errors
-                                                                .test_ids
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="flex justify-end">
-                                                    <Button
-                                                        type="submit"
-                                                        disabled={
-                                                            labForm.processing
-                                                        }
-                                                    >
-                                                        Request Lab Tests
-                                                    </Button>
-                                                </div>
-                                            </form>
                                         )}
 
-                                        {labRequests.length === 0 ? (
-                                            <p className="text-sm text-muted-foreground">
-                                                No laboratory requests have been
-                                                placed yet.
-                                            </p>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                {labRequests.map((request) => (
-                                                    <div
-                                                        key={request.id}
-                                                        className="rounded-lg border p-4"
-                                                    >
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <h3 className="font-medium">
-                                                                {request.items
-                                                                    .map(
-                                                                        (
-                                                                            item,
-                                                                        ) =>
-                                                                            item
-                                                                                .test
-                                                                                ?.test_name,
-                                                                    )
-                                                                    .filter(
-                                                                        Boolean,
-                                                                    )
-                                                                    .join(
-                                                                        ', ',
-                                                                    ) ||
-                                                                    'Lab request'}
-                                                            </h3>
-                                                            <Badge
-                                                                className={cn(
-                                                                    'border-0',
-                                                                    statusBadgeClasses(
-                                                                        request.status,
-                                                                    ),
-                                                                )}
-                                                            >
-                                                                {labelize(
-                                                                    request.status,
-                                                                )}
-                                                            </Badge>
-                                                        </div>
-                                                        <p className="mt-1 text-sm text-muted-foreground">
-                                                            Ordered by{' '}
-                                                            {staffName(
-                                                                request.requestedBy,
-                                                            )}{' '}
-                                                            on{' '}
-                                                            {formatDateTime(
-                                                                request.request_date,
-                                                            )}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Priority:{' '}
-                                                            {labelize(
-                                                                request.priority,
-                                                            )}
-                                                            {request.is_stat
-                                                                ? ' | STAT'
-                                                                : ''}
-                                                        </p>
-                                                        {request.clinical_notes ? (
-                                                            <p className="mt-2 text-sm text-muted-foreground">
-                                                                Clinical notes:{' '}
-                                                                {
-                                                                    request.clinical_notes
-                                                                }
-                                                            </p>
-                                                        ) : null}
-                                                        <div className="mt-4 space-y-3">
-                                                            {request.items.map(
-                                                                (item) => {
-                                                                    const releasedValues =
-                                                                        labItemResultValues(
-                                                                            item,
-                                                                        );
-
-                                                                    return (
-                                                                        <div
-                                                                            key={
-                                                                                item.id
-                                                                            }
-                                                                            className="rounded-lg border bg-muted/30 p-3"
-                                                                        >
-                                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                                <p className="font-medium">
-                                                                                    {item
-                                                                                        .test
-                                                                                        ?.test_name ??
-                                                                                        'Lab test'}
-                                                                                </p>
-                                                                                <Badge
-                                                                                    className={cn(
-                                                                                        'border-0',
-                                                                                        statusBadgeClasses(
-                                                                                            item.status,
-                                                                                        ),
-                                                                                    )}
-                                                                                >
-                                                                                    {labelize(
-                                                                                        item.workflow_stage ??
-                                                                                            item.status,
-                                                                                    )}
-                                                                                </Badge>
-                                                                            </div>
-                                                                            {item.result_visible &&
-                                                                            releasedValues.length ? (
-                                                                                <div className="mt-3 space-y-2">
-                                                                                    {releasedValues.map(
-                                                                                        (
-                                                                                            value,
-                                                                                        ) => (
-                                                                                            <div
-                                                                                                key={
-                                                                                                    value.id
-                                                                                                }
-                                                                                                className="rounded-md border bg-background p-3"
-                                                                                            >
-                                                                                                <p className="text-sm text-muted-foreground">
-                                                                                                    {
-                                                                                                        value.label
-                                                                                                    }
-                                                                                                </p>
-                                                                                                <p className="font-medium">
-                                                                                                    {value.display_value ??
-                                                                                                        value.value_text ??
-                                                                                                        value.value_numeric}
-                                                                                                    {value.unit
-                                                                                                        ? ` ${value.unit}`
-                                                                                                        : ''}
-                                                                                                </p>
-                                                                                                {value.reference_range ? (
-                                                                                                    <p className="text-xs text-muted-foreground">
-                                                                                                        Reference:{' '}
-                                                                                                        {
-                                                                                                            value.reference_range
-                                                                                                        }
-                                                                                                    </p>
-                                                                                                ) : null}
-                                                                                            </div>
-                                                                                        ),
-                                                                                    )}
-                                                                                </div>
-                                                                            ) : (
-                                                                                <p className="mt-2 text-sm text-muted-foreground">
-                                                                                    Result
-                                                                                    not
-                                                                                    yet
-                                                                                    released.
-                                                                                </p>
-                                                                            )}
-                                                                        </div>
-                                                                    );
-                                                                },
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                        <LabOrdersTable
+                                            labRequests={labRequests}
+                                            canManageOrders={canPlaceOrders}
+                                            onEdit={(request) => {
+                                                setEditingLabRequest(request);
+                                                setLabModalOpen(true);
+                                            }}
+                                            onDelete={(request) => {
+                                                if (confirm('Are you sure you want to remove this lab request?')) {
+                                                    router.delete(`/visits/${visit.id}/lab-requests/${request.id}`, {
+                                                        data: { redirect_to: 'consultation' },
+                                                        preserveScroll: true,
+                                                    });
+                                                }
+                                            }}
+                                        />
                                     </CardContent>
                                 </Card>
                             </TabsContent>
@@ -1374,1265 +1049,205 @@ export default function DoctorConsultationShow({
                                 className="space-y-6"
                             >
                                 <Card>
-                                    <CardHeader>
-                                        <CardTitle>Prescriptions</CardTitle>
-                                        <p className="text-sm text-muted-foreground">
-                                            Build the drug plan inside the
-                                            consultation workspace so pharmacy
-                                            can act on a clear prescription set.
-                                        </p>
+                                    <CardHeader className="flex flex-row items-center justify-between">
+                                        <div>
+                                            <CardTitle>Prescriptions</CardTitle>
+                                            <p className="text-sm text-muted-foreground">
+                                                Build the drug plan inside the
+                                                consultation workspace so pharmacy
+                                                can act on a clear prescription set.
+                                            </p>
+                                        </div>
+                                        {canPlaceOrders && (
+                                            <Button
+                                                onClick={() => {
+                                                    setEditingPrescription(null);
+                                                    setPrescriptionModalOpen(true);
+                                                }}
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                New Prescription
+                                            </Button>
+                                        )}
                                     </CardHeader>
                                     <CardContent className="space-y-6">
-                                        {!canPlaceOrders ? (
+                                        {!canPlaceOrders && (
                                             <OrderGuard
                                                 consultation={consultation}
                                                 canManageOrders={
                                                     canUpdateConsultation
                                                 }
                                             />
-                                        ) : (
-                                            <form
-                                                className="space-y-4 rounded-lg border p-4"
-                                                onSubmit={(event) => {
-                                                    event.preventDefault();
-                                                    prescriptionForm.post(
-                                                        `/visits/${visit.id}/prescriptions`,
-                                                        {
-                                                            preserveState: true,
-                                                            preserveScroll: true,
-                                                            onError: () =>
-                                                                setSelectedTab(
-                                                                    'prescriptions',
-                                                                ),
-                                                            onSuccess: () => {
-                                                                setSelectedTab(
-                                                                    'prescriptions',
-                                                                );
-                                                                prescriptionForm.reset();
-                                                            },
-                                                        },
-                                                    );
-                                                }}
-                                            >
-                                                <div className="space-y-4">
-                                                    {prescriptionForm.data.items.map(
-                                                        (item, index) => (
-                                                            <div
-                                                                key={index}
-                                                                className="rounded-lg border p-4"
-                                                            >
-                                                                <div className="mb-4 flex items-center justify-between">
-                                                                    <h3 className="font-medium">
-                                                                        Drug{' '}
-                                                                        {index +
-                                                                            1}
-                                                                    </h3>
-                                                                    {prescriptionForm
-                                                                        .data
-                                                                        .items
-                                                                        .length >
-                                                                    1 ? (
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            onClick={() =>
-                                                                                prescriptionForm.setData(
-                                                                                    'items',
-                                                                                    prescriptionForm.data.items.filter(
-                                                                                        (
-                                                                                            _,
-                                                                                            itemIndex,
-                                                                                        ) =>
-                                                                                            itemIndex !==
-                                                                                            index,
-                                                                                    ),
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                                            Remove
-                                                                        </Button>
-                                                                    ) : null}
-                                                                </div>
-                                                                <div className="grid gap-4 md:grid-cols-2">
-                                                                    <div className="grid gap-2">
-                                                                        <Label>
-                                                                            Drug
-                                                                        </Label>
-                                                                        <Select
-                                                                            value={
-                                                                                item.drug_id
-                                                                            }
-                                                                            onValueChange={(
-                                                                                value,
-                                                                            ) =>
-                                                                                updatePrescriptionItem(
-                                                                                    index,
-                                                                                    'drug_id',
-                                                                                    value,
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <SelectTrigger>
-                                                                                <SelectValue placeholder="Select drug" />
-                                                                            </SelectTrigger>
-                                                                            <SelectContent>
-                                                                                {drugOptions.map(
-                                                                                    (
-                                                                                        drug,
-                                                                                    ) => (
-                                                                                        <SelectItem
-                                                                                            key={
-                                                                                                drug.id
-                                                                                            }
-                                                                                            value={
-                                                                                                drug.id
-                                                                                            }
-                                                                                        >
-                                                                                            {
-                                                                                                drug.generic_name
-                                                                                            }
-                                                                                            {drug.brand_name
-                                                                                                ? ` (${drug.brand_name})`
-                                                                                                : ''}
-                                                                                        </SelectItem>
-                                                                                    ),
-                                                                                )}
-                                                                            </SelectContent>
-                                                                        </Select>
-                                                                        <InputError
-                                                                            message={
-                                                                                prescriptionForm
-                                                                                    .errors[
-                                                                                    `items.${index}.drug_id`
-                                                                                ]
-                                                                            }
-                                                                        />
-                                                                        {selectedDrugOptions[
-                                                                            index
-                                                                        ] ? (
-                                                                            <p className="text-xs text-muted-foreground">
-                                                                                Quoted
-                                                                                price:{' '}
-                                                                                {formatMoney(
-                                                                                    selectedDrugOptions[
-                                                                                        index
-                                                                                    ]
-                                                                                        ?.quoted_price ??
-                                                                                        null,
-                                                                                )}
-                                                                                {selectedDrugOptions[
-                                                                                    index
-                                                                                ]
-                                                                                    ?.price_source ===
-                                                                                'insurance_package'
-                                                                                    ? ' (insurance package)'
-                                                                                    : ' (no catalog price configured)'}
-                                                                            </p>
-                                                                        ) : null}
-                                                                    </div>
-                                                                    <div className="grid gap-2">
-                                                                        <Label>
-                                                                            Dosage
-                                                                        </Label>
-                                                                        <Input
-                                                                            value={
-                                                                                item.dosage
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                updatePrescriptionItem(
-                                                                                    index,
-                                                                                    'dosage',
-                                                                                    event
-                                                                                        .target
-                                                                                        .value,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                prescriptionForm
-                                                                                    .errors[
-                                                                                    `items.${index}.dosage`
-                                                                                ]
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="mt-4 grid gap-4 md:grid-cols-4">
-                                                                    <div className="grid gap-2">
-                                                                        <Label>
-                                                                            Frequency
-                                                                        </Label>
-                                                                        <Input
-                                                                            value={
-                                                                                item.frequency
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                updatePrescriptionItem(
-                                                                                    index,
-                                                                                    'frequency',
-                                                                                    event
-                                                                                        .target
-                                                                                        .value,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                prescriptionForm
-                                                                                    .errors[
-                                                                                    `items.${index}.frequency`
-                                                                                ]
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                    <div className="grid gap-2">
-                                                                        <Label>
-                                                                            Route
-                                                                        </Label>
-                                                                        <Input
-                                                                            value={
-                                                                                item.route
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                updatePrescriptionItem(
-                                                                                    index,
-                                                                                    'route',
-                                                                                    event
-                                                                                        .target
-                                                                                        .value,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                prescriptionForm
-                                                                                    .errors[
-                                                                                    `items.${index}.route`
-                                                                                ]
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                    <div className="grid gap-2">
-                                                                        <Label>
-                                                                            Duration
-                                                                            (Days)
-                                                                        </Label>
-                                                                        <Input
-                                                                            type="number"
-                                                                            min={
-                                                                                1
-                                                                            }
-                                                                            value={
-                                                                                item.duration_days
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                updatePrescriptionItem(
-                                                                                    index,
-                                                                                    'duration_days',
-                                                                                    event
-                                                                                        .target
-                                                                                        .value,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                prescriptionForm
-                                                                                    .errors[
-                                                                                    `items.${index}.duration_days`
-                                                                                ]
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                    <div className="grid gap-2">
-                                                                        <Label>
-                                                                            Quantity
-                                                                        </Label>
-                                                                        <Input
-                                                                            type="number"
-                                                                            min={
-                                                                                1
-                                                                            }
-                                                                            value={
-                                                                                item.quantity
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                updatePrescriptionItem(
-                                                                                    index,
-                                                                                    'quantity',
-                                                                                    event
-                                                                                        .target
-                                                                                        .value,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                prescriptionForm
-                                                                                    .errors[
-                                                                                    `items.${index}.quantity`
-                                                                                ]
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="mt-4 grid gap-2">
-                                                                    <Label>
-                                                                        Instructions
-                                                                    </Label>
-                                                                    <Textarea
-                                                                        rows={2}
-                                                                        value={
-                                                                            item.instructions
-                                                                        }
-                                                                        onChange={(
-                                                                            event,
-                                                                        ) =>
-                                                                            updatePrescriptionItem(
-                                                                                index,
-                                                                                'instructions',
-                                                                                event
-                                                                                    .target
-                                                                                    .value,
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                    <InputError
-                                                                        message={
-                                                                            prescriptionForm
-                                                                                .errors[
-                                                                                `items.${index}.instructions`
-                                                                            ]
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                                <div className="mt-4 flex flex-wrap gap-4">
-                                                                    <label className="flex items-center gap-2 text-sm">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={
-                                                                                item.is_prn
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                updatePrescriptionItem(
-                                                                                    index,
-                                                                                    'is_prn',
-                                                                                    event
-                                                                                        .target
-                                                                                        .checked,
-                                                                                )
-                                                                            }
-                                                                            className="h-4 w-4"
-                                                                        />
-                                                                        Prescribe
-                                                                        as
-                                                                        needed
-                                                                    </label>
-                                                                    <label className="flex items-center gap-2 text-sm">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={
-                                                                                item.is_external_pharmacy
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                updatePrescriptionItem(
-                                                                                    index,
-                                                                                    'is_external_pharmacy',
-                                                                                    event
-                                                                                        .target
-                                                                                        .checked,
-                                                                                )
-                                                                            }
-                                                                            className="h-4 w-4"
-                                                                        />
-                                                                        External
-                                                                        pharmacy
-                                                                    </label>
-                                                                </div>
-                                                                {item.is_prn ? (
-                                                                    <div className="mt-4 grid gap-2">
-                                                                        <Label>
-                                                                            PRN
-                                                                            Reason
-                                                                        </Label>
-                                                                        <Input
-                                                                            value={
-                                                                                item.prn_reason
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                updatePrescriptionItem(
-                                                                                    index,
-                                                                                    'prn_reason',
-                                                                                    event
-                                                                                        .target
-                                                                                        .value,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                prescriptionForm
-                                                                                    .errors[
-                                                                                    `items.${index}.prn_reason`
-                                                                                ]
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                ) : null}
-                                                            </div>
-                                                        ),
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            prescriptionForm.setData(
-                                                                'items',
-                                                                [
-                                                                    ...prescriptionForm
-                                                                        .data
-                                                                        .items,
-                                                                    createPrescriptionItem(),
-                                                                ],
-                                                            )
-                                                        }
-                                                    >
-                                                        <Plus className="mr-2 h-4 w-4" />
-                                                        Add Drug
-                                                    </Button>
-                                                    <Button
-                                                        type="submit"
-                                                        disabled={
-                                                            prescriptionForm.processing
-                                                        }
-                                                    >
-                                                        Save Prescription
-                                                    </Button>
-                                                </div>
-                                            </form>
                                         )}
 
-                                        {prescriptions.length === 0 ? (
-                                            <p className="text-sm text-muted-foreground">
-                                                No prescriptions have been
-                                                written yet.
-                                            </p>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                {prescriptions.map(
-                                                    (prescription) => (
-                                                        <div
-                                                            key={
-                                                                prescription.id
-                                                            }
-                                                            className="rounded-lg border p-4"
-                                                        >
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <h3 className="font-medium">
-                                                                    {prescription.primary_diagnosis ||
-                                                                        'Prescription'}
-                                                                </h3>
-                                                                <Badge
-                                                                    className={cn(
-                                                                        'border-0',
-                                                                        statusBadgeClasses(
-                                                                            prescription.status,
-                                                                        ),
-                                                                    )}
-                                                                >
-                                                                    {labelize(
-                                                                        prescription.status,
-                                                                    )}
-                                                                </Badge>
-                                                            </div>
-                                                            <p className="mt-1 text-sm text-muted-foreground">
-                                                                Prescribed by{' '}
-                                                                {staffName(
-                                                                    prescription.prescribedBy,
-                                                                )}{' '}
-                                                                on{' '}
-                                                                {formatDateTime(
-                                                                    prescription.prescription_date,
-                                                                )}
-                                                            </p>
-                                                            <div className="mt-3 space-y-2 text-sm">
-                                                                {prescription.items.map(
-                                                                    (item) => (
-                                                                        <div
-                                                                            key={
-                                                                                item.id
-                                                                            }
-                                                                            className="rounded-md bg-muted/40 px-3 py-2"
-                                                                        >
-                                                                            <p className="font-medium">
-                                                                                {item
-                                                                                    .drug
-                                                                                    ?.generic_name ??
-                                                                                    'Drug'}
-                                                                                {item
-                                                                                    .drug
-                                                                                    ?.brand_name
-                                                                                    ? ` (${item.drug.brand_name})`
-                                                                                    : ''}
-                                                                            </p>
-                                                                            <p className="text-muted-foreground">
-                                                                                {
-                                                                                    item.dosage
-                                                                                }{' '}
-                                                                                |{' '}
-                                                                                {
-                                                                                    item.frequency
-                                                                                }{' '}
-                                                                                |{' '}
-                                                                                {
-                                                                                    item.route
-                                                                                }{' '}
-                                                                                |{' '}
-                                                                                {
-                                                                                    item.duration_days
-                                                                                }{' '}
-                                                                                day(s)
-                                                                                |
-                                                                                Qty{' '}
-                                                                                {
-                                                                                    item.quantity
-                                                                                }
-                                                                            </p>
-                                                                        </div>
-                                                                    ),
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        )}
+                                        <PrescriptionOrdersTable
+                                            prescriptions={prescriptions}
+                                            canManageOrders={canPlaceOrders}
+                                            onEdit={(prescription) => {
+                                                setEditingPrescription(prescription);
+                                                setPrescriptionModalOpen(true);
+                                            }}
+                                            onDelete={(prescription) => {
+                                                if (confirm('Are you sure you want to remove this prescription?')) {
+                                                    router.delete(`/visits/${visit.id}/prescriptions/${prescription.id}`, {
+                                                        data: { redirect_to: 'consultation' },
+                                                        preserveScroll: true,
+                                                    });
+                                                }
+                                            }}
+                                        />
                                     </CardContent>
                                 </Card>
                             </TabsContent>
 
                             <TabsContent value="imaging" className="space-y-6">
                                 <Card>
-                                    <CardHeader>
-                                        <CardTitle>Imaging Requests</CardTitle>
-                                        <p className="text-sm text-muted-foreground">
-                                            Capture radiology and scan requests
-                                            with the clinical history and
-                                            indication that support the order.
-                                        </p>
+                                    <CardHeader className="flex flex-row items-center justify-between">
+                                        <div>
+                                            <CardTitle>Imaging Requests</CardTitle>
+                                            <p className="text-sm text-muted-foreground">
+                                                Capture radiology and scan requests
+                                                with the clinical history and
+                                                indication that support the order.
+                                            </p>
+                                        </div>
+                                        {canPlaceOrders && (
+                                            <Button
+                                                onClick={() => {
+                                                    setEditingImagingRequest(null);
+                                                    setImagingModalOpen(true);
+                                                }}
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                New Imaging Request
+                                            </Button>
+                                        )}
                                     </CardHeader>
                                     <CardContent className="space-y-6">
-                                        {!canPlaceOrders ? (
+                                        {!canPlaceOrders && (
                                             <OrderGuard
                                                 consultation={consultation}
                                                 canManageOrders={
                                                     canUpdateConsultation
                                                 }
                                             />
-                                        ) : (
-                                            <form
-                                                className="space-y-4 rounded-lg border p-4"
-                                                onSubmit={(event) => {
-                                                    event.preventDefault();
-                                                    imagingForm.post(
-                                                        `/visits/${visit.id}/imaging-requests`,
-                                                    );
-                                                }}
-                                            >
-                                                <div className="grid gap-4 md:grid-cols-3">
-                                                    <div className="grid gap-2">
-                                                        <Label>Modality</Label>
-                                                        <Select
-                                                            value={
-                                                                imagingForm.data
-                                                                    .modality
-                                                            }
-                                                            onValueChange={(
-                                                                value,
-                                                            ) =>
-                                                                imagingForm.setData(
-                                                                    'modality',
-                                                                    value,
-                                                                )
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {imagingModalities.map(
-                                                                    (
-                                                                        modality,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                modality.value
-                                                                            }
-                                                                            value={
-                                                                                modality.value
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                modality.label
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                imagingForm
-                                                                    .errors
-                                                                    .modality
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="imaging_body_part">
-                                                            Body Part
-                                                        </Label>
-                                                        <Input
-                                                            id="imaging_body_part"
-                                                            value={
-                                                                imagingForm.data
-                                                                    .body_part
-                                                            }
-                                                            onChange={(event) =>
-                                                                imagingForm.setData(
-                                                                    'body_part',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                imagingForm
-                                                                    .errors
-                                                                    .body_part
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label>
-                                                            Laterality
-                                                        </Label>
-                                                        <Select
-                                                            value={
-                                                                imagingForm.data
-                                                                    .laterality
-                                                            }
-                                                            onValueChange={(
-                                                                value,
-                                                            ) =>
-                                                                imagingForm.setData(
-                                                                    'laterality',
-                                                                    value,
-                                                                )
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {imagingLateralities.map(
-                                                                    (
-                                                                        laterality,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                laterality.value
-                                                                            }
-                                                                            value={
-                                                                                laterality.value
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                laterality.label
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                imagingForm
-                                                                    .errors
-                                                                    .laterality
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="grid gap-4 md:grid-cols-2">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="imaging_clinical_history">
-                                                            Clinical History
-                                                        </Label>
-                                                        <Textarea
-                                                            id="imaging_clinical_history"
-                                                            rows={3}
-                                                            value={
-                                                                imagingForm.data
-                                                                    .clinical_history
-                                                            }
-                                                            onChange={(event) =>
-                                                                imagingForm.setData(
-                                                                    'clinical_history',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                imagingForm
-                                                                    .errors
-                                                                    .clinical_history
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="imaging_indication">
-                                                            Indication
-                                                        </Label>
-                                                        <Textarea
-                                                            id="imaging_indication"
-                                                            rows={3}
-                                                            value={
-                                                                imagingForm.data
-                                                                    .indication
-                                                            }
-                                                            onChange={(event) =>
-                                                                imagingForm.setData(
-                                                                    'indication',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                imagingForm
-                                                                    .errors
-                                                                    .indication
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="grid gap-4 md:grid-cols-3">
-                                                    <div className="grid gap-2">
-                                                        <Label>Priority</Label>
-                                                        <Select
-                                                            value={
-                                                                imagingForm.data
-                                                                    .priority
-                                                            }
-                                                            onValueChange={(
-                                                                value,
-                                                            ) =>
-                                                                imagingForm.setData(
-                                                                    'priority',
-                                                                    value,
-                                                                )
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {imagingPriorities.map(
-                                                                    (
-                                                                        priority,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                priority.value
-                                                                            }
-                                                                            value={
-                                                                                priority.value
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                priority.label
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                imagingForm
-                                                                    .errors
-                                                                    .priority
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label>
-                                                            Pregnancy Status
-                                                        </Label>
-                                                        <Select
-                                                            value={
-                                                                imagingForm.data
-                                                                    .pregnancy_status
-                                                            }
-                                                            onValueChange={(
-                                                                value,
-                                                            ) =>
-                                                                imagingForm.setData(
-                                                                    'pregnancy_status',
-                                                                    value,
-                                                                )
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {pregnancyStatuses.map(
-                                                                    (
-                                                                        status,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                status.value
-                                                                            }
-                                                                            value={
-                                                                                status.value
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                status.label
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                imagingForm
-                                                                    .errors
-                                                                    .pregnancy_status
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="contrast_allergy_status">
-                                                            Contrast Allergy
-                                                            Status
-                                                        </Label>
-                                                        <Input
-                                                            id="contrast_allergy_status"
-                                                            value={
-                                                                imagingForm.data
-                                                                    .contrast_allergy_status
-                                                            }
-                                                            onChange={(event) =>
-                                                                imagingForm.setData(
-                                                                    'contrast_allergy_status',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                imagingForm
-                                                                    .errors
-                                                                    .contrast_allergy_status
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <label className="flex items-center gap-2 text-sm">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={
-                                                            imagingForm.data
-                                                                .requires_contrast
-                                                        }
-                                                        onChange={(event) =>
-                                                            imagingForm.setData(
-                                                                'requires_contrast',
-                                                                event.target
-                                                                    .checked,
-                                                            )
-                                                        }
-                                                        className="h-4 w-4"
-                                                    />
-                                                    This study requires contrast
-                                                </label>
-                                                <div className="flex justify-end">
-                                                    <Button
-                                                        type="submit"
-                                                        disabled={
-                                                            imagingForm.processing
-                                                        }
-                                                    >
-                                                        Request Imaging
-                                                    </Button>
-                                                </div>
-                                            </form>
                                         )}
 
-                                        {imagingRequests.length === 0 ? (
-                                            <p className="text-sm text-muted-foreground">
-                                                No imaging requests have been
-                                                placed yet.
-                                            </p>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                {imagingRequests.map(
-                                                    (request) => (
-                                                        <div
-                                                            key={request.id}
-                                                            className="rounded-lg border p-4"
-                                                        >
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <h3 className="font-medium">
-                                                                    {labelize(
-                                                                        request.modality,
-                                                                    )}{' '}
-                                                                    {
-                                                                        request.body_part
-                                                                    }
-                                                                </h3>
-                                                                <Badge
-                                                                    className={cn(
-                                                                        'border-0',
-                                                                        statusBadgeClasses(
-                                                                            request.status,
-                                                                        ),
-                                                                    )}
-                                                                >
-                                                                    {labelize(
-                                                                        request.status,
-                                                                    )}
-                                                                </Badge>
-                                                            </div>
-                                                            <p className="mt-1 text-sm text-muted-foreground">
-                                                                Ordered by{' '}
-                                                                {staffName(
-                                                                    request.requestedBy,
-                                                                )}{' '}
-                                                                | Priority{' '}
-                                                                {labelize(
-                                                                    request.priority,
-                                                                )}
-                                                            </p>
-                                                            <p className="mt-2 text-sm text-muted-foreground">
-                                                                Clinical
-                                                                history:{' '}
-                                                                {
-                                                                    request.clinical_history
-                                                                }
-                                                            </p>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Indication:{' '}
-                                                                {
-                                                                    request.indication
-                                                                }
-                                                            </p>
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        )}
+                                        <ImagingOrdersTable
+                                            imagingRequests={imagingRequests}
+                                            canManageOrders={canPlaceOrders}
+                                            onEdit={(request) => {
+                                                setEditingImagingRequest(request);
+                                                setImagingModalOpen(true);
+                                            }}
+                                            onDelete={(request) => {
+                                                if (confirm('Are you sure you want to remove this imaging request?')) {
+                                                    router.delete(`/visits/${visit.id}/imaging-requests/${request.id}`, {
+                                                        data: { redirect_to: 'consultation' },
+                                                        preserveScroll: true,
+                                                    });
+                                                }
+                                            }}
+                                        />
                                     </CardContent>
                                 </Card>
                             </TabsContent>
 
-                            <TabsContent value="services">
+                            <TabsContent value="services" className="space-y-6">
                                 <Card>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <CreditCard className="h-5 w-5" />
-                                            Facility Services
-                                        </CardTitle>
+                                    <CardHeader className="flex flex-row items-center justify-between">
+                                        <div>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <CreditCard className="h-5 w-5" />
+                                                Facility Services
+                                            </CardTitle>
+                                            <p className="text-sm text-muted-foreground">
+                                                Order facility services for this visit.
+                                            </p>
+                                        </div>
+                                        {canPlaceOrders && (
+                                            <Button
+                                                onClick={() => {
+                                                    setEditingServiceOrder(null);
+                                                    setServiceOrderModalOpen(true);
+                                                }}
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                New Service Order
+                                            </Button>
+                                        )}
                                     </CardHeader>
                                     <CardContent className="space-y-6">
-                                        {!canPlaceOrders ? (
+                                        {!canPlaceOrders && (
                                             <OrderGuard
                                                 consultation={consultation}
                                                 canManageOrders={
                                                     canUpdateConsultation
                                                 }
                                             />
-                                        ) : facilityServiceOptions.length ===
-                                          0 ? (
-                                            <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-                                                No facility services are active
-                                                in the catalog yet. Add them
-                                                from Settings before doctors can
-                                                place operational orders.
-                                            </div>
-                                        ) : (
-                                            <form
-                                                className="space-y-4 rounded-lg border p-4"
-                                                onSubmit={(event) => {
-                                                    event.preventDefault();
-                                                    serviceForm.post(
-                                                        `/visits/${visit.id}/facility-service-orders`,
-                                                        {
-                                                            preserveState: true,
-                                                            preserveScroll: true,
-                                                            onError: () =>
-                                                                setSelectedTab(
-                                                                    'services',
-                                                                ),
-                                                            onSuccess: () => {
-                                                                setSelectedTab(
-                                                                    'services',
-                                                                );
-                                                                serviceForm.reset(
-                                                                    'facility_service_id',
-                                                                );
-                                                            },
-                                                        },
-                                                    );
-                                                }}
-                                            >
-                                                <div className="grid gap-4 lg:grid-cols-2">
-                                                    <div className="grid gap-2">
-                                                        <Label>
-                                                            Facility Service
-                                                        </Label>
-                                                        <Select
-                                                            value={
-                                                                serviceForm.data
-                                                                    .facility_service_id
-                                                            }
-                                                            onValueChange={(
-                                                                value,
-                                                            ) =>
-                                                                serviceForm.setData(
-                                                                    'facility_service_id',
-                                                                    value,
-                                                                )
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select service" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {facilityServiceOptions.map(
-                                                                    (
-                                                                        option,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                option.id
-                                                                            }
-                                                                            value={
-                                                                                option.id
-                                                                            }
-                                                                            disabled={pendingFacilityServiceIds.has(
-                                                                                option.id,
-                                                                            )}
-                                                                        >
-                                                                            {
-                                                                                option.name
-                                                                            }{' '}
-                                                                            (
-                                                                            {
-                                                                                option.service_code
-                                                                            }
-                                                                            )
-                                                                            {
-                                                                                ' - '
-                                                                            }
-                                                                            {labelize(
-                                                                                option.category,
-                                                                            )}
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <InputError
-                                                            message={
-                                                                serviceForm
-                                                                    .errors
-                                                                    .facility_service_id
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="rounded-lg border bg-zinc-50 p-3 text-sm dark:bg-zinc-950">
-                                                        <p className="font-medium">
-                                                            Service Snapshot
-                                                        </p>
-                                                        <p className="mt-1 text-muted-foreground">
-                                                            {selectedFacilityService
-                                                                ? hasPendingSelectedFacilityService
-                                                                    ? `${selectedFacilityService.name} already has a pending order for this visit.`
-                                                                    : `${selectedFacilityService.name} is ready to order.`
-                                                                : 'Select a service to review its catalog details.'}
-                                                        </p>
-                                                        {selectedFacilityService ? (
-                                                            <p className="mt-2 text-muted-foreground">
-                                                                Quoted price:{' '}
-                                                                {formatMoney(
-                                                                    selectedFacilityService.quoted_price ??
-                                                                        selectedFacilityService.selling_price ??
-                                                                        null,
-                                                                )}
-                                                                {selectedFacilityService.price_source ===
-                                                                'insurance_package'
-                                                                    ? ' (insurance package)'
-                                                                    : ' (catalog)'}
-                                                            </p>
-                                                        ) : null}
-                                                        {selectedFacilityService ? (
-                                                            <div className="mt-2 flex flex-wrap gap-2">
-                                                                <Badge variant="outline">
-                                                                    {labelize(
-                                                                        selectedFacilityService.category,
-                                                                    )}
-                                                                </Badge>
-                                                                <Badge variant="outline">
-                                                                    {selectedFacilityService.is_billable
-                                                                        ? 'Billable'
-                                                                        : 'Non-billable'}
-                                                                </Badge>
-                                                            </div>
-                                                        ) : null}
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-end">
-                                                    <Button
-                                                        type="submit"
-                                                        disabled={
-                                                            serviceForm.processing ||
-                                                            serviceForm.data
-                                                                .facility_service_id ===
-                                                                '' ||
-                                                            hasPendingSelectedFacilityService
-                                                        }
-                                                    >
-                                                        Order Facility Service
-                                                    </Button>
-                                                </div>
-                                            </form>
                                         )}
 
-                                        {facilityServiceOrders.length === 0 ? (
-                                            <p className="text-sm text-muted-foreground">
-                                                No facility services have been
-                                                ordered yet.
-                                            </p>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                {facilityServiceOrders.map(
-                                                    (order) => (
-                                                        <div
-                                                            key={order.id}
-                                                            className="rounded-lg border p-4"
-                                                        >
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <h3 className="font-medium">
-                                                                    {order
-                                                                        .service
-                                                                        ?.name ??
-                                                                        'Facility Service'}
-                                                                </h3>
-                                                                <Badge
-                                                                    className={cn(
-                                                                        'border-0',
-                                                                        statusBadgeClasses(
-                                                                            order.status,
-                                                                        ),
-                                                                    )}
-                                                                >
-                                                                    {labelize(
-                                                                        order.status,
-                                                                    )}
-                                                                </Badge>
-                                                            </div>
-                                                            <p className="mt-1 text-sm text-muted-foreground">
-                                                                Ordered by{' '}
-                                                                {staffName(
-                                                                    order.orderedBy,
-                                                                )}{' '}
-                                                                on{' '}
-                                                                {formatDateTime(
-                                                                    order.ordered_at,
-                                                                )}
-                                                            </p>
-                                                            {order.completed_at ? (
-                                                                <p className="text-sm text-muted-foreground">
-                                                                    Completed:{' '}
-                                                                    {formatDateTime(
-                                                                        order.completed_at,
-                                                                    )}
-                                                                </p>
-                                                            ) : null}
-                                                            {order.status ===
-                                                            'pending' ? (
-                                                                <div className="mt-3 flex justify-end">
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        onClick={() =>
-                                                                            router.delete(
-                                                                                `/visits/${visit.id}/facility-service-orders/${order.id}`,
-                                                                                {
-                                                                                    data: {
-                                                                                        redirect_to:
-                                                                                            'consultation',
-                                                                                    },
-                                                                                    preserveState: true,
-                                                                                    preserveScroll: true,
-                                                                                    onSuccess:
-                                                                                        () =>
-                                                                                            setSelectedTab(
-                                                                                                'services',
-                                                                                            ),
-                                                                                },
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                                        Remove
-                                                                        Pending
-                                                                        Order
-                                                                    </Button>
-                                                                </div>
-                                                            ) : null}
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        )}
+                                        <ServiceOrdersTable
+                                            orders={facilityServiceOrders}
+                                            canManageOrders={canPlaceOrders}
+                                            onEdit={(order) => {
+                                                setEditingServiceOrder(order);
+                                                setServiceOrderModalOpen(true);
+                                            }}
+                                            onDelete={(order) => {
+                                                if (confirm('Are you sure you want to remove this service order?')) {
+                                                    router.delete(`/visits/${visit.id}/facility-service-orders/${order.id}`, {
+                                                        data: { redirect_to: 'consultation' },
+                                                        preserveScroll: true,
+                                                    });
+                                                }
+                                            }}
+                                        />
                                     </CardContent>
                                 </Card>
                             </TabsContent>
                         </Tabs>
+
+                        {canPlaceOrders && (
+                            <>
+                                <LabOrderModal
+                                    open={labModalOpen}
+                                    onOpenChange={setLabModalOpen}
+                                    visit={visit}
+                                    labRequest={editingLabRequest}
+                                    labTestOptions={labTestOptions}
+                                    labPriorities={labPriorities}
+                                    redirectTo="consultation"
+                                />
+                                <PrescriptionOrderModal
+                                    open={prescriptionModalOpen}
+                                    onOpenChange={setPrescriptionModalOpen}
+                                    visit={visit}
+                                    prescription={editingPrescription}
+                                    drugOptions={drugOptions}
+                                    redirectTo="consultation"
+                                />
+                                <ImagingOrderModal
+                                    open={imagingModalOpen}
+                                    onOpenChange={setImagingModalOpen}
+                                    visit={visit}
+                                    imagingRequest={editingImagingRequest}
+                                    imagingModalities={imagingModalities}
+                                    imagingPriorities={imagingPriorities}
+                                    imagingLateralities={imagingLateralities}
+                                    pregnancyStatuses={pregnancyStatuses}
+                                    redirectTo="consultation"
+                                />
+                                <ServiceOrderModal
+                                    open={serviceOrderModalOpen}
+                                    onOpenChange={setServiceOrderModalOpen}
+                                    visit={visit}
+                                    serviceOrder={editingServiceOrder}
+                                    facilityServiceOptions={facilityServiceOptions}
+                                    redirectTo="consultation"
+                                />
+                            </>
+                        )}
                     </div>
 
                     <div className="space-y-6">
@@ -2821,21 +1436,6 @@ export default function DoctorConsultationShow({
                     </div>
                 </div>
 
-                <VisitOrderDialog
-                    open={orderDialogOpen}
-                    onOpenChange={setOrderDialogOpen}
-                    initialTab={orderDialogTab}
-                    redirectTo="consultation"
-                    visit={visit}
-                    labTestOptions={labTestOptions}
-                    drugOptions={drugOptions}
-                    labPriorities={labPriorities}
-                    imagingModalities={imagingModalities}
-                    imagingPriorities={imagingPriorities}
-                    imagingLateralities={imagingLateralities}
-                    pregnancyStatuses={pregnancyStatuses}
-                    facilityServiceOptions={facilityServiceOptions}
-                />
             </div>
         </AppLayout>
     );
