@@ -1,5 +1,5 @@
 import { AllergenModal } from '@/components/allergen-modal';
-import { AllergyBanner } from '@/components/allergy-banner';
+import { AllergyAlert } from '@/components/allergy-alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import VisitStartDialog from '@/components/visit-start-dialog';
@@ -9,6 +9,7 @@ import { type BreadcrumbItem } from '@/types';
 import { type PatientShowPageProps } from '@/types/patient';
 import { Head, Link } from '@inertiajs/react';
 import { Calendar, Edit, Plus, User } from 'lucide-react';
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Patients', href: '/patients' },
@@ -62,6 +63,8 @@ export default function PatientShow({
     packages,
     hasActiveVisit,
     allergens,
+    severityOptions,
+    reactionOptions,
 }: PatientShowPageProps) {
     const { hasPermission } = usePermissions();
     const [allergenModalOpen, setAllergenModalOpen] = useState(false);
@@ -81,19 +84,20 @@ export default function PatientShow({
             <Head title={`Patient: ${fullName}`} />
 
             <div className="m-4 space-y-6">
-                <AllergyBanner allergies={patient.allergies?.map(a => ({
-                    id: a.id,
-                    allergen_name: a.allergen?.name || 'Unknown',
-                    severity: a.severity || 'unknown',
-                    reaction: a.reaction,
-                }))} />
-
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div className="flex items-center gap-3">
                         <div>
-                            <h1 className="text-2xl font-semibold">
-                                {fullName}
-                            </h1>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-2xl font-semibold">
+                                    {fullName}
+                                </h1>
+                                <AllergyAlert allergies={patient.allergies?.map(a => ({
+                                    id: a.id,
+                                    allergen_name: a.allergen?.name || 'Unknown',
+                                    severity: a.severity || 'unknown',
+                                    reaction: a.reaction,
+                                }))} />
+                            </div>
                             <p className="text-sm text-muted-foreground">
                                 MRN: {patient.patient_number}
                             </p>
@@ -411,6 +415,8 @@ export default function PatientShow({
                     onOpenChange={setAllergenModalOpen}
                     patientId={patient.id}
                     allergens={allergens}
+                    severityOptions={severityOptions}
+                    reactionOptions={reactionOptions}
                 />
             </div>
         </AppLayout>

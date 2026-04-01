@@ -1,3 +1,4 @@
+import { AllergyAlert } from '@/components/allergy-alert';
 import { Button } from '@/components/ui/button';
 import { Link } from '@inertiajs/react';
 import {
@@ -32,6 +33,12 @@ type VisitHeaderProps = {
             first_name: string;
             middle_name?: string | null;
             last_name: string;
+            activeAllergies?: Array<{
+                id: string;
+                severity: string;
+                reaction?: string | null;
+                allergen?: { name: string } | null;
+            }> | null;
         } | null;
         triage?: object | null;
     };
@@ -54,6 +61,13 @@ export function VisitHeader({
         .filter(Boolean)
         .join(' ');
 
+    const allergies = (visit.patient?.activeAllergies ?? visit.patient?.allergies)?.map(a => ({
+        id: a.id,
+        allergen_name: a.allergen?.name || 'Unknown',
+        severity: a.severity || 'unknown',
+        reaction: a.reaction,
+    }));
+
     return (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
@@ -62,10 +76,13 @@ export function VisitHeader({
                         <h1 className="text-2xl font-semibold">
                             Visit {formatDate(visit.registered_at)}
                         </h1>
-                        <p className="text-sm text-muted-foreground">
-                            {visit.visit_type.replaceAll('_', ' ')} for{' '}
-                            {patientName || 'Unknown patient'}
-                        </p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>
+                                {visit.visit_type.replaceAll('_', ' ')} for{' '}
+                                {patientName || 'Unknown patient'}
+                            </span>
+                            <AllergyAlert allergies={allergies} />
+                        </div>
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">

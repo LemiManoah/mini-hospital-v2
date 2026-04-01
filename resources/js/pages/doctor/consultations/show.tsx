@@ -2,8 +2,8 @@ import {
     AllergenModal,
 } from '@/components/allergen-modal';
 import {
-    AllergyBanner,
-} from '@/components/allergy-banner';
+    AllergyAlert,
+} from '@/components/allergy-alert';
 import InputError from '@/components/input-error';
 import {
     LabOrderModal,
@@ -243,6 +243,8 @@ export default function DoctorConsultationShow({
     pregnancyStatuses,
     facilityServiceOptions,
     allergens,
+    severityOptions,
+    reactionOptions,
 }: DoctorConsultationShowPageProps) {
     const { hasPermission } = usePermissions();
     const patientName = [
@@ -305,13 +307,6 @@ export default function DoctorConsultationShow({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Consultation ${visit.visit_number}`} />
             <div className="m-4 space-y-6">
-                <AllergyBanner allergies={visit.patient?.activeAllergies?.map(a => ({
-                    id: a.id,
-                    allergen_name: a.allergen?.name || 'Unknown',
-                    severity: a.severity || 'unknown',
-                    reaction: a.reaction,
-                }))} />
-
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                         <div className="flex items-center gap-3">
@@ -319,10 +314,18 @@ export default function DoctorConsultationShow({
                                 <h1 className="text-2xl font-semibold">
                                     Consultation Workspace
                                 </h1>
-                                <p className="text-sm text-muted-foreground">
-                                    {formatDate(visit.registered_at)} for{' '}
-                                    {patientName || 'Unknown patient'}
-                                </p>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span>
+                                        {formatDate(visit.registered_at)} for{' '}
+                                        {patientName || 'Unknown patient'}
+                                    </span>
+                                    <AllergyAlert allergies={(visit.patient?.activeAllergies ?? visit.patient?.allergies)?.map(a => ({
+                                        id: a.id,
+                                        allergen_name: a.allergen?.name || 'Unknown',
+                                        severity: a.severity || 'unknown',
+                                        reaction: a.reaction,
+                                    }))} />
+                                </div>
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
@@ -1264,6 +1267,8 @@ export default function DoctorConsultationShow({
                                     onOpenChange={setAllergenModalOpen}
                                     patientId={visit.patient?.id || ''}
                                     allergens={allergens}
+                                    severityOptions={severityOptions}
+                                    reactionOptions={reactionOptions}
                                 />
                             </>
                         )}

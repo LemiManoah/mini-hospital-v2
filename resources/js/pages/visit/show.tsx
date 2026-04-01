@@ -1,4 +1,3 @@
-import { AllergyBanner } from '@/components/allergy-banner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
@@ -29,6 +28,9 @@ export default function VisitShow({
     paymentMethods,
     completionCheck,
     triageGrades,
+    allergens,
+    severityOptions,
+    reactionOptions,
 }: VisitShowPageProps) {
     const { hasPermission } = usePermissions();
     const [selectedTab, setSelectedTab] = useState(activeTab || 'overview');
@@ -67,13 +69,6 @@ export default function VisitShow({
             <Head title={`Visit ${visit.visit_number}`} />
 
             <div className="m-4 space-y-6">
-                <AllergyBanner allergies={visit.patient?.activeAllergies?.map(a => ({
-                    id: a.id,
-                    allergen_name: a.allergen?.name || 'Unknown',
-                    severity: a.severity || 'unknown',
-                    reaction: a.reaction,
-                }))} />
-
                 <VisitHeader
                     visit={visit}
                     canViewPatient={canViewPatient}
@@ -134,6 +129,9 @@ export default function VisitShow({
                                     facilityServiceOptions={
                                         facilityServiceOptions
                                     }
+                                    allergens={allergens}
+                                    severityOptions={severityOptions}
+                                    reactionOptions={reactionOptions}
                                 />
                             </TabsContent>
 

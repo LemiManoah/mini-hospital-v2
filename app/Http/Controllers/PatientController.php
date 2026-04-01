@@ -204,7 +204,7 @@ final readonly class PatientController implements HasMiddleware
         return Inertia::render('patient/show', [
             'patient' => $patient,
             'stats' => $stats,
-            'allergens' => Allergen::query()->select('id', 'name')->orderBy('name')->get(),
+            'allergens' => Allergen::query()->orderBy('name')->get(['id', 'name', 'type']),
             'severityOptions' => collect(AllergySeverity::cases())->map(fn ($case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),

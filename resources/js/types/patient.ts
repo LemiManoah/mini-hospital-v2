@@ -330,6 +330,8 @@ export interface Patient {
     address?: { id: string; city: string; district: string | null } | null;
     completed_visits_count?: number;
     last_completed_visit_at?: string | null;
+    activeAllergies?: PatientAllergy[];
+    allergies?: PatientAllergy[];
 }
 
 export interface PaginatedList<T> {
@@ -435,10 +437,10 @@ export interface PatientShowPageProps extends VisitFormOptions {
         address?: { id: string; city: string; district: string | null } | null;
     };
     stats: PatientStats;
-    allergens: { id: string; name: string }[];
+    hasActiveVisit: boolean;
+    allergens: { id: string; name: string; type: string }[];
     severityOptions: { value: string; label: string }[];
     reactionOptions: { value: string; label: string }[];
-    hasActiveVisit: boolean;
 }
 
 export interface ActiveVisitsPageProps {
@@ -478,6 +480,8 @@ export interface VisitShowPageProps {
     pregnancyStatuses: { value: string; label: string }[];
     facilityServiceOptions: FacilityServiceOption[];
     allergens: { id: string; name: string; type: string }[];
+    severityOptions: { value: string; label: string }[];
+    reactionOptions: { value: string; label: string }[];
 }
 
 export interface DoctorConsultationIndexPageProps {
@@ -518,4 +522,6 @@ export interface DoctorConsultationShowPageProps {
     pregnancyStatuses: { value: string; label: string }[];
     facilityServiceOptions: FacilityServiceOption[];
     allergens: { id: string; name: string; type: string }[];
+    severityOptions: { value: string; label: string }[];
+    reactionOptions: { value: string; label: string }[];
 }

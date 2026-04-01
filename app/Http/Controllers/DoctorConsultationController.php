@@ -7,6 +7,8 @@ namespace App\Http\Controllers;
 use App\Actions\CompleteConsultation;
 use App\Actions\CreateConsultation;
 use App\Actions\UpdateConsultation;
+use App\Enums\AllergyReaction;
+use App\Enums\AllergySeverity;
 use App\Enums\ConsultationOutcome;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
@@ -174,7 +176,15 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 ])
                 ->values()
                 ->all(),
-            'allergens' => Allergen::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'type']),
+            'allergens' => Allergen::query()->orderBy('name')->get(['id', 'name', 'type']),
+            'severityOptions' => collect(AllergySeverity::cases())->map(fn ($case): array => [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ]),
+            'reactionOptions' => collect(AllergyReaction::cases())->map(fn ($case): array => [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ]),
             ...$this->visitOrderOptions->forVisit($visit),
         ]);
     }

@@ -27,23 +27,32 @@ interface Allergen {
     type: string;
 }
 
+interface Option {
+    value: string;
+    label: string;
+}
+
 export function AllergenModal({
     open,
     onOpenChange,
     patientId,
     allergens = [],
+    severityOptions = [],
+    reactionOptions = [],
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     patientId: string;
     allergens: Allergen[];
+    severityOptions: Option[];
+    reactionOptions: Option[];
 }) {
     const [mode, setMode] = useState<'assign' | 'create'>('assign');
 
     const assignForm = useForm({
         allergen_id: '',
-        severity: 'mild',
-        reaction: 'rash',
+        severity: severityOptions[0]?.value ?? 'mild',
+        reaction: reactionOptions[0]?.value ?? 'rash',
         notes: '',
         is_active: true,
     });
@@ -110,7 +119,7 @@ export function AllergenModal({
                                 <SelectTrigger className="bg-white">
                                     <SelectValue placeholder="Select an allergen" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-white">
+                                <SelectContent className="bg-white max-h-[300px]">
                                     {allergens.map((a) => (
                                         <SelectItem key={a.id} value={a.id}>
                                             {a.name} ({a.type})
@@ -132,10 +141,11 @@ export function AllergenModal({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
-                                        <SelectItem value="mild">Mild</SelectItem>
-                                        <SelectItem value="moderate">Moderate</SelectItem>
-                                        <SelectItem value="severe">Severe</SelectItem>
-                                        <SelectItem value="life_threatening">Life Threatening</SelectItem>
+                                        {severityOptions.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                                 <InputError message={assignForm.errors.severity} />
@@ -150,12 +160,11 @@ export function AllergenModal({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
-                                        <SelectItem value="rash">Rash</SelectItem>
-                                        <SelectItem value="anaphylaxis">Anaphylaxis</SelectItem>
-                                        <SelectItem value="breathing_difficulty">Breathing Difficulty</SelectItem>
-                                        <SelectItem value="itching">Itching</SelectItem>
-                                        <SelectItem value="swelling">Swelling</SelectItem>
-                                        <SelectItem value="other">Other</SelectItem>
+                                        {reactionOptions.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                                 <InputError message={assignForm.errors.reaction} />

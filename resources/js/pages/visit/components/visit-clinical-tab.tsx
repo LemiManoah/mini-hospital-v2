@@ -1,5 +1,4 @@
 import { AllergenModal } from '@/components/allergen-modal';
-import { AllergyBanner } from '@/components/allergy-banner';
 import {
     LabOrderModal,
 } from '@/components/orders/lab-order-modal';
@@ -166,13 +165,6 @@ export function VisitClinicalTab({
 
     return (
         <div className="space-y-6">
-            <AllergyBanner allergies={visit.patient?.activeAllergies?.map(a => ({
-                id: a.id,
-                allergen_name: a.allergen?.name || 'Unknown',
-                severity: a.severity || 'unknown',
-                reaction: a.reaction,
-            }))} />
-
             <Card>
                 <CardHeader>
                     <CardTitle>Triage Snapshot</CardTitle>
@@ -560,6 +552,8 @@ export function VisitClinicalTab({
                 onOpenChange={setAllergenModalOpen}
                 patientId={visit.patient?.id || ''}
                 allergens={allergens}
+                severityOptions={severityOptions}
+                reactionOptions={reactionOptions}
             />
         </div>
     );

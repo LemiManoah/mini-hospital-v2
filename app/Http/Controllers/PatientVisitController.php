@@ -8,6 +8,8 @@ use App\Actions\AssessPatientVisitCompletion;
 use App\Actions\EnsureVisitBilling;
 use App\Actions\RecalculateVisitBilling;
 use App\Actions\TransitionPatientVisitStatus;
+use App\Enums\AllergyReaction;
+use App\Enums\AllergySeverity;
 use App\Enums\AttendanceType;
 use App\Enums\ConsciousLevel;
 use App\Enums\MobilityStatus;
@@ -197,7 +199,15 @@ final readonly class PatientVisitController implements HasMiddleware
                 ['value' => 'mobile_money', 'label' => 'Mobile Money'],
                 ['value' => 'bank_transfer', 'label' => 'Bank Transfer'],
             ],
-            'allergens' => Allergen::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'type']),
+            'allergens' => Allergen::query()->orderBy('name')->get(['id', 'name', 'type']),
+            'severityOptions' => collect(AllergySeverity::cases())->map(fn ($case): array => [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ]),
+            'reactionOptions' => collect(AllergyReaction::cases())->map(fn ($case): array => [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ]),
             ...$this->visitOrderOptions->forVisit($visit),
         ]);
     }

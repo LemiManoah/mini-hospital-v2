@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\CreateAllergen;
 use App\Actions\DeleteAllergen;
 use App\Actions\UpdateAllergen;
+use App\Enums\AllergyType;
 use App\Http\Requests\DeleteAllergenRequest;
 use App\Http\Requests\StoreAllergenRequest;
 use App\Http\Requests\UpdateAllergenRequest;
@@ -54,14 +55,28 @@ final readonly class AllergenController implements HasMiddleware
 
     public function create(): Response
     {
-        return Inertia::render('allergen/create');
+        return Inertia::render('allergen/create', [
+            'allergyTypes' => $this->allergenOptions(),
+        ]);
     }
 
     public function store(StoreAllergenRequest $request, CreateAllergen $action): RedirectResponse
     {
         $action->handle($request->validated());
 
+        if ($request->header('X-Inertia')) {
+            return back()->with('success', 'Allergen created successfully.');
+        }
+
         return to_route('allergens.index')->with('success', 'Allergen created successfully.');
+    }
+
+    private function allergenOptions(): array
+    {
+        return collect(AllergyType::cases())->map(fn (AllergyType $type): array => [
+            'value' => $type->value,
+            'label' => $type->label(),
+        ])->values()->all();
     }
 
     public function edit(Allergen $allergen): Response
