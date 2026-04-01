@@ -9,12 +9,22 @@ import {
 } from 'lucide-react';
 import { statusClasses } from './visit-show-utils';
 
+function formatDate(date: string | null | undefined): string {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+}
+
 type VisitHeaderProps = {
     visit: {
         id: string;
         visit_number: string;
         visit_type: string;
         status: string;
+        registered_at: string | null;
         clinic?: { name?: string | null } | null;
         doctor?: { first_name: string; last_name: string } | null;
         patient?: {
@@ -48,12 +58,9 @@ export function VisitHeader({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
-                        <Stethoscope className="h-6 w-6" />
-                    </div>
                     <div>
                         <h1 className="text-2xl font-semibold">
-                            Visit {visit.visit_number}
+                            Visit {formatDate(visit.registered_at)}
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             {visit.visit_type.replaceAll('_', ' ')} for{' '}

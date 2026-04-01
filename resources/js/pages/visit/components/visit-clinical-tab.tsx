@@ -1,3 +1,5 @@
+import { AllergenModal } from '@/components/allergen-modal';
+import { AllergyBanner } from '@/components/allergy-banner';
 import {
     LabOrderModal,
 } from '@/components/orders/lab-order-modal';
@@ -130,6 +132,7 @@ export function VisitClinicalTab({
     imagingLateralities,
     pregnancyStatuses,
     facilityServiceOptions,
+    allergens,
 }: VisitClinicalTabProps) {
     const latestVital = (triage?.vitalSigns ?? triage?.vital_signs ?? [])[0];
     const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
@@ -147,6 +150,7 @@ export function VisitClinicalTab({
     const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
     const [imagingModalOpen, setImagingModalOpen] = useState(false);
     const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
+    const [allergenModalOpen, setAllergenModalOpen] = useState(false);
 
     const [editingLabRequest, setEditingLabRequest] = useState<LabRequest | null>(null);
     const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
@@ -162,6 +166,13 @@ export function VisitClinicalTab({
 
     return (
         <div className="space-y-6">
+            <AllergyBanner allergies={visit.patient?.activeAllergies?.map(a => ({
+                id: a.id,
+                allergen_name: a.allergen?.name || 'Unknown',
+                severity: a.severity || 'unknown',
+                reaction: a.reaction,
+            }))} />
+
             <Card>
                 <CardHeader>
                     <CardTitle>Triage Snapshot</CardTitle>
@@ -364,6 +375,14 @@ export function VisitClinicalTab({
                                 <Button
                                     variant="outline"
                                     size="sm"
+                                    onClick={() => setAllergenModalOpen(true)}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Record Allergy
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => openOrderDialog('lab')}
                                 >
                                     <Plus data-icon="inline-start" />
@@ -535,6 +554,12 @@ export function VisitClinicalTab({
                 serviceOrder={editingServiceOrder}
                 facilityServiceOptions={facilityServiceOptions}
                 redirectTo="visit"
+            />
+            <AllergenModal
+                open={allergenModalOpen}
+                onOpenChange={setAllergenModalOpen}
+                patientId={visit.patient?.id || ''}
+                allergens={allergens}
             />
         </div>
     );

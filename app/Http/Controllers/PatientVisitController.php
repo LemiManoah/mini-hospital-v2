@@ -14,6 +14,7 @@ use App\Enums\MobilityStatus;
 use App\Enums\PayerType;
 use App\Enums\TriageGrade;
 use App\Enums\VisitStatus;
+use App\Models\Allergen;
 use App\Models\Clinic;
 use App\Models\FacilityBranch;
 use App\Models\Patient;
@@ -109,6 +110,7 @@ final readonly class PatientVisitController implements HasMiddleware
             'patient:id,patient_number,first_name,last_name,middle_name,date_of_birth,age,age_units,gender,phone_number,email,blood_group,next_of_kin_name,next_of_kin_phone,address_id,country_id',
             'patient.address:id,city,district',
             'patient.country:id,country_name',
+            'patient.activeAllergies.allergen:id,name',
             'branch:id,name',
             'clinic:id,clinic_name',
             'doctor:id,first_name,last_name',
@@ -195,6 +197,7 @@ final readonly class PatientVisitController implements HasMiddleware
                 ['value' => 'mobile_money', 'label' => 'Mobile Money'],
                 ['value' => 'bank_transfer', 'label' => 'Bank Transfer'],
             ],
+            'allergens' => Allergen::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'type']),
             ...$this->visitOrderOptions->forVisit($visit),
         ]);
     }

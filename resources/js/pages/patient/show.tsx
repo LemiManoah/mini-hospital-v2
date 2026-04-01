@@ -1,3 +1,5 @@
+import { AllergenModal } from '@/components/allergen-modal';
+import { AllergyBanner } from '@/components/allergy-banner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import VisitStartDialog from '@/components/visit-start-dialog';
@@ -59,8 +61,10 @@ export default function PatientShow({
     companies,
     packages,
     hasActiveVisit,
+    allergens,
 }: PatientShowPageProps) {
     const { hasPermission } = usePermissions();
+    const [allergenModalOpen, setAllergenModalOpen] = useState(false);
     const fullName = [
         patient.first_name,
         patient.middle_name,
@@ -77,11 +81,15 @@ export default function PatientShow({
             <Head title={`Patient: ${fullName}`} />
 
             <div className="m-4 space-y-6">
+                <AllergyBanner allergies={patient.allergies?.map(a => ({
+                    id: a.id,
+                    allergen_name: a.allergen?.name || 'Unknown',
+                    severity: a.severity || 'unknown',
+                    reaction: a.reaction,
+                }))} />
+
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
-                            <User className="h-6 w-6" />
-                        </div>
                         <div>
                             <h1 className="text-2xl font-semibold">
                                 {fullName}
@@ -120,6 +128,10 @@ export default function PatientShow({
                                 </Link>
                             </Button>
                         ) : null}
+                        <Button variant="outline" onClick={() => setAllergenModalOpen(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Record Allergy
+                        </Button>
                     </div>
                 </div>
 
@@ -358,8 +370,15 @@ export default function PatientShow({
                         </Card>
 
                         <Card>
-                            <CardHeader>
+                            <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle>Current Allergies</CardTitle>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setAllergenModalOpen(true)}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
                             </CardHeader>
                             <CardContent>
                                 {patient.allergies.length > 0 ? (
@@ -386,6 +405,13 @@ export default function PatientShow({
                         </Card>
                     </div>
                 </div>
+
+                <AllergenModal
+                    open={allergenModalOpen}
+                    onOpenChange={setAllergenModalOpen}
+                    patientId={patient.id}
+                    allergens={allergens}
+                />
             </div>
         </AppLayout>
     );

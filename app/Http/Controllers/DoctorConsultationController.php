@@ -10,6 +10,7 @@ use App\Actions\UpdateConsultation;
 use App\Enums\ConsultationOutcome;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
+use App\Models\Allergen;
 use App\Models\PatientVisit;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\DoctorConsultationAccess;
@@ -110,6 +111,7 @@ final readonly class DoctorConsultationController implements HasMiddleware
             'patient:id,patient_number,first_name,last_name,middle_name,date_of_birth,age,age_units,gender,phone_number,email,blood_group,next_of_kin_name,next_of_kin_phone,address_id,country_id',
             'patient.address:id,city,district',
             'patient.country:id,country_name',
+            'patient.activeAllergies.allergen:id,name',
             'branch:id,name',
             'clinic:id,clinic_name',
             'doctor:id,first_name,last_name',
@@ -172,6 +174,7 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 ])
                 ->values()
                 ->all(),
+            'allergens' => Allergen::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'type']),
             ...$this->visitOrderOptions->forVisit($visit),
         ]);
     }

@@ -1,3 +1,4 @@
+import { AllergyBanner } from '@/components/allergy-banner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
@@ -66,6 +67,13 @@ export default function VisitShow({
             <Head title={`Visit ${visit.visit_number}`} />
 
             <div className="m-4 space-y-6">
+                <AllergyBanner allergies={visit.patient?.activeAllergies?.map(a => ({
+                    id: a.id,
+                    allergen_name: a.allergen?.name || 'Unknown',
+                    severity: a.severity || 'unknown',
+                    reaction: a.reaction,
+                }))} />
+
                 <VisitHeader
                     visit={visit}
                     canViewPatient={canViewPatient}

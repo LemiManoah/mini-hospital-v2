@@ -1,3 +1,9 @@
+import {
+    AllergenModal,
+} from '@/components/allergen-modal';
+import {
+    AllergyBanner,
+} from '@/components/allergy-banner';
 import InputError from '@/components/input-error';
 import {
     LabOrderModal,
@@ -236,6 +242,7 @@ export default function DoctorConsultationShow({
     imagingLateralities,
     pregnancyStatuses,
     facilityServiceOptions,
+    allergens,
 }: DoctorConsultationShowPageProps) {
     const { hasPermission } = usePermissions();
     const patientName = [
@@ -280,6 +287,7 @@ export default function DoctorConsultationShow({
     const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
     const [imagingModalOpen, setImagingModalOpen] = useState(false);
     const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
+    const [allergenModalOpen, setAllergenModalOpen] = useState(false);
 
     const [editingLabRequest, setEditingLabRequest] = useState<LabRequest | null>(null);
     const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
@@ -297,18 +305,22 @@ export default function DoctorConsultationShow({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Consultation ${visit.visit_number}`} />
             <div className="m-4 space-y-6">
+                <AllergyBanner allergies={visit.patient?.activeAllergies?.map(a => ({
+                    id: a.id,
+                    allergen_name: a.allergen?.name || 'Unknown',
+                    severity: a.severity || 'unknown',
+                    reaction: a.reaction,
+                }))} />
+
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-700">
-                                <Stethoscope className="h-6 w-6" />
-                            </div>
                             <div>
                                 <h1 className="text-2xl font-semibold">
                                     Consultation Workspace
                                 </h1>
                                 <p className="text-sm text-muted-foreground">
-                                    {visit.visit_number} for{' '}
+                                    {formatDate(visit.registered_at)} for{' '}
                                     {patientName || 'Unknown patient'}
                                 </p>
                             </div>
@@ -323,14 +335,14 @@ export default function DoctorConsultationShow({
                                     ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
                                     : 'Not assigned'}
                             </span>
-                            <span>
+                            {/* <span>
                                 Started:{' '}
                                 {formatDateTime(
                                     consultation?.started_at ??
                                         triage?.triage_datetime ??
                                         visit.registered_at,
                                 )}
-                            </span>
+                            </span> */}
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -340,13 +352,14 @@ export default function DoctorConsultationShow({
                                 Back to Consultation Queue
                             </Link>
                         </Button>
+                       
                         {canPlaceOrders ? (
                             <Button
                                 variant="outline"
-                                onClick={() => openOrderDialog('lab')}
+                                onClick={() => setAllergenModalOpen(true)}
                             >
-                                <Plus data-icon="inline-start" />
-                                Open Order Center
+                                <Plus className="mr-2 h-4 w-4" />
+                                Record Allergy
                             </Button>
                         ) : null}
                         {canViewVisit ? (
@@ -1245,6 +1258,12 @@ export default function DoctorConsultationShow({
                                     serviceOrder={editingServiceOrder}
                                     facilityServiceOptions={facilityServiceOptions}
                                     redirectTo="consultation"
+                                />
+                                <AllergenModal
+                                    open={allergenModalOpen}
+                                    onOpenChange={setAllergenModalOpen}
+                                    patientId={visit.patient?.id || ''}
+                                    allergens={allergens}
                                 />
                             </>
                         )}

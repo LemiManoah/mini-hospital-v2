@@ -477,6 +477,7 @@ export interface VisitShowPageProps {
     imagingLateralities: { value: string; label: string }[];
     pregnancyStatuses: { value: string; label: string }[];
     facilityServiceOptions: FacilityServiceOption[];
+    allergens: { id: string; name: string; type: string }[];
 }
 
 export interface DoctorConsultationIndexPageProps {
@@ -516,4 +517,5 @@ export interface DoctorConsultationShowPageProps {
     imagingLateralities: { value: string; label: string }[];
     pregnancyStatuses: { value: string; label: string }[];
     facilityServiceOptions: FacilityServiceOption[];
+    allergens: { id: string; name: string; type: string }[];
 }

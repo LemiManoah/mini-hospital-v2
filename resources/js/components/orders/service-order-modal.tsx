@@ -88,7 +88,7 @@ export function ServiceOrderModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-2xl bg-white border-none shadow-2xl">
                 <DialogHeader>
                     <DialogTitle>
                         {serviceOrder ? 'Edit Service Order' : 'New Service Order'}

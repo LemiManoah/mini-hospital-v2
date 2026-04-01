@@ -98,7 +98,7 @@ export function ImagingOrderModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl bg-white border-none shadow-2xl">
                 <DialogHeader>
                     <DialogTitle>
                         {imagingRequest ? 'Edit Imaging Request' : 'New Imaging Request'}
