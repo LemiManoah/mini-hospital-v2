@@ -82,7 +82,7 @@ final readonly class PatientController implements HasMiddleware
         $search = mb_trim((string) $request->query('search', ''));
 
         $patients = Patient::query()
-            ->with(['country:id,country_name'])
+            ->with(['country:id,country_name', 'address'])
             ->whereHas('visits', static fn (Builder $query) => $query->where('status', 'completed'))
             ->withCount([
                 'visits as completed_visits_count' => static fn (Builder $query) => $query->where('status', 'completed'),
