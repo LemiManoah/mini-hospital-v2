@@ -23,7 +23,6 @@ import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type ActiveVisitsPageProps, type PatientVisit } from '@/types/patient';
 import { Head, Link, router } from '@inertiajs/react';
-import { CheckCircle2, ExternalLink } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -120,7 +119,6 @@ export default function ActiveVisits({
                     <Table className="min-w-[1120px]">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Visit</TableHead>
                                 <TableHead>Patient</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Clinic</TableHead>
@@ -151,19 +149,6 @@ export default function ActiveVisits({
 
                                     return (
                                         <TableRow key={visit.id}>
-                                            <TableCell>
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {visit.visit_number}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {visit.visit_type.replaceAll(
-                                                            '_',
-                                                            ' ',
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </TableCell>
                                             <TableCell>
                                                 <div>
                                                     <p className="font-medium">
@@ -264,7 +249,6 @@ export default function ActiveVisits({
                                                             <Link
                                                                 href={`/visits/${visit.id}`}
                                                             >
-                                                                <ExternalLink className="mr-2 h-4 w-4" />
                                                                 Open Visit
                                                             </Link>
                                                         </Button>
@@ -287,7 +271,6 @@ export default function ActiveVisits({
                                                                 redirectTo="index"
                                                                 trigger={
                                                                     <Button size="sm">
-                                                                        <CheckCircle2 className="mr-2 h-4 w-4" />
                                                                         Complete
                                                                         Visit
                                                                     </Button>
@@ -298,7 +281,6 @@ export default function ActiveVisits({
                                                                 size="sm"
                                                                 disabled
                                                             >
-                                                                <CheckCircle2 className="mr-2 h-4 w-4" />
                                                                 Mark In Progress
                                                                 First
                                                             </Button>
@@ -312,7 +294,7 @@ export default function ActiveVisits({
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={8}
+                                        colSpan={7}
                                         className="py-12 text-center text-zinc-500 italic"
                                     >
                                         No active visits found.

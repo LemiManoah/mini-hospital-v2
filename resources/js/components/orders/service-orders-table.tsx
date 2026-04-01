@@ -25,7 +25,7 @@ const statusBadgeClasses = (status: string): string =>
         in_progress: 'bg-blue-100 text-blue-900',
         completed: 'bg-emerald-100 text-emerald-900',
         cancelled: 'bg-zinc-200 text-zinc-900',
-    }[status] ?? 'bg-zinc-100 text-zinc-800');
+    })[status] ?? 'bg-zinc-100 text-zinc-800';
 
 export function ServiceOrdersTable({
     orders,
@@ -56,7 +56,11 @@ export function ServiceOrdersTable({
                         <TableHead>Ordered By</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Price</TableHead>
-                        {canManageOrders && <TableHead className="text-right">Actions</TableHead>}
+                        {canManageOrders && (
+                            <TableHead className="text-right">
+                                Actions
+                            </TableHead>
+                        )}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -76,7 +80,9 @@ export function ServiceOrdersTable({
                                 </Badge>
                             </TableCell>
                             <TableCell>{staffName(order.orderedBy)}</TableCell>
-                            <TableCell>{formatDateTime(order.ordered_at)}</TableCell>
+                            <TableCell>
+                                {formatDateTime(order.ordered_at)}
+                            </TableCell>
                             <TableCell>
                                 {formatMoney(
                                     order.service?.quoted_price ??

@@ -1,36 +1,20 @@
 import { AllergenModal } from '@/components/allergen-modal';
-import {
-    LabOrderModal,
-} from '@/components/orders/lab-order-modal';
-import {
-    LabOrdersTable,
-} from '@/components/orders/lab-orders-table';
-import {
-    PrescriptionOrderModal,
-} from '@/components/orders/prescription-order-modal';
-import {
-    PrescriptionOrdersTable,
-} from '@/components/orders/prescription-orders-table';
-import {
-    ImagingOrderModal,
-} from '@/components/orders/imaging-order-modal';
-import {
-    ImagingOrdersTable,
-} from '@/components/orders/imaging-orders-table';
-import {
-    ServiceOrderModal,
-} from '@/components/orders/service-order-modal';
-import {
-    ServiceOrdersTable,
-} from '@/components/orders/service-orders-table';
+import { ImagingOrderModal } from '@/components/orders/imaging-order-modal';
+import { ImagingOrdersTable } from '@/components/orders/imaging-orders-table';
+import { LabOrderModal } from '@/components/orders/lab-order-modal';
+import { LabOrdersTable } from '@/components/orders/lab-orders-table';
+import { PrescriptionOrderModal } from '@/components/orders/prescription-order-modal';
+import { PrescriptionOrdersTable } from '@/components/orders/prescription-orders-table';
+import { ServiceOrderModal } from '@/components/orders/service-order-modal';
+import { ServiceOrdersTable } from '@/components/orders/service-orders-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     type OrderTabValue,
     OrderAccessMessage,
     OrderSectionHeader,
 } from '@/components/visit-ordering';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     type DrugOption,
     type FacilityServiceOption,
@@ -40,7 +24,7 @@ import {
     type Prescription,
     type VitalSign,
 } from '@/types/patient';
-import { router, Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ClipboardPlus, HeartPulse, NotebookPen, Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -151,10 +135,14 @@ export function VisitClinicalTab({
     const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
     const [allergenModalOpen, setAllergenModalOpen] = useState(false);
 
-    const [editingLabRequest, setEditingLabRequest] = useState<LabRequest | null>(null);
-    const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
-    const [editingImagingRequest, setEditingImagingRequest] = useState<ImagingRequest | null>(null);
-    const [editingServiceOrder, setEditingServiceOrder] = useState<FacilityServiceOrder | null>(null);
+    const [editingLabRequest, setEditingLabRequest] =
+        useState<LabRequest | null>(null);
+    const [editingPrescription, setEditingPrescription] =
+        useState<Prescription | null>(null);
+    const [editingImagingRequest, setEditingImagingRequest] =
+        useState<ImagingRequest | null>(null);
+    const [editingServiceOrder, setEditingServiceOrder] =
+        useState<FacilityServiceOrder | null>(null);
 
     const openOrderDialog = (tab: OrderTabValue) => {
         if (tab === 'lab') setLabModalOpen(true);
@@ -423,7 +411,10 @@ export function VisitClinicalTab({
                         }
                         className="space-y-4"
                     >
-                        <TabsList variant="line" className="w-full justify-start">
+                        <TabsList
+                            variant="line"
+                            className="w-full justify-start"
+                        >
                             <TabsTrigger value="lab">Lab</TabsTrigger>
                             <TabsTrigger value="prescriptions">
                                 Prescriptions
@@ -435,17 +426,26 @@ export function VisitClinicalTab({
                         <TabsContent value="lab">
                             <LabOrdersTable
                                 labRequests={labRequests}
-                                canManageOrders={canManageOrders && !isConsultationFinalized}
+                                canManageOrders={
+                                    canManageOrders && !isConsultationFinalized
+                                }
                                 onEdit={(request) => {
                                     setEditingLabRequest(request);
                                     setLabModalOpen(true);
                                 }}
                                 onDelete={(request) => {
-                                    if (confirm('Are you sure you want to remove this lab request?')) {
-                                        router.delete(`/visits/${visit.id}/lab-requests/${request.id}`, {
-                                            data: { redirect_to: 'visit' },
-                                            preserveScroll: true,
-                                        });
+                                    if (
+                                        confirm(
+                                            'Are you sure you want to remove this lab request?',
+                                        )
+                                    ) {
+                                        router.delete(
+                                            `/visits/${visit.id}/lab-requests/${request.id}`,
+                                            {
+                                                data: { redirect_to: 'visit' },
+                                                preserveScroll: true,
+                                            },
+                                        );
                                     }
                                 }}
                             />
@@ -454,17 +454,26 @@ export function VisitClinicalTab({
                         <TabsContent value="prescriptions">
                             <PrescriptionOrdersTable
                                 prescriptions={prescriptions}
-                                canManageOrders={canManageOrders && !isConsultationFinalized}
+                                canManageOrders={
+                                    canManageOrders && !isConsultationFinalized
+                                }
                                 onEdit={(prescription) => {
                                     setEditingPrescription(prescription);
                                     setPrescriptionModalOpen(true);
                                 }}
                                 onDelete={(prescription) => {
-                                    if (confirm('Are you sure you want to remove this prescription?')) {
-                                        router.delete(`/visits/${visit.id}/prescriptions/${prescription.id}`, {
-                                            data: { redirect_to: 'visit' },
-                                            preserveScroll: true,
-                                        });
+                                    if (
+                                        confirm(
+                                            'Are you sure you want to remove this prescription?',
+                                        )
+                                    ) {
+                                        router.delete(
+                                            `/visits/${visit.id}/prescriptions/${prescription.id}`,
+                                            {
+                                                data: { redirect_to: 'visit' },
+                                                preserveScroll: true,
+                                            },
+                                        );
                                     }
                                 }}
                             />
@@ -473,17 +482,26 @@ export function VisitClinicalTab({
                         <TabsContent value="imaging">
                             <ImagingOrdersTable
                                 imagingRequests={imagingRequests}
-                                canManageOrders={canManageOrders && !isConsultationFinalized}
+                                canManageOrders={
+                                    canManageOrders && !isConsultationFinalized
+                                }
                                 onEdit={(request) => {
                                     setEditingImagingRequest(request);
                                     setImagingModalOpen(true);
                                 }}
                                 onDelete={(request) => {
-                                    if (confirm('Are you sure you want to remove this imaging request?')) {
-                                        router.delete(`/visits/${visit.id}/imaging-requests/${request.id}`, {
-                                            data: { redirect_to: 'visit' },
-                                            preserveScroll: true,
-                                        });
+                                    if (
+                                        confirm(
+                                            'Are you sure you want to remove this imaging request?',
+                                        )
+                                    ) {
+                                        router.delete(
+                                            `/visits/${visit.id}/imaging-requests/${request.id}`,
+                                            {
+                                                data: { redirect_to: 'visit' },
+                                                preserveScroll: true,
+                                            },
+                                        );
                                     }
                                 }}
                             />
@@ -492,17 +510,26 @@ export function VisitClinicalTab({
                         <TabsContent value="services">
                             <ServiceOrdersTable
                                 orders={facilityServiceOrders}
-                                canManageOrders={canManageOrders && !isConsultationFinalized}
+                                canManageOrders={
+                                    canManageOrders && !isConsultationFinalized
+                                }
                                 onEdit={(order) => {
                                     setEditingServiceOrder(order);
                                     setServiceOrderModalOpen(true);
                                 }}
                                 onDelete={(order) => {
-                                    if (confirm('Are you sure you want to remove this service order?')) {
-                                        router.delete(`/visits/${visit.id}/facility-service-orders/${order.id}`, {
-                                            data: { redirect_to: 'visit' },
-                                            preserveScroll: true,
-                                        });
+                                    if (
+                                        confirm(
+                                            'Are you sure you want to remove this service order?',
+                                        )
+                                    ) {
+                                        router.delete(
+                                            `/visits/${visit.id}/facility-service-orders/${order.id}`,
+                                            {
+                                                data: { redirect_to: 'visit' },
+                                                preserveScroll: true,
+                                            },
+                                        );
                                     }
                                 }}
                             />

@@ -122,9 +122,7 @@ export default function VisitShow({
                                     labPriorities={labPriorities}
                                     imagingModalities={imagingModalities}
                                     imagingPriorities={imagingPriorities}
-                                    imagingLateralities={
-                                        imagingLateralities
-                                    }
+                                    imagingLateralities={imagingLateralities}
                                     pregnancyStatuses={pregnancyStatuses}
                                     facilityServiceOptions={
                                         facilityServiceOptions

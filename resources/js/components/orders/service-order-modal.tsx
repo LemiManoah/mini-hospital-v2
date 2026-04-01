@@ -35,12 +35,16 @@ export function ServiceOrderModal({
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    visit: Pick<PatientVisit, 'id' | 'facilityServiceOrders' | 'facility_service_orders'>;
+    visit: Pick<
+        PatientVisit,
+        'id' | 'facilityServiceOrders' | 'facility_service_orders'
+    >;
     serviceOrder?: FacilityServiceOrder | null;
     facilityServiceOptions: FacilityServiceOption[];
     redirectTo: 'visit' | 'consultation';
 }) {
-    const facilityServiceOrders = visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
+    const facilityServiceOrders =
+        visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
 
     const form = useForm({
         facility_service_id: '',
@@ -69,7 +73,8 @@ export function ServiceOrderModal({
     const hasPendingSelectedFacilityService =
         form.data.facility_service_id !== '' &&
         pendingFacilityServiceIds.has(form.data.facility_service_id) &&
-        (!serviceOrder || serviceOrder.facility_service_id !== form.data.facility_service_id);
+        (!serviceOrder ||
+            serviceOrder.facility_service_id !== form.data.facility_service_id);
 
     const onSubmit = (event: React.FormEvent) => {
         event.preventDefault();
@@ -88,10 +93,12 @@ export function ServiceOrderModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl bg-white border-none shadow-2xl">
+            <DialogContent className="border-none bg-white shadow-2xl sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {serviceOrder ? 'Edit Service Order' : 'New Service Order'}
+                        {serviceOrder
+                            ? 'Edit Service Order'
+                            : 'New Service Order'}
                     </DialogTitle>
                     <DialogDescription>
                         {serviceOrder
@@ -112,27 +119,39 @@ export function ServiceOrderModal({
                                 <Select
                                     value={form.data.facility_service_id}
                                     onValueChange={(value) =>
-                                        form.setData('facility_service_id', value)
+                                        form.setData(
+                                            'facility_service_id',
+                                            value,
+                                        )
                                     }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select service" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {facilityServiceOptions.map((option) => (
-                                            <SelectItem key={option.id} value={option.id}>
-                                                {option.name}
-                                                {option.service_code
-                                                    ? ` (${option.service_code})`
-                                                    : ''}
-                                            </SelectItem>
-                                        ))}
+                                        {facilityServiceOptions.map(
+                                            (option) => (
+                                                <SelectItem
+                                                    key={option.id}
+                                                    value={option.id}
+                                                >
+                                                    {option.name}
+                                                    {option.service_code
+                                                        ? ` (${option.service_code})`
+                                                        : ''}
+                                                </SelectItem>
+                                            ),
+                                        )}
                                     </SelectContent>
                                 </Select>
-                                <InputError message={form.errors.facility_service_id} />
+                                <InputError
+                                    message={form.errors.facility_service_id}
+                                />
                             </div>
                             <div className="rounded-lg border bg-muted/30 p-4">
-                                <p className="text-sm text-muted-foreground">Service preview</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Service preview
+                                </p>
                                 <p className="mt-1 font-medium">
                                     {selectedFacilityService?.name ??
                                         'Choose a service to preview its billing details.'}
@@ -148,7 +167,9 @@ export function ServiceOrderModal({
                                         </p>
                                         <div className="mt-2 flex flex-wrap gap-2">
                                             <Badge variant="outline">
-                                                {labelize(selectedFacilityService.category)}
+                                                {labelize(
+                                                    selectedFacilityService.category,
+                                                )}
                                             </Badge>
                                             <Badge variant="outline">
                                                 {selectedFacilityService.is_billable
@@ -160,7 +181,8 @@ export function ServiceOrderModal({
                                 ) : null}
                                 {hasPendingSelectedFacilityService ? (
                                     <p className="mt-2 text-sm text-amber-700">
-                                        This service already has a pending order for the visit.
+                                        This service already has a pending order
+                                        for the visit.
                                     </p>
                                 ) : null}
                             </div>
@@ -181,7 +203,9 @@ export function ServiceOrderModal({
                                     hasPendingSelectedFacilityService
                                 }
                             >
-                                {serviceOrder ? 'Update Order' : 'Order Service'}
+                                {serviceOrder
+                                    ? 'Update Order'
+                                    : 'Order Service'}
                             </Button>
                         </div>
                     </form>

@@ -11,11 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type Prescription } from '@/types/patient';
 import { Edit2, Trash2 } from 'lucide-react';
-import {
-    formatDateTime,
-    labelize,
-    staffName,
-} from '../visit-ordering';
+import { formatDateTime, labelize, staffName } from '../visit-ordering';
 
 const statusBadgeClasses = (status: string): string =>
     ({
@@ -25,7 +21,7 @@ const statusBadgeClasses = (status: string): string =>
         completed: 'bg-emerald-100 text-emerald-900',
         fully_dispensed: 'bg-emerald-100 text-emerald-900',
         cancelled: 'bg-zinc-200 text-zinc-900',
-    }[status] ?? 'bg-zinc-100 text-zinc-800');
+    })[status] ?? 'bg-zinc-100 text-zinc-800';
 
 export function PrescriptionOrdersTable({
     prescriptions,
@@ -55,7 +51,11 @@ export function PrescriptionOrdersTable({
                         <TableHead>Status</TableHead>
                         <TableHead>Prescribed By</TableHead>
                         <TableHead>Date</TableHead>
-                        {canManageOrders && <TableHead className="text-right">Actions</TableHead>}
+                        {canManageOrders && (
+                            <TableHead className="text-right">
+                                Actions
+                            </TableHead>
+                        )}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -64,13 +64,20 @@ export function PrescriptionOrdersTable({
                             <TableCell className="max-w-[400px]">
                                 <div className="flex flex-col gap-1">
                                     <span className="font-medium">
-                                        {prescription.primary_diagnosis || 'Prescription'}
+                                        {prescription.primary_diagnosis ||
+                                            'Prescription'}
                                     </span>
                                     <div className="flex flex-wrap gap-1">
                                         {prescription.items.map((item, idx) => (
-                                            <span key={item.id} className="text-xs text-muted-foreground">
+                                            <span
+                                                key={item.id}
+                                                className="text-xs text-muted-foreground"
+                                            >
                                                 {item.drug?.generic_name}
-                                                {idx < prescription.items.length - 1 ? ', ' : ''}
+                                                {idx <
+                                                prescription.items.length - 1
+                                                    ? ', '
+                                                    : ''}
                                             </span>
                                         ))}
                                     </div>
@@ -86,15 +93,21 @@ export function PrescriptionOrdersTable({
                                     {labelize(prescription.status)}
                                 </Badge>
                             </TableCell>
-                            <TableCell>{staffName(prescription.prescribedBy)}</TableCell>
-                            <TableCell>{formatDateTime(prescription.prescription_date)}</TableCell>
+                            <TableCell>
+                                {staffName(prescription.prescribedBy)}
+                            </TableCell>
+                            <TableCell>
+                                {formatDateTime(prescription.prescription_date)}
+                            </TableCell>
                             {canManageOrders && (
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => onEdit?.(prescription)}
+                                            onClick={() =>
+                                                onEdit?.(prescription)
+                                            }
                                             title="Edit prescription"
                                         >
                                             <Edit2 className="h-4 w-4" />
@@ -102,7 +115,9 @@ export function PrescriptionOrdersTable({
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => onDelete?.(prescription)}
+                                            onClick={() =>
+                                                onDelete?.(prescription)
+                                            }
                                             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                             title="Remove prescription"
                                         >

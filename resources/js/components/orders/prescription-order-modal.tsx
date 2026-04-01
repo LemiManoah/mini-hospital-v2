@@ -26,7 +26,6 @@ import {
 import { useForm } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
-import { formatMoney } from '../visit-ordering';
 
 type PrescriptionDraftItem = {
     drug_id: string;
@@ -85,7 +84,8 @@ export function PrescriptionOrderModal({
             form.setData({
                 primary_diagnosis: prescription.primary_diagnosis ?? '',
                 pharmacy_notes: prescription.pharmacy_notes ?? '',
-                is_discharge_medication: prescription.is_discharge_medication ?? false,
+                is_discharge_medication:
+                    prescription.is_discharge_medication ?? false,
                 is_long_term: prescription.is_long_term ?? false,
                 items: prescription.items.map((item) => ({
                     drug_id: item.drug_id,
@@ -136,10 +136,12 @@ export function PrescriptionOrderModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl bg-white border-none shadow-2xl">
+            <DialogContent className="max-h-[90vh] overflow-y-auto border-none bg-white shadow-2xl sm:max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {prescription ? 'Edit Prescription' : 'New Prescription'}
+                        {prescription
+                            ? 'Edit Prescription'
+                            : 'New Prescription'}
                     </DialogTitle>
                     <DialogDescription>
                         {prescription
@@ -164,7 +166,9 @@ export function PrescriptionOrderModal({
                                     )
                                 }
                             />
-                            <InputError message={form.errors.primary_diagnosis} />
+                            <InputError
+                                message={form.errors.primary_diagnosis}
+                            />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="pharmacy_notes">
@@ -187,7 +191,9 @@ export function PrescriptionOrderModal({
                         {form.data.items.map((item, index) => (
                             <div key={index} className="rounded-lg border p-4">
                                 <div className="mb-4 flex items-center justify-between">
-                                    <h3 className="font-medium">Drug {index + 1}</h3>
+                                    <h3 className="font-medium">
+                                        Drug {index + 1}
+                                    </h3>
                                     {form.data.items.length > 1 && (
                                         <Button
                                             type="button"
@@ -359,7 +365,9 @@ export function PrescriptionOrderModal({
                                         />
                                         <label className="flex items-center gap-3 text-sm">
                                             <Checkbox
-                                                checked={item.is_external_pharmacy}
+                                                checked={
+                                                    item.is_external_pharmacy
+                                                }
                                                 onCheckedChange={(checked) =>
                                                     updatePrescriptionItem(
                                                         index,
@@ -399,7 +407,9 @@ export function PrescriptionOrderModal({
                                 Cancel
                             </Button>
                             <Button type="submit" disabled={form.processing}>
-                                {prescription ? 'Update Prescription' : 'Save Prescription'}
+                                {prescription
+                                    ? 'Update Prescription'
+                                    : 'Save Prescription'}
                             </Button>
                         </div>
                     </div>

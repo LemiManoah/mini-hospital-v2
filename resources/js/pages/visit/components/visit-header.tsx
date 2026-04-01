@@ -1,13 +1,7 @@
 import { AllergyAlert } from '@/components/allergy-alert';
 import { Button } from '@/components/ui/button';
 import { Link } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    HeartPulse,
-    NotebookPen,
-    Stethoscope,
-    UserRound,
-} from 'lucide-react';
+import { ArrowLeft, HeartPulse, NotebookPen, UserRound } from 'lucide-react';
 import { statusClasses } from './visit-show-utils';
 
 function formatDate(date: string | null | undefined): string {
@@ -61,7 +55,9 @@ export function VisitHeader({
         .filter(Boolean)
         .join(' ');
 
-    const allergies = (visit.patient?.activeAllergies ?? visit.patient?.allergies)?.map(a => ({
+    const allergies = (
+        visit.patient?.activeAllergies ?? visit.patient?.allergies
+    )?.map((a) => ({
         id: a.id,
         allergen_name: a.allergen?.name || 'Unknown',
         severity: a.severity || 'unknown',

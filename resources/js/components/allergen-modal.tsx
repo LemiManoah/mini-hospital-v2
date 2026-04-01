@@ -18,8 +18,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from '@inertiajs/react';
+import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { Plus, Loader2 } from 'lucide-react';
 
 interface Allergen {
     id: string;
@@ -85,14 +85,16 @@ export function AllergenModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] bg-white border-none shadow-2xl">
+            <DialogContent className="border-none bg-white shadow-2xl sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold">
-                        {mode === 'assign' ? 'Record Patient Allergy' : 'Create New Allergen'}
+                        {mode === 'assign'
+                            ? 'Record Patient Allergy'
+                            : 'Create New Allergen'}
                     </DialogTitle>
                     <DialogDescription>
-                        {mode === 'assign' 
-                            ? 'Assign a known allergen to this patient profile.' 
+                        {mode === 'assign'
+                            ? 'Assign a known allergen to this patient profile.'
                             : 'Add a new allergen to the system catalog.'}
                     </DialogDescription>
                 </DialogHeader>
@@ -102,9 +104,9 @@ export function AllergenModal({
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="allergen_id">Allergen</Label>
-                                <Button 
-                                    type="button" 
-                                    variant="link" 
+                                <Button
+                                    type="button"
+                                    variant="link"
                                     className="h-auto p-0 text-xs"
                                     onClick={() => setMode('create')}
                                 >
@@ -114,12 +116,14 @@ export function AllergenModal({
                             </div>
                             <Select
                                 value={assignForm.data.allergen_id}
-                                onValueChange={(value) => assignForm.setData('allergen_id', value)}
+                                onValueChange={(value) =>
+                                    assignForm.setData('allergen_id', value)
+                                }
                             >
                                 <SelectTrigger className="bg-white">
                                     <SelectValue placeholder="Select an allergen" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-white max-h-[300px]">
+                                <SelectContent className="max-h-[300px] bg-white">
                                     {allergens.map((a) => (
                                         <SelectItem key={a.id} value={a.id}>
                                             {a.name} ({a.type})
@@ -127,7 +131,9 @@ export function AllergenModal({
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <InputError message={assignForm.errors.allergen_id} />
+                            <InputError
+                                message={assignForm.errors.allergen_id}
+                            />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -135,39 +141,55 @@ export function AllergenModal({
                                 <Label htmlFor="severity">Severity</Label>
                                 <Select
                                     value={assignForm.data.severity}
-                                    onValueChange={(value) => assignForm.setData('severity', value)}
+                                    onValueChange={(value) =>
+                                        assignForm.setData('severity', value)
+                                    }
                                 >
                                     <SelectTrigger className="bg-white">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
                                         {severityOptions.map((opt) => (
-                                            <SelectItem key={opt.value} value={opt.value}>
+                                            <SelectItem
+                                                key={opt.value}
+                                                value={opt.value}
+                                            >
                                                 {opt.label}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <InputError message={assignForm.errors.severity} />
+                                <InputError
+                                    message={assignForm.errors.severity}
+                                />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="reaction">Typical Reaction</Label>
+                                <Label htmlFor="reaction">
+                                    Typical Reaction
+                                </Label>
                                 <Select
                                     value={assignForm.data.reaction}
-                                    onValueChange={(value) => assignForm.setData('reaction', value)}
+                                    onValueChange={(value) =>
+                                        assignForm.setData('reaction', value)
+                                    }
                                 >
                                     <SelectTrigger className="bg-white">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
                                         {reactionOptions.map((opt) => (
-                                            <SelectItem key={opt.value} value={opt.value}>
+                                            <SelectItem
+                                                key={opt.value}
+                                                value={opt.value}
+                                            >
                                                 {opt.label}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <InputError message={assignForm.errors.reaction} />
+                                <InputError
+                                    message={assignForm.errors.reaction}
+                                />
                             </div>
                         </div>
 
@@ -178,17 +200,28 @@ export function AllergenModal({
                                 className="bg-white"
                                 placeholder="Add any specific details about this patient's reaction..."
                                 value={assignForm.data.notes}
-                                onChange={(e) => assignForm.setData('notes', e.target.value)}
+                                onChange={(e) =>
+                                    assignForm.setData('notes', e.target.value)
+                                }
                             />
                             <InputError message={assignForm.errors.notes} />
                         </div>
 
                         <div className="flex justify-end gap-3 pt-2">
-                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                            >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={assignForm.processing}>
-                                {assignForm.processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <Button
+                                type="submit"
+                                disabled={assignForm.processing}
+                            >
+                                {assignForm.processing && (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                )}
                                 Record Allergy
                             </Button>
                         </div>
@@ -202,7 +235,9 @@ export function AllergenModal({
                                 className="bg-white"
                                 placeholder="e.g. Penicillin, Peanuts..."
                                 value={createForm.data.name}
-                                onChange={(e) => createForm.setData('name', e.target.value)}
+                                onChange={(e) =>
+                                    createForm.setData('name', e.target.value)
+                                }
                             />
                             <InputError message={createForm.errors.name} />
                         </div>
@@ -211,39 +246,65 @@ export function AllergenModal({
                             <Label htmlFor="type">Type</Label>
                             <Select
                                 value={createForm.data.type}
-                                onValueChange={(value) => createForm.setData('type', value)}
+                                onValueChange={(value) =>
+                                    createForm.setData('type', value)
+                                }
                             >
                                 <SelectTrigger className="bg-white">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
-                                    <SelectItem value="medication">Medication</SelectItem>
+                                    <SelectItem value="medication">
+                                        Medication
+                                    </SelectItem>
                                     <SelectItem value="food">Food</SelectItem>
-                                    <SelectItem value="environmental">Environmental</SelectItem>
+                                    <SelectItem value="environmental">
+                                        Environmental
+                                    </SelectItem>
                                     <SelectItem value="latex">Latex</SelectItem>
-                                    <SelectItem value="contrast">Contrast Dye</SelectItem>
+                                    <SelectItem value="contrast">
+                                        Contrast Dye
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                             <InputError message={createForm.errors.type} />
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="description">Description (Optional)</Label>
+                            <Label htmlFor="description">
+                                Description (Optional)
+                            </Label>
                             <Textarea
                                 id="description"
                                 className="bg-white"
                                 value={createForm.data.description}
-                                onChange={(e) => createForm.setData('description', e.target.value)}
+                                onChange={(e) =>
+                                    createForm.setData(
+                                        'description',
+                                        e.target.value,
+                                    )
+                                }
                             />
-                            <InputError message={createForm.errors.description} />
+                            <InputError
+                                message={createForm.errors.description}
+                            />
                         </div>
 
                         <div className="flex justify-end gap-3 pt-2">
-                            <Button type="button" variant="outline" onClick={() => setMode('assign')}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setMode('assign')}
+                            >
                                 Back to Assign
                             </Button>
-                            <Button type="submit" disabled={createForm.processing}>
-                                {createForm.processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <Button
+                                type="submit"
+                                disabled={createForm.processing}
+                            >
+                                {createForm.processing && (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                )}
                                 Create Allergen
                             </Button>
                         </div>

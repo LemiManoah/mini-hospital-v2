@@ -1,4 +1,5 @@
 import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -10,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Select,
     SelectContent,
@@ -18,13 +20,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { type LabRequest, type PatientVisit } from '@/types/patient';
 import { useForm } from '@inertiajs/react';
-import { useEffect, useState, useMemo } from 'react';
-import { formatMoney } from '../visit-ordering';
 import { Search, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { formatMoney } from '../visit-ordering';
 
 export function LabOrderModal({
     open,
@@ -141,7 +141,7 @@ export function LabOrderModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-h-[95vh] flex flex-col gap-0 p-0 sm:max-w-5xl bg-white border-none shadow-2xl overflow-hidden">
+            <DialogContent className="flex max-h-[95vh] flex-col gap-0 overflow-hidden border-none bg-white p-0 shadow-2xl sm:max-w-5xl">
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle className="text-xl font-bold">
                         {labRequest ? 'Edit Lab Request' : 'New Lab Request'}
@@ -153,25 +153,30 @@ export function LabOrderModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <form className="flex flex-col flex-1 overflow-hidden" onSubmit={onSubmit}>
-                    <div className="grid lg:grid-cols-[1fr_300px] flex-1 overflow-hidden">
+                <form
+                    className="flex flex-1 flex-col overflow-hidden"
+                    onSubmit={onSubmit}
+                >
+                    <div className="grid flex-1 overflow-hidden lg:grid-cols-[1fr_300px]">
                         {/* Left Side: Test Selection */}
-                        <div className="flex flex-col border-r overflow-hidden min-h-0">
-                            <div className="p-4 border-b bg-zinc-50/50">
+                        <div className="flex min-h-0 flex-col overflow-hidden border-r">
+                            <div className="border-b bg-zinc-50/50 p-4">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                     <Input
                                         placeholder="Search by test name, code or category..."
-                                        className="pl-9 bg-white"
+                                        className="bg-white pl-9"
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={(e) =>
+                                            setSearchTerm(e.target.value)
+                                        }
                                     />
                                     {searchTerm && (
                                         <Button
                                             type="button"
                                             variant="ghost"
                                             size="icon"
-                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                                            className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2"
                                             onClick={() => setSearchTerm('')}
                                         >
                                             <X className="h-3 w-3" />
@@ -180,44 +185,68 @@ export function LabOrderModal({
                                 </div>
                             </div>
 
-                            <ScrollArea className="flex-1 p-4 h-[400px] lg:h-auto">
+                            <ScrollArea className="h-[400px] flex-1 p-4 lg:h-auto">
                                 <div className="space-y-6">
-                                    {Object.entries(groupedLabTests).length === 0 ? (
-                                        <div className="text-center py-12 text-muted-foreground">
-                                            No tests found matching "{searchTerm}"
+                                    {Object.entries(groupedLabTests).length ===
+                                    0 ? (
+                                        <div className="py-12 text-center text-muted-foreground">
+                                            No tests found matching "
+                                            {searchTerm}"
                                         </div>
                                     ) : (
                                         Object.entries(groupedLabTests).map(
                                             ([category, tests]) => (
-                                                <div key={category} className="space-y-3">
-                                                    <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 sticky top-0 bg-white py-1 z-10">
+                                                <div
+                                                    key={category}
+                                                    className="space-y-3"
+                                                >
+                                                    <h3 className="sticky top-0 z-10 bg-white py-1 text-xs font-bold tracking-wider text-zinc-500 uppercase">
                                                         {category}
                                                     </h3>
                                                     <div className="grid gap-2 sm:grid-cols-2">
                                                         {tests.map((test) => (
                                                             <label
                                                                 key={test.id}
-                                                                className={`flex items-start gap-3 rounded-lg border p-3 text-sm transition-colors cursor-pointer hover:bg-zinc-50 ${
-                                                                    form.data.test_ids.includes(test.id)
+                                                                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-zinc-50 ${
+                                                                    form.data.test_ids.includes(
+                                                                        test.id,
+                                                                    )
                                                                         ? 'border-primary bg-primary/5'
                                                                         : ''
                                                                 }`}
                                                             >
                                                                 <Checkbox
-                                                                    checked={form.data.test_ids.includes(test.id)}
-                                                                    onCheckedChange={(checked) =>
-                                                                        toggleLabTest(test.id, checked === true)
+                                                                    checked={form.data.test_ids.includes(
+                                                                        test.id,
+                                                                    )}
+                                                                    onCheckedChange={(
+                                                                        checked,
+                                                                    ) =>
+                                                                        toggleLabTest(
+                                                                            test.id,
+                                                                            checked ===
+                                                                                true,
+                                                                        )
                                                                     }
                                                                     className="mt-0.5"
                                                                 />
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="font-medium truncate">
-                                                                        {test.test_name}
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="truncate font-medium">
+                                                                        {
+                                                                            test.test_name
+                                                                        }
                                                                     </div>
-                                                                    <div className="text-[11px] text-muted-foreground flex justify-between items-center mt-1">
-                                                                        <span>{test.test_code}</span>
+                                                                    <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                                                                        <span>
+                                                                            {
+                                                                                test.test_code
+                                                                            }
+                                                                        </span>
                                                                         <span className="font-semibold text-zinc-700">
-                                                                            {formatMoney(test.quoted_price ?? test.base_price)}
+                                                                            {formatMoney(
+                                                                                test.quoted_price ??
+                                                                                    test.base_price,
+                                                                            )}
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -225,7 +254,7 @@ export function LabOrderModal({
                                                         ))}
                                                     </div>
                                                 </div>
-                                            )
+                                            ),
                                         )
                                     )}
                                 </div>
@@ -233,26 +262,35 @@ export function LabOrderModal({
                         </div>
 
                         {/* Right Side: Request Details */}
-                        <div className="flex flex-col bg-zinc-50/30 overflow-hidden min-h-0">
+                        <div className="flex min-h-0 flex-col overflow-hidden bg-zinc-50/30">
                             <ScrollArea className="flex-1 p-6">
                                 <div className="space-y-6">
                                     <div className="space-y-3">
-                                        <Label className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-                                            Selected Tests ({form.data.test_ids.length})
+                                        <Label className="text-xs font-bold tracking-wider text-zinc-500 uppercase">
+                                            Selected Tests (
+                                            {form.data.test_ids.length})
                                         </Label>
                                         <div className="flex flex-wrap gap-2">
                                             {selectedTestsList.length === 0 ? (
-                                                <p className="text-sm text-muted-foreground italic">No tests selected yet.</p>
+                                                <p className="text-sm text-muted-foreground italic">
+                                                    No tests selected yet.
+                                                </p>
                                             ) : (
-                                                selectedTestsList.map(t => (
-                                                    <Badge key={t.id} variant="secondary" className="pl-2 pr-1 py-1 gap-1">
+                                                selectedTestsList.map((t) => (
+                                                    <Badge
+                                                        key={t.id}
+                                                        variant="secondary"
+                                                        className="gap-1 py-1 pr-1 pl-2"
+                                                    >
                                                         {t.test_name}
-                                                        <Button 
-                                                            type="button" 
-                                                            variant="ghost" 
-                                                            size="icon" 
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
                                                             className="h-4 w-4 rounded-full hover:bg-zinc-200"
-                                                            onClick={() => removeTest(t.id)}
+                                                            onClick={() =>
+                                                                removeTest(t.id)
+                                                            }
                                                         >
                                                             <X className="h-2 w-2" />
                                                         </Button>
@@ -260,7 +298,9 @@ export function LabOrderModal({
                                                 ))
                                             )}
                                         </div>
-                                        <InputError message={form.errors.test_ids} />
+                                        <InputError
+                                            message={form.errors.test_ids}
+                                        />
                                     </div>
 
                                     <div className="grid gap-4">
@@ -268,48 +308,89 @@ export function LabOrderModal({
                                             <Label>Priority</Label>
                                             <Select
                                                 value={form.data.priority}
-                                                onValueChange={(value) => form.setData('priority', value)}
+                                                onValueChange={(value) =>
+                                                    form.setData(
+                                                        'priority',
+                                                        value,
+                                                    )
+                                                }
                                             >
                                                 <SelectTrigger className="bg-white">
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent className="bg-white">
-                                                    {labPriorities.map((priority) => (
-                                                        <SelectItem key={priority.value} value={priority.value}>
-                                                            {priority.label}
-                                                        </SelectItem>
-                                                    ))}
+                                                    {labPriorities.map(
+                                                        (priority) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    priority.value
+                                                                }
+                                                                value={
+                                                                    priority.value
+                                                                }
+                                                            >
+                                                                {priority.label}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                         </div>
 
                                         <div className="grid gap-2">
-                                            <Label htmlFor="diagnosis_code">Diagnosis Code</Label>
+                                            <Label htmlFor="diagnosis_code">
+                                                Diagnosis Code
+                                            </Label>
                                             <Input
                                                 id="diagnosis_code"
                                                 className="bg-white"
                                                 value={form.data.diagnosis_code}
-                                                onChange={(e) => form.setData('diagnosis_code', e.target.value)}
+                                                onChange={(e) =>
+                                                    form.setData(
+                                                        'diagnosis_code',
+                                                        e.target.value,
+                                                    )
+                                                }
                                             />
-                                            <InputError message={form.errors.diagnosis_code} />
+                                            <InputError
+                                                message={
+                                                    form.errors.diagnosis_code
+                                                }
+                                            />
                                         </div>
 
                                         <div className="grid gap-2">
-                                            <Label htmlFor="lab_clinical_notes">Clinical Notes</Label>
+                                            <Label htmlFor="lab_clinical_notes">
+                                                Clinical Notes
+                                            </Label>
                                             <Textarea
                                                 id="lab_clinical_notes"
                                                 className="bg-white"
                                                 rows={4}
                                                 value={form.data.clinical_notes}
-                                                onChange={(e) => form.setData('clinical_notes', e.target.value)}
+                                                onChange={(e) =>
+                                                    form.setData(
+                                                        'clinical_notes',
+                                                        e.target.value,
+                                                    )
+                                                }
                                             />
-                                            <InputError message={form.errors.clinical_notes} />
+                                            <InputError
+                                                message={
+                                                    form.errors.clinical_notes
+                                                }
+                                            />
                                         </div>
 
-                                        <label className="flex items-center gap-3 text-sm font-medium cursor-pointer">
+                                        <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
                                             <Checkbox
                                                 checked={form.data.is_stat}
-                                                onCheckedChange={(checked) => form.setData('is_stat', checked === true)}
+                                                onCheckedChange={(checked) =>
+                                                    form.setData(
+                                                        'is_stat',
+                                                        checked === true,
+                                                    )
+                                                }
                                             />
                                             Mark as STAT (Urgent)
                                         </label>
@@ -317,11 +398,22 @@ export function LabOrderModal({
                                 </div>
                             </ScrollArea>
 
-                            <div className="p-6 border-t bg-white mt-auto flex flex-col gap-3">
+                            <div className="mt-auto flex flex-col gap-3 border-t bg-white p-6">
                                 <div className="flex justify-between text-sm font-medium">
-                                    <span className="text-muted-foreground">Total Estimate:</span>
+                                    <span className="text-muted-foreground">
+                                        Total Estimate:
+                                    </span>
                                     <span>
-                                        {formatMoney(selectedTestsList.reduce((sum, t) => sum + (t.quoted_price ?? t.base_price ?? 0), 0))}
+                                        {formatMoney(
+                                            selectedTestsList.reduce(
+                                                (sum, t) =>
+                                                    sum +
+                                                    (t.quoted_price ??
+                                                        t.base_price ??
+                                                        0),
+                                                0,
+                                            ),
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex gap-3">
@@ -333,12 +425,17 @@ export function LabOrderModal({
                                     >
                                         Cancel
                                     </Button>
-                                    <Button 
-                                        type="submit" 
+                                    <Button
+                                        type="submit"
                                         className="flex-1"
-                                        disabled={form.processing || form.data.test_ids.length === 0}
+                                        disabled={
+                                            form.processing ||
+                                            form.data.test_ids.length === 0
+                                        }
                                     >
-                                        {labRequest ? 'Update Request' : 'Create Request'}
+                                        {labRequest
+                                            ? 'Update Request'
+                                            : 'Create Request'}
                                     </Button>
                                 </div>
                             </div>

@@ -8,7 +8,7 @@ import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type PatientShowPageProps } from '@/types/patient';
 import { Head, Link } from '@inertiajs/react';
-import { Calendar, Edit, Plus, User } from 'lucide-react';
+import { Calendar, Edit, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -91,12 +91,15 @@ export default function PatientShow({
                                 <h1 className="text-2xl font-semibold">
                                     {fullName}
                                 </h1>
-                                <AllergyAlert allergies={patient.allergies?.map(a => ({
-                                    id: a.id,
-                                    allergen_name: a.allergen?.name || 'Unknown',
-                                    severity: a.severity || 'unknown',
-                                    reaction: a.reaction,
-                                }))} />
+                                <AllergyAlert
+                                    allergies={patient.allergies?.map((a) => ({
+                                        id: a.id,
+                                        allergen_name:
+                                            a.allergen?.name || 'Unknown',
+                                        severity: a.severity || 'unknown',
+                                        reaction: a.reaction,
+                                    }))}
+                                />
                             </div>
                             <p className="text-sm text-muted-foreground">
                                 MRN: {patient.patient_number}
@@ -132,7 +135,10 @@ export default function PatientShow({
                                 </Link>
                             </Button>
                         ) : null}
-                        <Button variant="outline" onClick={() => setAllergenModalOpen(true)}>
+                        <Button
+                            variant="outline"
+                            onClick={() => setAllergenModalOpen(true)}
+                        >
                             <Plus className="mr-2 h-4 w-4" />
                             Record Allergy
                         </Button>

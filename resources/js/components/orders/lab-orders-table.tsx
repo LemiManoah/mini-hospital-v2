@@ -11,11 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type LabRequest } from '@/types/patient';
 import { Edit2, Trash2 } from 'lucide-react';
-import {
-    formatDateTime,
-    labelize,
-    staffName,
-} from '../visit-ordering';
+import { formatDateTime, labelize, staffName } from '../visit-ordering';
 
 const statusBadgeClasses = (status: string): string =>
     ({
@@ -26,7 +22,7 @@ const statusBadgeClasses = (status: string): string =>
         scheduled: 'bg-sky-100 text-sky-900',
         cancelled: 'bg-zinc-200 text-zinc-900',
         rejected: 'bg-rose-100 text-rose-900',
-    }[status] ?? 'bg-zinc-100 text-zinc-800');
+    })[status] ?? 'bg-zinc-100 text-zinc-800';
 
 export function LabOrdersTable({
     labRequests,
@@ -57,7 +53,11 @@ export function LabOrdersTable({
                         <TableHead>Priority</TableHead>
                         <TableHead>Ordered By</TableHead>
                         <TableHead>Date</TableHead>
-                        {canManageOrders && <TableHead className="text-right">Actions</TableHead>}
+                        {canManageOrders && (
+                            <TableHead className="text-right">
+                                Actions
+                            </TableHead>
+                        )}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -83,14 +83,21 @@ export function LabOrdersTable({
                                 <div className="flex items-center gap-1">
                                     {labelize(request.priority)}
                                     {request.is_stat && (
-                                        <Badge variant="destructive" className="h-4 px-1 text-[10px]">
+                                        <Badge
+                                            variant="destructive"
+                                            className="h-4 px-1 text-[10px]"
+                                        >
                                             STAT
                                         </Badge>
                                     )}
                                 </div>
                             </TableCell>
-                            <TableCell>{staffName(request.requestedBy)}</TableCell>
-                            <TableCell>{formatDateTime(request.request_date)}</TableCell>
+                            <TableCell>
+                                {staffName(request.requestedBy)}
+                            </TableCell>
+                            <TableCell>
+                                {formatDateTime(request.request_date)}
+                            </TableCell>
                             {canManageOrders && (
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">

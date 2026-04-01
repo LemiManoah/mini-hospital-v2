@@ -11,11 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type ImagingRequest } from '@/types/patient';
 import { Edit2, Trash2 } from 'lucide-react';
-import {
-    formatDateTime,
-    labelize,
-    staffName,
-} from '../visit-ordering';
+import { formatDateTime, labelize, staffName } from '../visit-ordering';
 
 const statusBadgeClasses = (status: string): string =>
     ({
@@ -26,7 +22,7 @@ const statusBadgeClasses = (status: string): string =>
         scheduled: 'bg-sky-100 text-sky-900',
         cancelled: 'bg-zinc-200 text-zinc-900',
         rejected: 'bg-rose-100 text-rose-900',
-    }[status] ?? 'bg-zinc-100 text-zinc-800');
+    })[status] ?? 'bg-zinc-100 text-zinc-800';
 
 export function ImagingOrdersTable({
     imagingRequests,
@@ -57,7 +53,11 @@ export function ImagingOrdersTable({
                         <TableHead>Priority</TableHead>
                         <TableHead>Ordered By</TableHead>
                         <TableHead>Date</TableHead>
-                        {canManageOrders && <TableHead className="text-right">Actions</TableHead>}
+                        {canManageOrders && (
+                            <TableHead className="text-right">
+                                Actions
+                            </TableHead>
+                        )}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -65,7 +65,9 @@ export function ImagingOrdersTable({
                         <TableRow key={request.id}>
                             <TableCell className="font-medium">
                                 {labelize(request.modality)} {request.body_part}
-                                {request.laterality && request.laterality !== 'na' && ` (${labelize(request.laterality)})`}
+                                {request.laterality &&
+                                    request.laterality !== 'na' &&
+                                    ` (${labelize(request.laterality)})`}
                             </TableCell>
                             <TableCell>
                                 <Badge
@@ -78,8 +80,12 @@ export function ImagingOrdersTable({
                                 </Badge>
                             </TableCell>
                             <TableCell>{labelize(request.priority)}</TableCell>
-                            <TableCell>{staffName(request.requestedBy)}</TableCell>
-                            <TableCell>{formatDateTime(request.created_at)}</TableCell>
+                            <TableCell>
+                                {staffName(request.requestedBy)}
+                            </TableCell>
+                            <TableCell>
+                                {formatDateTime(request.created_at)}
+                            </TableCell>
                             {canManageOrders && (
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">

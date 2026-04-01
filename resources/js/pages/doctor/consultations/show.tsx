@@ -1,38 +1,14 @@
-import {
-    AllergenModal,
-} from '@/components/allergen-modal';
-import {
-    AllergyAlert,
-} from '@/components/allergy-alert';
+import { AllergenModal } from '@/components/allergen-modal';
+import { AllergyAlert } from '@/components/allergy-alert';
 import InputError from '@/components/input-error';
-import {
-    LabOrderModal,
-} from '@/components/orders/lab-order-modal';
-import {
-    LabOrdersTable,
-} from '@/components/orders/lab-orders-table';
-import {
-    PrescriptionOrderModal,
-} from '@/components/orders/prescription-order-modal';
-import {
-    PrescriptionOrdersTable,
-} from '@/components/orders/prescription-orders-table';
-import {
-    ImagingOrderModal,
-} from '@/components/orders/imaging-order-modal';
-import {
-    ImagingOrdersTable,
-} from '@/components/orders/imaging-orders-table';
-import {
-    ServiceOrderModal,
-} from '@/components/orders/service-order-modal';
-import {
-    ServiceOrdersTable,
-} from '@/components/orders/service-orders-table';
-import {
-    type OrderTabValue,
-} from '@/components/visit-ordering';
-import { Badge } from '@/components/ui/badge';
+import { ImagingOrderModal } from '@/components/orders/imaging-order-modal';
+import { ImagingOrdersTable } from '@/components/orders/imaging-orders-table';
+import { LabOrderModal } from '@/components/orders/lab-order-modal';
+import { LabOrdersTable } from '@/components/orders/lab-orders-table';
+import { PrescriptionOrderModal } from '@/components/orders/prescription-order-modal';
+import { PrescriptionOrdersTable } from '@/components/orders/prescription-orders-table';
+import { ServiceOrderModal } from '@/components/orders/service-order-modal';
+import { ServiceOrdersTable } from '@/components/orders/service-orders-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,30 +22,23 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { type OrderTabValue } from '@/components/visit-ordering';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
-import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import {
     type Consultation,
     type DoctorConsultationShowPageProps,
-    type TriageRecord,
-    type VitalSign,
+    type FacilityServiceOrder,
+    type ImagingRequest,
     type LabRequest,
     type Prescription,
-    type ImagingRequest,
-    type FacilityServiceOrder,
+    type TriageRecord,
+    type VitalSign,
 } from '@/types/patient';
 import { Form, Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    ClipboardPen,
-    CreditCard,
-    Plus,
-    Stethoscope,
-    Trash2,
-} from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ArrowLeft, ClipboardPen, CreditCard, Plus } from 'lucide-react';
+import { useState } from 'react';
 
 const formatDate = (date: string | null | undefined): string =>
     date
@@ -282,8 +251,7 @@ export default function DoctorConsultationShow({
         },
     ];
 
-    const canPlaceOrders =
-        !isConsultationFinalized && canUpdateConsultation;
+    const canPlaceOrders = !isConsultationFinalized && canUpdateConsultation;
 
     const [labModalOpen, setLabModalOpen] = useState(false);
     const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
@@ -291,10 +259,14 @@ export default function DoctorConsultationShow({
     const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
     const [allergenModalOpen, setAllergenModalOpen] = useState(false);
 
-    const [editingLabRequest, setEditingLabRequest] = useState<LabRequest | null>(null);
-    const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
-    const [editingImagingRequest, setEditingImagingRequest] = useState<ImagingRequest | null>(null);
-    const [editingServiceOrder, setEditingServiceOrder] = useState<FacilityServiceOrder | null>(null);
+    const [editingLabRequest, setEditingLabRequest] =
+        useState<LabRequest | null>(null);
+    const [editingPrescription, setEditingPrescription] =
+        useState<Prescription | null>(null);
+    const [editingImagingRequest, setEditingImagingRequest] =
+        useState<ImagingRequest | null>(null);
+    const [editingServiceOrder, setEditingServiceOrder] =
+        useState<FacilityServiceOrder | null>(null);
 
     const openOrderDialog = (tab: OrderTabValue) => {
         if (tab === 'lab') setLabModalOpen(true);
@@ -319,12 +291,18 @@ export default function DoctorConsultationShow({
                                         {formatDate(visit.registered_at)} for{' '}
                                         {patientName || 'Unknown patient'}
                                     </span>
-                                    <AllergyAlert allergies={(visit.patient?.activeAllergies ?? visit.patient?.allergies)?.map(a => ({
-                                        id: a.id,
-                                        allergen_name: a.allergen?.name || 'Unknown',
-                                        severity: a.severity || 'unknown',
-                                        reaction: a.reaction,
-                                    }))} />
+                                    <AllergyAlert
+                                        allergies={(
+                                            visit.patient?.activeAllergies ??
+                                            visit.patient?.allergies
+                                        )?.map((a) => ({
+                                            id: a.id,
+                                            allergen_name:
+                                                a.allergen?.name || 'Unknown',
+                                            severity: a.severity || 'unknown',
+                                            reaction: a.reaction,
+                                        }))}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -355,7 +333,7 @@ export default function DoctorConsultationShow({
                                 Back to Consultation Queue
                             </Link>
                         </Button>
-                       
+
                         {canPlaceOrders ? (
                             <Button
                                 variant="outline"
@@ -1014,8 +992,9 @@ export default function DoctorConsultationShow({
                                             </CardTitle>
                                             <p className="text-sm text-muted-foreground">
                                                 Order lab tests against this
-                                                consultation and keep the running
-                                                request history together.
+                                                consultation and keep the
+                                                running request history
+                                                together.
                                             </p>
                                         </div>
                                         {canPlaceOrders && (
@@ -1048,11 +1027,21 @@ export default function DoctorConsultationShow({
                                                 setLabModalOpen(true);
                                             }}
                                             onDelete={(request) => {
-                                                if (confirm('Are you sure you want to remove this lab request?')) {
-                                                    router.delete(`/visits/${visit.id}/lab-requests/${request.id}`, {
-                                                        data: { redirect_to: 'consultation' },
-                                                        preserveScroll: true,
-                                                    });
+                                                if (
+                                                    confirm(
+                                                        'Are you sure you want to remove this lab request?',
+                                                    )
+                                                ) {
+                                                    router.delete(
+                                                        `/visits/${visit.id}/lab-requests/${request.id}`,
+                                                        {
+                                                            data: {
+                                                                redirect_to:
+                                                                    'consultation',
+                                                            },
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
                                                 }
                                             }}
                                         />
@@ -1070,15 +1059,20 @@ export default function DoctorConsultationShow({
                                             <CardTitle>Prescriptions</CardTitle>
                                             <p className="text-sm text-muted-foreground">
                                                 Build the drug plan inside the
-                                                consultation workspace so pharmacy
-                                                can act on a clear prescription set.
+                                                consultation workspace so
+                                                pharmacy can act on a clear
+                                                prescription set.
                                             </p>
                                         </div>
                                         {canPlaceOrders && (
                                             <Button
                                                 onClick={() => {
-                                                    setEditingPrescription(null);
-                                                    setPrescriptionModalOpen(true);
+                                                    setEditingPrescription(
+                                                        null,
+                                                    );
+                                                    setPrescriptionModalOpen(
+                                                        true,
+                                                    );
                                                 }}
                                             >
                                                 <Plus className="mr-2 h-4 w-4" />
@@ -1100,15 +1094,27 @@ export default function DoctorConsultationShow({
                                             prescriptions={prescriptions}
                                             canManageOrders={canPlaceOrders}
                                             onEdit={(prescription) => {
-                                                setEditingPrescription(prescription);
+                                                setEditingPrescription(
+                                                    prescription,
+                                                );
                                                 setPrescriptionModalOpen(true);
                                             }}
                                             onDelete={(prescription) => {
-                                                if (confirm('Are you sure you want to remove this prescription?')) {
-                                                    router.delete(`/visits/${visit.id}/prescriptions/${prescription.id}`, {
-                                                        data: { redirect_to: 'consultation' },
-                                                        preserveScroll: true,
-                                                    });
+                                                if (
+                                                    confirm(
+                                                        'Are you sure you want to remove this prescription?',
+                                                    )
+                                                ) {
+                                                    router.delete(
+                                                        `/visits/${visit.id}/prescriptions/${prescription.id}`,
+                                                        {
+                                                            data: {
+                                                                redirect_to:
+                                                                    'consultation',
+                                                            },
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
                                                 }
                                             }}
                                         />
@@ -1120,17 +1126,22 @@ export default function DoctorConsultationShow({
                                 <Card>
                                     <CardHeader className="flex flex-row items-center justify-between">
                                         <div>
-                                            <CardTitle>Imaging Requests</CardTitle>
+                                            <CardTitle>
+                                                Imaging Requests
+                                            </CardTitle>
                                             <p className="text-sm text-muted-foreground">
-                                                Capture radiology and scan requests
-                                                with the clinical history and
-                                                indication that support the order.
+                                                Capture radiology and scan
+                                                requests with the clinical
+                                                history and indication that
+                                                support the order.
                                             </p>
                                         </div>
                                         {canPlaceOrders && (
                                             <Button
                                                 onClick={() => {
-                                                    setEditingImagingRequest(null);
+                                                    setEditingImagingRequest(
+                                                        null,
+                                                    );
                                                     setImagingModalOpen(true);
                                                 }}
                                             >
@@ -1153,15 +1164,27 @@ export default function DoctorConsultationShow({
                                             imagingRequests={imagingRequests}
                                             canManageOrders={canPlaceOrders}
                                             onEdit={(request) => {
-                                                setEditingImagingRequest(request);
+                                                setEditingImagingRequest(
+                                                    request,
+                                                );
                                                 setImagingModalOpen(true);
                                             }}
                                             onDelete={(request) => {
-                                                if (confirm('Are you sure you want to remove this imaging request?')) {
-                                                    router.delete(`/visits/${visit.id}/imaging-requests/${request.id}`, {
-                                                        data: { redirect_to: 'consultation' },
-                                                        preserveScroll: true,
-                                                    });
+                                                if (
+                                                    confirm(
+                                                        'Are you sure you want to remove this imaging request?',
+                                                    )
+                                                ) {
+                                                    router.delete(
+                                                        `/visits/${visit.id}/imaging-requests/${request.id}`,
+                                                        {
+                                                            data: {
+                                                                redirect_to:
+                                                                    'consultation',
+                                                            },
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
                                                 }
                                             }}
                                         />
@@ -1178,14 +1201,19 @@ export default function DoctorConsultationShow({
                                                 Facility Services
                                             </CardTitle>
                                             <p className="text-sm text-muted-foreground">
-                                                Order facility services for this visit.
+                                                Order facility services for this
+                                                visit.
                                             </p>
                                         </div>
                                         {canPlaceOrders && (
                                             <Button
                                                 onClick={() => {
-                                                    setEditingServiceOrder(null);
-                                                    setServiceOrderModalOpen(true);
+                                                    setEditingServiceOrder(
+                                                        null,
+                                                    );
+                                                    setServiceOrderModalOpen(
+                                                        true,
+                                                    );
                                                 }}
                                             >
                                                 <Plus className="mr-2 h-4 w-4" />
@@ -1211,11 +1239,21 @@ export default function DoctorConsultationShow({
                                                 setServiceOrderModalOpen(true);
                                             }}
                                             onDelete={(order) => {
-                                                if (confirm('Are you sure you want to remove this service order?')) {
-                                                    router.delete(`/visits/${visit.id}/facility-service-orders/${order.id}`, {
-                                                        data: { redirect_to: 'consultation' },
-                                                        preserveScroll: true,
-                                                    });
+                                                if (
+                                                    confirm(
+                                                        'Are you sure you want to remove this service order?',
+                                                    )
+                                                ) {
+                                                    router.delete(
+                                                        `/visits/${visit.id}/facility-service-orders/${order.id}`,
+                                                        {
+                                                            data: {
+                                                                redirect_to:
+                                                                    'consultation',
+                                                            },
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
                                                 }
                                             }}
                                         />
@@ -1259,7 +1297,9 @@ export default function DoctorConsultationShow({
                                     onOpenChange={setServiceOrderModalOpen}
                                     visit={visit}
                                     serviceOrder={editingServiceOrder}
-                                    facilityServiceOptions={facilityServiceOptions}
+                                    facilityServiceOptions={
+                                        facilityServiceOptions
+                                    }
                                     redirectTo="consultation"
                                 />
                                 <AllergenModal
@@ -1459,7 +1499,6 @@ export default function DoctorConsultationShow({
                         </Card>
                     </div>
                 </div>
-
             </div>
         </AppLayout>
     );

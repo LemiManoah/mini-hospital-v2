@@ -1,4 +1,3 @@
-import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -72,7 +71,8 @@ export function ImagingOrderModal({
                 indication: imagingRequest.indication ?? '',
                 priority: imagingRequest.priority ?? 'routine',
                 requires_contrast: imagingRequest.requires_contrast ?? false,
-                contrast_allergy_status: imagingRequest.contrast_allergy_status ?? '',
+                contrast_allergy_status:
+                    imagingRequest.contrast_allergy_status ?? '',
                 pregnancy_status: imagingRequest.pregnancy_status ?? 'unknown',
                 redirect_to: redirectTo,
             });
@@ -98,10 +98,12 @@ export function ImagingOrderModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl bg-white border-none shadow-2xl">
+            <DialogContent className="max-h-[90vh] overflow-y-auto border-none bg-white shadow-2xl sm:max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {imagingRequest ? 'Edit Imaging Request' : 'New Imaging Request'}
+                        {imagingRequest
+                            ? 'Edit Imaging Request'
+                            : 'New Imaging Request'}
                     </DialogTitle>
                     <DialogDescription>
                         {imagingRequest
@@ -116,14 +118,19 @@ export function ImagingOrderModal({
                             <Label>Modality</Label>
                             <Select
                                 value={form.data.modality}
-                                onValueChange={(value) => form.setData('modality', value)}
+                                onValueChange={(value) =>
+                                    form.setData('modality', value)
+                                }
                             >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {imagingModalities.map((modality) => (
-                                        <SelectItem key={modality.value} value={modality.value}>
+                                        <SelectItem
+                                            key={modality.value}
+                                            value={modality.value}
+                                        >
                                             {modality.label}
                                         </SelectItem>
                                     ))}
@@ -136,7 +143,10 @@ export function ImagingOrderModal({
                                 id="imaging_body_part"
                                 value={form.data.body_part}
                                 onChange={(event) =>
-                                    form.setData('body_part', event.target.value)
+                                    form.setData(
+                                        'body_part',
+                                        event.target.value,
+                                    )
                                 }
                             />
                         </div>
@@ -144,14 +154,19 @@ export function ImagingOrderModal({
                             <Label>Laterality</Label>
                             <Select
                                 value={form.data.laterality}
-                                onValueChange={(value) => form.setData('laterality', value)}
+                                onValueChange={(value) =>
+                                    form.setData('laterality', value)
+                                }
                             >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {imagingLateralities.map((laterality) => (
-                                        <SelectItem key={laterality.value} value={laterality.value}>
+                                        <SelectItem
+                                            key={laterality.value}
+                                            value={laterality.value}
+                                        >
                                             {laterality.label}
                                         </SelectItem>
                                     ))}
@@ -170,18 +185,26 @@ export function ImagingOrderModal({
                                 rows={3}
                                 value={form.data.clinical_history}
                                 onChange={(event) =>
-                                    form.setData('clinical_history', event.target.value)
+                                    form.setData(
+                                        'clinical_history',
+                                        event.target.value,
+                                    )
                                 }
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="imaging_indication">Indication</Label>
+                            <Label htmlFor="imaging_indication">
+                                Indication
+                            </Label>
                             <Textarea
                                 id="imaging_indication"
                                 rows={3}
                                 value={form.data.indication}
                                 onChange={(event) =>
-                                    form.setData('indication', event.target.value)
+                                    form.setData(
+                                        'indication',
+                                        event.target.value,
+                                    )
                                 }
                             />
                         </div>
@@ -192,14 +215,19 @@ export function ImagingOrderModal({
                             <Label>Priority</Label>
                             <Select
                                 value={form.data.priority}
-                                onValueChange={(value) => form.setData('priority', value)}
+                                onValueChange={(value) =>
+                                    form.setData('priority', value)
+                                }
                             >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {imagingPriorities.map((priority) => (
-                                        <SelectItem key={priority.value} value={priority.value}>
+                                        <SelectItem
+                                            key={priority.value}
+                                            value={priority.value}
+                                        >
                                             {priority.label}
                                         </SelectItem>
                                     ))}
@@ -219,7 +247,10 @@ export function ImagingOrderModal({
                                 </SelectTrigger>
                                 <SelectContent>
                                     {pregnancyStatuses.map((status) => (
-                                        <SelectItem key={status.value} value={status.value}>
+                                        <SelectItem
+                                            key={status.value}
+                                            value={status.value}
+                                        >
                                             {status.label}
                                         </SelectItem>
                                     ))}
@@ -234,7 +265,10 @@ export function ImagingOrderModal({
                                 id="contrast_allergy_status"
                                 value={form.data.contrast_allergy_status}
                                 onChange={(event) =>
-                                    form.setData('contrast_allergy_status', event.target.value)
+                                    form.setData(
+                                        'contrast_allergy_status',
+                                        event.target.value,
+                                    )
                                 }
                             />
                         </div>
@@ -244,7 +278,10 @@ export function ImagingOrderModal({
                         <Checkbox
                             checked={form.data.requires_contrast}
                             onCheckedChange={(checked) =>
-                                form.setData('requires_contrast', checked === true)
+                                form.setData(
+                                    'requires_contrast',
+                                    checked === true,
+                                )
                             }
                         />
                         This study requires contrast
@@ -259,7 +296,9 @@ export function ImagingOrderModal({
                             Cancel
                         </Button>
                         <Button type="submit" disabled={form.processing}>
-                            {imagingRequest ? 'Update Imaging' : 'Request Imaging'}
+                            {imagingRequest
+                                ? 'Update Imaging'
+                                : 'Request Imaging'}
                         </Button>
                     </div>
                 </form>

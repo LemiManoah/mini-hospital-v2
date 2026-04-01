@@ -108,18 +108,14 @@ export function VisitOrderDialog({
     facilityServiceOptions: FacilityServiceOption[];
 }) {
     const [selectedTab, setSelectedTab] = useState<OrderTabValue>(initialTab);
-    const consultation = (visit.consultation ?? null) as
-        | {
-              history_of_present_illness?: string | null;
-              primary_diagnosis?: string | null;
-              primary_icd10_code?: string | null;
-          }
-        | null;
-    const triage = (visit.triage ?? null) as
-        | {
-              history_of_presenting_illness?: string | null;
-          }
-        | null;
+    const consultation = (visit.consultation ?? null) as {
+        history_of_present_illness?: string | null;
+        primary_diagnosis?: string | null;
+        primary_icd10_code?: string | null;
+    } | null;
+    const triage = (visit.triage ?? null) as {
+        history_of_presenting_illness?: string | null;
+    } | null;
     const facilityServiceOrders =
         visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
 
@@ -237,15 +233,13 @@ export function VisitOrderDialog({
                     className="flex flex-col gap-4"
                 >
                     <TabsList variant="line" className="w-full justify-start">
-                        {(
-                            Object.keys(
-                                ORDER_TAB_LABELS,
-                            ) as OrderTabValue[]
-                        ).map((tab) => (
-                            <TabsTrigger key={tab} value={tab}>
-                                {ORDER_TAB_LABELS[tab]}
-                            </TabsTrigger>
-                        ))}
+                        {(Object.keys(ORDER_TAB_LABELS) as OrderTabValue[]).map(
+                            (tab) => (
+                                <TabsTrigger key={tab} value={tab}>
+                                    {ORDER_TAB_LABELS[tab]}
+                                </TabsTrigger>
+                            ),
+                        )}
                     </TabsList>
 
                     <TabsContent value="lab" className="flex flex-col gap-4">
@@ -253,13 +247,16 @@ export function VisitOrderDialog({
                             className="flex flex-col gap-4"
                             onSubmit={(event) => {
                                 event.preventDefault();
-                                labForm.post(`/visits/${visit.id}/lab-requests`, {
-                                    preserveScroll: true,
-                                    onSuccess: () => {
-                                        labForm.reset('test_ids');
-                                        closeDialog();
+                                labForm.post(
+                                    `/visits/${visit.id}/lab-requests`,
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => {
+                                            labForm.reset('test_ids');
+                                            closeDialog();
+                                        },
                                     },
-                                });
+                                );
                             }}
                         >
                             <div className="flex flex-col gap-3">
@@ -395,7 +392,10 @@ export function VisitOrderDialog({
                                 <Checkbox
                                     checked={labForm.data.is_stat}
                                     onCheckedChange={(checked) =>
-                                        labForm.setData('is_stat', checked === true)
+                                        labForm.setData(
+                                            'is_stat',
+                                            checked === true,
+                                        )
                                     }
                                 />
                                 Mark this request as STAT
@@ -518,7 +518,9 @@ export function VisitOrderDialog({
                                                     <Label>Drug</Label>
                                                     <Select
                                                         value={item.drug_id}
-                                                        onValueChange={(value) =>
+                                                        onValueChange={(
+                                                            value,
+                                                        ) =>
                                                             updatePrescriptionItem(
                                                                 index,
                                                                 'drug_id',
@@ -559,13 +561,16 @@ export function VisitOrderDialog({
                                                             ]
                                                         }
                                                     />
-                                                    {selectedDrugOptions[index] ? (
+                                                    {selectedDrugOptions[
+                                                        index
+                                                    ] ? (
                                                         <p className="text-xs text-muted-foreground">
                                                             Quoted price:{' '}
                                                             {formatMoney(
                                                                 selectedDrugOptions[
                                                                     index
-                                                                ]?.quoted_price ??
+                                                                ]
+                                                                    ?.quoted_price ??
                                                                     null,
                                                             )}
                                                         </p>
@@ -652,9 +657,7 @@ export function VisitOrderDialog({
                                             </div>
                                             <div className="mt-4 grid gap-4 md:grid-cols-2">
                                                 <div className="grid gap-2">
-                                                    <Label>
-                                                        Instructions
-                                                    </Label>
+                                                    <Label>Instructions</Label>
                                                     <Textarea
                                                         rows={3}
                                                         value={
@@ -956,9 +959,7 @@ export function VisitOrderDialog({
                             </div>
                             <label className="flex items-center gap-3 text-sm">
                                 <Checkbox
-                                    checked={
-                                        imagingForm.data.requires_contrast
-                                    }
+                                    checked={imagingForm.data.requires_contrast}
                                     onCheckedChange={(checked) =>
                                         imagingForm.setData(
                                             'requires_contrast',

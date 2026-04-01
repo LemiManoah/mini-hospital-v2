@@ -22,25 +22,13 @@ import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type PatientVisit, type TriageQueuePageProps } from '@/types/patient';
 import { Head, Link, router } from '@inertiajs/react';
-import { ClipboardList, FileClock, PlayCircle } from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Triage', href: '/triage' },
     { title: 'Queue', href: '/triage' },
 ];
-
-function formatDateTime(date: string | null | undefined): string {
-    if (!date) return 'N/A';
-
-    return new Date(date).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
 
 function triageBadgeClass(grade: string | undefined): string {
     return (
@@ -131,13 +119,11 @@ export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
                     <Table className="min-w-[1080px]">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Visit</TableHead>
                                 <TableHead>Patient</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Triage Grade</TableHead>
                                 <TableHead>Chief Complaint</TableHead>
-                                <TableHead>Clinic</TableHead>
-                                <TableHead>Nurse</TableHead>
+                                <TableHead>Clinic / Nurse</TableHead>
                                 <TableHead>Last Activity</TableHead>
                                 <TableHead>Action</TableHead>
                             </TableRow>
@@ -153,22 +139,12 @@ export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
                                         .filter(Boolean)
                                         .join(' ');
                                     const state = triageState(visit);
+                                    const activityDate =
+                                        visit.triage?.triage_datetime ??
+                                        visit.registered_at;
 
                                     return (
                                         <TableRow key={visit.id}>
-                                            <TableCell>
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {visit.visit_number}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {visit.visit_type.replaceAll(
-                                                            '_',
-                                                            ' ',
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </TableCell>
                                             <TableCell>
                                                 <div>
                                                     <p className="font-medium">
@@ -216,20 +192,44 @@ export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
                                                     'Capture complaint in triage'}
                                             </TableCell>
                                             <TableCell>
-                                                {visit.clinic?.name ||
-                                                    'Not assigned'}
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {visit.clinic?.name ||
+                                                            'Not assigned'}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {visit.triage?.nurse
+                                                            ? `${visit.triage.nurse.first_name} ${visit.triage.nurse.last_name}`
+                                                            : 'Open queue'}
+                                                    </p>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
-                                                {visit.triage?.nurse
-                                                    ? `${visit.triage.nurse.first_name} ${visit.triage.nurse.last_name}`
-                                                    : 'Open queue'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {formatDateTime(
-                                                    visit.triage
-                                                        ?.triage_datetime ??
-                                                        visit.registered_at,
-                                                )}
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {new Date(
+                                                            activityDate,
+                                                        ).toLocaleDateString(
+                                                            'en-US',
+                                                            {
+                                                                year: 'numeric',
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                            },
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {new Date(
+                                                            activityDate,
+                                                        ).toLocaleTimeString(
+                                                            'en-US',
+                                                            {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                            },
+                                                        )}
+                                                    </p>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 {canViewTriage ? (
@@ -237,11 +237,6 @@ export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
                                                         <Link
                                                             href={`/triage/${visit.id}`}
                                                         >
-                                                            {visit.triage ? (
-                                                                <FileClock className="mr-2 h-4 w-4" />
-                                                            ) : (
-                                                                <PlayCircle className="mr-2 h-4 w-4" />
-                                                            )}
                                                             {visit.triage ||
                                                             canCreateTriage
                                                                 ? state.actionLabel
@@ -260,7 +255,7 @@ export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={9}
+                                        colSpan={7}
                                         className="py-12 text-center text-zinc-500 italic"
                                     >
                                         No active visits are waiting in the

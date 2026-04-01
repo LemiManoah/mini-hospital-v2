@@ -25,25 +25,13 @@ import {
     type PatientVisit,
 } from '@/types/patient';
 import { Head, Link, router } from '@inertiajs/react';
-import { ClipboardPen, FileClock, PlayCircle } from 'lucide-react';
+import { ClipboardPen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Doctors', href: '/doctors/consultations' },
     { title: 'Consultation', href: '/doctors/consultations' },
 ];
-
-function formatDateTime(date: string | null | undefined): string {
-    if (!date) return 'N/A';
-
-    return new Date(date).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
 
 function triageBadgeClass(grade: string | undefined): string {
     return (
@@ -146,12 +134,10 @@ export default function DoctorConsultationsIndex({
                     <Table className="min-w-[1100px]">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Visit</TableHead>
                                 <TableHead>Patient</TableHead>
                                 <TableHead>Triage</TableHead>
                                 <TableHead>Chief Complaint</TableHead>
-                                <TableHead>Clinic</TableHead>
-                                <TableHead>Assigned Doctor</TableHead>
+                                <TableHead>Clinic / Doctor</TableHead>
                                 <TableHead>Consultation</TableHead>
                                 <TableHead>Last Activity</TableHead>
                                 <TableHead>Action</TableHead>
@@ -169,22 +155,13 @@ export default function DoctorConsultationsIndex({
                                         .join(' ');
                                     const consultation =
                                         consultationState(visit);
+                                    const activityDate =
+                                        visit.consultation?.started_at ??
+                                        visit.triage?.triage_datetime ??
+                                        visit.registered_at;
 
                                     return (
                                         <TableRow key={visit.id}>
-                                            <TableCell>
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {visit.visit_number}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {visit.visit_type.replaceAll(
-                                                            '_',
-                                                            ' ',
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </TableCell>
                                             <TableCell>
                                                 <div>
                                                     <p className="font-medium">
@@ -217,13 +194,17 @@ export default function DoctorConsultationsIndex({
                                                     'No complaint captured'}
                                             </TableCell>
                                             <TableCell>
-                                                {visit.clinic?.name ||
-                                                    'Not assigned'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {visit.doctor
-                                                    ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
-                                                    : 'Open queue'}
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {visit.clinic?.name ||
+                                                            'Not assigned'}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {visit.doctor
+                                                            ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
+                                                            : 'Open queue'}
+                                                    </p>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="space-y-1">
@@ -239,25 +220,65 @@ export default function DoctorConsultationsIndex({
                                                     </p>
                                                     {visit.consultation
                                                         ?.completed_at ? (
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Finalized{' '}
-                                                            {formatDateTime(
-                                                                visit
-                                                                    .consultation
-                                                                    .completed_at,
-                                                            )}
-                                                        </p>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            <p>Finalized</p>
+                                                            <p>
+                                                                {new Date(
+                                                                    visit
+                                                                        .consultation
+                                                                        .completed_at,
+                                                                ).toLocaleDateString(
+                                                                    'en-US',
+                                                                    {
+                                                                        year: 'numeric',
+                                                                        month: 'short',
+                                                                        day: 'numeric',
+                                                                    },
+                                                                )}
+                                                            </p>
+                                                            <p>
+                                                                {new Date(
+                                                                    visit
+                                                                        .consultation
+                                                                        .completed_at,
+                                                                ).toLocaleTimeString(
+                                                                    'en-US',
+                                                                    {
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit',
+                                                                    },
+                                                                )}
+                                                            </p>
+                                                        </div>
                                                     ) : null}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                {formatDateTime(
-                                                    visit.consultation
-                                                        ?.started_at ??
-                                                        visit.triage
-                                                            ?.triage_datetime ??
-                                                        visit.registered_at,
-                                                )}
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {new Date(
+                                                            activityDate,
+                                                        ).toLocaleDateString(
+                                                            'en-US',
+                                                            {
+                                                                year: 'numeric',
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                            },
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {new Date(
+                                                            activityDate,
+                                                        ).toLocaleTimeString(
+                                                            'en-US',
+                                                            {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                            },
+                                                        )}
+                                                    </p>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 {canViewConsultation ? (
@@ -265,11 +286,6 @@ export default function DoctorConsultationsIndex({
                                                         <Link
                                                             href={`/doctors/consultations/${visit.id}`}
                                                         >
-                                                            {visit.consultation ? (
-                                                                <FileClock className="mr-2 h-4 w-4" />
-                                                            ) : (
-                                                                <PlayCircle className="mr-2 h-4 w-4" />
-                                                            )}
                                                             {
                                                                 consultation.actionLabel
                                                             }
@@ -287,7 +303,7 @@ export default function DoctorConsultationsIndex({
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={9}
+                                        colSpan={7}
                                         className="py-12 text-center text-zinc-500 italic"
                                     >
                                         No triaged visits are ready for

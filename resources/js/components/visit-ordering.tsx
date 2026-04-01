@@ -60,7 +60,7 @@ const statusBadgeClasses = (status: string): string =>
         scheduled: 'bg-sky-100 text-sky-900',
         cancelled: 'bg-zinc-200 text-zinc-900',
         rejected: 'bg-rose-100 text-rose-900',
-    }[status] ?? 'bg-zinc-100 text-zinc-800');
+    })[status] ?? 'bg-zinc-100 text-zinc-800';
 
 const labItemResultValues = (item: {
     resultEntry?: {
@@ -295,8 +295,8 @@ export function PrescriptionOrdersList({
                                 </p>
                                 <p className="text-muted-foreground">
                                     {item.dosage} | {item.frequency} |{' '}
-                                    {item.route} | {item.duration_days} day(s)
-                                    | Qty {item.quantity}
+                                    {item.route} | {item.duration_days} day(s) |
+                                    Qty {item.quantity}
                                 </p>
                             </div>
                         ))}
