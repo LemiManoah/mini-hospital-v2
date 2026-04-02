@@ -2,6 +2,14 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from '@/components/ui/combobox';
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -10,13 +18,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
     type DrugOption,
@@ -216,33 +217,77 @@ export function PrescriptionOrderModal({
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="grid gap-2">
                                         <Label>Drug</Label>
-                                        <Select
-                                            value={item.inventory_item_id}
-                                            onValueChange={(value) =>
+                                        <Combobox
+                                            items={drugOptions}
+                                            itemToStringValue={(drug) =>
+                                                [
+                                                    drug.generic_name,
+                                                    drug.brand_name,
+                                                    drug.strength,
+                                                    drug.dosage_form,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' ')
+                                            }
+                                            value={
+                                                drugOptions.find(
+                                                    (drug) =>
+                                                        drug.id ===
+                                                        item.inventory_item_id,
+                                                ) ?? null
+                                            }
+                                            onValueChange={(drug) =>
                                                 updatePrescriptionItem(
                                                     index,
                                                     'inventory_item_id',
-                                                    value,
+                                                    drug?.id ?? '',
                                                 )
                                             }
                                         >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select drug" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {drugOptions.map((drug) => (
-                                                    <SelectItem
-                                                        key={drug.id}
-                                                        value={drug.id}
-                                                    >
-                                                        {drug.generic_name}
-                                                        {drug.brand_name
-                                                            ? ` (${drug.brand_name})`
-                                                            : ''}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            <ComboboxInput
+                                                placeholder="Search drug"
+                                                showClear
+                                            />
+                                            <ComboboxContent>
+                                                <ComboboxEmpty>
+                                                    No drugs found.
+                                                </ComboboxEmpty>
+                                                <ComboboxList>
+                                                    {(drug) => (
+                                                        <ComboboxItem
+                                                            key={drug.id}
+                                                            value={drug}
+                                                        >
+                                                            <div className="flex flex-col gap-0.5">
+                                                                <span>
+                                                                    {
+                                                                        drug.generic_name
+                                                                    }
+                                                                    {drug.brand_name
+                                                                        ? ` (${drug.brand_name})`
+                                                                        : ''}
+                                                                </span>
+                                                                {drug.strength ||
+                                                                drug.dosage_form ? (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        {[
+                                                                            drug.strength,
+                                                                            drug.dosage_form,
+                                                                        ]
+                                                                            .filter(
+                                                                                Boolean,
+                                                                            )
+                                                                            .join(
+                                                                                ' | ',
+                                                                            )}
+                                                                    </span>
+                                                                ) : null}
+                                                            </div>
+                                                        </ComboboxItem>
+                                                    )}
+                                                </ComboboxList>
+                                            </ComboboxContent>
+                                        </Combobox>
                                         <InputError
                                             message={
                                                 (form.errors as any)[

@@ -1,14 +1,8 @@
 import InputError from '@/components/input-error';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -17,8 +11,6 @@ import { Form, Head, Link } from '@inertiajs/react';
 import { LoaderCircle, Save } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
-const NONE = '__none__';
 
 export default function InventoryItemEdit({
     inventoryItem,
@@ -109,7 +101,8 @@ export default function InventoryItemEdit({
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="grid gap-2">
                                         <Label>Item Type</Label>
-                                        <Select
+                                        <SearchableSelect
+                                            options={itemTypes}
                                             value={itemType}
                                             onValueChange={(value) => {
                                                 setItemType(value);
@@ -119,21 +112,9 @@ export default function InventoryItemEdit({
                                                     setDosageForm('');
                                                 }
                                             }}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select item type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {itemTypes.map((option) => (
-                                                    <SelectItem
-                                                        key={option.value}
-                                                        value={option.value}
-                                                    >
-                                                        {option.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select item type"
+                                            emptyMessage="No item types found."
+                                        />
                                         <InputError
                                             message={errors.item_type}
                                         />
@@ -141,31 +122,14 @@ export default function InventoryItemEdit({
 
                                     <div className="grid gap-2">
                                         <Label>Unit</Label>
-                                        <Select
-                                            value={unitId || NONE}
-                                            onValueChange={(value) =>
-                                                setUnitId(
-                                                    value === NONE ? '' : value,
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select a unit" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value={NONE}>
-                                                    No unit
-                                                </SelectItem>
-                                                {unitOptions.map((option) => (
-                                                    <SelectItem
-                                                        key={option.value}
-                                                        value={option.value}
-                                                    >
-                                                        {option.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <SearchableSelect
+                                            options={unitOptions}
+                                            value={unitId}
+                                            onValueChange={setUnitId}
+                                            placeholder="Select a unit"
+                                            emptyMessage="No units found."
+                                            allowClear
+                                        />
                                         <InputError message={errors.unit_id} />
                                     </div>
 
@@ -211,41 +175,14 @@ export default function InventoryItemEdit({
 
                                             <div className="grid gap-2">
                                                 <Label>Drug Category</Label>
-                                                <Select
-                                                    value={category || NONE}
-                                                    onValueChange={(value) =>
-                                                        setCategory(
-                                                            value === NONE
-                                                                ? ''
-                                                                : value,
-                                                        )
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a category" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value={NONE}>
-                                                            Select a category
-                                                        </SelectItem>
-                                                        {drugCategories.map(
-                                                            (option) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        option.value
-                                                                    }
-                                                                    value={
-                                                                        option.value
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        option.label
-                                                                    }
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
+                                                <SearchableSelect
+                                                    options={drugCategories}
+                                                    value={category}
+                                                    onValueChange={setCategory}
+                                                    placeholder="Select a category"
+                                                    emptyMessage="No categories found."
+                                                    allowClear
+                                                />
                                                 <InputError
                                                     message={errors.category}
                                                 />
@@ -253,41 +190,14 @@ export default function InventoryItemEdit({
 
                                             <div className="grid gap-2">
                                                 <Label>Dosage Form</Label>
-                                                <Select
-                                                    value={dosageForm || NONE}
-                                                    onValueChange={(value) =>
-                                                        setDosageForm(
-                                                            value === NONE
-                                                                ? ''
-                                                                : value,
-                                                        )
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a dosage form" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value={NONE}>
-                                                            Select a dosage form
-                                                        </SelectItem>
-                                                        {dosageForms.map(
-                                                            (option) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        option.value
-                                                                    }
-                                                                    value={
-                                                                        option.value
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        option.label
-                                                                    }
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
+                                                <SearchableSelect
+                                                    options={dosageForms}
+                                                    value={dosageForm}
+                                                    onValueChange={setDosageForm}
+                                                    placeholder="Select a dosage form"
+                                                    emptyMessage="No dosage forms found."
+                                                    allowClear
+                                                />
                                                 <InputError
                                                     message={
                                                         errors.dosage_form

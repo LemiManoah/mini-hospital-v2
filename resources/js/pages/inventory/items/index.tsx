@@ -1,4 +1,5 @@
 import DeleteConfirmationModal from '@/components/delete-confirmation-modal';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,13 +12,6 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -103,22 +97,16 @@ export default function InventoryItemsIndex({
                             />
                         </div>
                         <div className="w-full md:max-w-xs">
-                            <Select value={type} onValueChange={setType}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Filter by type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All types</SelectItem>
-                                    {itemTypes.map((option) => (
-                                        <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                options={[
+                                    { value: 'all', label: 'All types' },
+                                    ...itemTypes,
+                                ]}
+                                value={type}
+                                onValueChange={setType}
+                                placeholder="Filter by type"
+                                emptyMessage="No item types found."
+                            />
                         </div>
                     </div>
                     {hasPermission('inventory_items.create') ? (

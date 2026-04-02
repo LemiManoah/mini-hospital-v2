@@ -1,14 +1,8 @@
 import InputError from '@/components/input-error';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -89,21 +83,13 @@ export default function InventoryLocationCreate({
                                     </div>
                                     <div className="grid gap-2">
                                         <Label>Location Type</Label>
-                                        <Select value={type} onValueChange={setType}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select location type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {locationTypes.map((option) => (
-                                                    <SelectItem
-                                                        key={option.value}
-                                                        value={option.value}
-                                                    >
-                                                        {option.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <SearchableSelect
+                                            options={locationTypes}
+                                            value={type}
+                                            onValueChange={setType}
+                                            placeholder="Select location type"
+                                            emptyMessage="No location types found."
+                                        />
                                         <InputError message={errors.type} />
                                     </div>
                                     <div className="grid gap-2 md:col-span-2">
