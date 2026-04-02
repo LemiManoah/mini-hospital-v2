@@ -32,7 +32,7 @@ return new class extends Migration
             Schema::create('prescription_items', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('prescription_id')->constrained('prescriptions')->onDelete('cascade');
-                $table->foreignUuid('drug_id')->constrained('drugs')->onDelete('restrict');
+                $table->foreignUuid('inventory_item_id')->constrained('inventory_items')->onDelete('restrict');
                 $table->string('dosage', 50);
                 $table->string('frequency', 50);
                 $table->string('route', 50);

@@ -28,7 +28,7 @@ import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
 
 type PrescriptionDraftItem = {
-    drug_id: string;
+    inventory_item_id: string;
     dosage: string;
     frequency: string;
     route: string;
@@ -41,7 +41,7 @@ type PrescriptionDraftItem = {
 };
 
 const createPrescriptionItem = (): PrescriptionDraftItem => ({
-    drug_id: '',
+    inventory_item_id: '',
     dosage: '',
     frequency: '',
     route: '',
@@ -88,7 +88,7 @@ export function PrescriptionOrderModal({
                     prescription.is_discharge_medication ?? false,
                 is_long_term: prescription.is_long_term ?? false,
                 items: prescription.items.map((item) => ({
-                    drug_id: item.drug_id,
+                    inventory_item_id: item.inventory_item_id,
                     dosage: item.dosage ?? '',
                     frequency: item.frequency ?? '',
                     route: item.route ?? '',
@@ -217,11 +217,11 @@ export function PrescriptionOrderModal({
                                     <div className="grid gap-2">
                                         <Label>Drug</Label>
                                         <Select
-                                            value={item.drug_id}
+                                            value={item.inventory_item_id}
                                             onValueChange={(value) =>
                                                 updatePrescriptionItem(
                                                     index,
-                                                    'drug_id',
+                                                    'inventory_item_id',
                                                     value,
                                                 )
                                             }
@@ -246,7 +246,7 @@ export function PrescriptionOrderModal({
                                         <InputError
                                             message={
                                                 (form.errors as any)[
-                                                    `items.${index}.drug_id`
+                                                    `items.${index}.inventory_item_id`
                                                 ]
                                             }
                                         />

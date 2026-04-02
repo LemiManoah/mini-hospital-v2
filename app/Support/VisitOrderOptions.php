@@ -11,8 +11,8 @@ use App\Enums\ImagingModality;
 use App\Enums\ImagingPriority;
 use App\Enums\PregnancyStatus;
 use App\Enums\Priority;
-use App\Models\Drug;
 use App\Models\FacilityService;
+use App\Models\InventoryItem;
 use App\Models\InsurancePackagePrice;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
@@ -30,7 +30,8 @@ final readonly class VisitOrderOptions
             ->orderBy('test_name')
             ->get(['id', 'test_code', 'test_name', 'lab_test_category_id', 'base_price']);
 
-        $drugs = Drug::query()
+        $drugs = InventoryItem::query()
+            ->drugs()
             ->where('is_active', true)
             ->orderBy('generic_name')
             ->get(['id', 'generic_name', 'brand_name', 'strength', 'dosage_form']);
@@ -58,12 +59,12 @@ final readonly class VisitOrderOptions
                 ])
                 ->all(),
             'drugOptions' => $drugs
-                ->map(static fn (Drug $drug): array => [
+                ->map(static fn (InventoryItem $drug): array => [
                     'id' => $drug->id,
                     'generic_name' => $drug->generic_name,
                     'brand_name' => $drug->brand_name,
                     'strength' => $drug->strength,
-                    'dosage_form' => $drug->dosage_form->value,
+                    'dosage_form' => $drug->dosage_form?->value,
                     'quoted_price' => $drugPriceMap[$drug->id] ?? null,
                     'price_source' => isset($drugPriceMap[$drug->id]) ? 'insurance_package' : null,
                 ])

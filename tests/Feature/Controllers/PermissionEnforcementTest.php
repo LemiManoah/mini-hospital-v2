@@ -6,6 +6,7 @@ use App\Enums\AttendanceType;
 use App\Enums\ConsciousLevel;
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
+use App\Enums\InventoryItemType;
 use App\Enums\MobilityStatus;
 use App\Enums\Priority;
 use App\Enums\StaffType;
@@ -18,10 +19,10 @@ use App\Models\Consultation;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Department;
-use App\Models\Drug;
 use App\Models\FacilityBranch;
 use App\Models\FacilityService;
 use App\Models\FacilityServiceOrder;
+use App\Models\InventoryItem;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
 use App\Models\LabTestCategory;
@@ -290,18 +291,19 @@ function createPermissionLabTest(Tenant $tenant, Department $department): LabTes
     return $labTest->refresh();
 }
 
-function createPermissionDrug(Tenant $tenant, User $user): Drug
+function createPermissionDrug(Tenant $tenant, User $user): InventoryItem
 {
     $sequence = nextPermissionTestSequence();
 
-    return Drug::query()->create([
+    return InventoryItem::query()->create([
         'tenant_id' => $tenant->id,
+        'item_type' => InventoryItemType::DRUG,
+        'name' => 'Paracetamol '.$sequence,
         'generic_name' => 'Paracetamol '.$sequence,
-        'drug_code' => 'DRG-'.$sequence,
         'category' => 'other',
         'dosage_form' => 'tablet',
         'strength' => '500mg',
-        'unit' => 'tablet',
+        'expires' => true,
         'is_active' => true,
         'created_by' => $user->id,
         'updated_by' => $user->id,
@@ -735,7 +737,7 @@ describe('Consultation workflow permissions', function (): void {
         $payload = [
             'primary_diagnosis' => 'Headache',
             'items' => [[
-                'drug_id' => $drug->id,
+                'inventory_item_id' => $drug->id,
                 'dosage' => '500mg',
                 'frequency' => 'BD',
                 'route' => 'oral',

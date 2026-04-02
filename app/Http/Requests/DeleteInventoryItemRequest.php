@@ -6,7 +6,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-final class DeleteDrugRequest extends FormRequest
+final class DeleteInventoryItemRequest extends FormRequest
 {
     public function authorize(): bool
     {

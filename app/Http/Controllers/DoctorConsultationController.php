@@ -152,7 +152,7 @@ final readonly class DoctorConsultationController implements HasMiddleware
             'prescriptions' => static function (HasMany $query): void {
                 $query->with([
                     'prescribedBy:id,first_name,last_name',
-                    'items.drug:id,generic_name,brand_name,strength,dosage_form',
+                    'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form',
                 ])
                     ->latest('prescription_date');
             },

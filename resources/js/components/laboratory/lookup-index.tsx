@@ -113,6 +113,11 @@ export function LookupIndex({
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+                    Default records are system-provided and stay locked. Create
+                    a custom record if you want something you can edit or
+                    delete.
+                </div>
                 <Table className="min-w-[900px]">
                     <TableHeader>
                         <TableRow>
@@ -205,6 +210,22 @@ export function LookupIndex({
                                                             </Button>
                                                         }
                                                     />
+                                                ) : null}
+                                                {isDefault ? (
+                                                    <Badge variant="secondary">
+                                                        System default
+                                                    </Badge>
+                                                ) : null}
+                                                {!isDefault &&
+                                                !hasPermission(
+                                                    updatePermission,
+                                                ) &&
+                                                !hasPermission(
+                                                    deletePermission,
+                                                ) ? (
+                                                    <span className="text-sm text-zinc-500">
+                                                        No actions available
+                                                    </span>
                                                 ) : null}
                                             </div>
                                         </TableCell>

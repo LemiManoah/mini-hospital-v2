@@ -2,6 +2,7 @@
 
 import {
     Bot,
+    Boxes,
     CalendarDays,
     FlaskConical,
     HeartPulse,
@@ -50,6 +51,7 @@ type NavChild = {
     title: string;
     url: string;
     permission?: string;
+    permissions?: string[];
 };
 
 function filterItems(
@@ -57,9 +59,17 @@ function filterItems(
     hasPermission: (permission: string) => boolean,
 ): Array<{ title: string; url: string }> {
     return items
-        .filter((item) =>
-            item.permission ? hasPermission(item.permission) : true,
-        )
+        .filter((item) => {
+            if (item.permission) {
+                return hasPermission(item.permission);
+            }
+
+            if (item.permissions) {
+                return item.permissions.some(hasPermission);
+            }
+
+            return true;
+        })
         .map(({ title, url }) => ({ title, url }));
 }
 
@@ -228,6 +238,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         url: '/lab-test-catalogs',
                         permission: 'lab_test_catalogs.view',
                     },
+                    {
+                        title: 'Lab Management',
+                        url: '/laboratory/management',
+                        permissions: [
+                            'specimen_types.view',
+                            'result_types.view',
+                        ],
+                    },
+                ],
+                hasPermission,
+            ),
+        },
+        {
+            title: 'Inventory',
+            url: '/inventory/dashboard',
+            icon: Boxes,
+            items: filterItems(
+                [
+                    {
+                        title: 'Dashboard',
+                        url: '/inventory/dashboard',
+                        permission: 'inventory_items.view',
+                    },
+                    {
+                        title: 'Items',
+                        url: '/inventory-items',
+                        permission: 'inventory_items.view',
+                    },
+                    {
+                        title: 'Locations',
+                        url: '/inventory-locations',
+                        permission: 'inventory_locations.view',
+                    },
                 ],
                 hasPermission,
             ),
@@ -314,9 +357,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'units.view',
                     },
                     {
-                        title: 'Drugs',
-                        url: '/drugs',
-                        permission: 'drugs.view',
+                        title: 'Inventory Items',
+                        url: '/inventory-items',
+                        permission: 'inventory_items.view',
+                    },
+                    {
+                        title: 'Inventory Locations',
+                        url: '/inventory-locations',
+                        permission: 'inventory_locations.view',
                     },
                     {
                         title: 'Insurance Companies',

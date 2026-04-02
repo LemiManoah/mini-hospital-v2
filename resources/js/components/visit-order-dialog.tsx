@@ -37,7 +37,7 @@ import {
 } from './visit-ordering';
 
 type PrescriptionDraftItem = {
-    drug_id: string;
+    inventory_item_id: string;
     dosage: string;
     frequency: string;
     route: string;
@@ -50,7 +50,7 @@ type PrescriptionDraftItem = {
 };
 
 const createPrescriptionItem = (): PrescriptionDraftItem => ({
-    drug_id: '',
+    inventory_item_id: '',
     dosage: '',
     frequency: '',
     route: '',
@@ -197,7 +197,7 @@ export function VisitOrderDialog({
         );
 
     const selectedDrugOptions = prescriptionForm.data.items.map((item) =>
-        drugOptions.find((drug) => drug.id === item.drug_id),
+        drugOptions.find((drug) => drug.id === item.inventory_item_id),
     );
     const selectedFacilityService = facilityServiceOptions.find(
         (option) => option.id === serviceForm.data.facility_service_id,
@@ -517,13 +517,15 @@ export function VisitOrderDialog({
                                                 <div className="grid gap-2">
                                                     <Label>Drug</Label>
                                                     <Select
-                                                        value={item.drug_id}
+                                                        value={
+                                                            item.inventory_item_id
+                                                        }
                                                         onValueChange={(
                                                             value,
                                                         ) =>
                                                             updatePrescriptionItem(
                                                                 index,
-                                                                'drug_id',
+                                                                'inventory_item_id',
                                                                 value,
                                                             )
                                                         }
@@ -557,7 +559,7 @@ export function VisitOrderDialog({
                                                         message={
                                                             prescriptionForm
                                                                 .errors[
-                                                                `items.${index}.drug_id`
+                                                                `items.${index}.inventory_item_id`
                                                             ]
                                                         }
                                                     />

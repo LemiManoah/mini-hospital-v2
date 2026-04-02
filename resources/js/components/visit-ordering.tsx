@@ -288,9 +288,10 @@ export function PrescriptionOrdersList({
                                 className="rounded-md bg-muted/40 px-3 py-2"
                             >
                                 <p className="font-medium">
-                                    {item.drug?.generic_name ?? 'Drug'}
-                                    {item.drug?.brand_name
-                                        ? ` (${item.drug.brand_name})`
+                                    {item.inventory_item?.generic_name ??
+                                        'Drug'}
+                                    {item.inventory_item?.brand_name
+                                        ? ` (${item.inventory_item.brand_name})`
                                         : ''}
                                 </p>
                                 <p className="text-muted-foreground">

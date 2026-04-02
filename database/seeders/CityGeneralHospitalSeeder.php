@@ -12,6 +12,9 @@ final class CityGeneralHospitalSeeder extends Seeder
     {
         $this->call([
             CityGeneralHospitalReferenceSeeder::class,
+            InventoryItemSeeder::class,
+            InventoryLocationSeeder::class,
+            InventoryLocationItemSeeder::class,
             CityGeneralHospitalPatientSeeder::class,
             CityGeneralHospitalEncounterSeeder::class,
         ]);

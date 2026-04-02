@@ -157,7 +157,7 @@ final readonly class PatientVisitController implements HasMiddleware
             'prescriptions' => static fn ($query) => $query
                 ->with([
                     'prescribedBy:id,first_name,last_name',
-                    'items.drug:id,generic_name,brand_name,strength,dosage_form',
+                    'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form',
                 ])
                 ->latest('prescription_date'),
             'facilityServiceOrders' => static fn ($query) => $query

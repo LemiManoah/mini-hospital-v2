@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Models\Consultation;
-use App\Models\Drug;
+use App\Models\InventoryItem;
 use App\Models\PatientVisit;
 use App\Models\Prescription;
 use Illuminate\Support\Collection;
@@ -20,14 +20,15 @@ final readonly class CreatePrescription
         /** @var array<int, array<string, mixed>> $items */
         $items = $data['items'] ?? [];
 
-        /** @var Collection<int, Drug> $drugs */
-        $drugs = Drug::query()
-            ->whereIn('id', collect($items)->pluck('drug_id')->filter()->all())
+        /** @var Collection<int, InventoryItem> $inventoryItems */
+        $inventoryItems = InventoryItem::query()
+            ->drugs()
+            ->whereIn('id', collect($items)->pluck('inventory_item_id')->filter()->all())
             ->where('is_active', true)
             ->get()
             ->keyBy('id');
 
-        return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $items, $drugs): Prescription {
+        return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $items, $inventoryItems): Prescription {
             $prescription = Prescription::query()->create([
                 'visit_id' => $visit->id,
                 'consultation_id' => $consultation?->id,
@@ -41,13 +42,13 @@ final readonly class CreatePrescription
             ]);
 
             foreach ($items as $item) {
-                $drug = $drugs->get($item['drug_id']);
-                if ($drug === null) {
+                $inventoryItem = $inventoryItems->get($item['inventory_item_id']);
+                if ($inventoryItem === null) {
                     continue;
                 }
 
                 $prescription->items()->create([
-                    'drug_id' => $drug->id,
+                    'inventory_item_id' => $inventoryItem->id,
                     'dosage' => $this->stringValue($item['dosage'] ?? null),
                     'frequency' => $this->stringValue($item['frequency'] ?? null),
                     'route' => $this->stringValue($item['route'] ?? null),
@@ -63,7 +64,7 @@ final readonly class CreatePrescription
 
             return $prescription->loadMissing([
                 'prescribedBy:id,first_name,last_name',
-                'items.drug:id,generic_name,brand_name,strength,dosage_form',
+                'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form',
             ]);
         });
     }

@@ -73,7 +73,10 @@ export function PrescriptionOrdersTable({
                                                 key={item.id}
                                                 className="text-xs text-muted-foreground"
                                             >
-                                                {item.drug?.generic_name}
+                                                {
+                                                    item.inventory_item
+                                                        ?.generic_name
+                                                }
                                                 {idx <
                                                 prescription.items.length - 1
                                                     ? ', '

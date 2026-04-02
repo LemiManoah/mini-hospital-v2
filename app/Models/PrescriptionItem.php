@@ -19,7 +19,7 @@ final class PrescriptionItem extends Model
 
     protected $casts = [
         'prescription_id' => 'string',
-        'drug_id' => 'string',
+        'inventory_item_id' => 'string',
         'duration_days' => 'integer',
         'quantity' => 'integer',
         'is_prn' => 'boolean',
@@ -33,8 +33,8 @@ final class PrescriptionItem extends Model
         return $this->belongsTo(Prescription::class, 'prescription_id');
     }
 
-    public function drug(): BelongsTo
+    public function inventoryItem(): BelongsTo
     {
-        return $this->belongsTo(Drug::class, 'drug_id');
+        return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
     }
 }

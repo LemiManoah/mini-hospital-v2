@@ -11,6 +11,7 @@ use App\Enums\DrugCategory;
 use App\Enums\DrugDosageForm;
 use App\Enums\FacilityServiceOrderStatus;
 use App\Enums\ImagingModality;
+use App\Enums\InventoryItemType;
 use App\Enums\Priority;
 use App\Models\Consultation;
 use App\Models\VisitCharge;
@@ -256,16 +257,17 @@ it('creates a prescription with multiple drug items', function (): void {
     $context = seedConsultationContext();
     $drugId = (string) Str::uuid();
 
-    DB::table('drugs')->insert([
+    DB::table('inventory_items')->insert([
         'id' => $drugId,
         'tenant_id' => $context['tenant_id'],
+        'item_type' => InventoryItemType::DRUG->value,
+        'name' => 'Paracetamol',
         'generic_name' => 'Paracetamol',
         'brand_name' => 'Panadol',
-        'drug_code' => 'DRG-TEST-001',
         'category' => DrugCategory::ANALGESIC->value,
         'dosage_form' => DrugDosageForm::TABLET->value,
         'strength' => '500mg',
-        'unit' => 'tab',
+        'expires' => true,
         'is_controlled' => false,
         'is_active' => true,
         'created_at' => now(),
@@ -278,7 +280,7 @@ it('creates a prescription with multiple drug items', function (): void {
         'is_discharge_medication' => false,
         'is_long_term' => false,
         'items' => [[
-            'drug_id' => $drugId,
+            'inventory_item_id' => $drugId,
             'dosage' => '1 tablet',
             'frequency' => 'TDS',
             'route' => 'oral',

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Models\Drug;
+use App\Models\InventoryItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-final readonly class CreateDrug
+final readonly class CreateInventoryItem
 {
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public function handle(array $attributes): Drug
+    public function handle(array $attributes): InventoryItem
     {
-        return DB::transaction(fn (): Drug => Drug::query()->create([
+        return DB::transaction(fn (): InventoryItem => InventoryItem::query()->create([
             ...$attributes,
             'created_by' => Auth::id(),
         ]));

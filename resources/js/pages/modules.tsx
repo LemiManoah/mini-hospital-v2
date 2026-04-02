@@ -68,11 +68,12 @@ const modules: Module[] = [
         category: 'Operations',
     },
     {
-        name: 'Pharmacy',
-        description: 'Inventory management and medication dispensing.',
+        name: 'Inventory',
+        description:
+            'Stock catalog, store locations, and pharmacy inventory foundations.',
         icon: Pill,
-        permission: 'dashboard.view',
-        href: dashboard().url,
+        permission: 'inventory_items.view',
+        href: '/inventory/dashboard',
         category: 'Operations',
     },
     {

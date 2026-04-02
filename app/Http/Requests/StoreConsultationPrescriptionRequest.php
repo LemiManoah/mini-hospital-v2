@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\InventoryItemType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -23,10 +24,15 @@ final class StoreConsultationPrescriptionRequest extends FormRequest
             'is_discharge_medication' => ['nullable', 'boolean'],
             'is_long_term' => ['nullable', 'boolean'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.drug_id' => [
+            'items.*.inventory_item_id' => [
                 'required',
                 'string',
-                Rule::exists('drugs', 'id')->where('is_active', true),
+                Rule::exists('inventory_items', 'id')->where(static function ($query): void {
+                    $query
+                        ->where('is_active', true)
+                        ->where('item_type', InventoryItemType::DRUG->value)
+                        ->whereNull('deleted_at');
+                }),
             ],
             'items.*.dosage' => ['required', 'string', 'max:50'],
             'items.*.frequency' => ['required', 'string', 'max:50'],

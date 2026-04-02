@@ -26,6 +26,10 @@ trait InteractsWithCityGeneralHospital
     {
         return FacilityBranch::query()
             ->where('tenant_id', $tenant->id)
+            ->where('branch_code', 'CGH-MAIN')
+            ->first()
+            ?? FacilityBranch::query()
+                ->where('tenant_id', $tenant->id)
             ->orderByDesc('is_main_branch')
             ->orderBy('name')
             ->first();

@@ -174,6 +174,7 @@ export interface DrugOption {
 
 export interface PrescriptionItem {
     id: string;
+    inventory_item_id: string;
     dosage: string;
     frequency: string;
     route: string;
@@ -185,7 +186,7 @@ export interface PrescriptionItem {
     is_external_pharmacy: boolean;
     status: string;
     dispensed_at: string | null;
-    drug?: DrugOption | null;
+    inventory_item?: DrugOption | null;
 }
 
 export interface Prescription {
