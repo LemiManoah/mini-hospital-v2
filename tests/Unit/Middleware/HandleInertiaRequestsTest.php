@@ -42,9 +42,9 @@ it('shares authenticated user data', function (): void {
     $shared = $middleware->share($request);
 
     expect($shared['auth']['user'])->not->toBeNull()
-        ->and($shared['auth']['user']->id)->toBe($user->id)
-        ->and($shared['auth']['user']->name)->toBe('Test User')
-        ->and($shared['auth']['user']->email)->toBe('test@example.com');
+        ->and($shared['auth']['user']['id'])->toBe($user->id)
+        ->and($shared['auth']['user']['name'])->toBe('test')
+        ->and($shared['auth']['user']['email'])->toBe('test@example.com');
 });
 
 it('defaults sidebarOpen to true when no cookie', function (): void {

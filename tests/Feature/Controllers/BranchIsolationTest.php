@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\GeneralStatus;
+use App\Enums\FacilityLevel;
 use App\Enums\StaffType;
 use App\Enums\VisitStatus;
 use App\Models\Appointment;
@@ -54,7 +55,10 @@ function createTenantWithBranches(int $count = 2): array
         'has_branches' => true,
         'subscription_package_id' => $package->id,
         'status' => GeneralStatus::ACTIVE,
+        'facility_level' => FacilityLevel::HOSPITAL,
         'country_id' => $country->id,
+        'onboarding_completed_at' => now(),
+        'onboarding_current_step' => 'completed',
     ]);
 
     $branches = collect();
@@ -472,6 +476,7 @@ it('forbids editing a doctor schedule from a different active branch', function 
 
 it('forbids non-support users from opening the facility switcher', function (): void {
     $user = User::query()->create([
+        'tenant_id' => null,
         'email' => 'plain.user@hospital.com',
         'password' => Hash::make('password'),
         'is_support' => false,
@@ -487,6 +492,7 @@ it('forbids non-support users from switching facility context', function (): voi
     [$tenant] = createTenantWithBranches();
 
     $user = User::query()->create([
+        'tenant_id' => null,
         'email' => 'plain.switch.user@hospital.com',
         'password' => Hash::make('password'),
         'is_support' => false,
