@@ -325,6 +325,7 @@ The inventory module should feel like a real operational workspace, not a collec
 - `inventory/purchases/index`
 - `inventory/purchases/show`
 - `inventory/receipts/index`
+- `inventory/stock-by-location`
 - `inventory/requisitions/index`
 - `inventory/transfers/index`
 - `inventory/counts/index`
@@ -411,7 +412,7 @@ Branch isolation should follow the same active-branch approach already used else
 
 - [x] Milestone 0 completed: surrounding foundations already exist (`InventoryItem`, `Prescription`, branch scoping, billing base)
 - [ ] Milestone 1 in progress: inventory foundations and stock catalog
-- [ ] Milestone 2 pending: suppliers, purchase orders, and goods receipt
+- [ ] Milestone 2 in progress: suppliers, purchase orders, and goods receipt
 - [ ] Milestone 3 pending: stock ledger, balances, counts, and adjustments
 - [ ] Milestone 4 pending: requisitions and inter-store transfers
 - [ ] Milestone 5 pending: pharmacy dispensing workflow
@@ -466,7 +467,7 @@ Create the base inventory domain so the app can understand what items exist, whe
 
 ### Current Status
 
-The schema, base models, requests, actions, controllers, routes, and first Inertia CRUD pages for `InventoryItem` and `InventoryLocation` are now in place. The next slice is polish and operational depth: location-item assignment, richer filtering, safer deactivation rules, and then movement/procurement workflows.
+The schema, base models, requests, actions, controllers, routes, and first Inertia CRUD pages for `InventoryItem` and `InventoryLocation` are now in place. The next slice is polish and operational depth: location-item assignment, richer filtering, safer deactivation rules, and then deeper stock-ledger workflows.
 
 ### Definition Of Done
 
@@ -487,27 +488,31 @@ Build the inbound supply workflow so stock enters the system through controlled 
 - batch capture on receiving
 - receipt-created stock movements
 
+### Milestone Boundary Note
+
+The procurement documents and receiving workflow belong in Milestone 2, but the remaining unchecked item, inbound stock movements from posted receipts, depends on the stock-ledger foundation planned for Milestone 3. Until `InventoryBatch`, `StockMovement`, and stock balance queries exist, Milestone 2 should be treated as operationally in progress rather than fully complete.
+
 ### Milestone Checklist
 
-- [ ] Create `suppliers` table and CRUD
-- [ ] Create `purchase_orders` and `purchase_order_items`
-- [ ] Create `goods_receipts` and `goods_receipt_items`
-- [ ] Support PO statuses:
+- [x] Create `suppliers` table and CRUD
+- [x] Create `purchase_orders` and `purchase_order_items`
+- [x] Create `goods_receipts` and `goods_receipt_items`
+- [x] Support PO statuses:
   - draft
   - submitted
   - approved
   - partial
   - received
   - cancelled
-- [ ] Support receipt statuses:
+- [x] Support receipt statuses:
   - draft
   - posted
   - cancelled
-- [ ] Capture supplier invoice/reference details
-- [ ] Capture batch number, expiry, quantity, and unit cost at receipt time
+- [x] Capture supplier invoice/reference details
+- [x] Capture batch number, expiry, quantity, and unit cost at receipt time
 - [ ] Create inbound stock movements from posted receipts
-- [ ] Add receiving UI and PO detail page
-- [ ] Add tests for full and partial receiving
+- [x] Add receiving UI and PO detail page
+- [x] Add tests for full and partial receiving
 
 ### Definition Of Done
 
@@ -525,6 +530,7 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 - `InventoryBatch`
 - `StockMovement`
 - stock balance calculation
+- stock-by-location visibility page
 - stock adjustments
 - stock counts / cycle counts
 - expiry and damaged stock write-off support
@@ -536,6 +542,7 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 - [ ] Create `stock_adjustments` and related items
 - [ ] Create `stock_counts` and related items
 - [ ] Build stock summary queries by item, batch, and location
+- [x] Add stock-by-location page showing each item's quantity across locations
 - [ ] Add adjustment reasons and approval rules
 - [ ] Add cycle count workflow
 - [ ] Add expiry and damage write-off workflow
@@ -546,6 +553,10 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 
 - stock on hand can be explained by posted movements
 - users cannot change quantity silently outside approved workflows
+
+### Current Status
+
+The first stock-by-location page is now in place and gives branch users a working visibility surface for item quantities across locations. At the moment those balances are receipt-backed and configuration-backed, not yet full ledger balances, so the remaining milestone 3 work is still the movement engine, adjustments, counts, and auditable reconciliation.
 
 ## Milestone 4: Requisitions And Inter-Store Transfers
 

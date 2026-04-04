@@ -26,6 +26,7 @@ use App\Http\Controllers\FacilitySwitcherController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\InsurancePackageController;
 use App\Http\Controllers\InventoryDashboardController;
+use App\Http\Controllers\InventoryStockByLocationController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\InventoryLocationController;
 use App\Http\Controllers\LaboratoryDashboardController;
@@ -165,6 +166,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::resource('patients', PatientController::class);
     Route::resource('staff', StaffController::class)->except(['show']);
     Route::get('inventory/dashboard', [InventoryDashboardController::class, 'index'])->name('inventory.dashboard.index');
+    Route::get('inventory/stock-by-location', [InventoryStockByLocationController::class, 'index'])->name('inventory.stock-by-location.index');
     Route::resource('inventory-items', InventoryItemController::class)->except(['show']);
     Route::resource('inventory-locations', InventoryLocationController::class)->except(['show']);
     Route::resource('suppliers', SupplierController::class)->except(['show']);
