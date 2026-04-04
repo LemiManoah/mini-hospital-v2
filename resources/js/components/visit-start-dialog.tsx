@@ -1,3 +1,4 @@
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -9,16 +10,19 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Form } from '@inertiajs/react';
 import { Stethoscope } from 'lucide-react';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
+
+const billingTypeOptions = [
+    { value: 'cash', label: 'Cash' },
+    { value: 'insurance', label: 'Insurance' },
+];
+
+const formatDoctorLabel = (doctor: {
+    first_name: string;
+    last_name: string;
+}) => `${doctor.first_name} ${doctor.last_name}`;
 
 interface VisitStartDialogProps {
     patientId: string;
@@ -66,6 +70,38 @@ export default function VisitStartDialog({
     const filteredPackages = useMemo(
         () => packages.filter((pkg) => pkg.insurance_company_id === companyId),
         [packages, companyId],
+    );
+    const clinicOptions = useMemo(
+        () =>
+            clinics.map((clinic) => ({
+                value: clinic.id,
+                label: clinic.name,
+            })),
+        [clinics],
+    );
+    const doctorOptions = useMemo(
+        () =>
+            doctors.map((doctor) => ({
+                value: doctor.id,
+                label: formatDoctorLabel(doctor),
+            })),
+        [doctors],
+    );
+    const companyOptions = useMemo(
+        () =>
+            companies.map((company) => ({
+                value: company.id,
+                label: company.name,
+            })),
+        [companies],
+    );
+    const packageOptions = useMemo(
+        () =>
+            filteredPackages.map((pkg) => ({
+                value: pkg.id,
+                label: pkg.name,
+            })),
+        [filteredPackages],
     );
 
     useEffect(() => {
@@ -137,24 +173,14 @@ export default function VisitStartDialog({
                             <Label htmlFor={`visit_type_${patientId}`}>
                                 Visit Type
                             </Label>
-                            <Select
+                            <SearchableSelect
+                                inputId={`visit_type_${patientId}`}
+                                options={visitTypes}
                                 value={visitType}
                                 onValueChange={setVisitType}
-                            >
-                                <SelectTrigger id={`visit_type_${patientId}`}>
-                                    <SelectValue placeholder="Select visit type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {visitTypes.map((type) => (
-                                        <SelectItem
-                                            key={type.value}
-                                            value={type.value}
-                                        >
-                                            {type.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Select visit type"
+                                emptyMessage="No visit types available."
+                            />
                         </div>
 
                         <div className="grid gap-2 sm:grid-cols-2">
@@ -162,53 +188,30 @@ export default function VisitStartDialog({
                                 <Label htmlFor={`clinic_id_${patientId}`}>
                                     Clinic
                                 </Label>
-                                <Select
+                                <SearchableSelect
+                                    inputId={`clinic_id_${patientId}`}
+                                    options={clinicOptions}
                                     value={clinicId}
                                     onValueChange={setClinicId}
-                                >
-                                    <SelectTrigger
-                                        id={`clinic_id_${patientId}`}
-                                    >
-                                        <SelectValue placeholder="Select clinic" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {clinics.map((clinic) => (
-                                            <SelectItem
-                                                key={clinic.id}
-                                                value={clinic.id}
-                                            >
-                                                {clinic.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    placeholder="Select clinic"
+                                    emptyMessage="No clinics available."
+                                    allowClear
+                                />
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor={`doctor_id_${patientId}`}>
                                     Doctor
                                 </Label>
-                                <Select
+                                <SearchableSelect
+                                    inputId={`doctor_id_${patientId}`}
+                                    options={doctorOptions}
                                     value={doctorId}
                                     onValueChange={setDoctorId}
-                                >
-                                    <SelectTrigger
-                                        id={`doctor_id_${patientId}`}
-                                    >
-                                        <SelectValue placeholder="Select doctor" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {doctors.map((doctor) => (
-                                            <SelectItem
-                                                key={doctor.id}
-                                                value={doctor.id}
-                                            >
-                                                {doctor.first_name}{' '}
-                                                {doctor.last_name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    placeholder="Select doctor"
+                                    emptyMessage="No doctors available."
+                                    allowClear
+                                />
                             </div>
                         </div>
 
@@ -217,28 +220,17 @@ export default function VisitStartDialog({
                                 <Label htmlFor={`billing_type_${patientId}`}>
                                     Billing Type
                                 </Label>
-                                <Select
+                                <SearchableSelect
+                                    inputId={`billing_type_${patientId}`}
+                                    options={billingTypeOptions}
                                     value={billingType}
                                     onValueChange={(value) =>
                                         setBillingType(
                                             value as 'cash' | 'insurance',
                                         )
                                     }
-                                >
-                                    <SelectTrigger
-                                        id={`billing_type_${patientId}`}
-                                    >
-                                        <SelectValue placeholder="Select billing type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="cash">
-                                            Cash
-                                        </SelectItem>
-                                        <SelectItem value="insurance">
-                                            Insurance
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                    placeholder="Select billing type"
+                                />
                             </div>
 
                             <div className="flex items-center gap-2 pt-8">
@@ -266,26 +258,15 @@ export default function VisitStartDialog({
                                     >
                                         Insurer
                                     </Label>
-                                    <Select
+                                    <SearchableSelect
+                                        inputId={`insurance_company_id_${patientId}`}
+                                        options={companyOptions}
                                         value={companyId}
                                         onValueChange={setCompanyId}
-                                    >
-                                        <SelectTrigger
-                                            id={`insurance_company_id_${patientId}`}
-                                        >
-                                            <SelectValue placeholder="Select insurer" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {companies.map((company) => (
-                                                <SelectItem
-                                                    key={company.id}
-                                                    value={company.id}
-                                                >
-                                                    {company.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                        placeholder="Select insurer"
+                                        emptyMessage="No insurers available."
+                                        allowClear
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -294,26 +275,15 @@ export default function VisitStartDialog({
                                     >
                                         Package
                                     </Label>
-                                    <Select
+                                    <SearchableSelect
+                                        inputId={`insurance_package_id_${patientId}`}
+                                        options={packageOptions}
                                         value={packageId}
                                         onValueChange={setPackageId}
-                                    >
-                                        <SelectTrigger
-                                            id={`insurance_package_id_${patientId}`}
-                                        >
-                                            <SelectValue placeholder="Select package" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {filteredPackages.map((pkg) => (
-                                                <SelectItem
-                                                    key={pkg.id}
-                                                    value={pkg.id}
-                                                >
-                                                    {pkg.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                        placeholder="Select package"
+                                        emptyMessage="No packages available."
+                                        allowClear
+                                    />
                                 </div>
                             </div>
                         ) : null}

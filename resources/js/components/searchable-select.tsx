@@ -17,6 +17,7 @@ export function SearchableSelect({
     options,
     value,
     onValueChange,
+    inputId,
     placeholder,
     emptyMessage = 'No matches found.',
     allowClear = false,
@@ -27,6 +28,7 @@ export function SearchableSelect({
     options: SearchableOption[];
     value: string;
     onValueChange: (value: string) => void;
+    inputId?: string;
     placeholder: string;
     emptyMessage?: string;
     allowClear?: boolean;
@@ -45,6 +47,7 @@ export function SearchableSelect({
             onValueChange={(option) => onValueChange(option?.value ?? '')}
         >
             <ComboboxInput
+                id={inputId}
                 placeholder={placeholder}
                 aria-invalid={invalid || undefined}
                 showClear={allowClear}

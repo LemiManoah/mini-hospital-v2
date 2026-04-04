@@ -1,3 +1,4 @@
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -9,13 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { type ImagingRequest, type PatientVisit } from '@/types/patient';
 import { useForm } from '@inertiajs/react';
@@ -116,26 +110,15 @@ export function ImagingOrderModal({
                     <div className="grid gap-4 md:grid-cols-3">
                         <div className="grid gap-2">
                             <Label>Modality</Label>
-                            <Select
+                            <SearchableSelect
+                                inputId="imaging_modality"
+                                options={imagingModalities}
                                 value={form.data.modality}
                                 onValueChange={(value) =>
                                     form.setData('modality', value)
                                 }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {imagingModalities.map((modality) => (
-                                        <SelectItem
-                                            key={modality.value}
-                                            value={modality.value}
-                                        >
-                                            {modality.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Select modality"
+                            />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="imaging_body_part">Body Part</Label>
@@ -152,26 +135,15 @@ export function ImagingOrderModal({
                         </div>
                         <div className="grid gap-2">
                             <Label>Laterality</Label>
-                            <Select
+                            <SearchableSelect
+                                inputId="imaging_laterality"
+                                options={imagingLateralities}
                                 value={form.data.laterality}
                                 onValueChange={(value) =>
                                     form.setData('laterality', value)
                                 }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {imagingLateralities.map((laterality) => (
-                                        <SelectItem
-                                            key={laterality.value}
-                                            value={laterality.value}
-                                        >
-                                            {laterality.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Select laterality"
+                            />
                         </div>
                     </div>
 
@@ -213,49 +185,27 @@ export function ImagingOrderModal({
                     <div className="grid gap-4 md:grid-cols-3">
                         <div className="grid gap-2">
                             <Label>Priority</Label>
-                            <Select
+                            <SearchableSelect
+                                inputId="imaging_priority"
+                                options={imagingPriorities}
                                 value={form.data.priority}
                                 onValueChange={(value) =>
                                     form.setData('priority', value)
                                 }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {imagingPriorities.map((priority) => (
-                                        <SelectItem
-                                            key={priority.value}
-                                            value={priority.value}
-                                        >
-                                            {priority.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Select priority"
+                            />
                         </div>
                         <div className="grid gap-2">
                             <Label>Pregnancy Status</Label>
-                            <Select
+                            <SearchableSelect
+                                inputId="pregnancy_status"
+                                options={pregnancyStatuses}
                                 value={form.data.pregnancy_status}
                                 onValueChange={(value) =>
                                     form.setData('pregnancy_status', value)
                                 }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {pregnancyStatuses.map((status) => (
-                                        <SelectItem
-                                            key={status.value}
-                                            value={status.value}
-                                        >
-                                            {status.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Select pregnancy status"
+                            />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="contrast_allergy_status">

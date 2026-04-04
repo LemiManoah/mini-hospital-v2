@@ -1,4 +1,5 @@
 import InputError from '@/components/input-error';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -9,13 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from '@inertiajs/react';
 import { Loader2, Plus } from 'lucide-react';
@@ -31,6 +25,14 @@ interface Option {
     value: string;
     label: string;
 }
+
+const allergenTypeOptions = [
+    { value: 'medication', label: 'Medication' },
+    { value: 'food', label: 'Food' },
+    { value: 'environmental', label: 'Environmental' },
+    { value: 'latex', label: 'Latex' },
+    { value: 'contrast', label: 'Contrast Dye' },
+];
 
 export function AllergenModal({
     open,
@@ -48,6 +50,10 @@ export function AllergenModal({
     reactionOptions: Option[];
 }) {
     const [mode, setMode] = useState<'assign' | 'create'>('assign');
+    const allergenOptions = allergens.map((allergen) => ({
+        value: allergen.id,
+        label: `${allergen.name} (${allergen.type})`,
+    }));
 
     const assignForm = useForm({
         allergen_id: '',
@@ -114,23 +120,19 @@ export function AllergenModal({
                                     Not in list? Create new
                                 </Button>
                             </div>
-                            <Select
+                            <SearchableSelect
+                                inputId="allergen_id"
+                                options={allergenOptions}
                                 value={assignForm.data.allergen_id}
                                 onValueChange={(value) =>
                                     assignForm.setData('allergen_id', value)
                                 }
-                            >
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Select an allergen" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-[300px] bg-white">
-                                    {allergens.map((a) => (
-                                        <SelectItem key={a.id} value={a.id}>
-                                            {a.name} ({a.type})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Select an allergen"
+                                emptyMessage="No allergens available."
+                                invalid={Boolean(
+                                    assignForm.errors.allergen_id,
+                                )}
+                            />
                             <InputError
                                 message={assignForm.errors.allergen_id}
                             />
@@ -139,26 +141,16 @@ export function AllergenModal({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="severity">Severity</Label>
-                                <Select
+                                <SearchableSelect
+                                    inputId="severity"
+                                    options={severityOptions}
                                     value={assignForm.data.severity}
                                     onValueChange={(value) =>
                                         assignForm.setData('severity', value)
                                     }
-                                >
-                                    <SelectTrigger className="bg-white">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white">
-                                        {severityOptions.map((opt) => (
-                                            <SelectItem
-                                                key={opt.value}
-                                                value={opt.value}
-                                            >
-                                                {opt.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    placeholder="Select severity"
+                                    invalid={Boolean(assignForm.errors.severity)}
+                                />
                                 <InputError
                                     message={assignForm.errors.severity}
                                 />
@@ -167,26 +159,16 @@ export function AllergenModal({
                                 <Label htmlFor="reaction">
                                     Typical Reaction
                                 </Label>
-                                <Select
+                                <SearchableSelect
+                                    inputId="reaction"
+                                    options={reactionOptions}
                                     value={assignForm.data.reaction}
                                     onValueChange={(value) =>
                                         assignForm.setData('reaction', value)
                                     }
-                                >
-                                    <SelectTrigger className="bg-white">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white">
-                                        {reactionOptions.map((opt) => (
-                                            <SelectItem
-                                                key={opt.value}
-                                                value={opt.value}
-                                            >
-                                                {opt.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    placeholder="Select reaction"
+                                    invalid={Boolean(assignForm.errors.reaction)}
+                                />
                                 <InputError
                                     message={assignForm.errors.reaction}
                                 />
@@ -244,29 +226,16 @@ export function AllergenModal({
 
                         <div className="space-y-2">
                             <Label htmlFor="type">Type</Label>
-                            <Select
+                            <SearchableSelect
+                                inputId="type"
+                                options={allergenTypeOptions}
                                 value={createForm.data.type}
                                 onValueChange={(value) =>
                                     createForm.setData('type', value)
                                 }
-                            >
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-white">
-                                    <SelectItem value="medication">
-                                        Medication
-                                    </SelectItem>
-                                    <SelectItem value="food">Food</SelectItem>
-                                    <SelectItem value="environmental">
-                                        Environmental
-                                    </SelectItem>
-                                    <SelectItem value="latex">Latex</SelectItem>
-                                    <SelectItem value="contrast">
-                                        Contrast Dye
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
+                                placeholder="Select type"
+                                invalid={Boolean(createForm.errors.type)}
+                            />
                             <InputError message={createForm.errors.type} />
                         </div>
 

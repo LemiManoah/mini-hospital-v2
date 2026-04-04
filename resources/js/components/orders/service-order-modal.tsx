@@ -1,4 +1,5 @@
 import InputError from '@/components/input-error';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,13 +10,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     type FacilityServiceOption,
     type FacilityServiceOrder,
@@ -64,6 +58,12 @@ export function ServiceOrderModal({
 
     const selectedFacilityService = facilityServiceOptions.find(
         (option) => option.id === form.data.facility_service_id,
+    );
+    const facilityServiceSelectOptions = facilityServiceOptions.map(
+        (option) => ({
+            value: option.id,
+            label: `${option.name}${option.service_code ? ` (${option.service_code})` : ''}`,
+        }),
     );
     const pendingFacilityServiceIds = new Set(
         facilityServiceOrders
@@ -116,7 +116,9 @@ export function ServiceOrderModal({
                         <div className="grid gap-4 lg:grid-cols-2">
                             <div className="grid gap-2">
                                 <Label>Facility Service</Label>
-                                <Select
+                                <SearchableSelect
+                                    inputId="facility_service_id"
+                                    options={facilityServiceSelectOptions}
                                     value={form.data.facility_service_id}
                                     onValueChange={(value) =>
                                         form.setData(
@@ -124,26 +126,12 @@ export function ServiceOrderModal({
                                             value,
                                         )
                                     }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select service" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {facilityServiceOptions.map(
-                                            (option) => (
-                                                <SelectItem
-                                                    key={option.id}
-                                                    value={option.id}
-                                                >
-                                                    {option.name}
-                                                    {option.service_code
-                                                        ? ` (${option.service_code})`
-                                                        : ''}
-                                                </SelectItem>
-                                            ),
-                                        )}
-                                    </SelectContent>
-                                </Select>
+                                    placeholder="Select service"
+                                    emptyMessage="No services available."
+                                    invalid={Boolean(
+                                        form.errors.facility_service_id,
+                                    )}
+                                />
                                 <InputError
                                     message={form.errors.facility_service_id}
                                 />

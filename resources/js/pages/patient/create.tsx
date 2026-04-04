@@ -1,15 +1,9 @@
 import InputError from '@/components/input-error';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type PatientCreatePageProps } from '@/types/patient';
@@ -22,6 +16,30 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Patients', href: '/patients' },
     { title: 'Register Patient', href: '/patients/create' },
 ];
+
+const ageInputModeOptions = [
+    { value: 'dob', label: 'Date of Birth' },
+    { value: 'age', label: 'Current Age' },
+];
+
+const ageUnitOptions = [
+    { value: 'year', label: 'Years' },
+    { value: 'month', label: 'Months' },
+    { value: 'day', label: 'Days' },
+];
+
+const billingTypeOptions = [
+    { value: 'cash', label: 'Cash' },
+    { value: 'insurance', label: 'Insurance' },
+];
+
+const formatAddressLabel = (address: { city: string; district: string | null }) =>
+    `${address.city}${address.district ? `, ${address.district}` : ''}`;
+
+const formatDoctorLabel = (doctor: {
+    first_name: string;
+    last_name: string;
+}) => `${doctor.first_name} ${doctor.last_name}`;
 
 export default function PatientCreate({
     countries,
@@ -58,6 +76,54 @@ export default function PatientCreate({
     const filteredPackages = useMemo(
         () => packages.filter((pkg) => pkg.insurance_company_id === companyId),
         [packages, companyId],
+    );
+    const countryOptions = useMemo(
+        () =>
+            countries.map((country) => ({
+                value: country.id,
+                label: country.country_name,
+            })),
+        [countries],
+    );
+    const addressOptions = useMemo(
+        () =>
+            addresses.map((address) => ({
+                value: address.id,
+                label: formatAddressLabel(address),
+            })),
+        [addresses],
+    );
+    const clinicOptions = useMemo(
+        () =>
+            clinics.map((clinic) => ({
+                value: clinic.id,
+                label: clinic.clinic_name,
+            })),
+        [clinics],
+    );
+    const doctorOptions = useMemo(
+        () =>
+            doctors.map((doctor) => ({
+                value: doctor.id,
+                label: formatDoctorLabel(doctor),
+            })),
+        [doctors],
+    );
+    const companyOptions = useMemo(
+        () =>
+            companies.map((company) => ({
+                value: company.id,
+                label: company.name,
+            })),
+        [companies],
+    );
+    const packageOptions = useMemo(
+        () =>
+            filteredPackages.map((pkg) => ({
+                value: pkg.id,
+                label: pkg.name,
+            })),
+        [filteredPackages],
     );
 
     useEffect(() => {
@@ -229,50 +295,32 @@ export default function PatientCreate({
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="gender">Gender</Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="gender"
+                                            options={genderOptions}
                                             value={gender}
                                             onValueChange={setGender}
-                                        >
-                                            <SelectTrigger id="gender">
-                                                <SelectValue placeholder="Select gender" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {genderOptions.map((option) => (
-                                                    <SelectItem
-                                                        key={option.value}
-                                                        value={option.value}
-                                                    >
-                                                        {option.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select gender"
+                                            emptyMessage="No gender options available."
+                                            invalid={Boolean(errors.gender)}
+                                        />
                                         <InputError message={errors.gender} />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="age_input_mode">
                                             Birth Date Type
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="age_input_mode"
+                                            options={ageInputModeOptions}
                                             value={ageInputMode}
                                             onValueChange={(value) =>
                                                 setAgeInputMode(
                                                     value as 'dob' | 'age',
                                                 )
                                             }
-                                        >
-                                            <SelectTrigger id="age_input_mode">
-                                                <SelectValue placeholder="Select mode" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="dob">
-                                                    Date of Birth
-                                                </SelectItem>
-                                                <SelectItem value="age">
-                                                    Current Age
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select mode"
+                                        />
                                     </div>
                                     {ageInputMode === 'dob' ? (
                                         <div className="grid gap-2">
@@ -306,7 +354,9 @@ export default function PatientCreate({
                                                 <Label htmlFor="age_units">
                                                     Units
                                                 </Label>
-                                                <Select
+                                                <SearchableSelect
+                                                    inputId="age_units"
+                                                    options={ageUnitOptions}
                                                     value={ageUnits}
                                                     onValueChange={(value) =>
                                                         setAgeUnits(
@@ -316,22 +366,8 @@ export default function PatientCreate({
                                                                 | 'day',
                                                         )
                                                     }
-                                                >
-                                                    <SelectTrigger id="age_units">
-                                                        <SelectValue placeholder="Select units" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="year">
-                                                            Years
-                                                        </SelectItem>
-                                                        <SelectItem value="month">
-                                                            Months
-                                                        </SelectItem>
-                                                        <SelectItem value="day">
-                                                            Days
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
+                                                    placeholder="Select units"
+                                                />
                                             </div>
                                         </>
                                     )}
@@ -373,110 +409,43 @@ export default function PatientCreate({
                                         <Label htmlFor="country_id">
                                             Country
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="country_id"
+                                            options={countryOptions}
                                             value={countryId}
                                             onValueChange={setCountryId}
-                                        >
-                                            <SelectTrigger id="country_id">
-                                                <SelectValue placeholder="Select country" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {countries.length > 0 ? (
-                                                    countries.map((country) => (
-                                                        <SelectItem
-                                                            key={country.id}
-                                                            value={country.id}
-                                                        >
-                                                            {
-                                                                country.country_name
-                                                            }
-                                                        </SelectItem>
-                                                    ))
-                                                ) : (
-                                                    <SelectItem
-                                                        disabled
-                                                        value="none"
-                                                    >
-                                                        No countries available
-                                                    </SelectItem>
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select country"
+                                            emptyMessage="No countries available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="address_id">
                                             City / Address
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="address_id"
+                                            options={addressOptions}
                                             value={addressId}
                                             onValueChange={setAddressId}
-                                        >
-                                            <SelectTrigger id="address_id">
-                                                <SelectValue placeholder="Select address" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {addresses.length > 0 ? (
-                                                    addresses.map((address) => (
-                                                        <SelectItem
-                                                            key={address.id}
-                                                            value={address.id}
-                                                        >
-                                                            {address.city}
-                                                            {address.district
-                                                                ? `, ${address.district}`
-                                                                : ''}
-                                                        </SelectItem>
-                                                    ))
-                                                ) : (
-                                                    <SelectItem
-                                                        disabled
-                                                        value="none"
-                                                    >
-                                                        No addresses available
-                                                    </SelectItem>
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select address"
+                                            emptyMessage="No addresses available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="marital_status">
                                             Marital Status
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="marital_status"
+                                            options={maritalStatusOptions}
                                             value={maritalStatus}
                                             onValueChange={setMaritalStatus}
-                                        >
-                                            <SelectTrigger id="marital_status">
-                                                <SelectValue placeholder="Select marital status" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {maritalStatusOptions.length >
-                                                0 ? (
-                                                    maritalStatusOptions.map(
-                                                        (option) => (
-                                                            <SelectItem
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                            </SelectItem>
-                                                        ),
-                                                    )
-                                                ) : (
-                                                    <SelectItem
-                                                        disabled
-                                                        value="none"
-                                                    >
-                                                        No marital status
-                                                        options available
-                                                    </SelectItem>
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select marital status"
+                                            emptyMessage="No marital status options available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="occupation">
@@ -491,80 +460,29 @@ export default function PatientCreate({
                                         <Label htmlFor="religion">
                                             Religion
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="religion"
+                                            options={religionOptions}
                                             value={religion}
                                             onValueChange={setReligion}
-                                        >
-                                            <SelectTrigger id="religion">
-                                                <SelectValue placeholder="Select religion" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {religionOptions.length > 0 ? (
-                                                    religionOptions.map(
-                                                        (option) => (
-                                                            <SelectItem
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                            </SelectItem>
-                                                        ),
-                                                    )
-                                                ) : (
-                                                    <SelectItem
-                                                        disabled
-                                                        value="none"
-                                                    >
-                                                        No religion options
-                                                        available
-                                                    </SelectItem>
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select religion"
+                                            emptyMessage="No religion options available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="blood_group">
                                             Blood Group
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="blood_group"
+                                            options={bloodGroupOptions}
                                             value={bloodGroup}
                                             onValueChange={setBloodGroup}
-                                        >
-                                            <SelectTrigger id="blood_group">
-                                                <SelectValue placeholder="Select blood group" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {bloodGroupOptions.length >
-                                                0 ? (
-                                                    bloodGroupOptions.map(
-                                                        (option) => (
-                                                            <SelectItem
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                            </SelectItem>
-                                                        ),
-                                                    )
-                                                ) : (
-                                                    <SelectItem
-                                                        disabled
-                                                        value="none"
-                                                    >
-                                                        No blood group options
-                                                        available
-                                                    </SelectItem>
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select blood group"
+                                            emptyMessage="No blood group options available."
+                                            allowClear
+                                        />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -596,41 +514,15 @@ export default function PatientCreate({
                                         <Label htmlFor="next_of_kin_relationship">
                                             Relationship
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="next_of_kin_relationship"
+                                            options={kinRelationshipOptions}
                                             value={kinRelationship}
                                             onValueChange={setKinRelationship}
-                                        >
-                                            <SelectTrigger id="next_of_kin_relationship">
-                                                <SelectValue placeholder="Select relationship" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {kinRelationshipOptions.length >
-                                                0 ? (
-                                                    kinRelationshipOptions.map(
-                                                        (option) => (
-                                                            <SelectItem
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                            </SelectItem>
-                                                        ),
-                                                    )
-                                                ) : (
-                                                    <SelectItem
-                                                        disabled
-                                                        value="none"
-                                                    >
-                                                        No relationship options
-                                                        available
-                                                    </SelectItem>
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select relationship"
+                                            emptyMessage="No relationship options available."
+                                            allowClear
+                                        />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -644,33 +536,15 @@ export default function PatientCreate({
                                         <Label htmlFor="visit_type">
                                             Visit Type
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="visit_type"
+                                            options={visitTypes}
                                             value={visitType}
                                             onValueChange={setVisitType}
-                                        >
-                                            <SelectTrigger id="visit_type">
-                                                <SelectValue placeholder="Select visit type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {visitTypes.length > 0 ? (
-                                                    visitTypes.map((type) => (
-                                                        <SelectItem
-                                                            key={type.value}
-                                                            value={type.value}
-                                                        >
-                                                            {type.label}
-                                                        </SelectItem>
-                                                    ))
-                                                ) : (
-                                                    <SelectItem
-                                                        disabled
-                                                        value="none"
-                                                    >
-                                                        No visit types available
-                                                    </SelectItem>
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select visit type"
+                                            emptyMessage="No visit types available."
+                                            invalid={Boolean(errors.visit_type)}
+                                        />
                                         <InputError
                                             message={errors.visit_type}
                                         />
@@ -679,72 +553,37 @@ export default function PatientCreate({
                                         <Label htmlFor="clinic_id">
                                             Clinic
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="clinic_id"
+                                            options={clinicOptions}
                                             value={clinicId}
                                             onValueChange={setClinicId}
-                                        >
-                                            <SelectTrigger id="clinic_id">
-                                                <SelectValue placeholder="Select clinic" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {clinics.length > 0 ? (
-                                                    clinics.map((clinic) => (
-                                                        <SelectItem
-                                                            key={clinic.id}
-                                                            value={clinic.id}
-                                                        >
-                                                            {clinic.clinic_name}
-                                                        </SelectItem>
-                                                    ))
-                                                ) : (
-                                                    <SelectItem
-                                                        disabled
-                                                        value="none"
-                                                    >
-                                                        No clinics available
-                                                    </SelectItem>
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select clinic"
+                                            emptyMessage="No clinics available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="doctor_id">
                                             Doctor
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="doctor_id"
+                                            options={doctorOptions}
                                             value={doctorId}
                                             onValueChange={setDoctorId}
-                                        >
-                                            <SelectTrigger id="doctor_id">
-                                                <SelectValue placeholder="Select doctor" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {doctors.length > 0 ? (
-                                                    doctors.map((doctor) => (
-                                                        <SelectItem
-                                                            key={doctor.id}
-                                                            value={doctor.id}
-                                                        >
-                                                            {doctor.first_name}{' '}
-                                                            {doctor.last_name}
-                                                        </SelectItem>
-                                                    ))
-                                                ) : (
-                                                    <SelectItem
-                                                        disabled
-                                                        value="none"
-                                                    >
-                                                        No doctors available
-                                                    </SelectItem>
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select doctor"
+                                            emptyMessage="No doctors available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="billing_type">
                                             Billing Type
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="billing_type"
+                                            options={billingTypeOptions}
                                             value={billingType}
                                             onValueChange={(value) =>
                                                 setBillingType(
@@ -753,19 +592,9 @@ export default function PatientCreate({
                                                         | 'insurance',
                                                 )
                                             }
-                                        >
-                                            <SelectTrigger id="billing_type">
-                                                <SelectValue placeholder="Select billing type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="cash">
-                                                    Cash
-                                                </SelectItem>
-                                                <SelectItem value="insurance">
-                                                    Insurance
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select billing type"
+                                            invalid={Boolean(errors.billing_type)}
+                                        />
                                         <InputError
                                             message={errors.billing_type}
                                         />
@@ -776,43 +605,18 @@ export default function PatientCreate({
                                                 <Label htmlFor="insurance_company_id">
                                                     Insurer
                                                 </Label>
-                                                <Select
+                                                <SearchableSelect
+                                                    inputId="insurance_company_id"
+                                                    options={companyOptions}
                                                     value={companyId}
                                                     onValueChange={setCompanyId}
-                                                >
-                                                    <SelectTrigger id="insurance_company_id">
-                                                        <SelectValue placeholder="Select insurer" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {companies.length >
-                                                        0 ? (
-                                                            companies.map(
-                                                                (company) => (
-                                                                    <SelectItem
-                                                                        key={
-                                                                            company.id
-                                                                        }
-                                                                        value={
-                                                                            company.id
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            company.name
-                                                                        }
-                                                                    </SelectItem>
-                                                                ),
-                                                            )
-                                                        ) : (
-                                                            <SelectItem
-                                                                disabled
-                                                                value="none"
-                                                            >
-                                                                No insurers
-                                                                available
-                                                            </SelectItem>
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
+                                                    placeholder="Select insurer"
+                                                    emptyMessage="No insurers available."
+                                                    allowClear
+                                                    invalid={Boolean(
+                                                        errors.insurance_company_id,
+                                                    )}
+                                                />
                                                 <InputError
                                                     message={
                                                         errors.insurance_company_id
@@ -823,43 +627,18 @@ export default function PatientCreate({
                                                 <Label htmlFor="insurance_package_id">
                                                     Package
                                                 </Label>
-                                                <Select
+                                                <SearchableSelect
+                                                    inputId="insurance_package_id"
+                                                    options={packageOptions}
                                                     value={packageId}
                                                     onValueChange={setPackageId}
-                                                >
-                                                    <SelectTrigger id="insurance_package_id">
-                                                        <SelectValue placeholder="Select package" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {filteredPackages.length >
-                                                        0 ? (
-                                                            filteredPackages.map(
-                                                                (pkg) => (
-                                                                    <SelectItem
-                                                                        key={
-                                                                            pkg.id
-                                                                        }
-                                                                        value={
-                                                                            pkg.id
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            pkg.name
-                                                                        }
-                                                                    </SelectItem>
-                                                                ),
-                                                            )
-                                                        ) : (
-                                                            <SelectItem
-                                                                disabled
-                                                                value="none"
-                                                            >
-                                                                No packages
-                                                                available
-                                                            </SelectItem>
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
+                                                    placeholder="Select package"
+                                                    emptyMessage="No packages available."
+                                                    allowClear
+                                                    invalid={Boolean(
+                                                        errors.insurance_package_id,
+                                                    )}
+                                                />
                                                 <InputError
                                                     message={
                                                         errors.insurance_package_id

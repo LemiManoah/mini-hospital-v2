@@ -1,15 +1,9 @@
 import InputError from '@/components/input-error';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type PatientEditPageProps } from '@/types/patient';
@@ -17,6 +11,20 @@ import { Form, Head, Link } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+
+const ageInputModeOptions = [
+    { value: 'dob', label: 'Date of Birth' },
+    { value: 'age', label: 'Current Age' },
+];
+
+const ageUnitOptions = [
+    { value: 'year', label: 'Years' },
+    { value: 'month', label: 'Months' },
+    { value: 'day', label: 'Days' },
+];
+
+const formatAddressLabel = (address: { city: string; district: string | null }) =>
+    `${address.city}${address.district ? `, ${address.district}` : ''}`;
 
 export default function PatientEdit({
     patient,
@@ -40,7 +48,7 @@ export default function PatientEdit({
     const [ageInputMode, setAgeInputMode] = useState<'dob' | 'age'>(
         patient.date_of_birth ? 'dob' : 'age',
     );
-    const [gender, setGender] = useState(
+    const [gender, setGender] = useState<string>(
         patient.gender || genderOptions[0]?.value || '',
     );
     const [ageUnits, setAgeUnits] = useState<'year' | 'month' | 'day'>(
@@ -56,6 +64,14 @@ export default function PatientEdit({
     );
     const [countryId, setCountryId] = useState(patient.country_id || '');
     const [addressId, setAddressId] = useState(patient.address_id || '');
+    const countryOptions = countries.map((country) => ({
+        value: country.id,
+        label: country.country_name,
+    }));
+    const addressOptions = addresses.map((address) => ({
+        value: address.id,
+        label: formatAddressLabel(address),
+    }));
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -174,49 +190,29 @@ export default function PatientEdit({
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="gender">Gender</Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="gender"
+                                            options={genderOptions}
                                             value={gender}
                                             onValueChange={setGender}
-                                        >
-                                            <SelectTrigger id="gender">
-                                                <SelectValue placeholder="Select gender" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {genderOptions.map((option) => (
-                                                    <SelectItem
-                                                        key={option.value}
-                                                        value={option.value}
-                                                    >
-                                                        {option.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select gender"
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="age_input_mode">
                                             Birth Date Type
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="age_input_mode"
+                                            options={ageInputModeOptions}
                                             value={ageInputMode}
                                             onValueChange={(value) =>
                                                 setAgeInputMode(
                                                     value as 'dob' | 'age',
                                                 )
                                             }
-                                        >
-                                            <SelectTrigger id="age_input_mode">
-                                                <SelectValue placeholder="Select mode" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="dob">
-                                                    Date of Birth
-                                                </SelectItem>
-                                                <SelectItem value="age">
-                                                    Current Age
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select mode"
+                                        />
                                     </div>
                                     {ageInputMode === 'dob' ? (
                                         <div className="grid gap-2">
@@ -262,7 +258,9 @@ export default function PatientEdit({
                                                 <Label htmlFor="age_units">
                                                     Units
                                                 </Label>
-                                                <Select
+                                                <SearchableSelect
+                                                    inputId="age_units"
+                                                    options={ageUnitOptions}
                                                     value={ageUnits}
                                                     onValueChange={(value) =>
                                                         setAgeUnits(
@@ -272,22 +270,8 @@ export default function PatientEdit({
                                                                 | 'day',
                                                         )
                                                     }
-                                                >
-                                                    <SelectTrigger id="age_units">
-                                                        <SelectValue placeholder="Select units" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="year">
-                                                            Years
-                                                        </SelectItem>
-                                                        <SelectItem value="month">
-                                                            Months
-                                                        </SelectItem>
-                                                        <SelectItem value="day">
-                                                            Days
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
+                                                    placeholder="Select units"
+                                                />
                                             </div>
                                         </>
                                     )}
@@ -331,75 +315,43 @@ export default function PatientEdit({
                                         <Label htmlFor="country_id">
                                             Country
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="country_id"
+                                            options={countryOptions}
                                             value={countryId}
                                             onValueChange={setCountryId}
-                                        >
-                                            <SelectTrigger id="country_id">
-                                                <SelectValue placeholder="Select country" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {countries.map((country) => (
-                                                    <SelectItem
-                                                        key={country.id}
-                                                        value={country.id}
-                                                    >
-                                                        {country.country_name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select country"
+                                            emptyMessage="No countries available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="address_id">
                                             City / Address
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="address_id"
+                                            options={addressOptions}
                                             value={addressId}
                                             onValueChange={setAddressId}
-                                        >
-                                            <SelectTrigger id="address_id">
-                                                <SelectValue placeholder="Select address" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {addresses.map((address) => (
-                                                    <SelectItem
-                                                        key={address.id}
-                                                        value={address.id}
-                                                    >
-                                                        {address.city}
-                                                        {address.district
-                                                            ? `, ${address.district}`
-                                                            : ''}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select address"
+                                            emptyMessage="No addresses available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="marital_status">
                                             Marital Status
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="marital_status"
+                                            options={maritalStatusOptions}
                                             value={maritalStatus}
                                             onValueChange={setMaritalStatus}
-                                        >
-                                            <SelectTrigger id="marital_status">
-                                                <SelectValue placeholder="Select marital status" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {maritalStatusOptions.map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value}
-                                                        >
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select marital status"
+                                            emptyMessage="No marital status options available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="occupation">
@@ -417,51 +369,29 @@ export default function PatientEdit({
                                         <Label htmlFor="religion">
                                             Religion
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="religion"
+                                            options={religionOptions}
                                             value={religion}
                                             onValueChange={setReligion}
-                                        >
-                                            <SelectTrigger id="religion">
-                                                <SelectValue placeholder="Select religion" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {religionOptions.map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value}
-                                                        >
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select religion"
+                                            emptyMessage="No religion options available."
+                                            allowClear
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="blood_group">
                                             Blood Group
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="blood_group"
+                                            options={bloodGroupOptions}
                                             value={bloodGroup}
                                             onValueChange={setBloodGroup}
-                                        >
-                                            <SelectTrigger id="blood_group">
-                                                <SelectValue placeholder="Select blood group" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {bloodGroupOptions.map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value}
-                                                        >
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select blood group"
+                                            emptyMessage="No blood group options available."
+                                            allowClear
+                                        />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -499,26 +429,15 @@ export default function PatientEdit({
                                         <Label htmlFor="next_of_kin_relationship">
                                             Relationship
                                         </Label>
-                                        <Select
+                                        <SearchableSelect
+                                            inputId="next_of_kin_relationship"
+                                            options={kinRelationshipOptions}
                                             value={kinRelationship}
                                             onValueChange={setKinRelationship}
-                                        >
-                                            <SelectTrigger id="next_of_kin_relationship">
-                                                <SelectValue placeholder="Select relationship" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {kinRelationshipOptions.map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value}
-                                                        >
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Select relationship"
+                                            emptyMessage="No relationship options available."
+                                            allowClear
+                                        />
                                     </div>
                                 </CardContent>
                             </Card>
