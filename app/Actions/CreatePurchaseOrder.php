@@ -9,6 +9,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 final readonly class CreatePurchaseOrder
 {
@@ -19,8 +20,13 @@ final readonly class CreatePurchaseOrder
     public function handle(array $attributes, array $items): PurchaseOrder
     {
         return DB::transaction(function () use ($attributes, $items): PurchaseOrder {
+            $tenantId = is_string($attributes['tenant_id'] ?? null)
+                ? $attributes['tenant_id']
+                : Auth::user()?->tenantId();
+
             $purchaseOrder = PurchaseOrder::query()->create([
                 ...$attributes,
+                'order_number' => $this->generateOrderNumber($tenantId),
                 'status' => PurchaseOrderStatus::Draft,
                 'created_by' => Auth::id(),
             ]);
@@ -38,5 +44,17 @@ final readonly class CreatePurchaseOrder
 
             return $purchaseOrder->refresh()->load('items.inventoryItem');
         });
+    }
+
+    private function generateOrderNumber(?string $tenantId): string
+    {
+        do {
+            $orderNumber = 'PO-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
+        } while (
+            $tenantId !== null
+            && PurchaseOrder::query()->where('tenant_id', $tenantId)->where('order_number', $orderNumber)->exists()
+        );
+
+        return $orderNumber;
     }
 }

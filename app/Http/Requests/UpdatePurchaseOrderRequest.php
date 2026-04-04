@@ -22,7 +22,6 @@ final class UpdatePurchaseOrderRequest extends FormRequest
                 Rule::exists('suppliers', 'id')
                     ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
             ],
-            'order_number' => ['required', 'string', 'max:50'],
             'order_date' => ['required', 'date'],
             'expected_delivery_date' => ['nullable', 'date', 'after_or_equal:order_date'],
             'notes' => ['nullable', 'string'],

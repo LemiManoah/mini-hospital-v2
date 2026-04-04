@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/date';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type GoodsReceiptIndexPageProps } from '@/types/goods-receipt';
@@ -144,7 +145,7 @@ export default function GoodsReceiptsIndex({
                                         <TableCell>
                                             {gr.inventory_location?.name ?? '-'}
                                         </TableCell>
-                                        <TableCell>{gr.receipt_date}</TableCell>
+                                        <TableCell>{formatDate(gr.receipt_date)}</TableCell>
                                         <TableCell>
                                             <Badge
                                                 variant={

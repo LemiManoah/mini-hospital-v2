@@ -38,7 +38,6 @@ export default function PurchaseOrderEdit({
 
     const form = useForm({
         supplier_id: po.supplier_id,
-        order_number: po.order_number,
         order_date: po.order_date,
         expected_delivery_date: po.expected_delivery_date ?? '',
         notes: po.notes ?? '',
@@ -110,6 +109,9 @@ export default function PurchaseOrderEdit({
                         <p className="text-sm text-muted-foreground">
                             Update draft purchase order {po.order_number}.
                         </p>
+                        <p className="text-sm text-muted-foreground">
+                            Purchase order numbers are generated automatically and cannot be changed.
+                        </p>
                     </div>
                     <Button variant="outline" asChild>
                         <Link href={`/purchase-orders/${po.id}`}>Back</Link>
@@ -131,16 +133,6 @@ export default function PurchaseOrderEdit({
                                     emptyMessage="No suppliers found."
                                 />
                                 <InputError message={form.errors.supplier_id} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="order_number">Order Number</Label>
-                                <Input
-                                    id="order_number"
-                                    value={form.data.order_number}
-                                    onChange={(e) => form.setData('order_number', e.target.value)}
-                                    required
-                                />
-                                <InputError message={form.errors.order_number} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="order_date">Order Date</Label>

@@ -139,7 +139,6 @@ it('creates a purchase order with items', function (): void {
         ->actingAs($user)
         ->post(route('purchase-orders.store'), [
             'supplier_id' => $supplier->id,
-            'order_number' => 'PO-TEST-001',
             'order_date' => now()->toDateString(),
             'items' => [
                 [
@@ -150,9 +149,10 @@ it('creates a purchase order with items', function (): void {
             ],
         ]);
 
-    $po = PurchaseOrder::query()->where('order_number', 'PO-TEST-001')->first();
+    $po = PurchaseOrder::query()->latest('created_at')->first();
     expect($po)->not->toBeNull()
         ->and($po->status)->toBe(PurchaseOrderStatus::Draft)
+        ->and((bool) preg_match('/^PO-\d{14}-[A-Z0-9]{4}$/', (string) $po->order_number))->toBeTrue()
         ->and((float) $po->total_amount)->toBe(5000.00)
         ->and($po->items)->toHaveCount(1);
 

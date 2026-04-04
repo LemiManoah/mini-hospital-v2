@@ -9,6 +9,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/date';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type GoodsReceiptShowPageProps } from '@/types/goods-receipt';
@@ -90,7 +91,7 @@ export default function GoodsReceiptShow({
                                 Receipt Date
                             </span>
                             <p className="mt-1 font-medium">
-                                {gr.receipt_date}
+                                {formatDate(gr.receipt_date)}
                             </p>
                         </div>
                         <div>
@@ -171,7 +172,7 @@ export default function GoodsReceiptShow({
                                             {item.batch_number ?? '-'}
                                         </TableCell>
                                         <TableCell>
-                                            {item.expiry_date ?? '-'}
+                                            {formatDate(item.expiry_date)}
                                         </TableCell>
                                     </TableRow>
                                 ))}

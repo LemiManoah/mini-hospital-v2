@@ -172,7 +172,6 @@ it('creates a goods receipt', function (): void {
         ->post(route('goods-receipts.store'), [
             'purchase_order_id' => $po->id,
             'inventory_location_id' => $location->id,
-            'receipt_number' => 'GR-CREATE-001',
             'receipt_date' => now()->toDateString(),
             'items' => [
                 [
@@ -186,12 +185,166 @@ it('creates a goods receipt', function (): void {
             ],
         ]);
 
-    $gr = GoodsReceipt::query()->where('receipt_number', 'GR-CREATE-001')->first();
+    $gr = GoodsReceipt::query()->latest('created_at')->first();
     expect($gr)->not->toBeNull()
         ->and($gr->status)->toBe(GoodsReceiptStatus::Draft)
+        ->and((bool) preg_match('/^GR-\d{14}-[A-Z0-9]{4}$/', (string) $gr->receipt_number))->toBeTrue()
         ->and($gr->items)->toHaveCount(1);
 
     $response->assertRedirect(route('goods-receipts.show', $gr));
+});
+
+it('rejects receipt items from a different purchase order', function (): void {
+    [$tenant, $branch, $user, $supplier, $item, $location, $po] = createGRTestContext();
+    $user->givePermissionTo('goods_receipts.create');
+
+    $otherPurchaseOrder = PurchaseOrder::query()->create([
+        'tenant_id' => $tenant->id,
+        'branch_id' => $branch->id,
+        'supplier_id' => $supplier->id,
+        'order_number' => 'GR-PO-OTHER-001',
+        'status' => PurchaseOrderStatus::Approved,
+        'order_date' => now(),
+        'total_amount' => 2500,
+    ]);
+
+    $otherPurchaseOrderItem = PurchaseOrderItem::query()->create([
+        'purchase_order_id' => $otherPurchaseOrder->id,
+        'inventory_item_id' => $item->id,
+        'quantity_ordered' => 50,
+        'unit_cost' => 50,
+        'total_cost' => 2500,
+    ]);
+
+    $response = $this->from(route('goods-receipts.create'))
+        ->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('goods-receipts.store'), [
+            'purchase_order_id' => $po->id,
+            'inventory_location_id' => $location->id,
+            'receipt_date' => now()->toDateString(),
+            'items' => [
+                [
+                    'purchase_order_item_id' => $otherPurchaseOrderItem->id,
+                    'inventory_item_id' => $item->id,
+                    'quantity_received' => 10,
+                    'unit_cost' => 50,
+                ],
+            ],
+        ]);
+
+    $response->assertRedirect(route('goods-receipts.create'))
+        ->assertSessionHasErrors(['items.0.purchase_order_item_id']);
+
+    expect(GoodsReceipt::query()->count())->toBe(0);
+});
+
+it('rejects receipt items whose inventory item does not match the purchase order item', function (): void {
+    [$tenant, $branch, $user, , , $location, $po, $poItem] = createGRTestContext();
+    $user->givePermissionTo('goods_receipts.create');
+
+    $otherInventoryItem = InventoryItem::query()->create([
+        'tenant_id' => $tenant->id,
+        'name' => 'GR Other Test Drug',
+        'item_type' => InventoryItemType::DRUG,
+        'is_active' => true,
+    ]);
+
+    $response = $this->from(route('goods-receipts.create'))
+        ->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('goods-receipts.store'), [
+            'purchase_order_id' => $po->id,
+            'inventory_location_id' => $location->id,
+            'receipt_date' => now()->toDateString(),
+            'items' => [
+                [
+                    'purchase_order_item_id' => $poItem->id,
+                    'inventory_item_id' => $otherInventoryItem->id,
+                    'quantity_received' => 10,
+                    'unit_cost' => 50,
+                ],
+            ],
+        ]);
+
+    $response->assertRedirect(route('goods-receipts.create'))
+        ->assertSessionHasErrors(['items.0.inventory_item_id']);
+
+    expect(GoodsReceipt::query()->count())->toBe(0);
+});
+
+it('prevents creating another goods receipt while a draft receipt already exists for the purchase order', function (): void {
+    [$tenant, $branch, $user, , $item, $location, $po, $poItem] = createGRTestContext();
+    $user->givePermissionTo('goods_receipts.create');
+
+    $draftReceipt = GoodsReceipt::query()->create([
+        'tenant_id' => $tenant->id,
+        'branch_id' => $branch->id,
+        'purchase_order_id' => $po->id,
+        'inventory_location_id' => $location->id,
+        'receipt_number' => 'GR-DRAFT-LOCK-001',
+        'status' => GoodsReceiptStatus::Draft,
+        'receipt_date' => now(),
+    ]);
+
+    GoodsReceiptItem::query()->create([
+        'goods_receipt_id' => $draftReceipt->id,
+        'purchase_order_item_id' => $poItem->id,
+        'inventory_item_id' => $item->id,
+        'quantity_received' => 10,
+        'unit_cost' => 50,
+    ]);
+
+    $response = $this->from(route('goods-receipts.create'))
+        ->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('goods-receipts.store'), [
+            'purchase_order_id' => $po->id,
+            'inventory_location_id' => $location->id,
+            'receipt_date' => now()->toDateString(),
+            'items' => [
+                [
+                    'purchase_order_item_id' => $poItem->id,
+                    'inventory_item_id' => $item->id,
+                    'quantity_received' => 5,
+                    'unit_cost' => 50,
+                ],
+            ],
+        ]);
+
+    $response->assertRedirect(route('goods-receipts.create'))
+        ->assertSessionHasErrors(['purchase_order_id']);
+
+    expect(GoodsReceipt::query()->count())->toBe(1);
+});
+
+it('prevents receiving more than the remaining purchase order quantity', function (): void {
+    [$tenant, $branch, $user, , $item, $location, $po, $poItem] = createGRTestContext();
+    $user->givePermissionTo('goods_receipts.create');
+
+    $poItem->update(['quantity_received' => 95]);
+
+    $response = $this->from(route('goods-receipts.create'))
+        ->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('goods-receipts.store'), [
+            'purchase_order_id' => $po->id,
+            'inventory_location_id' => $location->id,
+            'receipt_date' => now()->toDateString(),
+            'items' => [
+                [
+                    'purchase_order_item_id' => $poItem->id,
+                    'inventory_item_id' => $item->id,
+                    'quantity_received' => 10,
+                    'unit_cost' => 50,
+                ],
+            ],
+        ]);
+
+    $response->assertRedirect(route('goods-receipts.create'))
+        ->assertSessionHasErrors(['items.0.quantity_received']);
+
+    expect(GoodsReceipt::query()->count())->toBe(0);
 });
 
 it('posts a goods receipt and updates PO item quantities', function (): void {
@@ -317,7 +470,6 @@ it('prevents creating goods receipt against a draft PO', function (): void {
         ->post(route('goods-receipts.store'), [
             'purchase_order_id' => $draftPO->id,
             'inventory_location_id' => $location->id,
-            'receipt_number' => 'GR-NODRAFT-001',
             'receipt_date' => now()->toDateString(),
             'items' => [
                 [

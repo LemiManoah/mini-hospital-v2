@@ -1,5 +1,6 @@
 import InputError from '@/components/input-error';
 import { SearchableSelect } from '@/components/searchable-select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,8 +18,8 @@ import { type BreadcrumbItem } from '@/types';
 import { type GoodsReceiptFormPageProps } from '@/types/goods-receipt';
 import type { PurchaseOrder } from '@/types/purchase-order';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { LoaderCircle, PlusCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { AlertTriangle, LoaderCircle, PlusCircle } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -50,7 +51,7 @@ export default function GoodsReceiptCreate({
 
     const poOptions = purchaseOrders.map((po) => ({
         value: po.id,
-        label: `${po.order_number} — ${po.supplier?.name ?? 'Unknown'}`,
+        label: `${po.order_number} - ${po.supplier?.name ?? 'Unknown'}`,
     }));
 
     const locationOptions = inventoryLocations.map((loc) => ({
@@ -62,6 +63,7 @@ export default function GoodsReceiptCreate({
         if (!po?.items) {
             return [];
         }
+
         return po.items
             .filter(
                 (item) =>
@@ -89,7 +91,6 @@ export default function GoodsReceiptCreate({
     const form = useForm({
         purchase_order_id: selectedPO?.id ?? '',
         inventory_location_id: '',
-        receipt_number: '',
         receipt_date: new Date().toISOString().split('T')[0],
         supplier_invoice_number: '',
         supplier_delivery_note: '',
@@ -97,8 +98,13 @@ export default function GoodsReceiptCreate({
         items: buildLines(selectedPO),
     });
 
+    const activeDraftReceipt =
+        selectedPO?.goods_receipts?.find((receipt) => receipt.status === 'draft') ??
+        null;
+
     const handlePOChange = (poId: string) => {
-        const po = purchaseOrders.find((p) => p.id === poId) ?? null;
+        const po = purchaseOrders.find((purchaseOrder) => purchaseOrder.id === poId) ?? null;
+
         setSelectedPO(po);
         form.setData({
             ...form.data,
@@ -138,6 +144,9 @@ export default function GoodsReceiptCreate({
                         <p className="text-sm text-muted-foreground">
                             Record items received against a purchase order.
                         </p>
+                        <p className="text-sm text-muted-foreground">
+                            The receipt number will be generated automatically when you save.
+                        </p>
                     </div>
                     <Button variant="outline" asChild>
                         <Link href="/goods-receipts">Back</Link>
@@ -165,10 +174,10 @@ export default function GoodsReceiptCreate({
                                 <SearchableSelect
                                     options={locationOptions}
                                     value={form.data.inventory_location_id}
-                                    onValueChange={(v) =>
+                                    onValueChange={(value) =>
                                         form.setData(
                                             'inventory_location_id',
-                                            v,
+                                            value,
                                         )
                                     }
                                     placeholder="Select location"
@@ -176,25 +185,6 @@ export default function GoodsReceiptCreate({
                                 />
                                 <InputError
                                     message={form.errors.inventory_location_id}
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="receipt_number">
-                                    Receipt Number
-                                </Label>
-                                <Input
-                                    id="receipt_number"
-                                    value={form.data.receipt_number}
-                                    onChange={(e) =>
-                                        form.setData(
-                                            'receipt_number',
-                                            e.target.value,
-                                        )
-                                    }
-                                    required
-                                />
-                                <InputError
-                                    message={form.errors.receipt_number}
                                 />
                             </div>
                             <div className="grid gap-2">
@@ -272,6 +262,25 @@ export default function GoodsReceiptCreate({
                         </div>
                     </div>
 
+                    {activeDraftReceipt ? (
+                        <Alert className="border-amber-200 bg-amber-50 text-amber-950">
+                            <AlertTriangle />
+                            <AlertTitle>Draft receipt already exists</AlertTitle>
+                            <AlertDescription>
+                                <p>
+                                    This purchase order already has draft receipt{' '}
+                                    <strong>{activeDraftReceipt.receipt_number}</strong>.
+                                    Post that receipt before creating another one.
+                                </p>
+                                <Button variant="outline" size="sm" asChild className="mt-2">
+                                    <Link href={`/goods-receipts/${activeDraftReceipt.id}`}>
+                                        Open Draft Receipt
+                                    </Link>
+                                </Button>
+                            </AlertDescription>
+                        </Alert>
+                    ) : null}
+
                     {form.data.items.length > 0 ? (
                         <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                             <h2 className="mb-4 text-lg font-medium">
@@ -329,6 +338,13 @@ export default function GoodsReceiptCreate({
                                                                 'quantity_received',
                                                                 e.target.value,
                                                             )
+                                                        }
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            form.errors[
+                                                                `items.${index}.quantity_received` as keyof typeof form.errors
+                                                            ]
                                                         }
                                                     />
                                                 </TableCell>
@@ -390,7 +406,8 @@ export default function GoodsReceiptCreate({
                             type="submit"
                             disabled={
                                 form.processing ||
-                                form.data.items.length === 0
+                                form.data.items.length === 0 ||
+                                activeDraftReceipt !== null
                             }
                         >
                             {form.processing ? (

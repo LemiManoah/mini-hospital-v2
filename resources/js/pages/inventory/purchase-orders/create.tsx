@@ -37,7 +37,6 @@ export default function PurchaseOrderCreate({
 }: PurchaseOrderFormPageProps) {
     const form = useForm({
         supplier_id: '',
-        order_number: '',
         order_date: new Date().toISOString().split('T')[0],
         expected_delivery_date: '',
         notes: '',
@@ -105,6 +104,9 @@ export default function PurchaseOrderCreate({
                         <p className="text-sm text-muted-foreground">
                             Raise a new purchase order for a supplier.
                         </p>
+                        <p className="text-sm text-muted-foreground">
+                            The purchase order number will be generated automatically when you save.
+                        </p>
                     </div>
                     <Button variant="outline" asChild>
                         <Link href="/purchase-orders">Back</Link>
@@ -127,25 +129,6 @@ export default function PurchaseOrderCreate({
                                 />
                                 <InputError
                                     message={form.errors.supplier_id}
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="order_number">
-                                    Order Number
-                                </Label>
-                                <Input
-                                    id="order_number"
-                                    value={form.data.order_number}
-                                    onChange={(e) =>
-                                        form.setData(
-                                            'order_number',
-                                            e.target.value,
-                                        )
-                                    }
-                                    required
-                                />
-                                <InputError
-                                    message={form.errors.order_number}
                                 />
                             </div>
                             <div className="grid gap-2">

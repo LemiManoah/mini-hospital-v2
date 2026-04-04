@@ -9,6 +9,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/date';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type PurchaseOrderShowPageProps } from '@/types/purchase-order';
@@ -36,6 +37,8 @@ export default function PurchaseOrderShow({
     purchaseOrder: po,
 }: PurchaseOrderShowPageProps) {
     const { hasPermission } = usePermissions();
+    const draftGoodsReceipt =
+        po.goods_receipts?.find((receipt) => receipt.status === 'draft') ?? null;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Inventory', href: '/inventory/dashboard' },
@@ -86,14 +89,14 @@ export default function PurchaseOrderShow({
                             <span className="text-sm text-muted-foreground">
                                 Order Date
                             </span>
-                            <p className="mt-1 font-medium">{po.order_date}</p>
+                            <p className="mt-1 font-medium">{formatDate(po.order_date)}</p>
                         </div>
                         <div>
                             <span className="text-sm text-muted-foreground">
                                 Expected Delivery
                             </span>
                             <p className="mt-1 font-medium">
-                                {po.expected_delivery_date ?? '-'}
+                                {formatDate(po.expected_delivery_date)}
                             </p>
                         </div>
                         <div>
@@ -183,13 +186,21 @@ export default function PurchaseOrderShow({
                             ) : null}
                             {po.status === 'approved' ||
                             po.status === 'partial' ? (
-                                <Button size="sm" asChild>
-                                    <Link
-                                        href={`/goods-receipts/create?purchase_order_id=${po.id}`}
-                                    >
-                                        Receive Goods
-                                    </Link>
-                                </Button>
+                                draftGoodsReceipt ? (
+                                    <Button size="sm" variant="outline" asChild>
+                                        <Link href={`/goods-receipts/${draftGoodsReceipt.id}`}>
+                                            Open Draft Receipt
+                                        </Link>
+                                    </Button>
+                                ) : (
+                                    <Button size="sm" asChild>
+                                        <Link
+                                            href={`/goods-receipts/create?purchase_order_id=${po.id}`}
+                                        >
+                                            Receive Goods
+                                        </Link>
+                                    </Button>
+                                )
                             ) : null}
                         </div>
                     ) : null}
@@ -288,7 +299,7 @@ export default function PurchaseOrderShow({
                                                 {gr.receipt_number}
                                             </TableCell>
                                             <TableCell>
-                                                {gr.receipt_date}
+                                                {formatDate(gr.receipt_date)}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge

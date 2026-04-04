@@ -20,6 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/date';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type PurchaseOrderIndexPageProps } from '@/types/purchase-order';
@@ -150,9 +151,9 @@ export default function PurchaseOrdersIndex({
                                         <TableCell>
                                             {po.supplier?.name ?? '-'}
                                         </TableCell>
-                                        <TableCell>{po.order_date}</TableCell>
+                                        <TableCell>{formatDate(po.order_date)}</TableCell>
                                         <TableCell>
-                                            {po.expected_delivery_date ?? '-'}
+                                            {formatDate(po.expected_delivery_date)}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             {Number(po.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
