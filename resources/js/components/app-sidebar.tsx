@@ -271,6 +271,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         url: '/inventory-locations',
                         permission: 'inventory_locations.view',
                     },
+                    {
+                        title: 'Suppliers',
+                        url: '/suppliers',
+                        permission: 'suppliers.view',
+                    },
+                    {
+                        title: 'Purchase Orders',
+                        url: '/purchase-orders',
+                        permission: 'purchase_orders.view',
+                    },
+                    {
+                        title: 'Goods Receipts',
+                        url: '/goods-receipts',
+                        permission: 'goods_receipts.view',
+                    },
                 ],
                 hasPermission,
             ),
