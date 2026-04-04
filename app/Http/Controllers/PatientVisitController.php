@@ -28,6 +28,7 @@ use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
 use App\Support\VisitOrderOptions;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -122,21 +123,21 @@ final readonly class PatientVisitController implements HasMiddleware
             'payer.insuranceCompany:id,name',
             'payer.insurancePackage:id,name',
             'billing:id,patient_visit_id,visit_payer_id,payer_type,gross_amount,discount_amount,paid_amount,balance_amount,status,billed_at,settled_at',
-            'billing.payments' => static fn (Builder $query): Builder => $query
+            'billing.payments' => static fn (HasMany $query): HasMany => $query
                 ->select('id', 'visit_billing_id', 'patient_visit_id', 'receipt_number', 'payment_date', 'amount', 'payment_method', 'reference_number', 'is_refund', 'notes')
                 ->latest('payment_date'),
-            'charges' => static fn (Builder $query): Builder => $query
+            'charges' => static fn (HasMany $query): HasMany => $query
                 ->select('id', 'visit_billing_id', 'patient_visit_id', 'source_type', 'source_id', 'charge_code', 'description', 'quantity', 'unit_price', 'line_total', 'status', 'charged_at')
                 ->latest('charged_at'),
             'triage:id,visit_id,nurse_id,triage_datetime,triage_grade,attendance_type,news_score,pews_score,conscious_level,mobility_status,chief_complaint,history_of_presenting_illness,assigned_clinic_id,requires_priority,is_pediatric,poisoning_case,poisoning_agent,snake_bite_case,referred_by,nurse_notes',
             'triage.nurse:id,first_name,last_name',
             'triage.assignedClinic:id,clinic_name',
-            'triage.vitalSigns' => static fn (Builder $query): Builder => $query
+            'triage.vitalSigns' => static fn (HasMany $query): HasMany => $query
                 ->with(['recordedBy:id,first_name,last_name'])
                 ->latest('recorded_at'),
             'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code',
             'consultation.doctor:id,first_name,last_name',
-            'labRequests' => static fn (Builder $query): Builder => $query
+            'labRequests' => static fn (HasMany $query): HasMany => $query
                 ->with([
                     'requestedBy:id,first_name,last_name',
                     'items.test:id,test_name,test_code,lab_test_category_id,result_type_id',
@@ -148,19 +149,19 @@ final readonly class PatientVisitController implements HasMiddleware
                     'items.resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,reference_range,sort_order',
                 ])
                 ->latest('request_date'),
-            'imagingRequests' => static fn (Builder $query): Builder => $query
+            'imagingRequests' => static fn (HasMany $query): HasMany => $query
                 ->with([
                     'requestedBy:id,first_name,last_name',
                     'scheduledBy:id,first_name,last_name',
                 ])
                 ->latest(),
-            'prescriptions' => static fn (Builder $query): Builder => $query
+            'prescriptions' => static fn (HasMany $query): HasMany => $query
                 ->with([
                     'prescribedBy:id,first_name,last_name',
                     'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form',
                 ])
                 ->latest('prescription_date'),
-            'facilityServiceOrders' => static fn (Builder $query): Builder => $query
+            'facilityServiceOrders' => static fn (HasMany $query): HasMany => $query
                 ->with([
                     'service:id,name,service_code,category,selling_price,is_billable',
                     'orderedBy:id,first_name,last_name',
