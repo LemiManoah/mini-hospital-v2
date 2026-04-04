@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Enums\LabRequestItemStatus;
 use App\Enums\LabRequestStatus;
 use App\Models\LabRequest;
+use App\Models\LabRequestItem;
 
 final readonly class SyncLabRequestProgress
 {
@@ -19,7 +20,7 @@ final readonly class SyncLabRequestProgress
             return $labRequest;
         }
 
-        if ($items->every(static fn ($item): bool => $item->status === LabRequestItemStatus::CANCELLED)) {
+        if ($items->every(static fn (LabRequestItem $item): bool => $item->status === LabRequestItemStatus::CANCELLED)) {
             $labRequest->forceFill([
                 'status' => LabRequestStatus::CANCELLED,
                 'completed_at' => null,
@@ -28,7 +29,7 @@ final readonly class SyncLabRequestProgress
             return $labRequest->refresh();
         }
 
-        if ($items->every(static fn ($item): bool => $item->status === LabRequestItemStatus::COMPLETED)) {
+        if ($items->every(static fn (LabRequestItem $item): bool => $item->status === LabRequestItemStatus::COMPLETED)) {
             $labRequest->forceFill([
                 'status' => LabRequestStatus::COMPLETED,
                 'completed_at' => $items->max('completed_at') ?? now(),
@@ -37,7 +38,7 @@ final readonly class SyncLabRequestProgress
             return $labRequest->refresh();
         }
 
-        if ($items->contains(static fn ($item): bool => $item->status === LabRequestItemStatus::IN_PROGRESS
+        if ($items->contains(static fn (LabRequestItem $item): bool => $item->status === LabRequestItemStatus::IN_PROGRESS
             || $item->status === LabRequestItemStatus::COMPLETED
             || $item->result_entered_at !== null
             || $item->reviewed_at !== null
@@ -50,7 +51,7 @@ final readonly class SyncLabRequestProgress
             return $labRequest->refresh();
         }
 
-        if ($items->contains(static fn ($item): bool => $item->received_at !== null)) {
+        if ($items->contains(static fn (LabRequestItem $item): bool => $item->received_at !== null)) {
             $labRequest->forceFill([
                 'status' => LabRequestStatus::SAMPLE_COLLECTED,
                 'completed_at' => null,

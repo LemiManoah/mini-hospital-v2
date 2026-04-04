@@ -118,7 +118,7 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
                 'requestedBy:id,first_name,last_name',
                 'visit:id,visit_number,patient_id',
                 'visit.patient:id,patient_number,first_name,last_name',
-                'items' => static fn ($query) => $query
+                'items' => static fn (Builder $query): Builder => $query
                     ->with([
                         'test:id,test_code,test_name,lab_test_category_id,result_type_id',
                         'test.labCategory:id,name',

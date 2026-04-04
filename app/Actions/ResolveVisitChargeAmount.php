@@ -9,6 +9,7 @@ use App\Enums\GeneralStatus;
 use App\Enums\PayerType;
 use App\Models\InsurancePackagePrice;
 use App\Models\PatientVisit;
+use Illuminate\Database\Eloquent\Builder;
 
 final class ResolveVisitChargeAmount
 {
@@ -33,13 +34,13 @@ final class ResolveVisitChargeAmount
                 ->where('billable_type', $billableType->value)
                 ->where('billable_id', $billableId)
                 ->where('status', GeneralStatus::ACTIVE->value)
-                ->where(function ($query): void {
+                ->where(function (Builder $query): void {
                     $today = now()->toDateString();
 
                     $query->whereNull('effective_from')
                         ->orWhere('effective_from', '<=', $today);
                 })
-                ->where(function ($query): void {
+                ->where(function (Builder $query): void {
                     $today = now()->toDateString();
 
                     $query->whereNull('effective_to')

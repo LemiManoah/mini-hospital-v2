@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\BillableItemType;
 use App\Models\FacilityServiceOrder;
+use Illuminate\Database\Eloquent\Builder;
 
 final readonly class SyncFacilityServiceOrderCharge
 {
@@ -18,7 +19,7 @@ final readonly class SyncFacilityServiceOrderCharge
     {
         $order->loadMissing(['visit.payer']);
         $order->load([
-            'service' => static fn ($query) => $query->select([
+            'service' => static fn (Builder $query): Builder => $query->select([
                 'id',
                 'name',
                 'service_code',

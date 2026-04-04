@@ -147,7 +147,7 @@ final readonly class DoctorScheduleController implements HasMiddleware
             ->doctors()
             ->when(
                 BranchContext::getActiveBranchId() !== null,
-                fn ($query) => $query->forActiveBranch()
+                fn (Builder $query): Builder => $query->forActiveBranch()
             )
             ->where('is_active', true)
             ->orderBy('first_name')

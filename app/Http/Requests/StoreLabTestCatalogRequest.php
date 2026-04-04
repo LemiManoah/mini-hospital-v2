@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\LabResultType;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -26,7 +27,7 @@ final class StoreLabTestCatalogRequest extends FormRequest
                 'string',
                 'max:20',
                 Rule::unique('lab_test_catalogs', 'test_code')->where(
-                    static fn ($query) => $query->where('tenant_id', $tenantId)
+                    static fn (QueryBuilder $query): QueryBuilder => $query->where('tenant_id', $tenantId)
                 ),
             ],
             'test_name' => ['required', 'string', 'max:200'],
@@ -34,7 +35,7 @@ final class StoreLabTestCatalogRequest extends FormRequest
                 'required',
                 'uuid',
                 Rule::exists('lab_test_categories', 'id')->where(
-                    static fn ($query) => $query->where('tenant_id', $tenantId)
+                    static fn (QueryBuilder $query): QueryBuilder => $query->where('tenant_id', $tenantId)
                         ->orWhereNull('tenant_id')
                 ),
             ],
@@ -47,7 +48,7 @@ final class StoreLabTestCatalogRequest extends FormRequest
                 'required',
                 'uuid',
                 Rule::exists('specimen_types', 'id')->where(
-                    static fn ($query) => $query->where('tenant_id', $tenantId)
+                    static fn (QueryBuilder $query): QueryBuilder => $query->where('tenant_id', $tenantId)
                         ->orWhereNull('tenant_id')
                 ),
             ],
@@ -55,7 +56,7 @@ final class StoreLabTestCatalogRequest extends FormRequest
                 'required',
                 'uuid',
                 Rule::exists('result_types', 'id')->where(
-                    static fn ($query) => $query->where('tenant_id', $tenantId)
+                    static fn (QueryBuilder $query): QueryBuilder => $query->where('tenant_id', $tenantId)
                         ->orWhereNull('tenant_id')
                 ),
             ],

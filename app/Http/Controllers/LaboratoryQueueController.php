@@ -75,7 +75,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
                 'requestedBy:id,first_name,last_name',
                 'visit:id,visit_number,patient_id',
                 'visit.patient:id,patient_number,first_name,last_name,gender,phone_number',
-                'items' => function ($query) use ($stage): void {
+                'items' => function (HasMany $query) use ($stage): void {
                     $this->applyStageFilter($query, $stage)
                         ->with([
                             'test:id,test_code,test_name,description,lab_test_category_id,result_type_id,base_price',

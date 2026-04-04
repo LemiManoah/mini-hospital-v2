@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\GeneralStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -27,7 +28,7 @@ final class StoreFacilityBranchRequest extends FormRequest
                 'string',
                 'max:20',
                 Rule::unique('facility_branches', 'branch_code')
-                    ->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->where('tenant_id', $tenantId)),
             ],
             'currency_id' => ['required', 'uuid', 'exists:currencies,id'],
             'status' => ['required', new Enum(GeneralStatus::class)],

@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\InventoryLocationType;
 use App\Models\InventoryLocation;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,7 +29,7 @@ final class UpdateInventoryLocationRequest extends FormRequest
                 'string',
                 'max:50',
                 Rule::unique('inventory_locations', 'location_code')
-                    ->where(fn ($query) => $query
+                    ->where(fn (QueryBuilder $query): QueryBuilder => $query
                         ->where('branch_id', $inventoryLocation?->branch_id)
                         ->whereNull('deleted_at'))
                     ->ignore($inventoryLocation),

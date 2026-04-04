@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,7 @@ final class StoreSpecimenTypeRequest extends FormRequest
                 'string',
                 'max:100',
                 Rule::unique('specimen_types', 'name')
-                    ->where(static fn ($query) => $query
+                    ->where(static fn (QueryBuilder $query): QueryBuilder => $query
                         ->where('tenant_id', $tenantId)
                         ->orWhereNull('tenant_id')),
             ],

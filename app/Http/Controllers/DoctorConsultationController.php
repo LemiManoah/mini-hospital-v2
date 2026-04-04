@@ -177,11 +177,11 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 ->values()
                 ->all(),
             'allergens' => Allergen::query()->orderBy('name')->get(['id', 'name', 'type']),
-            'severityOptions' => collect(AllergySeverity::cases())->map(fn ($case): array => [
+            'severityOptions' => collect(AllergySeverity::cases())->map(fn (AllergySeverity $case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
-            'reactionOptions' => collect(AllergyReaction::cases())->map(fn ($case): array => [
+            'reactionOptions' => collect(AllergyReaction::cases())->map(fn (AllergyReaction $case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),

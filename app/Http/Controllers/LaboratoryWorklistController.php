@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LabRequestItem;
 use App\Support\ActiveBranchWorkspace;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -55,7 +56,7 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
             'resultEntry.reviewedBy:id,first_name,last_name',
             'resultEntry.approvedBy:id,first_name,last_name',
             'resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,reference_range,sort_order',
-            'consumables' => static fn ($query) => $query
+            'consumables' => static fn (HasMany $query): HasMany => $query
                 ->with('recordedBy:id,first_name,last_name')
                 ->latest('used_at'),
         ]);

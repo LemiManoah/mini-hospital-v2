@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\DoctorSchedule;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -43,11 +44,11 @@ final readonly class DeleteDoctorSchedule
             ->where('clinic_id', $schedule->clinic_id)
             ->when(
                 $validFrom !== null,
-                fn ($query) => $query->whereDate('appointment_date', '>=', $validFrom),
+                fn (Builder $query): Builder => $query->whereDate('appointment_date', '>=', $validFrom),
             )
             ->when(
                 $validTo !== null,
-                fn ($query) => $query->whereDate('appointment_date', '<=', $validTo),
+                fn (Builder $query): Builder => $query->whereDate('appointment_date', '<=', $validTo),
             )
             ->get(['appointment_date', 'start_time', 'end_time'])
             ->contains(function (Appointment $appointment) use ($schedule): bool {

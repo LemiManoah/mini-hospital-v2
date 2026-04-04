@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\StartTenantSubscription;
+use App\Models\Department;
+use App\Models\FacilityBranch;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Models\User;
@@ -181,20 +183,20 @@ final readonly class FacilitySwitcherController implements HasMiddleware
                 'staff' => $tenant->staff_count ?? 0,
             ],
             'branches' => $includeDetails
-                ? $tenant->branches->map(fn ($branch): array => [
+                ? $tenant->branches->map(fn (FacilityBranch $branch): array => [
                     'id' => $branch->id,
                     'name' => $branch->name,
                     'branch_code' => $branch->branch_code,
                 ])->values()->all()
                 : [],
             'departments' => $includeDetails
-                ? $tenant->departments->map(fn ($department): array => [
+                ? $tenant->departments->map(fn (Department $department): array => [
                     'id' => $department->id,
                     'name' => $department->department_name,
                 ])->values()->all()
                 : [],
             'staff' => $includeDetails
-                ? $tenant->staff->map(fn ($staffUser): array => [
+                ? $tenant->staff->map(fn (User $staffUser): array => [
                     'id' => $staffUser->id,
                     'name' => $staffUser->name,
                     'email' => $staffUser->email,

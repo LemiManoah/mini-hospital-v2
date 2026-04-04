@@ -16,6 +16,7 @@ use App\Models\InventoryItem;
 use App\Models\InsurancePackagePrice;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
+use Illuminate\Database\Eloquent\Builder;
 
 final readonly class VisitOrderOptions
 {
@@ -141,11 +142,11 @@ final readonly class VisitOrderOptions
             ->where('billable_type', $type->value)
             ->whereIn('billable_id', $billableIds)
             ->where('status', GeneralStatus::ACTIVE->value)
-            ->where(function ($query) use ($today): void {
+            ->where(function (Builder $query) use ($today): void {
                 $query->whereNull('effective_from')
                     ->orWhere('effective_from', '<=', $today);
             })
-            ->where(function ($query) use ($today): void {
+            ->where(function (Builder $query) use ($today): void {
                 $query->whereNull('effective_to')
                     ->orWhere('effective_to', '>=', $today);
             })

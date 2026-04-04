@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\DrugCategory;
 use App\Enums\DrugDosageForm;
 use App\Enums\InventoryItemType;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,7 +32,7 @@ final class UpdateInventoryItemRequest extends FormRequest
                 'nullable',
                 'string',
                 Rule::exists('units', 'id')
-                    ->where(fn ($query) => $query->whereNull('deleted_at')),
+                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
             ],
             'category' => [Rule::requiredIf($isDrug), 'nullable', Rule::enum(DrugCategory::class)],
             'strength' => [Rule::requiredIf($isDrug), 'nullable', 'string', 'max:50'],

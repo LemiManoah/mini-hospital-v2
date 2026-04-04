@@ -60,7 +60,9 @@ final class HandleInertiaRequests extends Middleware
                     ]),
                     'active_branch_id' => BranchContext::getActiveBranchId(),
                     'active_branch' => $activeBranch,
-                    'can' => $request->user()->getAllPermissions()->pluck('name')->mapWithKeys(fn ($p): array => [$p => true]),
+                    'can' => $request->user()->getAllPermissions()->pluck('name')->mapWithKeys(
+                        fn (string $permission): array => [$permission => true]
+                    ),
                     'roles' => $request->user()->getRoleNames(),
                 ] : null,
             ],

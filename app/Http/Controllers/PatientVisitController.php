@@ -122,21 +122,21 @@ final readonly class PatientVisitController implements HasMiddleware
             'payer.insuranceCompany:id,name',
             'payer.insurancePackage:id,name',
             'billing:id,patient_visit_id,visit_payer_id,payer_type,gross_amount,discount_amount,paid_amount,balance_amount,status,billed_at,settled_at',
-            'billing.payments' => static fn ($query) => $query
+            'billing.payments' => static fn (Builder $query): Builder => $query
                 ->select('id', 'visit_billing_id', 'patient_visit_id', 'receipt_number', 'payment_date', 'amount', 'payment_method', 'reference_number', 'is_refund', 'notes')
                 ->latest('payment_date'),
-            'charges' => static fn ($query) => $query
+            'charges' => static fn (Builder $query): Builder => $query
                 ->select('id', 'visit_billing_id', 'patient_visit_id', 'source_type', 'source_id', 'charge_code', 'description', 'quantity', 'unit_price', 'line_total', 'status', 'charged_at')
                 ->latest('charged_at'),
             'triage:id,visit_id,nurse_id,triage_datetime,triage_grade,attendance_type,news_score,pews_score,conscious_level,mobility_status,chief_complaint,history_of_presenting_illness,assigned_clinic_id,requires_priority,is_pediatric,poisoning_case,poisoning_agent,snake_bite_case,referred_by,nurse_notes',
             'triage.nurse:id,first_name,last_name',
             'triage.assignedClinic:id,clinic_name',
-            'triage.vitalSigns' => static fn ($query) => $query
+            'triage.vitalSigns' => static fn (Builder $query): Builder => $query
                 ->with(['recordedBy:id,first_name,last_name'])
                 ->latest('recorded_at'),
             'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code',
             'consultation.doctor:id,first_name,last_name',
-            'labRequests' => static fn ($query) => $query
+            'labRequests' => static fn (Builder $query): Builder => $query
                 ->with([
                     'requestedBy:id,first_name,last_name',
                     'items.test:id,test_name,test_code,lab_test_category_id,result_type_id',
@@ -148,19 +148,19 @@ final readonly class PatientVisitController implements HasMiddleware
                     'items.resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,reference_range,sort_order',
                 ])
                 ->latest('request_date'),
-            'imagingRequests' => static fn ($query) => $query
+            'imagingRequests' => static fn (Builder $query): Builder => $query
                 ->with([
                     'requestedBy:id,first_name,last_name',
                     'scheduledBy:id,first_name,last_name',
                 ])
                 ->latest(),
-            'prescriptions' => static fn ($query) => $query
+            'prescriptions' => static fn (Builder $query): Builder => $query
                 ->with([
                     'prescribedBy:id,first_name,last_name',
                     'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form',
                 ])
                 ->latest('prescription_date'),
-            'facilityServiceOrders' => static fn ($query) => $query
+            'facilityServiceOrders' => static fn (Builder $query): Builder => $query
                 ->with([
                     'service:id,name,service_code,category,selling_price,is_billable',
                     'orderedBy:id,first_name,last_name',
@@ -200,11 +200,11 @@ final readonly class PatientVisitController implements HasMiddleware
                 ['value' => 'bank_transfer', 'label' => 'Bank Transfer'],
             ],
             'allergens' => Allergen::query()->orderBy('name')->get(['id', 'name', 'type']),
-            'severityOptions' => collect(AllergySeverity::cases())->map(fn ($case): array => [
+            'severityOptions' => collect(AllergySeverity::cases())->map(fn (AllergySeverity $case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
-            'reactionOptions' => collect(AllergyReaction::cases())->map(fn ($case): array => [
+            'reactionOptions' => collect(AllergyReaction::cases())->map(fn (AllergyReaction $case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
@@ -402,13 +402,16 @@ final readonly class PatientVisitController implements HasMiddleware
      */
     private function enumOptions(array $cases): array
     {
-        return collect($cases)
-            ->map(static fn ($case): array => [
+        $options = [];
+
+        foreach ($cases as $case) {
+            $options[] = [
                 'value' => $case->value,
                 'label' => $case->label(),
-            ])
-            ->values()
-            ->all();
+            ];
+        }
+
+        return $options;
     }
 
     private function statusRedirect(PatientVisit $visit, string $redirectTo): RedirectResponse

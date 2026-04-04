@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\LabResultType;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,7 +29,7 @@ final class UpdateLabResultTypeRequest extends FormRequest
                 'max:50',
                 Rule::unique('result_types', 'code')
                     ->ignore($resultType->id)
-                    ->where(static fn ($query) => $query
+                    ->where(static fn (QueryBuilder $query): QueryBuilder => $query
                         ->where('tenant_id', $tenantId)
                         ->orWhereNull('tenant_id')),
             ],
@@ -38,7 +39,7 @@ final class UpdateLabResultTypeRequest extends FormRequest
                 'max:100',
                 Rule::unique('result_types', 'name')
                     ->ignore($resultType->id)
-                    ->where(static fn ($query) => $query
+                    ->where(static fn (QueryBuilder $query): QueryBuilder => $query
                         ->where('tenant_id', $tenantId)
                         ->orWhereNull('tenant_id')),
             ],

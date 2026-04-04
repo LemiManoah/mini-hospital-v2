@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\InventoryItemType;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -27,7 +28,7 @@ final class StoreConsultationPrescriptionRequest extends FormRequest
             'items.*.inventory_item_id' => [
                 'required',
                 'string',
-                Rule::exists('inventory_items', 'id')->where(static function ($query): void {
+                Rule::exists('inventory_items', 'id')->where(static function (QueryBuilder $query): void {
                     $query
                         ->where('is_active', true)
                         ->where('item_type', InventoryItemType::DRUG->value)

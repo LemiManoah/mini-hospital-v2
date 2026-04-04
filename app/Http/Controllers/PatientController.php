@@ -205,11 +205,11 @@ final readonly class PatientController implements HasMiddleware
             'patient' => $patient,
             'stats' => $stats,
             'allergens' => Allergen::query()->orderBy('name')->get(['id', 'name', 'type']),
-            'severityOptions' => collect(AllergySeverity::cases())->map(fn ($case): array => [
+            'severityOptions' => collect(AllergySeverity::cases())->map(fn (AllergySeverity $case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
-            'reactionOptions' => collect(AllergyReaction::cases())->map(fn ($case): array => [
+            'reactionOptions' => collect(AllergyReaction::cases())->map(fn (AllergyReaction $case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
@@ -226,13 +226,16 @@ final readonly class PatientController implements HasMiddleware
      */
     private function enumOptions(array $cases): array
     {
-        return collect($cases)
-            ->map(static fn ($case): array => [
+        $options = [];
+
+        foreach ($cases as $case) {
+            $options[] = [
                 'value' => $case->value,
                 'label' => $case->label(),
-            ])
-            ->values()
-            ->all();
+            ];
+        }
+
+        return $options;
     }
 
     /**
@@ -257,7 +260,7 @@ final readonly class PatientController implements HasMiddleware
                 })
                 ->orderBy('first_name')
                 ->get(),
-            'visitTypes' => collect(VisitType::cases())->map(fn ($case): array => [
+            'visitTypes' => collect(VisitType::cases())->map(fn (VisitType $case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),

@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\BillableItemType;
 use App\Models\LabRequest;
+use App\Models\LabRequestItem;
 
 final readonly class SyncLabRequestCharge
 {
@@ -18,7 +19,7 @@ final readonly class SyncLabRequestCharge
     {
         $request->loadMissing(['visit.payer', 'items.test']);
 
-        $total = $request->items->sum(function ($item) use ($request): float {
+        $total = $request->items->sum(function (LabRequestItem $item) use ($request): float {
             $resolved = $this->resolveVisitChargeAmount->handle(
                 $request->visit,
                 BillableItemType::TEST,

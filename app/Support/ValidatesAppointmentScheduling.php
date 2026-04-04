@@ -7,6 +7,7 @@ namespace App\Support;
 use App\Models\DoctorSchedule;
 use App\Models\DoctorScheduleException;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Validator;
 
@@ -57,7 +58,7 @@ final readonly class ValidatesAppointmentScheduling
             ->where('doctor_id', $doctorId)
             ->where('day_of_week', mb_strtolower($date->englishDayOfWeek))
             ->whereDate('valid_from', '<=', $date->toDateString())
-            ->where(function ($query) use ($date): void {
+            ->where(function (Builder $query) use ($date): void {
                 $query
                     ->whereNull('valid_to')
                     ->orWhereDate('valid_to', '>=', $date->toDateString());
@@ -67,7 +68,7 @@ final readonly class ValidatesAppointmentScheduling
         $branchId = BranchContext::getActiveBranchId();
 
         if ($branchId !== null) {
-            $scheduleQuery->where(function ($query) use ($branchId): void {
+            $scheduleQuery->where(function (Builder $query) use ($branchId): void {
                 $query
                     ->where('facility_branch_id', $branchId)
                     ->orWhereNull('facility_branch_id');
@@ -148,8 +149,8 @@ final readonly class ValidatesAppointmentScheduling
             ->whereDate('exception_date', $date->toDateString())
             ->when(
                 $branchId !== null,
-                static function ($query) use ($branchId): void {
-                    $query->where(function ($innerQuery) use ($branchId): void {
+                static function (Builder $query) use ($branchId): void {
+                    $query->where(function (Builder $innerQuery) use ($branchId): void {
                         $innerQuery
                             ->where('facility_branch_id', $branchId)
                             ->orWhereNull('facility_branch_id');
@@ -158,14 +159,14 @@ final readonly class ValidatesAppointmentScheduling
             )
             ->when(
                 is_string($clinicId) && $clinicId !== '',
-                static function ($query) use ($clinicId): void {
-                    $query->where(function ($innerQuery) use ($clinicId): void {
+                static function (Builder $query) use ($clinicId): void {
+                    $query->where(function (Builder $innerQuery) use ($clinicId): void {
                         $innerQuery
                             ->where('clinic_id', $clinicId)
                             ->orWhereNull('clinic_id');
                     });
                 },
-                static function ($query): void {
+                static function (Builder $query): void {
                     $query->whereNull('clinic_id');
                 },
             )
