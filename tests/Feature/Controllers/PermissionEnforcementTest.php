@@ -256,9 +256,11 @@ function createPermissionAppointment(
     Tenant $tenant,
     Patient $patient,
     User $user,
+    ?FacilityBranch $branch = null,
 ): Appointment {
     return Appointment::query()->create([
         'tenant_id' => $tenant->id,
+        'facility_branch_id' => $branch?->id,
         'patient_id' => $patient->id,
         'appointment_date' => now()->toDateString(),
         'start_time' => '09:00:00',
@@ -890,18 +892,20 @@ describe('Consultation workflow permissions', function (): void {
 
 describe('Appointment action permissions', function (): void {
     it('forbids and allows appointment confirmation based on appointments.confirm permission', function (): void {
-        [$tenant] = createPermissionTenant();
-        $user = createPermissionUser($tenant);
+        [$tenant, $branch] = createPermissionTenant(true);
+        $user = createPermissionUser($tenant, branch: $branch);
         $patient = createPermissionPatient($tenant, $user);
-        $appointment = createPermissionAppointment($tenant, $patient, $user);
+        $appointment = createPermissionAppointment($tenant, $patient, $user, $branch);
 
-        $this->actingAs($user)
+        $this->withSession(['active_branch_id' => $branch->id])
+            ->actingAs($user)
             ->post(route('appointments.confirm', $appointment))
             ->assertForbidden();
 
         $user->givePermissionTo('appointments.confirm');
 
-        $response = $this->actingAs($user)
+        $response = $this->withSession(['active_branch_id' => $branch?->id])
+            ->actingAs($user)
             ->post(route('appointments.confirm', $appointment));
 
         $response->assertRedirectToRoute('appointments.show', $appointment);

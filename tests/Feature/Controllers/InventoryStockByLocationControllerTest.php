@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\PostGoodsReceipt;
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Enums\GoodsReceiptStatus;
@@ -181,7 +182,7 @@ function createInventoryStockContext(): array
         'purchase_order_id' => $purchaseOrder->id,
         'inventory_location_id' => $locationA->id,
         'receipt_number' => 'GR-STOCK-1-'.$sequence,
-        'status' => GoodsReceiptStatus::Posted,
+        'status' => GoodsReceiptStatus::Draft,
         'receipt_date' => now()->subDay(),
     ]);
 
@@ -199,7 +200,7 @@ function createInventoryStockContext(): array
         'purchase_order_id' => $purchaseOrder->id,
         'inventory_location_id' => $locationA->id,
         'receipt_number' => 'GR-STOCK-2-'.$sequence,
-        'status' => GoodsReceiptStatus::Posted,
+        'status' => GoodsReceiptStatus::Draft,
         'receipt_date' => now(),
     ]);
 
@@ -253,7 +254,7 @@ function createInventoryStockContext(): array
         'purchase_order_id' => $otherPurchaseOrder->id,
         'inventory_location_id' => $otherLocation->id,
         'receipt_number' => 'GR-STOCK-OTHER-'.$sequence,
-        'status' => GoodsReceiptStatus::Posted,
+        'status' => GoodsReceiptStatus::Draft,
         'receipt_date' => now(),
     ]);
 
@@ -264,6 +265,10 @@ function createInventoryStockContext(): array
         'quantity_received' => 6,
         'unit_cost' => 50,
     ]);
+
+    resolve(PostGoodsReceipt::class)->handle($postedReceiptOne);
+    resolve(PostGoodsReceipt::class)->handle($postedReceiptTwo);
+    resolve(PostGoodsReceipt::class)->handle($otherBranchReceipt);
 
     $sequence++;
 

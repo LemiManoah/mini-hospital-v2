@@ -25,6 +25,7 @@ it('may update profile information', function (): void {
     $response = $this->actingAs($user)
         ->fromRoute('user-profile.edit')
         ->patch(route('user-profile.update'), [
+            'name' => 'New Name',
             'email' => 'new@example.com',
         ]);
 
@@ -42,6 +43,7 @@ it('resets email verification when email changes', function (): void {
     $response = $this->actingAs($user)
         ->fromRoute('user-profile.edit')
         ->patch(route('user-profile.update'), [
+            'name' => 'New Name',
             'email' => 'new@example.com',
         ]);
 
@@ -60,6 +62,7 @@ it('keeps email verification when email stays the same', function (): void {
     $response = $this->actingAs($user)
         ->fromRoute('user-profile.edit')
         ->patch(route('user-profile.update'), [
+            'name' => 'Same Name',
             'email' => 'same@example.com',
         ]);
 
@@ -129,6 +132,7 @@ it('allows keeping same email', function (): void {
     $response = $this->actingAs($user)
         ->fromRoute('user-profile.edit')
         ->patch(route('user-profile.update'), [
+            'name' => 'Same Name',
             'email' => 'test@example.com',
         ]);
 

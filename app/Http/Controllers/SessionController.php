@@ -60,7 +60,7 @@ final readonly class SessionController
             BranchContext::clear();
         }
 
-        return redirect()->intended(route('home', absolute: false));
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     public function destroy(Request $request): RedirectResponse

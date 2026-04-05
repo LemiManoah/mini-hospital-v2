@@ -40,6 +40,16 @@ final class InventoryLocation extends Model
         return $this->hasMany(InventoryLocationItem::class);
     }
 
+    public function batches(): HasMany
+    {
+        return $this->hasMany(InventoryBatch::class);
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
     public function items(): BelongsToMany
     {
         return $this->belongsToMany(InventoryItem::class, 'inventory_location_items')

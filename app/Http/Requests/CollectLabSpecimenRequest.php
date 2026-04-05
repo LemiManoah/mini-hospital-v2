@@ -35,7 +35,7 @@ final class CollectLabSpecimenRequest extends FormRequest
                 return;
             }
 
-            $labRequestItem->loadMissing('test.specimenTypes:id');
+            $labRequestItem->loadMissing('test.specimenTypes:id,name');
 
             $allowedSpecimenIds = $labRequestItem->test?->specimenTypes?->pluck('id')->all() ?? [];
             $specimenTypeId = (string) $this->input('specimen_type_id', '');

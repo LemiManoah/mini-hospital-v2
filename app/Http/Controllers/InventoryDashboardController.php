@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\PurchaseOrder;
+use App\Models\StockMovement;
 use App\Models\Supplier;
+use App\Support\BranchContext;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
@@ -24,40 +27,35 @@ final readonly class InventoryDashboardController implements HasMiddleware
 
     public function index(): Response
     {
-        $activeBranchId = \App\Support\BranchContext::getActiveBranchId();
+        $activeBranchId = BranchContext::getActiveBranchId();
 
-        // Calculate Stock on Hand from posted goods receipts (simplified logic based on buildRows in InventoryStockByLocationController)
-        $stockLevels = \App\Models\GoodsReceiptItem::query()
-            ->whereHas('goodsReceipt', function ($query) use ($activeBranchId) {
-                $query->where('branch_id', $activeBranchId)
-                    ->where('status', \App\Enums\GoodsReceiptStatus::Posted);
-            })
+        $stockLevels = StockMovement::query()
+            ->where('branch_id', $activeBranchId)
             ->select('inventory_item_id')
-            ->selectRaw('SUM(quantity_received) as total_qty')
+            ->selectRaw('SUM(quantity) as total_qty')
             ->groupBy('inventory_item_id')
             ->with('inventoryItem:id,minimum_stock_level,default_purchase_price')
             ->get();
 
-        $outOfStockCount = InventoryItem::query()->whereDoesntHave('locationItems')->count(); // Initial assumption
-        // Refine out of stock: items that should be in stock but have 0 qty
-        $outOfStockCount = $stockLevels->filter(fn($s) => $s->total_qty <= 0)->count();
+        $outOfStockCount = $stockLevels
+            ->filter(static fn (StockMovement $stockLevel): bool => (float) $stockLevel->total_qty <= 0)
+            ->count();
 
-        // Items below minimum stock
-        $lowStockCount = $stockLevels->filter(function($s) {
-            return $s->total_qty <= ($s->inventoryItem->minimum_stock_level ?? 0) && $s->total_qty > 0;
-        })->count();
+        $lowStockCount = $stockLevels
+            ->filter(static function (StockMovement $stockLevel): bool {
+                $minimumStockLevel = (float) ($stockLevel->inventoryItem?->minimum_stock_level ?? 0);
+                $totalQuantity = (float) $stockLevel->total_qty;
 
-        // Total monetary value
-        $totalStockValue = $stockLevels->sum(function($s) {
-            return $s->total_qty * ($s->inventoryItem->default_purchase_price ?? 0);
-        });
-
-        // Expiring soon (next 30 days)
-        $expiringSoonCount = \App\Models\GoodsReceiptItem::query()
-            ->whereHas('goodsReceipt', function ($query) use ($activeBranchId) {
-                $query->where('branch_id', $activeBranchId)
-                    ->where('status', \App\Enums\GoodsReceiptStatus::Posted);
+                return $totalQuantity <= $minimumStockLevel && $totalQuantity > 0;
             })
+            ->count();
+
+        $totalStockValue = $stockLevels
+            ->sum(static fn (StockMovement $stockLevel): float => (float) $stockLevel->total_qty
+                * (float) ($stockLevel->inventoryItem?->default_purchase_price ?? 0));
+
+        $expiringSoonCount = InventoryBatch::query()
+            ->where('branch_id', $activeBranchId)
             ->whereNotNull('expiry_date')
             ->where('expiry_date', '>', now())
             ->where('expiry_date', '<=', now()->addDays(30))
@@ -68,7 +66,7 @@ final readonly class InventoryDashboardController implements HasMiddleware
             ->selectRaw('count(*) as count')
             ->groupBy('item_type')
             ->get()
-            ->mapWithKeys(fn ($item) => [$item->item_type->value => $item->count])
+            ->mapWithKeys(static fn (InventoryItem $item): array => [$item->item_type->value => $item->count])
             ->toArray();
 
         $distributionByCategory = InventoryItem::query()
@@ -77,7 +75,7 @@ final readonly class InventoryDashboardController implements HasMiddleware
             ->selectRaw('count(*) as count')
             ->groupBy('category')
             ->get()
-            ->mapWithKeys(fn ($item) => [$item->category->value => $item->count])
+            ->mapWithKeys(static fn (InventoryItem $item): array => [$item->category->value => $item->count])
             ->toArray();
 
         $recentItems = InventoryItem::query()
@@ -90,7 +88,7 @@ final readonly class InventoryDashboardController implements HasMiddleware
             ->selectRaw('count(*) as count')
             ->groupBy('status')
             ->get()
-            ->mapWithKeys(fn ($po) => [$po->status->value => $po->count])
+            ->mapWithKeys(static fn (PurchaseOrder $po): array => [$po->status->value => $po->count])
             ->toArray();
 
         return Inertia::render('inventory/dashboard', [

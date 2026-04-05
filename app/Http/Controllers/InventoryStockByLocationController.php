@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\GoodsReceiptStatus;
 use App\Enums\InventoryItemType;
-use App\Models\GoodsReceipt;
-use App\Models\GoodsReceiptItem;
+use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\InventoryLocationItem;
 use App\Support\BranchContext;
+use App\Support\InventoryStockLedger;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -21,6 +20,10 @@ use Inertia\Response;
 
 final readonly class InventoryStockByLocationController implements HasMiddleware
 {
+    public function __construct(
+        private InventoryStockLedger $inventoryStockLedger,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -80,7 +83,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                 ])
                 ->values(),
             'locations' => $locations,
-            'note' => 'Balances currently reflect posted goods receipts and configured location-item records. They will move to the stock ledger once milestone 3 inventory movements are implemented.',
+            'note' => 'Balances now reflect posted stock movements, grouped by item and location. Quantities combine all batches currently received into each location.',
         ]);
     }
 
@@ -119,16 +122,32 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
             ->mapWithKeys(static fn (array $location): array => [$location['id'] => 0.0])
             ->all();
 
-        /** @var array<string, array<string, mixed>> $rows */
-        $rows = [];
-
-        InventoryLocationItem::query()
+        $locationItems = InventoryLocationItem::query()
             ->where('branch_id', $activeBranchId)
             ->with([
                 'item:id,name,generic_name,item_type,minimum_stock_level,reorder_level,unit_id',
                 'item.unit:id,name,symbol',
             ])
-            ->get()
+            ->get();
+
+        /** @var array<string, InventoryLocationItem> $locationItemLookup */
+        $locationItemLookup = $locationItems
+            ->mapWithKeys(static fn (InventoryLocationItem $locationItem): array => [
+                sprintf('%s:%s', $locationItem->inventory_location_id, $locationItem->inventory_item_id) => $locationItem,
+            ])
+            ->all();
+
+        /** @var array<string, InventoryItem> $itemLookup */
+        $itemLookup = $locationItems
+            ->mapWithKeys(static fn (InventoryLocationItem $locationItem): array => $locationItem->item !== null
+                ? [$locationItem->inventory_item_id => $locationItem->item]
+                : [])
+            ->all();
+
+        /** @var array<string, array<string, mixed>> $rows */
+        $rows = [];
+
+        $locationItems
             ->each(function (InventoryLocationItem $locationItem) use (&$rows, $locationQuantitiesTemplate): void {
                 $item = $locationItem->item;
 
@@ -151,52 +170,43 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                 ];
             });
 
-        GoodsReceipt::query()
-            ->where('branch_id', $activeBranchId)
-            ->with([
-                'inventoryLocation:id,name,location_code,type',
-                'items:id,goods_receipt_id,inventory_item_id,quantity_received',
-                'items.inventoryItem:id,name,generic_name,item_type,minimum_stock_level,reorder_level,unit_id',
-                'items.inventoryItem.unit:id,name,symbol',
-            ])
-            ->where('status', GoodsReceiptStatus::Posted)
-            ->orderByDesc('receipt_date')
-            ->get()
-            ->each(function (GoodsReceipt $goodsReceipt) use (&$rows, $locationQuantitiesTemplate): void {
-                $location = $goodsReceipt->inventoryLocation;
+        $this->inventoryStockLedger
+            ->summarizeByLocation($activeBranchId)
+            ->each(function (array $balance) use (&$rows, $itemLookup, $locationItemLookup, $locationQuantitiesTemplate): void {
+                $locationItem = $locationItemLookup[sprintf(
+                    '%s:%s',
+                    $balance['inventory_location_id'],
+                    $balance['inventory_item_id'],
+                )] ?? null;
 
-                if ($location === null) {
+                $item = $itemLookup[$balance['inventory_item_id']] ?? null;
+
+                if ($item === null) {
+                    $item = InventoryItem::query()
+                        ->with('unit:id,name,symbol')
+                        ->find($balance['inventory_item_id']);
+                }
+
+                if ($item === null) {
                     return;
                 }
 
-                $goodsReceipt->items->each(function (GoodsReceiptItem $receiptItem) use (&$rows, $location, $locationQuantitiesTemplate): void {
-                    $item = $receiptItem->inventoryItem;
+                $key = $item->id;
 
-                    if ($item === null) {
-                        return;
-                    }
+                if (! array_key_exists($key, $rows)) {
+                    $rows[$key] = [
+                        'item_id' => $item->id,
+                        'item_name' => $item->generic_name ?? $item->name,
+                        'item_type' => $item->item_type?->value,
+                        'unit' => $item->unit?->symbol,
+                        'minimum_stock_level' => (float) ($locationItem?->minimum_stock_level ?? $item->minimum_stock_level),
+                        'total_quantity' => 0.0,
+                        'location_quantities' => $locationQuantitiesTemplate,
+                    ];
+                }
 
-                    $key = $item->id;
-
-                    if (! array_key_exists($key, $rows)) {
-                        $rows[$key] = [
-                            'item_id' => $item->id,
-                            'item_name' => $item->generic_name ?? $item->name,
-                            'item_type' => $item->item_type?->value,
-                            'unit' => $item->unit?->symbol,
-                            'minimum_stock_level' => (float) $item->minimum_stock_level,
-                            'total_quantity' => 0.0,
-                            'location_quantities' => $locationQuantitiesTemplate,
-                        ];
-                    }
-
-                    if (! array_key_exists($location->id, $rows[$key]['location_quantities'])) {
-                        $rows[$key]['location_quantities'][$location->id] = 0.0;
-                    }
-
-                    $rows[$key]['location_quantities'][$location->id] += (float) $receiptItem->quantity_received;
-                    $rows[$key]['total_quantity'] += (float) $receiptItem->quantity_received;
-                });
+                $rows[$key]['location_quantities'][$balance['inventory_location_id']] = $balance['quantity'];
+                $rows[$key]['total_quantity'] += $balance['quantity'];
             });
 
         return [

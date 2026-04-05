@@ -54,6 +54,16 @@ final class InventoryItem extends Model
         return $this->hasMany(InventoryLocationItem::class);
     }
 
+    public function batches(): HasMany
+    {
+        return $this->hasMany(InventoryBatch::class);
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
     public function prescriptionItems(): HasMany
     {
         return $this->hasMany(PrescriptionItem::class, 'inventory_item_id');

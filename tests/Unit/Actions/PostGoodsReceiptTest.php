@@ -14,10 +14,12 @@ use App\Models\Currency;
 use App\Models\FacilityBranch;
 use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptItem;
+use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
@@ -164,4 +166,32 @@ it('rejects posting when the goods receipt is no longer draft in storage', funct
         fn (HttpException $exception): bool => $exception->getStatusCode() === 422
             && $exception->getMessage() === 'Only draft goods receipts can be posted.',
     );
+});
+
+it('creates inventory batches and stock movements when posting a goods receipt', function (): void {
+    [$user, $goodsReceipt] = createPostGoodsReceiptContext();
+
+    $this->actingAs($user);
+
+    $action = resolve(PostGoodsReceipt::class);
+    $postedGoodsReceipt = $action->handle($goodsReceipt);
+
+    $postedGoodsReceiptItem = $postedGoodsReceipt->items->firstOrFail();
+
+    $batch = InventoryBatch::query()
+        ->where('goods_receipt_item_id', $postedGoodsReceiptItem->id)
+        ->first();
+
+    expect($batch)->not->toBeNull()
+        ->and((string) $batch?->inventory_location_id)->toBe((string) $postedGoodsReceipt->inventory_location_id)
+        ->and((float) $batch?->quantity_received)->toBe(10.0);
+
+    $movement = StockMovement::query()
+        ->where('source_line_id', $postedGoodsReceiptItem->id)
+        ->first();
+
+    expect($movement)->not->toBeNull()
+        ->and((string) $movement?->inventory_batch_id)->toBe((string) $batch?->id)
+        ->and($movement?->movement_type?->value)->toBe('receipt')
+        ->and((float) $movement?->quantity)->toBe(10.0);
 });

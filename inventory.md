@@ -17,15 +17,13 @@ What already exists:
 - billing foundations exist through `VisitBilling`, `VisitCharge`, and visit payment capture
 - branch-aware and tenant-aware architecture already exists
 - laboratory can record consumables used on a request item, including actual execution cost
+- supplier, purchase order, and goods receipt workflows now exist
+- posted goods receipts now create inventory batches and stock movements
+- stock-by-location and stock movement visibility pages now exist
 
 What does not yet exist:
 
-- stock-on-hand records
 - pharmacy store workflow
-- supplier and procurement workflow
-- purchase orders and goods receipt workflow
-- batch or lot tracking
-- stock movements ledger
 - branch-to-branch or store-to-store transfers
 - departmental requisitions and issue workflow
 - stock counts, adjustments, expiries, wastage, and reconciliation
@@ -412,8 +410,8 @@ Branch isolation should follow the same active-branch approach already used else
 
 - [x] Milestone 0 completed: surrounding foundations already exist (`InventoryItem`, `Prescription`, branch scoping, billing base)
 - [ ] Milestone 1 in progress: inventory foundations and stock catalog
-- [ ] Milestone 2 in progress: suppliers, purchase orders, and goods receipt
-- [ ] Milestone 3 pending: stock ledger, balances, counts, and adjustments
+- [x] Milestone 2 completed: suppliers, purchase orders, and goods receipt
+- [ ] Milestone 3 in progress: stock ledger, balances, counts, and adjustments
 - [ ] Milestone 4 pending: requisitions and inter-store transfers
 - [ ] Milestone 5 pending: pharmacy dispensing workflow
 - [ ] Milestone 6 pending: alerts, reporting, permissions, and audit coverage
@@ -490,7 +488,7 @@ Build the inbound supply workflow so stock enters the system through controlled 
 
 ### Milestone Boundary Note
 
-The procurement documents and receiving workflow belong in Milestone 2, but the remaining unchecked item, inbound stock movements from posted receipts, depends on the stock-ledger foundation planned for Milestone 3. Until `InventoryBatch`, `StockMovement`, and stock balance queries exist, Milestone 2 should be treated as operationally in progress rather than fully complete.
+The procurement workflow is now complete from supplier through posted receipt, and posted receipts now write into the stock-ledger foundation added in Milestone 3. Milestone 2 is therefore complete, while the broader stock-control tooling continues in Milestone 3.
 
 ### Milestone Checklist
 
@@ -510,7 +508,7 @@ The procurement documents and receiving workflow belong in Milestone 2, but the 
   - cancelled
 - [x] Capture supplier invoice/reference details
 - [x] Capture batch number, expiry, quantity, and unit cost at receipt time
-- [ ] Create inbound stock movements from posted receipts
+- [x] Create inbound stock movements from posted receipts
 - [x] Add receiving UI and PO detail page
 - [x] Add tests for full and partial receiving
 
@@ -537,17 +535,17 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 
 ### Milestone Checklist
 
-- [ ] Create `inventory_batches`
-- [ ] Create `stock_movements`
+- [x] Create `inventory_batches`
+- [x] Create `stock_movements`
 - [ ] Create `stock_adjustments` and related items
 - [ ] Create `stock_counts` and related items
-- [ ] Build stock summary queries by item, batch, and location
+- [x] Build stock summary queries by item, batch, and location
 - [x] Add stock-by-location page showing each item's quantity across locations
 - [ ] Add adjustment reasons and approval rules
 - [ ] Add cycle count workflow
 - [ ] Add expiry and damage write-off workflow
-- [ ] Add movement history page
-- [ ] Add tests that balances match posted movements
+- [x] Add movement history page
+- [x] Add tests that balances match posted movements
 
 ### Definition Of Done
 
@@ -556,7 +554,7 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 
 ### Current Status
 
-The first stock-by-location page is now in place and gives branch users a working visibility surface for item quantities across locations. At the moment those balances are receipt-backed and configuration-backed, not yet full ledger balances, so the remaining milestone 3 work is still the movement engine, adjustments, counts, and auditable reconciliation.
+The stock ledger foundation is now in place. Posted goods receipts create `InventoryBatch` and `StockMovement` records, the stock-by-location matrix now reads from movement-backed balances, and a stock movement history page is available for branch users. Milestone 3 is still not complete, because stock adjustments, counts, cycle-count workflow, and expiry or damage write-off tooling are still outstanding.
 
 ## Milestone 4: Requisitions And Inter-Store Transfers
 
