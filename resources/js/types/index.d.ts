@@ -36,16 +36,42 @@ export interface SharedData {
     [key: string]: unknown;
 }
 
+export interface SharedSubscriptionPackage {
+    id: string;
+    name: string;
+    price: string;
+}
+
+export interface SharedCurrentSubscription {
+    id: string;
+    status: string;
+    trial_ends_at: string | null;
+    subscription_package: SharedSubscriptionPackage | null;
+}
+
+export interface SharedTenant {
+    id: string;
+    name: string;
+    current_subscription: SharedCurrentSubscription | null;
+}
+
+export interface SharedActiveBranch {
+    id: string;
+    name: string;
+    branch_code: string;
+}
+
 export interface User {
-    id: number;
+    id: string;
     name: string;
     email: string;
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
+    is_support?: boolean;
     roles: string[];
     can: Record<string, boolean>;
-    created_at: string;
-    updated_at: string;
+    tenant?: SharedTenant | null;
+    active_branch?: SharedActiveBranch | null;
     [key: string]: unknown; // This allows for additional properties...
 }

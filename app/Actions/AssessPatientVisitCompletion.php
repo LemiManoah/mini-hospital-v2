@@ -33,6 +33,44 @@ final readonly class AssessPatientVisitCompletion
         $unpaidBalance = $this->unpaidBalance($visit);
         $consultationBlockingReason = $this->consultationBlockingReason($visit);
 
+        return $this->buildResult($pendingServicesCount, $unpaidBalance, $consultationBlockingReason);
+    }
+
+    /**
+     * Evaluate completion from already-hydrated data without touching the database.
+     *
+     * @return array{
+     *     can_complete: bool,
+     *     has_pending_services: bool,
+     *     pending_services_count: int,
+     *     has_unpaid_balance: bool,
+     *     unpaid_balance: float,
+     *     blocking_reasons: array<int, string>,
+     *     warning_messages: array<int, string>
+     * }
+     */
+    public function handleLoaded(PatientVisit $visit): array
+    {
+        $pendingServicesCount = $this->pendingServicesCountFromLoaded($visit);
+        $unpaidBalance = $this->unpaidBalanceFromLoaded($visit);
+        $consultationBlockingReason = $this->consultationBlockingReasonFromLoaded($visit);
+
+        return $this->buildResult($pendingServicesCount, $unpaidBalance, $consultationBlockingReason);
+    }
+
+    /**
+     * @return array{
+     *     can_complete: bool,
+     *     has_pending_services: bool,
+     *     pending_services_count: int,
+     *     has_unpaid_balance: bool,
+     *     unpaid_balance: float,
+     *     blocking_reasons: array<int, string>,
+     *     warning_messages: array<int, string>
+     * }
+     */
+    private function buildResult(int $pendingServicesCount, float $unpaidBalance, ?string $consultationBlockingReason): array
+    {
         $blockingReasons = [];
         $warningMessages = [];
 
@@ -64,6 +102,44 @@ final readonly class AssessPatientVisitCompletion
             'blocking_reasons' => $blockingReasons,
             'warning_messages' => $warningMessages,
         ];
+    }
+
+    private function pendingServicesCountFromLoaded(PatientVisit $visit): int
+    {
+        return (int) ($visit->pending_lab_requests_count ?? 0)
+            + (int) ($visit->pending_imaging_requests_count ?? 0)
+            + (int) ($visit->pending_prescriptions_count ?? 0)
+            + (int) ($visit->pending_facility_service_orders_count ?? 0);
+    }
+
+    private function unpaidBalanceFromLoaded(PatientVisit $visit): float
+    {
+        if (! $visit->relationLoaded('billing') || $visit->billing === null) {
+            return 0.0;
+        }
+
+        return (float) ($visit->billing->balance_amount ?? 0);
+    }
+
+    private function consultationBlockingReasonFromLoaded(PatientVisit $visit): ?string
+    {
+        if (! $visit->relationLoaded('triage')) {
+            return null;
+        }
+
+        if ($visit->triage === null) {
+            return null;
+        }
+
+        if (! $visit->relationLoaded('consultation') || $visit->consultation === null) {
+            return 'This visit cannot be completed until the consultation has been started.';
+        }
+
+        if ($visit->consultation->completed_at === null) {
+            return 'This visit cannot be completed until the consultation has been finalized.';
+        }
+
+        return null;
     }
 
     private function pendingServicesCount(PatientVisit $visit): int

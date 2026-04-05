@@ -12,8 +12,12 @@ use App\Enums\AllergyReaction;
 use App\Enums\AllergySeverity;
 use App\Enums\AttendanceType;
 use App\Enums\ConsciousLevel;
+use App\Enums\FacilityServiceOrderStatus;
+use App\Enums\ImagingRequestStatus;
+use App\Enums\LabRequestStatus;
 use App\Enums\MobilityStatus;
 use App\Enums\PayerType;
+use App\Enums\PrescriptionStatus;
 use App\Enums\TriageGrade;
 use App\Enums\VisitStatus;
 use App\Models\Allergen;
@@ -70,6 +74,28 @@ final readonly class PatientVisitController implements HasMiddleware
                 'payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
                 'payer.insuranceCompany:id,name',
                 'payer.insurancePackage:id,name',
+                'billing:id,patient_visit_id,balance_amount',
+                'triage:id,visit_id',
+                'consultation:id,visit_id,completed_at',
+            ])
+            ->withCount([
+                'labRequests as pending_lab_requests_count' => static fn (Builder $query) => $query->whereNotIn('status', [
+                    LabRequestStatus::COMPLETED->value,
+                    LabRequestStatus::CANCELLED->value,
+                    LabRequestStatus::REJECTED->value,
+                ]),
+                'imagingRequests as pending_imaging_requests_count' => static fn (Builder $query) => $query->whereNotIn('status', [
+                    ImagingRequestStatus::COMPLETED->value,
+                    ImagingRequestStatus::CANCELLED->value,
+                ]),
+                'prescriptions as pending_prescriptions_count' => static fn (Builder $query) => $query->whereNotIn('status', [
+                    PrescriptionStatus::FULLY_DISPENSED->value,
+                    PrescriptionStatus::CANCELLED->value,
+                ]),
+                'facilityServiceOrders as pending_facility_service_orders_count' => static fn (Builder $query) => $query->whereNotIn('status', [
+                    FacilityServiceOrderStatus::COMPLETED->value,
+                    FacilityServiceOrderStatus::CANCELLED->value,
+                ]),
             ])
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->when(
@@ -91,7 +117,7 @@ final readonly class PatientVisitController implements HasMiddleware
             ->withQueryString()
             ->through(fn (PatientVisit $visit): array => [
                 ...$visit->toArray(),
-                'completion_check' => $assessment->handle($visit),
+                'completion_check' => $assessment->handleLoaded($visit),
             ]);
 
         return Inertia::render('visit/active', [

@@ -13,7 +13,25 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryItemShowPageProps } from '@/types/inventory-item';
 import { Head, Link } from '@inertiajs/react';
-import { format } from 'date-fns';
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+});
+
+const formatDate = (value: string): string => dateFormatter.format(new Date(value));
+
+const formatDateTime = (value: string): string => dateTimeFormatter.format(new Date(value));
 
 export default function InventoryItemShow({
     inventoryItem,
@@ -194,10 +212,10 @@ export default function InventoryItemShow({
                                             <TableCell className="font-medium">
                                                 {batch.batch_number ?? 'N/A'}
                                             </TableCell>
-                                            <TableCell>{batch.location?.name ?? 'N/A'}</TableCell>
+                                            <TableCell>{batch.inventory_location?.name ?? 'N/A'}</TableCell>
                                             <TableCell>
                                                 {batch.expiry_date
-                                                    ? format(new Date(batch.expiry_date), 'MMM d, yyyy')
+                                                    ? formatDate(batch.expiry_date)
                                                     : 'Non-expiring'}
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -207,7 +225,7 @@ export default function InventoryItemShow({
                                                 {batch.quantity_received}
                                             </TableCell>
                                             <TableCell>
-                                                {format(new Date(batch.received_at), 'MMM d, yyyy HH:mm')}
+                                                {formatDateTime(batch.received_at)}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -244,14 +262,14 @@ export default function InventoryItemShow({
                                     inventoryItem.stock_movements.map((movement) => (
                                         <TableRow key={movement.id}>
                                             <TableCell>
-                                                {format(new Date(movement.occurred_at), 'MMM d, yyyy HH:mm')}
+                                                {formatDateTime(movement.occurred_at)}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline">
                                                     {labelize(movement.movement_type)}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell>{movement.location?.name ?? 'N/A'}</TableCell>
+                                            <TableCell>{movement.inventory_location?.name ?? 'N/A'}</TableCell>
                                             <TableCell className="text-right font-medium">
                                                 {parseFloat(movement.quantity) > 0 ? '+' : ''}
                                                 {movement.quantity}

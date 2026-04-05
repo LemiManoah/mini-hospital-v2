@@ -37,17 +37,17 @@ final class EnsureActiveBranch
             return $next($request);
         }
 
+        $activeBranchId = BranchContext::getActiveBranchId();
+
+        if ($activeBranchId !== null && BranchContext::canAccessBranch($user, $activeBranchId)) {
+            return $next($request);
+        }
+
         $accessibleBranches = BranchContext::getAccessibleBranches($user);
 
         if ($accessibleBranches->isEmpty()) {
             BranchContext::clear();
 
-            return $next($request);
-        }
-
-        $activeBranchId = BranchContext::getActiveBranchId();
-
-        if ($activeBranchId !== null && BranchContext::canAccessBranch($user, $activeBranchId)) {
             return $next($request);
         }
 

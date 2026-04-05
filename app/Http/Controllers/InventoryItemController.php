@@ -71,8 +71,8 @@ final readonly class InventoryItemController implements HasMiddleware
         return Inertia::render('inventory/items/show', [
             'inventoryItem' => $inventoryItem->load([
                 'unit:id,name,symbol',
-                'batches' => fn ($query) => $query->with('location:id,name')->orderBy('expiry_date'),
-                'stockMovements' => fn ($query) => $query->with(['location:id,name', 'user:id,name'])->latest()->limit(50),
+                'batches' => fn ($query) => $query->with('inventoryLocation:id,name')->orderBy('expiry_date'),
+                'stockMovements' => fn ($query) => $query->with(['inventoryLocation:id,name', 'user:id,name'])->latest()->limit(50),
             ]),
         ]);
     }

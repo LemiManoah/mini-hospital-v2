@@ -17,7 +17,7 @@ export interface InventoryBatch {
     unit_cost: string;
     received_at: string;
     inventory_location_id: string;
-    location?: {
+    inventory_location?: {
         id: string;
         name: string;
     } | null;
@@ -31,7 +31,7 @@ export interface StockMovement {
     occurred_at: string;
     created_at: string;
     inventory_location_id: string;
-    location?: {
+    inventory_location?: {
         id: string;
         name: string;
     } | null;

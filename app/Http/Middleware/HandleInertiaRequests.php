@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\FacilityBranch;
+use App\Models\User;
 use App\Support\BranchContext;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -34,7 +37,8 @@ final class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $activeBranch = null;
-        $activeBranchModel = BranchContext::getActiveBranch($request->user());
+        $user = $request->user();
+        $activeBranchModel = BranchContext::getActiveBranch($user);
 
         if ($activeBranchModel instanceof FacilityBranch) {
             $activeBranch = [
@@ -55,21 +59,89 @@ final class HandleInertiaRequests extends Middleware
                 'reconciliationPrompt' => fn (): ?string => $request->session()->get('reconciliation_prompt'),
             ],
             'auth' => [
-                'user' => $request->user() ? [
-                    ...$request->user()->toArray(),
-                    'tenant' => $request->user()->tenant?->loadMissing([
-                        'subscriptionPackage',
-                        'currentSubscription.subscriptionPackage',
-                    ]),
-                    'active_branch_id' => BranchContext::getActiveBranchId(),
-                    'active_branch' => $activeBranch,
-                    'can' => $request->user()->getAllPermissions()->pluck('name')->mapWithKeys(
-                        fn (string $permission): array => [$permission => true]
-                    ),
-                    'roles' => $request->user()->getRoleNames(),
-                ] : null,
+                'user' => $this->sharedUser($user, $activeBranch),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+        ];
+    }
+
+    /**
+     * @param  array{id: string, name: string, branch_code: string}|null  $activeBranch
+     * @return array<string, mixed>|null
+     */
+    private function sharedUser(?User $user, ?array $activeBranch): ?array
+    {
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        $user->loadMissing([
+            'staff' => static fn (BelongsTo $query): BelongsTo => $query
+                ->select('staff.id', 'staff.first_name', 'staff.last_name'),
+            'tenant' => static fn (BelongsTo $query): BelongsTo => $query
+                ->select('tenants.id', 'tenants.name')
+                ->with([
+                    'currentSubscription' => static fn (HasOne $subscriptionQuery): HasOne => $subscriptionQuery
+                        ->select(
+                            'tenant_subscriptions.id',
+                            'tenant_subscriptions.tenant_id',
+                            'tenant_subscriptions.status',
+                            'tenant_subscriptions.trial_ends_at',
+                            'tenant_subscriptions.subscription_package_id',
+                        )
+                        ->with([
+                            'subscriptionPackage' => static fn (BelongsTo $packageQuery): BelongsTo => $packageQuery
+                                ->select(
+                                    'subscription_packages.id',
+                                    'subscription_packages.name',
+                                    'subscription_packages.price',
+                                ),
+                        ]),
+                ]),
+        ]);
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar' => $user->avatar,
+            'email_verified_at' => $user->email_verified_at,
+            'is_support' => $user->isSupportUser(),
+            'tenant' => $this->sharedTenant($user),
+            'active_branch' => $activeBranch,
+            'can' => $user->getAllPermissions()->pluck('name')->mapWithKeys(
+                fn (string $permission): array => [$permission => true]
+            ),
+            'roles' => $user->getRoleNames()->values()->all(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function sharedTenant(User $user): ?array
+    {
+        $tenant = $user->tenant;
+
+        if ($tenant === null) {
+            return null;
+        }
+
+        $currentSubscription = $tenant->currentSubscription;
+
+        return [
+            'id' => $tenant->id,
+            'name' => $tenant->name,
+            'current_subscription' => $currentSubscription ? [
+                'id' => $currentSubscription->id,
+                'status' => $currentSubscription->status,
+                'trial_ends_at' => $currentSubscription->trial_ends_at,
+                'subscription_package' => $currentSubscription->subscriptionPackage ? [
+                    'id' => $currentSubscription->subscriptionPackage->id,
+                    'name' => $currentSubscription->subscriptionPackage->name,
+                    'price' => $currentSubscription->subscriptionPackage->price,
+                ] : null,
+            ] : null,
         ];
     }
 }
