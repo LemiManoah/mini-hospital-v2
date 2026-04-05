@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Actions\PostGoodsReceipt;
-use App\Actions\PostStockAdjustment;
-use App\Actions\PostStockCount;
+use App\Actions\PostInventoryReconciliation;
 use App\Enums\GoodsReceiptStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\StockAdjustmentStatus;
-use App\Enums\StockCountStatus;
 use App\Models\GoodsReceipt;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
@@ -18,7 +16,6 @@ use App\Models\InventoryLocation;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\StockAdjustment;
-use App\Models\StockCount;
 use App\Models\Supplier;
 use App\Support\InventoryStockLedger;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
@@ -62,15 +59,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             items: $items->all(),
         );
 
-        $this->seedAdjustments(
-            tenantId: $tenant->id,
-            branchId: $mainBranch->id,
-            userId: $creator->id,
-            locations: $locations->all(),
-            items: $items->all(),
-        );
-
-        $this->seedCounts(
+        $this->seedReconciliations(
             tenantId: $tenant->id,
             branchId: $mainBranch->id,
             userId: $creator->id,
@@ -295,103 +284,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
      * @param  array<string, InventoryLocation>  $locations
      * @param  array<string, InventoryItem>  $items
      */
-    private function seedAdjustments(
-        string $tenantId,
-        string $branchId,
-        string $userId,
-        array $locations,
-        array $items,
-    ): void {
-        $pharmacyLocation = $locations['CGH-MAIN-PHARM'] ?? null;
-        $labLocation = $locations['CGH-MAIN-LAB'] ?? null;
-        $paracetamol = $items['Paracetamol'] ?? null;
-        $malariaKit = $items['Malaria Rapid Test Kit'] ?? null;
-
-        if (
-            ! $pharmacyLocation instanceof InventoryLocation
-            || ! $labLocation instanceof InventoryLocation
-            || ! $paracetamol instanceof InventoryItem
-            || ! $malariaKit instanceof InventoryItem
-        ) {
-            return;
-        }
-
-        $paracetamolBatch = InventoryBatch::query()
-            ->where('inventory_location_id', $pharmacyLocation->id)
-            ->where('inventory_item_id', $paracetamol->id)
-            ->orderBy('received_at')
-            ->first();
-
-        if ($paracetamolBatch instanceof InventoryBatch) {
-            $postedAdjustment = StockAdjustment::query()->firstOrCreate(
-                [
-                    'tenant_id' => $tenantId,
-                    'adjustment_number' => 'CGH-ADJ-001',
-                ],
-                [
-                    'branch_id' => $branchId,
-                    'inventory_location_id' => $pharmacyLocation->id,
-                    'status' => StockAdjustmentStatus::Draft,
-                    'adjustment_date' => now()->subDay()->toDateString(),
-                    'reason' => 'Damaged blister packs removed from pharmacy shelf.',
-                    'notes' => 'Seeded posted adjustment for manual inventory testing.',
-                    'created_by' => $userId,
-                    'updated_by' => $userId,
-                ],
-            );
-
-            $postedAdjustment->items()->firstOrCreate(
-                [
-                    'inventory_item_id' => $paracetamol->id,
-                ],
-                [
-                    'inventory_batch_id' => $paracetamolBatch->id,
-                    'quantity_delta' => -12,
-                    'unit_cost' => 120,
-                    'notes' => 'Packaging damaged during shelf review.',
-                ],
-            );
-
-            if ($postedAdjustment->status === StockAdjustmentStatus::Draft) {
-                resolve(PostStockAdjustment::class)->handle($postedAdjustment);
-            }
-        }
-
-        StockAdjustment::query()->firstOrCreate(
-            [
-                'tenant_id' => $tenantId,
-                'adjustment_number' => 'CGH-ADJ-002',
-            ],
-            [
-                'branch_id' => $branchId,
-                'inventory_location_id' => $labLocation->id,
-                'status' => StockAdjustmentStatus::Draft,
-                'adjustment_date' => now()->toDateString(),
-                'reason' => 'Laboratory verification stock gain awaiting post.',
-                'notes' => 'Seeded draft adjustment so the draft workflow can be tested manually.',
-                'created_by' => $userId,
-                'updated_by' => $userId,
-            ],
-        )->items()->firstOrCreate(
-            [
-                'inventory_item_id' => $malariaKit->id,
-            ],
-            [
-                'inventory_batch_id' => null,
-                'quantity_delta' => 6,
-                'unit_cost' => 9500,
-                'batch_number' => 'CGH-MRDT-ADJ-001',
-                'expiry_date' => now()->addMonths(6)->toDateString(),
-                'notes' => 'Additional kits found during shelf consolidation.',
-            ],
-        );
-    }
-
-    /**
-     * @param  array<string, InventoryLocation>  $locations
-     * @param  array<string, InventoryItem>  $items
-     */
-    private function seedCounts(
+    private function seedReconciliations(
         string $tenantId,
         string $branchId,
         string $userId,
@@ -407,79 +300,148 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
 
         $pharmacyLocation = $locations['CGH-MAIN-PHARM'] ?? null;
         $storeLocation = $locations['CGH-MAIN-STORE'] ?? null;
+        $labLocation = $locations['CGH-MAIN-LAB'] ?? null;
         $paracetamol = $items['Paracetamol'] ?? null;
         $amoxicillin = $items['Amoxicillin'] ?? null;
+        $malariaKit = $items['Malaria Rapid Test Kit'] ?? null;
 
         if (
             ! $pharmacyLocation instanceof InventoryLocation
             || ! $storeLocation instanceof InventoryLocation
+            || ! $labLocation instanceof InventoryLocation
             || ! $paracetamol instanceof InventoryItem
             || ! $amoxicillin instanceof InventoryItem
+            || ! $malariaKit instanceof InventoryItem
         ) {
             return;
         }
 
-        $postedCount = StockCount::query()->firstOrCreate(
+        $paracetamolBatch = InventoryBatch::query()
+            ->where('inventory_location_id', $pharmacyLocation->id)
+            ->where('inventory_item_id', $paracetamol->id)
+            ->orderBy('received_at')
+            ->first();
+
+        if ($paracetamolBatch instanceof InventoryBatch) {
+            $pharmacyExpected = (float) ($locationBalances[$pharmacyLocation->id.'|'.$paracetamol->id] ?? 0.0);
+
+            $postedReconciliation = StockAdjustment::query()->firstOrCreate(
+                [
+                    'tenant_id' => $tenantId,
+                    'adjustment_number' => 'CGH-REC-001',
+                ],
+                [
+                    'branch_id' => $branchId,
+                    'inventory_location_id' => $pharmacyLocation->id,
+                    'status' => StockAdjustmentStatus::Draft,
+                    'adjustment_date' => now()->subDay()->toDateString(),
+                    'reason' => 'Pharmacy shelf reconciliation after damage review.',
+                    'notes' => 'Seeded posted reconciliation for manual testing.',
+                    'submitted_by' => $userId,
+                    'submitted_at' => now()->subDay(),
+                    'reviewed_by' => $userId,
+                    'reviewed_at' => now()->subDay(),
+                    'review_notes' => 'Shelf variance confirmed during review.',
+                    'approved_by' => $userId,
+                    'approved_at' => now()->subDay(),
+                    'approval_notes' => 'Approved for posting after pharmacist review.',
+                    'created_by' => $userId,
+                    'updated_by' => $userId,
+                ],
+            );
+
+            $postedReconciliation->items()->firstOrCreate(
+                [
+                    'inventory_item_id' => $paracetamol->id,
+                ],
+                [
+                    'inventory_batch_id' => $paracetamolBatch->id,
+                    'expected_quantity' => $pharmacyExpected,
+                    'actual_quantity' => max($pharmacyExpected - 3, 0),
+                    'variance_quantity' => max($pharmacyExpected - 3, 0) - $pharmacyExpected,
+                    'quantity_delta' => max($pharmacyExpected - 3, 0) - $pharmacyExpected,
+                    'unit_cost' => 120,
+                    'notes' => 'Three packs were damaged during handling.',
+                ],
+            );
+
+            if ($postedReconciliation->status === StockAdjustmentStatus::Draft) {
+                resolve(PostInventoryReconciliation::class)->handle($postedReconciliation);
+            }
+        }
+
+        $labExpected = (float) ($locationBalances[$labLocation->id.'|'.$malariaKit->id] ?? 0.0);
+
+        $approvedReconciliation = StockAdjustment::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
-                'count_number' => 'CGH-CNT-001',
+                'adjustment_number' => 'CGH-REC-002',
             ],
             [
                 'branch_id' => $branchId,
-                'inventory_location_id' => $pharmacyLocation->id,
-                'status' => StockCountStatus::Draft,
-                'count_date' => now()->toDateString(),
-                'notes' => 'Seeded posted count for pharmacy shelf reconciliation.',
+                'inventory_location_id' => $labLocation->id,
+                'status' => StockAdjustmentStatus::Draft,
+                'adjustment_date' => now()->toDateString(),
+                'reason' => 'Laboratory shelf verification awaiting post.',
+                'notes' => 'Seeded approved reconciliation so the final posting step can be tested manually.',
+                'submitted_by' => $userId,
+                'submitted_at' => now(),
+                'reviewed_by' => $userId,
+                'reviewed_at' => now(),
+                'review_notes' => 'Review confirms additional kits were found.',
+                'approved_by' => $userId,
+                'approved_at' => now(),
+                'approval_notes' => 'Approved for posting.',
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ],
         );
 
-        $pharmacyExpected = (float) ($locationBalances[$pharmacyLocation->id.'|'.$paracetamol->id] ?? 0.0);
-
-        $postedCount->items()->firstOrCreate(
+        $approvedReconciliation->items()->firstOrCreate(
             [
-                'inventory_item_id' => $paracetamol->id,
+                'inventory_item_id' => $malariaKit->id,
             ],
             [
-                'expected_quantity' => $pharmacyExpected,
-                'counted_quantity' => max($pharmacyExpected - 3, 0),
-                'variance_quantity' => max($pharmacyExpected - 3, 0) - $pharmacyExpected,
-                'notes' => 'Three packs could not be accounted for during count.',
+                'inventory_batch_id' => null,
+                'expected_quantity' => $labExpected,
+                'actual_quantity' => $labExpected + 6,
+                'variance_quantity' => 6,
+                'quantity_delta' => 6,
+                'unit_cost' => 9500,
+                'batch_number' => 'CGH-MRDT-REC-001',
+                'expiry_date' => now()->addMonths(6)->toDateString(),
+                'notes' => 'Additional kits found during shelf consolidation.',
             ],
         );
 
-        if ($postedCount->status === StockCountStatus::Draft) {
-            resolve(PostStockCount::class)->handle($postedCount);
-        }
-
         $storeExpected = (float) ($locationBalances[$storeLocation->id.'|'.$amoxicillin->id] ?? 0.0);
 
-        $draftCount = StockCount::query()->firstOrCreate(
+        StockAdjustment::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
-                'count_number' => 'CGH-CNT-002',
+                'adjustment_number' => 'CGH-REC-003',
             ],
             [
                 'branch_id' => $branchId,
                 'inventory_location_id' => $storeLocation->id,
-                'status' => StockCountStatus::Draft,
-                'count_date' => now()->toDateString(),
-                'notes' => 'Seeded draft count so the posting flow can be tested manually.',
+                'status' => StockAdjustmentStatus::Draft,
+                'adjustment_date' => now()->toDateString(),
+                'reason' => 'Main store cycle-check draft.',
+                'notes' => 'Seeded draft reconciliation so the full workflow can be tested manually.',
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ],
-        );
-
-        $draftCount->items()->firstOrCreate(
+        )->items()->firstOrCreate(
             [
                 'inventory_item_id' => $amoxicillin->id,
             ],
             [
                 'expected_quantity' => $storeExpected,
-                'counted_quantity' => $storeExpected,
+                'actual_quantity' => $storeExpected,
                 'variance_quantity' => 0,
-                'notes' => 'Awaiting manual confirmation before post.',
+                'quantity_delta' => 0,
+                'unit_cost' => 180,
+                'notes' => 'Awaiting submit and review.',
             ],
         );
     }

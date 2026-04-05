@@ -1,0 +1,93 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Actions;
+
+use App\Enums\StockAdjustmentStatus;
+use App\Models\StockAdjustment;
+use App\Support\BranchContext;
+use App\Support\InventoryStockLedger;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+final readonly class CreateInventoryReconciliation
+{
+    public function __construct(
+        private InventoryStockLedger $inventoryStockLedger,
+    ) {}
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    public function handle(array $attributes, array $items): StockAdjustment
+    {
+        return DB::transaction(function () use ($attributes, $items): StockAdjustment {
+            $tenantId = is_string($attributes['tenant_id'] ?? null)
+                ? $attributes['tenant_id']
+                : Auth::user()?->tenantId();
+            $branchId = is_string($attributes['branch_id'] ?? null)
+                ? $attributes['branch_id']
+                : BranchContext::getActiveBranchId();
+            $locationId = (string) $attributes['inventory_location_id'];
+
+            $currentQuantities = is_string($branchId) && $branchId !== ''
+                ? $this->inventoryStockLedger
+                    ->summarizeByLocation($branchId)
+                    ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId)
+                    ->mapWithKeys(static fn (array $balance): array => [
+                        $balance['inventory_item_id'] => $balance['quantity'],
+                    ])
+                : collect();
+
+            $reconciliation = StockAdjustment::query()->create([
+                'tenant_id' => $tenantId,
+                'branch_id' => $branchId,
+                'inventory_location_id' => $locationId,
+                'adjustment_number' => $this->generateReconciliationNumber($tenantId),
+                'status' => StockAdjustmentStatus::Draft,
+                'adjustment_date' => $attributes['reconciliation_date'],
+                'reason' => $attributes['reason'],
+                'notes' => ($attributes['notes'] ?? '') !== '' ? $attributes['notes'] : null,
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
+            ]);
+
+            foreach ($items as $item) {
+                $inventoryItemId = (string) $item['inventory_item_id'];
+                $expectedQuantity = (float) ($currentQuantities[$inventoryItemId] ?? 0.0);
+                $actualQuantity = (float) $item['actual_quantity'];
+                $varianceQuantity = $actualQuantity - $expectedQuantity;
+
+                $reconciliation->items()->create([
+                    'inventory_item_id' => $inventoryItemId,
+                    'inventory_batch_id' => ($item['inventory_batch_id'] ?? '') !== '' ? $item['inventory_batch_id'] : null,
+                    'expected_quantity' => $expectedQuantity,
+                    'actual_quantity' => $actualQuantity,
+                    'variance_quantity' => $varianceQuantity,
+                    'quantity_delta' => $varianceQuantity,
+                    'unit_cost' => $item['unit_cost'],
+                    'batch_number' => ($item['batch_number'] ?? '') !== '' ? $item['batch_number'] : null,
+                    'expiry_date' => ($item['expiry_date'] ?? '') !== '' ? $item['expiry_date'] : null,
+                    'notes' => ($item['notes'] ?? '') !== '' ? $item['notes'] : null,
+                ]);
+            }
+
+            return $reconciliation->refresh()->load('items.inventoryItem', 'items.inventoryBatch', 'inventoryLocation');
+        });
+    }
+
+    private function generateReconciliationNumber(?string $tenantId): string
+    {
+        do {
+            $reconciliationNumber = 'REC-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
+        } while (
+            $tenantId !== null
+            && StockAdjustment::query()->where('tenant_id', $tenantId)->where('adjustment_number', $reconciliationNumber)->exists()
+        );
+
+        return $reconciliationNumber;
+    }
+}
