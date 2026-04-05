@@ -20,7 +20,7 @@ What already exists:
 - supplier, purchase order, and goods receipt workflows now exist
 - posted goods receipts now create inventory batches and stock movements
 - stock-by-location and stock movement visibility pages now exist
-- stock counts and stock adjustments now exist for controlled reconciliation
+- user-facing inventory reconciliations now exist for controlled stock correction and review
 - City General Hospital main branch now has seeded inventory workflow data for manual testing
 
 What does not yet exist:
@@ -28,7 +28,7 @@ What does not yet exist:
 - pharmacy store workflow
 - branch-to-branch or store-to-store transfers
 - departmental requisitions and issue workflow
-- stock counts, cycle counts, expiry or damage write-offs, and reconciliation tooling
+- cycle counts, expiry or damage write-offs, and deeper reconciliation tooling
 - dispensing records tied to real stock depletion
 - reorder levels, alerts, and inventory reporting
 
@@ -85,7 +85,7 @@ The inventory module should be considered complete when all of the following are
 - stock can be received through supplier purchasing and goods receipt
 - stock is tracked per batch with expiry support
 - all stock changes are auditable through a movement ledger
-- users can perform adjustments, counts, and reconciliations safely
+- users can perform reconciliations safely with review and approval workflow
 - departments can request stock and stores can issue it
 - branches or stores can transfer stock between locations
 - prescriptions can be dispensed against available stock
@@ -120,7 +120,7 @@ This module should cover four connected areas, not only pharmacy:
 - requisitions from departments
 - store issues
 - inter-store transfers
-- stock counts and adjustments
+- reconciliations
 - expiry, loss, damage, and return workflows
 
 ### 4.4 Pharmacy Operations
@@ -148,10 +148,8 @@ The exact names can change later, but the module should roughly center on the fo
 
 - `InventoryBatch` -> `inventory_batches`
 - `StockMovement` -> `stock_movements`
-- `StockAdjustment` -> `stock_adjustments`
-- `StockAdjustmentItem` -> `stock_adjustment_items`
-- `StockCount` -> `stock_counts`
-- `StockCountItem` -> `stock_count_items`
+- `InventoryReconciliation` -> user-facing workflow currently backed by `stock_adjustments`
+- reconciliation line items -> currently backed by `stock_adjustment_items`
 
 ### Procurement
 
@@ -250,9 +248,9 @@ The exact names can change later, but the module should roughly center on the fo
 
 ## 6.3 Stock Corrections
 
-1. Start stock count or adjustment
-2. Record counted quantity or correction reason
-3. Require review/approval for sensitive adjustments
+1. Start reconciliation
+2. Record actual quantity found or the correction being applied
+3. Require review/approval before posting balancing movements
 4. Post balancing stock movements
 5. Preserve before/after values for audit
 
@@ -307,8 +305,7 @@ The inventory module should feel like a real operational workspace, not a collec
 - receipts
 - requisitions
 - transfers
-- stock counts
-- adjustments
+- reconciliations
 - pharmacy queue
 - dispensing history
 - reports and alerts
@@ -328,8 +325,7 @@ The inventory module should feel like a real operational workspace, not a collec
 - `inventory/stock-by-location`
 - `inventory/requisitions/index`
 - `inventory/transfers/index`
-- `inventory/counts/index`
-- `inventory/adjustments/index`
+- `inventory/reconciliations/index`
 - `pharmacy/queue`
 - `pharmacy/prescriptions/{prescription}`
 - `pharmacy/dispenses/index`
@@ -362,8 +358,7 @@ Recommended permissions:
 - `inventory.suppliers.manage`
 - `inventory.purchases.manage`
 - `inventory.receipts.manage`
-- `inventory.adjustments.manage`
-- `inventory.counts.manage`
+- `inventory.reconciliations.manage`
 - `inventory.requisitions.manage`
 - `inventory.transfers.manage`
 - `inventory.reports.view`
@@ -413,7 +408,7 @@ Branch isolation should follow the same active-branch approach already used else
 - [x] Milestone 0 completed: surrounding foundations already exist (`InventoryItem`, `Prescription`, branch scoping, billing base)
 - [ ] Milestone 1 in progress: inventory foundations and stock catalog
 - [x] Milestone 2 completed: suppliers, purchase orders, and goods receipt
-- [ ] Milestone 3 in progress: stock ledger, balances, counts, and adjustments
+- [ ] Milestone 3 in progress: stock ledger, balances, and reconciliations
 - [ ] Milestone 4 pending: requisitions and inter-store transfers
 - [ ] Milestone 5 pending: pharmacy dispensing workflow
 - [ ] Milestone 6 pending: alerts, reporting, permissions, and audit coverage
@@ -519,7 +514,7 @@ The procurement workflow is now complete from supplier through posted receipt, a
 - new stock enters the system through auditable receipts
 - received stock is batch-aware and priced at receipt time
 
-## Milestone 3: Stock Ledger, Balances, Counts, And Adjustments
+## Milestone 3: Stock Ledger, Balances, And Reconciliations
 
 ### Objective
 
@@ -531,19 +526,18 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 - `StockMovement`
 - stock balance calculation
 - stock-by-location visibility page
-- stock adjustments
-- stock counts / cycle counts
+- reconciliations with review and approval workflow
+- cycle counts
 - expiry and damaged stock write-off support
 
 ### Milestone Checklist
 
 - [x] Create `inventory_batches`
 - [x] Create `stock_movements`
-- [x] Create `stock_adjustments` and related items
-- [x] Create `stock_counts` and related items
+- [x] Create reconciliation records and related items on top of stock-ledger storage
 - [x] Build stock summary queries by item, batch, and location
 - [x] Add stock-by-location page showing each item's quantity across locations
-- [ ] Add adjustment reasons and approval rules
+- [x] Add reconciliation review and approval rules
 - [ ] Add cycle count workflow
 - [ ] Add expiry and damage write-off workflow
 - [x] Add movement history page
@@ -556,7 +550,7 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 
 ### Current Status
 
-The stock ledger foundation is now in place. Posted goods receipts create `InventoryBatch` and `StockMovement` records, the stock-by-location matrix reads from movement-backed balances, a stock movement history page is available for branch users, and both stock adjustments and stock counts can now be created and posted to reconcile inventory against the ledger. City General Hospital main branch also has seeded inventory users and workflow data so the milestone 3 surfaces can be exercised manually after seeding. Milestone 3 is still not complete, because cycle-count workflow, adjustment approval rules, and expiry or damage write-off tooling are still outstanding.
+The stock ledger foundation is now in place. Posted goods receipts create `InventoryBatch` and `StockMovement` records, the stock-by-location matrix reads from movement-backed balances, a stock movement history page is available for branch users, and user-facing reconciliations now cover both count-style and correction-style stock variance with submit, review, approve, reject, and post steps. City General Hospital main branch also has seeded inventory users and workflow data so the milestone 3 surfaces can be exercised manually after seeding. Milestone 3 is still not complete, because dedicated cycle-count workflow and expiry or damage write-off tooling are still outstanding.
 
 ## Milestone 4: Requisitions And Inter-Store Transfers
 
@@ -704,7 +698,7 @@ The safest implementation order is:
 1. inventory catalog and locations
 2. suppliers and purchasing
 3. receipt-driven stock movements and batches
-4. stock counts and adjustments
+4. reconciliations
 5. requisitions and transfers
 6. pharmacy dispensing
 7. alerts, reporting, and test hardening
