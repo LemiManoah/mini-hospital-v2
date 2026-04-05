@@ -16,8 +16,10 @@ final class StockAdjustmentItem extends Model
 
     use HasUuids;
 
+    protected $table = 'stock_reconciliation_items';
+
     protected $casts = [
-        'stock_adjustment_id' => 'string',
+        'stock_reconciliation_id' => 'string',
         'inventory_item_id' => 'string',
         'inventory_batch_id' => 'string',
         'expected_quantity' => 'decimal:3',
@@ -30,7 +32,7 @@ final class StockAdjustmentItem extends Model
 
     public function stockAdjustment(): BelongsTo
     {
-        return $this->belongsTo(StockAdjustment::class);
+        return $this->belongsTo(StockAdjustment::class, 'stock_reconciliation_id');
     }
 
     public function inventoryItem(): BelongsTo

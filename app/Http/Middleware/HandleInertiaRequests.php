@@ -50,6 +50,9 @@ final class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn (): ?string => $request->session()->get('success'),
                 'error' => fn (): ?string => $request->session()->get('error'),
+                'info' => fn (): ?string => $request->session()->get('info'),
+                'warning' => fn (): ?string => $request->session()->get('warning'),
+                'reconciliationPrompt' => fn (): ?string => $request->session()->get('reconciliation_prompt'),
             ],
             'auth' => [
                 'user' => $request->user() ? [

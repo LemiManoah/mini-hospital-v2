@@ -25,6 +25,8 @@ final class StockAdjustment extends Model
     use HasUuids;
     use SoftDeletes;
 
+    protected $table = 'stock_reconciliations';
+
     protected $casts = [
         'tenant_id' => 'string',
         'branch_id' => 'string',
@@ -52,7 +54,7 @@ final class StockAdjustment extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(StockAdjustmentItem::class);
+        return $this->hasMany(StockAdjustmentItem::class, 'stock_reconciliation_id');
     }
 
     public function workflowStatus(): string

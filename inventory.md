@@ -148,8 +148,8 @@ The exact names can change later, but the module should roughly center on the fo
 
 - `InventoryBatch` -> `inventory_batches`
 - `StockMovement` -> `stock_movements`
-- `InventoryReconciliation` -> user-facing workflow currently backed by `stock_adjustments`
-- reconciliation line items -> currently backed by `stock_adjustment_items`
+- `InventoryReconciliation` -> user-facing workflow currently backed by `stock_reconciliations`
+- reconciliation line items -> currently backed by `stock_reconciliation_items`
 
 ### Procurement
 

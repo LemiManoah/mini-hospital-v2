@@ -14,7 +14,6 @@ import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type GoodsReceiptShowPageProps } from '@/types/goods-receipt';
 import { Head, Link, router } from '@inertiajs/react';
-import { toast } from 'sonner';
 
 const labelize = (value: string): string =>
     value
@@ -33,16 +32,7 @@ export default function GoodsReceiptShow({
     ];
 
     const handlePost = () => {
-        router.post(
-            `/goods-receipts/${gr.id}/post`,
-            {},
-            {
-                onSuccess: () =>
-                    toast.success(
-                        'Goods receipt posted. Stock quantities updated.',
-                    ),
-            },
-        );
+        router.post(`/goods-receipts/${gr.id}/post`);
     };
 
     return (
@@ -57,8 +47,7 @@ export default function GoodsReceiptShow({
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             PO: {gr.purchase_order?.order_number ?? '-'} |
-                            Supplier:{' '}
-                            {gr.purchase_order?.supplier?.name ?? '-'}
+                            Supplier: {gr.purchase_order?.supplier?.name ?? '-'}
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -131,9 +120,7 @@ export default function GoodsReceiptShow({
                 </div>
 
                 <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <h2 className="mb-4 text-lg font-medium">
-                        Received Items
-                    </h2>
+                    <h2 className="mb-4 text-lg font-medium">Received Items</h2>
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>

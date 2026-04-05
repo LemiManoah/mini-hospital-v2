@@ -10,7 +10,6 @@ import { type InventoryItemFormPageProps } from '@/types/inventory-item';
 import { Form, Head, Link } from '@inertiajs/react';
 import { LoaderCircle, PlusCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '/inventory/dashboard' },
@@ -56,11 +55,6 @@ export default function InventoryItemCreate({
                     <Form
                         action="/inventory-items"
                         method="post"
-                        onSuccess={() =>
-                            toast.success(
-                                'Inventory item created successfully.',
-                            )
-                        }
                         className="space-y-6"
                     >
                         {({ processing, errors }) => (
@@ -173,15 +167,15 @@ export default function InventoryItemCreate({
                                                 <SearchableSelect
                                                     options={dosageForms}
                                                     value={dosageForm}
-                                                    onValueChange={setDosageForm}
+                                                    onValueChange={
+                                                        setDosageForm
+                                                    }
                                                     placeholder="Select a dosage form"
                                                     emptyMessage="No dosage forms found."
                                                     allowClear
                                                 />
                                                 <InputError
-                                                    message={
-                                                        errors.dosage_form
-                                                    }
+                                                    message={errors.dosage_form}
                                                 />
                                             </div>
 
@@ -252,9 +246,7 @@ export default function InventoryItemCreate({
                                             defaultValue="0"
                                         />
                                         <InputError
-                                            message={
-                                                errors.minimum_stock_level
-                                            }
+                                            message={errors.minimum_stock_level}
                                         />
                                     </div>
 
@@ -354,7 +346,11 @@ export default function InventoryItemCreate({
                                         )}
                                         Create Inventory Item
                                     </Button>
-                                    <Button variant="ghost" type="button" asChild>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        asChild
+                                    >
                                         <Link href="/inventory-items">
                                             Cancel
                                         </Link>

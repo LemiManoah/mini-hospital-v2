@@ -69,11 +69,6 @@ final class InventoryItem extends Model
         return $this->hasMany(StockAdjustmentItem::class);
     }
 
-    public function stockCountItems(): HasMany
-    {
-        return $this->hasMany(StockCountItem::class);
-    }
-
     public function prescriptionItems(): HasMany
     {
         return $this->hasMany(PrescriptionItem::class, 'inventory_item_id');

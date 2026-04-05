@@ -1,8 +1,15 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Table,
     TableBody,
@@ -11,20 +18,23 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate, formatDateTime } from '@/lib/date';
 import { usePermissions } from '@/lib/permissions';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type SharedData } from '@/types';
 import { type InventoryReconciliationShowPageProps } from '@/types/inventory-reconciliation';
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { toast } from 'sonner';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 const labelize = (value: string): string =>
     value
         .replaceAll('_', ' ')
         .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-const badgeVariant = (status: string): 'default' | 'secondary' | 'destructive' =>
+const badgeVariant = (
+    status: string,
+): 'default' | 'secondary' | 'destructive' =>
     status === 'posted'
         ? 'default'
         : status === 'rejected'
@@ -35,6 +45,7 @@ export default function InventoryReconciliationShow({
     reconciliation,
 }: InventoryReconciliationShowPageProps) {
     const { hasPermission } = usePermissions();
+    const { flash } = usePage<SharedData>().props;
 
     const reviewForm = useForm({
         review_notes: reconciliation.review_notes ?? '',
@@ -45,6 +56,10 @@ export default function InventoryReconciliationShow({
     const rejectionForm = useForm({
         rejection_reason: reconciliation.rejection_reason ?? '',
     });
+    const submitForm = useForm({});
+    const postForm = useForm({});
+    const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+    const [postDialogOpen, setPostDialogOpen] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Inventory', href: '/inventory/dashboard' },
@@ -57,11 +72,201 @@ export default function InventoryReconciliationShow({
 
     const canUpdate = hasPermission('stock_adjustments.update');
 
+    useEffect(() => {
+        if (flash?.reconciliationPrompt === 'submit') {
+            setSubmitDialogOpen(true);
+        }
+
+        if (flash?.reconciliationPrompt === 'post') {
+            setPostDialogOpen(true);
+        }
+    }, [flash?.reconciliationPrompt]);
+
+    const lineRows = reconciliation.items ?? [];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Reconciliation: ${reconciliation.adjustment_number}`} />
+            <Head
+                title={`Reconciliation: ${reconciliation.adjustment_number}`}
+            />
 
             <div className="m-4 max-w-7xl space-y-6">
+                <Dialog
+                    open={submitDialogOpen}
+                    onOpenChange={setSubmitDialogOpen}
+                >
+                    <DialogContent className="sm:max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle>
+                                Submit Reconciliation For Review?
+                            </DialogTitle>
+                            <DialogDescription>
+                                Review the old and new quantities below, then
+                                submit this reconciliation. Submitting does not
+                                change stock yet. It sends the record into the
+                                review and approval workflow so another user can
+                                confirm it before posting.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Item</TableHead>
+                                        <TableHead className="text-right">
+                                            Old Qty
+                                        </TableHead>
+                                        <TableHead className="text-right">
+                                            New Qty
+                                        </TableHead>
+                                        <TableHead className="text-right">
+                                            Variance
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {lineRows.map((item) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="font-medium">
+                                                {item.inventory_item
+                                                    ?.generic_name ??
+                                                    item.inventory_item?.name ??
+                                                    '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {Number(
+                                                    item.expected_quantity ?? 0,
+                                                ).toFixed(3)}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {Number(
+                                                    item.actual_quantity ??
+                                                        item.expected_quantity ??
+                                                        0,
+                                                ).toFixed(3)}
+                                            </TableCell>
+                                            <TableCell className="text-right font-medium">
+                                                {Number(
+                                                    item.variance_quantity ??
+                                                        item.quantity_delta,
+                                                ).toFixed(3)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setSubmitDialogOpen(false)}
+                            >
+                                Keep Draft
+                            </Button>
+                            <Button
+                                type="button"
+                                disabled={submitForm.processing}
+                                onClick={() =>
+                                    submitForm.post(
+                                        `/reconciliations/${reconciliation.id}/submit`,
+                                    )
+                                }
+                            >
+                                Submit For Review
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={postDialogOpen} onOpenChange={setPostDialogOpen}>
+                    <DialogContent className="sm:max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle>
+                                Post Approved Reconciliation?
+                            </DialogTitle>
+                            <DialogDescription>
+                                Posting will create the final stock movements
+                                for the variances below and immediately update
+                                balances for this location. Only post when the
+                                approval is fully confirmed.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Item</TableHead>
+                                        <TableHead className="text-right">
+                                            Old Qty
+                                        </TableHead>
+                                        <TableHead className="text-right">
+                                            New Qty
+                                        </TableHead>
+                                        <TableHead className="text-right">
+                                            Variance
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {lineRows.map((item) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="font-medium">
+                                                {item.inventory_item
+                                                    ?.generic_name ??
+                                                    item.inventory_item?.name ??
+                                                    '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {Number(
+                                                    item.expected_quantity ?? 0,
+                                                ).toFixed(3)}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {Number(
+                                                    item.actual_quantity ??
+                                                        item.expected_quantity ??
+                                                        0,
+                                                ).toFixed(3)}
+                                            </TableCell>
+                                            <TableCell className="text-right font-medium">
+                                                {Number(
+                                                    item.variance_quantity ??
+                                                        item.quantity_delta,
+                                                ).toFixed(3)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setPostDialogOpen(false)}
+                            >
+                                Not Yet
+                            </Button>
+                            <Button
+                                type="button"
+                                disabled={postForm.processing}
+                                onClick={() =>
+                                    postForm.post(
+                                        `/reconciliations/${reconciliation.id}/post`,
+                                    )
+                                }
+                            >
+                                Post Reconciliation
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold">
@@ -124,7 +329,9 @@ export default function InventoryReconciliationShow({
                             <span className="text-sm text-muted-foreground">
                                 Notes
                             </span>
-                            <p className="mt-1">{reconciliation.notes ?? '-'}</p>
+                            <p className="mt-1">
+                                {reconciliation.notes ?? '-'}
+                            </p>
                         </div>
                         <div>
                             <span className="text-sm text-muted-foreground">
@@ -133,7 +340,9 @@ export default function InventoryReconciliationShow({
                             <div className="mt-1 space-y-1 text-sm">
                                 <p>
                                     Submitted:{' '}
-                                    {formatDateTime(reconciliation.submitted_at)}
+                                    {formatDateTime(
+                                        reconciliation.submitted_at,
+                                    )}
                                 </p>
                                 <p>
                                     Reviewed:{' '}
@@ -156,7 +365,9 @@ export default function InventoryReconciliationShow({
                             <span className="text-sm text-muted-foreground">
                                 Review Notes
                             </span>
-                            <p className="mt-1">{reconciliation.review_notes ?? '-'}</p>
+                            <p className="mt-1">
+                                {reconciliation.review_notes ?? '-'}
+                            </p>
                         </div>
                         <div>
                             <span className="text-sm text-muted-foreground">
@@ -181,18 +392,7 @@ export default function InventoryReconciliationShow({
                             {reconciliation.can_submit ? (
                                 <Button
                                     size="sm"
-                                    onClick={() =>
-                                        router.post(
-                                            `/reconciliations/${reconciliation.id}/submit`,
-                                            {},
-                                            {
-                                                onSuccess: () =>
-                                                    toast.success(
-                                                        'Reconciliation submitted for review.',
-                                                    ),
-                                            },
-                                        )
-                                    }
+                                    onClick={() => setSubmitDialogOpen(true)}
                                 >
                                     Submit For Review
                                 </Button>
@@ -205,12 +405,6 @@ export default function InventoryReconciliationShow({
                                         event.preventDefault();
                                         reviewForm.post(
                                             `/reconciliations/${reconciliation.id}/review`,
-                                            {
-                                                onSuccess: () =>
-                                                    toast.success(
-                                                        'Reconciliation reviewed.',
-                                                    ),
-                                            },
                                         );
                                     }}
                                 >
@@ -243,12 +437,6 @@ export default function InventoryReconciliationShow({
                                         event.preventDefault();
                                         approvalForm.post(
                                             `/reconciliations/${reconciliation.id}/approve`,
-                                            {
-                                                onSuccess: () =>
-                                                    toast.success(
-                                                        'Reconciliation approved.',
-                                                    ),
-                                            },
                                         );
                                     }}
                                 >
@@ -281,12 +469,6 @@ export default function InventoryReconciliationShow({
                                         event.preventDefault();
                                         rejectionForm.post(
                                             `/reconciliations/${reconciliation.id}/reject`,
-                                            {
-                                                onSuccess: () =>
-                                                    toast.success(
-                                                        'Reconciliation rejected.',
-                                                    ),
-                                            },
                                         );
                                     }}
                                 >
@@ -295,7 +477,9 @@ export default function InventoryReconciliationShow({
                                     </Label>
                                     <Input
                                         id="rejection_reason"
-                                        value={rejectionForm.data.rejection_reason}
+                                        value={
+                                            rejectionForm.data.rejection_reason
+                                        }
                                         onChange={(event) =>
                                             rejectionForm.setData(
                                                 'rejection_reason',
@@ -318,18 +502,7 @@ export default function InventoryReconciliationShow({
                             {reconciliation.can_post ? (
                                 <Button
                                     size="sm"
-                                    onClick={() =>
-                                        router.post(
-                                            `/reconciliations/${reconciliation.id}/post`,
-                                            {},
-                                            {
-                                                onSuccess: () =>
-                                                    toast.success(
-                                                        'Reconciliation posted. Inventory balances updated.',
-                                                    ),
-                                            },
-                                        )
-                                    }
+                                    onClick={() => setPostDialogOpen(true)}
                                 >
                                     Post Reconciliation
                                 </Button>
@@ -364,15 +537,17 @@ export default function InventoryReconciliationShow({
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {reconciliation.items?.map((item) => (
+                                {lineRows.map((item) => (
                                     <TableRow key={item.id}>
                                         <TableCell className="font-medium">
-                                            {item.inventory_item?.generic_name ??
+                                            {item.inventory_item
+                                                ?.generic_name ??
                                                 item.inventory_item?.name ??
                                                 '-'}
                                         </TableCell>
                                         <TableCell>
-                                            {item.inventory_batch?.batch_number ??
+                                            {item.inventory_batch
+                                                ?.batch_number ??
                                                 item.batch_number ??
                                                 '-'}
                                         </TableCell>
@@ -398,15 +573,14 @@ export default function InventoryReconciliationShow({
                                             {item.unit_cost !== null
                                                 ? Number(
                                                       item.unit_cost,
-                                                  ).toLocaleString(
-                                                      undefined,
-                                                      {
-                                                          minimumFractionDigits: 2,
-                                                      },
-                                                  )
+                                                  ).toLocaleString(undefined, {
+                                                      minimumFractionDigits: 2,
+                                                  })
                                                 : '-'}
                                         </TableCell>
-                                        <TableCell>{item.notes ?? '-'}</TableCell>
+                                        <TableCell>
+                                            {item.notes ?? '-'}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

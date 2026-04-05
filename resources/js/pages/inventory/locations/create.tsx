@@ -10,7 +10,6 @@ import { type InventoryLocationFormPageProps } from '@/types/inventory-location'
 import { Form, Head, Link } from '@inertiajs/react';
 import { LoaderCircle, PlusCircle } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '/inventory/dashboard' },
@@ -46,11 +45,6 @@ export default function InventoryLocationCreate({
                     <Form
                         action="/inventory-locations"
                         method="post"
-                        onSuccess={() =>
-                            toast.success(
-                                'Inventory location created successfully.',
-                            )
-                        }
                         className="space-y-6"
                     >
                         {({ processing, errors }) => (
@@ -147,7 +141,11 @@ export default function InventoryLocationCreate({
                                         )}
                                         Create Location
                                     </Button>
-                                    <Button variant="ghost" type="button" asChild>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        asChild
+                                    >
                                         <Link href="/inventory-locations">
                                             Cancel
                                         </Link>

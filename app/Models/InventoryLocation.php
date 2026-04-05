@@ -55,11 +55,6 @@ final class InventoryLocation extends Model
         return $this->hasMany(StockAdjustment::class);
     }
 
-    public function stockCounts(): HasMany
-    {
-        return $this->hasMany(StockCount::class);
-    }
-
     public function items(): BelongsToMany
     {
         return $this->belongsToMany(InventoryItem::class, 'inventory_location_items')

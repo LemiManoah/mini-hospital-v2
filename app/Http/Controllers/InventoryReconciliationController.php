@@ -146,7 +146,8 @@ final readonly class InventoryReconciliationController implements HasMiddleware
         $reconciliation = $action->handle($validated, $items);
 
         return to_route('reconciliations.show', $reconciliation)
-            ->with('success', 'Reconciliation created successfully.');
+            ->with('success', 'Reconciliation created successfully.')
+            ->with('reconciliation_prompt', 'submit');
     }
 
     public function show(StockAdjustment $reconciliation): Response
@@ -191,7 +192,8 @@ final readonly class InventoryReconciliationController implements HasMiddleware
         $action->handle($reconciliation, $validated['approval_notes'] ?? null);
 
         return to_route('reconciliations.show', $reconciliation)
-            ->with('success', 'Reconciliation approved and ready to post.');
+            ->with('success', 'Reconciliation approved and ready to post.')
+            ->with('reconciliation_prompt', 'post');
     }
 
     public function reject(Request $request, StockAdjustment $reconciliation, RejectInventoryReconciliation $action): RedirectResponse

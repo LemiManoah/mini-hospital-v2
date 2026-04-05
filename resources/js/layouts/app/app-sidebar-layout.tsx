@@ -22,7 +22,15 @@ export default function AppSidebarLayout({
         if (flash?.error) {
             toast.error(flash.error);
         }
-    }, [flash?.error, flash?.success]);
+
+        if (flash?.info) {
+            toast.info(flash.info);
+        }
+
+        if (flash?.warning) {
+            toast.warning(flash.warning);
+        }
+    }, [flash?.error, flash?.info, flash?.success, flash?.warning]);
 
     return (
         <AppShell variant="sidebar">

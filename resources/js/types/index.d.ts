@@ -28,6 +28,9 @@ export interface SharedData {
     flash?: {
         success?: string | null;
         error?: string | null;
+        info?: string | null;
+        warning?: string | null;
+        reconciliationPrompt?: string | null;
     };
     sidebarOpen: boolean;
     [key: string]: unknown;

@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('stock_adjustments', function (Blueprint $table): void {
+        Schema::table('stock_reconciliations', function (Blueprint $table): void {
             $table->foreignUuid('submitted_by')->nullable()->after('updated_by')->constrained('users')->nullOnDelete();
             $table->timestamp('submitted_at')->nullable()->after('submitted_by');
             $table->foreignUuid('reviewed_by')->nullable()->after('submitted_at')->constrained('users')->nullOnDelete();
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->text('rejection_reason')->nullable()->after('rejected_at');
         });
 
-        Schema::table('stock_adjustment_items', function (Blueprint $table): void {
+        Schema::table('stock_reconciliation_items', function (Blueprint $table): void {
             $table->decimal('expected_quantity', 14, 3)->nullable()->after('inventory_batch_id');
             $table->decimal('actual_quantity', 14, 3)->nullable()->after('expected_quantity');
             $table->decimal('variance_quantity', 14, 3)->nullable()->after('actual_quantity');
@@ -33,11 +33,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('stock_adjustment_items', function (Blueprint $table): void {
+        Schema::table('stock_reconciliation_items', function (Blueprint $table): void {
             $table->dropColumn(['expected_quantity', 'actual_quantity', 'variance_quantity']);
         });
 
-        Schema::table('stock_adjustments', function (Blueprint $table): void {
+        Schema::table('stock_reconciliations', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('submitted_by');
             $table->dropColumn('submitted_at');
             $table->dropConstrainedForeignId('reviewed_by');

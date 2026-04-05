@@ -4,7 +4,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Table,
     TableBody,
@@ -13,13 +12,13 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryReconciliationFormPageProps } from '@/types/inventory-reconciliation';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, LoaderCircle, PlusCircle, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '/inventory/dashboard' },
@@ -74,7 +73,8 @@ export default function InventoryReconciliationCreate({
     const locationBalanceFor = (inventoryItemId: string): number => {
         const balance = locationBalances.find(
             (entry) =>
-                entry.inventory_location_id === form.data.inventory_location_id &&
+                entry.inventory_location_id ===
+                    form.data.inventory_location_id &&
                 entry.inventory_item_id === inventoryItemId,
         );
 
@@ -132,9 +132,7 @@ export default function InventoryReconciliationCreate({
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        form.post('/reconciliations', {
-            onSuccess: () => toast.success('Reconciliation created successfully.'),
-        });
+        form.post('/reconciliations');
     };
 
     return (
@@ -148,9 +146,9 @@ export default function InventoryReconciliationCreate({
                             Create Reconciliation
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Record the actual quantity found for each item in one
-                            location. The system will calculate the variance for
-                            review, approval, and posting.
+                            Record the actual quantity found for each item in
+                            one location. The system will calculate the variance
+                            for review, approval, and posting.
                         </p>
                         <p className="text-sm text-muted-foreground">
                             The reconciliation number will be generated
@@ -222,7 +220,10 @@ export default function InventoryReconciliationCreate({
                                     id="reason"
                                     value={form.data.reason}
                                     onChange={(event) =>
-                                        form.setData('reason', event.target.value)
+                                        form.setData(
+                                            'reason',
+                                            event.target.value,
+                                        )
                                     }
                                     placeholder="Cycle count, damage, expiry, shelf verification, opening balance..."
                                     required
@@ -237,7 +238,10 @@ export default function InventoryReconciliationCreate({
                                     rows={2}
                                     value={form.data.notes}
                                     onChange={(event) =>
-                                        form.setData('notes', event.target.value)
+                                        form.setData(
+                                            'notes',
+                                            event.target.value,
+                                        )
                                     }
                                 />
                                 <InputError message={form.errors.notes} />
@@ -273,7 +277,9 @@ export default function InventoryReconciliationCreate({
                             <Table className="min-w-[1280px]">
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-56">Item</TableHead>
+                                        <TableHead className="w-56">
+                                            Item
+                                        </TableHead>
                                         <TableHead className="w-28 text-right">
                                             System Qty
                                         </TableHead>
@@ -322,10 +328,14 @@ export default function InventoryReconciliationCreate({
                                                         value={
                                                             line.inventory_item_id
                                                         }
-                                                        onValueChange={(value) =>
+                                                        onValueChange={(
+                                                            value,
+                                                        ) =>
                                                             replaceLine(
                                                                 index,
-                                                                (currentLine) => {
+                                                                (
+                                                                    currentLine,
+                                                                ) => {
                                                                     const item =
                                                                         inventoryItems.find(
                                                                             (
@@ -368,7 +378,7 @@ export default function InventoryReconciliationCreate({
                                                         }
                                                     />
                                                 </TableCell>
-                                                <TableCell className="align-top text-right font-medium">
+                                                <TableCell className="text-right align-top font-medium">
                                                     {systemQty.toFixed(3)}
                                                 </TableCell>
                                                 <TableCell className="align-top">
@@ -383,7 +393,8 @@ export default function InventoryReconciliationCreate({
                                                             updateLine(
                                                                 index,
                                                                 'actual_quantity',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         placeholder="Actual quantity"
@@ -396,7 +407,7 @@ export default function InventoryReconciliationCreate({
                                                         }
                                                     />
                                                 </TableCell>
-                                                <TableCell className="align-top text-right font-medium">
+                                                <TableCell className="text-right align-top font-medium">
                                                     {variance.toFixed(3)}
                                                 </TableCell>
                                                 <TableCell className="align-top">
@@ -413,7 +424,9 @@ export default function InventoryReconciliationCreate({
                                                         value={
                                                             line.inventory_batch_id
                                                         }
-                                                        onValueChange={(value) =>
+                                                        onValueChange={(
+                                                            value,
+                                                        ) =>
                                                             updateLine(
                                                                 index,
                                                                 'inventory_batch_id',
@@ -441,7 +454,8 @@ export default function InventoryReconciliationCreate({
                                                             updateLine(
                                                                 index,
                                                                 'unit_cost',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                     />
@@ -455,12 +469,15 @@ export default function InventoryReconciliationCreate({
                                                 </TableCell>
                                                 <TableCell className="align-top">
                                                     <Input
-                                                        value={line.batch_number}
+                                                        value={
+                                                            line.batch_number
+                                                        }
                                                         onChange={(event) =>
                                                             updateLine(
                                                                 index,
                                                                 'batch_number',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         placeholder="Optional for gains"
@@ -481,7 +498,8 @@ export default function InventoryReconciliationCreate({
                                                             updateLine(
                                                                 index,
                                                                 'expiry_date',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                     />
@@ -501,7 +519,8 @@ export default function InventoryReconciliationCreate({
                                                             updateLine(
                                                                 index,
                                                                 'notes',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         placeholder="Optional line note"
@@ -514,7 +533,7 @@ export default function InventoryReconciliationCreate({
                                                         }
                                                     />
                                                 </TableCell>
-                                                <TableCell className="align-top text-right">
+                                                <TableCell className="text-right align-top">
                                                     <Button
                                                         type="button"
                                                         size="icon"
@@ -537,7 +556,9 @@ export default function InventoryReconciliationCreate({
                     <div className="flex gap-3">
                         <Button
                             type="submit"
-                            disabled={form.processing || form.data.items.length === 0}
+                            disabled={
+                                form.processing || form.data.items.length === 0
+                            }
                         >
                             {form.processing ? (
                                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />

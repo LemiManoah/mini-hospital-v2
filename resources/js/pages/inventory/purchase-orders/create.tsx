@@ -3,7 +3,6 @@ import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Table,
     TableBody,
@@ -12,12 +11,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type PurchaseOrderFormPageProps } from '@/types/purchase-order';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { LoaderCircle, PlusCircle, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '/inventory/dashboard' },
@@ -40,7 +39,9 @@ export default function PurchaseOrderCreate({
         order_date: new Date().toISOString().split('T')[0],
         expected_delivery_date: '',
         notes: '',
-        items: [{ inventory_item_id: '', quantity_ordered: '', unit_cost: '' }] as LineItem[],
+        items: [
+            { inventory_item_id: '', quantity_ordered: '', unit_cost: '' },
+        ] as LineItem[],
     });
 
     const supplierOptions = suppliers.map((s) => ({
@@ -67,7 +68,11 @@ export default function PurchaseOrderCreate({
         );
     };
 
-    const updateLine = (index: number, field: keyof LineItem, value: string) => {
+    const updateLine = (
+        index: number,
+        field: keyof LineItem,
+        value: string,
+    ) => {
         const updated = [...form.data.items];
         updated[index] = { ...updated[index], [field]: value };
         form.setData('items', updated);
@@ -86,9 +91,7 @@ export default function PurchaseOrderCreate({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        form.post('/purchase-orders', {
-            onSuccess: () => toast.success('Purchase order created successfully.'),
-        });
+        form.post('/purchase-orders');
     };
 
     return (
@@ -105,7 +108,8 @@ export default function PurchaseOrderCreate({
                             Raise a new purchase order for a supplier.
                         </p>
                         <p className="text-sm text-muted-foreground">
-                            The purchase order number will be generated automatically when you save.
+                            The purchase order number will be generated
+                            automatically when you save.
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -127,9 +131,7 @@ export default function PurchaseOrderCreate({
                                     placeholder="Select supplier"
                                     emptyMessage="No suppliers found."
                                 />
-                                <InputError
-                                    message={form.errors.supplier_id}
-                                />
+                                <InputError message={form.errors.supplier_id} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="order_date">Order Date</Label>
@@ -145,9 +147,7 @@ export default function PurchaseOrderCreate({
                                     }
                                     required
                                 />
-                                <InputError
-                                    message={form.errors.order_date}
-                                />
+                                <InputError message={form.errors.order_date} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="expected_delivery_date">
@@ -305,7 +305,9 @@ export default function PurchaseOrderCreate({
                                     Grand Total:
                                 </span>
                                 <span className="ml-2 text-lg font-semibold">
-                                    {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    {grandTotal.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                    })}
                                 </span>
                             </div>
                         </div>

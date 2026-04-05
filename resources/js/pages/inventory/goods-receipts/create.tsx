@@ -4,7 +4,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Table,
     TableBody,
@@ -13,6 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type GoodsReceiptFormPageProps } from '@/types/goods-receipt';
@@ -20,7 +20,6 @@ import type { PurchaseOrder } from '@/types/purchase-order';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, LoaderCircle, PlusCircle } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '/inventory/dashboard' },
@@ -99,11 +98,14 @@ export default function GoodsReceiptCreate({
     });
 
     const activeDraftReceipt =
-        selectedPO?.goods_receipts?.find((receipt) => receipt.status === 'draft') ??
-        null;
+        selectedPO?.goods_receipts?.find(
+            (receipt) => receipt.status === 'draft',
+        ) ?? null;
 
     const handlePOChange = (poId: string) => {
-        const po = purchaseOrders.find((purchaseOrder) => purchaseOrder.id === poId) ?? null;
+        const po =
+            purchaseOrders.find((purchaseOrder) => purchaseOrder.id === poId) ??
+            null;
 
         setSelectedPO(po);
         form.setData({
@@ -125,10 +127,7 @@ export default function GoodsReceiptCreate({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        form.post('/goods-receipts', {
-            onSuccess: () =>
-                toast.success('Goods receipt created successfully.'),
-        });
+        form.post('/goods-receipts');
     };
 
     return (
@@ -145,7 +144,8 @@ export default function GoodsReceiptCreate({
                             Record items received against a purchase order.
                         </p>
                         <p className="text-sm text-muted-foreground">
-                            The receipt number will be generated automatically when you save.
+                            The receipt number will be generated automatically
+                            when you save.
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -242,9 +242,7 @@ export default function GoodsReceiptCreate({
                                     }
                                 />
                                 <InputError
-                                    message={
-                                        form.errors.supplier_delivery_note
-                                    }
+                                    message={form.errors.supplier_delivery_note}
                                 />
                             </div>
                             <div className="grid gap-2 md:col-span-2">
@@ -265,15 +263,28 @@ export default function GoodsReceiptCreate({
                     {activeDraftReceipt ? (
                         <Alert className="border-amber-200 bg-amber-50 text-amber-950">
                             <AlertTriangle />
-                            <AlertTitle>Draft receipt already exists</AlertTitle>
+                            <AlertTitle>
+                                Draft receipt already exists
+                            </AlertTitle>
                             <AlertDescription>
                                 <p>
-                                    This purchase order already has draft receipt{' '}
-                                    <strong>{activeDraftReceipt.receipt_number}</strong>.
-                                    Post that receipt before creating another one.
+                                    This purchase order already has draft
+                                    receipt{' '}
+                                    <strong>
+                                        {activeDraftReceipt.receipt_number}
+                                    </strong>
+                                    . Post that receipt before creating another
+                                    one.
                                 </p>
-                                <Button variant="outline" size="sm" asChild className="mt-2">
-                                    <Link href={`/goods-receipts/${activeDraftReceipt.id}`}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    asChild
+                                    className="mt-2"
+                                >
+                                    <Link
+                                        href={`/goods-receipts/${activeDraftReceipt.id}`}
+                                    >
                                         Open Draft Receipt
                                     </Link>
                                 </Button>
@@ -381,9 +392,7 @@ export default function GoodsReceiptCreate({
                                                 <TableCell>
                                                     <Input
                                                         type="date"
-                                                        value={
-                                                            line.expiry_date
-                                                        }
+                                                        value={line.expiry_date}
                                                         onChange={(e) =>
                                                             updateLine(
                                                                 index,

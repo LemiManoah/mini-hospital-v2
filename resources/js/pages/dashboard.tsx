@@ -7,10 +7,39 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    ChartConfig,
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartTooltip,
+    ChartTooltipContent,
+} from '@/components/ui/chart';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
-import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, Link, usePage } from '@inertiajs/react';
+import {
+    Activity,
+    CalendarClock,
+    CalendarPlus,
+    CheckCircle2,
+    ClipboardList,
+    FlaskConical,
+    LayoutDashboard,
+    Stethoscope,
+    UserPlus,
+    Users,
+} from 'lucide-react';
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Pie,
+    PieChart,
+    XAxis,
+} from 'recharts';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -79,49 +108,22 @@ interface DashboardPageProps {
     recent_appointments: Appointment[];
 }
 
-const iconPaths: Record<string, string> = {
-    users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
-    activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
-    calendar:
-        'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
-    flask: 'M10 2v7.31L6 15v4h12v-4l-4-5.69V2M10 2h4M10 2H8',
-    'user-check':
-        'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 3l-4 4',
-    'check-circle': 'M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3',
+const METRIC_ICONS: Record<string, typeof Activity> = {
+    users: Users,
+    activity: Activity,
+    calendar: CalendarClock,
+    flask: FlaskConical,
+    'user-check': UserPlus,
+    'check-circle': CheckCircle2,
 };
 
-const colorClasses: Record<string, string> = {
-    blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950',
-    green: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950',
-    purple: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950',
-    orange: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950',
-    teal: 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950',
-    emerald:
-        'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950',
-};
-
-function MetricIcon({ icon, color }: { icon: string; color: string }) {
-    const path = iconPaths[icon] || iconPaths.users;
-
-    return (
-        <div
-            className={`flex h-12 w-12 items-center justify-center rounded-lg ${colorClasses[color] || colorClasses.blue}`}
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6"
-            >
-                <path d={path} />
-            </svg>
-        </div>
-    );
-}
+const CHART_COLORS = [
+    'var(--chart-1)',
+    'var(--chart-2)',
+    'var(--chart-3)',
+    'var(--chart-4)',
+    'var(--chart-5)',
+];
 
 function VisitStatusBadge({ status }: { status: string }) {
     const variants: Record<
@@ -186,147 +188,193 @@ export default function Dashboard({
     recent_visits,
     recent_appointments,
 }: DashboardPageProps) {
+    const { auth } = usePage<SharedData>().props;
+    const firstName = auth.user?.name?.split(' ')[0] ?? 'there';
+
+    const visitChartData = visit_status_counts.map((status) => ({
+        status: status.label,
+        count: status.count,
+    }));
+
+    const appointmentChartData = appointment_status_counts
+        .filter((status) => status.count > 0)
+        .map((status, index) => ({
+            name: status.label,
+            value: status.count,
+            fill: CHART_COLORS[index % CHART_COLORS.length],
+        }));
+
+    const visitChartConfig = {
+        count: {
+            label: 'Visits',
+            color: 'var(--chart-1)',
+        },
+    } satisfies ChartConfig;
+
+    const appointmentChartConfig = {
+        value: { label: 'Appointments' },
+        ...Object.fromEntries(
+            appointmentChartData.map((d, i) => [
+                d.name,
+                { label: d.name, color: CHART_COLORS[i % CHART_COLORS.length] },
+            ]),
+        ),
+    } satisfies ChartConfig;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-2xl font-semibold">Dashboard</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Welcome back! Here's an overview of your facility.
-                    </p>
+            <div className="flex flex-col gap-6 p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Welcome back, {firstName}
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Here's the pulse of your facility today —{' '}
+                            {new Date().toLocaleDateString(undefined, {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                            })}
+                            .
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                        <Button asChild>
+                            <Link href="/patients">
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Register Patient
+                            </Link>
+                        </Button>
+                        <Button asChild variant="outline">
+                            <Link href="/appointments/create">
+                                <CalendarPlus className="mr-2 h-4 w-4" />
+                                New Appointment
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                     {metrics.map((metric) => (
-                        <Card key={metric.label}>
-                            <CardContent className="flex flex-row items-center gap-4 p-6">
-                                <MetricIcon
-                                    icon={metric.icon}
-                                    color={metric.color}
-                                />
-                                <div className="flex flex-col gap-1">
-                                    <p className="text-sm text-muted-foreground">
-                                        {metric.label}
-                                    </p>
-                                    <p className="text-3xl font-semibold">
-                                        {metric.value}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {metric.hint}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <MetricCard key={metric.label} metric={metric} />
                     ))}
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-                    <Card>
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <Card className="border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader>
-                            <div className="flex flex-col gap-1">
-                                <CardTitle>Visit Status</CardTitle>
-                                <CardDescription>
-                                    Current visit distribution across statuses.
-                                </CardDescription>
-                            </div>
+                            <CardTitle>Visit Status Distribution</CardTitle>
+                            <CardDescription>
+                                Active visit workload across the patient
+                                lifecycle
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent className="flex flex-col gap-3">
-                            {visit_status_counts.map((status) => (
-                                <div
-                                    key={status.value}
-                                    className="flex items-center justify-between rounded-lg border p-3"
+                        <CardContent>
+                            <ChartContainer
+                                config={visitChartConfig}
+                                className="aspect-auto h-[300px] w-full"
+                            >
+                                <BarChart
+                                    accessibilityLayer
+                                    data={visitChartData}
+                                    margin={{ top: 20 }}
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div
-                                            className={`h-2 w-2 rounded-full ${
-                                                status.value === 'in_progress'
-                                                    ? 'bg-blue-500'
-                                                    : status.value ===
-                                                        'awaiting_payment'
-                                                      ? 'bg-orange-500'
-                                                      : status.value ===
-                                                          'completed'
-                                                        ? 'bg-green-500'
-                                                        : 'bg-gray-400'
-                                            }`}
-                                        />
-                                        <p className="font-medium">
-                                            {status.label}
-                                        </p>
-                                    </div>
-                                    <p className="text-xl font-semibold">
-                                        {status.count}
-                                    </p>
-                                </div>
-                            ))}
-                            <Button variant="outline" className="mt-2" asChild>
-                                <Link href="/visits">View All Visits</Link>
-                            </Button>
+                                    <CartesianGrid vertical={false} />
+                                    <XAxis
+                                        dataKey="status"
+                                        tickLine={false}
+                                        tickMargin={10}
+                                        axisLine={false}
+                                    />
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={
+                                            <ChartTooltipContent hideLabel />
+                                        }
+                                    />
+                                    <Bar
+                                        dataKey="count"
+                                        fill="var(--color-count)"
+                                        radius={8}
+                                    />
+                                </BarChart>
+                            </ChartContainer>
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="flex flex-col border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader>
-                            <div className="flex flex-col gap-1">
-                                <CardTitle>Today's Appointments</CardTitle>
-                                <CardDescription>
-                                    Appointment distribution for today.
-                                </CardDescription>
-                            </div>
+                            <CardTitle>Appointment Mix</CardTitle>
+                            <CardDescription>
+                                Appointment volume by status across all dates
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent className="flex flex-col gap-3">
-                            {appointment_status_counts.map((status) => (
-                                <div
-                                    key={status.value}
-                                    className="flex items-center justify-between rounded-lg border p-3"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div
-                                            className={`h-2 w-2 rounded-full ${
-                                                status.value === 'checked_in'
-                                                    ? 'bg-green-500'
-                                                    : status.value ===
-                                                        'confirmed'
-                                                      ? 'bg-blue-500'
-                                                      : status.value ===
-                                                          'no_show'
-                                                        ? 'bg-red-500'
-                                                        : 'bg-gray-400'
-                                            }`}
-                                        />
-                                        <p className="font-medium">
-                                            {status.label}
-                                        </p>
-                                    </div>
-                                    <p className="text-xl font-semibold">
-                                        {status.count}
-                                    </p>
+                        <CardContent className="flex-1 pb-0">
+                            {appointmentChartData.length === 0 ? (
+                                <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+                                    No appointments recorded yet.
                                 </div>
-                            ))}
-                            <Button variant="outline" className="mt-2" asChild>
-                                <Link href="/appointments">
-                                    View All Appointments
-                                </Link>
-                            </Button>
+                            ) : (
+                                <ChartContainer
+                                    config={appointmentChartConfig}
+                                    className="mx-auto aspect-square max-h-[300px]"
+                                >
+                                    <PieChart>
+                                        <ChartTooltip
+                                            cursor={false}
+                                            content={
+                                                <ChartTooltipContent hideLabel />
+                                            }
+                                        />
+                                        <Pie
+                                            data={appointmentChartData}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            innerRadius={60}
+                                            strokeWidth={5}
+                                        >
+                                            {appointmentChartData.map(
+                                                (entry, index) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={entry.fill}
+                                                    />
+                                                ),
+                                            )}
+                                        </Pie>
+                                        <ChartLegend
+                                            content={
+                                                <ChartLegendContent nameKey="name" />
+                                            }
+                                            className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+                                        />
+                                    </PieChart>
+                                </ChartContainer>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex flex-col gap-1">
+                <div className="grid gap-6 lg:grid-cols-3">
+                    <Card className="col-span-2 border-none shadow-sm ring-1 ring-border/50">
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
                                 <CardTitle>Recent Visits</CardTitle>
                                 <CardDescription>
-                                    Latest patient visits in the active branch.
+                                    Latest patient visits in the active branch
                                 </CardDescription>
                             </div>
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link href="/visits">View all</Link>
+                            </Button>
                         </CardHeader>
                         <CardContent className="flex flex-col gap-3">
                             {recent_visits.length === 0 ? (
-                                <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                                <div className="rounded-lg border border-dashed px-4 py-12 text-center text-sm text-muted-foreground">
                                     No visits yet in the active branch.
                                 </div>
                             ) : (
@@ -343,10 +391,19 @@ export default function Dashboard({
                                                     : 'Unknown Patient'}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                Visit {visit.visit_number} •{' '}
+                                                Visit {visit.visit_number} |{' '}
                                                 {visit.doctor
                                                     ? `Dr. ${visit.doctor.first_name} ${visit.doctor.last_name}`
-                                                    : 'No doctor assigned'}
+                                                    : 'No doctor assigned'}{' '}
+                                                |{' '}
+                                                {new Date(
+                                                    visit.created_at,
+                                                ).toLocaleString([], {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}
                                             </p>
                                         </div>
                                         <VisitStatusBadge
@@ -358,157 +415,155 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <div className="flex flex-col gap-1">
-                                <CardTitle>Upcoming Today</CardTitle>
-                                <CardDescription>
-                                    Appointments scheduled for today.
-                                </CardDescription>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="flex flex-col gap-3">
-                            {recent_appointments.length === 0 ? (
-                                <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                                    No appointments scheduled for today.
+                    <div className="flex flex-col gap-6">
+                        <Card className="border-none shadow-sm ring-1 ring-border/50">
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div>
+                                    <CardTitle className="text-lg">
+                                        Upcoming Today
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Appointments for today
+                                    </CardDescription>
                                 </div>
-                            ) : (
-                                recent_appointments.map((appointment) => (
-                                    <Link
-                                        key={appointment.id}
-                                        href={`/appointments/${appointment.id}`}
-                                        className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-medium">
-                                                {appointment.patient
-                                                    ? `${appointment.patient.first_name} ${appointment.patient.last_name}`
-                                                    : 'Unknown Patient'}
-                                            </p>
-                                            <AppointmentStatusBadge
-                                                status={appointment.status}
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                            <span>
-                                                {appointment.start_time
-                                                    ? new Date(
-                                                          `1970-01-01T${appointment.start_time}`,
-                                                      ).toLocaleTimeString([], {
-                                                          hour: '2-digit',
-                                                          minute: '2-digit',
-                                                      })
-                                                    : 'No time'}
-                                            </span>
-                                            <span>•</span>
-                                            <span>
-                                                {appointment.clinic
-                                                    ?.clinic_name ||
-                                                    'No clinic'}
-                                            </span>
-                                        </div>
-                                    </Link>
-                                ))
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                                <Button variant="ghost" size="sm" asChild>
+                                    <Link href="/appointments">All</Link>
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="flex flex-col gap-3">
+                                {recent_appointments.length === 0 ? (
+                                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                                        No appointments scheduled for today.
+                                    </div>
+                                ) : (
+                                    recent_appointments.map((appointment) => (
+                                        <Link
+                                            key={appointment.id}
+                                            href={`/appointments/${appointment.id}`}
+                                            className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                                        >
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="truncate font-medium">
+                                                    {appointment.patient
+                                                        ? `${appointment.patient.first_name} ${appointment.patient.last_name}`
+                                                        : 'Unknown Patient'}
+                                                </p>
+                                                <AppointmentStatusBadge
+                                                    status={appointment.status}
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <span>
+                                                    {appointment.start_time
+                                                        ? new Date(
+                                                              `1970-01-01T${appointment.start_time}`,
+                                                          ).toLocaleTimeString(
+                                                              [],
+                                                              {
+                                                                  hour: '2-digit',
+                                                                  minute: '2-digit',
+                                                              },
+                                                          )
+                                                        : 'No time'}
+                                                </span>
+                                                <span>|</span>
+                                                <span className="truncate">
+                                                    {appointment.clinic
+                                                        ?.clinic_name ||
+                                                        'No clinic'}
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    ))
+                                )}
+                            </CardContent>
+                        </Card>
 
-                <div className="grid gap-4 md:grid-cols-4">
-                    <Button
-                        variant="outline"
-                        className="h-20 flex-col gap-2"
-                        asChild
-                    >
-                        <Link href="/patients">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                                />
-                            </svg>
-                            <span>Register Patient</span>
-                        </Link>
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="h-20 flex-col gap-2"
-                        asChild
-                    >
-                        <Link href="/appointments/create">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                            </svg>
-                            <span>New Appointment</span>
-                        </Link>
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="h-20 flex-col gap-2"
-                        asChild
-                    >
-                        <Link href="/laboratory/dashboard">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                                />
-                            </svg>
-                            <span>Lab Dashboard</span>
-                        </Link>
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="h-20 flex-col gap-2"
-                        asChild
-                    >
-                        <Link href="/visits">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                />
-                            </svg>
-                            <span>All Visits</span>
-                        </Link>
-                    </Button>
+                        <Card className="border-none shadow-sm ring-1 ring-border/50">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-lg">
+                                    Quick Management
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid gap-3">
+                                <Button
+                                    variant="outline"
+                                    className="justify-start"
+                                    asChild
+                                >
+                                    <Link href="/patients">
+                                        <Users className="mr-2 h-4 w-4" />
+                                        Patients
+                                    </Link>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="justify-start"
+                                    asChild
+                                >
+                                    <Link href="/visits">
+                                        <ClipboardList className="mr-2 h-4 w-4" />
+                                        All Visits
+                                    </Link>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="justify-start"
+                                    asChild
+                                >
+                                    <Link href="/appointments">
+                                        <CalendarClock className="mr-2 h-4 w-4" />
+                                        Appointments
+                                    </Link>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="justify-start"
+                                    asChild
+                                >
+                                    <Link href="/laboratory/dashboard">
+                                        <FlaskConical className="mr-2 h-4 w-4" />
+                                        Laboratory
+                                    </Link>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="justify-start"
+                                    asChild
+                                >
+                                    <Link href="/inventory/dashboard">
+                                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                                        Inventory
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             </div>
         </AppLayout>
+    );
+}
+
+function MetricCard({ metric }: { metric: Metric }) {
+    const Icon = METRIC_ICONS[metric.icon] ?? Stethoscope;
+
+    return (
+        <Card className="border-none shadow-sm ring-1 ring-border/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                    {metric.label}
+                </CardDescription>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <CardTitle className="text-3xl font-bold">
+                    {metric.value}
+                </CardTitle>
+                <p className="mt-1 text-xs text-muted-foreground">
+                    {metric.hint}
+                </p>
+            </CardContent>
+        </Card>
     );
 }

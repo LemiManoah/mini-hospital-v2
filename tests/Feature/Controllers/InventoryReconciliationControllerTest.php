@@ -235,7 +235,8 @@ it('creates a draft reconciliation with expected and actual quantities', functio
         ->and((string) $reconciliation->items->first()->actual_quantity)->toBe('6.000')
         ->and((string) $reconciliation->items->first()->quantity_delta)->toBe('-2.000');
 
-    $response->assertRedirect(route('reconciliations.show', $reconciliation));
+    $response->assertRedirect(route('reconciliations.show', $reconciliation))
+        ->assertSessionHas('reconciliation_prompt', 'submit');
 
     expect(
         StockMovement::withoutGlobalScopes()
@@ -285,7 +286,8 @@ it('runs the submit review approve and post workflow', function (): void {
         ->post(route('reconciliations.approve', $reconciliation), [
             'approval_notes' => 'Approved for posting.',
         ])
-        ->assertRedirect(route('reconciliations.show', $reconciliation));
+        ->assertRedirect(route('reconciliations.show', $reconciliation))
+        ->assertSessionHas('reconciliation_prompt', 'post');
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)

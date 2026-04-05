@@ -14,10 +14,12 @@ import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type PurchaseOrderShowPageProps } from '@/types/purchase-order';
 import { Head, Link, router } from '@inertiajs/react';
-import { toast } from 'sonner';
 
 const statusColor = (status: string) => {
-    const map: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    const map: Record<
+        string,
+        'default' | 'secondary' | 'destructive' | 'outline'
+    > = {
         draft: 'secondary',
         submitted: 'outline',
         approved: 'default',
@@ -38,7 +40,8 @@ export default function PurchaseOrderShow({
 }: PurchaseOrderShowPageProps) {
     const { hasPermission } = usePermissions();
     const draftGoodsReceipt =
-        po.goods_receipts?.find((receipt) => receipt.status === 'draft') ?? null;
+        po.goods_receipts?.find((receipt) => receipt.status === 'draft') ??
+        null;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Inventory', href: '/inventory/dashboard' },
@@ -46,10 +49,8 @@ export default function PurchaseOrderShow({
         { title: po.order_number, href: `/purchase-orders/${po.id}` },
     ];
 
-    const postAction = (action: string, message: string) => {
-        router.post(`/purchase-orders/${po.id}/${action}`, {}, {
-            onSuccess: () => toast.success(message),
-        });
+    const postAction = (action: string) => {
+        router.post(`/purchase-orders/${po.id}/${action}`);
     };
 
     return (
@@ -89,7 +90,9 @@ export default function PurchaseOrderShow({
                             <span className="text-sm text-muted-foreground">
                                 Order Date
                             </span>
-                            <p className="mt-1 font-medium">{formatDate(po.order_date)}</p>
+                            <p className="mt-1 font-medium">
+                                {formatDate(po.order_date)}
+                            </p>
                         </div>
                         <div>
                             <span className="text-sm text-muted-foreground">
@@ -104,7 +107,10 @@ export default function PurchaseOrderShow({
                                 Total Amount
                             </span>
                             <p className="mt-1 text-lg font-semibold">
-                                {Number(po.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                {Number(po.total_amount).toLocaleString(
+                                    undefined,
+                                    { minimumFractionDigits: 2 },
+                                )}
                             </p>
                         </div>
                     </div>
@@ -121,10 +127,7 @@ export default function PurchaseOrderShow({
                         <div className="mt-4 flex gap-2 border-t pt-4">
                             {po.status === 'draft' ? (
                                 <>
-                                    <Button
-                                        size="sm"
-                                        asChild
-                                    >
+                                    <Button size="sm" asChild>
                                         <Link
                                             href={`/purchase-orders/${po.id}/edit`}
                                         >
@@ -134,24 +137,14 @@ export default function PurchaseOrderShow({
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() =>
-                                            postAction(
-                                                'submit',
-                                                'Purchase order submitted for approval.',
-                                            )
-                                        }
+                                        onClick={() => postAction('submit')}
                                     >
                                         Submit for Approval
                                     </Button>
                                     <Button
                                         size="sm"
                                         variant="destructive"
-                                        onClick={() =>
-                                            postAction(
-                                                'cancel',
-                                                'Purchase order cancelled.',
-                                            )
-                                        }
+                                        onClick={() => postAction('cancel')}
                                     >
                                         Cancel PO
                                     </Button>
@@ -161,24 +154,14 @@ export default function PurchaseOrderShow({
                                 <>
                                     <Button
                                         size="sm"
-                                        onClick={() =>
-                                            postAction(
-                                                'approve',
-                                                'Purchase order approved.',
-                                            )
-                                        }
+                                        onClick={() => postAction('approve')}
                                     >
                                         Approve
                                     </Button>
                                     <Button
                                         size="sm"
                                         variant="destructive"
-                                        onClick={() =>
-                                            postAction(
-                                                'cancel',
-                                                'Purchase order cancelled.',
-                                            )
-                                        }
+                                        onClick={() => postAction('cancel')}
                                     >
                                         Cancel PO
                                     </Button>
@@ -188,7 +171,9 @@ export default function PurchaseOrderShow({
                             po.status === 'partial' ? (
                                 draftGoodsReceipt ? (
                                     <Button size="sm" variant="outline" asChild>
-                                        <Link href={`/goods-receipts/${draftGoodsReceipt.id}`}>
+                                        <Link
+                                            href={`/goods-receipts/${draftGoodsReceipt.id}`}
+                                        >
                                             Open Draft Receipt
                                         </Link>
                                     </Button>
@@ -240,7 +225,8 @@ export default function PurchaseOrderShow({
                                     return (
                                         <TableRow key={item.id}>
                                             <TableCell className="font-medium">
-                                                {item.inventory_item?.generic_name ??
+                                                {item.inventory_item
+                                                    ?.generic_name ??
                                                     item.inventory_item?.name ??
                                                     '-'}
                                             </TableCell>
@@ -248,10 +234,18 @@ export default function PurchaseOrderShow({
                                                 {item.quantity_ordered}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                {Number(item.unit_cost).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                {Number(
+                                                    item.unit_cost,
+                                                ).toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                })}
                                             </TableCell>
                                             <TableCell className="text-right font-medium">
-                                                {Number(item.total_cost).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                {Number(
+                                                    item.total_cost,
+                                                ).toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                })}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 {item.quantity_received}
@@ -307,7 +301,7 @@ export default function PurchaseOrderShow({
                                                         gr.status === 'posted'
                                                             ? 'default'
                                                             : gr.status ===
-                                                                  'cancelled'
+                                                                'cancelled'
                                                               ? 'destructive'
                                                               : 'secondary'
                                                     }

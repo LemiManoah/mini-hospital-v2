@@ -7,7 +7,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Form, Head, Link } from '@inertiajs/react';
 import { LoaderCircle, PlusCircle } from 'lucide-react';
-import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '/inventory/dashboard' },
@@ -39,9 +38,6 @@ export default function SupplierCreate() {
                     <Form
                         action="/suppliers"
                         method="post"
-                        onSuccess={() =>
-                            toast.success('Supplier created successfully.')
-                        }
                         className="space-y-6"
                     >
                         {({ processing, errors }) => (
@@ -135,7 +131,11 @@ export default function SupplierCreate() {
                                         )}
                                         Create Supplier
                                     </Button>
-                                    <Button variant="ghost" type="button" asChild>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        asChild
+                                    >
                                         <Link href="/suppliers">Cancel</Link>
                                     </Button>
                                 </div>
