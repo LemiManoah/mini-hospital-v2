@@ -28,6 +28,7 @@ use App\Http\Controllers\InsurancePackageController;
 use App\Http\Controllers\InventoryDashboardController;
 use App\Http\Controllers\InventoryMovementReportController;
 use App\Http\Controllers\InventoryReconciliationController;
+use App\Http\Controllers\InventoryRequisitionController;
 use App\Http\Controllers\InventoryStockByLocationController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\InventoryLocationController;
@@ -170,7 +171,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('inventory/dashboard', [InventoryDashboardController::class, 'index'])->name('inventory.dashboard.index');
     Route::get('inventory/stock-by-location', [InventoryStockByLocationController::class, 'index'])->name('inventory.stock-by-location.index');
     Route::get('inventory/reports/movements', [InventoryMovementReportController::class, 'index'])->name('inventory.reports.movements.index');
-    Route::resource('inventory-items', InventoryItemController::class)->except(['show']);
+    Route::resource('inventory-items', InventoryItemController::class);
     Route::resource('inventory-locations', InventoryLocationController::class)->except(['show']);
     Route::resource('suppliers', SupplierController::class)->except(['show']);
     Route::resource('purchase-orders', PurchaseOrderController::class)->except(['destroy']);
@@ -179,6 +180,11 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
     Route::resource('goods-receipts', GoodsReceiptController::class)->only(['index', 'create', 'store', 'show']);
     Route::post('goods-receipts/{goods_receipt}/post', [GoodsReceiptController::class, 'post'])->name('goods-receipts.post');
+    Route::resource('inventory-requisitions', InventoryRequisitionController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('inventory-requisitions/{requisition}/submit', [InventoryRequisitionController::class, 'submit'])->name('inventory-requisitions.submit');
+    Route::post('inventory-requisitions/{requisition}/approve', [InventoryRequisitionController::class, 'approve'])->name('inventory-requisitions.approve');
+    Route::post('inventory-requisitions/{requisition}/reject', [InventoryRequisitionController::class, 'reject'])->name('inventory-requisitions.reject');
+    Route::post('inventory-requisitions/{requisition}/issue', [InventoryRequisitionController::class, 'issue'])->name('inventory-requisitions.issue');
     Route::get('stock-counts', fn () => to_route('reconciliations.index'));
     Route::get('stock-adjustments', fn () => to_route('reconciliations.index'));
     Route::resource('reconciliations', InventoryReconciliationController::class)->only(['index', 'create', 'store', 'show']);

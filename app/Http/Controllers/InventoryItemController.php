@@ -28,7 +28,7 @@ final readonly class InventoryItemController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:inventory_items.view', only: ['index']),
+            new Middleware('permission:inventory_items.view', only: ['index', 'show']),
             new Middleware('permission:inventory_items.create', only: ['create', 'store']),
             new Middleware('permission:inventory_items.update', only: ['edit', 'update']),
             new Middleware('permission:inventory_items.delete', only: ['destroy']),
@@ -63,6 +63,17 @@ final readonly class InventoryItemController implements HasMiddleware
                 'type' => $type,
             ],
             'itemTypes' => $this->itemTypeOptions(),
+        ]);
+    }
+
+    public function show(InventoryItem $inventoryItem): Response
+    {
+        return Inertia::render('inventory/items/show', [
+            'inventoryItem' => $inventoryItem->load([
+                'unit:id,name,symbol',
+                'batches' => fn ($query) => $query->with('location:id,name')->orderBy('expiry_date'),
+                'stockMovements' => fn ($query) => $query->with(['location:id,name', 'user:id,name'])->latest()->limit(50),
+            ]),
         ]);
     }
 

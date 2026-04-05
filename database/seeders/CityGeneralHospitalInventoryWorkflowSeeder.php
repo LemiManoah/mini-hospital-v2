@@ -6,13 +6,17 @@ namespace Database\Seeders;
 
 use App\Actions\PostGoodsReceipt;
 use App\Actions\PostInventoryReconciliation;
+use App\Actions\IssueInventoryRequisition;
 use App\Enums\GoodsReceiptStatus;
+use App\Enums\InventoryRequisitionStatus;
+use App\Enums\Priority;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\ReconciliationStatus;
 use App\Models\GoodsReceipt;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
+use App\Models\InventoryRequisition;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Reconciliation;
@@ -60,6 +64,14 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         );
 
         $this->seedReconciliations(
+            tenantId: $tenant->id,
+            branchId: $mainBranch->id,
+            userId: $creator->id,
+            locations: $locations->all(),
+            items: $items->all(),
+        );
+
+        $this->seedRequisitions(
             tenantId: $tenant->id,
             branchId: $mainBranch->id,
             userId: $creator->id,
@@ -444,5 +456,153 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
                 'notes' => 'Awaiting submit and review.',
             ],
         );
+    }
+
+    /**
+     * @param  array<string, InventoryLocation>  $locations
+     * @param  array<string, InventoryItem>  $items
+     */
+    private function seedRequisitions(
+        string $tenantId,
+        string $branchId,
+        string $userId,
+        array $locations,
+        array $items,
+    ): void {
+        $storeLocation = $locations['CGH-MAIN-STORE'] ?? null;
+        $pharmacyLocation = $locations['CGH-MAIN-PHARM'] ?? null;
+        $labLocation = $locations['CGH-MAIN-LAB'] ?? null;
+        $paracetamol = $items['Paracetamol'] ?? null;
+        $amoxicillin = $items['Amoxicillin'] ?? null;
+
+        if (
+            ! $storeLocation instanceof InventoryLocation
+            || ! $pharmacyLocation instanceof InventoryLocation
+            || ! $labLocation instanceof InventoryLocation
+            || ! $paracetamol instanceof InventoryItem
+            || ! $amoxicillin instanceof InventoryItem
+        ) {
+            return;
+        }
+
+        InventoryRequisition::query()->firstOrCreate(
+            [
+                'tenant_id' => $tenantId,
+                'requisition_number' => 'CGH-REQ-001',
+            ],
+            [
+                'branch_id' => $branchId,
+                'source_inventory_location_id' => $storeLocation->id,
+                'destination_inventory_location_id' => $pharmacyLocation->id,
+                'status' => InventoryRequisitionStatus::Draft,
+                'priority' => Priority::URGENT,
+                'requisition_date' => now()->toDateString(),
+                'notes' => 'Seeded draft requisition for manual testing.',
+                'created_by' => $userId,
+                'updated_by' => $userId,
+            ],
+        )->items()->firstOrCreate(
+            [
+                'inventory_item_id' => $paracetamol->id,
+            ],
+            [
+                'requested_quantity' => 30,
+                'approved_quantity' => 0,
+                'issued_quantity' => 0,
+                'notes' => 'Awaiting submit and approval.',
+            ],
+        );
+
+        InventoryRequisition::query()->firstOrCreate(
+            [
+                'tenant_id' => $tenantId,
+                'requisition_number' => 'CGH-REQ-002',
+            ],
+            [
+                'branch_id' => $branchId,
+                'source_inventory_location_id' => $storeLocation->id,
+                'destination_inventory_location_id' => $labLocation->id,
+                'status' => InventoryRequisitionStatus::Submitted,
+                'priority' => Priority::ROUTINE,
+                'requisition_date' => now()->toDateString(),
+                'notes' => 'Seeded submitted requisition awaiting approval.',
+                'submitted_by' => $userId,
+                'submitted_at' => now(),
+                'created_by' => $userId,
+                'updated_by' => $userId,
+            ],
+        )->items()->firstOrCreate(
+            [
+                'inventory_item_id' => $amoxicillin->id,
+            ],
+            [
+                'requested_quantity' => 12,
+                'approved_quantity' => 0,
+                'issued_quantity' => 0,
+                'notes' => 'Pending review.',
+            ],
+        );
+
+        $approvedRequisition = InventoryRequisition::query()->firstOrCreate(
+            [
+                'tenant_id' => $tenantId,
+                'requisition_number' => 'CGH-REQ-003',
+            ],
+            [
+                'branch_id' => $branchId,
+                'source_inventory_location_id' => $storeLocation->id,
+                'destination_inventory_location_id' => $pharmacyLocation->id,
+                'status' => InventoryRequisitionStatus::Approved,
+                'priority' => Priority::URGENT,
+                'requisition_date' => now()->toDateString(),
+                'notes' => 'Seeded approved requisition ready for issue.',
+                'submitted_by' => $userId,
+                'submitted_at' => now(),
+                'approved_by' => $userId,
+                'approved_at' => now(),
+                'approval_notes' => 'Approved for issue.',
+                'created_by' => $userId,
+                'updated_by' => $userId,
+            ],
+        );
+
+        $approvedLine = $approvedRequisition->items()->firstOrCreate(
+            [
+                'inventory_item_id' => $paracetamol->id,
+            ],
+            [
+                'requested_quantity' => 20,
+                'approved_quantity' => 20,
+                'issued_quantity' => 0,
+                'notes' => 'Seeded approved line.',
+            ],
+        );
+
+        if (
+            $approvedRequisition->status === InventoryRequisitionStatus::Approved
+            && (float) $approvedLine->issued_quantity === 0.0
+        ) {
+            $sourceBatch = InventoryBatch::query()
+                ->where('inventory_location_id', $storeLocation->id)
+                ->where('inventory_item_id', $paracetamol->id)
+                ->orderBy('received_at')
+                ->first();
+
+            if ($sourceBatch instanceof InventoryBatch) {
+                resolve(IssueInventoryRequisition::class)->handle($approvedRequisition, [
+                    [
+                        'inventory_requisition_item_id' => $approvedLine->id,
+                        'issue_quantity' => 8,
+                        'notes' => 'Seeded partial issue.',
+                        'allocations' => [
+                            [
+                                'inventory_batch_id' => $sourceBatch->id,
+                                'quantity' => 8,
+                            ],
+                        ],
+                    ],
+                ], 'Seeded partial issue for manual testing.');
+            }
+        }
     }
 }

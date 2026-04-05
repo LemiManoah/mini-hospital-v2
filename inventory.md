@@ -21,13 +21,13 @@ What already exists:
 - posted goods receipts now create inventory batches and stock movements
 - stock-by-location and stock movement visibility pages now exist
 - user-facing inventory reconciliations now exist for controlled stock correction and review
+- same-branch inventory requisitions now support draft, submit, approve, reject, and issue workflow
 - City General Hospital main branch now has seeded inventory workflow data for manual testing
 
 What does not yet exist:
 
 - pharmacy store workflow
 - branch-to-branch or store-to-store transfers
-- departmental requisitions and issue workflow
 - reconciliation presets and specialized workflows for cycle count, expiry, and damage handling
 - dispensing records tied to real stock depletion
 - reorder levels, alerts, and inventory reporting
@@ -205,6 +205,8 @@ The exact names can change later, but the module should roughly center on the fo
 - receipt
 - transfer_out
 - transfer_in
+- requisition_out
+- requisition_in
 - issue
 - dispense
 - adjustment_gain
@@ -257,10 +259,12 @@ The exact names can change later, but the module should roughly center on the fo
 ## 6.4 Internal Requisition And Issue
 
 1. Department or sub-store raises requisition
-2. Store reviews availability
-3. Approve fully or partially
-4. Issue stock from selected batches
-5. Mark requisition as fulfilled, partially fulfilled, or cancelled
+2. Source and destination remain within the active branch
+3. Store reviews availability
+4. Approve fully or partially
+5. Issue stock from selected source batches
+6. System posts outbound movement from the source and inbound movement into the destination
+7. Mark requisition as fulfilled, partially issued, rejected, or cancelled
 
 ## 6.5 Inter-Store Transfers
 
@@ -409,7 +413,7 @@ Branch isolation should follow the same active-branch approach already used else
 - [ ] Milestone 1 in progress: inventory foundations and stock catalog
 - [x] Milestone 2 completed: suppliers, purchase orders, and goods receipt
 - [ ] Milestone 3 in progress: stock ledger, balances, and reconciliations
-- [ ] Milestone 4 pending: requisitions and inter-store transfers
+- [ ] Milestone 4 in progress: requisitions and inter-store transfers
 - [ ] Milestone 5 pending: pharmacy dispensing workflow
 - [ ] Milestone 6 pending: alerts, reporting, permissions, and audit coverage
 - [ ] Milestone 7 pending: test hardening and rollout polish
@@ -567,14 +571,15 @@ Support operational movement of stock inside the hospital between stores and ser
 
 ### Milestone Checklist
 
-- [ ] Create `inventory_requisitions` and items
+- [x] Create `inventory_requisitions` and items
 - [ ] Create `stock_transfers` and items
-- [ ] Add requisition statuses:
+- [x] Add requisition statuses:
   - draft
   - submitted
   - approved
   - partially_issued
   - fulfilled
+  - rejected
   - cancelled
 - [ ] Add transfer statuses:
   - draft
@@ -582,10 +587,15 @@ Support operational movement of stock inside the hospital between stores and ser
   - received
   - reconciled
   - cancelled
-- [ ] Add source/destination location handling
-- [ ] Post transfer-out and transfer-in movements
-- [ ] Add requisition and transfer pages
-- [ ] Add tests for partial issue and transfer receipt
+- [x] Add source/destination location handling for same-branch requisitions
+- [x] Post requisition issue-out and issue-in movements
+- [x] Add requisition pages
+- [x] Add tests for partial issue
+- [ ] Add transfer pages and tests for transfer receipt
+
+### Current Status
+
+Same-branch requisitions are now implemented end to end. Users can create a requisition, submit it for approval, approve line quantities, reject it, and issue approved quantities from selected source batches. Issuing posts real stock movements from the source location into the destination location, and partial issue is supported through remaining approved quantities on each line. Inter-store transfer documents are still pending, so milestone 4 remains in progress.
 
 ### Definition Of Done
 

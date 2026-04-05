@@ -69,6 +69,11 @@ final class InventoryItem extends Model
         return $this->hasMany(ReconciliationItem::class);
     }
 
+    public function requisitionItems(): HasMany
+    {
+        return $this->hasMany(InventoryRequisitionItem::class);
+    }
+
     public function prescriptionItems(): HasMany
     {
         return $this->hasMany(PrescriptionItem::class, 'inventory_item_id');

@@ -55,6 +55,16 @@ final class InventoryLocation extends Model
         return $this->hasMany(Reconciliation::class);
     }
 
+    public function sourceRequisitions(): HasMany
+    {
+        return $this->hasMany(InventoryRequisition::class, 'source_inventory_location_id');
+    }
+
+    public function destinationRequisitions(): HasMany
+    {
+        return $this->hasMany(InventoryRequisition::class, 'destination_inventory_location_id');
+    }
+
     public function items(): BelongsToMany
     {
         return $this->belongsToMany(InventoryItem::class, 'inventory_location_items')

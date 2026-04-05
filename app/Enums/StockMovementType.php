@@ -10,6 +10,8 @@ enum StockMovementType: string
     case Receipt = 'receipt';
     case TransferOut = 'transfer_out';
     case TransferIn = 'transfer_in';
+    case RequisitionOut = 'requisition_out';
+    case RequisitionIn = 'requisition_in';
     case Issue = 'issue';
     case Dispense = 'dispense';
     case AdjustmentGain = 'adjustment_gain';
@@ -26,6 +28,8 @@ enum StockMovementType: string
             self::Receipt => 'Receipt',
             self::TransferOut => 'Transfer Out',
             self::TransferIn => 'Transfer In',
+            self::RequisitionOut => 'Requisition Out',
+            self::RequisitionIn => 'Requisition In',
             self::Issue => 'Issue',
             self::Dispense => 'Dispense',
             self::AdjustmentGain => 'Adjustment Gain',

@@ -9,6 +9,38 @@ export interface InventoryItemUnitLink {
     symbol: string;
 }
 
+export interface InventoryBatch {
+    id: string;
+    batch_number: string;
+    expiry_date: string | null;
+    quantity_received: string;
+    unit_cost: string;
+    received_at: string;
+    inventory_location_id: string;
+    location?: {
+        id: string;
+        name: string;
+    } | null;
+}
+
+export interface StockMovement {
+    id: string;
+    movement_type: string;
+    quantity: string;
+    unit_cost: string | null;
+    occurred_at: string;
+    created_at: string;
+    inventory_location_id: string;
+    location?: {
+        id: string;
+        name: string;
+    } | null;
+    user?: {
+        id: string;
+        name: string;
+    } | null;
+}
+
 export interface InventoryItem {
     id: string;
     item_type: string;
@@ -30,8 +62,13 @@ export interface InventoryItem {
     created_at: string;
     updated_at: string;
     unit?: InventoryItemUnitLink | null;
+    batches?: InventoryBatch[];
+    stock_movements?: StockMovement[];
 }
 
+export interface InventoryItemShowPageProps {
+    inventoryItem: InventoryItem;
+}
 export interface PaginatedInventoryItemList<T> {
     data: T[];
     links: {

@@ -124,7 +124,6 @@ export default function InventoryItemsIndex({
                             <TableRow>
                                 <TableHead>Item</TableHead>
                                 <TableHead>Type</TableHead>
-                                <TableHead>Drug Details</TableHead>
                                 <TableHead>Unit</TableHead>
                                 <TableHead>Expiry</TableHead>
                                 <TableHead>Thresholds</TableHead>
@@ -162,25 +161,6 @@ export default function InventoryItemsIndex({
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
-                                            {item.item_type === 'drug'
-                                                ? [
-                                                      item.category
-                                                          ? labelize(
-                                                                item.category,
-                                                            )
-                                                          : null,
-                                                      item.dosage_form
-                                                          ? labelize(
-                                                                item.dosage_form,
-                                                            )
-                                                          : null,
-                                                      item.strength,
-                                                  ]
-                                                      .filter(Boolean)
-                                                      .join(' | ')
-                                                : 'Not applicable'}
-                                        </TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">
                                             {item.unit
                                                 ? `${item.unit.name} (${item.unit.symbol})`
                                                 : 'Not set'}
@@ -199,8 +179,10 @@ export default function InventoryItemsIndex({
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
-                                            Min {item.minimum_stock_level} /
-                                            Reorder {item.reorder_level}
+                                            <div className="flex flex-col">
+                                                <span>Min: {item.minimum_stock_level}</span>
+                                                <span>Reorder: {item.reorder_level}</span>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <Badge
@@ -217,6 +199,17 @@ export default function InventoryItemsIndex({
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={`/inventory-items/${item.id}`}
+                                                    >
+                                                        View
+                                                    </Link>
+                                                </Button>
                                                 {hasPermission(
                                                     'inventory_items.update',
                                                 ) ? (
