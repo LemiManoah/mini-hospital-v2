@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\StockAdjustmentStatus;
-use App\Models\StockAdjustment;
+use App\Enums\ReconciliationStatus;
+use App\Models\Reconciliation;
 use App\Support\BranchContext;
 use App\Support\InventoryStockLedger;
 use Illuminate\Support\Facades\Auth;
@@ -22,9 +22,9 @@ final readonly class CreateInventoryReconciliation
      * @param  array<string, mixed>  $attributes
      * @param  array<int, array<string, mixed>>  $items
      */
-    public function handle(array $attributes, array $items): StockAdjustment
+    public function handle(array $attributes, array $items): Reconciliation
     {
-        return DB::transaction(function () use ($attributes, $items): StockAdjustment {
+        return DB::transaction(function () use ($attributes, $items): Reconciliation {
             $tenantId = is_string($attributes['tenant_id'] ?? null)
                 ? $attributes['tenant_id']
                 : Auth::user()?->tenantId();
@@ -42,12 +42,12 @@ final readonly class CreateInventoryReconciliation
                     ])
                 : collect();
 
-            $reconciliation = StockAdjustment::query()->create([
+            $reconciliation = Reconciliation::query()->create([
                 'tenant_id' => $tenantId,
                 'branch_id' => $branchId,
                 'inventory_location_id' => $locationId,
                 'adjustment_number' => $this->generateReconciliationNumber($tenantId),
-                'status' => StockAdjustmentStatus::Draft,
+                'status' => ReconciliationStatus::Draft,
                 'adjustment_date' => $attributes['reconciliation_date'],
                 'reason' => $attributes['reason'],
                 'notes' => ($attributes['notes'] ?? '') !== '' ? $attributes['notes'] : null,
@@ -85,7 +85,7 @@ final readonly class CreateInventoryReconciliation
             $reconciliationNumber = 'REC-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
         } while (
             $tenantId !== null
-            && StockAdjustment::query()->where('tenant_id', $tenantId)->where('adjustment_number', $reconciliationNumber)->exists()
+            && Reconciliation::query()->where('tenant_id', $tenantId)->where('adjustment_number', $reconciliationNumber)->exists()
         );
 
         return $reconciliationNumber;

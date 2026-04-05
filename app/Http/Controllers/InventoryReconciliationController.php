@@ -10,13 +10,13 @@ use App\Actions\PostInventoryReconciliation;
 use App\Actions\RejectInventoryReconciliation;
 use App\Actions\ReviewInventoryReconciliation;
 use App\Actions\SubmitInventoryReconciliation;
-use App\Enums\StockAdjustmentStatus;
+use App\Enums\ReconciliationStatus;
 use App\Http\Requests\StoreInventoryReconciliationRequest;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
-use App\Models\StockAdjustment;
-use App\Models\StockAdjustmentItem;
+use App\Models\Reconciliation;
+use App\Models\ReconciliationItem;
 use App\Support\BranchContext;
 use App\Support\InventoryStockLedger;
 use Illuminate\Database\Eloquent\Builder;
@@ -47,7 +47,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
         $search = mb_trim((string) $request->query('search', ''));
         $status = mb_trim((string) $request->query('status', ''));
 
-        $reconciliations = StockAdjustment::query()
+        $reconciliations = Reconciliation::query()
             ->with('inventoryLocation:id,name,location_code')
             ->when(
                 $search !== '',
@@ -65,7 +65,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             )
             ->latest('adjustment_date')
             ->paginate(10)
-            ->through(fn (StockAdjustment $reconciliation): array => $this->serializeReconciliationSummary($reconciliation))
+            ->through(fn (Reconciliation $reconciliation): array => $this->serializeReconciliationSummary($reconciliation))
             ->withQueryString();
 
         return Inertia::render('inventory/reconciliations/index', [
@@ -150,7 +150,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             ->with('reconciliation_prompt', 'submit');
     }
 
-    public function show(StockAdjustment $reconciliation): Response
+    public function show(Reconciliation $reconciliation): Response
     {
         $reconciliation->load([
             'inventoryLocation',
@@ -163,7 +163,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
         ]);
     }
 
-    public function submit(StockAdjustment $reconciliation, SubmitInventoryReconciliation $action): RedirectResponse
+    public function submit(Reconciliation $reconciliation, SubmitInventoryReconciliation $action): RedirectResponse
     {
         $action->handle($reconciliation);
 
@@ -171,7 +171,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             ->with('success', 'Reconciliation submitted for review.');
     }
 
-    public function review(Request $request, StockAdjustment $reconciliation, ReviewInventoryReconciliation $action): RedirectResponse
+    public function review(Request $request, Reconciliation $reconciliation, ReviewInventoryReconciliation $action): RedirectResponse
     {
         $validated = $request->validate([
             'review_notes' => ['nullable', 'string'],
@@ -183,7 +183,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             ->with('success', 'Reconciliation reviewed.');
     }
 
-    public function approve(Request $request, StockAdjustment $reconciliation, ApproveInventoryReconciliation $action): RedirectResponse
+    public function approve(Request $request, Reconciliation $reconciliation, ApproveInventoryReconciliation $action): RedirectResponse
     {
         $validated = $request->validate([
             'approval_notes' => ['nullable', 'string'],
@@ -196,7 +196,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             ->with('reconciliation_prompt', 'post');
     }
 
-    public function reject(Request $request, StockAdjustment $reconciliation, RejectInventoryReconciliation $action): RedirectResponse
+    public function reject(Request $request, Reconciliation $reconciliation, RejectInventoryReconciliation $action): RedirectResponse
     {
         $validated = $request->validate([
             'rejection_reason' => ['required', 'string'],
@@ -208,7 +208,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             ->with('success', 'Reconciliation rejected.');
     }
 
-    public function post(StockAdjustment $reconciliation, PostInventoryReconciliation $action): RedirectResponse
+    public function post(Reconciliation $reconciliation, PostInventoryReconciliation $action): RedirectResponse
     {
         $action->handle($reconciliation);
 
@@ -220,27 +220,27 @@ final readonly class InventoryReconciliationController implements HasMiddleware
     {
         return match ($status) {
             'draft' => $query
-                ->where('status', StockAdjustmentStatus::Draft)
+                ->where('status', ReconciliationStatus::Draft)
                 ->whereNull('submitted_at')
                 ->whereNull('rejected_at'),
             'submitted' => $query
-                ->where('status', StockAdjustmentStatus::Draft)
+                ->where('status', ReconciliationStatus::Draft)
                 ->whereNotNull('submitted_at')
                 ->whereNull('reviewed_at')
                 ->whereNull('rejected_at'),
             'reviewed' => $query
-                ->where('status', StockAdjustmentStatus::Draft)
+                ->where('status', ReconciliationStatus::Draft)
                 ->whereNotNull('reviewed_at')
                 ->whereNull('approved_at')
                 ->whereNull('rejected_at'),
             'approved' => $query
-                ->where('status', StockAdjustmentStatus::Draft)
+                ->where('status', ReconciliationStatus::Draft)
                 ->whereNotNull('approved_at')
                 ->whereNull('rejected_at'),
             'rejected' => $query
-                ->where('status', StockAdjustmentStatus::Draft)
+                ->where('status', ReconciliationStatus::Draft)
                 ->whereNotNull('rejected_at'),
-            'posted' => $query->where('status', StockAdjustmentStatus::Posted),
+            'posted' => $query->where('status', ReconciliationStatus::Posted),
             default => $query,
         };
     }
@@ -263,7 +263,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
     /**
      * @return array<string, mixed>
      */
-    private function serializeReconciliationSummary(StockAdjustment $reconciliation): array
+    private function serializeReconciliationSummary(Reconciliation $reconciliation): array
     {
         return [
             'id' => $reconciliation->id,
@@ -283,7 +283,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
     /**
      * @return array<string, mixed>
      */
-    private function serializeReconciliationDetail(StockAdjustment $reconciliation): array
+    private function serializeReconciliationDetail(Reconciliation $reconciliation): array
     {
         return [
             'id' => $reconciliation->id,
@@ -310,7 +310,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
                 'name' => $reconciliation->inventoryLocation->name,
                 'location_code' => $reconciliation->inventoryLocation->location_code,
             ],
-            'items' => $reconciliation->items->map(static fn (StockAdjustmentItem $item): array => [
+            'items' => $reconciliation->items->map(static fn (ReconciliationItem $item): array => [
                 'id' => $item->id,
                 'inventory_item_id' => $item->inventory_item_id,
                 'inventory_batch_id' => $item->inventory_batch_id,

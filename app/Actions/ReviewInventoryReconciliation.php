@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\StockAdjustmentStatus;
-use App\Models\StockAdjustment;
+use App\Enums\ReconciliationStatus;
+use App\Models\Reconciliation;
 use Illuminate\Support\Facades\Auth;
 
 final readonly class ReviewInventoryReconciliation
 {
-    public function handle(StockAdjustment $reconciliation, ?string $reviewNotes = null): StockAdjustment
+    public function handle(Reconciliation $reconciliation, ?string $reviewNotes = null): Reconciliation
     {
-        $updatedRows = StockAdjustment::query()
+        $updatedRows = Reconciliation::query()
             ->whereKey($reconciliation->id)
-            ->where('status', StockAdjustmentStatus::Draft)
+            ->where('status', ReconciliationStatus::Draft)
             ->whereNotNull('submitted_at')
             ->whereNull('reviewed_at')
             ->whereNull('approved_at')
@@ -28,7 +28,7 @@ final readonly class ReviewInventoryReconciliation
 
         abort_unless($updatedRows === 1, 422, 'Only submitted reconciliations can be reviewed.');
 
-        return StockAdjustment::query()
+        return Reconciliation::query()
             ->with('items.inventoryItem', 'items.inventoryBatch', 'inventoryLocation')
             ->findOrFail($reconciliation->id);
     }

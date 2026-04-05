@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\StockAdjustmentStatus;
+use App\Enums\ReconciliationStatus;
 use App\Enums\StockMovementType;
 use App\Models\InventoryBatch;
-use App\Models\StockAdjustment;
-use App\Models\StockAdjustmentItem;
+use App\Models\Reconciliation;
+use App\Models\ReconciliationItem;
 use App\Models\StockMovement;
 use App\Support\InventoryStockLedger;
 use Illuminate\Support\Facades\Auth;
@@ -20,22 +20,22 @@ final readonly class PostInventoryReconciliation
         private InventoryStockLedger $inventoryStockLedger,
     ) {}
 
-    public function handle(StockAdjustment $reconciliation): StockAdjustment
+    public function handle(Reconciliation $reconciliation): Reconciliation
     {
-        return DB::transaction(function () use ($reconciliation): StockAdjustment {
-            $reconciliation = StockAdjustment::query()
+        return DB::transaction(function () use ($reconciliation): Reconciliation {
+            $reconciliation = Reconciliation::query()
                 ->with('items.inventoryBatch', 'items.inventoryItem', 'inventoryLocation')
                 ->findOrFail($reconciliation->id);
 
             $this->guardCurrentBalances($reconciliation);
 
-            $updatedRows = StockAdjustment::query()
+            $updatedRows = Reconciliation::query()
                 ->whereKey($reconciliation->id)
-                ->where('status', StockAdjustmentStatus::Draft)
+                ->where('status', ReconciliationStatus::Draft)
                 ->whereNotNull('approved_at')
                 ->whereNull('rejected_at')
                 ->update([
-                    'status' => StockAdjustmentStatus::Posted,
+                    'status' => ReconciliationStatus::Posted,
                     'posted_by' => Auth::id(),
                     'posted_at' => now(),
                     'updated_by' => Auth::id(),
@@ -43,7 +43,7 @@ final readonly class PostInventoryReconciliation
 
             abort_unless($updatedRows === 1, 422, 'Only approved reconciliations can be posted.');
 
-            $reconciliation = StockAdjustment::query()
+            $reconciliation = Reconciliation::query()
                 ->with('items.inventoryBatch', 'items.inventoryItem', 'inventoryLocation')
                 ->findOrFail($reconciliation->id);
 
@@ -67,9 +67,9 @@ final readonly class PostInventoryReconciliation
                         : StockMovementType::AdjustmentLoss,
                     'quantity' => $varianceQuantity,
                     'unit_cost' => $item->unit_cost,
-                    'source_document_type' => StockAdjustment::class,
+                    'source_document_type' => Reconciliation::class,
                     'source_document_id' => $reconciliation->id,
-                    'source_line_type' => StockAdjustmentItem::class,
+                    'source_line_type' => ReconciliationItem::class,
                     'source_line_id' => $item->id,
                     'notes' => $item->notes ?? $reconciliation->reason,
                     'occurred_at' => $reconciliation->posted_at ?? now(),
@@ -81,7 +81,7 @@ final readonly class PostInventoryReconciliation
         });
     }
 
-    private function guardCurrentBalances(StockAdjustment $reconciliation): void
+    private function guardCurrentBalances(Reconciliation $reconciliation): void
     {
         $currentBalances = $this->inventoryStockLedger
             ->summarizeByLocation($reconciliation->branch_id)
@@ -121,7 +121,7 @@ final readonly class PostInventoryReconciliation
         }
     }
 
-    private function resolveBatch(StockAdjustment $reconciliation, StockAdjustmentItem $item): ?InventoryBatch
+    private function resolveBatch(Reconciliation $reconciliation, ReconciliationItem $item): ?InventoryBatch
     {
         if (is_string($item->inventory_batch_id) && $item->inventory_batch_id !== '') {
             return InventoryBatch::query()->find($item->inventory_batch_id);

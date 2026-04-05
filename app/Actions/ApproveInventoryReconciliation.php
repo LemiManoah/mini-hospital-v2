@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\StockAdjustmentStatus;
-use App\Models\StockAdjustment;
+use App\Enums\ReconciliationStatus;
+use App\Models\Reconciliation;
 use Illuminate\Support\Facades\Auth;
 
 final readonly class ApproveInventoryReconciliation
 {
-    public function handle(StockAdjustment $reconciliation, ?string $approvalNotes = null): StockAdjustment
+    public function handle(Reconciliation $reconciliation, ?string $approvalNotes = null): Reconciliation
     {
-        $updatedRows = StockAdjustment::query()
+        $updatedRows = Reconciliation::query()
             ->whereKey($reconciliation->id)
-            ->where('status', StockAdjustmentStatus::Draft)
+            ->where('status', ReconciliationStatus::Draft)
             ->whereNotNull('reviewed_at')
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
@@ -27,7 +27,7 @@ final readonly class ApproveInventoryReconciliation
 
         abort_unless($updatedRows === 1, 422, 'Only reviewed reconciliations can be approved.');
 
-        return StockAdjustment::query()
+        return Reconciliation::query()
             ->with('items.inventoryItem', 'items.inventoryBatch', 'inventoryLocation')
             ->findOrFail($reconciliation->id);
     }

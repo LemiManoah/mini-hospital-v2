@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum StockAdjustmentStatus: string
+enum ReconciliationStatus: string
 {
     case Draft = 'draft';
     case Posted = 'posted';

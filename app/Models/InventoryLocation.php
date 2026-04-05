@@ -50,9 +50,9 @@ final class InventoryLocation extends Model
         return $this->hasMany(StockMovement::class);
     }
 
-    public function stockAdjustments(): HasMany
+    public function reconciliations(): HasMany
     {
-        return $this->hasMany(StockAdjustment::class);
+        return $this->hasMany(Reconciliation::class);
     }
 
     public function items(): BelongsToMany

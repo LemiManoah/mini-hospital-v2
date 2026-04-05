@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\StockAdjustmentStatus;
+use App\Enums\ReconciliationStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -14,12 +14,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-final class StockAdjustment extends Model
+final class Reconciliation extends Model
 {
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\StockAdjustmentFactory> */
+    /** @use HasFactory<\Database\Factories\ReconciliationFactory> */
     use HasFactory;
 
     use HasUuids;
@@ -31,7 +31,7 @@ final class StockAdjustment extends Model
         'tenant_id' => 'string',
         'branch_id' => 'string',
         'inventory_location_id' => 'string',
-        'status' => StockAdjustmentStatus::class,
+        'status' => ReconciliationStatus::class,
         'adjustment_date' => 'date',
         'created_by' => 'string',
         'updated_by' => 'string',
@@ -54,12 +54,12 @@ final class StockAdjustment extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(StockAdjustmentItem::class, 'stock_reconciliation_id');
+        return $this->hasMany(ReconciliationItem::class, 'stock_reconciliation_id');
     }
 
     public function workflowStatus(): string
     {
-        if ($this->status === StockAdjustmentStatus::Posted) {
+        if ($this->status === ReconciliationStatus::Posted) {
             return 'posted';
         }
 
@@ -84,7 +84,7 @@ final class StockAdjustment extends Model
 
     public function canBeSubmitted(): bool
     {
-        return $this->status === StockAdjustmentStatus::Draft
+        return $this->status === ReconciliationStatus::Draft
             && $this->submitted_at === null
             && $this->rejected_at === null
             && $this->posted_at === null;
@@ -92,7 +92,7 @@ final class StockAdjustment extends Model
 
     public function canBeReviewed(): bool
     {
-        return $this->status === StockAdjustmentStatus::Draft
+        return $this->status === ReconciliationStatus::Draft
             && $this->submitted_at !== null
             && $this->reviewed_at === null
             && $this->approved_at === null
@@ -102,7 +102,7 @@ final class StockAdjustment extends Model
 
     public function canBeApproved(): bool
     {
-        return $this->status === StockAdjustmentStatus::Draft
+        return $this->status === ReconciliationStatus::Draft
             && $this->reviewed_at !== null
             && $this->approved_at === null
             && $this->rejected_at === null
@@ -111,7 +111,7 @@ final class StockAdjustment extends Model
 
     public function canBeRejected(): bool
     {
-        return $this->status === StockAdjustmentStatus::Draft
+        return $this->status === ReconciliationStatus::Draft
             && $this->submitted_at !== null
             && $this->approved_at === null
             && $this->rejected_at === null
@@ -120,7 +120,7 @@ final class StockAdjustment extends Model
 
     public function canBePosted(): bool
     {
-        return $this->status === StockAdjustmentStatus::Draft
+        return $this->status === ReconciliationStatus::Draft
             && $this->approved_at !== null
             && $this->rejected_at === null
             && $this->posted_at === null;

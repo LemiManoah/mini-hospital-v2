@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\StockAdjustmentStatus;
+use App\Enums\ReconciliationStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -17,8 +17,8 @@ return new class extends Migration
             $table->foreignUuid('branch_id')->constrained('facility_branches')->onDelete('cascade');
             $table->foreignUuid('inventory_location_id')->constrained('inventory_locations')->onDelete('cascade');
             $table->string('adjustment_number', 50)->index();
-            $table->enum('status', array_column(StockAdjustmentStatus::cases(), 'value'))
-                ->default(StockAdjustmentStatus::Draft->value)
+            $table->enum('status', array_column(ReconciliationStatus::cases(), 'value'))
+                ->default(ReconciliationStatus::Draft->value)
                 ->index();
             $table->date('adjustment_date');
             $table->string('reason', 200);
@@ -27,6 +27,17 @@ return new class extends Migration
             $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUuid('posted_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('posted_at')->nullable();
+              $table->foreignUuid('submitted_by')->nullable()->after('updated_by')->constrained('users')->nullOnDelete();
+            $table->timestamp('submitted_at')->nullable()->after('submitted_by');
+            $table->foreignUuid('reviewed_by')->nullable()->after('submitted_at')->constrained('users')->nullOnDelete();
+            $table->timestamp('reviewed_at')->nullable()->after('reviewed_by');
+            $table->text('review_notes')->nullable()->after('reviewed_at');
+            $table->foreignUuid('approved_by')->nullable()->after('review_notes')->constrained('users')->nullOnDelete();
+            $table->timestamp('approved_at')->nullable()->after('approved_by');
+            $table->text('approval_notes')->nullable()->after('approved_at');
+            $table->foreignUuid('rejected_by')->nullable()->after('approval_notes')->constrained('users')->nullOnDelete();
+            $table->timestamp('rejected_at')->nullable()->after('rejected_by');
+            $table->text('rejection_reason')->nullable()->after('rejected_at');
             $table->timestamps();
             $table->softDeletes();
 
@@ -44,6 +55,10 @@ return new class extends Migration
             $table->string('batch_number', 100)->nullable();
             $table->date('expiry_date')->nullable();
             $table->text('notes')->nullable();
+             $table->decimal('expected_quantity', 14, 3)->nullable()->after('inventory_batch_id');
+            $table->decimal('actual_quantity', 14, 3)->nullable()->after('expected_quantity');
+            $table->decimal('variance_quantity', 14, 3)->nullable()->after('actual_quantity');
+           
             $table->timestamps();
 
             $table->index(['stock_reconciliation_id', 'inventory_item_id'], 'stock_reconciliation_items_lookup');

@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\StockAdjustmentStatus;
-use App\Models\StockAdjustment;
+use App\Enums\ReconciliationStatus;
+use App\Models\Reconciliation;
 use Illuminate\Support\Facades\Auth;
 
 final readonly class SubmitInventoryReconciliation
 {
-    public function handle(StockAdjustment $reconciliation): StockAdjustment
+    public function handle(Reconciliation $reconciliation): Reconciliation
     {
-        $updatedRows = StockAdjustment::query()
+        $updatedRows = Reconciliation::query()
             ->whereKey($reconciliation->id)
-            ->where('status', StockAdjustmentStatus::Draft)
+            ->where('status', ReconciliationStatus::Draft)
             ->whereNull('submitted_at')
             ->whereNull('rejected_at')
             ->update([
@@ -25,7 +25,7 @@ final readonly class SubmitInventoryReconciliation
 
         abort_unless($updatedRows === 1, 422, 'Only draft reconciliations can be submitted.');
 
-        return StockAdjustment::query()
+        return Reconciliation::query()
             ->with('items.inventoryItem', 'items.inventoryBatch', 'inventoryLocation')
             ->findOrFail($reconciliation->id);
     }

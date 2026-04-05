@@ -8,14 +8,14 @@ use App\Actions\PostGoodsReceipt;
 use App\Actions\PostInventoryReconciliation;
 use App\Enums\GoodsReceiptStatus;
 use App\Enums\PurchaseOrderStatus;
-use App\Enums\StockAdjustmentStatus;
+use App\Enums\ReconciliationStatus;
 use App\Models\GoodsReceipt;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
-use App\Models\StockAdjustment;
+use App\Models\Reconciliation;
 use App\Models\Supplier;
 use App\Support\InventoryStockLedger;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
@@ -325,7 +325,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         if ($paracetamolBatch instanceof InventoryBatch) {
             $pharmacyExpected = (float) ($locationBalances[$pharmacyLocation->id.'|'.$paracetamol->id] ?? 0.0);
 
-            $postedReconciliation = StockAdjustment::query()->firstOrCreate(
+            $postedReconciliation = Reconciliation::query()->firstOrCreate(
                 [
                     'tenant_id' => $tenantId,
                     'adjustment_number' => 'CGH-REC-001',
@@ -333,7 +333,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
                 [
                     'branch_id' => $branchId,
                     'inventory_location_id' => $pharmacyLocation->id,
-                    'status' => StockAdjustmentStatus::Draft,
+                    'status' => ReconciliationStatus::Draft,
                     'adjustment_date' => now()->subDay()->toDateString(),
                     'reason' => 'Pharmacy shelf reconciliation after damage review.',
                     'notes' => 'Seeded posted reconciliation for manual testing.',
@@ -365,14 +365,14 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
                 ],
             );
 
-            if ($postedReconciliation->status === StockAdjustmentStatus::Draft) {
+            if ($postedReconciliation->status === ReconciliationStatus::Draft) {
                 resolve(PostInventoryReconciliation::class)->handle($postedReconciliation);
             }
         }
 
         $labExpected = (float) ($locationBalances[$labLocation->id.'|'.$malariaKit->id] ?? 0.0);
 
-        $approvedReconciliation = StockAdjustment::query()->firstOrCreate(
+        $approvedReconciliation = Reconciliation::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
                 'adjustment_number' => 'CGH-REC-002',
@@ -380,7 +380,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             [
                 'branch_id' => $branchId,
                 'inventory_location_id' => $labLocation->id,
-                'status' => StockAdjustmentStatus::Draft,
+                'status' => ReconciliationStatus::Draft,
                 'adjustment_date' => now()->toDateString(),
                 'reason' => 'Laboratory shelf verification awaiting post.',
                 'notes' => 'Seeded approved reconciliation so the final posting step can be tested manually.',
@@ -416,7 +416,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
 
         $storeExpected = (float) ($locationBalances[$storeLocation->id.'|'.$amoxicillin->id] ?? 0.0);
 
-        StockAdjustment::query()->firstOrCreate(
+        Reconciliation::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
                 'adjustment_number' => 'CGH-REC-003',
@@ -424,7 +424,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             [
                 'branch_id' => $branchId,
                 'inventory_location_id' => $storeLocation->id,
-                'status' => StockAdjustmentStatus::Draft,
+                'status' => ReconciliationStatus::Draft,
                 'adjustment_date' => now()->toDateString(),
                 'reason' => 'Main store cycle-check draft.',
                 'notes' => 'Seeded draft reconciliation so the full workflow can be tested manually.',

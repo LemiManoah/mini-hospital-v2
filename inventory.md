@@ -28,7 +28,7 @@ What does not yet exist:
 - pharmacy store workflow
 - branch-to-branch or store-to-store transfers
 - departmental requisitions and issue workflow
-- cycle counts, expiry or damage write-offs, and deeper reconciliation tooling
+- reconciliation presets and specialized workflows for cycle count, expiry, and damage handling
 - dispensing records tied to real stock depletion
 - reorder levels, alerts, and inventory reporting
 
@@ -527,8 +527,7 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 - stock balance calculation
 - stock-by-location visibility page
 - reconciliations with review and approval workflow
-- cycle counts
-- expiry and damaged stock write-off support
+- reconciliation presets for cycle count, expiry, and damage
 
 ### Milestone Checklist
 
@@ -538,8 +537,8 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 - [x] Build stock summary queries by item, batch, and location
 - [x] Add stock-by-location page showing each item's quantity across locations
 - [x] Add reconciliation review and approval rules
-- [ ] Add cycle count workflow
-- [ ] Add expiry and damage write-off workflow
+- [ ] Add cycle-count reconciliation preset/workflow
+- [ ] Add expiry and damage reconciliation preset/workflow
 - [x] Add movement history page
 - [x] Add tests that balances match posted movements
 
@@ -550,7 +549,7 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 
 ### Current Status
 
-The stock ledger foundation is now in place. Posted goods receipts create `InventoryBatch` and `StockMovement` records, the stock-by-location matrix reads from movement-backed balances, a stock movement history page is available for branch users, and user-facing reconciliations now cover both count-style and correction-style stock variance with submit, review, approve, reject, and post steps. City General Hospital main branch also has seeded inventory users and workflow data so the milestone 3 surfaces can be exercised manually after seeding. Milestone 3 is still not complete, because dedicated cycle-count workflow and expiry or damage write-off tooling are still outstanding.
+The stock ledger foundation is now in place. Posted goods receipts create `InventoryBatch` and `StockMovement` records, the stock-by-location matrix reads from movement-backed balances, a stock movement history page is available for branch users, and user-facing reconciliations now cover both count-style and correction-style stock variance with submit, review, approve, reject, and post steps. The reconciliation storage now also matches the domain language directly through `stock_reconciliations` and `stock_reconciliation_items`. City General Hospital main branch also has seeded inventory users and workflow data so the milestone 3 surfaces can be exercised manually after seeding. Milestone 3 is still not complete, because dedicated cycle-count reconciliation presets and expiry or damage reconciliation tooling are still outstanding.
 
 ## Milestone 4: Requisitions And Inter-Store Transfers
 
@@ -673,10 +672,10 @@ Stabilize the module for confident use across branches and workflows.
 ### Milestone Checklist
 
 - [ ] Add factory coverage for inventory core models
-- [ ] Add seeders for sample locations, suppliers, and items
+- [x] Add seeders for sample locations, suppliers, and items
 - [ ] Add end-to-end tests for:
   - receive stock
-  - adjust stock
+  - reconcile stock
   - transfer stock
   - issue requisition
   - dispense prescription

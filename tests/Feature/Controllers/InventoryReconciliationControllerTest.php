@@ -9,7 +9,7 @@ use App\Enums\GoodsReceiptStatus;
 use App\Enums\InventoryItemType;
 use App\Enums\InventoryLocationType;
 use App\Enums\PurchaseOrderStatus;
-use App\Enums\StockAdjustmentStatus;
+use App\Enums\ReconciliationStatus;
 use App\Enums\StockMovementType;
 use App\Models\Country;
 use App\Models\Currency;
@@ -21,7 +21,7 @@ use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
-use App\Models\StockAdjustment;
+use App\Models\Reconciliation;
 use App\Models\StockMovement;
 use App\Models\SubscriptionPackage;
 use App\Models\Supplier;
@@ -164,12 +164,12 @@ it('lists reconciliations for authorized user', function (): void {
     [$branch, $user, $location] = createInventoryReconciliationTestContext();
     $user->givePermissionTo('stock_adjustments.view');
 
-    StockAdjustment::query()->create([
+    Reconciliation::query()->create([
         'tenant_id' => $user->tenant_id,
         'branch_id' => $branch->id,
         'inventory_location_id' => $location->id,
         'adjustment_number' => 'REC-LIST-001',
-        'status' => StockAdjustmentStatus::Draft,
+        'status' => ReconciliationStatus::Draft,
         'adjustment_date' => now()->toDateString(),
         'reason' => 'Cycle shelf check',
     ]);
@@ -223,12 +223,12 @@ it('creates a draft reconciliation with expected and actual quantities', functio
             ],
         ]);
 
-    $reconciliation = StockAdjustment::withoutGlobalScopes()
+    $reconciliation = Reconciliation::withoutGlobalScopes()
         ->latest('created_at')
         ->first();
 
     expect($reconciliation)->not->toBeNull()
-        ->and($reconciliation->status)->toBe(StockAdjustmentStatus::Draft)
+        ->and($reconciliation->status)->toBe(ReconciliationStatus::Draft)
         ->and((bool) preg_match('/^REC-\d{14}-[A-Z0-9]{4}$/', (string) $reconciliation->adjustment_number))->toBeTrue()
         ->and($reconciliation->items)->toHaveCount(1)
         ->and((string) $reconciliation->items->first()->expected_quantity)->toBe('8.000')
@@ -240,7 +240,7 @@ it('creates a draft reconciliation with expected and actual quantities', functio
 
     expect(
         StockMovement::withoutGlobalScopes()
-            ->where('source_document_type', StockAdjustment::class)
+            ->where('source_document_type', Reconciliation::class)
             ->count()
     )->toBe(0);
 });
@@ -249,12 +249,12 @@ it('runs the submit review approve and post workflow', function (): void {
     [$branch, $user, $location, $item, $batch] = createInventoryReconciliationTestContext();
     $user->givePermissionTo(['stock_adjustments.view', 'stock_adjustments.update']);
 
-    $reconciliation = StockAdjustment::query()->create([
+    $reconciliation = Reconciliation::query()->create([
         'tenant_id' => $user->tenant_id,
         'branch_id' => $branch->id,
         'inventory_location_id' => $location->id,
         'adjustment_number' => 'REC-WORKFLOW-001',
-        'status' => StockAdjustmentStatus::Draft,
+        'status' => ReconciliationStatus::Draft,
         'adjustment_date' => now()->toDateString(),
         'reason' => 'Damaged stock on shelf',
     ]);
@@ -297,14 +297,14 @@ it('runs the submit review approve and post workflow', function (): void {
 
     $reconciliation->refresh();
 
-    expect($reconciliation->status)->toBe(StockAdjustmentStatus::Posted)
+    expect($reconciliation->status)->toBe(ReconciliationStatus::Posted)
         ->and($reconciliation->submitted_at)->not->toBeNull()
         ->and($reconciliation->reviewed_at)->not->toBeNull()
         ->and($reconciliation->approved_at)->not->toBeNull()
         ->and($reconciliation->posted_at)->not->toBeNull();
 
     $movement = StockMovement::withoutGlobalScopes()
-        ->where('source_document_type', StockAdjustment::class)
+        ->where('source_document_type', Reconciliation::class)
         ->where('source_document_id', $reconciliation->id)
         ->first();
 
@@ -317,12 +317,12 @@ it('allows a submitted reconciliation to be rejected', function (): void {
     [$branch, $user, $location] = createInventoryReconciliationTestContext();
     $user->givePermissionTo('stock_adjustments.update');
 
-    $reconciliation = StockAdjustment::query()->create([
+    $reconciliation = Reconciliation::query()->create([
         'tenant_id' => $user->tenant_id,
         'branch_id' => $branch->id,
         'inventory_location_id' => $location->id,
         'adjustment_number' => 'REC-REJECT-001',
-        'status' => StockAdjustmentStatus::Draft,
+        'status' => ReconciliationStatus::Draft,
         'adjustment_date' => now()->toDateString(),
         'reason' => 'Pending review',
         'submitted_by' => $user->id,
@@ -348,12 +348,12 @@ it('shows a reconciliation detail page', function (): void {
     [$branch, $user, $location, $item, $batch] = createInventoryReconciliationTestContext();
     $user->givePermissionTo('stock_adjustments.view');
 
-    $reconciliation = StockAdjustment::query()->create([
+    $reconciliation = Reconciliation::query()->create([
         'tenant_id' => $user->tenant_id,
         'branch_id' => $branch->id,
         'inventory_location_id' => $location->id,
         'adjustment_number' => 'REC-SHOW-001',
-        'status' => StockAdjustmentStatus::Draft,
+        'status' => ReconciliationStatus::Draft,
         'adjustment_date' => now()->toDateString(),
         'reason' => 'Store shelf check',
     ]);

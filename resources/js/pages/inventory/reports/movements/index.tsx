@@ -129,9 +129,6 @@ export default function InventoryMovementReportIndex({
                                         <TableCell>{movement.item_name ?? '-'}</TableCell>
                                         <TableCell>
                                             {movement.location_name ?? '-'}
-                                            {movement.location_code
-                                                ? ` (${movement.location_code})`
-                                                : ''}
                                         </TableCell>
                                         <TableCell>{movement.movement_type_label ?? '-'}</TableCell>
                                         <TableCell>{movement.batch_number ?? '-'}</TableCell>

@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-final class StockAdjustmentItem extends Model
+final class ReconciliationItem extends Model
 {
-    /** @use HasFactory<\Database\Factories\StockAdjustmentItemFactory> */
+    /** @use HasFactory<\Database\Factories\ReconciliationItemFactory> */
     use HasFactory;
 
     use HasUuids;
@@ -30,9 +30,9 @@ final class StockAdjustmentItem extends Model
         'expiry_date' => 'date',
     ];
 
-    public function stockAdjustment(): BelongsTo
+    public function reconciliation(): BelongsTo
     {
-        return $this->belongsTo(StockAdjustment::class, 'stock_reconciliation_id');
+        return $this->belongsTo(Reconciliation::class, 'stock_reconciliation_id');
     }
 
     public function inventoryItem(): BelongsTo
