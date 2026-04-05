@@ -287,6 +287,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'goods_receipts.view',
                     },
                     {
+                        title: 'Stock Counts',
+                        url: '/stock-counts',
+                        permission: 'stock_counts.view',
+                    },
+                    {
+                        title: 'Stock Adjustments',
+                        url: '/stock-adjustments',
+                        permission: 'stock_adjustments.view',
+                    },
+                    {
                         title: 'Stock By Location',
                         url: '/inventory/stock-by-location',
                         permission: 'inventory_items.view',

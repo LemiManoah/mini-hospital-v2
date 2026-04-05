@@ -5,63 +5,8 @@ PS C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2> php arti
 
    FAIL  Tests\Browser\WelcomeTest
   ⨯ it has welcome page                                                                                             6.94s  
+ 
 
-   PASS  Tests\Unit\Actions\AssessPatientVisitCompletionTest
-  ✓ it blocks visit completion until a triaged visit has a finalized consultation                                   2.88s  
-  ✓ it blocks visit completion when downstream consultation orders are still pending                                1.53s  
-  ✓ it counts pending facility service orders as blocking downstream work                                           1.47s  
-  ✓ it warns when a visit has an unpaid balance and clears the warning after settlement                             2.00s  
-
-   PASS  Tests\Unit\Actions\CreateConsultationOrdersTest
-  ✓ it creates a lab request with priced items from the consultation context and syncs a visit charge               2.39s  
-  ✓ it uses insurance package prices when syncing lab request charges                                               2.04s  
-  ✓ it creates a prescription with multiple drug items                                                              1.75s  
-  ✓ it creates an imaging request linked to the consultation                                                        1.47s  
-  ✓ it creates a facility service order with consultation context and syncs an insurance-priced charge              1.43s  
-  ✓ it creates a facility service order with the service selling price for cash visits                              1.57s  
-  ✓ it creates a facility service order without syncing a charge for non-billable services                          1.19s  
-  ✓ it prevents duplicate pending facility service orders for the same visit                                        1.76s  
-  ✓ it deletes a pending facility service order and its synced charge                                               1.46s  
-
-   PASS  Tests\Unit\Actions\CreateConsultationTest
-  ✓ it creates a consultation using triage context and the authenticated clinician                                  1.35s  
-
-   PASS  Tests\Unit\Actions\CreateUserEmailResetNotificationTest
-  ✓ it may send password reset notification                                                                         2.29s  
-  ✓ it returns throttled status when too many attempts                                                             26.87s  
-  ✓ it returns invalid user status for non-existent email                                                           0.86s  
-
-   PASS  Tests\Unit\Actions\CreateUserEmailVerificationNotificationTest
-  ✓ it may send email verification notification                                                                     1.74s  
-
-   PASS  Tests\Unit\Actions\CreateUserPasswordTest
-  ✓ it may create a new user password                                                                               1.85s  
-  ✓ it returns invalid token status for incorrect token                                                             1.63s  
-  ✓ it returns invalid user status for non-existent email                                                           0.86s  
-  ✓ it updates remember token when resetting password                                                               1.10s  
-
-   PASS  Tests\Unit\Actions\CreateUserTest
-  ✓ it may create a user                                                                                            1.07s  
-
-   PASS  Tests\Unit\Actions\CreateVitalSignTest
-  ✓ it normalizes numeric strings before calculating derived vital sign values                                      1.06s  
-
-   PASS  Tests\Unit\Actions\DeleteUserTest
-  ✓ it may delete a user                                                                                            1.18s  
-
-   PASS  Tests\Unit\Actions\PostGoodsReceiptTest
-  ✓ it rejects posting when the goods receipt is no longer draft in storage                                         1.50s  
-
-   PASS  Tests\Unit\Actions\RecalculateVisitBillingTest
-  ✓ it recalculates visit billing totals from charges and payments                                                  1.34s  
-
-   PASS  Tests\Unit\Actions\UpdateUserPasswordTest
-  ✓ it may update a user password                                                                                   1.17s  
-
-   PASS  Tests\Unit\Actions\UpdateUserTest
-  ✓ it may update a user                                                                                            1.57s  
-  ✓ it resets email verification and sends notification when email changes                                          0.93s  
-  ✓ it keeps email verification and does not send notification when email stays the same                            0.96s  
 
    FAIL  Tests\Unit\ArchTest
   ✓ preset → php                                                                                                  265.19s  
@@ -69,121 +14,11 @@ PS C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2> php arti
   ✓ preset → security → ignoring ['assert']                                                                        16.40s  
   ✓ controllers                                                                                                    74.49s  
 
-   PASS  Tests\Unit\Middleware\HandleAppearanceTest
-  ✓ it shares appearance cookie value with views                                                                    1.43s  
-  ✓ it defaults to system when appearance cookie not present                                                        1.14s  
-  ✓ it handles light appearance                                                                                     1.25s  
-  ✓ it handles system appearance                                                                                    1.14s  
 
-   PASS  Tests\Unit\Middleware\HandleInertiaRequestsTest
-  ✓ it shares app name from config                                                                                  1.91s  
-  ✓ it shares null user when guest                                                                                  1.29s  
-  ✓ it shares authenticated user data                                                                               1.93s  
-  ✓ it defaults sidebarOpen to true when no cookie                                                                  1.27s  
-  ✓ it sets sidebarOpen to true when cookie is true                                                                 1.42s  
-  ✓ it sets sidebarOpen to false when cookie is false                                                               1.26s  
-  ✓ it includes parent shared data                                                                                  1.32s  
 
    FAIL  Tests\Unit\Models\UserTest
   ⨯ to array                                                                                                        1.91s  
 
-   PASS  Tests\Unit\Rules\ValidEmailTest
-  ✓ it works with valid email with ('simple@example.com')                                                           1.37s  
-  ✓ it works with valid email with ('very.common@example.com')                                                      1.39s  
-  ✓ it works with valid email with ('disposable.style.email.with+s…le.com')                                         1.43s  
-  ✓ it works with valid email with ('other.email-with-hyphen@example.com')                                          1.47s  
-  ✓ it works with valid email with ('x@example.com')                                                                1.37s  
-  ✓ it works with valid email with ('example-indeed@strange-example.com')                                           1.29s  
-  ✓ it works with valid email with ('admin@mailserver1.com')                                                        1.34s  
-  ✓ it works with valid email with ('user.name+tag+sorting@example.com')                                            1.39s  
-  ✓ it works with valid email with ('user.name@sub.domain.com')                                                     1.32s  
-  ✓ it works with valid email with ('firstname-lastname@example.com')                                               1.39s  
-  ✓ it works with valid email with ('1234567890@example.com')                                                       1.42s  
-  ✓ it works with valid email with ('user.123@example.com')                                                         1.40s  
-  ✓ it works with valid email with ('user123@example.com')                                                          1.27s  
-  ✓ it works with valid email with ('9876543210@example.net')                                                       1.38s  
-  ✓ it works with valid email with ('test456@domain123.com')                                                        1.43s  
-  ✓ it works with valid email with ('a.very.long.email.address.but…le.com')                                         1.49s  
-  ✓ it works with valid email with ('another.really.long.email.add….co.uk')                                         1.28s  
-  ✓ it works with valid email with ('longlocalpart1234567890123456…le.com')                                         1.38s  
-  ✓ it works with valid email with ('superlongemailaddresswith1234…le.org')                                         1.32s  
-  ✓ it works with valid email with ('excessive-length-testing-allo…le.com')                                         1.41s  
-  ✓ it works with valid email with ('user@ex-ample.com')                                                            1.27s  
-  ✓ it works with valid email with ('user@mail.example.com')                                                        1.40s  
-  ✓ it works with valid email with ('contact@support.company.com')                                                  1.30s  
-  ✓ it works with valid email with ('info@help.docs.example.com')                                                   1.40s  
-  ✓ it works with valid email with ('customer.service@global.enterprise.org')                                       1.47s  
-  ✓ it works with valid email with ('feedback@eu.store.example.net')                                                1.41s  
-  ✓ it works with valid email with ('user@company.app')                                                             1.36s  
-  ✓ it works with valid email with ('support@business.dev')                                                         1.32s  
-  ✓ it works with valid email with ('test@something.xyz')                                                           1.38s  
-  ✓ it works with valid email with ('email@custom.tld')                                                             1.29s  
-  ✓ it works with valid email with ('person@organization.online')                                                   1.48s  
-  ✓ it works with valid email with ('user@domain.museum')                                                           1.31s  
-  ✓ it works with valid email with ('info@charity.foundation')                                                      1.37s  
-  ✓ it works with valid email with ('admin@website.travel')                                                         1.29s  
-  ✓ it works with valid email with ('sales@company.agency')                                                         1.35s  
-  ✓ it works with valid email with ('team@startup.tech')                                                            1.25s  
-  ✓ it fails with invalid email with ('R@r.com')                                                                    1.40s  
-  ✓ it fails with invalid email with ('r@R.com')                                                                    1.36s  
-  ✓ it fails with invalid email with ('@example.com')                                                               1.39s  
-  ✓ it fails with invalid email with ('user@')                                                                      1.33s  
-  ✓ it fails with invalid email with ('user@.com')                                                                  1.46s  
-  ✓ it fails with invalid email with ('user@.example')                                                              1.39s  
-  ✓ it fails with invalid email with ('user@.example.com')                                                          1.35s  
-  ✓ it fails with invalid email with ('user@sub..example.com')                                                      1.40s  
-  ✓ it fails with invalid email with ('user')                                                                       1.30s  
-  ✓ it fails with invalid email with ('')                                                                           1.52s  
-  ✓ it fails with invalid email with ('user@123.123.123.123')                                                       1.52s  
-  ✓ it fails with invalid email with ('user@[192.168.1.1]')                                                         1.45s  
-  ✓ it fails with invalid email with ('user@[IPv6:2001:db8::1]')                                                    1.29s  
-  ✓ it fails with invalid email with ('"user@with-quotes"@example.com')                                             1.36s  
-  ✓ it fails with invalid email with (''user@with-quotes'@example.com')                                             1.30s  
-  ✓ it fails with invalid email with ('"very.unusual.@.email"@example.com')                                         1.27s  
-  ✓ it fails with invalid email with ('"quoted.local@part"@example.com')                                            1.38s  
-  ✓ it fails with invalid email with ('"user name"@example.com')                                                    1.38s  
-  ✓ it fails with invalid email with ('üñîçødé@example.com')                                                        1.40s  
-  ✓ it fails with invalid email with ('δοκιμή@παράδειγμα.ελ')                                                       1.43s  
-  ✓ it fails with invalid email with ('测试@测试.中国')                                                             1.37s  
-  ✓ it fails with invalid email with ('пример@пример.рус')                                                          1.51s  
-  ✓ it fails with invalid email with ('उपयोगकर्ता@उदाहरण.भारत')                                                     1.33s  
-  ✓ it fails with invalid email with ('mat@me')                                                                     1.38s  
-  ✓ it fails with invalid email with ('user@localserver')                                                           1.25s  
-  ✓ it fails with invalid email with ('user@localdomain')                                                           1.34s  
-  ✓ it fails with invalid email with ('user@sub.-domain.com')                                                       1.25s  
-  ✓ it fails with invalid email with ('𝓊𝓃𝒾𝒸ℴ𝒹ℯ@𝒹ℴ𝓂𝒶𝒾𝓃.𝒸ℴ𝓂')                                                         1.43s  
-
-   PASS  Tests\Feature\Controllers\BranchIsolationTest
-  ✓ it redirects tenant users to branch switcher when multiple branches and none selected                         144.08s  
-  ✓ it allows tenant admins to open facility branch administration without an active branch selected              147.98s  
-  ✓ it allows switching to an authorized branch and stores it in session                                          118.42s  
-  ✓ it forbids switching to an inactive branch                                                                    140.48s  
-  ✓ it forbids opening an appointment from a different active branch                                               89.03s  
-  ✓ it forbids opening a visit from a different active branch                                                     139.91s  
-  ✓ it forbids editing a clinic from a different active branch                                                     94.45s  
-  ✓ it forbids editing a doctor schedule from a different active branch                                            99.50s  
-  ✓ it forbids non-support users from opening the facility switcher                                                 1.48s  
-  ✓ it forbids non-support users from switching facility context                                                    1.57s  
-  ✓ it allows support users to switch tenant context and clears active branch selection                            90.59s  
-
-   PASS  Tests\Feature\Controllers\GoodsReceiptControllerTest
-  ✓ it lists goods receipts for authorized user                                                                   120.43s  
-  ✓ it denies goods receipt index without permission                                                              123.50s  
-  ✓ it creates a goods receipt                                                                                    130.63s  
-  ✓ it rejects receipt items from a different purchase order                                                      126.00s  
-  ✓ it rejects receipt items whose inventory item does not match the purchase order item                          127.27s  
-  ✓ it posts a goods receipt and updates PO item quantities                                                        88.66s  
-  ✓ it fully receiving all items marks PO as received                                                              84.79s  
-  ✓ it prevents posting an already posted goods receipt                                                            78.27s  
-  ✓ it prevents creating goods receipt against a draft PO                                                          93.00s  
-  ✓ it shows a goods receipt detail page                                                                          129.65s  
-
-   PASS  Tests\Feature\Controllers\LabReferenceLookupControllerTest
-  ✓ it creates and lists tenant lab test categories                                                               160.06s  
-  ✓ it prevents editing default lab test categories                                                               113.34s  
-  ✓ it updates and deletes a tenant specimen type                                                                 121.62s  
-  ✓ it creates and lists result types with code search                                                            117.38s  
-  ✓ it blocks deleting a result type that is already used by a lab test                                           114.36s  
 
    FAIL  Tests\Feature\Controllers\LabRequestItemConsumableControllerTest
   ⨯ it shows the laboratory worklist to authorized users                                                          112.24s  
@@ -194,67 +29,15 @@ PS C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2> php arti
   ⨯ it picks a sample for a laboratory request item from the incoming queue                                       111.65s  
   ⨯ it stores reviews and approves parameter-panel lab results                                                    102.87s  
   ⨯ it moves a request item between the incoming and enter-results queues after sample picking                    107.30s  
-
-   PASS  Tests\Feature\Controllers\LabTestCatalogControllerTest
-  ✓ it forbids users without lab test catalog view permission and allows authorized index access                   91.47s  
-  ✓ it forbids users without lab test catalog create permission and allows authorized create access               117.98s  
-  ✓ it lists lab tests for authorized users and supports search                                                    86.69s  
-  ✓ it creates a lab test catalog entry with lookup-backed relationships                                           71.35s  
-  ✓ it updates a lab test catalog entry                                                                            98.02s  
-  ✓ it deletes an unreferenced lab test catalog entry                                                             125.59s  
-  ✓ it blocks deleting a referenced lab test catalog entry                                                        107.28s  
+  
 
    FAIL  Tests\Feature\Controllers\PermissionEnforcementTest
-  ✓ Core permission pages → it forbids and allows users index based on users.view permission                       99.84s  
-  ✓ Core permission pages → it forbids and allows dashboard based on dashboard.view permission                     94.30s  
-  ✓ Core permission pages → it forbids and allows facility branch index based on facility_branches.view permissio… 92.41s  
-  ✓ Core permission pages → it forbids and allows facility branch creation page based on facility_branches.creat… 118.93s  
-  ✓ Tenant support and onboarding permissions → it forbids and allows support users opening the facility switche… 160.88s  
-  ✓ Tenant support and onboarding permissions → it forbids and allows support users switching tenant context base… 95.21s  
-  ✓ Tenant support and onboarding permissions → it forbids and allows onboarding access based on tenants.onboard… 112.79s  
-  ✓ Visit workflow permissions → it forbids and allows visit status updates based on visits.update permission     108.89s  
-  ✓ Visit workflow permissions → it forbids and allows triage creation based on triage.create permission          157.44s  
-  ✓ Visit workflow permissions → it forbids and allows vital sign creation based on triage.update permission      155.22s  
-  ✓ Consultation workflow permissions → it allows support users with consultation permission to open the consult… 130.91s  
-  ✓ Consultation workflow permissions → it allows support users with consultation permission to open a consultat… 101.75s  
-  ✓ Consultation workflow permissions → it forbids and allows consultation creation based on consultations.create… 83.49s  
-  ✓ Consultation workflow permissions → it forbids and allows consultation updates based on consultations.update…  81.13s  
-  ✓ Consultation workflow permissions → it forbids and allows lab request creation based on consultations.update…  64.09s  
-  ✓ Consultation workflow permissions → it forbids and allows prescription creation based on consultations.update… 66.55s  
-  ✓ Consultation workflow permissions → it forbids and allows facility service orders based on consultations.upda… 67.88s  
-  ✓ Consultation workflow permissions → it forbids and allows pending facility service order removal based on con… 83.06s  
-  ✓ Consultation workflow permissions → it blocks facility service deletion when service orders exist             107.64s  
   ✓ Consultation workflow permissions → it allows facility service deletion when no service orders exist           86.27s  
   ⨯ Appointment action permissions → it forbids and allows appointment confirmation based on appointments.confirm… 78.22s  
 
-   PASS  Tests\Feature\Controllers\PurchaseOrderControllerTest
-  ✓ it lists purchase orders for authorized user                                                                   78.74s  
-  ✓ it denies purchase order index without permission                                                              62.59s  
-  ✓ it creates a purchase order with items                                                                         68.14s  
-  ✓ it submits a draft purchase order                                                                             104.48s  
-  ✓ it approves a submitted purchase order                                                                         71.13s  
-  ✓ it cancels a purchase order                                                                                    77.22s  
-  ✓ it prevents submitting a non-draft purchase order                                                              93.07s  
-  ✓ it prevents editing a non-draft purchase order                                                                129.53s  
-  ✓ it shows a purchase order detail page                                                                         151.69s  
-
-   FAIL  Tests\Feature\Controllers\SessionControllerTest
-  ✓ it renders login page                                                                                           1.85s  
-  ⨯ it may create a session                                                                                         2.07s  
-  ⨯ it may create a session with remember me                                                                        2.07s  
-  ✓ it redirects to two-factor challenge when enabled                                                               1.54s  
-  ✓ it fails with invalid credentials                                                                               1.58s  
-  ✓ it requires email                                                                                               1.41s  
-  ✓ it requires password                                                                                            1.52s  
-  ✓ it may destroy a session                                                                                        1.67s  
-  ✓ it redirects authenticated users away from login                                                                1.73s  
-  ✓ it throttles login attempts after too many failures                                                             2.25s  
-  ⨯ it clears rate limit after successful login                                                                     2.01s  
-  ✓ it dispatches lockout event when rate limit is reached                                                          2.65s  
 
 
 
-osure))
 #40 C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\vendor\laravel\framework\src\Illuminate\Cookie\Middleware\EncryptCookies.php(74): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
 #41 C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Cookie\Middleware\EncryptCookies->handle(Object(Illuminate\Http\Request), Object(Closure))     
 #42 C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))

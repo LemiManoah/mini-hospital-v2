@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\StockCountStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -11,53 +12,38 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-final class InventoryBatch extends Model
+final class StockCount extends Model
 {
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\InventoryBatchFactory> */
+    /** @use HasFactory<\Database\Factories\StockCountFactory> */
     use HasFactory;
 
     use HasUuids;
+    use SoftDeletes;
 
     protected $casts = [
         'tenant_id' => 'string',
         'branch_id' => 'string',
         'inventory_location_id' => 'string',
-        'inventory_item_id' => 'string',
-        'goods_receipt_item_id' => 'string',
-        'unit_cost' => 'decimal:2',
-        'quantity_received' => 'decimal:3',
-        'expiry_date' => 'date',
-        'received_at' => 'datetime',
+        'status' => StockCountStatus::class,
+        'count_date' => 'date',
         'created_by' => 'string',
         'updated_by' => 'string',
+        'posted_by' => 'string',
+        'posted_at' => 'datetime',
     ];
-
-    public function inventoryItem(): BelongsTo
-    {
-        return $this->belongsTo(InventoryItem::class);
-    }
 
     public function inventoryLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class);
     }
 
-    public function goodsReceiptItem(): BelongsTo
+    public function items(): HasMany
     {
-        return $this->belongsTo(GoodsReceiptItem::class);
-    }
-
-    public function stockMovements(): HasMany
-    {
-        return $this->hasMany(StockMovement::class);
-    }
-
-    public function stockAdjustmentItems(): HasMany
-    {
-        return $this->hasMany(StockAdjustmentItem::class);
+        return $this->hasMany(StockCountItem::class);
     }
 }

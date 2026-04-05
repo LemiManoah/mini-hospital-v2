@@ -20,13 +20,15 @@ What already exists:
 - supplier, purchase order, and goods receipt workflows now exist
 - posted goods receipts now create inventory batches and stock movements
 - stock-by-location and stock movement visibility pages now exist
+- stock counts and stock adjustments now exist for controlled reconciliation
+- City General Hospital main branch now has seeded inventory workflow data for manual testing
 
 What does not yet exist:
 
 - pharmacy store workflow
 - branch-to-branch or store-to-store transfers
 - departmental requisitions and issue workflow
-- stock counts, adjustments, expiries, wastage, and reconciliation
+- stock counts, cycle counts, expiry or damage write-offs, and reconciliation tooling
 - dispensing records tied to real stock depletion
 - reorder levels, alerts, and inventory reporting
 
@@ -537,8 +539,8 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 
 - [x] Create `inventory_batches`
 - [x] Create `stock_movements`
-- [ ] Create `stock_adjustments` and related items
-- [ ] Create `stock_counts` and related items
+- [x] Create `stock_adjustments` and related items
+- [x] Create `stock_counts` and related items
 - [x] Build stock summary queries by item, batch, and location
 - [x] Add stock-by-location page showing each item's quantity across locations
 - [ ] Add adjustment reasons and approval rules
@@ -554,7 +556,7 @@ Make stock trustworthy by introducing a movement ledger and controlled reconcili
 
 ### Current Status
 
-The stock ledger foundation is now in place. Posted goods receipts create `InventoryBatch` and `StockMovement` records, the stock-by-location matrix now reads from movement-backed balances, and a stock movement history page is available for branch users. Milestone 3 is still not complete, because stock adjustments, counts, cycle-count workflow, and expiry or damage write-off tooling are still outstanding.
+The stock ledger foundation is now in place. Posted goods receipts create `InventoryBatch` and `StockMovement` records, the stock-by-location matrix reads from movement-backed balances, a stock movement history page is available for branch users, and both stock adjustments and stock counts can now be created and posted to reconcile inventory against the ledger. City General Hospital main branch also has seeded inventory users and workflow data so the milestone 3 surfaces can be exercised manually after seeding. Milestone 3 is still not complete, because cycle-count workflow, adjustment approval rules, and expiry or damage write-off tooling are still outstanding.
 
 ## Milestone 4: Requisitions And Inter-Store Transfers
 
