@@ -20,8 +20,6 @@ final class UpdateUserRequest extends FormRequest
         assert($user instanceof User);
 
         return [
-            'name' => ['required', 'string', 'max:255'],
-
             'email' => [
                 'required',
                 'string',

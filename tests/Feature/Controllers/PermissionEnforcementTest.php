@@ -893,7 +893,7 @@ describe('Consultation workflow permissions', function (): void {
 describe('Appointment action permissions', function (): void {
     it('forbids and allows appointment confirmation based on appointments.confirm permission', function (): void {
         [$tenant, $branch] = createPermissionTenant(true);
-        $user = createPermissionUser($tenant, branch: $branch);
+        $user = createPermissionUser($tenant, withStaff: true, branch: $branch);
         $patient = createPermissionPatient($tenant, $user);
         $appointment = createPermissionAppointment($tenant, $patient, $user, $branch);
 
@@ -903,6 +903,8 @@ describe('Appointment action permissions', function (): void {
             ->assertForbidden();
 
         $user->givePermissionTo('appointments.confirm');
+        $user = $user->fresh();
+        expect($user)->not->toBeNull();
 
         $response = $this->withSession(['active_branch_id' => $branch?->id])
             ->actingAs($user)

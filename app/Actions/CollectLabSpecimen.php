@@ -35,11 +35,12 @@ final readonly class CollectLabSpecimen
             ]);
         }
 
-        $labRequestItem->loadMissing('test.specimenTypes:id,name');
+        $labTest = $labRequestItem->test()->first();
 
         /** @var SpecimenType|null $specimenType */
-        $specimenType = $labRequestItem->test?->specimenTypes
-            ?->firstWhere('id', $payload['specimen_type_id'] ?? null);
+        $specimenType = $labTest?->specimenTypes()
+            ->whereKey($payload['specimen_type_id'] ?? null)
+            ->first(['specimen_types.id', 'specimen_types.name']);
 
         if (! $specimenType instanceof SpecimenType) {
             throw ValidationException::withMessages([

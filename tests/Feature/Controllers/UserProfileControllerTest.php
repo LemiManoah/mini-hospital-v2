@@ -25,7 +25,6 @@ it('may update profile information', function (): void {
     $response = $this->actingAs($user)
         ->fromRoute('user-profile.edit')
         ->patch(route('user-profile.update'), [
-            'name' => 'New Name',
             'email' => 'new@example.com',
         ]);
 
@@ -43,7 +42,6 @@ it('resets email verification when email changes', function (): void {
     $response = $this->actingAs($user)
         ->fromRoute('user-profile.edit')
         ->patch(route('user-profile.update'), [
-            'name' => 'New Name',
             'email' => 'new@example.com',
         ]);
 
@@ -56,13 +54,13 @@ it('keeps email verification when email stays the same', function (): void {
     $verifiedAt = now();
 
     $user = User::factory()->create([
+        'email' => 'same@example.com',
         'email_verified_at' => $verifiedAt,
     ]);
 
     $response = $this->actingAs($user)
         ->fromRoute('user-profile.edit')
         ->patch(route('user-profile.update'), [
-            'name' => 'Same Name',
             'email' => 'same@example.com',
         ]);
 
@@ -70,19 +68,6 @@ it('keeps email verification when email stays the same', function (): void {
 
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
-
-// it('requires name', function (): void {
-//     $user = User::factory()->create();
-
-//     $response = $this->actingAs($user)
-//         ->fromRoute('user-profile.edit')
-//         ->patch(route('user-profile.update'), [
-//             'email' => 'test@example.com',
-//         ]);
-
-//     $response->assertRedirectToRoute('user-profile.edit')
-//         ->assertSessionHasErrors('name');
-// });
 
 // it('requires email', function (): void {
 //     $user = User::factory()->create();
@@ -132,7 +117,6 @@ it('allows keeping same email', function (): void {
     $response = $this->actingAs($user)
         ->fromRoute('user-profile.edit')
         ->patch(route('user-profile.update'), [
-            'name' => 'Same Name',
             'email' => 'test@example.com',
         ]);
 

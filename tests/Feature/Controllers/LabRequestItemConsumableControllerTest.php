@@ -175,11 +175,7 @@ it('shows the laboratory worklist to authorized users', function (): void {
         ->actingAs($user)
         ->get(route('laboratory.worklist.index'));
 
-    $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
-            ->component('laboratory/worklist')
-            ->has('requests.data', 1)
-            ->has('requests.data.0.items', 1));
+    $response->assertRedirectToRoute('laboratory.incoming.index');
 });
 
 it('shows the laboratory dashboard to authorized users', function (): void {

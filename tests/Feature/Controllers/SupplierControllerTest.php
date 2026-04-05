@@ -181,7 +181,7 @@ it('deletes a supplier', function (): void {
         ->delete(route('suppliers.destroy', $supplier));
 
     $response->assertRedirectToRoute('suppliers.index');
-    expect($supplier->fresh())->toBeNull();
+    $this->assertSoftDeleted($supplier);
 });
 
 it('searches suppliers', function (): void {

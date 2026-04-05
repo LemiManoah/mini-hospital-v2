@@ -139,11 +139,13 @@ export default function RoleCreate({ permissionGroups }: RoleCreatePageProps) {
                                             ).map(([group, perms]) => (
                                                 <div
                                                     key={group}
+                                                    data-test={`permission-group-${group}`}
                                                     className="flex flex-col rounded-lg border border-zinc-200 bg-zinc-50/30 dark:border-zinc-800 dark:bg-zinc-900/30"
                                                 >
                                                     <div className="flex items-center justify-between border-b border-zinc-200 p-3 dark:border-zinc-800">
                                                         <Label
                                                             htmlFor={`group-${group}`}
+                                                            data-test={`permission-group-label-${group}`}
                                                             className="flex cursor-pointer items-center gap-2 text-sm font-bold capitalize"
                                                         >
                                                             {formatIdentifierLabel(
@@ -172,10 +174,12 @@ export default function RoleCreate({ permissionGroups }: RoleCreatePageProps) {
                                                                     key={
                                                                         permission.id
                                                                     }
+                                                                    data-test={`permission-row-${permission.name}`}
                                                                     className="flex items-center justify-between gap-2 px-1"
                                                                 >
                                                                     <Label
                                                                         htmlFor={`perm-${permission.id}`}
+                                                                        data-test={`permission-label-${permission.name}`}
                                                                         className="cursor-pointer text-xs font-normal text-zinc-600 dark:text-zinc-400"
                                                                     >
                                                                         {formatPermissionLabel(

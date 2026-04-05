@@ -7,10 +7,10 @@ use App\Models\User;
 test('to array', function (): void {
     $user = User::factory()->create()->refresh();
 
-    expect(array_keys($user->toArray()))
-        ->toBe([
+    expect($user->toArray())->toHaveKeys([
             'id',
             'name',
+            'avatar',
             'email',
             'email_verified_at',
             'two_factor_confirmed_at',

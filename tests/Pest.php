@@ -23,6 +23,10 @@ pest()->extend(TestCase::class)
     })
     ->in('Browser', 'Feature', 'Unit');
 
+pest()->beforeEach(function (): void {
+    config(['inertia.ssr.enabled' => false]);
+})->in('Browser', 'Feature', 'Unit');
+
 expect()->extend('toBeOne', fn () => $this->toBe(1));
 
 function something(): void

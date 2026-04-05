@@ -35,12 +35,12 @@ final class CollectLabSpecimenRequest extends FormRequest
                 return;
             }
 
-            $labRequestItem->loadMissing('test.specimenTypes:id,name');
-
-            $allowedSpecimenIds = $labRequestItem->test?->specimenTypes?->pluck('id')->all() ?? [];
             $specimenTypeId = (string) $this->input('specimen_type_id', '');
+            $labTest = $labRequestItem->test()->first();
+            $isAllowedSpecimenType = $specimenTypeId !== ''
+                && $labTest?->specimenTypes()->whereKey($specimenTypeId)->exists();
 
-            if ($specimenTypeId === '' || ! in_array($specimenTypeId, $allowedSpecimenIds, true)) {
+            if (! $isAllowedSpecimenType) {
                 $validator->errors()->add('specimen_type_id', 'Choose a specimen type configured for this test.');
             }
 
