@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\GoodsReceiptFactory;
 use App\Enums\GoodsReceiptStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
@@ -19,7 +20,7 @@ final class GoodsReceipt extends Model
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\GoodsReceiptFactory> */
+    /** @use HasFactory<GoodsReceiptFactory> */
     use HasFactory;
 
     use HasUuids;

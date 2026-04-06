@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Closure;
 use App\Models\InventoryBatch;
 use App\Support\BranchContext;
 use App\Support\InventoryStockLedger;
@@ -47,7 +48,7 @@ final class StoreInventoryReconciliationRequest extends FormRequest
     }
 
     /**
-     * @return array<int, \Closure(Validator): void>
+     * @return array<int, Closure(Validator):void>
      */
     public function after(): array
     {
@@ -95,8 +96,13 @@ final class StoreInventoryReconciliationRequest extends FormRequest
                     $inventoryItemId = $item['inventory_item_id'] ?? null;
                     $inventoryBatchId = $item['inventory_batch_id'] ?? null;
                     $actualQuantity = $item['actual_quantity'] ?? null;
-
-                    if (! is_string($inventoryItemId) || $inventoryItemId === '' || ! is_numeric($actualQuantity)) {
+                    if (! is_string($inventoryItemId)) {
+                        continue;
+                    }
+                    if ($inventoryItemId === '') {
+                        continue;
+                    }
+                    if (! is_numeric($actualQuantity)) {
                         continue;
                     }
 
@@ -105,14 +111,16 @@ final class StoreInventoryReconciliationRequest extends FormRequest
 
                     if ($variance < 0 && (! is_string($inventoryBatchId) || $inventoryBatchId === '')) {
                         $validator->errors()->add(
-                            "items.$index.inventory_batch_id",
+                            sprintf('items.%s.inventory_batch_id', $index),
                             'Select the batch to reduce when the actual quantity is below the system quantity.',
                         );
 
                         continue;
                     }
-
-                    if (! is_string($inventoryBatchId) || $inventoryBatchId === '') {
+                    if (! is_string($inventoryBatchId)) {
+                        continue;
+                    }
+                    if ($inventoryBatchId === '') {
                         continue;
                     }
 
@@ -123,7 +131,7 @@ final class StoreInventoryReconciliationRequest extends FormRequest
 
                     if (! $batch instanceof InventoryBatch) {
                         $validator->errors()->add(
-                            "items.$index.inventory_batch_id",
+                            sprintf('items.%s.inventory_batch_id', $index),
                             'The selected batch is not available in the active branch.',
                         );
 
@@ -132,14 +140,14 @@ final class StoreInventoryReconciliationRequest extends FormRequest
 
                     if ($batch->inventory_location_id !== $locationId || $batch->inventory_item_id !== $inventoryItemId) {
                         $validator->errors()->add(
-                            "items.$index.inventory_batch_id",
+                            sprintf('items.%s.inventory_batch_id', $index),
                             'The selected batch does not belong to the selected location and item.',
                         );
                     }
 
                     if ($variance < 0 && abs($variance) > (float) ($batchBalances[$inventoryBatchId] ?? 0.0)) {
                         $validator->errors()->add(
-                            "items.$index.actual_quantity",
+                            sprintf('items.%s.actual_quantity', $index),
                             'The reconciliation loss cannot exceed the selected batch balance.',
                         );
                     }

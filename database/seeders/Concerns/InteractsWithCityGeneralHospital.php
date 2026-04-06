@@ -41,8 +41,7 @@ trait InteractsWithCityGeneralHospital
             ->where('email', 'support+citygeneral@mini-hospital.com')
             ->first()
             ?? User::query()
-                ->where('tenant_id', $tenant->id)
-                ->orderBy('created_at')
+                ->where('tenant_id', $tenant->id)->oldest()
                 ->first();
     }
 
@@ -53,8 +52,7 @@ trait InteractsWithCityGeneralHospital
             ->where('email', 'support+citygeneral@mini-hospital.com')
             ->first()
             ?? Staff::query()
-                ->where('tenant_id', $tenant->id)
-                ->orderBy('created_at')
+                ->where('tenant_id', $tenant->id)->oldest()
                 ->first();
     }
 

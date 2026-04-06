@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\Tenant;
+use App\Models\FacilityBranch;
+use App\Models\User;
 use App\Actions\PostGoodsReceipt;
 use App\Actions\PostInventoryReconciliation;
 use App\Actions\IssueInventoryRequisition;
@@ -32,10 +35,10 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
     public function run(): void
     {
         $tenant = $this->cityGeneralTenant();
-        $mainBranch = $tenant ? $this->cityGeneralMainBranch($tenant) : null;
-        $creator = $tenant ? $this->cityGeneralRegistrar($tenant) : null;
+        $mainBranch = $tenant instanceof Tenant ? $this->cityGeneralMainBranch($tenant) : null;
+        $creator = $tenant instanceof Tenant ? $this->cityGeneralRegistrar($tenant) : null;
 
-        if ($tenant === null || $mainBranch === null || $creator === null) {
+        if (!$tenant instanceof Tenant || !$mainBranch instanceof FacilityBranch || !$creator instanceof User) {
             return;
         }
 
@@ -331,7 +334,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         $paracetamolBatch = InventoryBatch::query()
             ->where('inventory_location_id', $pharmacyLocation->id)
             ->where('inventory_item_id', $paracetamol->id)
-            ->orderBy('received_at')
+            ->oldest('received_at')
             ->first();
 
         if ($paracetamolBatch instanceof InventoryBatch) {
@@ -585,7 +588,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             $sourceBatch = InventoryBatch::query()
                 ->where('inventory_location_id', $storeLocation->id)
                 ->where('inventory_item_id', $paracetamol->id)
-                ->orderBy('received_at')
+                ->oldest('received_at')
                 ->first();
 
             if ($sourceBatch instanceof InventoryBatch) {

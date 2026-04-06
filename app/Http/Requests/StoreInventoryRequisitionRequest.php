@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Closure;
 use App\Enums\Priority;
 use App\Enums\InventoryLocationType;
 use App\Models\InventoryLocation;
@@ -52,7 +53,7 @@ final class StoreInventoryRequisitionRequest extends FormRequest
     }
 
     /**
-     * @return array<int, \Closure(Validator): void>
+     * @return array<int, Closure(Validator):void>
      */
     public function after(): array
     {

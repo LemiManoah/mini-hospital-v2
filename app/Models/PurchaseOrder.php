@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\PurchaseOrderFactory;
 use App\Enums\PurchaseOrderStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
@@ -19,7 +20,7 @@ final class PurchaseOrder extends Model
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\PurchaseOrderFactory> */
+    /** @use HasFactory<PurchaseOrderFactory> */
     use HasFactory;
 
     use HasUuids;

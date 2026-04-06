@@ -97,7 +97,9 @@ final readonly class InventoryRequisitionAccess
 
     private function canViewIncomingQueue(?User $user, InventoryRequisition $requisition): bool
     {
-        return $this->inventoryLocationAccess->canFulfillRequisition($user, $requisition, $requisition->branch_id)
-            || ($user !== null && ($user->isSupportUser() || $user->hasAnyRole(['super_admin', 'admin', 'store_keeper'])));
+        if ($this->inventoryLocationAccess->canFulfillRequisition($user, $requisition, $requisition->branch_id)) {
+            return true;
+        }
+        return $user instanceof User && ($user->isSupportUser() || $user->hasAnyRole(['super_admin', 'admin', 'store_keeper']));
     }
 }

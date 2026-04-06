@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\Tenant;
 use App\Actions\RecalculateVisitBilling;
 use App\Actions\SyncFacilityServiceOrderCharge;
 use App\Actions\SyncLabRequestCharge;
@@ -45,9 +46,9 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
     public function run(): void
     {
         $tenant = $this->cityGeneralTenant();
-        $registrar = $tenant ? $this->cityGeneralRegistrar($tenant) : null;
+        $registrar = $tenant instanceof Tenant ? $this->cityGeneralRegistrar($tenant) : null;
 
-        if ($tenant === null) {
+        if (!$tenant instanceof Tenant) {
             return;
         }
 
@@ -129,8 +130,16 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             $branch = $branches->get($scenario['branch_code']);
             $clinic = $clinics->get($scenario['clinic_code']);
             $doctor = $staff->get($scenario['doctor_email']);
-
-            if (! $patient instanceof Patient || ! $branch instanceof FacilityBranch || ! $clinic instanceof Clinic || ! $doctor instanceof Staff) {
+            if (! $patient instanceof Patient) {
+                continue;
+            }
+            if (! $branch instanceof FacilityBranch) {
+                continue;
+            }
+            if (! $clinic instanceof Clinic) {
+                continue;
+            }
+            if (! $doctor instanceof Staff) {
                 continue;
             }
 
@@ -209,9 +218,9 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                 );
             }
 
-            app(RecalculateVisitBilling::class)->handle($billing->fresh() ?? $billing);
+            resolve(RecalculateVisitBilling::class)->handle($billing->fresh() ?? $billing);
             $this->syncPayment($tenant->id, $branch->id, $visit, $billing->fresh() ?? $billing, $registrar?->id, $scenario['payment']);
-            app(RecalculateVisitBilling::class)->handle($billing->fresh() ?? $billing);
+            resolve(RecalculateVisitBilling::class)->handle($billing->fresh() ?? $billing);
         }
     }
 
@@ -352,7 +361,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             }
         }
 
-        app(SyncLabRequestCharge::class)->handle($labRequest->fresh(['items.test', 'visit.payer']) ?? $labRequest);
+        resolve(SyncLabRequestCharge::class)->handle($labRequest->fresh(['items.test', 'visit.payer']) ?? $labRequest);
     }
 
     private function syncLabResultEntry(LabRequestItem $item, Staff $workflowStaff, array $resultData): void
@@ -428,7 +437,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             ],
         );
 
-        app(SyncFacilityServiceOrderCharge::class)->handle($order->fresh(['service', 'visit.payer']) ?? $order);
+        resolve(SyncFacilityServiceOrderCharge::class)->handle($order->fresh(['service', 'visit.payer']) ?? $order);
     }
 
     private function syncPayment(

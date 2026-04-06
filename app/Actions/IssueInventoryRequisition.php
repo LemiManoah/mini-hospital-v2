@@ -192,7 +192,7 @@ final readonly class IssueInventoryRequisition
             ->where('branch_id', $requisition->branch_id)
             ->where('inventory_location_id', $requisition->destination_inventory_location_id)
             ->where('inventory_item_id', $sourceBatch->inventory_item_id)
-            ->where('goods_receipt_item_id', null)
+            ->where('goods_receipt_item_id')
             ->where('batch_number', $sourceBatch->batch_number)
             ->where('expiry_date', $sourceBatch->expiry_date)
             ->where('unit_cost', $sourceBatch->unit_cost)

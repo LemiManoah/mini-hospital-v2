@@ -125,8 +125,7 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
                         'test.labCategory:id,name',
                         'test.specimenTypes:id,name',
                         'test.resultTypeDefinition:id,code,name',
-                    ])
-                    ->orderBy('created_at'),
+                    ])->oldest(),
             ])
             ->orderByRaw("case when priority in ('critical', 'stat', 'urgent') then 0 else 1 end")
             ->latest('request_date')

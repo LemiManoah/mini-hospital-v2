@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\GoodsReceiptItemFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 final class GoodsReceiptItem extends Model
 {
-    /** @use HasFactory<\Database\Factories\GoodsReceiptItemFactory> */
+    /** @use HasFactory<GoodsReceiptItemFactory> */
     use HasFactory;
 
     use HasUuids;

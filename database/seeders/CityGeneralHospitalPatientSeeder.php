@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\Tenant;
+use App\Models\Country;
 use App\Enums\BloodGroup;
 use App\Enums\Gender;
 use App\Enums\KinRelationship;
@@ -22,7 +24,7 @@ final class CityGeneralHospitalPatientSeeder extends Seeder
         $tenant = $this->cityGeneralTenant();
         $country = $this->ugandaCountry();
 
-        if ($tenant === null || $country === null) {
+        if (!$tenant instanceof Tenant || !$country instanceof Country) {
             return;
         }
 

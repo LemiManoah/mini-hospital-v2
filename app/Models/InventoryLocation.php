@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\InventoryLocationFactory;
 use App\Enums\InventoryLocationType;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
@@ -19,7 +20,7 @@ final class InventoryLocation extends Model
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\InventoryLocationFactory> */
+    /** @use HasFactory<InventoryLocationFactory> */
     use HasFactory;
 
     use HasUuids;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Closure;
 use App\Models\InventoryRequisition;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -24,7 +25,7 @@ final class ApproveInventoryRequisitionRequest extends FormRequest
     }
 
     /**
-     * @return array<int, \Closure(Validator): void>
+     * @return array<int, Closure(Validator):void>
      */
     public function after(): array
     {
@@ -50,15 +51,17 @@ final class ApproveInventoryRequisitionRequest extends FormRequest
 
                     $lineId = $item['inventory_requisition_item_id'] ?? null;
                     $approvedQuantity = $item['approved_quantity'] ?? null;
-
-                    if (! is_string($lineId) || ! is_numeric($approvedQuantity)) {
+                    if (! is_string($lineId)) {
+                        continue;
+                    }
+                    if (! is_numeric($approvedQuantity)) {
                         continue;
                     }
 
                     $line = $requisitionItems->get($lineId);
                     if ($line === null) {
                         $validator->errors()->add(
-                            "items.$index.inventory_requisition_item_id",
+                            sprintf('items.%s.inventory_requisition_item_id', $index),
                             'One of the requisition lines is invalid.',
                         );
 
@@ -67,7 +70,7 @@ final class ApproveInventoryRequisitionRequest extends FormRequest
 
                     if ((float) $approvedQuantity > (float) $line->requested_quantity) {
                         $validator->errors()->add(
-                            "items.$index.approved_quantity",
+                            sprintf('items.%s.approved_quantity', $index),
                             'Approved quantity cannot exceed the requested quantity.',
                         );
                     }

@@ -91,8 +91,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
                             'resultEntry.reviewedBy:id,first_name,last_name',
                             'resultEntry.approvedBy:id,first_name,last_name',
                             'resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,gender,age_min,age_max,reference_range,sort_order',
-                        ])
-                        ->orderBy('created_at');
+                        ])->oldest();
                 },
             ])
             ->orderByRaw("case when priority in ('critical', 'stat', 'urgent') then 0 else 1 end")

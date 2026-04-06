@@ -217,7 +217,7 @@ it('lists stock movements for the active branch only', function (): void {
         ->get(route('inventory.reports.movements.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/reports/movements/index')
             ->has('movements.data', 1)
             ->where('movements.data.0.item_name', 'Movement Item 1')
@@ -297,7 +297,7 @@ it('shows only pharmacy movements on the dedicated pharmacy movement page', func
         ->get(route('pharmacy.movements.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('pharmacy/movements/index')
             ->has('movements.data', 1)
             ->where('movements.data.0.location_name', 'Movement Pharmacy Store')

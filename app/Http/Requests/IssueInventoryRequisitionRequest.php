@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Closure;
 use App\Models\InventoryBatch;
 use App\Models\InventoryRequisition;
 use App\Support\InventoryStockLedger;
@@ -30,7 +31,7 @@ final class IssueInventoryRequisitionRequest extends FormRequest
     }
 
     /**
-     * @return array<int, \Closure(Validator): void>
+     * @return array<int, Closure(Validator):void>
      */
     public function after(): array
     {
@@ -66,15 +67,17 @@ final class IssueInventoryRequisitionRequest extends FormRequest
                     $lineId = $item['inventory_requisition_item_id'] ?? null;
                     $issueQuantity = $item['issue_quantity'] ?? null;
                     $allocations = $item['allocations'] ?? [];
-
-                    if (! is_string($lineId) || ! is_numeric($issueQuantity)) {
+                    if (! is_string($lineId)) {
+                        continue;
+                    }
+                    if (! is_numeric($issueQuantity)) {
                         continue;
                     }
 
                     $line = $requisitionItems->get($lineId);
                     if ($line === null) {
                         $validator->errors()->add(
-                            "items.$index.inventory_requisition_item_id",
+                            sprintf('items.%s.inventory_requisition_item_id', $index),
                             'One of the requisition lines is invalid.',
                         );
 
@@ -89,14 +92,14 @@ final class IssueInventoryRequisitionRequest extends FormRequest
 
                     if ((float) $issueQuantity > $line->remainingApprovedQuantity()) {
                         $validator->errors()->add(
-                            "items.$index.issue_quantity",
+                            sprintf('items.%s.issue_quantity', $index),
                             'Issue quantity cannot exceed the remaining approved quantity.',
                         );
                     }
 
                     if (! is_array($allocations) || $allocations === []) {
                         $validator->errors()->add(
-                            "items.$index.allocations",
+                            sprintf('items.%s.allocations', $index),
                             'Select source batches for any quantity you are issuing.',
                         );
 
@@ -112,8 +115,10 @@ final class IssueInventoryRequisitionRequest extends FormRequest
 
                         $batchId = $allocation['inventory_batch_id'] ?? null;
                         $quantity = $allocation['quantity'] ?? null;
-
-                        if (! is_string($batchId) || ! is_numeric($quantity)) {
+                        if (! is_string($batchId)) {
+                            continue;
+                        }
+                        if (! is_numeric($quantity)) {
                             continue;
                         }
 
@@ -122,7 +127,7 @@ final class IssueInventoryRequisitionRequest extends FormRequest
                         $batch = InventoryBatch::query()->find($batchId);
                         if (! $batch instanceof InventoryBatch) {
                             $validator->errors()->add(
-                                "items.$index.allocations.$allocationIndex.inventory_batch_id",
+                                sprintf('items.%s.allocations.%s.inventory_batch_id', $index, $allocationIndex),
                                 'One of the selected source batches is invalid.',
                             );
 
@@ -134,14 +139,14 @@ final class IssueInventoryRequisitionRequest extends FormRequest
                             || $batch->inventory_item_id !== $line->inventory_item_id
                         ) {
                             $validator->errors()->add(
-                                "items.$index.allocations.$allocationIndex.inventory_batch_id",
+                                sprintf('items.%s.allocations.%s.inventory_batch_id', $index, $allocationIndex),
                                 'Each source batch must match the requisition item and source location.',
                             );
                         }
 
                         if ((float) $quantity > (float) ($batchBalances[$batchId] ?? 0.0)) {
                             $validator->errors()->add(
-                                "items.$index.allocations.$allocationIndex.quantity",
+                                sprintf('items.%s.allocations.%s.quantity', $index, $allocationIndex),
                                 'Batch quantity cannot exceed the available stock in the source batch.',
                             );
                         }
@@ -149,7 +154,7 @@ final class IssueInventoryRequisitionRequest extends FormRequest
 
                     if (abs($allocationTotal - (float) $issueQuantity) > 0.0005) {
                         $validator->errors()->add(
-                            "items.$index.allocations",
+                            sprintf('items.%s.allocations', $index),
                             'Allocated batch quantities must add up to the issue quantity.',
                         );
                     }

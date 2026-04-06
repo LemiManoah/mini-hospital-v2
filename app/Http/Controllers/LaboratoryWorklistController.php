@@ -31,7 +31,7 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
     {
         $query = $request->query();
 
-        return to_route('laboratory.incoming.index', $query === [] ? [] : $query);
+        return to_route('laboratory.incoming.index', $query);
     }
 
     public function show(LabRequestItem $labRequestItem): Response

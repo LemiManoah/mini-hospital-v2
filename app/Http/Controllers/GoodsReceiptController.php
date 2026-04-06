@@ -127,7 +127,7 @@ final readonly class GoodsReceiptController implements HasMiddleware
 
         $goodsReceipt = $action->handle($validated, $items, $workspace->locationTypeValues());
 
-        return redirect()->route($workspace->goodsReceiptShowRouteName(), $workspace->goodsReceiptShowRouteParameters($goodsReceipt))
+        return to_route($workspace->goodsReceiptShowRouteName(), $workspace->goodsReceiptShowRouteParameters($goodsReceipt))
             ->with('success', 'Goods receipt created successfully.');
     }
 
@@ -171,7 +171,7 @@ final readonly class GoodsReceiptController implements HasMiddleware
 
         $action->handle($goodsReceipt->load('items.purchaseOrderItem'));
 
-        return redirect()->route($workspace->goodsReceiptShowRouteName(), $workspace->goodsReceiptShowRouteParameters($goodsReceipt))
+        return to_route($workspace->goodsReceiptShowRouteName(), $workspace->goodsReceiptShowRouteParameters($goodsReceipt))
             ->with('success', 'Goods receipt posted. Stock quantities updated.');
     }
 

@@ -97,7 +97,7 @@ final class UpdateInventoryItemRequest extends FormRequest
         return $trimmed === '' ? null : $trimmed;
     }
 
-    private function numericOrDefault(string $key, int|float $default): int|float|string|null
+    private function numericOrDefault(string $key, int|float $default): int|float|string
     {
         $value = $this->input($key);
 

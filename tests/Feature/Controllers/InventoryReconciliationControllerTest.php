@@ -179,7 +179,7 @@ it('lists reconciliations for authorized user', function (): void {
         ->get(route('reconciliations.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/reconciliations/index')
             ->has('reconciliations.data', 1)
             ->where('reconciliations.data.0.adjustment_number', 'REC-LIST-001'));
@@ -194,7 +194,7 @@ it('shows the reconciliation create page with balances', function (): void {
         ->get(route('reconciliations.create'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/reconciliations/create')
             ->has('inventoryLocations', 1)
             ->has('inventoryItems', 1)
@@ -223,7 +223,7 @@ it('creates a draft reconciliation with expected and actual quantities', functio
             ],
         ]);
 
-    $reconciliation = Reconciliation::withoutGlobalScopes()
+    $reconciliation = Reconciliation::query()->withoutGlobalScopes()
         ->latest('created_at')
         ->first();
 
@@ -239,7 +239,7 @@ it('creates a draft reconciliation with expected and actual quantities', functio
         ->assertSessionHas('reconciliation_prompt', 'submit');
 
     expect(
-        StockMovement::withoutGlobalScopes()
+        StockMovement::query()->withoutGlobalScopes()
             ->where('source_document_type', Reconciliation::class)
             ->count()
     )->toBe(0);
@@ -303,7 +303,7 @@ it('runs the submit review approve and post workflow', function (): void {
         ->and($reconciliation->approved_at)->not->toBeNull()
         ->and($reconciliation->posted_at)->not->toBeNull();
 
-    $movement = StockMovement::withoutGlobalScopes()
+    $movement = StockMovement::query()->withoutGlobalScopes()
         ->where('source_document_type', Reconciliation::class)
         ->where('source_document_id', $reconciliation->id)
         ->first();
@@ -374,7 +374,7 @@ it('shows a reconciliation detail page', function (): void {
         ->get(route('reconciliations.show', $reconciliation));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/reconciliations/show')
             ->where('reconciliation.adjustment_number', 'REC-SHOW-001')
             ->has('reconciliation.items', 1));

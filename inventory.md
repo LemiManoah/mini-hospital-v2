@@ -9,6 +9,21 @@
 
 The codebase now uses `InventoryItem` as the single source of truth for medications and stock catalog records.
 
+Current document status:
+
+- this plan is up to date with the current application state
+- the inventory module itself is not complete yet
+- major completed areas are:
+  - catalog and locations
+  - procurement and receiving
+  - stock ledger and reconciliations foundation
+  - requester-to-main-store requisitions
+- major deferred or unfinished areas are:
+  - inter-store transfers
+  - reconciliation presets for cycle count, expiry, and damage
+  - pharmacy dispensing
+  - alerts and reporting
+
 What already exists:
 
 - `InventoryItem` now holds both drug and non-drug catalog records
@@ -627,6 +642,11 @@ Support operational movement of stock inside the hospital between stores and ser
 Same-branch requisitions are now implemented end to end. Pharmacy and laboratory users create and track requisitions from their own workspaces, submit them to the main store, and follow the resulting approval and issue statuses. Main inventory now behaves as a true incoming queue for requisitions rather than a generic create-and-process surface, so requester-side creation stays in the consuming unit and processing stays in main store. Main store users handle those requests through the incoming requisitions queue, where line review, rejection, and stock issue happen from selected source batches. Issuing posts real stock movements from the source location into the destination location, and partial issue is supported through remaining approved quantities on each line. Requester-side users can now also cancel draft requisitions or withdraw submitted requisitions before review, and cancelled records are kept with audit reason/details while dropping out of the active incoming queue. Inventory access is also store-aware within a branch: main store users can work across branch locations, while pharmacy and laboratory users are scoped to their own locations for stock views, receipts, movements, and destination-side requisitions. Requisition permissions are also now separated into create, submit, cancel, review, and issue abilities so requester and processor responsibilities are clearer. Inter-store transfer documents are still pending, so milestone 4 remains in progress.
 The requisition code path itself has also been simplified: incoming queue rules are now centralized in `InventoryRequisitionWorkflow`, workspace access decisions now flow through `InventoryRequisitionAccess`, and the UI/controller contract now prefers `fulfilling` and `requesting` location language instead of carrying duplicate vocabularies through most of the module. The remaining dead compatibility wrappers in `InventoryLocationAccess` have also been removed, so the requisition support layer now reads much closer to the real business flow.
 
+Planning note:
+
+- transfers are intentionally deferred for now
+- requisitions plus reconciliations are the active internal-movement workflow in the current application state
+
 ### Definition Of Done
 
 - departments and sub-stores can receive stock without bypassing the ledger
@@ -745,26 +765,30 @@ The safest implementation order from the current application state is:
 
 ### Recommended Next Step From Here
 
-The next best implementation step is to finish Milestone 4 by building inter-store transfers.
+Transfers are still part of the long-term inventory plan, but they are intentionally deferred right now.
+
+The next best implementation step from the current application state is Milestone 5: pharmacy dispensing against real stock.
 
 Why this is the right next move now:
 
-- requisitions are already functioning as requester-to-main-store documents
-- the store-aware workspace split is already in place for main store, pharmacy, and laboratory
-- transfers are the remaining major operational gap before pharmacy dispensing
-- transfers will complete the internal supply-chain story and reuse the stock-ledger foundation already in place
+- requisitions already cover the current requester-to-main-store internal supply flow
+- procurement, receiving, stock ledger, and requisitions are now strong enough to support true dispense validation
+- pharmacy is the next major operational workflow still missing from the inventory story
+- dispensing is the point where inventory begins affecting patient-facing medication fulfillment directly
 
-Recommended transfer workflow:
+Recommended dispensing workflow:
 
-1. main store or another authorized stock location creates a transfer
-2. transfer is submitted and issued out from the source location
-3. destination location receives the transfer
-4. the system posts `transfer_out` and `transfer_in` movements
-5. shortages, excess, or damaged receipt differences are captured explicitly
+1. pharmacy queue lists pending prescription items
+2. pharmacist selects batch and dispense quantity from pharmacy stock
+3. system validates available stock in the pharmacy location
+4. system posts dispense movements
+5. prescription line and header statuses update for partial or full dispense
+6. batch, expiry, quantity, and counselling details are stored as dispense snapshots
 
-After transfers, the next major step should be Milestone 5: pharmacy dispensing against real stock.
+After dispensing, the next major step should be:
 
-This order matters because dispensing, lab consumption, and internal issue workflows become risky if the stock ledger is not already trustworthy.
+1. transfer workflow, if still needed operationally
+2. or milestone 6 reporting and alerts, if the immediate priority is operational visibility
 
 ---
 

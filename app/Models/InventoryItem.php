@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Database\Factories\InventoryItemFactory;
 use App\Enums\DrugCategory;
 use App\Enums\DrugDosageForm;
 use App\Enums\InventoryItemType;
@@ -20,7 +22,7 @@ final class InventoryItem extends Model
 {
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\InventoryItemFactory> */
+    /** @use HasFactory<InventoryItemFactory> */
     use HasFactory;
 
     use HasUuids;
@@ -79,12 +81,14 @@ final class InventoryItem extends Model
         return $this->hasMany(PrescriptionItem::class, 'inventory_item_id');
     }
 
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeOfType(Builder $query, InventoryItemType|string $type): Builder
+    #[Scope]
+    protected function ofType(Builder $query, InventoryItemType|string $type): Builder
     {
         return $query->where(
             'item_type',
@@ -92,27 +96,32 @@ final class InventoryItem extends Model
         );
     }
 
-    public function scopeDrugs(Builder $query): Builder
+    #[Scope]
+    protected function drugs(Builder $query): Builder
     {
         return $query->ofType(InventoryItemType::DRUG);
     }
 
-    public function scopeConsumables(Builder $query): Builder
+    #[Scope]
+    protected function consumables(Builder $query): Builder
     {
         return $query->ofType(InventoryItemType::CONSUMABLE);
     }
 
-    public function scopeSupplies(Builder $query): Builder
+    #[Scope]
+    protected function supplies(Builder $query): Builder
     {
         return $query->ofType(InventoryItemType::SUPPLY);
     }
 
-    public function scopeReagents(Builder $query): Builder
+    #[Scope]
+    protected function reagents(Builder $query): Builder
     {
         return $query->ofType(InventoryItemType::REAGENT);
     }
 
-    public function scopeOthers(Builder $query): Builder
+    #[Scope]
+    protected function others(Builder $query): Builder
     {
         return $query->ofType(InventoryItemType::OTHER);
     }

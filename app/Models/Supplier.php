@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Database\Factories\SupplierFactory;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -16,7 +18,7 @@ final class Supplier extends Model
 {
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\SupplierFactory> */
+    /** @use HasFactory<SupplierFactory> */
     use HasFactory;
 
     use HasUuids;
@@ -34,7 +36,8 @@ final class Supplier extends Model
         return $this->hasMany(PurchaseOrder::class);
     }
 
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }

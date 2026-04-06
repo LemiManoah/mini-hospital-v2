@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Closure;
 use App\Enums\GoodsReceiptStatus;
 use App\Models\GoodsReceipt;
 use App\Models\InventoryLocation;
@@ -57,7 +58,7 @@ final class StoreGoodsReceiptRequest extends FormRequest
     }
 
     /**
-     * @return array<int, \Closure(Validator): void>
+     * @return array<int, Closure(Validator):void>
      */
     public function after(): array
     {
@@ -161,8 +162,10 @@ final class StoreGoodsReceiptRequest extends FormRequest
 
                     $purchaseOrderItemId = $item['purchase_order_item_id'] ?? null;
                     $inventoryItemId = $item['inventory_item_id'] ?? null;
-
-                    if (! is_string($purchaseOrderItemId) || $purchaseOrderItemId === '') {
+                    if (! is_string($purchaseOrderItemId)) {
+                        continue;
+                    }
+                    if ($purchaseOrderItemId === '') {
                         continue;
                     }
 
@@ -174,7 +177,7 @@ final class StoreGoodsReceiptRequest extends FormRequest
 
                     if ($purchaseOrderItem->purchase_order_id !== $purchaseOrderId) {
                         $validator->errors()->add(
-                            "items.$index.purchase_order_item_id",
+                            sprintf('items.%s.purchase_order_item_id', $index),
                             'The selected purchase order item does not belong to the selected purchase order.',
                         );
                     }
@@ -185,7 +188,7 @@ final class StoreGoodsReceiptRequest extends FormRequest
                         && $purchaseOrderItem->inventory_item_id !== $inventoryItemId
                     ) {
                         $validator->errors()->add(
-                            "items.$index.inventory_item_id",
+                            sprintf('items.%s.inventory_item_id', $index),
                             'The selected inventory item does not match the purchase order item.',
                         );
                     }
@@ -197,7 +200,7 @@ final class StoreGoodsReceiptRequest extends FormRequest
 
                         if ((float) $submittedQuantity > $remainingQuantity) {
                             $validator->errors()->add(
-                                "items.$index.quantity_received",
+                                sprintf('items.%s.quantity_received', $index),
                                 'The received quantity cannot be greater than the remaining purchase order quantity.',
                             );
                         }

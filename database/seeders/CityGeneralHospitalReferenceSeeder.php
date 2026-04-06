@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\Department;
+use App\Models\StaffPosition;
+use App\Models\Tenant;
+use App\Models\Country;
 use App\Enums\FacilityServiceCategory;
 use App\Enums\GeneralStatus;
 use App\Enums\StaffType;
@@ -28,7 +32,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
         $tenant = $this->cityGeneralTenant();
         $country = $this->ugandaCountry();
 
-        if ($tenant === null || $country === null) {
+        if (!$tenant instanceof Tenant || !$country instanceof Country) {
             return;
         }
 
@@ -56,7 +60,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
     {
         $tenant = $this->cityGeneralTenant();
 
-        if ($tenant === null) {
+        if (!$tenant instanceof Tenant) {
             return;
         }
 
@@ -151,8 +155,13 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
             $department = $this->findDepartment($tenant, $staffData['department']);
             $position = $this->findPosition($tenant, $staffData['positions']);
             $branch = $branches->get($staffData['branch_code']);
-
-            if ($department === null || $position === null || ! $branch instanceof FacilityBranch) {
+            if (!$department instanceof Department) {
+                continue;
+            }
+            if (!$position instanceof StaffPosition) {
+                continue;
+            }
+            if (! $branch instanceof FacilityBranch) {
                 continue;
             }
 
@@ -195,7 +204,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
     {
         $tenant = $this->cityGeneralTenant();
 
-        if ($tenant === null) {
+        if (!$tenant instanceof Tenant) {
             return;
         }
 
@@ -245,8 +254,10 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
         foreach ($clinics as $clinicData) {
             $department = $this->findDepartment($tenant, $clinicData['department']);
             $branch = $branches->get($clinicData['branch_code']);
-
-            if ($department === null || ! $branch instanceof FacilityBranch) {
+            if (!$department instanceof Department) {
+                continue;
+            }
+            if (! $branch instanceof FacilityBranch) {
                 continue;
             }
 
@@ -409,8 +420,10 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
         foreach ($tests as $testData) {
             $category = $categories->get($testData['category']);
             $resultType = $resultTypes->get($testData['result_type']);
-
-            if ($category === null || $resultType === null) {
+            if ($category === null) {
+                continue;
+            }
+            if ($resultType === null) {
                 continue;
             }
 

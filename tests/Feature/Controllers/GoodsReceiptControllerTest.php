@@ -148,7 +148,7 @@ it('lists goods receipts for authorized user', function (): void {
         ->get(route('goods-receipts.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/goods-receipts/index')
             ->has('goodsReceipts.data', 1));
 });
@@ -512,7 +512,7 @@ it('shows a goods receipt detail page', function (): void {
         ->get(route('goods-receipts.show', $gr));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/goods-receipts/show')
             ->has('goodsReceipt')
             ->where('goodsReceipt.receipt_number', 'GR-SHOW-001')
@@ -537,7 +537,7 @@ it('limits receiving locations for pharmacy users to pharmacy stores', function 
         ->get(route('goods-receipts.create', ['purchase_order_id' => $po->id]));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->where('inventoryLocations', [
                 [
                     'id' => $pharmacyLocation->id,
@@ -576,7 +576,7 @@ it('shows only laboratory receiving locations on the dedicated laboratory receip
         ->get(route('laboratory.receipts.create', ['purchase_order_id' => $po->id]));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('laboratory/receipts/create')
             ->where('inventoryLocations', [
                 [

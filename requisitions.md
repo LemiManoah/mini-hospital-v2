@@ -33,7 +33,7 @@ The first two simplification phases from this review have now been applied in th
     - `inventory_requisitions.issue`
   - requester workspaces use create/submit
   - main store queue uses review/issue
-- Phase 3 started:
+- Phase 3 completed:
   - the serialized requisition contract now exposes `fulfilling_location` and `requesting_location`
   - the requisition UI has started using requester/fulfiller language instead of leaning only on `source` and `destination`
 - Phase 4 completed:
@@ -103,6 +103,217 @@ The UI is also shared heavily across three workspaces:
 - pharmacy
 
 using the same controller methods and the same base page components with different route context.
+
+## Developer Guide
+
+This section describes the requisitions module as it exists now after the refactor phases above.
+
+### Core Mental Model
+
+Think about requisitions in two roles:
+
+- requester workspaces:
+  - laboratory
+  - pharmacy
+- fulfiller workspace:
+  - main inventory / main store
+
+That means:
+
+- lab and pharmacy create, submit, track, and optionally cancel or withdraw their own requisitions
+- main store reviews, approves, rejects, and issues them
+- stock only moves when main store posts the issue step
+
+### Current Terminology
+
+Inside the code, requisitions should now be read with these business terms first:
+
+- `fulfillingLocation`
+- `requestingLocation`
+- `fulfillingRequisitions`
+- `requestingRequisitions`
+
+The remaining `source` and `destination` naming is now mostly intentional schema naming, not the preferred domain vocabulary.
+
+### Intentional Naming Leftovers
+
+These are still present on purpose:
+
+- database columns:
+  - `source_inventory_location_id`
+  - `destination_inventory_location_id`
+- request payload fields and form keys that still submit those column names
+- feature-test local variables such as `$sourceLocation` and `$destinationLocation`
+
+These were kept because changing schema and request contracts would be a larger migration than the refactor needed. The business-facing and code-navigation-facing names should continue to prefer `fulfilling` and `requesting`.
+
+### Main Files And Responsibilities
+
+- [InventoryRequisition.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Models/InventoryRequisition.php)
+  - requisition model
+  - status transition helpers
+  - primary requisition relationships
+- [InventoryRequisitionController.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Controllers/InventoryRequisitionController.php)
+  - main orchestration layer for list, create, show, submit, cancel, approve, reject, and issue
+- [InventoryRequisitionWorkflow.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryRequisitionWorkflow.php)
+  - queue-definition rules
+  - requester location types
+  - hidden incoming statuses
+- [InventoryRequisitionAccess.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryRequisitionAccess.php)
+  - requester vs main-store access decisions
+  - workspace matching
+  - location resolution for requester and queue screens
+- [InventoryLocationAccess.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryLocationAccess.php)
+  - lower-level inventory location access rules reused by requisitions and other inventory modules
+- [InventoryWorkspace.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryWorkspace.php)
+  - determines whether the route is inventory, laboratory, or pharmacy
+- [InventoryNavigationContext.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryNavigationContext.php)
+  - chooses page labels, breadcrumbs, section titles, and hrefs
+- [StoreInventoryRequisitionRequest.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Requests/StoreInventoryRequisitionRequest.php)
+  - requester-side validation and workspace-aware location validation
+- [CreateInventoryRequisition.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Actions/CreateInventoryRequisition.php)
+  - creates draft requisitions
+- [SubmitInventoryRequisition.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Actions/SubmitInventoryRequisition.php)
+  - moves draft to submitted
+- [CancelInventoryRequisition.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Actions/CancelInventoryRequisition.php)
+  - cancels draft or withdraws submitted requisitions before review
+- [ApproveInventoryRequisition.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Actions/ApproveInventoryRequisition.php)
+  - records approved quantities
+- [RejectInventoryRequisition.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Actions/RejectInventoryRequisition.php)
+  - records rejection
+- [IssueInventoryRequisition.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Actions/IssueInventoryRequisition.php)
+  - validates available stock and posts `requisition_out` / `requisition_in` movements
+- [resources/js/pages/inventory/requisitions](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/inventory/requisitions)
+  - shared requisition page implementations reused by inventory, lab, and pharmacy routes
+
+### Request Path
+
+When tracing a requisition request, use this order:
+
+1. Route
+   - check whether the request came through `inventory`, `laboratory`, or `pharmacy`
+2. Workspace
+   - [InventoryWorkspace.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryWorkspace.php) decides the behavioral workspace
+3. Navigation
+   - [InventoryNavigationContext.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryNavigationContext.php) decides labels and links
+4. Permission middleware
+   - controller middleware checks `view`, `create`, `submit`, `cancel`, `review`, or `issue`
+5. Requisition access layer
+   - [InventoryRequisitionAccess.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryRequisitionAccess.php) decides whether the current workspace can view or process the requisition
+6. Validation or action
+   - request objects validate locations and payloads
+   - action classes enforce status transitions and stock rules
+
+### Workspace Behavior
+
+#### Inventory Workspace
+
+- acts as main-store queue
+- lists only incoming requester-to-main-store requisitions
+- can show submitted, approved, partially issued, fulfilled, rejected
+- cannot create requester-side requisitions
+- owns approve, reject, and issue
+
+#### Laboratory Workspace
+
+- can create requisitions only for laboratory locations
+- can only request from a fulfilling main-store location
+- can submit and track requisitions
+- can cancel draft or withdraw submitted requisitions before review
+
+#### Pharmacy Workspace
+
+- same flow as laboratory, but scoped to pharmacy locations
+
+### Status Flow
+
+The effective requisition lifecycle is:
+
+- `draft`
+- `submitted`
+- `approved`
+- `partially_issued`
+- `fulfilled`
+- `rejected`
+- `cancelled`
+
+Who can do what:
+
+- requester can:
+  - create draft
+  - submit draft
+  - cancel draft
+  - withdraw submitted before review
+- main store can:
+  - approve submitted
+  - reject submitted
+  - issue approved or partially issued
+
+### Stock Posting Behavior
+
+Approval does not move stock.
+
+Issue is the ledger event that moves stock:
+
+- `requisition_out` from the fulfilling location
+- `requisition_in` into the requesting location
+
+So if stock looks wrong, debug the issue action and movement history before debugging the approval step.
+
+### How To Debug Common Problems
+
+If a user says “I cannot see this requisition”:
+
+1. confirm the route workspace
+2. confirm the user has the route permission
+3. confirm the requisition matches the workspace
+4. confirm the user can access the relevant requesting or fulfilling location
+
+If a user says “I can see it but cannot process it”:
+
+1. check `inventory_requisitions.review` or `inventory_requisitions.issue`
+2. check whether they manage the fulfilling location
+3. check the requisition status
+
+If a user says “it disappeared from the queue”:
+
+1. check whether it is still `draft` or now `cancelled`
+2. check whether it still matches the incoming queue rule in [InventoryRequisitionWorkflow.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryRequisitionWorkflow.php)
+
+If a user says “issue failed”:
+
+1. check approved vs remaining quantities
+2. check available batch balances in the fulfilling location
+3. check that the selected batches belong to the correct location
+
+### Tests That Matter Most
+
+The most important current tests are:
+
+- [InventoryRequisitionControllerTest.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/tests/Feature/Controllers/InventoryRequisitionControllerTest.php)
+  - full workflow behavior and route access
+- [InventoryRequisitionWorkflowTest.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/tests/Unit/Support/InventoryRequisitionWorkflowTest.php)
+  - queue-definition rules
+- [InventoryRequisitionAccessTest.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/tests/Unit/Support/InventoryRequisitionAccessTest.php)
+  - workspace and access behavior
+
+### Current Minor Naming Leftovers
+
+These are the remaining small leftovers I found:
+
+- database-backed field names still use `source_` and `destination_`
+- form field names still submit those database names
+- some feature-test local variables still use `$sourceLocation` and `$destinationLocation`
+
+These are minor and acceptable for now. The important part is that:
+
+- model relationships
+- controller payloads
+- location relationships
+- access helpers
+- workflow helpers
+
+now all speak mostly in `fulfilling` / `requesting` terms.
 
 ## What the Module Is Doing Well
 
@@ -474,7 +685,7 @@ Implementation note:
 - this rule has now been extracted into [InventoryRequisitionWorkflow.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Support/InventoryRequisitionWorkflow.php)
 - the helper now centralizes requester location types, fulfilling location types, hidden queue statuses, and the definition of an incoming requisition
 
-The main inventory queue currently filters requisitions so they only count as incoming queue items when their destination is:
+Originally, the main inventory queue filtered requisitions so they only counted as incoming queue items when their destination was:
 
 - pharmacy
 - laboratory
@@ -535,7 +746,7 @@ See:
 
 - [InventoryRequisition.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Models/InventoryRequisition.php#L64)
 
-There is no cancel route or cancel action currently in use.
+This has now been implemented through requester-side cancel and withdraw actions.
 
 #### Why this matters
 
@@ -562,7 +773,7 @@ If not needed yet, remove `cancelled` until the flow exists.
 
 ### 6. The Shared Show Page Is Becoming Too Heavy
 
-The requisition show page currently handles:
+Originally, the requisition show page handled:
 
 - requester-side tracking
 - main-store queue guidance

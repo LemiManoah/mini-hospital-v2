@@ -176,7 +176,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
 
         $requisition = $action->handle($validated, $items, $workspace->locationTypeValues());
 
-        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
+        return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition created. Submit it when you are ready for main store review.');
     }
 
@@ -209,7 +209,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
 
         $action->handle($requisition);
 
-        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
+        return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition submitted to main store.');
     }
 
@@ -229,7 +229,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
 
         $action->handle($requisition, $validated['cancellation_reason']);
 
-        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
+        return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition cancelled.');
     }
 
@@ -252,7 +252,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             is_string($validated['approval_notes'] ?? null) ? $validated['approval_notes'] : null,
         );
 
-        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
+        return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition approved and ready for issue.');
     }
 
@@ -270,7 +270,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
 
         $action->handle($requisition, $validated['rejection_reason']);
 
-        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
+        return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition rejected.');
     }
 
@@ -293,7 +293,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             is_string($validated['issued_notes'] ?? null) ? $validated['issued_notes'] : null,
         );
 
-        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
+        return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition issue posted successfully.');
     }
 
@@ -490,7 +490,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             ->where('source_document_type', InventoryRequisition::class)
             ->where('source_document_id', $requisition->id)
             ->where('movement_type', StockMovementType::RequisitionOut)
-            ->orderBy('occurred_at')
+            ->oldest('occurred_at')
             ->get()
             ->groupBy('source_line_id')
             ->map(static fn (Collection $movements): array => $movements
