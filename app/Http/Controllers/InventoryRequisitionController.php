@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\ApproveInventoryRequisition;
+use App\Actions\CancelInventoryRequisition;
 use App\Actions\CreateInventoryRequisition;
 use App\Actions\IssueInventoryRequisition;
 use App\Actions\RejectInventoryRequisition;
 use App\Actions\SubmitInventoryRequisition;
 use App\Enums\InventoryRequisitionStatus;
-use App\Enums\InventoryLocationType;
 use App\Enums\Priority;
 use App\Enums\StockMovementType;
 use App\Http\Requests\ApproveInventoryRequisitionRequest;
@@ -23,9 +23,11 @@ use App\Models\InventoryRequisition;
 use App\Models\InventoryRequisitionItem;
 use App\Models\StockMovement;
 use App\Support\BranchContext;
+use App\Support\InventoryRequisitionAccess;
 use App\Support\InventoryNavigationContext;
 use App\Support\InventoryLocationAccess;
 use App\Support\InventoryStockLedger;
+use App\Support\InventoryRequisitionWorkflow;
 use App\Support\InventoryWorkspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -42,6 +44,8 @@ final readonly class InventoryRequisitionController implements HasMiddleware
     public function __construct(
         private InventoryStockLedger $inventoryStockLedger,
         private InventoryLocationAccess $inventoryLocationAccess,
+        private InventoryRequisitionAccess $inventoryRequisitionAccess,
+        private InventoryRequisitionWorkflow $inventoryRequisitionWorkflow,
     ) {}
 
     public static function middleware(): array
@@ -49,7 +53,10 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         return [
             new Middleware('permission:inventory_requisitions.view', only: ['index', 'show']),
             new Middleware('permission:inventory_requisitions.create', only: ['create', 'store']),
-            new Middleware('permission:inventory_requisitions.update', only: ['submit', 'approve', 'reject', 'issue']),
+            new Middleware('permission:inventory_requisitions.submit', only: ['submit']),
+            new Middleware('permission:inventory_requisitions.cancel', only: ['cancel']),
+            new Middleware('permission:inventory_requisitions.review', only: ['approve', 'reject']),
+            new Middleware('permission:inventory_requisitions.issue', only: ['issue']),
         ];
     }
 
@@ -59,40 +66,28 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         $search = mb_trim((string) $request->query('search', ''));
         $status = mb_trim((string) $request->query('status', ''));
         $activeBranchId = BranchContext::getActiveBranchId();
-        $isIncomingQueue = $workspace->key() === 'inventory';
-        $locationIds = $isIncomingQueue
-            ? $this->inventoryLocationAccess->accessibleLocationIds(
-                Auth::user(),
-                $activeBranchId,
-                [InventoryLocationType::MAIN_STORE],
-            )
-            : $this->inventoryLocationAccess->accessibleLocationIds(
-                Auth::user(),
-                $activeBranchId,
-                $workspace->locationTypeValues(),
-            );
+        $isIncomingQueue = $workspace->isInventory();
+        $locationIds = $this->inventoryRequisitionAccess->indexLocationIds(
+            Auth::user(),
+            $workspace,
+            $activeBranchId,
+        );
 
         $requisitions = InventoryRequisition::query()
             ->with([
-                'sourceLocation:id,name,location_code',
-                'destinationLocation:id,name,location_code',
+                'fulfillingLocation:id,name,location_code',
+                'requestingLocation:id,name,location_code',
             ])
             ->when(
                 $locationIds === [],
                 static fn (Builder $query): Builder => $query->whereRaw('1 = 0'),
-                static fn (Builder $query): Builder => $query->when(
+                fn (Builder $query): Builder => $query->when(
                     $isIncomingQueue,
-                    static function (Builder $incomingQuery) use ($locationIds): void {
-                        $incomingQuery
-                            ->whereIn('source_inventory_location_id', $locationIds)
-                            ->where('status', '!=', InventoryRequisitionStatus::Draft->value)
-                            ->whereHas('destinationLocation', static function (Builder $locationQuery): void {
-                                $locationQuery->whereIn('type', [
-                                    InventoryLocationType::PHARMACY->value,
-                                    InventoryLocationType::LABORATORY->value,
-                                ]);
-                            });
-                    },
+                    fn (Builder $incomingQuery): Builder => tap(
+                        $incomingQuery,
+                        fn (Builder $queueQuery) => $this->inventoryRequisitionWorkflow
+                            ->applyIncomingQueueScope($queueQuery, $locationIds),
+                    ),
                     static function (Builder $workspaceQuery) use ($locationIds): void {
                         $workspaceQuery->where(function (Builder $inner) use ($locationIds): void {
                             $inner
@@ -104,10 +99,10 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             )
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
-                    $inner
-                        ->where('requisition_number', 'like', sprintf('%%%s%%', $search))
-                        ->orWhereHas('sourceLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)))
-                        ->orWhereHas('destinationLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)));
+                        $inner
+                            ->where('requisition_number', 'like', sprintf('%%%s%%', $search))
+                            ->orWhereHas('fulfillingLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)))
+                            ->orWhereHas('requestingLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)));
                 });
             })
             ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))
@@ -135,23 +130,22 @@ final readonly class InventoryRequisitionController implements HasMiddleware
     public function create(Request $request): Response
     {
         $workspace = InventoryWorkspace::fromRequest($request);
+        abort_unless($workspace->isRequester(), 404);
+
         $branchId = BranchContext::getActiveBranchId();
-        $workspaceTypes = $workspace->locationTypeValues();
-        $sourceLocations = $workspaceTypes === []
-            ? $this->inventoryLocationAccess->requisitionSourceLocations(Auth::user(), $branchId)
-            : $this->inventoryLocationAccess->requisitionSourceLocations(Auth::user(), $branchId, ['main_store']);
-        $destinationLocations = $this->inventoryLocationAccess->accessibleLocations(Auth::user(), $branchId, $workspaceTypes);
+        $fulfillingLocations = $this->inventoryRequisitionAccess->fulfillingLocations(Auth::user(), $branchId);
+        $requestingLocations = $this->inventoryRequisitionAccess->requestingLocations(Auth::user(), $workspace, $branchId);
 
         return Inertia::render($workspace->requisitionCreateComponent(), [
             'navigation' => InventoryNavigationContext::fromRequest($request),
-            'sourceInventoryLocations' => $sourceLocations
+            'fulfillingInventoryLocations' => $fulfillingLocations
                 ->map(static fn (InventoryLocation $location): array => [
                     'id' => $location->id,
                     'name' => $location->name,
                     'location_code' => $location->location_code,
                 ])
                 ->values(),
-            'destinationInventoryLocations' => $destinationLocations
+            'requestingInventoryLocations' => $requestingLocations
                 ->map(static fn (InventoryLocation $location): array => [
                     'id' => $location->id,
                     'name' => $location->name,
@@ -174,6 +168,8 @@ final readonly class InventoryRequisitionController implements HasMiddleware
     public function store(StoreInventoryRequisitionRequest $request, CreateInventoryRequisition $action): RedirectResponse
     {
         $workspace = InventoryWorkspace::fromRequest($request);
+        abort_unless($workspace->isRequester(), 404);
+
         $validated = $request->validated();
         $items = $validated['items'];
         unset($validated['items']);
@@ -181,9 +177,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         $requisition = $action->handle($validated, $items, $workspace->locationTypeValues());
 
         return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
-            ->with('success', $workspace->key() === 'inventory'
-                ? 'Requisition created successfully.'
-                : 'Requisition created. Submit it when you are ready for main store review.');
+            ->with('success', 'Requisition created. Submit it when you are ready for main store review.');
     }
 
     public function show(Request $request, InventoryRequisition $requisition): Response
@@ -192,12 +186,12 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         $this->abortUnlessCanView($requisition, $workspace);
 
         $requisition->load([
-            'sourceLocation',
-            'destinationLocation',
+            'fulfillingLocation',
+            'requestingLocation',
             'items.inventoryItem',
         ]);
 
-        $this->abortUnlessMatchesWorkspace($requisition, $workspace->locationTypeValues());
+        $this->abortUnlessMatchesWorkspace($requisition, $workspace);
 
         return Inertia::render($workspace->requisitionShowComponent(), [
             'navigation' => InventoryNavigationContext::fromRequest($request),
@@ -209,14 +203,34 @@ final readonly class InventoryRequisitionController implements HasMiddleware
     public function submit(Request $request, InventoryRequisition $requisition, SubmitInventoryRequisition $action): RedirectResponse
     {
         $workspace = InventoryWorkspace::fromRequest($request);
+        abort_unless($workspace->isRequester(), 404);
+
         $this->abortUnlessCanView($requisition, $workspace);
 
         $action->handle($requisition);
 
         return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
-            ->with('success', $workspace->key() === 'inventory'
-                ? 'Requisition submitted for approval.'
-                : 'Requisition submitted to main store.');
+            ->with('success', 'Requisition submitted to main store.');
+    }
+
+    public function cancel(
+        Request $request,
+        InventoryRequisition $requisition,
+        CancelInventoryRequisition $action,
+    ): RedirectResponse {
+        $workspace = InventoryWorkspace::fromRequest($request);
+        abort_unless($workspace->isRequester(), 404);
+
+        $this->abortUnlessCanView($requisition, $workspace);
+
+        $validated = $request->validate([
+            'cancellation_reason' => ['required', 'string'],
+        ]);
+
+        $action->handle($requisition, $validated['cancellation_reason']);
+
+        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
+            ->with('success', 'Requisition cancelled.');
     }
 
     public function approve(
@@ -225,6 +239,9 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         ApproveInventoryRequisition $action,
     ): RedirectResponse {
         $workspace = InventoryWorkspace::fromRequest($request);
+        abort_unless($workspace->isInventory(), 404);
+
+        $this->abortUnlessIncomingQueueItem($requisition);
         $this->abortUnlessCanProcess($requisition);
 
         $validated = $request->validated();
@@ -242,6 +259,9 @@ final readonly class InventoryRequisitionController implements HasMiddleware
     public function reject(Request $request, InventoryRequisition $requisition, RejectInventoryRequisition $action): RedirectResponse
     {
         $workspace = InventoryWorkspace::fromRequest($request);
+        abort_unless($workspace->isInventory(), 404);
+
+        $this->abortUnlessIncomingQueueItem($requisition);
         $this->abortUnlessCanProcess($requisition);
 
         $validated = $request->validate([
@@ -260,6 +280,9 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         IssueInventoryRequisition $action,
     ): RedirectResponse {
         $workspace = InventoryWorkspace::fromRequest($request);
+        abort_unless($workspace->isInventory(), 404);
+
+        $this->abortUnlessIncomingQueueItem($requisition);
         $this->abortUnlessCanProcess($requisition);
 
         $validated = $request->validated();
@@ -280,6 +303,17 @@ final readonly class InventoryRequisitionController implements HasMiddleware
      */
     private function serializeDetail(InventoryRequisition $requisition, array $issueHistory): array
     {
+        $fulfillingLocation = $requisition->fulfillingLocation === null ? null : [
+            'id' => $requisition->fulfillingLocation->id,
+            'name' => $requisition->fulfillingLocation->name,
+            'location_code' => $requisition->fulfillingLocation->location_code,
+        ];
+        $requestingLocation = $requisition->requestingLocation === null ? null : [
+            'id' => $requisition->requestingLocation->id,
+            'name' => $requisition->requestingLocation->name,
+            'location_code' => $requisition->requestingLocation->location_code,
+        ];
+
         return [
             'id' => $requisition->id,
             'requisition_number' => $requisition->requisition_number,
@@ -291,25 +325,20 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             'notes' => $requisition->notes,
             'approval_notes' => $requisition->approval_notes,
             'rejection_reason' => $requisition->rejection_reason,
+            'cancellation_reason' => $requisition->cancellation_reason,
             'issued_notes' => $requisition->issued_notes,
             'submitted_at' => $requisition->submitted_at?->toIso8601String(),
             'approved_at' => $requisition->approved_at?->toIso8601String(),
             'rejected_at' => $requisition->rejected_at?->toIso8601String(),
+            'cancelled_at' => $requisition->cancelled_at?->toIso8601String(),
             'issued_at' => $requisition->issued_at?->toIso8601String(),
             'can_submit' => $requisition->canBeSubmitted(),
+            'can_cancel' => $requisition->canBeCancelled(),
             'can_approve' => $requisition->canBeApproved(),
             'can_reject' => $requisition->canBeRejected(),
             'can_issue' => $requisition->canBeIssued(),
-            'source_location' => $requisition->sourceLocation === null ? null : [
-                'id' => $requisition->sourceLocation->id,
-                'name' => $requisition->sourceLocation->name,
-                'location_code' => $requisition->sourceLocation->location_code,
-            ],
-            'destination_location' => $requisition->destinationLocation === null ? null : [
-                'id' => $requisition->destinationLocation->id,
-                'name' => $requisition->destinationLocation->name,
-                'location_code' => $requisition->destinationLocation->location_code,
-            ],
+            'fulfilling_location' => $fulfillingLocation,
+            'requesting_location' => $requestingLocation,
             'items' => $requisition->items->map(
                 static fn (InventoryRequisitionItem $item): array => [
                     'id' => $item->id,
@@ -335,6 +364,17 @@ final readonly class InventoryRequisitionController implements HasMiddleware
      */
     private function serializeSummary(InventoryRequisition $requisition): array
     {
+        $fulfillingLocation = $requisition->fulfillingLocation === null ? null : [
+            'id' => $requisition->fulfillingLocation->id,
+            'name' => $requisition->fulfillingLocation->name,
+            'location_code' => $requisition->fulfillingLocation->location_code,
+        ];
+        $requestingLocation = $requisition->requestingLocation === null ? null : [
+            'id' => $requisition->requestingLocation->id,
+            'name' => $requisition->requestingLocation->name,
+            'location_code' => $requisition->requestingLocation->location_code,
+        ];
+
         return [
             'id' => $requisition->id,
             'requisition_number' => $requisition->requisition_number,
@@ -343,16 +383,8 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             'priority' => $requisition->priority?->value,
             'priority_label' => $requisition->priority?->label(),
             'requisition_date' => $requisition->requisition_date?->toDateString(),
-            'source_location' => $requisition->sourceLocation === null ? null : [
-                'id' => $requisition->sourceLocation->id,
-                'name' => $requisition->sourceLocation->name,
-                'location_code' => $requisition->sourceLocation->location_code,
-            ],
-            'destination_location' => $requisition->destinationLocation === null ? null : [
-                'id' => $requisition->destinationLocation->id,
-                'name' => $requisition->destinationLocation->name,
-                'location_code' => $requisition->destinationLocation->location_code,
-            ],
+            'fulfilling_location' => $fulfillingLocation,
+            'requesting_location' => $requestingLocation,
             'issued_at' => $requisition->issued_at?->toIso8601String(),
         ];
     }
@@ -366,7 +398,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             return [];
         }
 
-        if (! $this->inventoryLocationAccess->canProcessRequisition(Auth::user(), $requisition, $requisition->branch_id)) {
+        if (! $this->inventoryLocationAccess->canFulfillRequisition(Auth::user(), $requisition, $requisition->branch_id)) {
             return [];
         }
 
@@ -413,10 +445,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         $user = Auth::user();
 
         abort_unless(
-            $workspace->key() === 'inventory'
-                ? $this->inventoryLocationAccess->canProcessRequisition($user, $requisition, $requisition->branch_id)
-                    || ($user !== null && ($user->isSupportUser() || $user->hasAnyRole(['super_admin', 'admin', 'store_keeper'])))
-                : $this->inventoryLocationAccess->canViewRequisition($user, $requisition, $requisition->branch_id),
+            $this->inventoryRequisitionAccess->canView($user, $requisition, $workspace),
             403,
             'You do not have access to this requisition.',
         );
@@ -425,29 +454,29 @@ final readonly class InventoryRequisitionController implements HasMiddleware
     private function abortUnlessCanProcess(InventoryRequisition $requisition): void
     {
         abort_unless(
-            $this->inventoryLocationAccess->canProcessRequisition(Auth::user(), $requisition, $requisition->branch_id),
+            $this->inventoryRequisitionAccess->canProcess(Auth::user(), $requisition),
             403,
             'You can only process requisitions for inventory locations you manage.',
         );
     }
 
     /**
-     * @param  list<string>  $workspaceTypes
      */
-    private function abortUnlessMatchesWorkspace(InventoryRequisition $requisition, array $workspaceTypes): void
+    private function abortUnlessMatchesWorkspace(InventoryRequisition $requisition, InventoryWorkspace $workspace): void
     {
-        if ($workspaceTypes === []) {
-            return;
-        }
-
-        $sourceType = $requisition->sourceLocation?->type?->value;
-        $destinationType = $requisition->destinationLocation?->type?->value;
-
         abort_unless(
-            in_array($sourceType, $workspaceTypes, true)
-                || in_array($destinationType, $workspaceTypes, true),
+            $this->inventoryRequisitionAccess->matchesWorkspace($requisition, $workspace),
             404,
             'This requisition does not belong to the selected inventory workspace.',
+        );
+    }
+
+    private function abortUnlessIncomingQueueItem(InventoryRequisition $requisition, int $status = 403): void
+    {
+        abort_unless(
+            $this->inventoryRequisitionAccess->isIncomingQueueItem($requisition),
+            $status,
+            'This requisition is not available in the main store queue.',
         );
     }
 

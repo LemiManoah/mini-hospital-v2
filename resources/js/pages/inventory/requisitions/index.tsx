@@ -153,14 +153,14 @@ export default function InventoryRequisitionsIndex({
                             <TableRow>
                                 <TableHead>Requisition #</TableHead>
                                 <TableHead>Date</TableHead>
-                                {/* <TableHead>
-                                    {isRequesterWorkspace
-                                        ? 'Source'
-                                        : 'Issuing Store'}
-                                </TableHead> */}
                                 <TableHead>
                                     {isRequesterWorkspace
-                                        ? 'Destination'
+                                        ? 'Requesting Unit'
+                                        : 'Fulfilling Store'}
+                                </TableHead>
+                                <TableHead>
+                                    {isRequesterWorkspace
+                                        ? 'Fulfilling Store'
                                         : 'Requesting Unit'}
                                 </TableHead>
                                 <TableHead>Priority</TableHead>
@@ -183,12 +183,12 @@ export default function InventoryRequisitionsIndex({
                                                 requisition.requisition_date,
                                             )}
                                         </TableCell>
-                                        {/* <TableCell>
-                                            {requisition.source_location?.name ??
-                                                '-'}
-                                        </TableCell> */}
                                         <TableCell>
-                                            {requisition.destination_location
+                                            {requisition.requesting_location
+                                                ?.name ?? '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {requisition.fulfilling_location
                                                 ?.name ?? '-'}
                                         </TableCell>
                                         <TableCell>

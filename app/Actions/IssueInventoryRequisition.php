@@ -175,8 +175,8 @@ final readonly class IssueInventoryRequisition
             ]);
 
             return $requisition->refresh()->load([
-                'sourceLocation',
-                'destinationLocation',
+                'fulfillingLocation',
+                'requestingLocation',
                 'items.inventoryItem',
             ]);
         });

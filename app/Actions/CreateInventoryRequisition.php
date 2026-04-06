@@ -32,27 +32,20 @@ final readonly class CreateInventoryRequisition
                 ? $attributes['branch_id']
                 : BranchContext::getActiveBranchId();
 
-            $sourceLocationId = is_string($attributes['source_inventory_location_id'] ?? null)
+            $fulfillingLocationId = is_string($attributes['source_inventory_location_id'] ?? null)
                 ? $attributes['source_inventory_location_id']
                 : null;
-            $destinationLocationId = is_string($attributes['destination_inventory_location_id'] ?? null)
+            $requestingLocationId = is_string($attributes['destination_inventory_location_id'] ?? null)
                 ? $attributes['destination_inventory_location_id']
                 : null;
 
-            $canCreate = $destinationTypes === []
-                ? $this->inventoryLocationAccess->canCreateRequisition(
-                    Auth::user(),
-                    $sourceLocationId,
-                    $destinationLocationId,
-                    is_string($branchId) ? $branchId : null,
-                )
-                : $this->inventoryLocationAccess->canCreateRequisitionForTypes(
-                    Auth::user(),
-                    $sourceLocationId,
-                    $destinationLocationId,
-                    $destinationTypes,
-                    is_string($branchId) ? $branchId : null,
-                );
+            $canCreate = $this->inventoryLocationAccess->canCreateRequestedRequisition(
+                Auth::user(),
+                $fulfillingLocationId,
+                $requestingLocationId,
+                $destinationTypes,
+                is_string($branchId) ? $branchId : null,
+            );
 
             abort_unless(
                 $canCreate,
@@ -85,8 +78,8 @@ final readonly class CreateInventoryRequisition
             }
 
             return $requisition->refresh()->load([
-                'sourceLocation',
-                'destinationLocation',
+                'fulfillingLocation',
+                'requestingLocation',
                 'items.inventoryItem',
             ]);
         });

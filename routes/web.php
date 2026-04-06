@@ -182,8 +182,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('goods-receipts/{goods_receipt}/post', [GoodsReceiptController::class, 'post'])->name('goods-receipts.post');
     Route::resource('inventory-requisitions', InventoryRequisitionController::class)
         ->parameters(['inventory-requisitions' => 'requisition'])
-        ->only(['index', 'create', 'store', 'show']);
-    Route::post('inventory-requisitions/{requisition}/submit', [InventoryRequisitionController::class, 'submit'])->name('inventory-requisitions.submit');
+        ->only(['index', 'show']);
     Route::post('inventory-requisitions/{requisition}/approve', [InventoryRequisitionController::class, 'approve'])->name('inventory-requisitions.approve');
     Route::post('inventory-requisitions/{requisition}/reject', [InventoryRequisitionController::class, 'reject'])->name('inventory-requisitions.reject');
     Route::post('inventory-requisitions/{requisition}/issue', [InventoryRequisitionController::class, 'issue'])->name('inventory-requisitions.issue');
@@ -207,9 +206,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('laboratory/requisitions', [InventoryRequisitionController::class, 'store'])->name('laboratory.requisitions.store');
     Route::get('laboratory/requisitions/{requisition}', [InventoryRequisitionController::class, 'show'])->name('laboratory.requisitions.show');
     Route::post('laboratory/requisitions/{requisition}/submit', [InventoryRequisitionController::class, 'submit'])->name('laboratory.requisitions.submit');
-    Route::post('laboratory/requisitions/{requisition}/approve', [InventoryRequisitionController::class, 'approve'])->name('laboratory.requisitions.approve');
-    Route::post('laboratory/requisitions/{requisition}/reject', [InventoryRequisitionController::class, 'reject'])->name('laboratory.requisitions.reject');
-    Route::post('laboratory/requisitions/{requisition}/issue', [InventoryRequisitionController::class, 'issue'])->name('laboratory.requisitions.issue');
+    Route::post('laboratory/requisitions/{requisition}/cancel', [InventoryRequisitionController::class, 'cancel'])->name('laboratory.requisitions.cancel');
     Route::get('laboratory/movements', [InventoryMovementReportController::class, 'index'])->name('laboratory.movements.index');
     Route::get('laboratory/receipts', [GoodsReceiptController::class, 'index'])->name('laboratory.receipts.index');
     Route::get('laboratory/receipts/create', [GoodsReceiptController::class, 'create'])->name('laboratory.receipts.create');
@@ -236,9 +233,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('pharmacy/requisitions', [InventoryRequisitionController::class, 'store'])->name('pharmacy.requisitions.store');
     Route::get('pharmacy/requisitions/{requisition}', [InventoryRequisitionController::class, 'show'])->name('pharmacy.requisitions.show');
     Route::post('pharmacy/requisitions/{requisition}/submit', [InventoryRequisitionController::class, 'submit'])->name('pharmacy.requisitions.submit');
-    Route::post('pharmacy/requisitions/{requisition}/approve', [InventoryRequisitionController::class, 'approve'])->name('pharmacy.requisitions.approve');
-    Route::post('pharmacy/requisitions/{requisition}/reject', [InventoryRequisitionController::class, 'reject'])->name('pharmacy.requisitions.reject');
-    Route::post('pharmacy/requisitions/{requisition}/issue', [InventoryRequisitionController::class, 'issue'])->name('pharmacy.requisitions.issue');
+    Route::post('pharmacy/requisitions/{requisition}/cancel', [InventoryRequisitionController::class, 'cancel'])->name('pharmacy.requisitions.cancel');
     Route::get('pharmacy/movements', [InventoryMovementReportController::class, 'index'])->name('pharmacy.movements.index');
     Route::get('pharmacy/receipts', [GoodsReceiptController::class, 'index'])->name('pharmacy.receipts.index');
     Route::get('pharmacy/receipts/create', [GoodsReceiptController::class, 'create'])->name('pharmacy.receipts.create');

@@ -171,21 +171,14 @@ function createInventoryRequisitionContext(): array
     return [$branch, $user, $sourceLocation, $destinationLocation, $item, $batch];
 }
 
-it('shows the requisition create page', function (): void {
+it('does not expose requisition creation from the main inventory queue', function (): void {
     [$branch, $user] = createInventoryRequisitionContext();
     $user->givePermissionTo('inventory_requisitions.create');
 
-    $response = $this->withSession(['active_branch_id' => $branch->id])
+    $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->get(route('inventory-requisitions.create'));
-
-    $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('inventory/requisitions/create')
-            ->has('sourceInventoryLocations', 2)
-            ->has('destinationInventoryLocations', 2)
-            ->has('inventoryItems', 1)
-            ->has('priorityOptions'));
+        ->get('/inventory-requisitions/create')
+        ->assertNotFound();
 });
 
 it('limits pharmacy users to pharmacy requisition destinations and main store sources', function (): void {
@@ -203,18 +196,18 @@ it('limits pharmacy users to pharmacy requisition destinations and main store so
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->get(route('inventory-requisitions.create'));
+        ->get(route('pharmacy.requisitions.create'));
 
     $response->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('sourceInventoryLocations', [
+            ->where('fulfillingInventoryLocations', [
                 [
                     'id' => $sourceLocation->id,
                     'name' => $sourceLocation->name,
                     'location_code' => $sourceLocation->location_code,
                 ],
             ])
-            ->where('destinationInventoryLocations', [
+            ->where('requestingInventoryLocations', [
                 [
                     'id' => $destinationLocation->id,
                     'name' => $destinationLocation->name,
@@ -224,7 +217,7 @@ it('limits pharmacy users to pharmacy requisition destinations and main store so
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('inventory-requisitions.store'), [
+        ->post(route('pharmacy.requisitions.store'), [
             'source_inventory_location_id' => $sourceLocation->id,
             'destination_inventory_location_id' => $labLocation->id,
             'requisition_date' => now()->toDateString(),
@@ -245,7 +238,7 @@ it('creates a draft requisition', function (): void {
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('inventory-requisitions.store'), [
+        ->post(route('pharmacy.requisitions.store'), [
             'source_inventory_location_id' => $sourceLocation->id,
             'destination_inventory_location_id' => $destinationLocation->id,
             'requisition_date' => now()->toDateString(),
@@ -270,7 +263,7 @@ it('creates a draft requisition', function (): void {
         ->and($requisition->items)->toHaveCount(1)
         ->and((string) $requisition->items->first()->requested_quantity)->toBe('5.000');
 
-    $response->assertRedirect(route('inventory-requisitions.show', $requisition));
+    $response->assertRedirect(route('pharmacy.requisitions.show', $requisition));
 });
 
 it('shows only submitted incoming requisitions for the main store queue', function (): void {
@@ -382,10 +375,121 @@ it('allows admin users to open an incoming requisition detail page', function ()
     $response->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('inventory/requisitions/show')
-            ->where('requisition.source_location.name', $sourceLocation->name)
-            ->where('requisition.destination_location.name', $destinationLocation->name)
+            ->where('requisition.fulfilling_location.name', $sourceLocation->name)
+            ->where('requisition.requesting_location.name', $destinationLocation->name)
             ->where('requisition.status', InventoryRequisitionStatus::Submitted->value)
             ->where('navigation.requisitions_title', 'Incoming Requisitions'));
+});
+
+it('does not show draft requisitions in the main inventory queue detail view', function (): void {
+    [$branch, $user, $sourceLocation, $destinationLocation, $item] = createInventoryRequisitionContext();
+    $user->assignRole('admin');
+
+    $requisition = InventoryRequisition::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'source_inventory_location_id' => $sourceLocation->id,
+        'destination_inventory_location_id' => $destinationLocation->id,
+        'requisition_number' => 'REQ-DRAFT-HIDDEN-001',
+        'status' => InventoryRequisitionStatus::Draft,
+        'priority' => Priority::ROUTINE,
+        'requisition_date' => now()->toDateString(),
+    ]);
+
+    $requisition->items()->create([
+        'inventory_item_id' => $item->id,
+        'requested_quantity' => 2,
+        'approved_quantity' => 0,
+        'issued_quantity' => 0,
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('inventory-requisitions.show', $requisition))
+        ->assertNotFound();
+});
+
+it('allows requester workspaces to cancel draft requisitions', function (): void {
+    [$branch, $user, $sourceLocation, $destinationLocation, $item] = createInventoryRequisitionContext();
+    $user->givePermissionTo([
+        'inventory_requisitions.view',
+        'inventory_requisitions.cancel',
+    ]);
+
+    $requisition = InventoryRequisition::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'source_inventory_location_id' => $sourceLocation->id,
+        'destination_inventory_location_id' => $destinationLocation->id,
+        'requisition_number' => 'REQ-CANCEL-DRAFT-001',
+        'status' => InventoryRequisitionStatus::Draft,
+        'priority' => Priority::ROUTINE,
+        'requisition_date' => now()->toDateString(),
+    ]);
+
+    $requisition->items()->create([
+        'inventory_item_id' => $item->id,
+        'requested_quantity' => 2,
+        'approved_quantity' => 0,
+        'issued_quantity' => 0,
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('pharmacy.requisitions.cancel', $requisition), [
+            'cancellation_reason' => 'Requested in error.',
+        ])
+        ->assertRedirect(route('pharmacy.requisitions.show', $requisition));
+
+    $requisition->refresh();
+
+    expect($requisition->status)->toBe(InventoryRequisitionStatus::Cancelled)
+        ->and($requisition->cancellation_reason)->toBe('Requested in error.');
+});
+
+it('allows requester workspaces to withdraw submitted requisitions before review', function (): void {
+    [$branch, $user, $sourceLocation, $destinationLocation, $item] = createInventoryRequisitionContext();
+    $user->givePermissionTo([
+        'inventory_requisitions.view',
+        'inventory_requisitions.cancel',
+    ]);
+
+    $requisition = InventoryRequisition::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'source_inventory_location_id' => $sourceLocation->id,
+        'destination_inventory_location_id' => $destinationLocation->id,
+        'requisition_number' => 'REQ-CANCEL-SUBMITTED-001',
+        'status' => InventoryRequisitionStatus::Submitted,
+        'priority' => Priority::ROUTINE,
+        'requisition_date' => now()->toDateString(),
+        'submitted_by' => $user->id,
+        'submitted_at' => now(),
+    ]);
+
+    $requisition->items()->create([
+        'inventory_item_id' => $item->id,
+        'requested_quantity' => 2,
+        'approved_quantity' => 0,
+        'issued_quantity' => 0,
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('pharmacy.requisitions.cancel', $requisition), [
+            'cancellation_reason' => 'Need changed before review.',
+        ])
+        ->assertRedirect(route('pharmacy.requisitions.show', $requisition));
+
+    $requisition->refresh();
+
+    expect($requisition->status)->toBe(InventoryRequisitionStatus::Cancelled)
+        ->and($requisition->cancellation_reason)->toBe('Need changed before review.');
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user->fresh())
+        ->get(route('inventory-requisitions.show', $requisition))
+        ->assertNotFound();
 });
 
 it('prevents pharmacists from opening the main store incoming requisition detail page', function (): void {
@@ -416,9 +520,46 @@ it('prevents pharmacists from opening the main store incoming requisition detail
         ->assertForbidden();
 });
 
+it('prevents main store queue from cancelling requester requisitions', function (): void {
+    [$branch, $user, $sourceLocation, $destinationLocation, $item] = createInventoryRequisitionContext();
+    $user->assignRole('admin');
+
+    $requisition = InventoryRequisition::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'source_inventory_location_id' => $sourceLocation->id,
+        'destination_inventory_location_id' => $destinationLocation->id,
+        'requisition_number' => 'REQ-CANCEL-BLOCK-001',
+        'status' => InventoryRequisitionStatus::Submitted,
+        'priority' => Priority::ROUTINE,
+        'requisition_date' => now()->toDateString(),
+        'submitted_by' => $user->id,
+        'submitted_at' => now(),
+    ]);
+
+    $requisition->items()->create([
+        'inventory_item_id' => $item->id,
+        'requested_quantity' => 2,
+        'approved_quantity' => 0,
+        'issued_quantity' => 0,
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post('/inventory-requisitions/'.$requisition->id.'/cancel', [
+            'cancellation_reason' => 'Main store should not cancel requester records here.',
+        ])
+        ->assertNotFound();
+});
+
 it('submits approves and partially issues a requisition', function (): void {
     [$branch, $user, $sourceLocation, $destinationLocation, $item, $batch] = createInventoryRequisitionContext();
-    $user->givePermissionTo(['inventory_requisitions.view', 'inventory_requisitions.update']);
+    $user->givePermissionTo([
+        'inventory_requisitions.view',
+        'inventory_requisitions.submit',
+        'inventory_requisitions.review',
+        'inventory_requisitions.issue',
+    ]);
 
     $requisition = InventoryRequisition::query()->create([
         'tenant_id' => $user->tenant_id,
@@ -441,8 +582,8 @@ it('submits approves and partially issues a requisition', function (): void {
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('inventory-requisitions.submit', $requisition))
-        ->assertRedirect(route('inventory-requisitions.show', $requisition));
+        ->post(route('pharmacy.requisitions.submit', $requisition))
+        ->assertRedirect(route('pharmacy.requisitions.show', $requisition));
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -512,7 +653,7 @@ it('submits approves and partially issues a requisition', function (): void {
 
 it('fulfills a requisition when all approved stock is issued', function (): void {
     [$branch, $user, $sourceLocation, $destinationLocation, $item, $batch] = createInventoryRequisitionContext();
-    $user->givePermissionTo(['inventory_requisitions.view', 'inventory_requisitions.update']);
+    $user->givePermissionTo(['inventory_requisitions.view', 'inventory_requisitions.issue']);
 
     $requisition = InventoryRequisition::query()->create([
         'tenant_id' => $user->tenant_id,
@@ -558,7 +699,7 @@ it('fulfills a requisition when all approved stock is issued', function (): void
 
 it('rejects a submitted requisition', function (): void {
     [$branch, $user, $sourceLocation, $destinationLocation] = createInventoryRequisitionContext();
-    $user->givePermissionTo(['inventory_requisitions.view', 'inventory_requisitions.update']);
+    $user->givePermissionTo(['inventory_requisitions.view', 'inventory_requisitions.review']);
 
     $requisition = InventoryRequisition::query()->create([
         'tenant_id' => $user->tenant_id,
@@ -645,14 +786,14 @@ it('shows only laboratory destinations on the dedicated laboratory requisition c
     $response->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('laboratory/requisitions/create')
-            ->where('sourceInventoryLocations', [
+            ->where('fulfillingInventoryLocations', [
                 [
                     'id' => $sourceLocation->id,
                     'name' => $sourceLocation->name,
                     'location_code' => $sourceLocation->location_code,
                 ],
             ])
-            ->where('destinationInventoryLocations', [
+            ->where('requestingInventoryLocations', [
                 [
                     'id' => $labLocation->id,
                     'name' => $labLocation->name,

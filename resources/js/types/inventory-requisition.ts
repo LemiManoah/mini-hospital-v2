@@ -31,21 +31,24 @@ export interface InventoryRequisition {
     notes: string | null;
     approval_notes: string | null;
     rejection_reason: string | null;
+    cancellation_reason: string | null;
     issued_notes: string | null;
     submitted_at: string | null;
     approved_at: string | null;
     rejected_at: string | null;
+    cancelled_at: string | null;
     issued_at: string | null;
     can_submit: boolean;
+    can_cancel: boolean;
     can_approve: boolean;
     can_reject: boolean;
     can_issue: boolean;
-    source_location?: {
+    fulfilling_location?: {
         id: string;
         name: string;
         location_code: string;
     } | null;
-    destination_location?: {
+    requesting_location?: {
         id: string;
         name: string;
         location_code: string;
@@ -99,8 +102,8 @@ export interface InventoryRequisitionIndexPageProps {
 
 export interface InventoryRequisitionFormPageProps {
     navigation: InventoryNavigationContext;
-    sourceInventoryLocations: InventoryRequisitionLocationOption[];
-    destinationInventoryLocations: InventoryRequisitionLocationOption[];
+    fulfillingInventoryLocations: InventoryRequisitionLocationOption[];
+    requestingInventoryLocations: InventoryRequisitionLocationOption[];
     inventoryItems: Pick<
         InventoryItem,
         'id' | 'name' | 'generic_name' | 'item_type'

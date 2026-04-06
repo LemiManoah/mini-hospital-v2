@@ -35,6 +35,16 @@ final readonly class InventoryWorkspace
         return $this->key;
     }
 
+    public function isInventory(): bool
+    {
+        return $this->key === 'inventory';
+    }
+
+    public function isRequester(): bool
+    {
+        return in_array($this->key, ['laboratory', 'pharmacy'], true);
+    }
+
     /**
      * @return list<string>
      */

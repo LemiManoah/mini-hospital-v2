@@ -33,15 +33,15 @@ const emptyLine = (): RequisitionLine => ({
 
 export default function InventoryRequisitionCreate({
     navigation,
-    sourceInventoryLocations,
-    destinationInventoryLocations,
+    fulfillingInventoryLocations,
+    requestingInventoryLocations,
     inventoryItems,
     priorityOptions,
 }: InventoryRequisitionFormPageProps) {
     const isRequesterWorkspace = navigation.key !== 'inventory';
     const singleSourceLocation =
-        sourceInventoryLocations.length === 1
-            ? sourceInventoryLocations[0]
+        fulfillingInventoryLocations.length === 1
+            ? fulfillingInventoryLocations[0]
             : null;
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
@@ -56,7 +56,8 @@ export default function InventoryRequisitionCreate({
     ];
 
     const form = useForm({
-        source_inventory_location_id: sourceInventoryLocations[0]?.id ?? '',
+        source_inventory_location_id:
+            fulfillingInventoryLocations[0]?.id ?? '',
         destination_inventory_location_id: '',
         requisition_date: new Date().toISOString().split('T')[0],
         priority: priorityOptions[0]?.value ?? 'routine',
@@ -64,12 +65,14 @@ export default function InventoryRequisitionCreate({
         items: [emptyLine()],
     });
 
-    const sourceLocationOptions = sourceInventoryLocations.map((location) => ({
+    const fulfillingLocationOptions = fulfillingInventoryLocations.map(
+        (location) => ({
         value: location.id,
         label: `${location.name} (${location.location_code})`,
-    }));
+        }),
+    );
 
-    const destinationLocationOptions = destinationInventoryLocations.map(
+    const requestingLocationOptions = requestingInventoryLocations.map(
         (location) => ({
         value: location.id,
         label: `${location.name} (${location.location_code})`,
@@ -150,7 +153,7 @@ export default function InventoryRequisitionCreate({
                                     </div>
                                 ) : (
                                     <SearchableSelect
-                                        options={sourceLocationOptions}
+                                        options={fulfillingLocationOptions}
                                         value={
                                             form.data
                                                 .source_inventory_location_id
@@ -161,7 +164,7 @@ export default function InventoryRequisitionCreate({
                                                 value,
                                             )
                                         }
-                                        placeholder="Select source location"
+                                        placeholder="Select fulfilling store"
                                         emptyMessage="No locations found."
                                     />
                                 )}
@@ -179,7 +182,7 @@ export default function InventoryRequisitionCreate({
                                         : 'Destination Location'}
                                 </Label>
                                 <SearchableSelect
-                                    options={destinationLocationOptions.filter(
+                                    options={requestingLocationOptions.filter(
                                         (location) =>
                                             location.value !==
                                             form.data
@@ -195,7 +198,7 @@ export default function InventoryRequisitionCreate({
                                             value,
                                         )
                                     }
-                                    placeholder="Select destination location"
+                                    placeholder="Select requesting unit"
                                     emptyMessage="No locations found."
                                 />
                                 <InputError

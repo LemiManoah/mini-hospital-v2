@@ -62,7 +62,7 @@ final class InventoryLocationAccess
     /**
      * @return Collection<int, InventoryLocation>
      */
-    public function requisitionSourceLocations(?User $user, ?string $branchId = null, array $requestedTypes = []): Collection
+    public function requisitionFulfillingLocations(?User $user, ?string $branchId = null, array $requestedTypes = []): Collection
     {
         $branchId ??= BranchContext::getActiveBranchId();
 
@@ -89,9 +89,9 @@ final class InventoryLocationAccess
     /**
      * @return list<string>
      */
-    public function requisitionSourceLocationIds(?User $user, ?string $branchId = null, array $requestedTypes = []): array
+    public function requisitionFulfillingLocationIds(?User $user, ?string $branchId = null, array $requestedTypes = []): array
     {
-        return $this->requisitionSourceLocations($user, $branchId, $requestedTypes)
+        return $this->requisitionFulfillingLocations($user, $branchId, $requestedTypes)
             ->pluck('id')
             ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
             ->values()
@@ -112,40 +112,32 @@ final class InventoryLocationAccess
             && in_array($locationId, $this->accessibleLocationIds($user, $branchId, $allowedTypes), true);
     }
 
-    public function canCreateRequisition(?User $user, ?string $sourceLocationId, ?string $destinationLocationId, ?string $branchId = null): bool
-    {
-        return is_string($sourceLocationId)
-            && $sourceLocationId !== ''
-            && is_string($destinationLocationId)
-            && $destinationLocationId !== ''
-            && in_array($sourceLocationId, $this->requisitionSourceLocationIds($user, $branchId), true)
-            && in_array($destinationLocationId, $this->accessibleLocationIds($user, $branchId), true);
-    }
-
-    public function canCreateRequisitionForTypes(
+    public function canCreateRequestedRequisition(
         ?User $user,
-        ?string $sourceLocationId,
-        ?string $destinationLocationId,
-        array $destinationTypes,
+        ?string $fulfillingLocationId,
+        ?string $requestingLocationId,
+        array $requestingTypes = [],
         ?string $branchId = null,
     ): bool {
-        return is_string($sourceLocationId)
-            && $sourceLocationId !== ''
-            && is_string($destinationLocationId)
-            && $destinationLocationId !== ''
-            && in_array(
-                $sourceLocationId,
-                $this->requisitionSourceLocationIds($user, $branchId, [InventoryLocationType::MAIN_STORE]),
-                true,
-            )
-            && in_array(
-                $destinationLocationId,
-                $this->accessibleLocationIds($user, $branchId, $destinationTypes),
-                true,
-            );
+        if (
+            ! is_string($fulfillingLocationId)
+            || $fulfillingLocationId === ''
+            || ! is_string($requestingLocationId)
+            || $requestingLocationId === ''
+        ) {
+            return false;
+        }
+
+        $allowedFulfillingLocationIds = $requestingTypes === []
+            ? $this->requisitionFulfillingLocationIds($user, $branchId)
+            : $this->requisitionFulfillingLocationIds($user, $branchId, [InventoryLocationType::MAIN_STORE]);
+        $allowedRequestingLocationIds = $this->accessibleLocationIds($user, $branchId, $requestingTypes);
+
+        return in_array($fulfillingLocationId, $allowedFulfillingLocationIds, true)
+            && in_array($requestingLocationId, $allowedRequestingLocationIds, true);
     }
 
-    public function canViewRequisition(?User $user, InventoryRequisition $requisition, ?string $branchId = null): bool
+    public function canViewRequestedRequisition(?User $user, InventoryRequisition $requisition, ?string $branchId = null): bool
     {
         $locationIds = $this->accessibleLocationIds($user, $branchId);
 
@@ -153,7 +145,7 @@ final class InventoryLocationAccess
             || in_array($requisition->destination_inventory_location_id, $locationIds, true);
     }
 
-    public function canProcessRequisition(?User $user, InventoryRequisition $requisition, ?string $branchId = null): bool
+    public function canFulfillRequisition(?User $user, InventoryRequisition $requisition, ?string $branchId = null): bool
     {
         return in_array(
             $requisition->source_inventory_location_id,

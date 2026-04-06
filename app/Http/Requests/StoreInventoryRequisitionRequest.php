@@ -59,44 +59,44 @@ final class StoreInventoryRequisitionRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 $activeBranchId = BranchContext::getActiveBranchId();
-                $sourceLocationId = $this->input('source_inventory_location_id');
-                $destinationLocationId = $this->input('destination_inventory_location_id');
+                $fulfillingLocationId = $this->input('source_inventory_location_id');
+                $requestingLocationId = $this->input('destination_inventory_location_id');
 
                 if (
                     ! is_string($activeBranchId)
                     || $activeBranchId === ''
-                    || ! is_string($sourceLocationId)
-                    || ! is_string($destinationLocationId)
+                    || ! is_string($fulfillingLocationId)
+                    || ! is_string($requestingLocationId)
                     || $validator->errors()->isNotEmpty()
                 ) {
                     return;
                 }
 
-                if ($sourceLocationId === $destinationLocationId) {
+                if ($fulfillingLocationId === $requestingLocationId) {
                     $validator->errors()->add(
                         'destination_inventory_location_id',
-                        'The destination location must be different from the source location.',
+                        'The requesting location must be different from the fulfilling location.',
                     );
                 }
 
                 $locations = InventoryLocation::query()
-                    ->whereIn('id', [$sourceLocationId, $destinationLocationId])
+                    ->whereIn('id', [$fulfillingLocationId, $requestingLocationId])
                     ->where('branch_id', $activeBranchId)
                     ->where('is_active', true)
                     ->get()
                     ->keyBy('id');
 
-                if (! $locations->has($sourceLocationId)) {
+                if (! $locations->has($fulfillingLocationId)) {
                     $validator->errors()->add(
                         'source_inventory_location_id',
-                        'The source location must be active in the current branch.',
+                        'The fulfilling location must be active in the current branch.',
                     );
                 }
 
-                if (! $locations->has($destinationLocationId)) {
+                if (! $locations->has($requestingLocationId)) {
                     $validator->errors()->add(
                         'destination_inventory_location_id',
-                        'The destination location must be active in the current branch.',
+                        'The requesting location must be active in the current branch.',
                     );
                 }
 
@@ -108,24 +108,22 @@ final class StoreInventoryRequisitionRequest extends FormRequest
                 $workspace = InventoryWorkspace::fromRequest($this);
                 $workspaceTypes = $workspace->locationTypeValues();
 
-                $canCreate = $workspaceTypes === []
-                    ? $inventoryLocationAccess->canCreateRequisition($this->user(), $sourceLocationId, $destinationLocationId, $activeBranchId)
-                    : $inventoryLocationAccess->canCreateRequisitionForTypes(
-                        $this->user(),
-                        $sourceLocationId,
-                        $destinationLocationId,
-                        $workspaceTypes,
-                        $activeBranchId,
-                    );
+                $canCreate = $inventoryLocationAccess->canCreateRequestedRequisition(
+                    $this->user(),
+                    $fulfillingLocationId,
+                    $requestingLocationId,
+                    $workspaceTypes,
+                    $activeBranchId,
+                );
 
                 if (! $canCreate) {
                     $validator->errors()->add(
                         'source_inventory_location_id',
-                        'You can only request stock from the branch main store or locations you manage.',
+                        'You can only request stock from a fulfilling location you are allowed to use.',
                     );
                     $validator->errors()->add(
                         'destination_inventory_location_id',
-                        'You can only request stock for inventory locations you manage.',
+                        'You can only request stock for requesting locations you manage.',
                     );
                 }
 
@@ -133,23 +131,23 @@ final class StoreInventoryRequisitionRequest extends FormRequest
                     return;
                 }
 
-                $sourceLocation = $locations->get($sourceLocationId);
-                $destinationLocation = $locations->get($destinationLocationId);
+                $fulfillingLocation = $locations->get($fulfillingLocationId);
+                $requestingLocation = $locations->get($requestingLocationId);
 
-                if ($sourceLocation instanceof InventoryLocation && $sourceLocation->type !== InventoryLocationType::MAIN_STORE) {
+                if ($fulfillingLocation instanceof InventoryLocation && $fulfillingLocation->type !== InventoryLocationType::MAIN_STORE) {
                     $validator->errors()->add(
                         'source_inventory_location_id',
-                        'Dedicated lab and pharmacy requisitions must be sourced from a main store location.',
+                        'Dedicated lab and pharmacy requisitions must be fulfilled from a main store location.',
                     );
                 }
 
                 if (
-                    $destinationLocation instanceof InventoryLocation
-                    && ! in_array($destinationLocation->type?->value, $workspaceTypes, true)
+                    $requestingLocation instanceof InventoryLocation
+                    && ! in_array($requestingLocation->type?->value, $workspaceTypes, true)
                 ) {
                     $validator->errors()->add(
                         'destination_inventory_location_id',
-                        'The destination location does not belong to this workspace.',
+                        'The requesting location does not belong to this workspace.',
                     );
                 }
             },

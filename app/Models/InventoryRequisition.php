@@ -42,18 +42,30 @@ final class InventoryRequisition extends Model
         'approved_at' => 'datetime',
         'rejected_by' => 'string',
         'rejected_at' => 'datetime',
+        'cancelled_by' => 'string',
+        'cancelled_at' => 'datetime',
         'issued_by' => 'string',
         'issued_at' => 'datetime',
     ];
 
-    public function sourceLocation(): BelongsTo
+    public function fulfillingLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class, 'source_inventory_location_id');
     }
 
-    public function destinationLocation(): BelongsTo
+    public function sourceLocation(): BelongsTo
+    {
+        return $this->fulfillingLocation();
+    }
+
+    public function requestingLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class, 'destination_inventory_location_id');
+    }
+
+    public function destinationLocation(): BelongsTo
+    {
+        return $this->requestingLocation();
     }
 
     public function items(): HasMany
@@ -81,6 +93,14 @@ final class InventoryRequisition extends Model
         return in_array($this->status, [
             InventoryRequisitionStatus::Approved,
             InventoryRequisitionStatus::PartiallyIssued,
+        ], true);
+    }
+
+    public function canBeCancelled(): bool
+    {
+        return in_array($this->status, [
+            InventoryRequisitionStatus::Draft,
+            InventoryRequisitionStatus::Submitted,
         ], true);
     }
 }

@@ -1,110 +1,25 @@
-import InputError from '@/components/input-error';
-import { SearchableSelect } from '@/components/searchable-select';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
-import { formatDate, formatDateTime } from '@/lib/date';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryRequisitionShowPageProps } from '@/types/inventory-requisition';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { PlusCircle, Trash2 } from 'lucide-react';
 
-type ApproveLine = {
-    inventory_requisition_item_id: string;
-    approved_quantity: string;
-};
-
-type AllocationLine = {
-    inventory_batch_id: string;
-    quantity: string;
-};
-
-type IssueLine = {
-    inventory_requisition_item_id: string;
-    issue_quantity: string;
-    notes: string;
-    allocations: AllocationLine[];
-};
-
-const badgeVariant = (
-    status: string | null,
-): 'default' | 'secondary' | 'destructive' | 'outline' => {
-    if (status === 'fulfilled') {
-        return 'default';
-    }
-
-    if (status === 'rejected' || status === 'cancelled') {
-        return 'destructive';
-    }
-
-    if (status === 'approved' || status === 'partially_issued') {
-        return 'outline';
-    }
-
-    return 'secondary';
-};
+import { RequisitionIssuePanel } from './components/requisition-issue-panel';
+import { RequisitionLinesTable } from './components/requisition-lines-table';
+import { RequisitionReviewPanel } from './components/requisition-review-panel';
+import { RequesterActionsPanel } from './components/requester-actions-panel';
+import { RequisitionSummaryCard } from './components/requisition-summary-card';
+import type {
+    AllocationLine,
+    ApproveLine,
+    IssueLine,
+} from './components/types';
 
 const emptyAllocation = (): AllocationLine => ({
     inventory_batch_id: '',
     quantity: '',
 });
-
-const workflowMessage = (
-    status: string | null,
-    isRequesterWorkspace: boolean,
-): string => {
-    if (isRequesterWorkspace) {
-        switch (status) {
-            case 'draft':
-                return 'This requisition is still a draft. Submit it when you are ready for main store review.';
-            case 'submitted':
-                return 'Main store has received this requisition and can now review the requested quantities.';
-            case 'approved':
-                return 'Main store approved this requisition. Stock can now be issued against the approved quantities.';
-            case 'partially_issued':
-                return 'Main store has issued part of this requisition. The remaining approved quantities are still pending.';
-            case 'fulfilled':
-                return 'Main store has fully issued this requisition.';
-            case 'rejected':
-                return 'Main store rejected this requisition. Check the rejection reason before raising another request.';
-            case 'cancelled':
-                return 'This requisition was cancelled and will not move forward.';
-            default:
-                return 'Follow this requisition here as it moves from your unit to the main store workflow.';
-        }
-    }
-
-    switch (status) {
-        case 'submitted':
-            return 'This incoming requisition is ready for main store review. Approve allowed quantities or reject it.';
-        case 'approved':
-            return 'This incoming requisition has been approved and is waiting for stock issue from the main store.';
-        case 'partially_issued':
-            return 'This incoming requisition has been partly issued. Complete the remaining approved quantities when available.';
-        case 'fulfilled':
-            return 'This incoming requisition has been fully issued.';
-        case 'rejected':
-            return 'This incoming requisition has been rejected and closed.';
-        case 'cancelled':
-            return 'This incoming requisition was cancelled before fulfillment.';
-        case 'draft':
-            return 'This requisition is still in draft and has not yet reached the incoming main store queue.';
-        default:
-            return 'Review the request, confirm what the main store can support, then issue available stock.';
-    }
-};
 
 export default function InventoryRequisitionShow({
     navigation,
@@ -112,7 +27,6 @@ export default function InventoryRequisitionShow({
     availableBatchBalances,
 }: InventoryRequisitionShowPageProps) {
     const { hasPermission } = usePermissions();
-
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
         {
@@ -126,14 +40,10 @@ export default function InventoryRequisitionShow({
     ];
 
     const isRequesterWorkspace = navigation.key !== 'inventory';
-    const canUpdate = hasPermission('inventory_requisitions.update');
-    const canManageQueue = canUpdate && navigation.key === 'inventory';
-    const canSubmitToMainStore =
-        canUpdate && isRequesterWorkspace && requisition.can_submit;
     const lines = requisition.items ?? [];
     const issueReadyLines = lines.filter((line) => line.remaining_quantity > 0);
 
-    const submitForm = useForm({});
+    const submitForm = useForm<Record<string, never>>({});
     const approveForm = useForm<{
         approval_notes: string;
         items: ApproveLine[];
@@ -146,6 +56,9 @@ export default function InventoryRequisitionShow({
     });
     const rejectForm = useForm({
         rejection_reason: requisition.rejection_reason ?? '',
+    });
+    const cancelForm = useForm({
+        cancellation_reason: requisition.cancellation_reason ?? '',
     });
     const issueForm = useForm<{
         issued_notes: string;
@@ -160,6 +73,23 @@ export default function InventoryRequisitionShow({
         })),
     });
 
+    const canSubmitToMainStore =
+        isRequesterWorkspace &&
+        hasPermission('inventory_requisitions.submit') &&
+        requisition.can_submit &&
+        navigation.key !== 'inventory';
+    const canCancelRequest =
+        isRequesterWorkspace &&
+        hasPermission('inventory_requisitions.cancel') &&
+        requisition.can_cancel &&
+        navigation.key !== 'inventory';
+    const canReview =
+        navigation.key === 'inventory' &&
+        hasPermission('inventory_requisitions.review');
+    const canIssue =
+        navigation.key === 'inventory' &&
+        hasPermission('inventory_requisitions.issue');
+
     const updateApproveLine = (index: number, value: string) => {
         const updated = [...approveForm.data.items];
         updated[index] = {
@@ -171,7 +101,7 @@ export default function InventoryRequisitionShow({
 
     const updateIssueLine = (
         index: number,
-        field: keyof Omit<IssueLine, 'allocations' | 'inventory_requisition_item_id'>,
+        field: 'issue_quantity' | 'notes',
         value: string,
     ) => {
         const updated = [...issueForm.data.items];
@@ -208,7 +138,7 @@ export default function InventoryRequisitionShow({
     const updateAllocation = (
         lineIndex: number,
         allocationIndex: number,
-        field: keyof AllocationLine,
+        field: 'inventory_batch_id' | 'quantity',
         value: string,
     ) => {
         const updated = [...issueForm.data.items];
@@ -224,14 +154,6 @@ export default function InventoryRequisitionShow({
         issueForm.setData('items', updated);
     };
 
-    const batchOptionsFor = (inventoryItemId: string) =>
-        availableBatchBalances
-            .filter((batch) => batch.inventory_item_id === inventoryItemId)
-            .map((batch) => ({
-                value: batch.inventory_batch_id,
-                label: `${batch.batch_number ?? 'No batch'} | Qty ${batch.quantity.toFixed(3)}${batch.expiry_date ? ` | Exp ${batch.expiry_date}` : ''}`,
-            }));
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head
@@ -246,8 +168,9 @@ export default function InventoryRequisitionShow({
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             {isRequesterWorkspace
-                                ? `${requisition.source_location?.name ?? '-'} to ${requisition.destination_location?.name ?? '-'}`
-                                : `Incoming request for ${requisition.destination_location?.name ?? '-'} from ${requisition.source_location?.name ?? '-'} stock`}
+                                ? `${requisition.requesting_location?.name ?? '-'} requesting stock from ${requisition.fulfilling_location?.name ?? '-'}`
+                                : `Incoming request from ${requisition.requesting_location?.name ?? '-'} to be fulfilled by ${requisition.fulfilling_location?.name ?? '-'}`
+                            }
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -255,633 +178,48 @@ export default function InventoryRequisitionShow({
                     </Button>
                 </div>
 
+                <RequisitionSummaryCard
+                    requisition={requisition}
+                    isRequesterWorkspace={isRequesterWorkspace}
+                />
+
                 <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="grid gap-4 md:grid-cols-4">
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Status
-                            </span>
-                            <div className="mt-1">
-                                <Badge variant={badgeVariant(requisition.status)}>
-                                    {requisition.status_label ?? '-'}
-                                </Badge>
-                            </div>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Priority
-                            </span>
-                            <p className="mt-1 font-medium">
-                                {requisition.priority_label ?? '-'}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Date
-                            </span>
-                            <p className="mt-1 font-medium">
-                                {formatDate(requisition.requisition_date)}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Issued At
-                            </span>
-                            <p className="mt-1 font-medium">
-                                {formatDateTime(requisition.issued_at)}
-                            </p>
-                        </div>
-                    </div>
+                    <RequesterActionsPanel
+                        navigation={navigation}
+                        requisition={requisition}
+                        canSubmitToMainStore={canSubmitToMainStore}
+                        canCancelRequest={canCancelRequest}
+                        submitForm={submitForm}
+                        cancelForm={cancelForm}
+                    />
 
-                    <div className="mt-4 grid gap-4 border-t pt-4 md:grid-cols-2">
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                {isRequesterWorkspace
-                                    ? 'Source'
-                                    : 'Issuing Store'}
-                            </span>
-                            <p className="mt-1 font-medium">
-                                {requisition.source_location?.name ?? '-'}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                {isRequesterWorkspace
-                                    ? 'Destination'
-                                    : 'Requesting Unit'}
-                            </span>
-                            <p className="mt-1 font-medium">
-                                {requisition.destination_location?.name ?? '-'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 grid gap-4 border-t pt-4 md:grid-cols-3">
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Notes
-                            </span>
-                            <p className="mt-1">{requisition.notes ?? '-'}</p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Approval Notes
-                            </span>
-                            <p className="mt-1">
-                                {requisition.approval_notes ?? '-'}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Rejection Reason
-                            </span>
-                            <p className="mt-1">
-                                {requisition.rejection_reason ?? '-'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-muted-foreground dark:border-zinc-800 dark:bg-zinc-950/50">
-                        <span className="font-medium text-foreground">
-                            {isRequesterWorkspace
-                                ? 'Main Store Handling'
-                                : 'Incoming Queue Guidance'}
-                        </span>
-                        <p className="mt-1">
-                            {workflowMessage(
-                                requisition.status,
-                                isRequesterWorkspace,
-                            )}
-                        </p>
-                    </div>
-
-                    {canSubmitToMainStore ? (
-                        <div className="mt-4 space-y-3 border-t pt-4">
-                            <p className="text-sm text-muted-foreground">
-                                Submit this draft when it is ready for the main
-                                store to review and issue.
-                            </p>
-                            <Button
-                                size="sm"
-                                onClick={() =>
-                                    submitForm.post(
-                                        `${navigation.requisitions_href}/${requisition.id}/submit`,
-                                    )
-                                }
-                            >
-                                Submit To Main Store
-                            </Button>
-                        </div>
-                    ) : null}
-
-                    {canManageQueue ? (
+                    {navigation.key === 'inventory' ? (
                         <div className="mt-4 space-y-6 border-t pt-4">
-                            {requisition.can_approve ? (
-                                <form
-                                    className="space-y-4"
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        approveForm.post(
-                                            `${navigation.requisitions_href}/${requisition.id}/approve`,
-                                        );
-                                    }}
-                                >
-                                    <div>
-                                        <h2 className="text-lg font-medium">
-                                            Review Requested Quantities
-                                        </h2>
-                                        <p className="text-sm text-muted-foreground">
-                                            Confirm the quantity each line is
-                                            allowed to issue from the main
-                                            store.
-                                        </p>
-                                    </div>
+                            <RequisitionReviewPanel
+                                navigation={navigation}
+                                requisition={requisition}
+                                canReview={canReview}
+                                approveForm={approveForm}
+                                rejectForm={rejectForm}
+                                onApproveLineChange={updateApproveLine}
+                            />
 
-                                    <div className="overflow-x-auto">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Item</TableHead>
-                                                    <TableHead className="text-right">
-                                                        Requested
-                                                    </TableHead>
-                                                    <TableHead className="w-48 text-right">
-                                                        Approved
-                                                    </TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {lines.map((line, index) => (
-                                                    <TableRow key={line.id}>
-                                                        <TableCell className="font-medium">
-                                                            {line.inventory_item
-                                                                ?.generic_name ??
-                                                                line
-                                                                    .inventory_item
-                                                                    ?.name ??
-                                                                '-'}
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {line.requested_quantity.toFixed(
-                                                                3,
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="align-top">
-                                                            <Input
-                                                                type="number"
-                                                                step="any"
-                                                                min="0"
-                                                                value={
-                                                                    approveForm
-                                                                        .data
-                                                                        .items[
-                                                                        index
-                                                                    ]
-                                                                        ?.approved_quantity ??
-                                                                    ''
-                                                                }
-                                                                onChange={(
-                                                                    event,
-                                                                ) =>
-                                                                    updateApproveLine(
-                                                                        index,
-                                                                        event
-                                                                            .target
-                                                                            .value,
-                                                                    )
-                                                                }
-                                                            />
-                                                            <InputError
-                                                                message={
-                                                                    approveForm
-                                                                        .errors[
-                                                                        `items.${index}.approved_quantity` as keyof typeof approveForm.errors
-                                                                    ]
-                                                                }
-                                                            />
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="approval_notes">
-                                            Approval Notes
-                                        </Label>
-                                        <Textarea
-                                            id="approval_notes"
-                                            rows={3}
-                                            value={
-                                                approveForm.data.approval_notes
-                                            }
-                                            onChange={(event) =>
-                                                approveForm.setData(
-                                                    'approval_notes',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                approveForm.errors
-                                                    .approval_notes
-                                            }
-                                        />
-                                    </div>
-
-                                    <Button size="sm" type="submit">
-                                        Approve Requisition
-                                    </Button>
-                                </form>
-                            ) : null}
-
-                            {requisition.can_reject ? (
-                                <form
-                                    className="grid gap-2"
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        rejectForm.post(
-                                            `${navigation.requisitions_href}/${requisition.id}/reject`,
-                                        );
-                                    }}
-                                >
-                                    <Label htmlFor="rejection_reason">
-                                        Rejection Reason
-                                    </Label>
-                                    <Input
-                                        id="rejection_reason"
-                                        value={rejectForm.data.rejection_reason}
-                                        onChange={(event) =>
-                                            rejectForm.setData(
-                                                'rejection_reason',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={
-                                            rejectForm.errors.rejection_reason
-                                        }
-                                    />
-                                    <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        type="submit"
-                                    >
-                                        Reject Requisition
-                                    </Button>
-                                </form>
-                            ) : null}
-
-                            {requisition.can_issue ? (
-                                <form
-                                    className="space-y-4"
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        issueForm.post(
-                                            `${navigation.requisitions_href}/${requisition.id}/issue`,
-                                        );
-                                    }}
-                                >
-                                    <div>
-                                        <h2 className="text-lg font-medium">
-                                            Issue Approved Stock
-                                        </h2>
-                                        <p className="text-sm text-muted-foreground">
-                                            Select the source batches and
-                                            quantities to move from the main
-                                            store into the requesting unit.
-                                        </p>
-                                    </div>
-
-                                    <InputError message={issueForm.errors.items} />
-
-                                    <div className="space-y-6">
-                                        {issueReadyLines.map((line, lineIndex) => (
-                                            <div
-                                                key={line.id}
-                                                className="rounded border border-zinc-200 p-4 dark:border-zinc-800"
-                                            >
-                                                <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-                                                    <div>
-                                                        <h3 className="font-medium">
-                                                            {line.inventory_item
-                                                                ?.generic_name ??
-                                                                line
-                                                                    .inventory_item
-                                                                    ?.name ??
-                                                                '-'}
-                                                        </h3>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Approved:{' '}
-                                                            {line.approved_quantity.toFixed(
-                                                                3,
-                                                            )}{' '}
-                                                            | Issued:{' '}
-                                                            {line.issued_quantity.toFixed(
-                                                                3,
-                                                            )}{' '}
-                                                            | Remaining:{' '}
-                                                            {line.remaining_quantity.toFixed(
-                                                                3,
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            addAllocation(
-                                                                lineIndex,
-                                                            )
-                                                        }
-                                                    >
-                                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                                        Add Batch
-                                                    </Button>
-                                                </div>
-
-                                                <div className="grid gap-4 md:grid-cols-2">
-                                                    <div className="grid gap-2">
-                                                        <Label>
-                                                            Issue Quantity
-                                                        </Label>
-                                                        <Input
-                                                            type="number"
-                                                            step="any"
-                                                            min="0"
-                                                            value={
-                                                                issueForm.data
-                                                                    .items[
-                                                                    lineIndex
-                                                                ]
-                                                                    ?.issue_quantity ??
-                                                                ''
-                                                            }
-                                                            onChange={(event) =>
-                                                                updateIssueLine(
-                                                                    lineIndex,
-                                                                    'issue_quantity',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                issueForm
-                                                                    .errors[
-                                                                    `items.${lineIndex}.issue_quantity` as keyof typeof issueForm.errors
-                                                                ]
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label>Line Notes</Label>
-                                                        <Textarea
-                                                            rows={2}
-                                                            value={
-                                                                issueForm.data
-                                                                    .items[
-                                                                    lineIndex
-                                                                ]?.notes ?? ''
-                                                            }
-                                                            onChange={(event) =>
-                                                                updateIssueLine(
-                                                                    lineIndex,
-                                                                    'notes',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="mt-4 space-y-3">
-                                                    {issueForm.data.items[
-                                                        lineIndex
-                                                    ]?.allocations.length ? (
-                                                        issueForm.data.items[
-                                                            lineIndex
-                                                        ].allocations.map(
-                                                            (
-                                                                allocation,
-                                                                allocationIndex,
-                                                            ) => (
-                                                                <div
-                                                                    key={`${line.id}-${allocationIndex}`}
-                                                                    className="grid gap-3 rounded border border-dashed border-zinc-200 p-3 md:grid-cols-[1.6fr_1fr_auto] dark:border-zinc-700"
-                                                                >
-                                                                    <div className="grid gap-2">
-                                                                        <Label>
-                                                                            Source
-                                                                            Batch
-                                                                        </Label>
-                                                                        <SearchableSelect
-                                                                            options={batchOptionsFor(
-                                                                                line.inventory_item_id,
-                                                                            )}
-                                                                            value={
-                                                                                allocation.inventory_batch_id
-                                                                            }
-                                                                            onValueChange={(
-                                                                                value,
-                                                                            ) =>
-                                                                                updateAllocation(
-                                                                                    lineIndex,
-                                                                                    allocationIndex,
-                                                                                    'inventory_batch_id',
-                                                                                    value,
-                                                                                )
-                                                                            }
-                                                                            placeholder="Select batch"
-                                                                            emptyMessage="No matching batches."
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                issueForm
-                                                                                    .errors[
-                                                                                    `items.${lineIndex}.allocations.${allocationIndex}.inventory_batch_id` as keyof typeof issueForm.errors
-                                                                                ]
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                    <div className="grid gap-2">
-                                                                        <Label>
-                                                                            Quantity
-                                                                        </Label>
-                                                                        <Input
-                                                                            type="number"
-                                                                            step="any"
-                                                                            min="0"
-                                                                            value={
-                                                                                allocation.quantity
-                                                                            }
-                                                                            onChange={(
-                                                                                event,
-                                                                            ) =>
-                                                                                updateAllocation(
-                                                                                    lineIndex,
-                                                                                    allocationIndex,
-                                                                                    'quantity',
-                                                                                    event
-                                                                                        .target
-                                                                                        .value,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                issueForm
-                                                                                    .errors[
-                                                                                    `items.${lineIndex}.allocations.${allocationIndex}.quantity` as keyof typeof issueForm.errors
-                                                                                ]
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                    <div className="flex items-end">
-                                                                        <Button
-                                                                            type="button"
-                                                                            size="icon"
-                                                                            variant="ghost"
-                                                                            onClick={() =>
-                                                                                removeAllocation(
-                                                                                    lineIndex,
-                                                                                    allocationIndex,
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <Trash2 className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </div>
-                                                                </div>
-                                                            ),
-                                                        )
-                                                    ) : (
-                                                        <p className="text-sm text-muted-foreground">
-                                                            No source batches
-                                                            selected yet.
-                                                        </p>
-                                                    )}
-                                                    <InputError
-                                                        message={
-                                                            issueForm.errors[
-                                                                `items.${lineIndex}.allocations` as keyof typeof issueForm.errors
-                                                            ]
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="issued_notes">
-                                            Issue Notes
-                                        </Label>
-                                        <Textarea
-                                            id="issued_notes"
-                                            rows={3}
-                                            value={issueForm.data.issued_notes}
-                                            onChange={(event) =>
-                                                issueForm.setData(
-                                                    'issued_notes',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                issueForm.errors.issued_notes
-                                            }
-                                        />
-                                    </div>
-
-                                    <Button size="sm" type="submit">
-                                        Post Issue
-                                    </Button>
-                                </form>
-                            ) : null}
+                            <RequisitionIssuePanel
+                                requisition={requisition}
+                                canIssue={canIssue}
+                                availableBatchBalances={availableBatchBalances}
+                                issueForm={issueForm}
+                                onIssueLineChange={updateIssueLine}
+                                onAddAllocation={addAllocation}
+                                onRemoveAllocation={removeAllocation}
+                                onUpdateAllocation={updateAllocation}
+                                submitUrl={`${navigation.requisitions_href}/${requisition.id}/issue`}
+                            />
                         </div>
                     ) : null}
                 </div>
 
-                <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <h2 className="mb-4 text-lg font-medium">
-                        Requisition Lines
-                    </h2>
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Item</TableHead>
-                                    <TableHead className="text-right">
-                                        Requested
-                                    </TableHead>
-                                    <TableHead className="text-right">
-                                        Approved
-                                    </TableHead>
-                                    <TableHead className="text-right">
-                                        Issued
-                                    </TableHead>
-                                    <TableHead className="text-right">
-                                        Remaining
-                                    </TableHead>
-                                    <TableHead>Issue History</TableHead>
-                                    <TableHead>Notes</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {lines.map((line) => (
-                                    <TableRow key={line.id}>
-                                        <TableCell className="font-medium">
-                                            {line.inventory_item?.generic_name ??
-                                                line.inventory_item?.name ??
-                                                '-'}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {line.requested_quantity.toFixed(3)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {line.approved_quantity.toFixed(3)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {line.issued_quantity.toFixed(3)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {line.remaining_quantity.toFixed(3)}
-                                        </TableCell>
-                                        <TableCell className="text-sm">
-                                            {line.issue_history?.length ? (
-                                                <div className="space-y-1">
-                                                    {line.issue_history.map(
-                                                        (entry, index) => (
-                                                            <div key={`${line.id}-${index}`}>
-                                                                {entry.quantity.toFixed(
-                                                                    3,
-                                                                )}{' '}
-                                                                from{' '}
-                                                                {entry.batch_number ??
-                                                                    'No batch'}
-                                                            </div>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                '-'
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{line.notes ?? '-'}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </div>
+                <RequisitionLinesTable requisition={requisition} />
             </div>
         </AppLayout>
     );

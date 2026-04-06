@@ -90,7 +90,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         Boolean(user.is_support) || hasRole('super_admin');
     const canAccessIncomingRequisitions =
         hasPermission('inventory_requisitions.view') &&
-        (Boolean(user.is_support) ||
+        (hasPermission('inventory_requisitions.review') ||
+            hasPermission('inventory_requisitions.issue') ||
+            Boolean(user.is_support) ||
             hasRole('super_admin') ||
             hasRole('admin') ||
             hasRole('store_keeper'));
