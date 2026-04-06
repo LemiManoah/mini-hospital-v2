@@ -75,9 +75,7 @@ final class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $user->loadMissing([
-            'staff' => static fn (BelongsTo $query): BelongsTo => $query
-                ->select('staff.id', 'staff.first_name', 'staff.last_name'),
+        $relations = [
             'tenant' => static fn (BelongsTo $query): BelongsTo => $query
                 ->select('tenants.id', 'tenants.name')
                 ->with([
@@ -98,7 +96,14 @@ final class HandleInertiaRequests extends Middleware
                                 ),
                         ]),
                 ]),
-        ]);
+        ];
+
+        if ($user->staffId() !== null) {
+            $relations['staff'] = static fn (BelongsTo $query): BelongsTo => $query
+                ->select('staff.id', 'staff.first_name', 'staff.last_name');
+        }
+
+        $user->loadMissing($relations);
 
         return [
             'id' => $user->id,

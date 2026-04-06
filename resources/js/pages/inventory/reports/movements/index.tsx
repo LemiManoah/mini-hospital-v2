@@ -24,17 +24,18 @@ import { type InventoryMovementReportPageProps } from '@/types/stock-movement';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Inventory', href: '/inventory/dashboard' },
-    { title: 'Stock Movements', href: '/inventory/reports/movements' },
-];
-
 export default function InventoryMovementReportIndex({
     movements,
+    navigation,
     filters,
     movementTypes,
     locations,
 }: InventoryMovementReportPageProps) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: navigation.section_title, href: navigation.section_href },
+        { title: navigation.movements_title, href: navigation.movements_href },
+    ];
+
     const [search, setSearch] = useState(filters.search ?? '');
     const [type, setType] = useState(filters.type ?? 'all');
     const [location, setLocation] = useState(filters.location ?? 'all');
@@ -50,7 +51,7 @@ export default function InventoryMovementReportIndex({
 
         const timeoutId = window.setTimeout(() => {
             router.get(
-                '/inventory/reports/movements',
+                navigation.movements_href,
                 {
                     search: search || undefined,
                     type: type === 'all' ? undefined : type,
@@ -70,9 +71,19 @@ export default function InventoryMovementReportIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Stock Movements" />
+            <Head title={navigation.movements_title} />
 
             <div className="m-4 flex flex-col gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold">
+                        {navigation.movements_title}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Review posted inventory activity for the locations you
+                        can access.
+                    </p>
+                </div>
+
                 <div className="flex flex-col gap-4 md:flex-row">
                     <div className="w-full md:max-w-sm">
                         <Input

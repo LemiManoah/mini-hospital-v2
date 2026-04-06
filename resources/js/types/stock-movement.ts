@@ -1,3 +1,5 @@
+import type { InventoryNavigationContext } from './inventory-navigation';
+
 export interface StockMovementOption {
     value: string;
     label: string;
@@ -33,6 +35,7 @@ export interface PaginatedStockMovements {
 
 export interface InventoryMovementReportPageProps {
     movements: PaginatedStockMovements;
+    navigation: InventoryNavigationContext;
     filters: {
         search: string | null;
         type: string | null;

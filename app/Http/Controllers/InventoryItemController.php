@@ -15,16 +15,24 @@ use App\Http\Requests\StoreInventoryItemRequest;
 use App\Http\Requests\UpdateInventoryItemRequest;
 use App\Models\InventoryItem;
 use App\Models\Unit;
+use App\Support\BranchContext;
+use App\Support\InventoryLocationAccess;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final readonly class InventoryItemController implements HasMiddleware
 {
+    public function __construct(
+        private InventoryLocationAccess $inventoryLocationAccess,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -68,11 +76,28 @@ final readonly class InventoryItemController implements HasMiddleware
 
     public function show(InventoryItem $inventoryItem): Response
     {
+        $locationIds = $this->inventoryLocationAccess->accessibleLocationIds(Auth::user(), BranchContext::getActiveBranchId());
+
         return Inertia::render('inventory/items/show', [
             'inventoryItem' => $inventoryItem->load([
                 'unit:id,name,symbol',
-                'batches' => fn ($query) => $query->with('inventoryLocation:id,name')->orderBy('expiry_date'),
-                'stockMovements' => fn ($query) => $query->with(['inventoryLocation:id,name', 'user:id,name'])->latest()->limit(50),
+                'batches' => static fn (HasMany $query): HasMany => $query
+                    ->with('inventoryLocation:id,name')
+                    ->when(
+                        $locationIds === [],
+                        static fn (Builder $builder): Builder => $builder->whereRaw('1 = 0'),
+                        static fn (Builder $builder): Builder => $builder->whereIn('inventory_location_id', $locationIds),
+                    )
+                    ->orderBy('expiry_date'),
+                'stockMovements' => static fn (HasMany $query): HasMany => $query
+                    ->with(['inventoryLocation:id,name', 'user:id,name'])
+                    ->when(
+                        $locationIds === [],
+                        static fn (Builder $builder): Builder => $builder->whereRaw('1 = 0'),
+                        static fn (Builder $builder): Builder => $builder->whereIn('inventory_location_id', $locationIds),
+                    )
+                    ->latest()
+                    ->limit(50),
             ]),
         ]);
     }

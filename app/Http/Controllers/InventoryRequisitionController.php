@@ -22,13 +22,17 @@ use App\Models\InventoryRequisition;
 use App\Models\InventoryRequisitionItem;
 use App\Models\StockMovement;
 use App\Support\BranchContext;
+use App\Support\InventoryNavigationContext;
+use App\Support\InventoryLocationAccess;
 use App\Support\InventoryStockLedger;
+use App\Support\InventoryWorkspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -36,6 +40,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
 {
     public function __construct(
         private InventoryStockLedger $inventoryStockLedger,
+        private InventoryLocationAccess $inventoryLocationAccess,
     ) {}
 
     public static function middleware(): array
@@ -49,14 +54,29 @@ final readonly class InventoryRequisitionController implements HasMiddleware
 
     public function index(Request $request): Response
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
         $search = mb_trim((string) $request->query('search', ''));
         $status = mb_trim((string) $request->query('status', ''));
+        $locationIds = $this->inventoryLocationAccess->accessibleLocationIds(
+            Auth::user(),
+            BranchContext::getActiveBranchId(),
+            $workspace->locationTypeValues(),
+        );
 
         $requisitions = InventoryRequisition::query()
             ->with([
                 'sourceLocation:id,name,location_code',
                 'destinationLocation:id,name,location_code',
             ])
+            ->when(
+                $locationIds === [],
+                static fn (Builder $query): Builder => $query->whereRaw('1 = 0'),
+                static fn (Builder $query): Builder => $query->where(function (Builder $inner) use ($locationIds): void {
+                    $inner
+                        ->whereIn('source_inventory_location_id', $locationIds)
+                        ->orWhereIn('destination_inventory_location_id', $locationIds);
+                }),
+            )
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
                     $inner
@@ -71,12 +91,13 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             ->through(fn (InventoryRequisition $requisition): array => $this->serializeSummary($requisition))
             ->withQueryString();
 
-        return Inertia::render('inventory/requisitions/index', [
+        return Inertia::render($workspace->requisitionIndexComponent(), [
             'requisitions' => $requisitions,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
             ],
+            'navigation' => InventoryNavigationContext::fromRequest($request),
             'statusOptions' => collect(InventoryRequisitionStatus::cases())
                 ->map(static fn (InventoryRequisitionStatus $status): array => [
                     'value' => $status->value,
@@ -86,13 +107,32 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('inventory/requisitions/create', [
-            'inventoryLocations' => InventoryLocation::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name', 'location_code']),
+        $workspace = InventoryWorkspace::fromRequest($request);
+        $branchId = BranchContext::getActiveBranchId();
+        $workspaceTypes = $workspace->locationTypeValues();
+        $sourceLocations = $workspaceTypes === []
+            ? $this->inventoryLocationAccess->requisitionSourceLocations(Auth::user(), $branchId)
+            : $this->inventoryLocationAccess->requisitionSourceLocations(Auth::user(), $branchId, ['main_store']);
+        $destinationLocations = $this->inventoryLocationAccess->accessibleLocations(Auth::user(), $branchId, $workspaceTypes);
+
+        return Inertia::render($workspace->requisitionCreateComponent(), [
+            'navigation' => InventoryNavigationContext::fromRequest($request),
+            'sourceInventoryLocations' => $sourceLocations
+                ->map(static fn (InventoryLocation $location): array => [
+                    'id' => $location->id,
+                    'name' => $location->name,
+                    'location_code' => $location->location_code,
+                ])
+                ->values(),
+            'destinationInventoryLocations' => $destinationLocations
+                ->map(static fn (InventoryLocation $location): array => [
+                    'id' => $location->id,
+                    'name' => $location->name,
+                    'location_code' => $location->location_code,
+                ])
+                ->values(),
             'inventoryItems' => InventoryItem::query()
                 ->active()
                 ->orderBy('name')
@@ -108,35 +148,45 @@ final readonly class InventoryRequisitionController implements HasMiddleware
 
     public function store(StoreInventoryRequisitionRequest $request, CreateInventoryRequisition $action): RedirectResponse
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
         $validated = $request->validated();
         $items = $validated['items'];
         unset($validated['items']);
 
-        $requisition = $action->handle($validated, $items);
+        $requisition = $action->handle($validated, $items, $workspace->locationTypeValues());
 
-        return to_route('inventory-requisitions.show', $requisition)
+        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition created successfully.');
     }
 
-    public function show(InventoryRequisition $requisition): Response
+    public function show(Request $request, InventoryRequisition $requisition): Response
     {
+        $this->abortUnlessCanView($requisition);
+        $workspace = InventoryWorkspace::fromRequest($request);
+
         $requisition->load([
             'sourceLocation',
             'destinationLocation',
             'items.inventoryItem',
         ]);
 
-        return Inertia::render('inventory/requisitions/show', [
+        $this->abortUnlessMatchesWorkspace($requisition, $workspace->locationTypeValues());
+
+        return Inertia::render($workspace->requisitionShowComponent(), [
+            'navigation' => InventoryNavigationContext::fromRequest($request),
             'requisition' => $this->serializeDetail($requisition, $this->issueHistory($requisition)),
             'availableBatchBalances' => $this->availableBatchBalances($requisition),
         ]);
     }
 
-    public function submit(InventoryRequisition $requisition, SubmitInventoryRequisition $action): RedirectResponse
+    public function submit(Request $request, InventoryRequisition $requisition, SubmitInventoryRequisition $action): RedirectResponse
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
+        $this->abortUnlessCanView($requisition);
+
         $action->handle($requisition);
 
-        return to_route('inventory-requisitions.show', $requisition)
+        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition submitted for approval.');
     }
 
@@ -145,6 +195,9 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         InventoryRequisition $requisition,
         ApproveInventoryRequisition $action,
     ): RedirectResponse {
+        $workspace = InventoryWorkspace::fromRequest($request);
+        $this->abortUnlessCanProcess($requisition);
+
         $validated = $request->validated();
 
         $action->handle(
@@ -153,19 +206,22 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             is_string($validated['approval_notes'] ?? null) ? $validated['approval_notes'] : null,
         );
 
-        return to_route('inventory-requisitions.show', $requisition)
+        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition approved and ready for issue.');
     }
 
     public function reject(Request $request, InventoryRequisition $requisition, RejectInventoryRequisition $action): RedirectResponse
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
+        $this->abortUnlessCanProcess($requisition);
+
         $validated = $request->validate([
             'rejection_reason' => ['required', 'string'],
         ]);
 
         $action->handle($requisition, $validated['rejection_reason']);
 
-        return to_route('inventory-requisitions.show', $requisition)
+        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition rejected.');
     }
 
@@ -174,6 +230,9 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         InventoryRequisition $requisition,
         IssueInventoryRequisition $action,
     ): RedirectResponse {
+        $workspace = InventoryWorkspace::fromRequest($request);
+        $this->abortUnlessCanProcess($requisition);
+
         $validated = $request->validated();
 
         $action->handle(
@@ -182,7 +241,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             is_string($validated['issued_notes'] ?? null) ? $validated['issued_notes'] : null,
         );
 
-        return to_route('inventory-requisitions.show', $requisition)
+        return redirect()->route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition issue posted successfully.');
     }
 
@@ -278,6 +337,10 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             return [];
         }
 
+        if (! $this->inventoryLocationAccess->canProcessRequisition(Auth::user(), $requisition, $requisition->branch_id)) {
+            return [];
+        }
+
         $activeBranchId = BranchContext::getActiveBranchId();
         if (! is_string($activeBranchId) || $activeBranchId === '') {
             return [];
@@ -314,6 +377,44 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             })
             ->values()
             ->all();
+    }
+
+    private function abortUnlessCanView(InventoryRequisition $requisition): void
+    {
+        abort_unless(
+            $this->inventoryLocationAccess->canViewRequisition(Auth::user(), $requisition, $requisition->branch_id),
+            403,
+            'You do not have access to this requisition.',
+        );
+    }
+
+    private function abortUnlessCanProcess(InventoryRequisition $requisition): void
+    {
+        abort_unless(
+            $this->inventoryLocationAccess->canProcessRequisition(Auth::user(), $requisition, $requisition->branch_id),
+            403,
+            'You can only process requisitions for inventory locations you manage.',
+        );
+    }
+
+    /**
+     * @param  list<string>  $workspaceTypes
+     */
+    private function abortUnlessMatchesWorkspace(InventoryRequisition $requisition, array $workspaceTypes): void
+    {
+        if ($workspaceTypes === []) {
+            return;
+        }
+
+        $sourceType = $requisition->sourceLocation?->type?->value;
+        $destinationType = $requisition->destinationLocation?->type?->value;
+
+        abort_unless(
+            in_array($sourceType, $workspaceTypes, true)
+                || in_array($destinationType, $workspaceTypes, true),
+            404,
+            'This requisition does not belong to the selected inventory workspace.',
+        );
     }
 
     /**

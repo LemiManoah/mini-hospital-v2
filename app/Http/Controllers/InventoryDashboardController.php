@@ -11,13 +11,20 @@ use App\Models\PurchaseOrder;
 use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Support\BranchContext;
+use App\Support\InventoryLocationAccess;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final readonly class InventoryDashboardController implements HasMiddleware
 {
+    public function __construct(
+        private InventoryLocationAccess $inventoryLocationAccess,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -28,14 +35,24 @@ final readonly class InventoryDashboardController implements HasMiddleware
     public function index(): Response
     {
         $activeBranchId = BranchContext::getActiveBranchId();
+        $accessibleLocations = $this->inventoryLocationAccess->accessibleLocations(Auth::user(), $activeBranchId);
+        $locationIds = $accessibleLocations
+            ->pluck('id')
+            ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
+            ->values()
+            ->all();
 
-        $stockLevels = StockMovement::query()
-            ->where('branch_id', $activeBranchId)
-            ->select('inventory_item_id')
-            ->selectRaw('SUM(quantity) as total_qty')
-            ->groupBy('inventory_item_id')
-            ->with('inventoryItem:id,minimum_stock_level,default_purchase_price')
-            ->get();
+        /** @var Collection<int, StockMovement> $stockLevels */
+        $stockLevels = is_string($activeBranchId) && $activeBranchId !== '' && $locationIds !== []
+            ? StockMovement::query()
+                ->where('branch_id', $activeBranchId)
+                ->whereIn('inventory_location_id', $locationIds)
+                ->select('inventory_item_id')
+                ->selectRaw('SUM(quantity) as total_qty')
+                ->groupBy('inventory_item_id')
+                ->with('inventoryItem:id,minimum_stock_level,default_purchase_price')
+                ->get()
+            : collect();
 
         $outOfStockCount = $stockLevels
             ->filter(static fn (StockMovement $stockLevel): bool => (float) $stockLevel->total_qty <= 0)
@@ -54,12 +71,15 @@ final readonly class InventoryDashboardController implements HasMiddleware
             ->sum(static fn (StockMovement $stockLevel): float => (float) $stockLevel->total_qty
                 * (float) ($stockLevel->inventoryItem?->default_purchase_price ?? 0));
 
-        $expiringSoonCount = InventoryBatch::query()
-            ->where('branch_id', $activeBranchId)
-            ->whereNotNull('expiry_date')
-            ->where('expiry_date', '>', now())
-            ->where('expiry_date', '<=', now()->addDays(30))
-            ->count();
+        $expiringSoonCount = is_string($activeBranchId) && $activeBranchId !== '' && $locationIds !== []
+            ? InventoryBatch::query()
+                ->where('branch_id', $activeBranchId)
+                ->whereIn('inventory_location_id', $locationIds)
+                ->whereNotNull('expiry_date')
+                ->where('expiry_date', '>', now())
+                ->where('expiry_date', '<=', now()->addDays(30))
+                ->count()
+            : 0;
 
         $distributionByType = InventoryItem::query()
             ->select('item_type')
@@ -101,8 +121,10 @@ final readonly class InventoryDashboardController implements HasMiddleware
                 'active_items' => InventoryItem::query()->where('is_active', true)->count(),
                 'drug_items' => InventoryItem::query()->drugs()->count(),
                 'expirable_items' => InventoryItem::query()->where('expires', true)->count(),
-                'total_locations' => InventoryLocation::query()->count(),
-                'dispensing_locations' => InventoryLocation::query()->where('is_dispensing_point', true)->count(),
+                'total_locations' => $accessibleLocations->count(),
+                'dispensing_locations' => $accessibleLocations
+                    ->filter(static fn (InventoryLocation $location): bool => $location->is_dispensing_point)
+                    ->count(),
                 'total_suppliers' => Supplier::query()->active()->count(),
                 'distribution_by_type' => $distributionByType,
                 'distribution_by_category' => $distributionByCategory,

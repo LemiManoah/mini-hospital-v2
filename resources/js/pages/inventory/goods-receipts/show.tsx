@@ -21,23 +21,27 @@ const labelize = (value: string): string =>
         .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 export default function GoodsReceiptShow({
+    navigation,
     goodsReceipt: gr,
 }: GoodsReceiptShowPageProps) {
     const { hasPermission } = usePermissions();
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Inventory', href: '/inventory/dashboard' },
-        { title: 'Goods Receipts', href: '/goods-receipts' },
-        { title: gr.receipt_number, href: `/goods-receipts/${gr.id}` },
+        { title: navigation.section_title, href: navigation.section_href },
+        { title: navigation.receipts_title, href: navigation.receipts_href },
+        {
+            title: gr.receipt_number,
+            href: `${navigation.receipts_href}/${gr.id}`,
+        },
     ];
 
     const handlePost = () => {
-        router.post(`/goods-receipts/${gr.id}/post`);
+        router.post(`${navigation.receipts_href}/${gr.id}/post`);
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`GR: ${gr.receipt_number}`} />
+            <Head title={`${navigation.receipts_title}: ${gr.receipt_number}`} />
 
             <div className="m-4 max-w-6xl space-y-6">
                 <div className="flex items-center justify-between">
@@ -51,7 +55,7 @@ export default function GoodsReceiptShow({
                         </p>
                     </div>
                     <Button variant="outline" asChild>
-                        <Link href="/goods-receipts">Back</Link>
+                        <Link href={navigation.receipts_href}>Back</Link>
                     </Button>
                 </div>
 

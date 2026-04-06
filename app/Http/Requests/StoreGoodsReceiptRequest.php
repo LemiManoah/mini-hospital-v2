@@ -6,7 +6,11 @@ namespace App\Http\Requests;
 
 use App\Enums\GoodsReceiptStatus;
 use App\Models\GoodsReceipt;
+use App\Models\InventoryLocation;
 use App\Models\PurchaseOrderItem;
+use App\Support\BranchContext;
+use App\Support\InventoryLocationAccess;
+use App\Support\InventoryWorkspace;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -60,10 +64,58 @@ final class StoreGoodsReceiptRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 $purchaseOrderId = $this->input('purchase_order_id');
+                $inventoryLocationId = $this->input('inventory_location_id');
                 $items = $this->input('items');
+                $activeBranchId = BranchContext::getActiveBranchId();
+                $workspace = InventoryWorkspace::fromRequest($this);
+                $workspaceTypes = $workspace->locationTypeValues();
 
-                if (! is_string($purchaseOrderId) || ! is_array($items) || $validator->errors()->isNotEmpty()) {
+                if (
+                    ! is_string($purchaseOrderId)
+                    || ! is_string($inventoryLocationId)
+                    || ! is_array($items)
+                    || $validator->errors()->isNotEmpty()
+                ) {
                     return;
+                }
+
+                $inventoryLocationAccess = resolve(InventoryLocationAccess::class);
+
+                $canAccessLocation = $workspaceTypes === []
+                    ? $inventoryLocationAccess->canAccessLocation($this->user(), $inventoryLocationId, $activeBranchId)
+                    : $inventoryLocationAccess->canAccessLocationForTypes(
+                        $this->user(),
+                        $inventoryLocationId,
+                        $workspaceTypes,
+                        $activeBranchId,
+                    );
+
+                if (! $canAccessLocation) {
+                    $validator->errors()->add(
+                        'inventory_location_id',
+                        'You can only receive goods into inventory locations you manage.',
+                    );
+
+                    return;
+                }
+
+                if ($workspaceTypes !== []) {
+                    $location = InventoryLocation::query()
+                        ->where('id', $inventoryLocationId)
+                        ->where('branch_id', $activeBranchId)
+                        ->first();
+
+                    if (
+                        ! $location instanceof InventoryLocation
+                        || ! in_array($location->type?->value, $workspaceTypes, true)
+                    ) {
+                        $validator->errors()->add(
+                            'inventory_location_id',
+                            'The receiving location does not belong to this workspace.',
+                        );
+
+                        return;
+                    }
                 }
 
                 if (GoodsReceipt::query()

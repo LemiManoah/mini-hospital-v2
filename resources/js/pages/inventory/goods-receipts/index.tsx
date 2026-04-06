@@ -27,11 +27,6 @@ import { type GoodsReceiptIndexPageProps } from '@/types/goods-receipt';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Inventory', href: '/inventory/dashboard' },
-    { title: 'Goods Receipts', href: '/goods-receipts' },
-];
-
 const labelize = (value: string): string =>
     value
         .replaceAll('_', ' ')
@@ -39,9 +34,15 @@ const labelize = (value: string): string =>
 
 export default function GoodsReceiptsIndex({
     goodsReceipts,
+    navigation,
     filters,
     statusOptions,
 }: GoodsReceiptIndexPageProps) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: navigation.section_title, href: navigation.section_href },
+        { title: navigation.receipts_title, href: navigation.receipts_href },
+    ];
+
     const { hasPermission } = usePermissions();
     const rows = goodsReceipts.data ?? [];
     const [search, setSearch] = useState(filters.search ?? '');
@@ -57,7 +58,7 @@ export default function GoodsReceiptsIndex({
 
         const timeoutId = window.setTimeout(() => {
             router.get(
-                '/goods-receipts',
+                navigation.receipts_href,
                 {
                     search: search || undefined,
                     status: status === 'all' ? undefined : status,
@@ -76,9 +77,19 @@ export default function GoodsReceiptsIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Goods Receipts" />
+            <Head title={navigation.receipts_title} />
 
             <div className="m-4 flex flex-col gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold">
+                        {navigation.receipts_title}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Review received stock and open draft receipts for the
+                        locations you manage.
+                    </p>
+                </div>
+
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="flex flex-1 flex-col gap-3 md:flex-row">
                         <div className="w-full md:max-w-sm">
@@ -105,7 +116,7 @@ export default function GoodsReceiptsIndex({
                     </div>
                     {hasPermission('goods_receipts.create') ? (
                         <Button asChild>
-                            <Link href="/goods-receipts/create">
+                            <Link href={`${navigation.receipts_href}/create`}>
                                 + New Goods Receipt
                             </Link>
                         </Button>
@@ -167,7 +178,7 @@ export default function GoodsReceiptsIndex({
                                                 asChild
                                             >
                                                 <Link
-                                                    href={`/goods-receipts/${gr.id}`}
+                                                    href={`${navigation.receipts_href}/${gr.id}`}
                                                 >
                                                     View
                                                 </Link>

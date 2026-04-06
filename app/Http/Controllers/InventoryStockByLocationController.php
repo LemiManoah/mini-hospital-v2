@@ -9,12 +9,16 @@ use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\InventoryLocationItem;
 use App\Support\BranchContext;
+use App\Support\InventoryNavigationContext;
+use App\Support\InventoryLocationAccess;
 use App\Support\InventoryStockLedger;
+use App\Support\InventoryWorkspace;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,6 +26,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
 {
     public function __construct(
         private InventoryStockLedger $inventoryStockLedger,
+        private InventoryLocationAccess $inventoryLocationAccess,
     ) {}
 
     public static function middleware(): array
@@ -33,12 +38,13 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
 
     public function index(Request $request): Response
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
         $search = mb_trim((string) $request->query('search', ''));
         $type = mb_trim((string) $request->query('type', ''));
         $page = max(1, (int) $request->integer('page', 1));
         $perPage = 15;
 
-        ['rows' => $allRows, 'locations' => $locations] = $this->buildRows();
+        ['rows' => $allRows, 'locations' => $locations] = $this->buildRows($workspace->locationTypeValues());
 
         $rows = $allRows
             ->when(
@@ -70,12 +76,13 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
             ],
         );
 
-        return Inertia::render('inventory/stock-by-location/index', [
+        return Inertia::render($workspace->stockComponent(), [
             'rows' => $paginator,
             'filters' => [
                 'search' => $search,
                 'type' => $type !== '' ? $type : null,
             ],
+            'navigation' => InventoryNavigationContext::fromRequest($request),
             'itemTypes' => collect(InventoryItemType::cases())
                 ->map(static fn (InventoryItemType $itemType): array => [
                     'value' => $itemType->value,
@@ -93,7 +100,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
      *     locations: Collection<int, array<string, mixed>>
      * }
      */
-    private function buildRows(): array
+    private function buildRows(array $locationTypes = []): array
     {
         $activeBranchId = BranchContext::getActiveBranchId();
 
@@ -104,10 +111,22 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
             ];
         }
 
-        $locations = InventoryLocation::query()
-            ->where('branch_id', $activeBranchId)
-            ->orderBy('name')
-            ->get(['id', 'name', 'location_code', 'type'])
+        $accessibleLocations = $this->inventoryLocationAccess->accessibleLocations(Auth::user(), $activeBranchId, $locationTypes);
+
+        if ($accessibleLocations->isEmpty()) {
+            return [
+                'rows' => collect(),
+                'locations' => collect(),
+            ];
+        }
+
+        $locationIds = $accessibleLocations
+            ->pluck('id')
+            ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
+            ->values()
+            ->all();
+
+        $locations = $accessibleLocations
             ->map(static fn (InventoryLocation $location): array => [
                 'id' => $location->id,
                 'name' => $location->name,
@@ -124,6 +143,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
 
         $locationItems = InventoryLocationItem::query()
             ->where('branch_id', $activeBranchId)
+            ->whereIn('inventory_location_id', $locationIds)
             ->with([
                 'item:id,name,generic_name,item_type,minimum_stock_level,reorder_level,unit_id',
                 'item.unit:id,name,symbol',
@@ -172,6 +192,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
 
         $this->inventoryStockLedger
             ->summarizeByLocation($activeBranchId)
+            ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $locationIds, true))
             ->each(function (array $balance) use (&$rows, $itemLookup, $locationItemLookup, $locationQuantitiesTemplate): void {
                 $locationItem = $locationItemLookup[sprintf(
                     '%s:%s',

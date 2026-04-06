@@ -24,41 +24,99 @@ final class CityGeneralHospitalInventoryUserSeeder extends Seeder
             return;
         }
 
-        $position = $this->findPosition($tenant, ['Healthcare Administrator', 'Pharmacy Technician']);
-        $department = $this->findDepartment($tenant, 'Administration');
+        $this->createInventoryUser(
+            tenantId: $tenant->id,
+            branchId: $mainBranch->id,
+            email: 'storekeeper@citygeneral.ug',
+            employeeNumber: 'CGH-INV-STORE-001',
+            firstName: 'Moses',
+            lastName: 'Kato',
+            phone: '+256 701 330001',
+            role: 'store_keeper',
+            specialty: 'Inventory Operations',
+            positionId: $this->findPosition($tenant, ['Healthcare Administrator', 'Pharmacy Technician'])?->id,
+            departmentId: $this->findDepartment($tenant, 'Administration')?->id,
+            type: StaffType::ADMINISTRATIVE,
+        );
 
+        $this->createInventoryUser(
+            tenantId: $tenant->id,
+            branchId: $mainBranch->id,
+            email: 'pharmacy@citygeneral.ug',
+            employeeNumber: 'CGH-INV-PHARM-001',
+            firstName: 'Sarah',
+            lastName: 'Namusoke',
+            phone: '+256 701 330002',
+            role: 'pharmacist',
+            specialty: 'Pharmacy Inventory',
+            positionId: $this->findPosition($tenant, ['Pharmacist', 'Pharmacy Technician'])?->id,
+            departmentId: $this->findDepartment($tenant, 'Pharmacy')?->id,
+            type: StaffType::ALLIED_HEALTH,
+        );
+
+        $this->createInventoryUser(
+            tenantId: $tenant->id,
+            branchId: $mainBranch->id,
+            email: 'lab@citygeneral.ug',
+            employeeNumber: 'CGH-INV-LAB-001',
+            firstName: 'Brian',
+            lastName: 'Ssemanda',
+            phone: '+256 701 330003',
+            role: 'lab_technician',
+            specialty: 'Laboratory Stock Control',
+            positionId: $this->findPosition($tenant, ['Laboratory Technician', 'Lab Technician'])?->id,
+            departmentId: $this->findDepartment($tenant, 'Laboratory')?->id,
+            type: StaffType::ALLIED_HEALTH,
+        );
+    }
+
+    private function createInventoryUser(
+        string $tenantId,
+        string $branchId,
+        string $email,
+        string $employeeNumber,
+        string $firstName,
+        string $lastName,
+        string $phone,
+        string $role,
+        string $specialty,
+        ?string $positionId,
+        ?string $departmentId,
+        StaffType $type,
+    ): void {
         $staff = Staff::query()->updateOrCreate(
             [
-                'tenant_id' => $tenant->id,
-                'email' => 'storekeeper@citygeneral.ug',
+                'tenant_id' => $tenantId,
+                'email' => $email,
             ],
             [
-                'employee_number' => 'CGH-STORE-001',
-                'first_name' => 'Moses',
-                'last_name' => 'Kato',
-                'phone' => '+256 701 330001',
-                'staff_position_id' => $position?->id,
-                'type' => StaffType::ADMINISTRATIVE->value,
-                'specialty' => 'Inventory Operations',
+                'email' => $email,
+                'employee_number' => $employeeNumber,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'phone' => $phone,
+                'staff_position_id' => $positionId,
+                'type' => $type->value,
+                'specialty' => $specialty,
                 'hire_date' => now()->subMonths(4)->toDateString(),
                 'is_active' => true,
             ],
         );
 
         $staff->branches()->sync([
-            $mainBranch->id => ['is_primary_location' => true],
+            $branchId => ['is_primary_location' => true],
         ]);
 
-        if ($department !== null) {
-            $staff->departments()->syncWithoutDetaching([$department->id]);
+        if ($departmentId !== null) {
+            $staff->departments()->syncWithoutDetaching([$departmentId]);
         }
 
         $user = User::query()->updateOrCreate(
             [
-                'email' => 'storekeeper@citygeneral.ug',
+                'email' => $email,
             ],
             [
-                'tenant_id' => $tenant->id,
+                'tenant_id' => $tenantId,
                 'staff_id' => $staff->id,
                 'password' => Hash::make('password'),
                 'is_support' => false,
@@ -66,6 +124,6 @@ final class CityGeneralHospitalInventoryUserSeeder extends Seeder
             ],
         );
 
-        $user->syncRoles(['store_keeper']);
+        $user->syncRoles([$role]);
     }
 }

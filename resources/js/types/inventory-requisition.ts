@@ -1,4 +1,5 @@
 import type { InventoryItem } from './inventory-item';
+import type { InventoryNavigationContext } from './inventory-navigation';
 
 export interface InventoryRequisitionItemIssueHistory {
     quantity: number;
@@ -88,6 +89,7 @@ export interface PaginatedInventoryRequisitionList {
 
 export interface InventoryRequisitionIndexPageProps {
     requisitions: PaginatedInventoryRequisitionList;
+    navigation: InventoryNavigationContext;
     filters: {
         search: string | null;
         status: string | null;
@@ -96,7 +98,9 @@ export interface InventoryRequisitionIndexPageProps {
 }
 
 export interface InventoryRequisitionFormPageProps {
-    inventoryLocations: InventoryRequisitionLocationOption[];
+    navigation: InventoryNavigationContext;
+    sourceInventoryLocations: InventoryRequisitionLocationOption[];
+    destinationInventoryLocations: InventoryRequisitionLocationOption[];
     inventoryItems: Pick<
         InventoryItem,
         'id' | 'name' | 'generic_name' | 'item_type'
@@ -105,6 +109,7 @@ export interface InventoryRequisitionFormPageProps {
 }
 
 export interface InventoryRequisitionShowPageProps {
+    navigation: InventoryNavigationContext;
     requisition: InventoryRequisition;
     availableBatchBalances: InventoryRequisitionAvailableBatch[];
 }

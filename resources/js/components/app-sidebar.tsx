@@ -7,6 +7,7 @@ import {
     FlaskConical,
     HeartPulse,
     LayoutGrid,
+    PillBottle,
     Settings2,
     UserCog,
     UserRoundSearch,
@@ -209,6 +210,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'lab_requests.view',
                     },
                     {
+                        title: 'Lab Stock',
+                        url: '/laboratory/stock',
+                        permission: 'inventory_items.view',
+                    },
+                    {
+                        title: 'Lab Requisitions',
+                        url: '/laboratory/requisitions',
+                        permission: 'inventory_requisitions.view',
+                    },
+                    {
+                        title: 'Lab Movements',
+                        url: '/laboratory/movements',
+                        permission: 'inventory_items.view',
+                    },
+                    {
+                        title: 'Lab Receipts',
+                        url: '/laboratory/receipts',
+                        permission: 'goods_receipts.view',
+                    },
+                    {
                         title: 'Incoming Lab Investigations Queue',
                         url: '/laboratory/incoming-investigations',
                         permission: 'lab_requests.view',
@@ -245,6 +266,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             'specimen_types.view',
                             'result_types.view',
                         ],
+                    },
+                ],
+                hasPermission,
+            ),
+        },
+        {
+            title: 'Pharmacy',
+            url: '/pharmacy/stock',
+            icon: PillBottle,
+            items: filterItems(
+                [
+                    {
+                        title: 'Pharmacy Stock',
+                        url: '/pharmacy/stock',
+                        permission: 'inventory_items.view',
+                    },
+                    {
+                        title: 'Pharmacy Requisitions',
+                        url: '/pharmacy/requisitions',
+                        permission: 'inventory_requisitions.view',
+                    },
+                    {
+                        title: 'Pharmacy Movements',
+                        url: '/pharmacy/movements',
+                        permission: 'inventory_items.view',
+                    },
+                    {
+                        title: 'Pharmacy Receipts',
+                        url: '/pharmacy/receipts',
+                        permission: 'goods_receipts.view',
                     },
                 ],
                 hasPermission,

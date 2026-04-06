@@ -9,6 +9,8 @@ use App\Enums\PurchaseOrderStatus;
 use App\Models\GoodsReceipt;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Support\BranchContext;
+use App\Support\InventoryLocationAccess;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,17 +18,44 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class CreateGoodsReceipt
 {
+    public function __construct(
+        private InventoryLocationAccess $inventoryLocationAccess,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $attributes
      * @param  array<int, array<string, mixed>>  $items
      */
-    public function handle(array $attributes, array $items): GoodsReceipt
+    public function handle(array $attributes, array $items, array $allowedLocationTypes = []): GoodsReceipt
     {
-        return DB::transaction(function () use ($attributes, $items): GoodsReceipt {
+        return DB::transaction(function () use ($attributes, $items, $allowedLocationTypes): GoodsReceipt {
             $purchaseOrder = PurchaseOrder::query()
                 ->lockForUpdate()
                 ->with('items:id,purchase_order_id,inventory_item_id,quantity_ordered,quantity_received')
                 ->findOrFail($attributes['purchase_order_id']);
+
+            $inventoryLocationId = is_string($attributes['inventory_location_id'] ?? null)
+                ? $attributes['inventory_location_id']
+                : null;
+
+            $canAccess = $allowedLocationTypes === []
+                ? $this->inventoryLocationAccess->canAccessLocation(
+                    Auth::user(),
+                    $inventoryLocationId,
+                    BranchContext::getActiveBranchId(),
+                )
+                : $this->inventoryLocationAccess->canAccessLocationForTypes(
+                    Auth::user(),
+                    $inventoryLocationId,
+                    $allowedLocationTypes,
+                    BranchContext::getActiveBranchId(),
+                );
+
+            abort_unless(
+                $canAccess,
+                403,
+                'You can only receive goods into inventory locations you manage.',
+            );
 
             abort_unless(
                 in_array($purchaseOrder->status, [PurchaseOrderStatus::Approved, PurchaseOrderStatus::Partial], true),

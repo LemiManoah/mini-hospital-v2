@@ -18,12 +18,14 @@ use App\Models\InventoryLocation;
 use App\Models\Reconciliation;
 use App\Models\ReconciliationItem;
 use App\Support\BranchContext;
+use App\Support\InventoryLocationAccess;
 use App\Support\InventoryStockLedger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,6 +33,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
 {
     public function __construct(
         private InventoryStockLedger $inventoryStockLedger,
+        private InventoryLocationAccess $inventoryLocationAccess,
     ) {}
 
     public static function middleware(): array
@@ -46,9 +49,15 @@ final readonly class InventoryReconciliationController implements HasMiddleware
     {
         $search = mb_trim((string) $request->query('search', ''));
         $status = mb_trim((string) $request->query('status', ''));
+        $locationIds = $this->inventoryLocationAccess->accessibleLocationIds(Auth::user(), BranchContext::getActiveBranchId());
 
         $reconciliations = Reconciliation::query()
             ->with('inventoryLocation:id,name,location_code')
+            ->when(
+                $locationIds === [],
+                static fn (Builder $query): Builder => $query->whereRaw('1 = 0'),
+                static fn (Builder $query): Builder => $query->whereIn('inventory_location_id', $locationIds),
+            )
             ->when(
                 $search !== '',
                 static function (Builder $query) use ($search): void {
@@ -81,16 +90,19 @@ final readonly class InventoryReconciliationController implements HasMiddleware
     public function create(): Response
     {
         $activeBranchId = BranchContext::getActiveBranchId();
+        $locationIds = $this->inventoryLocationAccess->accessibleLocationIds(Auth::user(), $activeBranchId);
 
         $locationBalances = is_string($activeBranchId) && $activeBranchId !== ''
             ? $this->inventoryStockLedger
                 ->summarizeByLocation($activeBranchId)
+                ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $locationIds, true))
                 ->values()
             : collect();
 
         $batchBalances = is_string($activeBranchId) && $activeBranchId !== ''
             ? $this->inventoryStockLedger
                 ->summarizeByBatch($activeBranchId)
+                ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $locationIds, true))
                 ->filter(static fn (array $balance): bool => $balance['quantity'] > 0)
                 ->values()
             : collect();
@@ -107,10 +119,14 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             ->all();
 
         return Inertia::render('inventory/reconciliations/create', [
-            'inventoryLocations' => InventoryLocation::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name', 'location_code']),
+            'inventoryLocations' => $this->inventoryLocationAccess
+                ->accessibleLocations(Auth::user(), $activeBranchId)
+                ->map(static fn (InventoryLocation $location): array => [
+                    'id' => $location->id,
+                    'name' => $location->name,
+                    'location_code' => $location->location_code,
+                ])
+                ->values(),
             'inventoryItems' => InventoryItem::query()
                 ->active()
                 ->orderBy('name')
@@ -152,6 +168,8 @@ final readonly class InventoryReconciliationController implements HasMiddleware
 
     public function show(Reconciliation $reconciliation): Response
     {
+        $this->abortUnlessCanAccess($reconciliation);
+
         $reconciliation->load([
             'inventoryLocation',
             'items.inventoryItem',
@@ -165,6 +183,8 @@ final readonly class InventoryReconciliationController implements HasMiddleware
 
     public function submit(Reconciliation $reconciliation, SubmitInventoryReconciliation $action): RedirectResponse
     {
+        $this->abortUnlessCanAccess($reconciliation);
+
         $action->handle($reconciliation);
 
         return to_route('reconciliations.show', $reconciliation)
@@ -173,6 +193,8 @@ final readonly class InventoryReconciliationController implements HasMiddleware
 
     public function review(Request $request, Reconciliation $reconciliation, ReviewInventoryReconciliation $action): RedirectResponse
     {
+        $this->abortUnlessCanAccess($reconciliation);
+
         $validated = $request->validate([
             'review_notes' => ['nullable', 'string'],
         ]);
@@ -185,6 +207,8 @@ final readonly class InventoryReconciliationController implements HasMiddleware
 
     public function approve(Request $request, Reconciliation $reconciliation, ApproveInventoryReconciliation $action): RedirectResponse
     {
+        $this->abortUnlessCanAccess($reconciliation);
+
         $validated = $request->validate([
             'approval_notes' => ['nullable', 'string'],
         ]);
@@ -198,6 +222,8 @@ final readonly class InventoryReconciliationController implements HasMiddleware
 
     public function reject(Request $request, Reconciliation $reconciliation, RejectInventoryReconciliation $action): RedirectResponse
     {
+        $this->abortUnlessCanAccess($reconciliation);
+
         $validated = $request->validate([
             'rejection_reason' => ['required', 'string'],
         ]);
@@ -210,6 +236,8 @@ final readonly class InventoryReconciliationController implements HasMiddleware
 
     public function post(Reconciliation $reconciliation, PostInventoryReconciliation $action): RedirectResponse
     {
+        $this->abortUnlessCanAccess($reconciliation);
+
         $action->handle($reconciliation);
 
         return to_route('reconciliations.show', $reconciliation)
@@ -334,5 +362,14 @@ final readonly class InventoryReconciliationController implements HasMiddleware
                 ],
             ])->all(),
         ];
+    }
+
+    private function abortUnlessCanAccess(Reconciliation $reconciliation): void
+    {
+        abort_unless(
+            $this->inventoryLocationAccess->canAccessLocation(Auth::user(), $reconciliation->inventory_location_id, $reconciliation->branch_id),
+            403,
+            'You do not have access to this reconciliation.',
+        );
     }
 }

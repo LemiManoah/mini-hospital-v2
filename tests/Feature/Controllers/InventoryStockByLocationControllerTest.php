@@ -322,3 +322,60 @@ it('denies stock by location page without permission', function (): void {
 
     $response->assertForbidden();
 });
+
+it('shows only pharmacy-managed stock locations for pharmacists', function (): void {
+    $context = createInventoryStockContext();
+    $branch = $context['branch'];
+    $user = $context['user'];
+    $locationB = $context['locationB'];
+
+    $user->assignRole('pharmacist');
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('inventory.stock-by-location.index'));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('locations', 1)
+            ->where('locations.0.id', $locationB->id)
+            ->has('rows.data', 1)
+            ->where('rows.data.0.location_quantities.'.$locationB->id, 0));
+});
+
+it('shows only laboratory locations on the dedicated laboratory stock page', function (): void {
+    $context = createInventoryStockContext();
+    $branch = $context['branch'];
+    $user = $context['user'];
+    $user->givePermissionTo('inventory_items.view');
+
+    $labLocation = InventoryLocation::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'name' => 'Gamma Lab Store',
+        'location_code' => 'GLS1',
+        'type' => InventoryLocationType::LABORATORY,
+        'is_active' => true,
+    ]);
+
+    InventoryLocationItem::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'inventory_location_id' => $labLocation->id,
+        'inventory_item_id' => InventoryItem::query()->where('tenant_id', $user->tenant_id)->firstOrFail()->id,
+        'minimum_stock_level' => 2,
+        'reorder_level' => 4,
+        'is_active' => true,
+    ]);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('laboratory.stock.index'));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('laboratory/stock/index')
+            ->has('locations', 1)
+            ->where('locations.0.id', $labLocation->id)
+            ->where('navigation.stock_title', 'Lab Stock'));
+});

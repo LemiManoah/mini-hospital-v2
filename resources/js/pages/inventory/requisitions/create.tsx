@@ -19,12 +19,6 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { LoaderCircle, PlusCircle, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Inventory', href: '/inventory/dashboard' },
-    { title: 'Requisitions', href: '/inventory-requisitions' },
-    { title: 'Create', href: '/inventory-requisitions/create' },
-];
-
 type RequisitionLine = {
     inventory_item_id: string;
     requested_quantity: string;
@@ -38,10 +32,24 @@ const emptyLine = (): RequisitionLine => ({
 });
 
 export default function InventoryRequisitionCreate({
-    inventoryLocations,
+    navigation,
+    sourceInventoryLocations,
+    destinationInventoryLocations,
     inventoryItems,
     priorityOptions,
 }: InventoryRequisitionFormPageProps) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: navigation.section_title, href: navigation.section_href },
+        {
+            title: navigation.requisitions_title,
+            href: navigation.requisitions_href,
+        },
+        {
+            title: navigation.requisition_create_title,
+            href: `${navigation.requisitions_href}/create`,
+        },
+    ];
+
     const form = useForm({
         source_inventory_location_id: '',
         destination_inventory_location_id: '',
@@ -51,10 +59,17 @@ export default function InventoryRequisitionCreate({
         items: [emptyLine()],
     });
 
-    const locationOptions = inventoryLocations.map((location) => ({
+    const sourceLocationOptions = sourceInventoryLocations.map((location) => ({
         value: location.id,
         label: `${location.name} (${location.location_code})`,
     }));
+
+    const destinationLocationOptions = destinationInventoryLocations.map(
+        (location) => ({
+        value: location.id,
+        label: `${location.name} (${location.location_code})`,
+        }),
+    );
 
     const itemOptions = inventoryItems.map((item) => ({
         value: item.id,
@@ -90,18 +105,18 @@ export default function InventoryRequisitionCreate({
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        form.post('/inventory-requisitions');
+        form.post(navigation.requisitions_href);
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Requisition" />
+            <Head title={navigation.requisition_create_title} />
 
             <div className="m-4 max-w-7xl space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold">
-                            Create Requisition
+                            {navigation.requisition_create_title}
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Request stock from one location to another within
@@ -110,7 +125,7 @@ export default function InventoryRequisitionCreate({
                         </p>
                     </div>
                     <Button variant="outline" asChild>
-                        <Link href="/inventory-requisitions">Back</Link>
+                        <Link href={navigation.requisitions_href}>Back</Link>
                     </Button>
                 </div>
 
@@ -120,7 +135,7 @@ export default function InventoryRequisitionCreate({
                             <div className="grid gap-2">
                                 <Label>Source Location</Label>
                                 <SearchableSelect
-                                    options={locationOptions}
+                                    options={sourceLocationOptions}
                                     value={form.data.source_inventory_location_id}
                                     onValueChange={(value) =>
                                         form.setData(
@@ -141,7 +156,7 @@ export default function InventoryRequisitionCreate({
                             <div className="grid gap-2">
                                 <Label>Destination Location</Label>
                                 <SearchableSelect
-                                    options={locationOptions.filter(
+                                    options={destinationLocationOptions.filter(
                                         (location) =>
                                             location.value !==
                                             form.data
@@ -363,7 +378,9 @@ export default function InventoryRequisitionCreate({
                             Create Requisition
                         </Button>
                         <Button variant="ghost" type="button" asChild>
-                            <Link href="/inventory-requisitions">Cancel</Link>
+                            <Link href={navigation.requisitions_href}>
+                                Cancel
+                            </Link>
                         </Button>
                     </div>
                 </form>

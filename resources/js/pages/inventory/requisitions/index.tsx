@@ -27,11 +27,6 @@ import { type InventoryRequisitionIndexPageProps } from '@/types/inventory-requi
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Inventory', href: '/inventory/dashboard' },
-    { title: 'Requisitions', href: '/inventory-requisitions' },
-];
-
 const badgeVariant = (
     status: string | null,
 ): 'default' | 'secondary' | 'destructive' | 'outline' => {
@@ -52,9 +47,18 @@ const badgeVariant = (
 
 export default function InventoryRequisitionsIndex({
     requisitions,
+    navigation,
     filters,
     statusOptions,
 }: InventoryRequisitionIndexPageProps) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: navigation.section_title, href: navigation.section_href },
+        {
+            title: navigation.requisitions_title,
+            href: navigation.requisitions_href,
+        },
+    ];
+
     const { hasPermission } = usePermissions();
     const rows = requisitions.data ?? [];
     const [search, setSearch] = useState(filters.search ?? '');
@@ -70,7 +74,7 @@ export default function InventoryRequisitionsIndex({
 
         const timeoutId = window.setTimeout(() => {
             router.get(
-                '/inventory-requisitions',
+                navigation.requisitions_href,
                 {
                     search: search || undefined,
                     status: status === 'all' ? undefined : status,
@@ -89,9 +93,19 @@ export default function InventoryRequisitionsIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Requisitions" />
+            <Head title={navigation.requisitions_title} />
 
             <div className="m-4 flex flex-col gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold">
+                        {navigation.requisitions_title}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Track internal stock requests moving within the active
+                        branch.
+                    </p>
+                </div>
+
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="flex flex-1 flex-col gap-3 md:flex-row">
                         <div className="w-full md:max-w-sm">
@@ -119,7 +133,7 @@ export default function InventoryRequisitionsIndex({
 
                     {hasPermission('inventory_requisitions.create') ? (
                         <Button asChild>
-                            <Link href="/inventory-requisitions/create">
+                            <Link href={`${navigation.requisitions_href}/create`}>
                                 + New Requisition
                             </Link>
                         </Button>
@@ -186,7 +200,7 @@ export default function InventoryRequisitionsIndex({
                                                 asChild
                                             >
                                                 <Link
-                                                    href={`/inventory-requisitions/${requisition.id}`}
+                                                    href={`${navigation.requisitions_href}/${requisition.id}`}
                                                 >
                                                     View
                                                 </Link>

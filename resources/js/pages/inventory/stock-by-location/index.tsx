@@ -25,11 +25,6 @@ import { Head, router } from '@inertiajs/react';
 import { PackageSearch } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Inventory', href: '/inventory/dashboard' },
-    { title: 'Stock By Location', href: '/inventory/stock-by-location' },
-];
-
 const labelize = (value: string | null): string =>
     value
         ? value
@@ -39,22 +34,31 @@ const labelize = (value: string | null): string =>
 
 export default function InventoryStockByLocationIndex({
     rows,
+    navigation,
     filters,
     itemTypes,
     locations,
     note,
 }: InventoryStockByLocationPageProps) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: navigation.section_title, href: navigation.section_href },
+        { title: navigation.stock_title, href: navigation.stock_href },
+    ];
+
     const [search, setSearch] = useState(filters.search ?? '');
     const [type, setType] = useState(filters.type ?? 'all');
 
     useEffect(() => {
-        if (search === (filters.search ?? '') && type === (filters.type ?? 'all')) {
+        if (
+            search === (filters.search ?? '') &&
+            type === (filters.type ?? 'all')
+        ) {
             return;
         }
 
         const timeoutId = window.setTimeout(() => {
             router.get(
-                '/inventory/stock-by-location',
+                navigation.stock_href,
                 {
                     search: search || undefined,
                     type: type === 'all' ? undefined : type,
@@ -69,13 +73,23 @@ export default function InventoryStockByLocationIndex({
         }, 300);
 
         return () => window.clearTimeout(timeoutId);
-    }, [search, type, filters.search, filters.type]);
+    }, [filters.search, filters.type, navigation.stock_href, search, type]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Stock By Location" />
+            <Head title={navigation.stock_title} />
 
             <div className="m-4 flex flex-col gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold">
+                        {navigation.stock_title}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        View total on-hand stock across the locations available
+                        in this workspace.
+                    </p>
+                </div>
+
                 <Alert>
                     <PackageSearch />
                     <AlertTitle>Receipt-backed balances</AlertTitle>
@@ -118,11 +132,14 @@ export default function InventoryStockByLocationIndex({
                                     >
                                         <div>{location.name}</div>
                                         <div className="text-xs font-normal text-muted-foreground">
-                                            {location.code} · {labelize(location.type)}
+                                            {location.code} -{' '}
+                                            {labelize(location.type)}
                                         </div>
                                     </TableHead>
                                 ))}
-                                <TableHead className="text-right">Total</TableHead>
+                                <TableHead className="text-right">
+                                    Total
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -132,15 +149,21 @@ export default function InventoryStockByLocationIndex({
                                         <TableCell className="font-medium">
                                             {row.item_name}
                                         </TableCell>
-                                        <TableCell>{labelize(row.item_type)}</TableCell>
-                                        <TableCell>{row.unit ?? 'No unit'}</TableCell>
+                                        <TableCell>
+                                            {labelize(row.item_type)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {row.unit ?? 'No unit'}
+                                        </TableCell>
                                         {locations.map((location) => (
                                             <TableCell
                                                 key={`${row.item_id}:${location.id}`}
                                                 className="text-right font-medium"
                                             >
                                                 {(
-                                                    row.location_quantities[location.id] ?? 0
+                                                    row.location_quantities[
+                                                        location.id
+                                                    ] ?? 0
                                                 ).toFixed(3)}
                                             </TableCell>
                                         ))}
@@ -155,7 +178,8 @@ export default function InventoryStockByLocationIndex({
                                         colSpan={locations.length + 4}
                                         className="py-10 text-center text-muted-foreground"
                                     >
-                                        No stock items found for the current filters.
+                                        No stock items found for the current
+                                        filters.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -178,7 +202,9 @@ export default function InventoryStockByLocationIndex({
 
                                         if (label === '...') {
                                             return (
-                                                <PaginationItem key={`ellipsis-${index}`}>
+                                                <PaginationItem
+                                                    key={`ellipsis-${index}`}
+                                                >
                                                     <PaginationEllipsis />
                                                 </PaginationItem>
                                             );
@@ -188,7 +214,9 @@ export default function InventoryStockByLocationIndex({
                                             return (
                                                 <PaginationItem key={label}>
                                                     <PaginationLink
-                                                        href={link.url ?? undefined}
+                                                        href={
+                                                            link.url ?? undefined
+                                                        }
                                                         isActive={link.active}
                                                     >
                                                         {label}

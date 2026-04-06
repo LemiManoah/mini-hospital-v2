@@ -518,3 +518,72 @@ it('shows a goods receipt detail page', function (): void {
             ->where('goodsReceipt.receipt_number', 'GR-SHOW-001')
             ->has('goodsReceipt.items', 1));
 });
+
+it('limits receiving locations for pharmacy users to pharmacy stores', function (): void {
+    [$tenant, $branch, $user, , , $location, $po] = createGRTestContext();
+    $user->assignRole('pharmacist');
+
+    $pharmacyLocation = InventoryLocation::query()->create([
+        'tenant_id' => $tenant->id,
+        'branch_id' => $branch->id,
+        'name' => 'GR Pharmacy Scope',
+        'location_code' => 'GR-PHARM',
+        'type' => InventoryLocationType::PHARMACY,
+        'is_active' => true,
+    ]);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('goods-receipts.create', ['purchase_order_id' => $po->id]));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('inventoryLocations', [
+                [
+                    'id' => $pharmacyLocation->id,
+                    'name' => $pharmacyLocation->name,
+                    'location_code' => $pharmacyLocation->location_code,
+                ],
+            ]));
+
+    expect($location->id)->not->toBe($pharmacyLocation->id);
+});
+
+it('shows only laboratory receiving locations on the dedicated laboratory receipt create page', function (): void {
+    [$tenant, $branch, $user, , , , $po] = createGRTestContext();
+    $user->givePermissionTo('goods_receipts.create');
+
+    InventoryLocation::query()->create([
+        'tenant_id' => $tenant->id,
+        'branch_id' => $branch->id,
+        'name' => 'GR Main Store Hidden',
+        'location_code' => 'GR-MAIN-H',
+        'type' => InventoryLocationType::MAIN_STORE,
+        'is_active' => true,
+    ]);
+
+    $labLocation = InventoryLocation::query()->create([
+        'tenant_id' => $tenant->id,
+        'branch_id' => $branch->id,
+        'name' => 'GR Lab Store',
+        'location_code' => 'GR-LAB',
+        'type' => InventoryLocationType::LABORATORY,
+        'is_active' => true,
+    ]);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('laboratory.receipts.create', ['purchase_order_id' => $po->id]));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('laboratory/receipts/create')
+            ->where('inventoryLocations', [
+                [
+                    'id' => $labLocation->id,
+                    'name' => $labLocation->name,
+                    'location_code' => $labLocation->location_code,
+                ],
+            ])
+            ->where('navigation.receipts_title', 'Lab Receipts'));
+});

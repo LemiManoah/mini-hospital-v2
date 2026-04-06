@@ -235,3 +235,71 @@ it('denies stock movement report without permission', function (): void {
 
     $response->assertForbidden();
 });
+
+it('shows only pharmacy movements on the dedicated pharmacy movement page', function (): void {
+    [$branch, $user] = createInventoryMovementReportContext();
+    $user->givePermissionTo('inventory_items.view');
+
+    $tenantId = $user->tenant_id;
+    $supplier = Supplier::query()->where('tenant_id', $tenantId)->firstOrFail();
+    $item = InventoryItem::query()->where('tenant_id', $tenantId)->firstOrFail();
+
+    $pharmacyLocation = InventoryLocation::query()->create([
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'name' => 'Movement Pharmacy Store',
+        'location_code' => 'MVPH',
+        'type' => InventoryLocationType::PHARMACY,
+        'is_active' => true,
+    ]);
+
+    $purchaseOrder = PurchaseOrder::query()->create([
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'supplier_id' => $supplier->id,
+        'order_number' => 'MV-PHARM-001',
+        'status' => PurchaseOrderStatus::Approved,
+        'order_date' => now(),
+        'total_amount' => 500,
+    ]);
+
+    $purchaseOrderItem = PurchaseOrderItem::query()->create([
+        'purchase_order_id' => $purchaseOrder->id,
+        'inventory_item_id' => $item->id,
+        'quantity_ordered' => 10,
+        'unit_cost' => 50,
+        'total_cost' => 500,
+    ]);
+
+    $goodsReceipt = GoodsReceipt::query()->create([
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'purchase_order_id' => $purchaseOrder->id,
+        'inventory_location_id' => $pharmacyLocation->id,
+        'receipt_number' => 'MV-PHARM-GR-001',
+        'status' => GoodsReceiptStatus::Draft,
+        'receipt_date' => now(),
+    ]);
+
+    GoodsReceiptItem::query()->create([
+        'goods_receipt_id' => $goodsReceipt->id,
+        'purchase_order_item_id' => $purchaseOrderItem->id,
+        'inventory_item_id' => $item->id,
+        'quantity_received' => 10,
+        'unit_cost' => 50,
+        'batch_number' => 'MV-PHARM-BATCH-001',
+    ]);
+
+    resolve(PostGoodsReceipt::class)->handle($goodsReceipt);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('pharmacy.movements.index'));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('pharmacy/movements/index')
+            ->has('movements.data', 1)
+            ->where('movements.data.0.location_name', 'Movement Pharmacy Store')
+            ->where('navigation.movements_title', 'Pharmacy Movements'));
+});

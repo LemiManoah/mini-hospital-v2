@@ -22,11 +22,11 @@ What already exists:
 - stock-by-location and stock movement visibility pages now exist
 - user-facing inventory reconciliations now exist for controlled stock correction and review
 - same-branch inventory requisitions now support draft, submit, approve, reject, and issue workflow
-- City General Hospital main branch now has seeded inventory workflow data for manual testing
+- inventory access can now be store-aware inside a branch, with pharmacy and laboratory users scoped to their own locations while main store users keep broader branch-store access
+- City General Hospital main branch now has seeded inventory workflow data and inventory users for manual testing
 
 What does not yet exist:
 
-- pharmacy store workflow
 - branch-to-branch or store-to-store transfers
 - reconciliation presets and specialized workflows for cycle count, expiry, and damage handling
 - dispensing records tied to real stock depletion
@@ -91,6 +91,7 @@ The inventory module should be considered complete when all of the following are
 - prescriptions can be dispensed against available stock
 - lab and other service areas can consume stock through inventory-backed issue workflows
 - low-stock, expiring, and out-of-stock visibility exists
+- store teams such as main store, pharmacy, and laboratory can each operate inside their own stock workspace without losing branch isolation
 - permissions, branch isolation, and feature tests cover the critical workflows
 
 ---
@@ -373,6 +374,8 @@ Recommended permissions:
 
 Branch isolation should follow the same active-branch approach already used elsewhere in the app.
 
+Within a branch, inventory should also support store-aware access. Main store users may work across branch inventory locations, while pharmacy and laboratory users should primarily see their own stock positions and requisitions.
+
 ---
 
 ## 9) Integration With Existing Modules
@@ -595,7 +598,7 @@ Support operational movement of stock inside the hospital between stores and ser
 
 ### Current Status
 
-Same-branch requisitions are now implemented end to end. Users can create a requisition, submit it for approval, approve line quantities, reject it, and issue approved quantities from selected source batches. Issuing posts real stock movements from the source location into the destination location, and partial issue is supported through remaining approved quantities on each line. Inter-store transfer documents are still pending, so milestone 4 remains in progress.
+Same-branch requisitions are now implemented end to end. Users can create a requisition, submit it for approval, approve line quantities, reject it, and issue approved quantities from selected source batches. Issuing posts real stock movements from the source location into the destination location, and partial issue is supported through remaining approved quantities on each line. Inventory access is also now store-aware within a branch: main store users can work across branch locations, while pharmacy and laboratory users are scoped to their own locations for stock views and destination-side requisitions, with the main store remaining the primary source for restricted store users. Inter-store transfer documents are still pending, so milestone 4 remains in progress.
 
 ### Definition Of Done
 
@@ -690,6 +693,7 @@ Stabilize the module for confident use across branches and workflows.
   - issue requisition
   - dispense prescription
 - [ ] Add navigation links from modules and sidebar
+- [x] Add seeded inventory users for main store, pharmacy, and laboratory manual testing
 - [ ] Update `system.md` after implementation lands
 - [ ] Update `hospital_database_schema.md` to match final table design
 

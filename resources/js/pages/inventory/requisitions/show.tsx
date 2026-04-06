@@ -62,17 +62,21 @@ const emptyAllocation = (): AllocationLine => ({
 });
 
 export default function InventoryRequisitionShow({
+    navigation,
     requisition,
     availableBatchBalances,
 }: InventoryRequisitionShowPageProps) {
     const { hasPermission } = usePermissions();
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Inventory', href: '/inventory/dashboard' },
-        { title: 'Requisitions', href: '/inventory-requisitions' },
+        { title: navigation.section_title, href: navigation.section_href },
+        {
+            title: navigation.requisitions_title,
+            href: navigation.requisitions_href,
+        },
         {
             title: requisition.requisition_number,
-            href: `/inventory-requisitions/${requisition.id}`,
+            href: `${navigation.requisitions_href}/${requisition.id}`,
         },
     ];
 
@@ -181,7 +185,9 @@ export default function InventoryRequisitionShow({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Requisition: ${requisition.requisition_number}`} />
+            <Head
+                title={`${navigation.requisitions_title}: ${requisition.requisition_number}`}
+            />
 
             <div className="m-4 max-w-7xl space-y-6">
                 <div className="flex items-center justify-between">
@@ -195,7 +201,7 @@ export default function InventoryRequisitionShow({
                         </p>
                     </div>
                     <Button variant="outline" asChild>
-                        <Link href="/inventory-requisitions">Back</Link>
+                        <Link href={navigation.requisitions_href}>Back</Link>
                     </Button>
                 </div>
 
@@ -288,7 +294,7 @@ export default function InventoryRequisitionShow({
                                     size="sm"
                                     onClick={() =>
                                         submitForm.post(
-                                            `/inventory-requisitions/${requisition.id}/submit`,
+                                            `${navigation.requisitions_href}/${requisition.id}/submit`,
                                         )
                                     }
                                 >
@@ -302,7 +308,7 @@ export default function InventoryRequisitionShow({
                                     onSubmit={(event) => {
                                         event.preventDefault();
                                         approveForm.post(
-                                            `/inventory-requisitions/${requisition.id}/approve`,
+                                            `${navigation.requisitions_href}/${requisition.id}/approve`,
                                         );
                                     }}
                                 >
@@ -423,7 +429,7 @@ export default function InventoryRequisitionShow({
                                     onSubmit={(event) => {
                                         event.preventDefault();
                                         rejectForm.post(
-                                            `/inventory-requisitions/${requisition.id}/reject`,
+                                            `${navigation.requisitions_href}/${requisition.id}/reject`,
                                         );
                                     }}
                                 >
@@ -461,7 +467,7 @@ export default function InventoryRequisitionShow({
                                     onSubmit={(event) => {
                                         event.preventDefault();
                                         issueForm.post(
-                                            `/inventory-requisitions/${requisition.id}/issue`,
+                                            `${navigation.requisitions_href}/${requisition.id}/issue`,
                                         );
                                     }}
                                 >

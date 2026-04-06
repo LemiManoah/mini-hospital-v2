@@ -1,4 +1,5 @@
 import type { InventoryItem } from './inventory-item';
+import type { InventoryNavigationContext } from './inventory-navigation';
 import type { PurchaseOrder, PurchaseOrderItem } from './purchase-order';
 
 export interface GoodsReceiptItem {
@@ -60,6 +61,7 @@ export interface PaginatedGoodsReceiptList {
 
 export interface GoodsReceiptIndexPageProps {
     goodsReceipts: PaginatedGoodsReceiptList;
+    navigation: InventoryNavigationContext;
     filters: {
         search: string | null;
         status: string | null;
@@ -68,11 +70,13 @@ export interface GoodsReceiptIndexPageProps {
 }
 
 export interface GoodsReceiptFormPageProps {
+    navigation: InventoryNavigationContext;
     purchaseOrders: PurchaseOrder[];
     selectedPurchaseOrder: PurchaseOrder | null;
     inventoryLocations: InventoryLocationOption[];
 }
 
 export interface GoodsReceiptShowPageProps {
+    navigation: InventoryNavigationContext;
     goodsReceipt: GoodsReceipt;
 }

@@ -182,9 +182,61 @@ it('shows the requisition create page', function (): void {
     $response->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('inventory/requisitions/create')
-            ->has('inventoryLocations', 2)
+            ->has('sourceInventoryLocations', 2)
+            ->has('destinationInventoryLocations', 2)
             ->has('inventoryItems', 1)
             ->has('priorityOptions'));
+});
+
+it('limits pharmacy users to pharmacy requisition destinations and main store sources', function (): void {
+    [$branch, $user, $sourceLocation, $destinationLocation, $item] = createInventoryRequisitionContext();
+    $user->assignRole('pharmacist');
+
+    $labLocation = InventoryLocation::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'name' => 'Lab Store Scoped',
+        'location_code' => 'RQLAB',
+        'type' => InventoryLocationType::LABORATORY,
+        'is_active' => true,
+    ]);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('inventory-requisitions.create'));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('sourceInventoryLocations', [
+                [
+                    'id' => $sourceLocation->id,
+                    'name' => $sourceLocation->name,
+                    'location_code' => $sourceLocation->location_code,
+                ],
+            ])
+            ->where('destinationInventoryLocations', [
+                [
+                    'id' => $destinationLocation->id,
+                    'name' => $destinationLocation->name,
+                    'location_code' => $destinationLocation->location_code,
+                ],
+            ]));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('inventory-requisitions.store'), [
+            'source_inventory_location_id' => $sourceLocation->id,
+            'destination_inventory_location_id' => $labLocation->id,
+            'requisition_date' => now()->toDateString(),
+            'priority' => Priority::ROUTINE->value,
+            'items' => [
+                [
+                    'inventory_item_id' => $item->id,
+                    'requested_quantity' => 2,
+                ],
+            ],
+        ])
+        ->assertSessionHasErrors(['destination_inventory_location_id']);
 });
 
 it('creates a draft requisition', function (): void {
@@ -391,4 +443,78 @@ it('rejects a submitted requisition', function (): void {
     expect($requisition->status)->toBe(InventoryRequisitionStatus::Rejected)
         ->and($requisition->rejection_reason)
         ->toBe('Requested quantity should be revised first.');
+});
+
+it('prevents pharmacy users from approving main store requisitions', function (): void {
+    [$branch, $user, $sourceLocation, $destinationLocation, $item] = createInventoryRequisitionContext();
+    $user->assignRole('pharmacist');
+
+    $requisition = InventoryRequisition::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'source_inventory_location_id' => $sourceLocation->id,
+        'destination_inventory_location_id' => $destinationLocation->id,
+        'requisition_number' => 'REQ-SCOPE-001',
+        'status' => InventoryRequisitionStatus::Submitted,
+        'priority' => Priority::ROUTINE,
+        'requisition_date' => now()->toDateString(),
+        'submitted_by' => $user->id,
+        'submitted_at' => now(),
+    ]);
+
+    $line = $requisition->items()->create([
+        'inventory_item_id' => $item->id,
+        'requested_quantity' => 3,
+        'approved_quantity' => 0,
+        'issued_quantity' => 0,
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('inventory-requisitions.approve', $requisition), [
+            'items' => [
+                [
+                    'inventory_requisition_item_id' => $line->id,
+                    'approved_quantity' => 3,
+                ],
+            ],
+        ])
+        ->assertForbidden();
+});
+
+it('shows only laboratory destinations on the dedicated laboratory requisition create page', function (): void {
+    [$branch, $user, $sourceLocation] = createInventoryRequisitionContext();
+    $user->givePermissionTo('inventory_requisitions.create');
+
+    $labLocation = InventoryLocation::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'name' => 'Req Lab Store',
+        'location_code' => 'RQLS',
+        'type' => InventoryLocationType::LABORATORY,
+        'is_active' => true,
+    ]);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('laboratory.requisitions.create'));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('laboratory/requisitions/create')
+            ->where('sourceInventoryLocations', [
+                [
+                    'id' => $sourceLocation->id,
+                    'name' => $sourceLocation->name,
+                    'location_code' => $sourceLocation->location_code,
+                ],
+            ])
+            ->where('destinationInventoryLocations', [
+                [
+                    'id' => $labLocation->id,
+                    'name' => $labLocation->name,
+                    'location_code' => $labLocation->location_code,
+                ],
+            ])
+            ->where('navigation.requisitions_title', 'Lab Requisitions'));
 });

@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\Priority;
+use App\Enums\InventoryLocationType;
 use App\Models\InventoryLocation;
 use App\Support\BranchContext;
+use App\Support\InventoryLocationAccess;
+use App\Support\InventoryWorkspace;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -94,6 +97,59 @@ final class StoreInventoryRequisitionRequest extends FormRequest
                     $validator->errors()->add(
                         'destination_inventory_location_id',
                         'The destination location must be active in the current branch.',
+                    );
+                }
+
+                if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                $inventoryLocationAccess = resolve(InventoryLocationAccess::class);
+                $workspace = InventoryWorkspace::fromRequest($this);
+                $workspaceTypes = $workspace->locationTypeValues();
+
+                $canCreate = $workspaceTypes === []
+                    ? $inventoryLocationAccess->canCreateRequisition($this->user(), $sourceLocationId, $destinationLocationId, $activeBranchId)
+                    : $inventoryLocationAccess->canCreateRequisitionForTypes(
+                        $this->user(),
+                        $sourceLocationId,
+                        $destinationLocationId,
+                        $workspaceTypes,
+                        $activeBranchId,
+                    );
+
+                if (! $canCreate) {
+                    $validator->errors()->add(
+                        'source_inventory_location_id',
+                        'You can only request stock from the branch main store or locations you manage.',
+                    );
+                    $validator->errors()->add(
+                        'destination_inventory_location_id',
+                        'You can only request stock for inventory locations you manage.',
+                    );
+                }
+
+                if ($workspaceTypes === []) {
+                    return;
+                }
+
+                $sourceLocation = $locations->get($sourceLocationId);
+                $destinationLocation = $locations->get($destinationLocationId);
+
+                if ($sourceLocation instanceof InventoryLocation && $sourceLocation->type !== InventoryLocationType::MAIN_STORE) {
+                    $validator->errors()->add(
+                        'source_inventory_location_id',
+                        'Dedicated lab and pharmacy requisitions must be sourced from a main store location.',
+                    );
+                }
+
+                if (
+                    $destinationLocation instanceof InventoryLocation
+                    && ! in_array($destinationLocation->type?->value, $workspaceTypes, true)
+                ) {
+                    $validator->errors()->add(
+                        'destination_inventory_location_id',
+                        'The destination location does not belong to this workspace.',
                     );
                 }
             },

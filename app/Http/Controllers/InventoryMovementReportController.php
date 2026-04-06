@@ -8,15 +8,23 @@ use App\Enums\StockMovementType;
 use App\Models\InventoryLocation;
 use App\Models\StockMovement;
 use App\Support\BranchContext;
+use App\Support\InventoryNavigationContext;
+use App\Support\InventoryLocationAccess;
+use App\Support\InventoryWorkspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class InventoryMovementReportController implements HasMiddleware
+final readonly class InventoryMovementReportController implements HasMiddleware
 {
+    public function __construct(
+        private InventoryLocationAccess $inventoryLocationAccess,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -26,10 +34,17 @@ final class InventoryMovementReportController implements HasMiddleware
 
     public function index(Request $request): Response
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
         $activeBranchId = BranchContext::getActiveBranchId();
         $search = mb_trim((string) $request->query('search', ''));
         $type = mb_trim((string) $request->query('type', ''));
         $locationId = mb_trim((string) $request->query('location', ''));
+        $accessibleLocations = $this->inventoryLocationAccess->accessibleLocations(Auth::user(), $activeBranchId, $workspace->locationTypeValues());
+        $locationIds = $accessibleLocations
+            ->pluck('id')
+            ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
+            ->values()
+            ->all();
 
         $query = StockMovement::query()
             ->with([
@@ -40,8 +55,10 @@ final class InventoryMovementReportController implements HasMiddleware
             ->orderByDesc('occurred_at')
             ->orderByDesc('created_at');
 
-        if (is_string($activeBranchId) && $activeBranchId !== '') {
-            $query->where('branch_id', $activeBranchId);
+        if (is_string($activeBranchId) && $activeBranchId !== '' && $locationIds !== []) {
+            $query
+                ->where('branch_id', $activeBranchId)
+                ->whereIn('inventory_location_id', $locationIds);
         } else {
             $query->whereRaw('1 = 0');
         }
@@ -84,23 +101,21 @@ final class InventoryMovementReportController implements HasMiddleware
                 'occurred_at' => $movement->occurred_at?->toIso8601String(),
             ]);
 
-        $locations = InventoryLocation::query()
-            ->where('branch_id', $activeBranchId)
-            ->orderBy('name')
-            ->get(['id', 'name', 'location_code'])
+        $locations = $accessibleLocations
             ->map(static fn (InventoryLocation $location): array => [
                 'value' => $location->id,
                 'label' => sprintf('%s (%s)', $location->name, $location->location_code),
             ])
             ->values();
 
-        return Inertia::render('inventory/reports/movements/index', [
+        return Inertia::render($workspace->movementsComponent(), [
             'movements' => $movements,
             'filters' => [
                 'search' => $search !== '' ? $search : null,
                 'type' => $type !== '' ? $type : null,
                 'location' => $locationId !== '' ? $locationId : null,
             ],
+            'navigation' => InventoryNavigationContext::fromRequest($request),
             'movementTypes' => collect(StockMovementType::cases())
                 ->map(static fn (StockMovementType $movementType): array => [
                     'value' => $movementType->value,

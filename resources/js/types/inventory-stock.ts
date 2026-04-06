@@ -1,3 +1,5 @@
+import type { InventoryNavigationContext } from './inventory-navigation';
+
 export interface InventoryStockRow {
     item_id: string;
     item_name: string;
@@ -37,6 +39,7 @@ export interface PaginatedInventoryStockRows {
 
 export interface InventoryStockByLocationPageProps {
     rows: PaginatedInventoryStockRows;
+    navigation: InventoryNavigationContext;
     filters: {
         search: string | null;
         type: string | null;

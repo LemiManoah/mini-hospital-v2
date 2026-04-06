@@ -11,17 +11,26 @@ use App\Enums\PurchaseOrderStatus;
 use App\Models\GoodsReceipt;
 use App\Models\InventoryLocation;
 use App\Models\PurchaseOrder;
+use App\Support\BranchContext;
+use App\Support\InventoryNavigationContext;
+use App\Support\InventoryLocationAccess;
+use App\Support\InventoryWorkspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\StoreGoodsReceiptRequest;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final readonly class GoodsReceiptController implements HasMiddleware
 {
+    public function __construct(
+        private InventoryLocationAccess $inventoryLocationAccess,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -33,11 +42,22 @@ final readonly class GoodsReceiptController implements HasMiddleware
 
     public function index(Request $request): Response
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
         $search = mb_trim((string) $request->query('search', ''));
         $status = mb_trim((string) $request->query('status', ''));
+        $locationIds = $this->inventoryLocationAccess->accessibleLocationIds(
+            Auth::user(),
+            BranchContext::getActiveBranchId(),
+            $workspace->locationTypeValues(),
+        );
 
         $goodsReceipts = GoodsReceipt::query()
             ->with(['purchaseOrder.supplier:id,name', 'inventoryLocation:id,name'])
+            ->when(
+                $locationIds === [],
+                static fn (Builder $query): Builder => $query->whereRaw('1 = 0'),
+                static fn (Builder $query): Builder => $query->whereIn('inventory_location_id', $locationIds),
+            )
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
                     $inner
@@ -50,19 +70,22 @@ final readonly class GoodsReceiptController implements HasMiddleware
             ->paginate(10)
             ->withQueryString();
 
-        return Inertia::render('inventory/goods-receipts/index', [
+        return Inertia::render($workspace->goodsReceiptIndexComponent(), [
             'goodsReceipts' => $goodsReceipts,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
             ],
+            'navigation' => InventoryNavigationContext::fromRequest($request),
             'statusOptions' => $this->statusOptions(),
         ]);
     }
 
     public function create(Request $request): Response
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
         $purchaseOrderId = $request->query('purchase_order_id');
+        $branchId = BranchContext::getActiveBranchId();
 
         $receivableStatuses = [PurchaseOrderStatus::Approved->value, PurchaseOrderStatus::Partial->value];
 
@@ -80,41 +103,76 @@ final readonly class GoodsReceiptController implements HasMiddleware
             ? $purchaseOrders->firstWhere('id', $purchaseOrderId)
             : null;
 
-        return Inertia::render('inventory/goods-receipts/create', [
+        return Inertia::render($workspace->goodsReceiptCreateComponent(), [
+            'navigation' => InventoryNavigationContext::fromRequest($request),
             'purchaseOrders' => $purchaseOrders,
             'selectedPurchaseOrder' => $selectedPurchaseOrder,
-            'inventoryLocations' => InventoryLocation::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name', 'location_code']),
+            'inventoryLocations' => $this->inventoryLocationAccess
+                ->accessibleLocations(Auth::user(), $branchId, $workspace->locationTypeValues())
+                ->map(static fn (InventoryLocation $location): array => [
+                    'id' => $location->id,
+                    'name' => $location->name,
+                    'location_code' => $location->location_code,
+                ])
+                ->values(),
         ]);
     }
 
     public function store(StoreGoodsReceiptRequest $request, CreateGoodsReceipt $action): RedirectResponse
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
         $validated = $request->validated();
         $items = $validated['items'];
         unset($validated['items']);
 
-        $goodsReceipt = $action->handle($validated, $items);
+        $goodsReceipt = $action->handle($validated, $items, $workspace->locationTypeValues());
 
-        return to_route('goods-receipts.show', $goodsReceipt)->with('success', 'Goods receipt created successfully.');
+        return redirect()->route($workspace->goodsReceiptShowRouteName(), $workspace->goodsReceiptShowRouteParameters($goodsReceipt))
+            ->with('success', 'Goods receipt created successfully.');
     }
 
-    public function show(GoodsReceipt $goodsReceipt): Response
+    public function show(Request $request, GoodsReceipt $goodsReceipt): Response
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
+        abort_unless(
+            $this->inventoryLocationAccess->canAccessLocation(Auth::user(), $goodsReceipt->inventory_location_id, $goodsReceipt->branch_id),
+            403,
+            'You do not have access to this goods receipt.',
+        );
+
+        abort_unless(
+            $workspace->locationTypeValues() === []
+                || $this->inventoryLocationAccess->canAccessLocationForTypes(
+                    Auth::user(),
+                    $goodsReceipt->inventory_location_id,
+                    $workspace->locationTypeValues(),
+                    $goodsReceipt->branch_id,
+                ),
+            404,
+            'This goods receipt does not belong to the selected inventory workspace.',
+        );
+
         $goodsReceipt->load(['purchaseOrder.supplier', 'inventoryLocation', 'items.inventoryItem', 'items.purchaseOrderItem']);
 
-        return Inertia::render('inventory/goods-receipts/show', [
+        return Inertia::render($workspace->goodsReceiptShowComponent(), [
+            'navigation' => InventoryNavigationContext::fromRequest($request),
             'goodsReceipt' => $goodsReceipt,
         ]);
     }
 
-    public function post(GoodsReceipt $goodsReceipt, PostGoodsReceipt $action): RedirectResponse
+    public function post(Request $request, GoodsReceipt $goodsReceipt, PostGoodsReceipt $action): RedirectResponse
     {
+        $workspace = InventoryWorkspace::fromRequest($request);
+        abort_unless(
+            $this->inventoryLocationAccess->canAccessLocation(Auth::user(), $goodsReceipt->inventory_location_id, $goodsReceipt->branch_id),
+            403,
+            'You do not have access to this goods receipt.',
+        );
+
         $action->handle($goodsReceipt->load('items.purchaseOrderItem'));
 
-        return to_route('goods-receipts.show', $goodsReceipt)->with('success', 'Goods receipt posted. Stock quantities updated.');
+        return redirect()->route($workspace->goodsReceiptShowRouteName(), $workspace->goodsReceiptShowRouteParameters($goodsReceipt))
+            ->with('success', 'Goods receipt posted. Stock quantities updated.');
     }
 
     /**

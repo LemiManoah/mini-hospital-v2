@@ -21,12 +21,6 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, LoaderCircle, PlusCircle } from 'lucide-react';
 import { useState } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Inventory', href: '/inventory/dashboard' },
-    { title: 'Goods Receipts', href: '/goods-receipts' },
-    { title: 'Create', href: '/goods-receipts/create' },
-];
-
 interface ReceiptLine {
     purchase_order_item_id: string;
     inventory_item_id: string;
@@ -40,10 +34,20 @@ interface ReceiptLine {
 }
 
 export default function GoodsReceiptCreate({
+    navigation,
     purchaseOrders,
     selectedPurchaseOrder,
     inventoryLocations,
 }: GoodsReceiptFormPageProps) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: navigation.section_title, href: navigation.section_href },
+        { title: navigation.receipts_title, href: navigation.receipts_href },
+        {
+            title: navigation.receipt_create_title,
+            href: `${navigation.receipts_href}/create`,
+        },
+    ];
+
     const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(
         selectedPurchaseOrder,
     );
@@ -127,18 +131,18 @@ export default function GoodsReceiptCreate({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        form.post('/goods-receipts');
+        form.post(navigation.receipts_href);
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Goods Receipt" />
+            <Head title={navigation.receipt_create_title} />
 
             <div className="m-4 max-w-6xl space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold">
-                            Receive Goods
+                            {navigation.receipt_create_title}
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Record items received against a purchase order.
@@ -149,7 +153,7 @@ export default function GoodsReceiptCreate({
                         </p>
                     </div>
                     <Button variant="outline" asChild>
-                        <Link href="/goods-receipts">Back</Link>
+                        <Link href={navigation.receipts_href}>Back</Link>
                     </Button>
                 </div>
 
@@ -283,7 +287,7 @@ export default function GoodsReceiptCreate({
                                     className="mt-2"
                                 >
                                     <Link
-                                        href={`/goods-receipts/${activeDraftReceipt.id}`}
+                                        href={`${navigation.receipts_href}/${activeDraftReceipt.id}`}
                                     >
                                         Open Draft Receipt
                                     </Link>
@@ -427,7 +431,7 @@ export default function GoodsReceiptCreate({
                             Create Goods Receipt
                         </Button>
                         <Button variant="ghost" type="button" asChild>
-                            <Link href="/goods-receipts">Cancel</Link>
+                            <Link href={navigation.receipts_href}>Cancel</Link>
                         </Button>
                     </div>
                 </form>

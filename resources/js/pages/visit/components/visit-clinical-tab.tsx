@@ -91,6 +91,9 @@ type VisitClinicalTabProps = {
     imagingLateralities: { value: string; label: string }[];
     pregnancyStatuses: { value: string; label: string }[];
     facilityServiceOptions: FacilityServiceOption[];
+    allergens: { id: string; name: string; type: string }[];
+    severityOptions: { value: string; label: string }[];
+    reactionOptions: { value: string; label: string }[];
 };
 
 const toOrderTab = (value: string): OrderTabValue =>
@@ -116,6 +119,8 @@ export function VisitClinicalTab({
     pregnancyStatuses,
     facilityServiceOptions,
     allergens,
+    severityOptions,
+    reactionOptions,
 }: VisitClinicalTabProps) {
     const latestVital = (triage?.vitalSigns ?? triage?.vital_signs ?? [])[0];
     const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
