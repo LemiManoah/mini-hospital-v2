@@ -25,6 +25,20 @@ final class LaboratoryManagementController
         return Inertia::render('laboratory/management', [
             'sections' => [
                 [
+                    'title' => 'Service Categories',
+                    'description' => 'Manage the category groupings used to organize laboratory services and keep catalog browsing tidy.',
+                    'href' => '/lab-test-categories',
+                    'permission' => 'lab_test_categories.view',
+                    'status' => 'live',
+                ],
+                [
+                    'title' => 'Laboratory Services',
+                    'description' => 'Manage the actual laboratory services, pricing, specimen requirements, and result capture setup.',
+                    'href' => '/lab-test-catalogs',
+                    'permission' => 'lab_test_catalogs.view',
+                    'status' => 'live',
+                ],
+                [
                     'title' => 'Specimen Types',
                     'description' => 'Manage the specimen options available when picking samples from the incoming investigations queue.',
                     'href' => '/specimen-types',

@@ -36,6 +36,7 @@ use App\Http\Controllers\LaboratoryDashboardController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\LaboratoryManagementController;
+use App\Http\Controllers\LaboratoryStockManagementController;
 use App\Http\Controllers\LaboratoryQueueController;
 use App\Http\Controllers\LaboratoryWorklistController;
 use App\Http\Controllers\LabRequestItemConsumableController;
@@ -200,6 +201,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::resource('result-types', LabResultTypeController::class)->except(['show']);
     Route::resource('lab-test-catalogs', LabTestCatalogController::class)->except(['show']);
     Route::get('laboratory/dashboard', [LaboratoryDashboardController::class, 'index'])->name('laboratory.dashboard.index');
+    Route::get('laboratory/stock-management', [LaboratoryStockManagementController::class, 'index'])->name('laboratory.stock-management.index');
     Route::get('laboratory/stock', [InventoryStockByLocationController::class, 'index'])->name('laboratory.stock.index');
     Route::get('laboratory/requisitions', [InventoryRequisitionController::class, 'index'])->name('laboratory.requisitions.index');
     Route::get('laboratory/requisitions/create', [InventoryRequisitionController::class, 'create'])->name('laboratory.requisitions.create');

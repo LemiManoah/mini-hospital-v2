@@ -238,16 +238,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'lab_requests.view',
                     },
                     {
-                        title: 'Service Categories',
-                        url: '/lab-test-categories',
-                        permission: 'lab_test_categories.view',
-                    },
-                    {
-                        title: 'Laboratory Services',
-                        url: '/lab-test-catalogs',
-                        permission: 'lab_test_catalogs.view',
-                    },
-                    {
                         title: 'Lab Management',
                         url: '/laboratory/management',
                         permissions: [
@@ -255,25 +245,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             'result_types.view',
                         ],
                     },
-                     {
-                        title: 'Lab Stock',
-                        url: '/laboratory/stock',
-                        permission: 'inventory_items.view',
-                    },
                     {
-                        title: 'Lab Requisitions',
-                        url: '/laboratory/requisitions',
-                        permission: 'inventory_requisitions.view',
-                    },
-                    {
-                        title: 'Lab Movements',
-                        url: '/laboratory/movements',
-                        permission: 'inventory_items.view',
-                    },
-                    {
-                        title: 'Lab Receipts',
-                        url: '/laboratory/receipts',
-                        permission: 'goods_receipts.view',
+                        title: 'Lab Stock Management',
+                        url: '/laboratory/stock-management',
+                        permissions: [
+                            'inventory_items.view',
+                            'inventory_requisitions.view',
+                            'goods_receipts.view',
+                        ],
                     },
                 ],
                 hasPermission,

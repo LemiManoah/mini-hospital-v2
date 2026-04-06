@@ -40,9 +40,9 @@ export default function LaboratoryManagement({
                 <div className="flex flex-col gap-1">
                     <h1 className="text-2xl font-semibold">Lab Management</h1>
                     <p className="text-sm text-muted-foreground">
-                        Manage the laboratory reference items that sit behind
-                        sample picking and result workflows. Stock management is
-                        reserved for the next phase.
+                        Manage the laboratory setup behind services, specimen
+                        collection, and result workflows from one place. Stock
+                        management is reserved for the next phase.
                     </p>
                 </div>
 

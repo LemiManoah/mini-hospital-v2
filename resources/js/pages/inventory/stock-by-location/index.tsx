@@ -90,12 +90,6 @@ export default function InventoryStockByLocationIndex({
                     </p>
                 </div>
 
-                <Alert>
-                    <PackageSearch />
-                    <AlertTitle>Receipt-backed balances</AlertTitle>
-                    <AlertDescription>{note}</AlertDescription>
-                </Alert>
-
                 <div className="flex flex-col gap-4 md:flex-row">
                     <div className="w-full md:max-w-sm">
                         <Input
