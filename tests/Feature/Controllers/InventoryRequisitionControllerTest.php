@@ -273,6 +273,149 @@ it('creates a draft requisition', function (): void {
     $response->assertRedirect(route('inventory-requisitions.show', $requisition));
 });
 
+it('shows only submitted incoming requisitions for the main store queue', function (): void {
+    [$branch, $user, $sourceLocation, $destinationLocation, $item] = createInventoryRequisitionContext();
+    $user->givePermissionTo('inventory_requisitions.view');
+
+    $labLocation = InventoryLocation::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'name' => 'Req Lab Queue',
+        'location_code' => 'RQLQ',
+        'type' => InventoryLocationType::LABORATORY,
+        'is_active' => true,
+    ]);
+
+    $otherMainStore = InventoryLocation::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'name' => 'Req Secondary Store',
+        'location_code' => 'RQSS',
+        'type' => InventoryLocationType::MAIN_STORE,
+        'is_active' => true,
+    ]);
+
+    foreach ([
+        [
+            'number' => 'REQ-INCOMING-PHARM-001',
+            'status' => InventoryRequisitionStatus::Submitted,
+            'destination_id' => $destinationLocation->id,
+            'date' => now()->subDay()->toDateString(),
+        ],
+        [
+            'number' => 'REQ-INCOMING-LAB-001',
+            'status' => InventoryRequisitionStatus::Approved,
+            'destination_id' => $labLocation->id,
+            'date' => now()->toDateString(),
+        ],
+        [
+            'number' => 'REQ-DRAFT-PHARM-001',
+            'status' => InventoryRequisitionStatus::Draft,
+            'destination_id' => $destinationLocation->id,
+            'date' => now()->subDays(2)->toDateString(),
+        ],
+        [
+            'number' => 'REQ-NONQUEUE-001',
+            'status' => InventoryRequisitionStatus::Submitted,
+            'destination_id' => $otherMainStore->id,
+            'date' => now()->subDays(3)->toDateString(),
+        ],
+    ] as $payload) {
+        $requisition = InventoryRequisition::query()->create([
+            'tenant_id' => $user->tenant_id,
+            'branch_id' => $branch->id,
+            'source_inventory_location_id' => $sourceLocation->id,
+            'destination_inventory_location_id' => $payload['destination_id'],
+            'requisition_number' => $payload['number'],
+            'status' => $payload['status'],
+            'priority' => Priority::ROUTINE,
+            'requisition_date' => $payload['date'],
+        ]);
+
+        $requisition->items()->create([
+            'inventory_item_id' => $item->id,
+            'requested_quantity' => 2,
+            'approved_quantity' => 0,
+            'issued_quantity' => 0,
+        ]);
+    }
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('inventory-requisitions.index'));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('inventory/requisitions/index')
+            ->where('navigation.requisitions_title', 'Incoming Requisitions')
+            ->has('requisitions.data', 2)
+            ->where('requisitions.data.0.requisition_number', 'REQ-INCOMING-LAB-001')
+            ->where('requisitions.data.1.requisition_number', 'REQ-INCOMING-PHARM-001'));
+});
+
+it('allows admin users to open an incoming requisition detail page', function (): void {
+    [$branch, $user, $sourceLocation, $destinationLocation, $item] = createInventoryRequisitionContext();
+    $user->assignRole('admin');
+
+    $requisition = InventoryRequisition::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'source_inventory_location_id' => $sourceLocation->id,
+        'destination_inventory_location_id' => $destinationLocation->id,
+        'requisition_number' => 'REQ-INCOMING-SHOW-001',
+        'status' => InventoryRequisitionStatus::Submitted,
+        'priority' => Priority::ROUTINE,
+        'requisition_date' => now()->toDateString(),
+    ]);
+
+    $requisition->items()->create([
+        'inventory_item_id' => $item->id,
+        'requested_quantity' => 2,
+        'approved_quantity' => 0,
+        'issued_quantity' => 0,
+    ]);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('inventory-requisitions.show', $requisition));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('inventory/requisitions/show')
+            ->where('requisition.source_location.name', $sourceLocation->name)
+            ->where('requisition.destination_location.name', $destinationLocation->name)
+            ->where('requisition.status', InventoryRequisitionStatus::Submitted->value)
+            ->where('navigation.requisitions_title', 'Incoming Requisitions'));
+});
+
+it('prevents pharmacists from opening the main store incoming requisition detail page', function (): void {
+    [$branch, $user, $sourceLocation, $destinationLocation, $item] = createInventoryRequisitionContext();
+    $user->assignRole('pharmacist');
+
+    $requisition = InventoryRequisition::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'source_inventory_location_id' => $sourceLocation->id,
+        'destination_inventory_location_id' => $destinationLocation->id,
+        'requisition_number' => 'REQ-INCOMING-BLOCK-001',
+        'status' => InventoryRequisitionStatus::Submitted,
+        'priority' => Priority::ROUTINE,
+        'requisition_date' => now()->toDateString(),
+    ]);
+
+    $requisition->items()->create([
+        'inventory_item_id' => $item->id,
+        'requested_quantity' => 2,
+        'approved_quantity' => 0,
+        'issued_quantity' => 0,
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('inventory-requisitions.show', $requisition))
+        ->assertForbidden();
+});
+
 it('submits approves and partially issues a requisition', function (): void {
     [$branch, $user, $sourceLocation, $destinationLocation, $item, $batch] = createInventoryRequisitionContext();
     $user->givePermissionTo(['inventory_requisitions.view', 'inventory_requisitions.update']);

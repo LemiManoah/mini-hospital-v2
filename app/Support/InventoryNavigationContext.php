@@ -52,7 +52,7 @@ final class InventoryNavigationContext
                 'section_href' => '/inventory/dashboard',
                 'stock_title' => 'Stock By Location',
                 'stock_href' => '/inventory/stock-by-location',
-                'requisitions_title' => 'Requisitions',
+                'requisitions_title' => 'Incoming Requisitions',
                 'requisitions_href' => '/inventory-requisitions',
                 'requisition_create_title' => 'Create Requisition',
                 'movements_title' => 'Stock Movements',

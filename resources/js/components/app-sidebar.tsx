@@ -88,6 +88,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     )?.name;
     const canSwitchFacility =
         Boolean(user.is_support) || hasRole('super_admin');
+    const canAccessIncomingRequisitions =
+        hasPermission('inventory_requisitions.view') &&
+        (Boolean(user.is_support) ||
+            hasRole('super_admin') ||
+            hasRole('admin') ||
+            hasRole('store_keeper'));
 
     const navMain: React.ComponentProps<typeof NavMain>['items'] = [
         {
@@ -210,26 +216,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'lab_requests.view',
                     },
                     {
-                        title: 'Lab Stock',
-                        url: '/laboratory/stock',
-                        permission: 'inventory_items.view',
-                    },
-                    {
-                        title: 'Lab Requisitions',
-                        url: '/laboratory/requisitions',
-                        permission: 'inventory_requisitions.view',
-                    },
-                    {
-                        title: 'Lab Movements',
-                        url: '/laboratory/movements',
-                        permission: 'inventory_items.view',
-                    },
-                    {
-                        title: 'Lab Receipts',
-                        url: '/laboratory/receipts',
-                        permission: 'goods_receipts.view',
-                    },
-                    {
                         title: 'Incoming Lab Investigations Queue',
                         url: '/laboratory/incoming-investigations',
                         permission: 'lab_requests.view',
@@ -266,6 +252,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             'specimen_types.view',
                             'result_types.view',
                         ],
+                    },
+                     {
+                        title: 'Lab Stock',
+                        url: '/laboratory/stock',
+                        permission: 'inventory_items.view',
+                    },
+                    {
+                        title: 'Lab Requisitions',
+                        url: '/laboratory/requisitions',
+                        permission: 'inventory_requisitions.view',
+                    },
+                    {
+                        title: 'Lab Movements',
+                        url: '/laboratory/movements',
+                        permission: 'inventory_items.view',
+                    },
+                    {
+                        title: 'Lab Receipts',
+                        url: '/laboratory/receipts',
+                        permission: 'goods_receipts.view',
                     },
                 ],
                 hasPermission,
@@ -337,11 +343,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         url: '/goods-receipts',
                         permission: 'goods_receipts.view',
                     },
-                    {
-                        title: 'Requisitions',
-                        url: '/inventory-requisitions',
-                        permission: 'inventory_requisitions.view',
-                    },
+                    ...(canAccessIncomingRequisitions
+                        ? [
+                              {
+                                  title: 'Incoming Requisitions',
+                                  url: '/inventory-requisitions',
+                              },
+                          ]
+                        : []),
                     {
                         title: 'Reconciliations',
                         url: '/reconciliations',

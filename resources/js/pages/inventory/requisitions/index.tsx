@@ -51,6 +51,7 @@ export default function InventoryRequisitionsIndex({
     filters,
     statusOptions,
 }: InventoryRequisitionIndexPageProps) {
+    const isRequesterWorkspace = navigation.key !== 'inventory';
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
         {
@@ -101,8 +102,9 @@ export default function InventoryRequisitionsIndex({
                         {navigation.requisitions_title}
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Track internal stock requests moving within the active
-                        branch.
+                        {isRequesterWorkspace
+                            ? 'Track stock requests raised from this unit to the main store, then follow them through approval and issue.'
+                            : 'Review incoming requisitions from pharmacy and laboratory, then approve, reject, or issue stock from the main store.'}
                     </p>
                 </div>
 
@@ -110,7 +112,11 @@ export default function InventoryRequisitionsIndex({
                     <div className="flex flex-1 flex-col gap-3 md:flex-row">
                         <div className="w-full md:max-w-sm">
                             <Input
-                                placeholder="Search by requisition number or location..."
+                                placeholder={
+                                    isRequesterWorkspace
+                                        ? 'Search by requisition number or main store...'
+                                        : 'Search by requisition number or requesting unit...'
+                                }
                                 value={search}
                                 onChange={(event) =>
                                     setSearch(event.target.value)
@@ -131,7 +137,8 @@ export default function InventoryRequisitionsIndex({
                         </div>
                     </div>
 
-                    {hasPermission('inventory_requisitions.create') ? (
+                    {isRequesterWorkspace &&
+                    hasPermission('inventory_requisitions.create') ? (
                         <Button asChild>
                             <Link href={`${navigation.requisitions_href}/create`}>
                                 + New Requisition
@@ -146,8 +153,16 @@ export default function InventoryRequisitionsIndex({
                             <TableRow>
                                 <TableHead>Requisition #</TableHead>
                                 <TableHead>Date</TableHead>
-                                <TableHead>Source</TableHead>
-                                <TableHead>Destination</TableHead>
+                                {/* <TableHead>
+                                    {isRequesterWorkspace
+                                        ? 'Source'
+                                        : 'Issuing Store'}
+                                </TableHead> */}
+                                <TableHead>
+                                    {isRequesterWorkspace
+                                        ? 'Destination'
+                                        : 'Requesting Unit'}
+                                </TableHead>
                                 <TableHead>Priority</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Issued At</TableHead>
@@ -168,10 +183,10 @@ export default function InventoryRequisitionsIndex({
                                                 requisition.requisition_date,
                                             )}
                                         </TableCell>
-                                        <TableCell>
+                                        {/* <TableCell>
                                             {requisition.source_location?.name ??
                                                 '-'}
-                                        </TableCell>
+                                        </TableCell> */}
                                         <TableCell>
                                             {requisition.destination_location
                                                 ?.name ?? '-'}
@@ -214,7 +229,9 @@ export default function InventoryRequisitionsIndex({
                                         colSpan={8}
                                         className="py-10 text-center text-muted-foreground"
                                     >
-                                        No requisitions found.
+                                        {isRequesterWorkspace
+                                            ? 'No requisitions found for this unit.'
+                                            : 'No incoming requisitions found for the main store.'}
                                     </TableCell>
                                 </TableRow>
                             )}

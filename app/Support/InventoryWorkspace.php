@@ -135,7 +135,7 @@ final readonly class InventoryWorkspace
     {
         return match ($this->key) {
             'laboratory', 'pharmacy' => ['requisition' => $requisition],
-            default => ['inventory_requisition' => $requisition],
+            default => ['requisition' => $requisition],
         };
     }
 

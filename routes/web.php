@@ -180,7 +180,9 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
     Route::resource('goods-receipts', GoodsReceiptController::class)->only(['index', 'create', 'store', 'show']);
     Route::post('goods-receipts/{goods_receipt}/post', [GoodsReceiptController::class, 'post'])->name('goods-receipts.post');
-    Route::resource('inventory-requisitions', InventoryRequisitionController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('inventory-requisitions', InventoryRequisitionController::class)
+        ->parameters(['inventory-requisitions' => 'requisition'])
+        ->only(['index', 'create', 'store', 'show']);
     Route::post('inventory-requisitions/{requisition}/submit', [InventoryRequisitionController::class, 'submit'])->name('inventory-requisitions.submit');
     Route::post('inventory-requisitions/{requisition}/approve', [InventoryRequisitionController::class, 'approve'])->name('inventory-requisitions.approve');
     Route::post('inventory-requisitions/{requisition}/reject', [InventoryRequisitionController::class, 'reject'])->name('inventory-requisitions.reject');

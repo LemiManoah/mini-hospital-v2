@@ -39,7 +39,7 @@ final class SupportUserSeeder extends Seeder
             'email_verified_at' => $user->email_verified_at ?? now(),
         ])->save();
 
-        $user->syncRoles(['admin']);
+        $user->syncRoles(['super_admin']);
     }
 
     /**

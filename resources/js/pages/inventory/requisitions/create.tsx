@@ -38,6 +38,11 @@ export default function InventoryRequisitionCreate({
     inventoryItems,
     priorityOptions,
 }: InventoryRequisitionFormPageProps) {
+    const isRequesterWorkspace = navigation.key !== 'inventory';
+    const singleSourceLocation =
+        sourceInventoryLocations.length === 1
+            ? sourceInventoryLocations[0]
+            : null;
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
         {
@@ -51,7 +56,7 @@ export default function InventoryRequisitionCreate({
     ];
 
     const form = useForm({
-        source_inventory_location_id: '',
+        source_inventory_location_id: sourceInventoryLocations[0]?.id ?? '',
         destination_inventory_location_id: '',
         requisition_date: new Date().toISOString().split('T')[0],
         priority: priorityOptions[0]?.value ?? 'routine',
@@ -119,9 +124,9 @@ export default function InventoryRequisitionCreate({
                             {navigation.requisition_create_title}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Request stock from one location to another within
-                            the active branch. The requisition number will be
-                            generated automatically when you save.
+                            {isRequesterWorkspace
+                                ? 'Raise a stock request from this unit to the main store. The requisition stays in draft until you submit it for main store review.'
+                                : 'Create an internal stock request within the active branch. The requisition number will be generated automatically when you save.'}
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -133,19 +138,33 @@ export default function InventoryRequisitionCreate({
                     <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label>Source Location</Label>
-                                <SearchableSelect
-                                    options={sourceLocationOptions}
-                                    value={form.data.source_inventory_location_id}
-                                    onValueChange={(value) =>
-                                        form.setData(
-                                            'source_inventory_location_id',
-                                            value,
-                                        )
-                                    }
-                                    placeholder="Select source location"
-                                    emptyMessage="No locations found."
-                                />
+                                <Label>
+                                    {isRequesterWorkspace
+                                        ? 'Issuing Store'
+                                        : 'Source Location'}
+                                </Label>
+                                {isRequesterWorkspace && singleSourceLocation ? (
+                                    <div className="rounded-md border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">
+                                        {singleSourceLocation.name} (
+                                        {singleSourceLocation.location_code})
+                                    </div>
+                                ) : (
+                                    <SearchableSelect
+                                        options={sourceLocationOptions}
+                                        value={
+                                            form.data
+                                                .source_inventory_location_id
+                                        }
+                                        onValueChange={(value) =>
+                                            form.setData(
+                                                'source_inventory_location_id',
+                                                value,
+                                            )
+                                        }
+                                        placeholder="Select source location"
+                                        emptyMessage="No locations found."
+                                    />
+                                )}
                                 <InputError
                                     message={
                                         form.errors.source_inventory_location_id
@@ -154,7 +173,11 @@ export default function InventoryRequisitionCreate({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label>Destination Location</Label>
+                                <Label>
+                                    {isRequesterWorkspace
+                                        ? 'Requesting Unit'
+                                        : 'Destination Location'}
+                                </Label>
                                 <SearchableSelect
                                     options={destinationLocationOptions.filter(
                                         (location) =>
@@ -244,7 +267,9 @@ export default function InventoryRequisitionCreate({
                                 </h2>
                                 <p className="text-sm text-muted-foreground">
                                     Add each stock item and the quantity needed
-                                    at the destination location.
+                                    {isRequesterWorkspace
+                                        ? ' in this unit so the main store can review and issue it.'
+                                        : ' at the destination location.'}
                                 </p>
                             </div>
                             <Button
@@ -375,7 +400,9 @@ export default function InventoryRequisitionCreate({
                             ) : (
                                 <PlusCircle className="mr-2 h-4 w-4" />
                             )}
-                            Create Requisition
+                            {isRequesterWorkspace
+                                ? 'Save Requisition Draft'
+                                : 'Create Requisition'}
                         </Button>
                         <Button variant="ghost" type="button" asChild>
                             <Link href={navigation.requisitions_href}>

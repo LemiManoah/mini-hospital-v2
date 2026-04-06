@@ -61,6 +61,51 @@ const emptyAllocation = (): AllocationLine => ({
     quantity: '',
 });
 
+const workflowMessage = (
+    status: string | null,
+    isRequesterWorkspace: boolean,
+): string => {
+    if (isRequesterWorkspace) {
+        switch (status) {
+            case 'draft':
+                return 'This requisition is still a draft. Submit it when you are ready for main store review.';
+            case 'submitted':
+                return 'Main store has received this requisition and can now review the requested quantities.';
+            case 'approved':
+                return 'Main store approved this requisition. Stock can now be issued against the approved quantities.';
+            case 'partially_issued':
+                return 'Main store has issued part of this requisition. The remaining approved quantities are still pending.';
+            case 'fulfilled':
+                return 'Main store has fully issued this requisition.';
+            case 'rejected':
+                return 'Main store rejected this requisition. Check the rejection reason before raising another request.';
+            case 'cancelled':
+                return 'This requisition was cancelled and will not move forward.';
+            default:
+                return 'Follow this requisition here as it moves from your unit to the main store workflow.';
+        }
+    }
+
+    switch (status) {
+        case 'submitted':
+            return 'This incoming requisition is ready for main store review. Approve allowed quantities or reject it.';
+        case 'approved':
+            return 'This incoming requisition has been approved and is waiting for stock issue from the main store.';
+        case 'partially_issued':
+            return 'This incoming requisition has been partly issued. Complete the remaining approved quantities when available.';
+        case 'fulfilled':
+            return 'This incoming requisition has been fully issued.';
+        case 'rejected':
+            return 'This incoming requisition has been rejected and closed.';
+        case 'cancelled':
+            return 'This incoming requisition was cancelled before fulfillment.';
+        case 'draft':
+            return 'This requisition is still in draft and has not yet reached the incoming main store queue.';
+        default:
+            return 'Review the request, confirm what the main store can support, then issue available stock.';
+    }
+};
+
 export default function InventoryRequisitionShow({
     navigation,
     requisition,
@@ -80,7 +125,11 @@ export default function InventoryRequisitionShow({
         },
     ];
 
+    const isRequesterWorkspace = navigation.key !== 'inventory';
     const canUpdate = hasPermission('inventory_requisitions.update');
+    const canManageQueue = canUpdate && navigation.key === 'inventory';
+    const canSubmitToMainStore =
+        canUpdate && isRequesterWorkspace && requisition.can_submit;
     const lines = requisition.items ?? [];
     const issueReadyLines = lines.filter((line) => line.remaining_quantity > 0);
 
@@ -196,8 +245,9 @@ export default function InventoryRequisitionShow({
                             {requisition.requisition_number}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {requisition.source_location?.name ?? '-'} to{' '}
-                            {requisition.destination_location?.name ?? '-'}
+                            {isRequesterWorkspace
+                                ? `${requisition.source_location?.name ?? '-'} to ${requisition.destination_location?.name ?? '-'}`
+                                : `Incoming request for ${requisition.destination_location?.name ?? '-'} from ${requisition.source_location?.name ?? '-'} stock`}
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -246,7 +296,9 @@ export default function InventoryRequisitionShow({
                     <div className="mt-4 grid gap-4 border-t pt-4 md:grid-cols-2">
                         <div>
                             <span className="text-sm text-muted-foreground">
-                                Source
+                                {isRequesterWorkspace
+                                    ? 'Source'
+                                    : 'Issuing Store'}
                             </span>
                             <p className="mt-1 font-medium">
                                 {requisition.source_location?.name ?? '-'}
@@ -254,7 +306,9 @@ export default function InventoryRequisitionShow({
                         </div>
                         <div>
                             <span className="text-sm text-muted-foreground">
-                                Destination
+                                {isRequesterWorkspace
+                                    ? 'Destination'
+                                    : 'Requesting Unit'}
                             </span>
                             <p className="mt-1 font-medium">
                                 {requisition.destination_location?.name ?? '-'}
@@ -287,21 +341,41 @@ export default function InventoryRequisitionShow({
                         </div>
                     </div>
 
-                    {canUpdate ? (
-                        <div className="mt-4 space-y-6 border-t pt-4">
-                            {requisition.can_submit ? (
-                                <Button
-                                    size="sm"
-                                    onClick={() =>
-                                        submitForm.post(
-                                            `${navigation.requisitions_href}/${requisition.id}/submit`,
-                                        )
-                                    }
-                                >
-                                    Submit For Approval
-                                </Button>
-                            ) : null}
+                    <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-muted-foreground dark:border-zinc-800 dark:bg-zinc-950/50">
+                        <span className="font-medium text-foreground">
+                            {isRequesterWorkspace
+                                ? 'Main Store Handling'
+                                : 'Incoming Queue Guidance'}
+                        </span>
+                        <p className="mt-1">
+                            {workflowMessage(
+                                requisition.status,
+                                isRequesterWorkspace,
+                            )}
+                        </p>
+                    </div>
 
+                    {canSubmitToMainStore ? (
+                        <div className="mt-4 space-y-3 border-t pt-4">
+                            <p className="text-sm text-muted-foreground">
+                                Submit this draft when it is ready for the main
+                                store to review and issue.
+                            </p>
+                            <Button
+                                size="sm"
+                                onClick={() =>
+                                    submitForm.post(
+                                        `${navigation.requisitions_href}/${requisition.id}/submit`,
+                                    )
+                                }
+                            >
+                                Submit To Main Store
+                            </Button>
+                        </div>
+                    ) : null}
+
+                    {canManageQueue ? (
+                        <div className="mt-4 space-y-6 border-t pt-4">
                             {requisition.can_approve ? (
                                 <form
                                     className="space-y-4"
@@ -314,12 +388,12 @@ export default function InventoryRequisitionShow({
                                 >
                                     <div>
                                         <h2 className="text-lg font-medium">
-                                            Approve Quantities
+                                            Review Requested Quantities
                                         </h2>
                                         <p className="text-sm text-muted-foreground">
-                                            Set the quantity each line is
-                                            allowed to issue from the source
-                                            location.
+                                            Confirm the quantity each line is
+                                            allowed to issue from the main
+                                            store.
                                         </p>
                                     </div>
 
@@ -473,13 +547,12 @@ export default function InventoryRequisitionShow({
                                 >
                                     <div>
                                         <h2 className="text-lg font-medium">
-                                            Issue Stock
+                                            Issue Approved Stock
                                         </h2>
                                         <p className="text-sm text-muted-foreground">
                                             Select the source batches and
-                                            quantities to move from the source
-                                            location to the destination
-                                            location.
+                                            quantities to move from the main
+                                            store into the requesting unit.
                                         </p>
                                     </div>
 
