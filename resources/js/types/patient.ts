@@ -462,7 +462,6 @@ export interface VisitShowPageProps {
     visit: PatientVisit;
     activeTab: string;
     activeClinicalTab: string;
-    availableTransitions: { value: string; label: string }[];
     completionCheck?: VisitCompletionCheck;
     paymentMethods: { value: string; label: string }[];
     triageGrades: { value: string; label: string }[];

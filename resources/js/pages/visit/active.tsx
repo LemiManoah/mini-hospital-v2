@@ -276,15 +276,7 @@ export default function ActiveVisits({
                                                                     </Button>
                                                                 }
                                                             />
-                                                        ) : (
-                                                            <Button
-                                                                size="sm"
-                                                                disabled
-                                                            >
-                                                                Mark In Progress
-                                                                First
-                                                            </Button>
-                                                        )
+                                                        ) : null
                                                     ) : null}
                                                 </div>
                                             </TableCell>

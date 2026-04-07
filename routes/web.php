@@ -258,7 +258,6 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('pharmacy/receipts/{goods_receipt}/post', [GoodsReceiptController::class, 'post'])->name('pharmacy.receipts.post');
     Route::resource('patients.allergies', PatientAllergyController::class);
     Route::post('patients/{patient}/visits', [PatientVisitController::class, 'store'])->name('patients.visits.store');
-    Route::patch('visits/{visit}/mark-in-progress', [PatientVisitController::class, 'markInProgress'])->name('visits.mark-in-progress');
 });
 
 Route::middleware('auth')->group(function (): void {

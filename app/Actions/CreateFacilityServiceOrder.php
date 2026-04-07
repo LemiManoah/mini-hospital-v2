@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\FacilityServiceOrderStatus;
+use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\FacilityServiceOrder;
 use App\Models\PatientVisit;
@@ -14,6 +15,7 @@ final readonly class CreateFacilityServiceOrder
 {
     public function __construct(
         private SyncFacilityServiceOrderCharge $syncFacilityServiceOrderCharge,
+        private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
     public function handle(Consultation|PatientVisit $context, array $data, string $staffId): FacilityServiceOrder
@@ -47,6 +49,7 @@ final readonly class CreateFacilityServiceOrder
         ]);
 
         $this->syncFacilityServiceOrderCharge->handle($order);
+        $this->ensureVisitInProgress($visit);
 
         return $order;
     }
@@ -61,5 +64,12 @@ final readonly class CreateFacilityServiceOrder
         }
 
         return [$context, $context->consultation];
+    }
+
+    private function ensureVisitInProgress(PatientVisit $visit): void
+    {
+        if ($visit->status === VisitStatus::REGISTERED) {
+            $this->transitionStatus->handle($visit, VisitStatus::IN_PROGRESS);
+        }
     }
 }

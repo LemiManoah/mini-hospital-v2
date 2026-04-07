@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\LabRequest;
 use App\Models\LabTestCatalog;
@@ -15,6 +16,7 @@ final readonly class CreateLabRequest
 {
     public function __construct(
         private SyncLabRequestCharge $syncLabRequestCharge,
+        private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
     public function handle(Consultation|PatientVisit $context, array $data, string $staffId): LabRequest
@@ -65,6 +67,7 @@ final readonly class CreateLabRequest
             ]);
 
             $this->syncLabRequestCharge->handle($request);
+            $this->ensureVisitInProgress($visit);
 
             return $request;
         });
@@ -91,5 +94,12 @@ final readonly class CreateLabRequest
         $trimmed = mb_trim($value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function ensureVisitInProgress(PatientVisit $visit): void
+    {
+        if ($visit->status === VisitStatus::REGISTERED) {
+            $this->transitionStatus->handle($visit, VisitStatus::IN_PROGRESS);
+        }
     }
 }

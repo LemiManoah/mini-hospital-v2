@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\InventoryItem;
 use App\Models\PatientVisit;
@@ -13,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class CreatePrescription
 {
+    public function __construct(
+        private TransitionPatientVisitStatus $transitionStatus,
+    ) {}
+
     public function handle(Consultation|PatientVisit $context, array $data, string $staffId): Prescription
     {
         [$visit, $consultation] = $this->resolveContext($context);
@@ -62,10 +67,14 @@ final readonly class CreatePrescription
                 ]);
             }
 
-            return $prescription->loadMissing([
+            $prescription = $prescription->loadMissing([
                 'prescribedBy:id,first_name,last_name',
                 'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form',
             ]);
+
+            $this->ensureVisitInProgress($visit);
+
+            return $prescription;
         });
     }
 
@@ -95,5 +104,12 @@ final readonly class CreatePrescription
         $trimmed = mb_trim($value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function ensureVisitInProgress(PatientVisit $visit): void
+    {
+        if ($visit->status === VisitStatus::REGISTERED) {
+            $this->transitionStatus->handle($visit, VisitStatus::IN_PROGRESS);
+        }
     }
 }

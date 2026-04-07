@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\PatientVisit;
 use Illuminate\Support\Facades\Auth;
 
 final readonly class CreateConsultation
 {
+    public function __construct(
+        private TransitionPatientVisitStatus $transitionStatus,
+    ) {}
+
     public function handle(PatientVisit $visit, array $data): Consultation
     {
         $doctorId = $visit->doctor_id ?? Auth::user()?->staff_id;
@@ -37,6 +42,10 @@ final readonly class CreateConsultation
 
         if ($visit->doctor_id === null && is_string($doctorId) && $doctorId !== '') {
             $visit->update(['doctor_id' => $doctorId]);
+        }
+
+        if ($visit->status === VisitStatus::REGISTERED) {
+            $this->transitionStatus->handle($visit, VisitStatus::IN_PROGRESS);
         }
 
         return $consultation;

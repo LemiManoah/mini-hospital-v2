@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\ImagingRequest;
 use App\Models\PatientVisit;
 
 final readonly class CreateImagingRequest
 {
+    public function __construct(
+        private TransitionPatientVisitStatus $transitionStatus,
+    ) {}
+
     public function handle(Consultation|PatientVisit $context, array $data, string $staffId): ImagingRequest
     {
         [$visit, $consultation] = $this->resolveContext($context);
 
-        return ImagingRequest::query()->create([
+        $request = ImagingRequest::query()->create([
             'visit_id' => $visit->id,
             'consultation_id' => $consultation?->id,
             'requested_by' => $staffId,
@@ -29,6 +34,12 @@ final readonly class CreateImagingRequest
             'contrast_allergy_status' => $this->nullableText($data['contrast_allergy_status'] ?? null),
             'pregnancy_status' => $data['pregnancy_status'] ?? 'unknown',
         ])->loadMissing('requestedBy:id,first_name,last_name');
+
+        if ($visit->status === VisitStatus::REGISTERED) {
+            $this->transitionStatus->handle($visit, VisitStatus::IN_PROGRESS);
+        }
+
+        return $request;
     }
 
     /**

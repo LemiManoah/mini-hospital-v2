@@ -455,10 +455,17 @@ describe('Visit workflow permissions', function (): void {
         [$tenant, $branch, , $clinic] = createPermissionTenant(withBranch: true);
         $user = createPermissionUser($tenant);
         $patient = createPermissionPatient($tenant, $user);
-        $visit = createPermissionVisit($tenant, $patient, $user, $branch, $clinic);
+        $visit = createPermissionVisit(
+            $tenant,
+            $patient,
+            $user,
+            $branch,
+            $clinic,
+            status: VisitStatus::IN_PROGRESS,
+        );
 
         $payload = [
-            'status' => VisitStatus::IN_PROGRESS->value,
+            'status' => VisitStatus::COMPLETED->value,
             'redirect_to' => 'show',
         ];
 
@@ -474,7 +481,7 @@ describe('Visit workflow permissions', function (): void {
         $response->assertRedirectToRoute('visits.show', $visit);
         $response->assertSessionHas('success', 'Visit status updated successfully.');
 
-        expect($visit->fresh()->status)->toBe(VisitStatus::IN_PROGRESS);
+        expect($visit->fresh()->status)->toBe(VisitStatus::COMPLETED);
     });
 
     it('forbids and allows triage creation based on triage.create permission', function (): void {

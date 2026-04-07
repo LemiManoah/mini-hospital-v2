@@ -20,6 +20,27 @@ export function formatDateTime(date: string | null | undefined): string {
     });
 }
 
+export function formatAge(
+    age: number | null | undefined,
+    ageUnits: string | null | undefined,
+): string {
+    if (age === null || age === undefined) {
+        return 'N/A';
+    }
+
+    const unitLabel =
+        {
+            year: 'year',
+            years: 'year',
+            month: 'month',
+            months: 'month',
+            day: 'day',
+            days: 'day',
+        }[ageUnits ?? ''] ?? ageUnits ?? 'unit';
+
+    return `${age} ${unitLabel}${age === 1 ? '' : 's'}`;
+}
+
 export function formatMoney(
     amount: number | string | null | undefined,
 ): string {

@@ -1,7 +1,8 @@
 import { AllergyAlert } from '@/components/allergy-alert';
 import { Button } from '@/components/ui/button';
+import { type PatientVisit } from '@/types/patient';
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, HeartPulse, NotebookPen, UserRound } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { statusClasses } from './visit-show-utils';
 
 function formatDate(date: string | null | undefined): string {
@@ -14,28 +15,7 @@ function formatDate(date: string | null | undefined): string {
 }
 
 type VisitHeaderProps = {
-    visit: {
-        id: string;
-        visit_number: string;
-        visit_type: string;
-        status: string;
-        registered_at: string | null;
-        clinic?: { name?: string | null } | null;
-        doctor?: { first_name: string; last_name: string } | null;
-        patient?: {
-            id: string;
-            first_name: string;
-            middle_name?: string | null;
-            last_name: string;
-            activeAllergies?: Array<{
-                id: string;
-                severity: string;
-                reaction?: string | null;
-                allergen?: { name: string } | null;
-            }> | null;
-        } | null;
-        triage?: object | null;
-    };
+    visit: PatientVisit;
     canViewPatient: boolean;
     canViewTriage: boolean;
     canViewConsultation: boolean;
@@ -109,7 +89,6 @@ export function VisitHeader({
                 {canViewPatient ? (
                     <Button variant="outline" asChild>
                         <Link href={`/patients/${visit.patient?.id}`}>
-                            <UserRound className="mr-2 h-4 w-4" />
                             Patient Profile
                         </Link>
                     </Button>
@@ -117,7 +96,6 @@ export function VisitHeader({
                 {canViewTriage ? (
                     <Button asChild>
                         <Link href={`/triage/${visit.id}`}>
-                            <HeartPulse className="mr-2 h-4 w-4" />
                             {visit.triage ? 'Open Triage Page' : 'Start Triage'}
                         </Link>
                     </Button>
@@ -125,7 +103,6 @@ export function VisitHeader({
                 {visit.triage && canViewConsultation ? (
                     <Button variant="outline" asChild>
                         <Link href={`/doctors/consultations/${visit.id}`}>
-                            <NotebookPen className="mr-2 h-4 w-4" />
                             Open Consultation
                         </Link>
                     </Button>

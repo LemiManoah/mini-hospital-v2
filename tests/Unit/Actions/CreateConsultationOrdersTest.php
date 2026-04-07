@@ -197,6 +197,51 @@ it('creates a lab request with priced items from the consultation context and sy
         ->and((float) $charge->line_total)->toBe(25000.0);
 });
 
+it('moves a registered visit into progress when a visit-level lab request is created', function (): void {
+    $context = seedConsultationContext();
+    $testId = (string) Str::uuid();
+    [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
+
+    DB::table('patient_visits')
+        ->where('id', $context['visit_id'])
+        ->update([
+            'status' => 'registered',
+            'started_at' => null,
+        ]);
+
+    DB::table('lab_test_catalogs')->insert([
+        'id' => $testId,
+        'tenant_id' => $context['tenant_id'],
+        'test_code' => 'CRP',
+        'test_name' => 'C-Reactive Protein',
+        'lab_test_category_id' => $categoryId,
+        'result_type_id' => $resultTypeId,
+        'base_price' => 30000,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    DB::table('lab_test_catalog_specimen_type')->insert([
+        'lab_test_catalog_id' => $testId,
+        'specimen_type_id' => $specimenTypeId,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $visit = \App\Models\PatientVisit::query()->findOrFail($context['visit_id']);
+
+    resolve(CreateLabRequest::class)->handle($visit, [
+        'test_ids' => [$testId],
+        'clinical_notes' => 'Inflammatory marker',
+        'priority' => 'routine',
+        'diagnosis_code' => 'R50',
+        'is_stat' => false,
+    ], $context['staff_id']);
+
+    expect($visit->fresh()->status)->toBe(\App\Enums\VisitStatus::IN_PROGRESS)
+        ->and($visit->fresh()->started_at)->not->toBeNull();
+});
+
 it('uses insurance package prices when syncing lab request charges', function (): void {
     $context = seedConsultationContext('insurance');
     $testId = (string) Str::uuid();

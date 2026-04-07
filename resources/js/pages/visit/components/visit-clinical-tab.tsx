@@ -1,20 +1,10 @@
 import { AllergenModal } from '@/components/allergen-modal';
 import { ImagingOrderModal } from '@/components/orders/imaging-order-modal';
-import { ImagingOrdersTable } from '@/components/orders/imaging-orders-table';
 import { LabOrderModal } from '@/components/orders/lab-order-modal';
-import { LabOrdersTable } from '@/components/orders/lab-orders-table';
 import { PrescriptionOrderModal } from '@/components/orders/prescription-order-modal';
-import { PrescriptionOrdersTable } from '@/components/orders/prescription-orders-table';
 import { ServiceOrderModal } from '@/components/orders/service-order-modal';
-import { ServiceOrdersTable } from '@/components/orders/service-orders-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-    type OrderTabValue,
-    OrderAccessMessage,
-    OrderSectionHeader,
-} from '@/components/visit-ordering';
 import {
     type DrugOption,
     type FacilityServiceOption,
@@ -25,7 +15,6 @@ import {
     type VitalSign,
 } from '@/types/patient';
 import { Link, router } from '@inertiajs/react';
-import { ClipboardPlus, HeartPulse, NotebookPen, Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
     findLabel,
@@ -33,6 +22,7 @@ import {
     triageGradeClasses,
     vitalSummaryItems,
 } from './visit-show-utils';
+import { VisitOrderCenterModal } from './visit-order-center-modal';
 
 type ClinicalTriage = {
     triage_grade: string;
@@ -50,6 +40,7 @@ type ClinicalTriage = {
 type VisitClinicalTabProps = {
     visit: {
         id: string;
+        patient?: { id: string } | null;
         triage?: ClinicalTriage | null;
         consultation?: { completed_at?: string | null } | null;
         labRequests?: LabRequest[] | null;
@@ -74,7 +65,6 @@ type VisitClinicalTabProps = {
     canViewTriage: boolean;
     canViewConsultation: boolean;
     canManageOrders: boolean;
-    activeOrderTab: string;
     labTestOptions: Array<{
         id: string;
         test_code: string;
@@ -96,11 +86,6 @@ type VisitClinicalTabProps = {
     reactionOptions: { value: string; label: string }[];
 };
 
-const toOrderTab = (value: string): OrderTabValue =>
-    ['lab', 'prescriptions', 'imaging', 'services'].includes(value)
-        ? (value as OrderTabValue)
-        : 'lab';
-
 export function VisitClinicalTab({
     visit,
     triage,
@@ -109,7 +94,6 @@ export function VisitClinicalTab({
     canViewTriage,
     canViewConsultation,
     canManageOrders,
-    activeOrderTab,
     labTestOptions,
     drugOptions,
     labPriorities,
@@ -130,10 +114,8 @@ export function VisitClinicalTab({
     const facilityServiceOrders =
         visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
     const isConsultationFinalized = consultation?.completed_at != null;
-    const [selectedOrderTab, setSelectedOrderTab] = useState<OrderTabValue>(
-        toOrderTab(activeOrderTab),
-    );
 
+    const [orderCenterOpen, setOrderCenterOpen] = useState(false);
     const [labModalOpen, setLabModalOpen] = useState(false);
     const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
     const [imagingModalOpen, setImagingModalOpen] = useState(false);
@@ -149,11 +131,40 @@ export function VisitClinicalTab({
     const [editingServiceOrder, setEditingServiceOrder] =
         useState<FacilityServiceOrder | null>(null);
 
-    const openOrderDialog = (tab: OrderTabValue) => {
-        if (tab === 'lab') setLabModalOpen(true);
-        if (tab === 'prescriptions') setPrescriptionModalOpen(true);
-        if (tab === 'imaging') setImagingModalOpen(true);
-        if (tab === 'services') setServiceOrderModalOpen(true);
+    const openOrderDialog = (
+        tab: 'lab' | 'prescriptions' | 'imaging' | 'services',
+    ) => {
+        setOrderCenterOpen(false);
+
+        if (tab === 'lab') {
+            setLabModalOpen(true);
+        }
+
+        if (tab === 'prescriptions') {
+            setPrescriptionModalOpen(true);
+        }
+
+        if (tab === 'imaging') {
+            setImagingModalOpen(true);
+        }
+
+        if (tab === 'services') {
+            setServiceOrderModalOpen(true);
+        }
+    };
+
+    const deleteVisitOrder = (
+        path: string,
+        confirmationMessage: string,
+    ): void => {
+        if (!confirm(confirmationMessage)) {
+            return;
+        }
+
+        router.delete(path, {
+            data: { redirect_to: 'visit' },
+            preserveScroll: true,
+        });
     };
 
     return (
@@ -268,9 +279,8 @@ export function VisitClinicalTab({
                     )}
                     {canViewTriage ? (
                         <div className="flex justify-end">
-                            <Button asChild>
+                            <Button variant="outline" asChild>
                                 <Link href={`/triage/${visit.id}`}>
-                                    <HeartPulse data-icon="inline-start" />
                                     {triage
                                         ? 'Continue in Triage Workspace'
                                         : 'Open Triage Workspace'}
@@ -319,7 +329,6 @@ export function VisitClinicalTab({
                                         <Link
                                             href={`/doctors/consultations/${visit.id}`}
                                         >
-                                            <NotebookPen data-icon="inline-start" />
                                             Continue Consultation
                                         </Link>
                                     </Button>
@@ -339,7 +348,6 @@ export function VisitClinicalTab({
                                         <Link
                                             href={`/doctors/consultations/${visit.id}`}
                                         >
-                                            <ClipboardPlus data-icon="inline-start" />
                                             Open Consultation Workspace
                                         </Link>
                                     </Button>
@@ -351,197 +359,146 @@ export function VisitClinicalTab({
             </Card>
 
             <Card>
-                <OrderSectionHeader
-                    title="Visit Orders"
-                    description="Use the order center to add lab tests, imaging, prescriptions, or services during this visit."
-                    action={
-                        canManageOrders && !isConsultationFinalized ? (
-                            <div className="flex flex-wrap gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setAllergenModalOpen(true)}
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Record Allergy
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openOrderDialog('lab')}
-                                >
-                                    <Plus data-icon="inline-start" />
-                                    Order Lab
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        openOrderDialog('prescriptions')
-                                    }
-                                >
-                                    <Plus data-icon="inline-start" />
-                                    Add Prescription
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openOrderDialog('imaging')}
-                                >
-                                    <Plus data-icon="inline-start" />
-                                    Order Imaging
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openOrderDialog('services')}
-                                >
-                                    <Plus data-icon="inline-start" />
-                                    Order Service
-                                </Button>
-                            </div>
-                        ) : null
-                    }
-                />
-                <CardContent className="space-y-6">
-                    <OrderAccessMessage
-                        canManageOrders={canManageOrders}
-                        isConsultationFinalized={isConsultationFinalized}
-                    />
-
-                    <Tabs
-                        value={selectedOrderTab}
-                        onValueChange={(value) =>
-                            setSelectedOrderTab(value as OrderTabValue)
-                        }
-                        className="space-y-4"
-                    >
-                        <TabsList
-                            variant="line"
-                            className="w-full justify-start"
-                        >
-                            <TabsTrigger value="lab">Lab</TabsTrigger>
-                            <TabsTrigger value="prescriptions">
-                                Prescriptions
-                            </TabsTrigger>
-                            <TabsTrigger value="imaging">Imaging</TabsTrigger>
-                            <TabsTrigger value="services">Services</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="lab">
-                            <LabOrdersTable
-                                labRequests={labRequests}
-                                canManageOrders={
-                                    canManageOrders && !isConsultationFinalized
-                                }
-                                onEdit={(request) => {
-                                    setEditingLabRequest(request);
-                                    setLabModalOpen(true);
-                                }}
-                                onDelete={(request) => {
-                                    if (
-                                        confirm(
-                                            'Are you sure you want to remove this lab request?',
-                                        )
-                                    ) {
-                                        router.delete(
-                                            `/visits/${visit.id}/lab-requests/${request.id}`,
-                                            {
-                                                data: { redirect_to: 'visit' },
-                                                preserveScroll: true,
-                                            },
-                                        );
-                                    }
-                                }}
-                            />
-                        </TabsContent>
-
-                        <TabsContent value="prescriptions">
-                            <PrescriptionOrdersTable
-                                prescriptions={prescriptions}
-                                canManageOrders={
-                                    canManageOrders && !isConsultationFinalized
-                                }
-                                onEdit={(prescription) => {
-                                    setEditingPrescription(prescription);
-                                    setPrescriptionModalOpen(true);
-                                }}
-                                onDelete={(prescription) => {
-                                    if (
-                                        confirm(
-                                            'Are you sure you want to remove this prescription?',
-                                        )
-                                    ) {
-                                        router.delete(
-                                            `/visits/${visit.id}/prescriptions/${prescription.id}`,
-                                            {
-                                                data: { redirect_to: 'visit' },
-                                                preserveScroll: true,
-                                            },
-                                        );
-                                    }
-                                }}
-                            />
-                        </TabsContent>
-
-                        <TabsContent value="imaging">
-                            <ImagingOrdersTable
-                                imagingRequests={imagingRequests}
-                                canManageOrders={
-                                    canManageOrders && !isConsultationFinalized
-                                }
-                                onEdit={(request) => {
-                                    setEditingImagingRequest(request);
-                                    setImagingModalOpen(true);
-                                }}
-                                onDelete={(request) => {
-                                    if (
-                                        confirm(
-                                            'Are you sure you want to remove this imaging request?',
-                                        )
-                                    ) {
-                                        router.delete(
-                                            `/visits/${visit.id}/imaging-requests/${request.id}`,
-                                            {
-                                                data: { redirect_to: 'visit' },
-                                                preserveScroll: true,
-                                            },
-                                        );
-                                    }
-                                }}
-                            />
-                        </TabsContent>
-
-                        <TabsContent value="services">
-                            <ServiceOrdersTable
-                                orders={facilityServiceOrders}
-                                canManageOrders={
-                                    canManageOrders && !isConsultationFinalized
-                                }
-                                onEdit={(order) => {
-                                    setEditingServiceOrder(order);
-                                    setServiceOrderModalOpen(true);
-                                }}
-                                onDelete={(order) => {
-                                    if (
-                                        confirm(
-                                            'Are you sure you want to remove this service order?',
-                                        )
-                                    ) {
-                                        router.delete(
-                                            `/visits/${visit.id}/facility-service-orders/${order.id}`,
-                                            {
-                                                data: { redirect_to: 'visit' },
-                                                preserveScroll: true,
-                                            },
-                                        );
-                                    }
-                                }}
-                            />
-                        </TabsContent>
-                    </Tabs>
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <CardTitle>Order Center</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                            Keep ordering work in one place while the main page
+                            stays focused on the visit itself.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {canManageOrders && !isConsultationFinalized ? (
+                            <Button
+                                variant="outline"
+                                onClick={() => setAllergenModalOpen(true)}
+                            >
+                                Record Allergy
+                            </Button>
+                        ) : null}
+                        <Button onClick={() => setOrderCenterOpen(true)}>
+                            Open Order Center
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-xl border p-4">
+                        <p className="text-sm text-muted-foreground">
+                            Prescriptions
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold">
+                            {prescriptions.length}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Medication orders on this visit.
+                        </p>
+                    </div>
+                    <div className="rounded-xl border p-4">
+                        <p className="text-sm text-muted-foreground">
+                            Laboratory
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold">
+                            {labRequests.length}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Investigation requests recorded so far.
+                        </p>
+                    </div>
+                    <div className="rounded-xl border p-4">
+                        <p className="text-sm text-muted-foreground">
+                            Imaging
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold">
+                            {imagingRequests.length}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Radiology and imaging orders.
+                        </p>
+                    </div>
+                    <div className="rounded-xl border p-4">
+                        <p className="text-sm text-muted-foreground">
+                            Other Services
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold">
+                            {facilityServiceOrders.length}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Service orders linked to this encounter.
+                        </p>
+                    </div>
                 </CardContent>
             </Card>
+
+            <VisitOrderCenterModal
+                open={orderCenterOpen}
+                onOpenChange={setOrderCenterOpen}
+                canManageOrders={canManageOrders}
+                isConsultationFinalized={isConsultationFinalized}
+                labRequests={labRequests}
+                prescriptions={prescriptions}
+                imagingRequests={imagingRequests}
+                serviceOrders={facilityServiceOrders}
+                onRecordAllergy={() => {
+                    setOrderCenterOpen(false);
+                    setAllergenModalOpen(true);
+                }}
+                onOrderLab={() => {
+                    setEditingLabRequest(null);
+                    openOrderDialog('lab');
+                }}
+                onOrderPrescription={() => {
+                    setEditingPrescription(null);
+                    openOrderDialog('prescriptions');
+                }}
+                onOrderImaging={() => {
+                    setEditingImagingRequest(null);
+                    openOrderDialog('imaging');
+                }}
+                onOrderService={() => {
+                    setEditingServiceOrder(null);
+                    openOrderDialog('services');
+                }}
+                onEditLabRequest={(request) => {
+                    setEditingLabRequest(request);
+                    openOrderDialog('lab');
+                }}
+                onDeleteLabRequest={(request) =>
+                    deleteVisitOrder(
+                        `/visits/${visit.id}/lab-requests/${request.id}`,
+                        'Are you sure you want to remove this lab request?',
+                    )
+                }
+                onEditPrescription={(prescription) => {
+                    setEditingPrescription(prescription);
+                    openOrderDialog('prescriptions');
+                }}
+                onDeletePrescription={(prescription) =>
+                    deleteVisitOrder(
+                        `/visits/${visit.id}/prescriptions/${prescription.id}`,
+                        'Are you sure you want to remove this prescription?',
+                    )
+                }
+                onEditImagingRequest={(request) => {
+                    setEditingImagingRequest(request);
+                    openOrderDialog('imaging');
+                }}
+                onDeleteImagingRequest={(request) =>
+                    deleteVisitOrder(
+                        `/visits/${visit.id}/imaging-requests/${request.id}`,
+                        'Are you sure you want to remove this imaging request?',
+                    )
+                }
+                onEditServiceOrder={(order) => {
+                    setEditingServiceOrder(order);
+                    openOrderDialog('services');
+                }}
+                onDeleteServiceOrder={(order) =>
+                    deleteVisitOrder(
+                        `/visits/${visit.id}/facility-service-orders/${order.id}`,
+                        'Are you sure you want to remove this service order?',
+                    )
+                }
+            />
 
             <LabOrderModal
                 open={labModalOpen}

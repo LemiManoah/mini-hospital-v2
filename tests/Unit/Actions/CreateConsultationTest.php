@@ -51,7 +51,7 @@ it('creates a consultation using triage context and the authenticated clinician'
         'patient_id' => $patientId,
         'visit_number' => 'VIS-002',
         'visit_type' => 'outpatient',
-        'status' => 'in_progress',
+        'status' => 'registered',
         'is_emergency' => false,
         'registered_at' => now(),
         'created_at' => now(),
@@ -91,5 +91,7 @@ it('creates a consultation using triage context and the authenticated clinician'
         ->and($consultation->chief_complaint)->toBe('Persistent headache')
         ->and($consultation->assessment)->toBe('Likely migraine')
         ->and($consultation->plan)->toBe('Analgesia and review if symptoms persist')
-        ->and($consultation->started_at)->not->toBeNull();
+        ->and($consultation->started_at)->not->toBeNull()
+        ->and($visit->fresh()->status)->toBe(\App\Enums\VisitStatus::IN_PROGRESS)
+        ->and($visit->fresh()->started_at)->not->toBeNull();
 });

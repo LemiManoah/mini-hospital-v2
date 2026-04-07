@@ -33,7 +33,6 @@ use App\Support\BranchContext;
 use App\Support\VisitOrderOptions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -57,7 +56,7 @@ final readonly class PatientVisitController implements HasMiddleware
         return [
             new Middleware('permission:visits.view', only: ['index', 'show']),
             new Middleware('permission:visits.create', only: ['store']),
-            new Middleware('permission:visits.update', only: ['updateStatus', 'markInProgress']),
+            new Middleware('permission:visits.update', only: ['updateStatus']),
         ];
     }
 
@@ -200,7 +199,6 @@ final readonly class PatientVisitController implements HasMiddleware
             'visit' => $visit,
             'activeTab' => $request->query('tab', 'overview'),
             'activeClinicalTab' => $request->query('clinical_tab', 'lab'),
-            'availableTransitions' => $this->availableTransitions($visit),
             'completionCheck' => $assessment->handle($visit),
             'triageGrades' => $this->enumOptions(TriageGrade::cases()),
             'attendanceTypes' => $this->enumOptions(AttendanceType::cases()),
@@ -363,7 +361,7 @@ final readonly class PatientVisitController implements HasMiddleware
         $this->activeBranchWorkspace->authorizeModel($visit);
 
         $validated = $request->validate([
-            'status' => ['required', Rule::in(['in_progress', 'completed', 'cancelled'])],
+            'status' => ['required', Rule::in(['completed'])],
             'redirect_to' => ['nullable', Rule::in(['show', 'index'])],
         ]);
 
@@ -393,31 +391,14 @@ final readonly class PatientVisitController implements HasMiddleware
         return $this->statusRedirect($visit, $redirectTo)->with('success', 'Visit status updated successfully.');
     }
 
-    public function markInProgress(PatientVisit $visit, TransitionPatientVisitStatus $action): JsonResponse
-    {
-        $this->activeBranchWorkspace->authorizeModel($visit);
-
-        $visit = $action->handle($visit, VisitStatus::IN_PROGRESS);
-
-        return response()->json([
-            'status' => $visit->status->value,
-            'started_at' => $visit->started_at,
-        ]);
-    }
-
     /**
      * @return array<int, array{value: string, label: string}>
      */
     private function availableTransitions(PatientVisit $visit): array
     {
         return match ($visit->status) {
-            VisitStatus::REGISTERED => [
-                ['value' => VisitStatus::IN_PROGRESS->value, 'label' => 'Mark In Progress'],
-                ['value' => VisitStatus::CANCELLED->value, 'label' => 'Cancel Visit'],
-            ],
             VisitStatus::IN_PROGRESS, VisitStatus::AWAITING_PAYMENT => [
                 ['value' => VisitStatus::COMPLETED->value, 'label' => 'Complete Visit'],
-                ['value' => VisitStatus::CANCELLED->value, 'label' => 'Cancel Visit'],
             ],
             default => [],
         };

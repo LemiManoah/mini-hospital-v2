@@ -10,12 +10,10 @@ import { VisitClinicalTab } from './components/visit-clinical-tab';
 import { VisitHeader } from './components/visit-header';
 import { VisitOverviewTab } from './components/visit-overview-tab';
 import { formatDateTime } from './components/visit-show-utils';
-import { VisitSidebar } from './components/visit-sidebar';
 
 export default function VisitShow({
     visit,
     activeTab,
-    activeClinicalTab,
     labTestOptions,
     drugOptions,
     labPriorities,
@@ -24,7 +22,6 @@ export default function VisitShow({
     imagingLateralities,
     pregnancyStatuses,
     facilityServiceOptions,
-    availableTransitions,
     paymentMethods,
     completionCheck,
     triageGrades,
@@ -77,98 +74,73 @@ export default function VisitShow({
                     canPrintSummary={hasPermission('visits.view')}
                 />
 
-                <div className="grid gap-6 lg:grid-cols-[2fr_0.9fr]">
-                    <div className="space-y-6">
-                        <Tabs
-                            value={selectedTab}
-                            onValueChange={setSelectedTab}
-                            className="space-y-4"
-                        >
-                            <TabsList
-                                variant="line"
-                                className="w-full justify-start"
-                            >
-                                <TabsTrigger value="overview">
-                                    Overview
-                                </TabsTrigger>
-                                <TabsTrigger value="clinical">
-                                    Clinical
-                                </TabsTrigger>
-                                <TabsTrigger value="billing">
-                                    Billing
-                                </TabsTrigger>
-                            </TabsList>
+                <Tabs
+                    value={selectedTab}
+                    onValueChange={setSelectedTab}
+                    className="space-y-4"
+                >
+                    <TabsList variant="line" className="w-full justify-start">
+                        <TabsTrigger value="overview">Overview</TabsTrigger>
+                        <TabsTrigger value="clinical">Clinical</TabsTrigger>
+                        <TabsTrigger value="billing">Billing</TabsTrigger>
+                    </TabsList>
 
-                            <TabsContent value="overview" className="space-y-6">
-                                <VisitOverviewTab
-                                    visit={visit}
-                                    timeline={timeline}
-                                />
-                            </TabsContent>
+                    <TabsContent value="overview" className="space-y-6">
+                        <VisitOverviewTab
+                            visit={visit}
+                            timeline={timeline}
+                            completionCheck={completionCheck}
+                            canUpdateVisit={canUpdateVisit}
+                        />
+                    </TabsContent>
 
-                            <TabsContent value="clinical" className="space-y-6">
-                                <VisitClinicalTab
-                                    visit={visit}
-                                    triage={visit.triage}
-                                    consultation={visit.consultation}
-                                    triageGrades={triageGrades}
-                                    canViewTriage={canViewTriage}
-                                    canViewConsultation={canViewConsultation}
-                                    canManageOrders={hasPermission(
-                                        'consultations.update',
-                                    )}
-                                    activeOrderTab={activeClinicalTab}
-                                    labTestOptions={labTestOptions}
-                                    drugOptions={drugOptions}
-                                    labPriorities={labPriorities}
-                                    imagingModalities={imagingModalities}
-                                    imagingPriorities={imagingPriorities}
-                                    imagingLateralities={imagingLateralities}
-                                    pregnancyStatuses={pregnancyStatuses}
-                                    facilityServiceOptions={
-                                        facilityServiceOptions
-                                    }
-                                    allergens={allergens}
-                                    severityOptions={severityOptions}
-                                    reactionOptions={reactionOptions}
-                                />
-                            </TabsContent>
+                    <TabsContent value="clinical" className="space-y-6">
+                        <VisitClinicalTab
+                            visit={visit}
+                            triage={visit.triage}
+                            consultation={visit.consultation}
+                            triageGrades={triageGrades}
+                            canViewTriage={canViewTriage}
+                            canViewConsultation={canViewConsultation}
+                            canManageOrders={hasPermission(
+                                'consultations.update',
+                            )}
+                            labTestOptions={labTestOptions}
+                            drugOptions={drugOptions}
+                            labPriorities={labPriorities}
+                            imagingModalities={imagingModalities}
+                            imagingPriorities={imagingPriorities}
+                            imagingLateralities={imagingLateralities}
+                            pregnancyStatuses={pregnancyStatuses}
+                            facilityServiceOptions={facilityServiceOptions}
+                            allergens={allergens}
+                            severityOptions={severityOptions}
+                            reactionOptions={reactionOptions}
+                        />
+                    </TabsContent>
 
-                            <TabsContent value="billing" className="space-y-6">
-                                <VisitBillingTab
-                                    visitId={visit.id}
-                                    billing={visit.billing}
-                                    charges={visit.charges ?? []}
-                                    payments={
-                                        visit.billing?.payments ??
-                                        visit.payments ??
-                                        []
-                                    }
-                                    canCreatePayment={canCreatePayment}
-                                    paymentMethods={paymentMethods}
-                                    paymentForm={paymentForm.data}
-                                    paymentErrors={paymentForm.errors}
-                                    paymentProcessing={paymentForm.processing}
-                                    onPaymentChange={(field, value) =>
-                                        paymentForm.setData(field, value)
-                                    }
-                                    onPaymentSubmit={() =>
-                                        paymentForm.post(
-                                            `/visits/${visit.id}/payments`,
-                                        )
-                                    }
-                                />
-                            </TabsContent>
-                        </Tabs>
-                    </div>
-
-                    <VisitSidebar
-                        visit={visit}
-                        completionCheck={completionCheck}
-                        canUpdateVisit={canUpdateVisit}
-                        availableTransitions={availableTransitions}
-                    />
-                </div>
+                    <TabsContent value="billing" className="space-y-6">
+                        <VisitBillingTab
+                            visitId={visit.id}
+                            billing={visit.billing}
+                            charges={visit.charges ?? []}
+                            payments={
+                                visit.billing?.payments ?? visit.payments ?? []
+                            }
+                            canCreatePayment={canCreatePayment}
+                            paymentMethods={paymentMethods}
+                            paymentForm={paymentForm.data}
+                            paymentErrors={paymentForm.errors}
+                            paymentProcessing={paymentForm.processing}
+                            onPaymentChange={(field, value) =>
+                                paymentForm.setData(field, value)
+                            }
+                            onPaymentSubmit={() =>
+                                paymentForm.post(`/visits/${visit.id}/payments`)
+                            }
+                        />
+                    </TabsContent>
+                </Tabs>
             </div>
         </AppLayout>
     );
