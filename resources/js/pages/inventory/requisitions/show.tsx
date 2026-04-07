@@ -173,9 +173,20 @@ export default function InventoryRequisitionShow({
                             }
                         </p>
                     </div>
-                    <Button variant="outline" asChild>
-                        <Link href={navigation.requisitions_href}>Back</Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" asChild>
+                            <a
+                                href={`${navigation.requisitions_href}/${requisition.id}/print`}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                Print
+                            </a>
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <Link href={navigation.requisitions_href}>Back</Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <RequisitionSummaryCard

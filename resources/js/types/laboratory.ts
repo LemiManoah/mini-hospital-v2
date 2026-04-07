@@ -4,6 +4,8 @@ export interface LaboratoryPatientSummary {
     first_name: string;
     last_name: string;
     gender?: string | null;
+    age?: number | null;
+    age_units?: string | null;
     phone_number?: string | null;
 }
 
@@ -61,6 +63,9 @@ export interface LaboratoryResultEntry {
     enteredBy?: { id: string; first_name: string; last_name: string } | null;
     reviewedBy?: { id: string; first_name: string; last_name: string } | null;
     approvedBy?: { id: string; first_name: string; last_name: string } | null;
+    entered_by?: { id: string; first_name: string; last_name: string } | null;
+    reviewed_by?: { id: string; first_name: string; last_name: string } | null;
+    approved_by?: { id: string; first_name: string; last_name: string } | null;
     values?: LaboratoryResultValue[] | null;
 }
 

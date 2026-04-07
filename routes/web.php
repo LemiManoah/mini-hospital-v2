@@ -48,6 +48,11 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PatientAllergyController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientVisitController;
+use App\Http\Controllers\Print\LabResultPrintController;
+use App\Http\Controllers\Print\InventoryRequisitionPrintController;
+use App\Http\Controllers\Print\VisitPaymentPrintController;
+use App\Http\Controllers\Print\GoodsReceiptPrintController;
+use App\Http\Controllers\Print\VisitSummaryPrintController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\SpecimenTypeController;
@@ -147,7 +152,9 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('patients/returning', [PatientController::class, 'returning'])->name('patients.returning');
     Route::get('visits', [PatientVisitController::class, 'index'])->name('visits.index');
     Route::get('visits/{visit}', [PatientVisitController::class, 'show'])->name('visits.show');
+    Route::get('visits/{visit}/summary/print', [VisitSummaryPrintController::class, 'show'])->name('visits.summary.print');
     Route::post('visits/{visit}/payments', [VisitPaymentController::class, 'store'])->name('visits.payments.store');
+    Route::get('visits/{visit}/payments/{payment}/print', [VisitPaymentPrintController::class, 'show'])->name('visits.payments.print');
     Route::post('visits/{visit}/lab-requests', [VisitOrderController::class, 'storeLabRequest'])->name('visits.lab-requests.store');
     Route::post('visits/{visit}/imaging-requests', [VisitOrderController::class, 'storeImagingRequest'])->name('visits.imaging-requests.store');
     Route::post('visits/{visit}/prescriptions', [VisitOrderController::class, 'storePrescription'])->name('visits.prescriptions.store');
@@ -180,10 +187,12 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('purchase-orders/{purchase_order}/approve', [PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve');
     Route::post('purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
     Route::resource('goods-receipts', GoodsReceiptController::class)->only(['index', 'create', 'store', 'show']);
+    Route::get('goods-receipts/{goods_receipt}/print', [GoodsReceiptPrintController::class, 'show'])->name('goods-receipts.print');
     Route::post('goods-receipts/{goods_receipt}/post', [GoodsReceiptController::class, 'post'])->name('goods-receipts.post');
     Route::resource('inventory-requisitions', InventoryRequisitionController::class)
         ->parameters(['inventory-requisitions' => 'requisition'])
         ->only(['index', 'show']);
+    Route::get('inventory-requisitions/{requisition}/print', [InventoryRequisitionPrintController::class, 'show'])->name('inventory-requisitions.print');
     Route::post('inventory-requisitions/{requisition}/approve', [InventoryRequisitionController::class, 'approve'])->name('inventory-requisitions.approve');
     Route::post('inventory-requisitions/{requisition}/reject', [InventoryRequisitionController::class, 'reject'])->name('inventory-requisitions.reject');
     Route::post('inventory-requisitions/{requisition}/issue', [InventoryRequisitionController::class, 'issue'])->name('inventory-requisitions.issue');
@@ -207,6 +216,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('laboratory/requisitions/create', [InventoryRequisitionController::class, 'create'])->name('laboratory.requisitions.create');
     Route::post('laboratory/requisitions', [InventoryRequisitionController::class, 'store'])->name('laboratory.requisitions.store');
     Route::get('laboratory/requisitions/{requisition}', [InventoryRequisitionController::class, 'show'])->name('laboratory.requisitions.show');
+    Route::get('laboratory/requisitions/{requisition}/print', [InventoryRequisitionPrintController::class, 'show'])->name('laboratory.requisitions.print');
     Route::post('laboratory/requisitions/{requisition}/submit', [InventoryRequisitionController::class, 'submit'])->name('laboratory.requisitions.submit');
     Route::post('laboratory/requisitions/{requisition}/cancel', [InventoryRequisitionController::class, 'cancel'])->name('laboratory.requisitions.cancel');
     Route::get('laboratory/movements', [InventoryMovementReportController::class, 'index'])->name('laboratory.movements.index');
@@ -214,6 +224,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('laboratory/receipts/create', [GoodsReceiptController::class, 'create'])->name('laboratory.receipts.create');
     Route::post('laboratory/receipts', [GoodsReceiptController::class, 'store'])->name('laboratory.receipts.store');
     Route::get('laboratory/receipts/{goods_receipt}', [GoodsReceiptController::class, 'show'])->name('laboratory.receipts.show');
+    Route::get('laboratory/receipts/{goods_receipt}/print', [GoodsReceiptPrintController::class, 'show'])->name('laboratory.receipts.print');
     Route::post('laboratory/receipts/{goods_receipt}/post', [GoodsReceiptController::class, 'post'])->name('laboratory.receipts.post');
     Route::get('laboratory/incoming-investigations', [LaboratoryQueueController::class, 'incoming'])->name('laboratory.incoming.index');
     Route::get('laboratory/enter-results', [LaboratoryQueueController::class, 'enterResults'])->name('laboratory.enter-results.index');
@@ -227,6 +238,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('laboratory/request-items/{labRequestItem}/results', [LabResultWorkflowController::class, 'store'])->name('laboratory.request-items.results.store');
     Route::post('laboratory/request-items/{labRequestItem}/review', [LabResultWorkflowController::class, 'review'])->name('laboratory.request-items.review');
     Route::post('laboratory/request-items/{labRequestItem}/approve', [LabResultWorkflowController::class, 'approve'])->name('laboratory.request-items.approve');
+    Route::get('laboratory/request-items/{labRequestItem}/print', [LabResultPrintController::class, 'show'])->name('laboratory.request-items.print');
     Route::post('laboratory/request-items/{labRequestItem}/consumables', [LabRequestItemConsumableController::class, 'store'])->name('laboratory.request-items.consumables.store');
     Route::delete('laboratory/request-items/{labRequestItem}/consumables/{labRequestItemConsumable}', [LabRequestItemConsumableController::class, 'destroy'])->name('laboratory.request-items.consumables.destroy');
     Route::get('pharmacy/stock', [InventoryStockByLocationController::class, 'index'])->name('pharmacy.stock.index');
@@ -234,6 +246,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('pharmacy/requisitions/create', [InventoryRequisitionController::class, 'create'])->name('pharmacy.requisitions.create');
     Route::post('pharmacy/requisitions', [InventoryRequisitionController::class, 'store'])->name('pharmacy.requisitions.store');
     Route::get('pharmacy/requisitions/{requisition}', [InventoryRequisitionController::class, 'show'])->name('pharmacy.requisitions.show');
+    Route::get('pharmacy/requisitions/{requisition}/print', [InventoryRequisitionPrintController::class, 'show'])->name('pharmacy.requisitions.print');
     Route::post('pharmacy/requisitions/{requisition}/submit', [InventoryRequisitionController::class, 'submit'])->name('pharmacy.requisitions.submit');
     Route::post('pharmacy/requisitions/{requisition}/cancel', [InventoryRequisitionController::class, 'cancel'])->name('pharmacy.requisitions.cancel');
     Route::get('pharmacy/movements', [InventoryMovementReportController::class, 'index'])->name('pharmacy.movements.index');
@@ -241,6 +254,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('pharmacy/receipts/create', [GoodsReceiptController::class, 'create'])->name('pharmacy.receipts.create');
     Route::post('pharmacy/receipts', [GoodsReceiptController::class, 'store'])->name('pharmacy.receipts.store');
     Route::get('pharmacy/receipts/{goods_receipt}', [GoodsReceiptController::class, 'show'])->name('pharmacy.receipts.show');
+    Route::get('pharmacy/receipts/{goods_receipt}/print', [GoodsReceiptPrintController::class, 'show'])->name('pharmacy.receipts.print');
     Route::post('pharmacy/receipts/{goods_receipt}/post', [GoodsReceiptController::class, 'post'])->name('pharmacy.receipts.post');
     Route::resource('patients.allergies', PatientAllergyController::class);
     Route::post('patients/{patient}/visits', [PatientVisitController::class, 'store'])->name('patients.visits.store');

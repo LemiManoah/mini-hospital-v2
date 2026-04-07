@@ -32,7 +32,9 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import {
     type LaboratoryQueuePageProps,
+    type LaboratoryRequestSummary,
     type LaboratoryRequestItem,
+    type LaboratoryResultEntry,
     type LaboratoryResultValue,
 } from '@/types/laboratory';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
@@ -52,6 +54,29 @@ const actorName = (
     actor?: { first_name: string; last_name: string } | null,
 ): string =>
     actor ? `${actor.first_name} ${actor.last_name}` : 'Not recorded';
+
+const actorFromResultEntry = (
+    resultEntry: LaboratoryResultEntry | null,
+    field: 'enteredBy' | 'reviewedBy' | 'approvedBy',
+    legacyField: 'entered_by' | 'reviewed_by' | 'approved_by',
+): string => actorName(resultEntry?.[field] ?? resultEntry?.[legacyField] ?? null);
+
+const formatPatientAge = (
+    patient?: {
+        age?: number | null;
+        age_units?: string | null;
+    } | null,
+): string => {
+    if (patient?.age === null || patient?.age === undefined) {
+        return 'N/A';
+    }
+
+    const units = patient.age_units
+        ? patient.age_units.replaceAll('_', ' ')
+        : 'years';
+
+    return `${patient.age} ${units}`;
+};
 
 const workflowVariant = (
     workflowStage: string,
@@ -82,6 +107,7 @@ type ModalMode = 'collect' | 'enter' | 'review' | 'view';
 type ActiveModal = {
     mode: ModalMode;
     item: LaboratoryRequestItem;
+    request: LaboratoryRequestSummary | null;
 } | null;
 
 export default function LaboratoryQueuePage({
@@ -127,15 +153,21 @@ export default function LaboratoryQueuePage({
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div className="flex flex-col gap-1">
                         <h1 className="text-2xl font-semibold">{page.title}</h1>
-                        <p className="text-sm text-muted-foreground">
-                            {page.description}
-                        </p>
+                        {page.stage !== 'view_results' ? (
+                            <p className="text-sm text-muted-foreground">
+                                {page.description}
+                            </p>
+                        ) : null}
                     </div>
 
                     <div className="flex flex-col gap-3 sm:flex-row">
-                        <Button variant="outline" asChild>
-                            <Link href="/laboratory/dashboard">Dashboard</Link>
-                        </Button>
+                        {page.stage !== 'view_results' ? (
+                            <Button variant="outline" asChild>
+                                <Link href="/laboratory/dashboard">
+                                    Dashboard
+                                </Link>
+                            </Button>
+                        ) : null}
                         <Input
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
@@ -173,9 +205,15 @@ export default function LaboratoryQueuePage({
                                                     | MRN{' '}
                                                     {patient?.patient_number ??
                                                         'N/A'}{' '}
-                                                    | Requested{' '}
-                                                    {formatDateTime(
-                                                        request.request_date,
+                                                    | Gender{' '}
+                                                    {patient?.gender
+                                                        ? labelize(
+                                                              patient.gender,
+                                                          )
+                                                        : 'N/A'}{' '}
+                                                    | Age{' '}
+                                                    {formatPatientAge(
+                                                        patient,
                                                     )}
                                                 </p>
                                             </div>
@@ -224,10 +262,6 @@ export default function LaboratoryQueuePage({
                                                                 </p>
                                                                 <p className="text-sm text-muted-foreground">
                                                                     {item.test
-                                                                        ?.test_code ??
-                                                                        'N/A'}{' '}
-                                                                    |{' '}
-                                                                    {item.test
                                                                         ?.category ??
                                                                         'Uncategorized'}
                                                                 </p>
@@ -267,6 +301,12 @@ export default function LaboratoryQueuePage({
                                                         <TableCell className="align-top">
                                                             <div className="flex flex-col gap-1 text-sm whitespace-normal text-muted-foreground">
                                                                 <span>
+                                                                    Requested:{' '}
+                                                                    {formatDateTime(
+                                                                        request.request_date,
+                                                                    )}
+                                                                </span>
+                                                                <span>
                                                                     Sample:{' '}
                                                                     {formatDateTime(
                                                                         item
@@ -282,17 +322,18 @@ export default function LaboratoryQueuePage({
                                                                     )}
                                                                 </span>
                                                                 <span>
-                                                                    Review:{' '}
+                                                                    Release:{' '}
                                                                     {formatDateTime(
-                                                                        item.reviewed_at,
+                                                                        item.approved_at,
                                                                     )}
                                                                 </span>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-right align-top">
-                                                            <Button
-                                                                type="button"
-                                                                variant="outline"
+                                                            <div className="flex justify-end gap-2">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
                                                                 onClick={() =>
                                                                     setActiveModal(
                                                                         {
@@ -300,14 +341,32 @@ export default function LaboratoryQueuePage({
                                                                                 page.stage,
                                                                             ),
                                                                             item,
+                                                                            request,
                                                                         },
                                                                     )
                                                                 }
-                                                            >
-                                                                {
-                                                                    page.action_label
-                                                                }
-                                                            </Button>
+                                                                >
+                                                                    {
+                                                                        page.action_label
+                                                                    }
+                                                                </Button>
+                                                                {page.stage ===
+                                                                    'view_results' &&
+                                                                item.result_visible ? (
+                                                                    <Button
+                                                                        type="button"
+                                                                        asChild
+                                                                    >
+                                                                        <a
+                                                                            href={`/laboratory/request-items/${item.id}/print`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                        >
+                                                                            Print
+                                                                        </a>
+                                                                    </Button>
+                                                                ) : null}
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
@@ -408,6 +467,7 @@ function QueueModal({
     ) : (
         <ViewResultDialog
             item={activeModal.item}
+            request={activeModal.request}
             open
             onOpenChange={onOpenChange}
         />
@@ -752,9 +812,9 @@ function ReviewResultDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
                 <DialogHeader>
-                    <DialogTitle>Review Results</DialogTitle>
+                    <DialogTitle>Review and Release Results</DialogTitle>
                     <DialogDescription>
-                        Review the entered result and release it when ready.
+                        Confirm the entered result and release it in one step.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -822,41 +882,21 @@ function ReviewResultDialog({
                     >
                         Close
                     </Button>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            disabled={form.processing}
-                            onClick={() =>
-                                form.post(
-                                    `/laboratory/request-items/${item.id}/review`,
-                                    {
-                                        preserveScroll: true,
-                                        onSuccess: () => onOpenChange(false),
-                                    },
-                                )
-                            }
-                        >
-                            {item.reviewed_at
-                                ? 'Update Review'
-                                : 'Mark Reviewed'}
-                        </Button>
-                        <Button
-                            type="button"
-                            disabled={!item.reviewed_at || form.processing}
-                            onClick={() =>
-                                form.post(
-                                    `/laboratory/request-items/${item.id}/approve`,
-                                    {
-                                        preserveScroll: true,
-                                        onSuccess: () => onOpenChange(false),
-                                    },
-                                )
-                            }
-                        >
-                            Approve and Release
-                        </Button>
-                    </div>
+                    <Button
+                        type="button"
+                        disabled={form.processing}
+                        onClick={() =>
+                            form.post(
+                                `/laboratory/request-items/${item.id}/approve`,
+                                {
+                                    preserveScroll: true,
+                                    onSuccess: () => onOpenChange(false),
+                                },
+                            )
+                        }
+                    >
+                        Review and Release
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -865,15 +905,19 @@ function ReviewResultDialog({
 
 function ViewResultDialog({
     item,
+    request,
     open,
     onOpenChange,
 }: {
     item: LaboratoryRequestItem;
+    request: LaboratoryRequestSummary | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
     const resultEntry = item.resultEntry ?? item.result_entry ?? null;
     const values = resultEntry?.values ?? [];
+    const patient = request?.visit?.patient ?? item.request?.visit?.patient;
+    const visit = request?.visit ?? item.request?.visit;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -886,87 +930,153 @@ function ViewResultDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                    <SummaryCard
-                        label="Specimen"
-                        value={
-                            item.specimen?.specimen_type_name ??
-                            item.test?.specimen_type ??
-                            'Not recorded'
-                        }
-                    />
-                    <SummaryCard
-                        label="Collected At"
-                        value={formatDateTime(item.specimen?.collected_at)}
-                    />
-                    <SummaryCard
-                        label="Entered By"
-                        value={actorName(resultEntry?.enteredBy)}
-                    />
-                    <SummaryCard
-                        label="Reviewed By"
-                        value={actorName(resultEntry?.reviewedBy)}
-                    />
-                    <SummaryCard
-                        label="Approved By"
-                        value={actorName(resultEntry?.approvedBy)}
-                    />
+                <div className="rounded-xl border bg-muted/20">
+                    <div className="border-b px-5 py-4">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="space-y-1">
+                                <p className="text-base font-semibold">
+                                    {patient
+                                        ? `${patient.first_name} ${patient.last_name}`
+                                        : 'Unknown patient'}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    MRN{' '}
+                                    {patient?.patient_number ?? 'N/A'} | Visit{' '}
+                                    {visit?.visit_number ?? 'N/A'}
+                                </p>
+                            </div>
+                            <Badge variant="default">
+                                {labelize(item.workflow_stage)}
+                            </Badge>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-x-6 gap-y-4 px-5 py-4 md:grid-cols-2">
+                        <ResultMetaRow
+                            label="Test"
+                            value={item.test?.test_name ?? 'Lab test'}
+                        />
+                        <ResultMetaRow
+                            label="Accession"
+                            value={
+                                item.specimen?.accession_number ??
+                                'Not assigned'
+                            }
+                        />
+                        <ResultMetaRow
+                            label="Specimen"
+                            value={
+                                item.specimen?.specimen_type_name ??
+                                item.test?.specimen_type ??
+                                'Not recorded'
+                            }
+                        />
+                        <ResultMetaRow
+                            label="Collected At"
+                            value={formatDateTime(item.specimen?.collected_at)}
+                        />
+                        <ResultMetaRow
+                            label="Entered By"
+                            value={actorFromResultEntry(
+                                resultEntry,
+                                'enteredBy',
+                                'entered_by',
+                            )}
+                        />
+                        <ResultMetaRow
+                            label="Reviewed By"
+                            value={actorFromResultEntry(
+                                resultEntry,
+                                'reviewedBy',
+                                'reviewed_by',
+                            )}
+                        />
+                        <ResultMetaRow
+                            label="Approved By"
+                            value={actorFromResultEntry(
+                                resultEntry,
+                                'approvedBy',
+                                'approved_by',
+                            )}
+                        />
+                        <ResultMetaRow
+                            label="Released At"
+                            value={formatDateTime(resultEntry?.released_at)}
+                        />
+                    </div>
                 </div>
 
-                <div className="rounded-lg border p-4">
-                    <p className="font-medium">Reported Values</p>
-                    <div className="mt-4 flex flex-col gap-3">
+                <div className="rounded-xl border">
+                    <div className="border-b px-5 py-3">
+                        <p className="font-medium">Reported Values</p>
+                    </div>
+                    <div className="px-5 py-3">
                         {values.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
                                 No released values were found.
                             </p>
                         ) : (
-                            values.map((value) => (
-                                <div
-                                    key={value.id}
-                                    className="flex items-start justify-between gap-4"
-                                >
-                                    <div className="flex flex-col gap-1">
-                                        <span className="font-medium">
-                                            {value.label}
-                                        </span>
-                                        {value.reference_range ? (
-                                            <span className="text-sm text-muted-foreground">
-                                                Reference:{' '}
-                                                {value.reference_range}
-                                            </span>
-                                        ) : null}
-                                    </div>
-                                    <span className="text-right font-medium">
-                                        {resultValueDisplay(value)}
-                                        {value.unit ? ` ${value.unit}` : ''}
-                                    </span>
-                                </div>
-                            ))
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Parameter</TableHead>
+                                        <TableHead>Result</TableHead>
+                                        <TableHead>Unit</TableHead>
+                                        <TableHead>Reference</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {values.map((value) => (
+                                        <TableRow key={value.id}>
+                                            <TableCell className="font-medium">
+                                                {value.label}
+                                            </TableCell>
+                                            <TableCell>
+                                                {resultValueDisplay(value)}
+                                            </TableCell>
+                                            <TableCell>
+                                                {value.unit ?? '-'}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {value.reference_range ?? '-'}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         )}
                     </div>
                 </div>
 
                 {resultEntry?.result_notes ? (
-                    <SummaryTextCard
+                    <ResultNoteSection
                         label="Bench Notes"
                         value={resultEntry.result_notes}
                     />
                 ) : null}
                 {resultEntry?.review_notes ? (
-                    <SummaryTextCard
+                    <ResultNoteSection
                         label="Review Notes"
                         value={resultEntry.review_notes}
                     />
                 ) : null}
                 {resultEntry?.approval_notes ? (
-                    <SummaryTextCard
+                    <ResultNoteSection
                         label="Release Notes"
                         value={resultEntry.approval_notes}
                     />
                 ) : null}
 
-                <DialogFooter>
+                <DialogFooter className="justify-between sm:justify-between">
+                    <Button type="button" asChild>
+                        <a
+                            href={`/laboratory/request-items/${item.id}/print`}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Print PDF
+                        </a>
+                    </Button>
                     <Button type="button" onClick={() => onOpenChange(false)}>
                         Close
                     </Button>
@@ -976,20 +1086,28 @@ function ViewResultDialog({
     );
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }) {
+function ResultMetaRow({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-lg border p-4">
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="font-medium">{value}</p>
+        <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {label}
+            </p>
+            <p className="text-sm font-medium">{value}</p>
         </div>
     );
 }
 
-function SummaryTextCard({ label, value }: { label: string; value: string }) {
+function ResultNoteSection({
+    label,
+    value,
+}: {
+    label: string;
+    value: string;
+}) {
     return (
-        <div className="rounded-lg border p-4 text-sm">
+        <div className="rounded-xl border px-5 py-4 text-sm">
             <p className="font-medium">{label}</p>
-            <p className="mt-2 text-muted-foreground">{value}</p>
+            <p className="mt-2 leading-6 text-muted-foreground">{value}</p>
         </div>
     );
 }

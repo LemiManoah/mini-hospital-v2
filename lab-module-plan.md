@@ -24,7 +24,6 @@ The biggest remaining gaps are:
 
 - specimen rejection workflow
 - post-release amendment/correction workflow
-- printable released results
 - stronger branch-isolation test coverage
 - a few richer clinician/result-detail presentation pieces
 
@@ -60,7 +59,6 @@ What is not yet fully implemented:
 
 - specimen rejection workflow
 - amendment/correction workflow after release
-- printable released results
 - richer branch-isolation coverage for lab-specific records
 - broader end-to-end test coverage around the remaining gaps
 
@@ -399,14 +397,14 @@ Return verified lab output back into the visit and consultation workflow where i
 - [x] Add released lab result data to visit detail payload
 - [x] Add released lab result data to consultation payload
 - [x] Add clinician-facing lab result UI
-- [ ] Add printable released result view
+- [x] Add printable released result view
 - [x] Add pending vs released state labels
 - [ ] Add dedicated result detail view or drawer
 - [ ] Add tests confirming unreleased results are hidden from clinicians where intended
 
 ### Current Status
 
-Clinicians can already see released results in the visit and consultation workspaces. The remaining work is a dedicated printable output, a richer result-detail presentation layer, and explicit tests proving unreleased work stays hidden.
+Clinicians can already see released results in the visit and consultation workspaces, and released lab results can now be exported as PDF. The remaining work is a richer result-detail presentation layer and explicit tests proving unreleased work stays hidden.
 
 ### Definition Of Done
 
@@ -460,10 +458,9 @@ Permission hooks and focused workflow tests exist, but the branch-isolation matr
 
 1. add specimen rejection flow and tests
 2. add amendment or correction flow for released results
-3. add printable released-result output
-4. add dedicated clinician result-detail presentation
-5. expand branch-isolation tests for requests, specimens, and result records
-6. add clinical enrichment such as abnormal flags and stronger reference range snapshots
+3. add dedicated clinician result-detail presentation
+4. expand branch-isolation tests for requests, specimens, and result records
+5. add clinical enrichment such as abnormal flags and stronger reference range snapshots
 
 ---
 
@@ -471,19 +468,19 @@ Permission hooks and focused workflow tests exist, but the branch-isolation matr
 
 The next implementation step for the lab module should be:
 
-### Build The Amendment And Printable Release Layer
+### Build The Amendment And Result Hardening Layer
 
 Why this is next:
 
 - the core lab workflow is already operational
-- the biggest remaining gaps are now at the safety and output layer, not the intake layer
-- released results need a correction path and printable output before the module feels fully complete in day-to-day hospital use
+- the biggest remaining gaps are now at the safety and hardening layer, not the intake layer
+- released results already have printable PDF output, so the next missing clinical safeguard is amendment/correction and stronger visibility hardening
 
 If only one slice should be taken first, start with:
 
 1. amendment or correction workflow
-2. printable released-result view
-3. branch-isolation tests
+2. branch-isolation tests
+3. richer clinician result-detail presentation
 
 ---
 
@@ -534,6 +531,5 @@ The remaining work is mainly finishing and hardening the workflow:
 
 - specimen rejection
 - amendment or correction after release
-- printable released results
 - richer clinician-facing result presentation
 - broader branch-isolation coverage

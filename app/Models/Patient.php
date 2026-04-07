@@ -58,4 +58,28 @@ final class Patient extends Model
     {
         return $this->hasMany(PatientVisit::class);
     }
+
+    //scopes
+    public function fullname(): string
+    {
+        return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+    }
+
+    public function ageWithUnits(): ?string
+    {
+        if ($this->age === null || $this->age_units === null) {
+            return null;
+        }
+
+        $units = match ($this->age_units) {
+            'year' => 'year(s)',
+            'month' => 'month(s)',
+            'day' => 'day(s)',
+            default => $this->age_units,
+        };
+
+        return "{$this->age} {$units}";
+    }
+
+    
 }

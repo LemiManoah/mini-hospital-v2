@@ -55,6 +55,12 @@ const actorName = (
 ): string =>
     actor ? `${actor.first_name} ${actor.last_name}` : 'Not recorded';
 
+const actorFromResultEntry = (
+    resultEntry: LaboratoryResultEntry | null,
+    field: 'enteredBy' | 'reviewedBy' | 'approvedBy',
+    legacyField: 'entered_by' | 'reviewed_by' | 'approved_by',
+): string => actorName(resultEntry?.[field] ?? resultEntry?.[legacyField] ?? null);
+
 const workflowVariant = (
     workflowStage: string,
 ): 'default' | 'secondary' | 'destructive' | 'outline' => {
@@ -90,10 +96,8 @@ export default function LaboratoryRequestItemShow({
     const variance =
         (labRequestItem.price ?? 0) - (labRequestItem.actual_cost ?? 0);
     const isApproved = labRequestItem.workflow_stage === 'approved';
-    const canReview =
+    const canRelease =
         labRequestItem.workflow_stage === 'result_entered' ||
-        labRequestItem.workflow_stage === 'reviewed';
-    const canApprove =
         labRequestItem.workflow_stage === 'reviewed' ||
         labRequestItem.workflow_stage === 'approved';
 
@@ -127,10 +131,8 @@ export default function LaboratoryRequestItemShow({
         ),
     });
 
-    const reviewForm = useForm({
+    const releaseForm = useForm({
         review_notes: resultEntry?.review_notes ?? '',
-    });
-    const approvalForm = useForm({
         approval_notes: resultEntry?.approval_notes ?? '',
     });
     const consumableForm = useForm({
@@ -196,6 +198,17 @@ export default function LaboratoryRequestItemShow({
                                         Back to Queue
                                     </Link>
                                 </Button>
+                                {labRequestItem.result_visible ? (
+                                    <Button type="button" asChild>
+                                        <a
+                                            href={`/laboratory/request-items/${labRequestItem.id}/print`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            Download PDF Result
+                                        </a>
+                                    </Button>
+                                ) : null}
                                 {labRequestItem.workflow_stage === 'pending' ? (
                                     <Button
                                         type="button"
@@ -463,102 +476,108 @@ export default function LaboratoryRequestItemShow({
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Review and Approval</CardTitle>
+                                <CardTitle>Review and Release</CardTitle>
                                 <CardDescription>
-                                    Approval releases the result for clinicians.
+                                    Review and release the result in one step.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-6">
                                 <form
                                     onSubmit={(event) => {
                                         event.preventDefault();
-                                        reviewForm.post(
-                                            `/laboratory/request-items/${labRequestItem.id}/review`,
-                                            { preserveScroll: true },
-                                        );
-                                    }}
-                                    className="flex flex-col gap-3 rounded-lg border p-4"
-                                >
-                                    <p className="text-sm text-muted-foreground">
-                                        Reviewed by:{' '}
-                                        {actorName(resultEntry?.reviewedBy)} |{' '}
-                                        {formatDateTime(
-                                            resultEntry?.reviewed_at,
-                                        )}
-                                    </p>
-                                    <Textarea
-                                        rows={3}
-                                        value={reviewForm.data.review_notes}
-                                        onChange={(event) =>
-                                            reviewForm.setData(
-                                                'review_notes',
-                                                event.target.value,
-                                            )
-                                        }
-                                        disabled={!canReview || isApproved}
-                                        placeholder="Optional review notes"
-                                    />
-                                    <InputError
-                                        message={reviewForm.errors.review_notes}
-                                    />
-                                    <div className="flex justify-end">
-                                        <Button
-                                            type="submit"
-                                            variant="outline"
-                                            disabled={
-                                                !canReview ||
-                                                isApproved ||
-                                                reviewForm.processing
-                                            }
-                                        >
-                                            Mark as Reviewed
-                                        </Button>
-                                    </div>
-                                </form>
-
-                                <form
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        approvalForm.post(
+                                        releaseForm.post(
                                             `/laboratory/request-items/${labRequestItem.id}/approve`,
                                             { preserveScroll: true },
                                         );
                                     }}
-                                    className="flex flex-col gap-3 rounded-lg border p-4"
+                                    className="flex flex-col gap-4 rounded-lg border p-4"
                                 >
-                                    <p className="text-sm text-muted-foreground">
-                                        Approved by:{' '}
-                                        {actorName(resultEntry?.approvedBy)} |{' '}
-                                        {formatDateTime(
-                                            resultEntry?.approved_at,
-                                        )}
-                                    </p>
-                                    <Textarea
-                                        rows={3}
-                                        value={approvalForm.data.approval_notes}
-                                        onChange={(event) =>
-                                            approvalForm.setData(
-                                                'approval_notes',
-                                                event.target.value,
-                                            )
-                                        }
-                                        disabled={!canApprove}
-                                        placeholder="Optional approval notes"
-                                    />
-                                    <InputError
-                                        message={
-                                            approvalForm.errors.approval_notes
-                                        }
-                                    />
+                                    <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
+                                        <p>
+                                            Reviewed by:{' '}
+                                            {actorFromResultEntry(
+                                                resultEntry,
+                                                'reviewedBy',
+                                                'reviewed_by',
+                                            )}{' '}
+                                            |{' '}
+                                            {formatDateTime(
+                                                resultEntry?.reviewed_at,
+                                            )}
+                                        </p>
+                                        <p>
+                                            Approved by:{' '}
+                                            {actorFromResultEntry(
+                                                resultEntry,
+                                                'approvedBy',
+                                                'approved_by',
+                                            )}{' '}
+                                            |{' '}
+                                            {formatDateTime(
+                                                resultEntry?.approved_at,
+                                            )}
+                                        </p>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="review_notes">
+                                            Review Notes
+                                        </Label>
+                                        <Textarea
+                                            id="review_notes"
+                                            rows={3}
+                                            value={releaseForm.data.review_notes}
+                                            onChange={(event) =>
+                                                releaseForm.setData(
+                                                    'review_notes',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            disabled={!canRelease || isApproved}
+                                            placeholder="Optional review notes"
+                                        />
+                                        <InputError
+                                            message={
+                                                releaseForm.errors.review_notes
+                                            }
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="approval_notes">
+                                            Release Notes
+                                        </Label>
+                                        <Textarea
+                                            id="approval_notes"
+                                            rows={3}
+                                            value={
+                                                releaseForm.data.approval_notes
+                                            }
+                                            onChange={(event) =>
+                                                releaseForm.setData(
+                                                    'approval_notes',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            disabled={!canRelease}
+                                            placeholder="Optional release notes"
+                                        />
+                                        <InputError
+                                            message={
+                                                releaseForm.errors
+                                                    .approval_notes
+                                            }
+                                        />
+                                    </div>
                                     <div className="flex justify-end">
                                         <Button
                                             type="submit"
                                             disabled={
-                                                !canApprove ||
-                                                approvalForm.processing
+                                                !canRelease ||
+                                                releaseForm.processing
                                             }
                                         >
-                                            Approve and Release
+                                            {isApproved
+                                                ? 'Update Release Notes'
+                                                : 'Review and Release'}
                                         </Button>
                                     </div>
                                 </form>

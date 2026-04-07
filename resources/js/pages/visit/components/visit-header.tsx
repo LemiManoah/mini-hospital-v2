@@ -39,6 +39,7 @@ type VisitHeaderProps = {
     canViewPatient: boolean;
     canViewTriage: boolean;
     canViewConsultation: boolean;
+    canPrintSummary?: boolean;
 };
 
 export function VisitHeader({
@@ -46,6 +47,7 @@ export function VisitHeader({
     canViewPatient,
     canViewTriage,
     canViewConsultation,
+    canPrintSummary = false,
 }: VisitHeaderProps) {
     const patientName = [
         visit.patient?.first_name,
@@ -126,6 +128,17 @@ export function VisitHeader({
                             <NotebookPen className="mr-2 h-4 w-4" />
                             Open Consultation
                         </Link>
+                    </Button>
+                ) : null}
+                {canPrintSummary ? (
+                    <Button variant="outline" asChild>
+                        <a
+                            href={`/visits/${visit.id}/summary/print`}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Print Summary
+                        </a>
                     </Button>
                 ) : null}
             </div>

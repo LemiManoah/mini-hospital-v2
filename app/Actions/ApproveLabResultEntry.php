@@ -15,26 +15,30 @@ final readonly class ApproveLabResultEntry
         private SyncLabRequestProgress $syncLabRequestProgress,
     ) {}
 
-    public function handle(LabRequestItem $labRequestItem, string $staffId, ?string $approvalNotes): LabRequestItem
+    public function handle(
+        LabRequestItem $labRequestItem,
+        string $staffId,
+        ?string $reviewNotes,
+        ?string $approvalNotes,
+    ): LabRequestItem
     {
         $resultEntry = $labRequestItem->resultEntry()->first();
 
         if ($resultEntry === null || ! $resultEntry->values()->exists()) {
             throw ValidationException::withMessages([
-                'approve' => 'Enter and review results before approval.',
+                'approve' => 'Enter results before approving and releasing them.',
             ]);
         }
 
-        if ($resultEntry->reviewed_at === null) {
-            throw ValidationException::withMessages([
-                'approve' => 'Review the result before approving it.',
-            ]);
-        }
-
-        return DB::transaction(function () use ($labRequestItem, $resultEntry, $staffId, $approvalNotes): LabRequestItem {
+        return DB::transaction(function () use ($labRequestItem, $resultEntry, $staffId, $reviewNotes, $approvalNotes): LabRequestItem {
             $timestamp = now();
+            $reviewTimestamp = $resultEntry->reviewed_at ?? $timestamp;
+            $reviewerId = $resultEntry->reviewed_by ?? $staffId;
 
             $resultEntry->forceFill([
+                'reviewed_by' => $reviewerId,
+                'reviewed_at' => $reviewTimestamp,
+                'review_notes' => $reviewNotes ?? $resultEntry->review_notes,
                 'approved_by' => $staffId,
                 'approved_at' => $timestamp,
                 'released_by' => $staffId,
@@ -44,6 +48,8 @@ final readonly class ApproveLabResultEntry
 
             $labRequestItem->forceFill([
                 'status' => LabRequestItemStatus::COMPLETED,
+                'reviewed_by' => $reviewerId,
+                'reviewed_at' => $reviewTimestamp,
                 'approved_by' => $staffId,
                 'approved_at' => $timestamp,
                 'completed_at' => $timestamp,

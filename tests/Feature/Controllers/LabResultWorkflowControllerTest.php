@@ -263,6 +263,57 @@ it('stores reviews and approves parameter-panel lab results', function (): void 
             ->has('labRequestItem.result_entry.values', 1));
 });
 
+it('can review and release parameter-panel lab results in one approval step', function (): void {
+    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+
+    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
+    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+            'specimen_type_id' => $specimenType->id,
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.results.store', $requestItem), [
+            'result_notes' => 'Sample quality acceptable.',
+            'parameter_values' => [
+                [
+                    'lab_test_result_parameter_id' => $parameter->id,
+                    'value' => '13.4',
+                ],
+            ],
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.approve', $requestItem), [
+            'review_notes' => 'Reviewed against analyzer output.',
+            'approval_notes' => 'Released to clinician.',
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem)
+        ->assertSessionHas(
+            'success',
+            'Lab results reviewed, approved, and released successfully.',
+        );
+
+    $requestItem->refresh();
+    $resultEntry = DB::table('lab_result_entries')
+        ->where('lab_request_item_id', $requestItem->id)
+        ->first();
+
+    expect($requestItem->reviewed_at)->not()->toBeNull()
+        ->and($requestItem->approved_at)->not()->toBeNull()
+        ->and($requestItem->status->value)->toBe('completed')
+        ->and($requestItem->result_visible)->toBeTrue();
+
+    expect($resultEntry?->reviewed_at)->not()->toBeNull();
+});
+
 it('moves a request item between the incoming and enter-results queues after sample picking', function (): void {
     [$branch, $user, $requestItem] = createLabResultWorkflowContext();
 

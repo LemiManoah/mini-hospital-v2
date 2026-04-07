@@ -54,9 +54,20 @@ export default function GoodsReceiptShow({
                             Supplier: {gr.purchase_order?.supplier?.name ?? '-'}
                         </p>
                     </div>
-                    <Button variant="outline" asChild>
-                        <Link href={navigation.receipts_href}>Back</Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" asChild>
+                            <a
+                                href={`${navigation.receipts_href}/${gr.id}/print`}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                Print
+                            </a>
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <Link href={navigation.receipts_href}>Back</Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">

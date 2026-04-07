@@ -102,9 +102,10 @@ final readonly class LabResultWorkflowController implements HasMiddleware
             fn (string $staffId): LabRequestItem => $action->handle(
                 $labRequestItem,
                 $staffId,
+                $this->nullableText($request->input('review_notes')),
                 $this->nullableText($request->input('approval_notes')),
             ),
-            'Lab results approved and released successfully.',
+            'Lab results reviewed, approved, and released successfully.',
         );
     }
 

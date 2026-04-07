@@ -407,6 +407,24 @@ export function VisitBillingTab({
                                                 {payment.notes}
                                             </p>
                                         ) : null}
+                                        {!payment.is_refund ? (
+                                            <div className="mt-3 flex justify-end">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={`/visits/${visitId}/payments/${payment.id}/print`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        Print Receipt
+                                                    </a>
+                                                </Button>
+                                            </div>
+                                        ) : null}
                                     </div>
                                 ))
                             )}

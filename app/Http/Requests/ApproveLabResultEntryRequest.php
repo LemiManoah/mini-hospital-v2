@@ -16,6 +16,7 @@ final class ApproveLabResultEntryRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'review_notes' => ['nullable', 'string'],
             'approval_notes' => ['nullable', 'string'],
         ];
     }

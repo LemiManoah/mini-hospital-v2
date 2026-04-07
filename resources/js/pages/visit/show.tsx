@@ -74,6 +74,7 @@ export default function VisitShow({
                     canViewPatient={canViewPatient}
                     canViewTriage={canViewTriage}
                     canViewConsultation={canViewConsultation}
+                    canPrintSummary={hasPermission('visits.view')}
                 />
 
                 <div className="grid gap-6 lg:grid-cols-[2fr_0.9fr]">

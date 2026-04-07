@@ -74,7 +74,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
             ->with([
                 'requestedBy:id,first_name,last_name',
                 'visit:id,visit_number,patient_id',
-                'visit.patient:id,patient_number,first_name,last_name,gender,phone_number',
+                'visit.patient:id,patient_number,first_name,last_name,gender,age,age_units,phone_number',
                 'items' => function (HasMany $query) use ($stage): void {
                     $this->applyStageFilter($query, $stage)
                         ->with([
@@ -163,9 +163,9 @@ final readonly class LaboratoryQueueController implements HasMiddleware
             ],
             'review_results' => [
                 'stage' => $stage,
-                'title' => 'Reviewing Results',
-                'description' => 'Review entered results, add review notes, and approve or release them from one focused queue.',
-                'action_label' => 'Review Result',
+                'title' => 'Review and Release Results',
+                'description' => 'Check entered results, add notes, and release them from one focused queue.',
+                'action_label' => 'Review and Release',
                 'route' => '/laboratory/review-results',
             ],
             'view_results' => [
