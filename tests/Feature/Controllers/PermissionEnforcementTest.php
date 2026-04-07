@@ -904,6 +904,7 @@ describe('Appointment action permissions', function (): void {
 
         $user->givePermissionTo('appointments.confirm');
         $user = $user->fresh();
+
         expect($user)->not->toBeNull();
 
         $response = $this->withSession(['active_branch_id' => $branch?->id])

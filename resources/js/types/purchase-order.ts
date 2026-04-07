@@ -67,7 +67,10 @@ export interface PurchaseOrderIndexPageProps {
 
 export interface PurchaseOrderFormPageProps {
     suppliers: Pick<Supplier, 'id' | 'name'>[];
-    inventoryItems: Pick<InventoryItem, 'id' | 'name' | 'generic_name' | 'item_type'>[];
+    inventoryItems: Pick<
+        InventoryItem,
+        'id' | 'name' | 'generic_name' | 'item_type'
+    >[];
 }
 
 export interface PurchaseOrderEditPageProps extends PurchaseOrderFormPageProps {

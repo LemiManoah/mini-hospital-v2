@@ -19,10 +19,8 @@ const billingTypeOptions = [
     { value: 'insurance', label: 'Insurance' },
 ];
 
-const formatDoctorLabel = (doctor: {
-    first_name: string;
-    last_name: string;
-}) => `${doctor.first_name} ${doctor.last_name}`;
+const formatDoctorLabel = (doctor: { first_name: string; last_name: string }) =>
+    `${doctor.first_name} ${doctor.last_name}`;
 
 interface VisitStartDialogProps {
     patientId: string;

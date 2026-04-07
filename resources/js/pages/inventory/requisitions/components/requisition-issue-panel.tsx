@@ -93,8 +93,9 @@ export function RequisitionIssuePanel({
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
                                     Approved:{' '}
-                                    {line.approved_quantity.toFixed(3)} | Issued:{' '}
-                                    {line.issued_quantity.toFixed(3)} | Remaining:{' '}
+                                    {line.approved_quantity.toFixed(3)} |
+                                    Issued: {line.issued_quantity.toFixed(3)} |
+                                    Remaining:{' '}
                                     {line.remaining_quantity.toFixed(3)}
                                 </p>
                             </div>
@@ -141,8 +142,8 @@ export function RequisitionIssuePanel({
                                 <Textarea
                                     rows={2}
                                     value={
-                                        issueForm.data.items[lineIndex]?.notes ??
-                                        ''
+                                        issueForm.data.items[lineIndex]
+                                            ?.notes ?? ''
                                     }
                                     onChange={(event) =>
                                         onIssueLineChange(
@@ -156,7 +157,8 @@ export function RequisitionIssuePanel({
                         </div>
 
                         <div className="mt-4 space-y-3">
-                            {issueForm.data.items[lineIndex]?.allocations.length ? (
+                            {issueForm.data.items[lineIndex]?.allocations
+                                .length ? (
                                 issueForm.data.items[lineIndex].allocations.map(
                                     (allocation, allocationIndex) => (
                                         <div

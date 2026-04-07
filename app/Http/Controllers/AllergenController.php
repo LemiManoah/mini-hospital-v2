@@ -71,14 +71,6 @@ final readonly class AllergenController implements HasMiddleware
         return to_route('allergens.index')->with('success', 'Allergen created successfully.');
     }
 
-    private function allergenOptions(): array
-    {
-        return collect(AllergyType::cases())->map(fn (AllergyType $type): array => [
-            'value' => $type->value,
-            'label' => $type->label(),
-        ])->values()->all();
-    }
-
     public function edit(Allergen $allergen): Response
     {
         return Inertia::render('allergen/edit', [
@@ -98,5 +90,13 @@ final readonly class AllergenController implements HasMiddleware
         $action->handle($allergen);
 
         return to_route('allergens.index')->with('success', 'Allergen deleted successfully.');
+    }
+
+    private function allergenOptions(): array
+    {
+        return collect(AllergyType::cases())->map(fn (AllergyType $type): array => [
+            'value' => $type->value,
+            'label' => $type->label(),
+        ])->values()->all();
     }
 }

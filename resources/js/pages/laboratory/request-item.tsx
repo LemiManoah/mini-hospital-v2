@@ -59,7 +59,8 @@ const actorFromResultEntry = (
     resultEntry: LaboratoryResultEntry | null,
     field: 'enteredBy' | 'reviewedBy' | 'approvedBy',
     legacyField: 'entered_by' | 'reviewed_by' | 'approved_by',
-): string => actorName(resultEntry?.[field] ?? resultEntry?.[legacyField] ?? null);
+): string =>
+    actorName(resultEntry?.[field] ?? resultEntry?.[legacyField] ?? null);
 
 const workflowVariant = (
     workflowStage: string,
@@ -525,7 +526,9 @@ export default function LaboratoryRequestItemShow({
                                         <Textarea
                                             id="review_notes"
                                             rows={3}
-                                            value={releaseForm.data.review_notes}
+                                            value={
+                                                releaseForm.data.review_notes
+                                            }
                                             onChange={(event) =>
                                                 releaseForm.setData(
                                                     'review_notes',

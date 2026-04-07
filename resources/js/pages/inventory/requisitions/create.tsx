@@ -56,8 +56,7 @@ export default function InventoryRequisitionCreate({
     ];
 
     const form = useForm({
-        source_inventory_location_id:
-            fulfillingInventoryLocations[0]?.id ?? '',
+        source_inventory_location_id: fulfillingInventoryLocations[0]?.id ?? '',
         destination_inventory_location_id: '',
         requisition_date: new Date().toISOString().split('T')[0],
         priority: priorityOptions[0]?.value ?? 'routine',
@@ -67,15 +66,15 @@ export default function InventoryRequisitionCreate({
 
     const fulfillingLocationOptions = fulfillingInventoryLocations.map(
         (location) => ({
-        value: location.id,
-        label: `${location.name} (${location.location_code})`,
+            value: location.id,
+            label: `${location.name} (${location.location_code})`,
         }),
     );
 
     const requestingLocationOptions = requestingInventoryLocations.map(
         (location) => ({
-        value: location.id,
-        label: `${location.name} (${location.location_code})`,
+            value: location.id,
+            label: `${location.name} (${location.location_code})`,
         }),
     );
 
@@ -146,7 +145,8 @@ export default function InventoryRequisitionCreate({
                                         ? 'Issuing Store'
                                         : 'Source Location'}
                                 </Label>
-                                {isRequesterWorkspace && singleSourceLocation ? (
+                                {isRequesterWorkspace &&
+                                singleSourceLocation ? (
                                     <div className="rounded-md border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">
                                         {singleSourceLocation.name} (
                                         {singleSourceLocation.location_code})
@@ -203,7 +203,8 @@ export default function InventoryRequisitionCreate({
                                 />
                                 <InputError
                                     message={
-                                        form.errors.destination_inventory_location_id
+                                        form.errors
+                                            .destination_inventory_location_id
                                     }
                                 />
                             </div>
@@ -307,7 +308,9 @@ export default function InventoryRequisitionCreate({
                                             <TableCell className="align-top">
                                                 <SearchableSelect
                                                     options={itemOptions}
-                                                    value={line.inventory_item_id}
+                                                    value={
+                                                        line.inventory_item_id
+                                                    }
                                                     onValueChange={(value) =>
                                                         updateLine(
                                                             index,

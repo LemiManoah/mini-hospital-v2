@@ -32,8 +32,8 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import {
     type LaboratoryQueuePageProps,
-    type LaboratoryRequestSummary,
     type LaboratoryRequestItem,
+    type LaboratoryRequestSummary,
     type LaboratoryResultEntry,
     type LaboratoryResultValue,
 } from '@/types/laboratory';
@@ -59,7 +59,8 @@ const actorFromResultEntry = (
     resultEntry: LaboratoryResultEntry | null,
     field: 'enteredBy' | 'reviewedBy' | 'approvedBy',
     legacyField: 'entered_by' | 'reviewed_by' | 'approved_by',
-): string => actorName(resultEntry?.[field] ?? resultEntry?.[legacyField] ?? null);
+): string =>
+    actorName(resultEntry?.[field] ?? resultEntry?.[legacyField] ?? null);
 
 const formatPatientAge = (
     patient?: {
@@ -188,16 +189,19 @@ export default function LaboratoryQueuePage({
                             const patient = request.visit?.patient;
 
                             return (
-                                <Card key={request.id}>
-                                    <CardHeader className="gap-4">
+                                <Card
+                                    key={request.id}
+                                    className="overflow-hidden border-border/70 shadow-sm"
+                                >
+                                    <CardHeader className="gap-4 border-b bg-muted/15 pb-5">
                                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                                             <div className="flex flex-col gap-1">
-                                                <CardTitle>
+                                                <CardTitle className="text-xl">
                                                     {patient
                                                         ? `${patient.first_name} ${patient.last_name}`
                                                         : 'Unknown patient'}
                                                 </CardTitle>
-                                                <p className="text-sm text-muted-foreground">
+                                                <p className="text-sm leading-6 text-muted-foreground">
                                                     Visit{' '}
                                                     {request.visit
                                                         ?.visit_number ??
@@ -212,12 +216,10 @@ export default function LaboratoryQueuePage({
                                                           )
                                                         : 'N/A'}{' '}
                                                     | Age{' '}
-                                                    {formatPatientAge(
-                                                        patient,
-                                                    )}
+                                                    {formatPatientAge(patient)}
                                                 </p>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-2 lg:max-w-xs lg:justify-end">
                                                 <Badge
                                                     variant={priorityVariant(
                                                         request.priority,
@@ -231,147 +233,185 @@ export default function LaboratoryQueuePage({
                                             </div>
                                         </div>
                                     </CardHeader>
-                                    <CardContent className="flex flex-col gap-4">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Order</TableHead>
-                                                    <TableHead>
-                                                        Specimen
-                                                    </TableHead>
-                                                    <TableHead>
-                                                        Workflow
-                                                    </TableHead>
-                                                    <TableHead>
-                                                        Timeline
-                                                    </TableHead>
-                                                    <TableHead className="text-right">
-                                                        Action
-                                                    </TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {request.items.map((item) => (
-                                                    <TableRow key={item.id}>
-                                                        <TableCell className="align-top">
-                                                            <div className="flex flex-col gap-1 whitespace-normal">
-                                                                <p className="font-medium">
-                                                                    {item.test
-                                                                        ?.test_name ??
-                                                                        'Lab test'}
-                                                                </p>
-                                                                <p className="text-sm text-muted-foreground">
-                                                                    {item.test
-                                                                        ?.category ??
-                                                                        'Uncategorized'}
-                                                                </p>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="align-top">
-                                                            <div className="flex flex-col gap-1 whitespace-normal">
-                                                                <span>
-                                                                    {item
-                                                                        .specimen
-                                                                        ?.specimen_type_name ??
-                                                                        item
-                                                                            .test
-                                                                            ?.specimen_type ??
-                                                                        'Not yet picked'}
-                                                                </span>
-                                                                {item.specimen
-                                                                    ?.outside_sample ? (
-                                                                    <span className="text-xs text-muted-foreground">
-                                                                        Outside
-                                                                        sample
-                                                                    </span>
-                                                                ) : null}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="align-top">
-                                                            <Badge
-                                                                variant={workflowVariant(
-                                                                    item.workflow_stage,
-                                                                )}
-                                                            >
-                                                                {labelize(
-                                                                    item.workflow_stage,
-                                                                )}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="align-top">
-                                                            <div className="flex flex-col gap-1 text-sm whitespace-normal text-muted-foreground">
-                                                                <span>
-                                                                    Requested:{' '}
-                                                                    {formatDateTime(
-                                                                        request.request_date,
-                                                                    )}
-                                                                </span>
-                                                                <span>
-                                                                    Sample:{' '}
-                                                                    {formatDateTime(
-                                                                        item
-                                                                            .specimen
-                                                                            ?.collected_at ??
-                                                                            item.received_at,
-                                                                    )}
-                                                                </span>
-                                                                <span>
-                                                                    Result:{' '}
-                                                                    {formatDateTime(
-                                                                        item.result_entered_at,
-                                                                    )}
-                                                                </span>
-                                                                <span>
-                                                                    Release:{' '}
-                                                                    {formatDateTime(
-                                                                        item.approved_at,
-                                                                    )}
-                                                                </span>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-right align-top">
-                                                            <div className="flex justify-end gap-2">
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="outline"
-                                                                onClick={() =>
-                                                                    setActiveModal(
-                                                                        {
-                                                                            mode: modalModeForStage(
-                                                                                page.stage,
-                                                                            ),
-                                                                            item,
-                                                                            request,
-                                                                        },
-                                                                    )
-                                                                }
-                                                                >
-                                                                    {
-                                                                        page.action_label
-                                                                    }
-                                                                </Button>
-                                                                {page.stage ===
-                                                                    'view_results' &&
-                                                                item.result_visible ? (
-                                                                    <Button
-                                                                        type="button"
-                                                                        asChild
-                                                                    >
-                                                                        <a
-                                                                            href={`/laboratory/request-items/${item.id}/print`}
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                        >
-                                                                            Print
-                                                                        </a>
-                                                                    </Button>
-                                                                ) : null}
-                                                            </div>
-                                                        </TableCell>
+                                    <CardContent className="px-0 py-0">
+                                        <div className="overflow-x-auto">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="px-6 py-4">
+                                                            Order
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Specimen
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Workflow
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Timeline
+                                                        </TableHead>
+                                                        <TableHead className="text-right">
+                                                            Action
+                                                        </TableHead>
                                                     </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {request.items.map(
+                                                        (item) => (
+                                                            <TableRow
+                                                                key={item.id}
+                                                                className="align-top"
+                                                            >
+                                                                <TableCell className="px-6 py-5 align-top">
+                                                                    <div className="flex max-w-sm flex-col gap-2 whitespace-normal">
+                                                                        <p className="text-sm font-semibold">
+                                                                            {item
+                                                                                .test
+                                                                                ?.test_name ??
+                                                                                'Lab test'}
+                                                                        </p>
+                                                                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                                                            <span className="rounded-full bg-muted px-2.5 py-1">
+                                                                                {item
+                                                                                    .test
+                                                                                    ?.category ??
+                                                                                    'Uncategorized'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell className="px-4 py-5 align-top">
+                                                                    <div className="flex min-w-40 flex-col gap-2 whitespace-normal">
+                                                                        <span className="text-sm font-medium">
+                                                                            {item
+                                                                                .specimen
+                                                                                ?.specimen_type_name ??
+                                                                                item
+                                                                                    .test
+                                                                                    ?.specimen_type ??
+                                                                                'Not yet picked'}
+                                                                        </span>
+                                                                        {item
+                                                                            .specimen
+                                                                            ?.outside_sample ? (
+                                                                            <span className="w-fit rounded-full bg-amber-50 px-2.5 py-1 text-xs text-amber-700">
+                                                                                Outside
+                                                                                sample
+                                                                            </span>
+                                                                        ) : null}
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell className="px-4 py-5 align-top">
+                                                                    <div className="flex flex-col gap-2">
+                                                                        <Badge
+                                                                            variant={workflowVariant(
+                                                                                item.workflow_stage,
+                                                                            )}
+                                                                            className="w-fit"
+                                                                        >
+                                                                            {labelize(
+                                                                                item.workflow_stage,
+                                                                            )}
+                                                                        </Badge>
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            {labelize(
+                                                                                item.status,
+                                                                            )}
+                                                                        </span>
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell className="px-4 py-5 align-top">
+                                                                    <div className="grid gap-2 text-sm whitespace-normal text-muted-foreground">
+                                                                        <div className="rounded-lg bg-muted/35 px-3 py-2">
+                                                                            <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
+                                                                                Requested
+                                                                            </span>
+                                                                            <span>
+                                                                                {formatDateTime(
+                                                                                    request.request_date,
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="rounded-lg bg-muted/35 px-3 py-2">
+                                                                            <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
+                                                                                Sample
+                                                                            </span>
+                                                                            <span>
+                                                                                {formatDateTime(
+                                                                                    item
+                                                                                        .specimen
+                                                                                        ?.collected_at ??
+                                                                                        item.received_at,
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="rounded-lg bg-muted/35 px-3 py-2">
+                                                                            <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
+                                                                                Result
+                                                                            </span>
+                                                                            <span>
+                                                                                {formatDateTime(
+                                                                                    item.result_entered_at,
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="rounded-lg bg-muted/35 px-3 py-2">
+                                                                            <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
+                                                                                Release
+                                                                            </span>
+                                                                            <span>
+                                                                                {formatDateTime(
+                                                                                    item.approved_at,
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell className="px-6 py-5 text-right align-top">
+                                                                    <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            onClick={() =>
+                                                                                setActiveModal(
+                                                                                    {
+                                                                                        mode: modalModeForStage(
+                                                                                            page.stage,
+                                                                                        ),
+                                                                                        item,
+                                                                                        request,
+                                                                                    },
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                page.action_label
+                                                                            }
+                                                                        </Button>
+                                                                        {page.stage ===
+                                                                            'view_results' &&
+                                                                        item.result_visible ? (
+                                                                            <Button
+                                                                                type="button"
+                                                                                asChild
+                                                                            >
+                                                                                <a
+                                                                                    href={`/laboratory/request-items/${item.id}/print`}
+                                                                                    target="_blank"
+                                                                                    rel="noreferrer"
+                                                                                >
+                                                                                    Print
+                                                                                </a>
+                                                                            </Button>
+                                                                        ) : null}
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ),
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             );
@@ -940,9 +980,8 @@ function ViewResultDialog({
                                         : 'Unknown patient'}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    MRN{' '}
-                                    {patient?.patient_number ?? 'N/A'} | Visit{' '}
-                                    {visit?.visit_number ?? 'N/A'}
+                                    MRN {patient?.patient_number ?? 'N/A'} |
+                                    Visit {visit?.visit_number ?? 'N/A'}
                                 </p>
                             </div>
                             <Badge variant="default">
@@ -1089,7 +1128,7 @@ function ViewResultDialog({
 function ResultMetaRow({ label, value }: { label: string; value: string }) {
     return (
         <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 {label}
             </p>
             <p className="text-sm font-medium">{value}</p>
@@ -1097,13 +1136,7 @@ function ResultMetaRow({ label, value }: { label: string; value: string }) {
     );
 }
 
-function ResultNoteSection({
-    label,
-    value,
-}: {
-    label: string;
-    value: string;
-}) {
+function ResultNoteSection({ label, value }: { label: string; value: string }) {
     return (
         <div className="rounded-xl border px-5 py-4 text-sm">
             <p className="font-medium">{label}</p>

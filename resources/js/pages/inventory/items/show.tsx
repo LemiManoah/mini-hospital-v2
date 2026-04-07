@@ -29,9 +29,11 @@ const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
     hour12: false,
 });
 
-const formatDate = (value: string): string => dateFormatter.format(new Date(value));
+const formatDate = (value: string): string =>
+    dateFormatter.format(new Date(value));
 
-const formatDateTime = (value: string): string => dateTimeFormatter.format(new Date(value));
+const formatDateTime = (value: string): string =>
+    dateTimeFormatter.format(new Date(value));
 
 export default function InventoryItemShow({
     inventoryItem,
@@ -39,7 +41,10 @@ export default function InventoryItemShow({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Inventory', href: '/inventory/dashboard' },
         { title: 'Items', href: '/inventory-items' },
-        { title: inventoryItem.name, href: `/inventory-items/${inventoryItem.id}` },
+        {
+            title: inventoryItem.name,
+            href: `/inventory-items/${inventoryItem.id}`,
+        },
     ];
 
     const labelize = (value: string | null): string =>
@@ -70,7 +75,9 @@ export default function InventoryItemShow({
                             <Link href="/inventory-items">Back to List</Link>
                         </Button>
                         <Button asChild>
-                            <Link href={`/inventory-items/${inventoryItem.id}/edit`}>
+                            <Link
+                                href={`/inventory-items/${inventoryItem.id}/edit`}
+                            >
                                 Edit Item
                             </Link>
                         </Button>
@@ -103,15 +110,25 @@ export default function InventoryItemShow({
                                 <span className="text-sm font-medium text-muted-foreground">
                                     Manufacturer
                                 </span>
-                                <span>{inventoryItem.manufacturer ?? 'N/A'}</span>
+                                <span>
+                                    {inventoryItem.manufacturer ?? 'N/A'}
+                                </span>
                             </div>
                             <div className="grid grid-cols-2 gap-1 border-b pb-2">
                                 <span className="text-sm font-medium text-muted-foreground">
                                     Status
                                 </span>
                                 <div>
-                                    <Badge variant={inventoryItem.is_active ? 'default' : 'secondary'}>
-                                        {inventoryItem.is_active ? 'Active' : 'Inactive'}
+                                    <Badge
+                                        variant={
+                                            inventoryItem.is_active
+                                                ? 'default'
+                                                : 'secondary'
+                                        }
+                                    >
+                                        {inventoryItem.is_active
+                                            ? 'Active'
+                                            : 'Inactive'}
                                     </Badge>
                                 </div>
                             </div>
@@ -120,7 +137,13 @@ export default function InventoryItemShow({
                                     Expiring
                                 </span>
                                 <div>
-                                    <Badge variant={inventoryItem.expires ? 'default' : 'secondary'}>
+                                    <Badge
+                                        variant={
+                                            inventoryItem.expires
+                                                ? 'default'
+                                                : 'secondary'
+                                        }
+                                    >
                                         {inventoryItem.expires ? 'Yes' : 'No'}
                                     </Badge>
                                 </div>
@@ -149,13 +172,19 @@ export default function InventoryItemShow({
                                 <span className="text-sm font-medium text-muted-foreground">
                                     Default Purchase Price
                                 </span>
-                                <span>{inventoryItem.default_purchase_price ?? 'N/A'}</span>
+                                <span>
+                                    {inventoryItem.default_purchase_price ??
+                                        'N/A'}
+                                </span>
                             </div>
                             <div className="grid grid-cols-2 gap-1">
                                 <span className="text-sm font-medium text-muted-foreground">
                                     Default Selling Price
                                 </span>
-                                <span>{inventoryItem.default_selling_price ?? 'N/A'}</span>
+                                <span>
+                                    {inventoryItem.default_selling_price ??
+                                        'N/A'}
+                                </span>
                             </div>
                         </CardContent>
                     </Card>
@@ -177,7 +206,9 @@ export default function InventoryItemShow({
                                 <span className="text-sm font-medium text-muted-foreground">
                                     Dosage Form
                                 </span>
-                                <span>{labelize(inventoryItem.dosage_form)}</span>
+                                <span>
+                                    {labelize(inventoryItem.dosage_form)}
+                                </span>
                             </div>
                             <div className="grid grid-cols-2 gap-1">
                                 <span className="text-sm font-medium text-muted-foreground">
@@ -200,22 +231,32 @@ export default function InventoryItemShow({
                                     <TableHead>Batch Number</TableHead>
                                     <TableHead>Location</TableHead>
                                     <TableHead>Expiry Date</TableHead>
-                                    <TableHead className="text-right">Unit Cost</TableHead>
-                                    <TableHead className="text-right">Received</TableHead>
+                                    <TableHead className="text-right">
+                                        Unit Cost
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                        Received
+                                    </TableHead>
                                     <TableHead>Received At</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {inventoryItem.batches && inventoryItem.batches.length > 0 ? (
+                                {inventoryItem.batches &&
+                                inventoryItem.batches.length > 0 ? (
                                     inventoryItem.batches.map((batch) => (
                                         <TableRow key={batch.id}>
                                             <TableCell className="font-medium">
                                                 {batch.batch_number ?? 'N/A'}
                                             </TableCell>
-                                            <TableCell>{batch.inventory_location?.name ?? 'N/A'}</TableCell>
+                                            <TableCell>
+                                                {batch.inventory_location
+                                                    ?.name ?? 'N/A'}
+                                            </TableCell>
                                             <TableCell>
                                                 {batch.expiry_date
-                                                    ? formatDate(batch.expiry_date)
+                                                    ? formatDate(
+                                                          batch.expiry_date,
+                                                      )
                                                     : 'Non-expiring'}
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -225,13 +266,18 @@ export default function InventoryItemShow({
                                                 {batch.quantity_received}
                                             </TableCell>
                                             <TableCell>
-                                                {formatDateTime(batch.received_at)}
+                                                {formatDateTime(
+                                                    batch.received_at,
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center text-muted-foreground">
+                                        <TableCell
+                                            colSpan={6}
+                                            className="text-center text-muted-foreground"
+                                        >
                                             No active batches found.
                                         </TableCell>
                                     </TableRow>
@@ -252,37 +298,62 @@ export default function InventoryItemShow({
                                     <TableHead>Date</TableHead>
                                     <TableHead>Type</TableHead>
                                     <TableHead>Location</TableHead>
-                                    <TableHead className="text-right">Quantity</TableHead>
-                                    <TableHead className="text-right">Unit Cost</TableHead>
+                                    <TableHead className="text-right">
+                                        Quantity
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                        Unit Cost
+                                    </TableHead>
                                     <TableHead>Performed By</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {inventoryItem.stock_movements && inventoryItem.stock_movements.length > 0 ? (
-                                    inventoryItem.stock_movements.map((movement) => (
-                                        <TableRow key={movement.id}>
-                                            <TableCell>
-                                                {formatDateTime(movement.occurred_at)}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">
-                                                    {labelize(movement.movement_type)}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>{movement.inventory_location?.name ?? 'N/A'}</TableCell>
-                                            <TableCell className="text-right font-medium">
-                                                {parseFloat(movement.quantity) > 0 ? '+' : ''}
-                                                {movement.quantity}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {movement.unit_cost ?? 'N/A'}
-                                            </TableCell>
-                                            <TableCell>{movement.user?.name ?? 'System'}</TableCell>
-                                        </TableRow>
-                                    ))
+                                {inventoryItem.stock_movements &&
+                                inventoryItem.stock_movements.length > 0 ? (
+                                    inventoryItem.stock_movements.map(
+                                        (movement) => (
+                                            <TableRow key={movement.id}>
+                                                <TableCell>
+                                                    {formatDateTime(
+                                                        movement.occurred_at,
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">
+                                                        {labelize(
+                                                            movement.movement_type,
+                                                        )}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {movement.inventory_location
+                                                        ?.name ?? 'N/A'}
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium">
+                                                    {parseFloat(
+                                                        movement.quantity,
+                                                    ) > 0
+                                                        ? '+'
+                                                        : ''}
+                                                    {movement.quantity}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {movement.unit_cost ??
+                                                        'N/A'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {movement.user?.name ??
+                                                        'System'}
+                                                </TableCell>
+                                            </TableRow>
+                                        ),
+                                    )
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center text-muted-foreground">
+                                        <TableCell
+                                            colSpan={6}
+                                            className="text-center text-muted-foreground"
+                                        >
                                             No stock movements found.
                                         </TableCell>
                                     </TableRow>

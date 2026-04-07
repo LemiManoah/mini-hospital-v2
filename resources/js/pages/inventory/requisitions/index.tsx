@@ -140,7 +140,9 @@ export default function InventoryRequisitionsIndex({
                     {isRequesterWorkspace &&
                     hasPermission('inventory_requisitions.create') ? (
                         <Button asChild>
-                            <Link href={`${navigation.requisitions_href}/create`}>
+                            <Link
+                                href={`${navigation.requisitions_href}/create`}
+                            >
                                 + New Requisition
                             </Link>
                         </Button>
@@ -200,7 +202,8 @@ export default function InventoryRequisitionsIndex({
                                                     requisition.status,
                                                 )}
                                             >
-                                                {requisition.status_label ?? '-'}
+                                                {requisition.status_label ??
+                                                    '-'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>

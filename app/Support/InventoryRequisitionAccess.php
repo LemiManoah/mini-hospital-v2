@@ -100,6 +100,7 @@ final readonly class InventoryRequisitionAccess
         if ($this->inventoryLocationAccess->canFulfillRequisition($user, $requisition, $requisition->branch_id)) {
             return true;
         }
+
         return $user instanceof User && ($user->isSupportUser() || $user->hasAnyRole(['super_admin', 'admin', 'store_keeper']));
     }
 }

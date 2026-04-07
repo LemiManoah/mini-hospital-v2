@@ -7,7 +7,10 @@ namespace Database\Seeders;
 use App\Enums\DrugCategory;
 use App\Enums\DrugDosageForm;
 use App\Enums\InventoryItemType;
+use App\Models\Country;
+use App\Models\FacilityBranch;
 use App\Models\InventoryItem;
+use App\Models\Tenant;
 use App\Models\Unit;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
 use Illuminate\Database\Seeder;
@@ -20,10 +23,10 @@ final class InventoryItemSeeder extends Seeder
     {
         $tenant = $this->cityGeneralTenant();
         $country = $this->ugandaCountry();
-        $creator = $tenant ? $this->cityGeneralRegistrar($tenant) : null;
-        $mainBranch = $tenant ? $this->cityGeneralMainBranch($tenant) : null;
+        $creator = $tenant instanceof Tenant ? $this->cityGeneralRegistrar($tenant) : null;
+        $mainBranch = $tenant instanceof Tenant ? $this->cityGeneralMainBranch($tenant) : null;
 
-        if ($tenant === null || $country === null || $mainBranch === null) {
+        if (! $tenant instanceof Tenant || ! $country instanceof Country || ! $mainBranch instanceof FacilityBranch) {
             return;
         }
 

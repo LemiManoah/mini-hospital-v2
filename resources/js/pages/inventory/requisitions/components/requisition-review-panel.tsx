@@ -162,9 +162,7 @@ export function RequisitionReviewPanel({
                             )
                         }
                     />
-                    <InputError
-                        message={rejectForm.errors.rejection_reason}
-                    />
+                    <InputError message={rejectForm.errors.rejection_reason} />
                     <Button size="sm" variant="destructive" type="submit">
                         Reject Requisition
                     </Button>

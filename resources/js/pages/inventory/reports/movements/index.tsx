@@ -1,3 +1,4 @@
+import { SearchableSelect } from '@/components/searchable-select';
 import { Input } from '@/components/ui/input';
 import {
     Pagination,
@@ -8,7 +9,6 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination';
-import { SearchableSelect } from '@/components/searchable-select';
 import {
     Table,
     TableBody,
@@ -61,13 +61,25 @@ export default function InventoryMovementReportIndex({
                     preserveState: true,
                     preserveScroll: true,
                     replace: true,
-                    only: ['movements', 'filters', 'movementTypes', 'locations'],
+                    only: [
+                        'movements',
+                        'filters',
+                        'movementTypes',
+                        'locations',
+                    ],
                 },
             );
         }, 300);
 
         return () => window.clearTimeout(timeoutId);
-    }, [search, type, location, filters.search, filters.type, filters.location]);
+    }, [
+        search,
+        type,
+        location,
+        filters.search,
+        filters.type,
+        filters.location,
+    ]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -128,22 +140,39 @@ export default function InventoryMovementReportIndex({
                                 <TableHead>Type</TableHead>
                                 <TableHead>Batch</TableHead>
                                 <TableHead>Expiry</TableHead>
-                                <TableHead className="text-right">Quantity</TableHead>
-                                <TableHead className="text-right">Unit Cost</TableHead>
+                                <TableHead className="text-right">
+                                    Quantity
+                                </TableHead>
+                                <TableHead className="text-right">
+                                    Unit Cost
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {movements.data.length > 0 ? (
                                 movements.data.map((movement) => (
                                     <TableRow key={movement.id}>
-                                        <TableCell>{formatDateTime(movement.occurred_at)}</TableCell>
-                                        <TableCell>{movement.item_name ?? '-'}</TableCell>
+                                        <TableCell>
+                                            {formatDateTime(
+                                                movement.occurred_at,
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {movement.item_name ?? '-'}
+                                        </TableCell>
                                         <TableCell>
                                             {movement.location_name ?? '-'}
                                         </TableCell>
-                                        <TableCell>{movement.movement_type_label ?? '-'}</TableCell>
-                                        <TableCell>{movement.batch_number ?? '-'}</TableCell>
-                                        <TableCell>{movement.expiry_date ?? '-'}</TableCell>
+                                        <TableCell>
+                                            {movement.movement_type_label ??
+                                                '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {movement.batch_number ?? '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {movement.expiry_date ?? '-'}
+                                        </TableCell>
                                         <TableCell className="text-right font-medium">
                                             {movement.quantity.toFixed(3)}
                                         </TableCell>
@@ -160,7 +189,8 @@ export default function InventoryMovementReportIndex({
                                         colSpan={8}
                                         className="py-10 text-center text-muted-foreground"
                                     >
-                                        No stock movements found for the current filters.
+                                        No stock movements found for the current
+                                        filters.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -173,7 +203,10 @@ export default function InventoryMovementReportIndex({
                                 <PaginationContent>
                                     <PaginationItem>
                                         <PaginationPrevious
-                                            href={movements.prev_page_url ?? undefined}
+                                            href={
+                                                movements.prev_page_url ??
+                                                undefined
+                                            }
                                         />
                                     </PaginationItem>
                                     {movements.links.map((link, index) => {
@@ -183,7 +216,9 @@ export default function InventoryMovementReportIndex({
 
                                         if (label === '...') {
                                             return (
-                                                <PaginationItem key={`ellipsis-${index}`}>
+                                                <PaginationItem
+                                                    key={`ellipsis-${index}`}
+                                                >
                                                     <PaginationEllipsis />
                                                 </PaginationItem>
                                             );
@@ -193,7 +228,10 @@ export default function InventoryMovementReportIndex({
                                             return (
                                                 <PaginationItem key={label}>
                                                     <PaginationLink
-                                                        href={link.url ?? undefined}
+                                                        href={
+                                                            link.url ??
+                                                            undefined
+                                                        }
                                                         isActive={link.active}
                                                     >
                                                         {label}
@@ -206,7 +244,10 @@ export default function InventoryMovementReportIndex({
                                     })}
                                     <PaginationItem>
                                         <PaginationNext
-                                            href={movements.next_page_url ?? undefined}
+                                            href={
+                                                movements.next_page_url ??
+                                                undefined
+                                            }
                                         />
                                     </PaginationItem>
                                 </PaginationContent>

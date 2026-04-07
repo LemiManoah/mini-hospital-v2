@@ -156,14 +156,16 @@ export default function GoodsReceiptsIndex({
                                         <TableCell>
                                             {gr.inventory_location?.name ?? '-'}
                                         </TableCell>
-                                        <TableCell>{formatDate(gr.receipt_date)}</TableCell>
+                                        <TableCell>
+                                            {formatDate(gr.receipt_date)}
+                                        </TableCell>
                                         <TableCell>
                                             <Badge
                                                 variant={
                                                     gr.status === 'posted'
                                                         ? 'default'
                                                         : gr.status ===
-                                                              'cancelled'
+                                                            'cancelled'
                                                           ? 'destructive'
                                                           : 'secondary'
                                                 }

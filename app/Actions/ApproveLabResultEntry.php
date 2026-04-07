@@ -20,8 +20,7 @@ final readonly class ApproveLabResultEntry
         string $staffId,
         ?string $reviewNotes,
         ?string $approvalNotes,
-    ): LabRequestItem
-    {
+    ): LabRequestItem {
         $resultEntry = $labRequestItem->resultEntry()->first();
 
         if ($resultEntry === null || ! $resultEntry->values()->exists()) {

@@ -33,13 +33,13 @@ const billingTypeOptions = [
     { value: 'insurance', label: 'Insurance' },
 ];
 
-const formatAddressLabel = (address: { city: string; district: string | null }) =>
-    `${address.city}${address.district ? `, ${address.district}` : ''}`;
+const formatAddressLabel = (address: {
+    city: string;
+    district: string | null;
+}) => `${address.city}${address.district ? `, ${address.district}` : ''}`;
 
-const formatDoctorLabel = (doctor: {
-    first_name: string;
-    last_name: string;
-}) => `${doctor.first_name} ${doctor.last_name}`;
+const formatDoctorLabel = (doctor: { first_name: string; last_name: string }) =>
+    `${doctor.first_name} ${doctor.last_name}`;
 
 export default function PatientCreate({
     countries,
@@ -593,7 +593,9 @@ export default function PatientCreate({
                                                 )
                                             }
                                             placeholder="Select billing type"
-                                            invalid={Boolean(errors.billing_type)}
+                                            invalid={Boolean(
+                                                errors.billing_type,
+                                            )}
                                         />
                                         <InputError
                                             message={errors.billing_type}

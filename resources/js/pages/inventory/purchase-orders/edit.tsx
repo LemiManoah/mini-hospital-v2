@@ -3,7 +3,6 @@ import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Table,
     TableBody,
@@ -12,6 +11,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type PurchaseOrderEditPageProps } from '@/types/purchase-order';
@@ -33,7 +33,10 @@ export default function PurchaseOrderEdit({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Inventory', href: '/inventory/dashboard' },
         { title: 'Purchase Orders', href: '/purchase-orders' },
-        { title: `Edit: ${po.order_number}`, href: `/purchase-orders/${po.id}/edit` },
+        {
+            title: `Edit: ${po.order_number}`,
+            href: `/purchase-orders/${po.id}/edit`,
+        },
     ];
 
     const form = useForm({
@@ -72,7 +75,11 @@ export default function PurchaseOrderEdit({
         );
     };
 
-    const updateLine = (index: number, field: keyof LineItem, value: string) => {
+    const updateLine = (
+        index: number,
+        field: keyof LineItem,
+        value: string,
+    ) => {
         const updated = [...form.data.items];
         updated[index] = { ...updated[index], [field]: value };
         form.setData('items', updated);
@@ -92,7 +99,8 @@ export default function PurchaseOrderEdit({
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         form.put(`/purchase-orders/${po.id}`, {
-            onSuccess: () => toast.success('Purchase order updated successfully.'),
+            onSuccess: () =>
+                toast.success('Purchase order updated successfully.'),
         });
     };
 
@@ -110,7 +118,8 @@ export default function PurchaseOrderEdit({
                             Update draft purchase order {po.order_number}.
                         </p>
                         <p className="text-sm text-muted-foreground">
-                            Purchase order numbers are generated automatically and cannot be changed.
+                            Purchase order numbers are generated automatically
+                            and cannot be changed.
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -140,20 +149,34 @@ export default function PurchaseOrderEdit({
                                     id="order_date"
                                     type="date"
                                     value={form.data.order_date}
-                                    onChange={(e) => form.setData('order_date', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'order_date',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                 />
                                 <InputError message={form.errors.order_date} />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="expected_delivery_date">Expected Delivery Date</Label>
+                                <Label htmlFor="expected_delivery_date">
+                                    Expected Delivery Date
+                                </Label>
                                 <Input
                                     id="expected_delivery_date"
                                     type="date"
                                     value={form.data.expected_delivery_date}
-                                    onChange={(e) => form.setData('expected_delivery_date', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'expected_delivery_date',
+                                            e.target.value,
+                                        )
+                                    }
                                 />
-                                <InputError message={form.errors.expected_delivery_date} />
+                                <InputError
+                                    message={form.errors.expected_delivery_date}
+                                />
                             </div>
                             <div className="grid gap-2 md:col-span-2">
                                 <Label htmlFor="notes">Notes</Label>
@@ -161,7 +184,9 @@ export default function PurchaseOrderEdit({
                                     id="notes"
                                     rows={2}
                                     value={form.data.notes}
-                                    onChange={(e) => form.setData('notes', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData('notes', e.target.value)
+                                    }
                                 />
                                 <InputError message={form.errors.notes} />
                             </div>
@@ -171,7 +196,12 @@ export default function PurchaseOrderEdit({
                     <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <div className="mb-4 flex items-center justify-between">
                             <h2 className="text-lg font-medium">Line Items</h2>
-                            <Button type="button" variant="outline" size="sm" onClick={addLine}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={addLine}
+                            >
                                 <PlusCircle className="mr-1 h-4 w-4" />
                                 Add Line
                             </Button>
@@ -182,10 +212,18 @@ export default function PurchaseOrderEdit({
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="min-w-[250px]">Item</TableHead>
-                                        <TableHead className="w-32">Quantity</TableHead>
-                                        <TableHead className="w-32">Unit Cost</TableHead>
-                                        <TableHead className="w-32 text-right">Total</TableHead>
+                                        <TableHead className="min-w-[250px]">
+                                            Item
+                                        </TableHead>
+                                        <TableHead className="w-32">
+                                            Quantity
+                                        </TableHead>
+                                        <TableHead className="w-32">
+                                            Unit Cost
+                                        </TableHead>
+                                        <TableHead className="w-32 text-right">
+                                            Total
+                                        </TableHead>
                                         <TableHead className="w-16" />
                                     </TableRow>
                                 </TableHeader>
@@ -195,8 +233,16 @@ export default function PurchaseOrderEdit({
                                             <TableCell>
                                                 <SearchableSelect
                                                     options={itemOptions}
-                                                    value={line.inventory_item_id}
-                                                    onValueChange={(v) => updateLine(index, 'inventory_item_id', v)}
+                                                    value={
+                                                        line.inventory_item_id
+                                                    }
+                                                    onValueChange={(v) =>
+                                                        updateLine(
+                                                            index,
+                                                            'inventory_item_id',
+                                                            v,
+                                                        )
+                                                    }
                                                     placeholder="Select item"
                                                     emptyMessage="No items found."
                                                 />
@@ -206,8 +252,16 @@ export default function PurchaseOrderEdit({
                                                     type="number"
                                                     step="any"
                                                     min="0"
-                                                    value={line.quantity_ordered}
-                                                    onChange={(e) => updateLine(index, 'quantity_ordered', e.target.value)}
+                                                    value={
+                                                        line.quantity_ordered
+                                                    }
+                                                    onChange={(e) =>
+                                                        updateLine(
+                                                            index,
+                                                            'quantity_ordered',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                 />
                                             </TableCell>
                                             <TableCell>
@@ -216,7 +270,13 @@ export default function PurchaseOrderEdit({
                                                     step="any"
                                                     min="0"
                                                     value={line.unit_cost}
-                                                    onChange={(e) => updateLine(index, 'unit_cost', e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateLine(
+                                                            index,
+                                                            'unit_cost',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                 />
                                             </TableCell>
                                             <TableCell className="text-right font-medium">
@@ -224,7 +284,14 @@ export default function PurchaseOrderEdit({
                                             </TableCell>
                                             <TableCell>
                                                 {form.data.items.length > 1 ? (
-                                                    <Button type="button" variant="ghost" size="sm" onClick={() => removeLine(index)}>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            removeLine(index)
+                                                        }
+                                                    >
                                                         <Trash2 className="h-4 w-4 text-red-500" />
                                                     </Button>
                                                 ) : null}
@@ -237,9 +304,13 @@ export default function PurchaseOrderEdit({
 
                         <div className="mt-4 flex justify-end border-t pt-4">
                             <div className="text-right">
-                                <span className="text-sm text-muted-foreground">Grand Total:</span>
+                                <span className="text-sm text-muted-foreground">
+                                    Grand Total:
+                                </span>
                                 <span className="ml-2 text-lg font-semibold">
-                                    {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    {grandTotal.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                    })}
                                 </span>
                             </div>
                         </div>
@@ -255,7 +326,9 @@ export default function PurchaseOrderEdit({
                             Save Changes
                         </Button>
                         <Button variant="ghost" type="button" asChild>
-                            <Link href={`/purchase-orders/${po.id}`}>Cancel</Link>
+                            <Link href={`/purchase-orders/${po.id}`}>
+                                Cancel
+                            </Link>
                         </Button>
                     </div>
                 </form>

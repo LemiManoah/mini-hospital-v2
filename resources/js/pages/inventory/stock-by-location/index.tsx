@@ -1,4 +1,4 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Input } from '@/components/ui/input';
 import {
     Pagination,
@@ -9,7 +9,6 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination';
-import { SearchableSelect } from '@/components/searchable-select';
 import {
     Table,
     TableBody,
@@ -22,7 +21,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryStockByLocationPageProps } from '@/types/inventory-stock';
 import { Head, router } from '@inertiajs/react';
-import { PackageSearch } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const labelize = (value: string | null): string =>
@@ -186,7 +184,9 @@ export default function InventoryStockByLocationIndex({
                                 <PaginationContent>
                                     <PaginationItem>
                                         <PaginationPrevious
-                                            href={rows.prev_page_url ?? undefined}
+                                            href={
+                                                rows.prev_page_url ?? undefined
+                                            }
                                         />
                                     </PaginationItem>
                                     {rows.links.map((link, index) => {
@@ -209,7 +209,8 @@ export default function InventoryStockByLocationIndex({
                                                 <PaginationItem key={label}>
                                                     <PaginationLink
                                                         href={
-                                                            link.url ?? undefined
+                                                            link.url ??
+                                                            undefined
                                                         }
                                                         isActive={link.active}
                                                     >
@@ -223,7 +224,9 @@ export default function InventoryStockByLocationIndex({
                                     })}
                                     <PaginationItem>
                                         <PaginationNext
-                                            href={rows.next_page_url ?? undefined}
+                                            href={
+                                                rows.next_page_url ?? undefined
+                                            }
                                         />
                                     </PaginationItem>
                                 </PaginationContent>

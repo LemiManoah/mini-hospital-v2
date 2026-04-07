@@ -12,8 +12,8 @@ use App\Models\FacilityBranch;
 use App\Models\InventoryItem;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
-use App\Models\Supplier;
 use App\Models\SubscriptionPackage;
+use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
@@ -116,7 +116,7 @@ it('lists purchase orders for authorized user', function (): void {
         ->get(route('purchase-orders.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/purchase-orders/index')
             ->has('purchaseOrders.data', 1));
 });
@@ -186,6 +186,7 @@ it('submits a draft purchase order', function (): void {
         ->post(route('purchase-orders.submit', $po));
 
     $response->assertRedirect(route('purchase-orders.show', $po));
+
     expect($po->fresh()->status)->toBe(PurchaseOrderStatus::Submitted);
 });
 
@@ -234,6 +235,7 @@ it('cancels a purchase order', function (): void {
         ->post(route('purchase-orders.cancel', $po));
 
     $response->assertRedirect(route('purchase-orders.show', $po));
+
     expect($po->fresh()->status)->toBe(PurchaseOrderStatus::Cancelled);
 });
 
@@ -306,7 +308,7 @@ it('shows a purchase order detail page', function (): void {
         ->get(route('purchase-orders.show', $po));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/purchase-orders/show')
             ->has('purchaseOrder')
             ->where('purchaseOrder.order_number', 'PO-SHOW-001')

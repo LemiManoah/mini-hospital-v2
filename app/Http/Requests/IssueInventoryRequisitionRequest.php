@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Closure;
 use App\Models\InventoryBatch;
 use App\Models\InventoryRequisition;
 use App\Support\InventoryStockLedger;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -70,6 +70,7 @@ final class IssueInventoryRequisitionRequest extends FormRequest
                     if (! is_string($lineId)) {
                         continue;
                     }
+
                     if (! is_numeric($issueQuantity)) {
                         continue;
                     }
@@ -118,6 +119,7 @@ final class IssueInventoryRequisitionRequest extends FormRequest
                         if (! is_string($batchId)) {
                             continue;
                         }
+
                         if (! is_numeric($quantity)) {
                             continue;
                         }

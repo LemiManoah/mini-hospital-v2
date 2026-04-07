@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Enums\GeneralStatus;
 use App\Enums\FacilityLevel;
+use App\Enums\GeneralStatus;
 use App\Enums\StaffType;
 use App\Enums\VisitStatus;
 use App\Models\Appointment;

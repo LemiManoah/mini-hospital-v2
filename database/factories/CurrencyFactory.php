@@ -19,7 +19,7 @@ final class CurrencyFactory extends Factory
     {
         return [
             'code' => fake()->unique()->currencyCode(),
-            'name' => fake()->word() . ' Currency',
+            'name' => fake()->word().' Currency',
             'symbol' => fake()->randomElement(['$', 'USh', 'KSh', 'TSh']),
         ];
     }

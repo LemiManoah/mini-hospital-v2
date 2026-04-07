@@ -27,7 +27,7 @@ return new class extends Migration
             $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUuid('posted_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('posted_at')->nullable();
-              $table->foreignUuid('submitted_by')->nullable()->after('updated_by')->constrained('users')->nullOnDelete();
+            $table->foreignUuid('submitted_by')->nullable()->after('updated_by')->constrained('users')->nullOnDelete();
             $table->timestamp('submitted_at')->nullable()->after('submitted_by');
             $table->foreignUuid('reviewed_by')->nullable()->after('submitted_at')->constrained('users')->nullOnDelete();
             $table->timestamp('reviewed_at')->nullable()->after('reviewed_by');
@@ -55,10 +55,10 @@ return new class extends Migration
             $table->string('batch_number', 100)->nullable();
             $table->date('expiry_date')->nullable();
             $table->text('notes')->nullable();
-             $table->decimal('expected_quantity', 14, 3)->nullable()->after('inventory_batch_id');
+            $table->decimal('expected_quantity', 14, 3)->nullable()->after('inventory_batch_id');
             $table->decimal('actual_quantity', 14, 3)->nullable()->after('expected_quantity');
             $table->decimal('variance_quantity', 14, 3)->nullable()->after('actual_quantity');
-           
+
             $table->timestamps();
 
             $table->index(['stock_reconciliation_id', 'inventory_item_id'], 'stock_reconciliation_items_lookup');

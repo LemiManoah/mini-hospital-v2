@@ -88,7 +88,7 @@ final readonly class InventoryItemController implements HasMiddleware
                         static fn (Builder $builder): Builder => $builder->whereRaw('1 = 0'),
                         static fn (Builder $builder): Builder => $builder->whereIn('inventory_location_id', $locationIds),
                     )
-                    ->orderBy('expiry_date'),
+                    ->oldest('expiry_date'),
                 'stockMovements' => static fn (HasMany $query): HasMany => $query
                     ->with(['inventoryLocation:id,name', 'user:id,name'])
                     ->when(

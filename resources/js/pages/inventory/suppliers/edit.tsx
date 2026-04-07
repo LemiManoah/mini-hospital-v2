@@ -85,9 +85,7 @@ export default function SupplierEdit({ supplier }: SupplierEditPageProps) {
                                             id="email"
                                             name="email"
                                             type="email"
-                                            defaultValue={
-                                                supplier.email ?? ''
-                                            }
+                                            defaultValue={supplier.email ?? ''}
                                         />
                                         <InputError message={errors.email} />
                                     </div>
@@ -96,9 +94,7 @@ export default function SupplierEdit({ supplier }: SupplierEditPageProps) {
                                         <Input
                                             id="phone"
                                             name="phone"
-                                            defaultValue={
-                                                supplier.phone ?? ''
-                                            }
+                                            defaultValue={supplier.phone ?? ''}
                                         />
                                         <InputError message={errors.phone} />
                                     </div>
@@ -107,9 +103,7 @@ export default function SupplierEdit({ supplier }: SupplierEditPageProps) {
                                         <Input
                                             id="tax_id"
                                             name="tax_id"
-                                            defaultValue={
-                                                supplier.tax_id ?? ''
-                                            }
+                                            defaultValue={supplier.tax_id ?? ''}
                                         />
                                         <InputError message={errors.tax_id} />
                                     </div>
@@ -131,9 +125,7 @@ export default function SupplierEdit({ supplier }: SupplierEditPageProps) {
                                             id="notes"
                                             name="notes"
                                             rows={3}
-                                            defaultValue={
-                                                supplier.notes ?? ''
-                                            }
+                                            defaultValue={supplier.notes ?? ''}
                                         />
                                         <InputError message={errors.notes} />
                                     </div>
@@ -164,7 +156,11 @@ export default function SupplierEdit({ supplier }: SupplierEditPageProps) {
                                         )}
                                         Save Changes
                                     </Button>
-                                    <Button variant="ghost" type="button" asChild>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        asChild
+                                    >
                                         <Link href="/suppliers">Cancel</Link>
                                     </Button>
                                 </div>

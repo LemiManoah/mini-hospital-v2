@@ -132,18 +132,14 @@ export function RequisitionSummaryCard({
 
             <div className="mt-4 grid gap-4 border-t pt-4 md:grid-cols-4">
                 <div>
-                    <span className="text-sm text-muted-foreground">
-                        Notes
-                    </span>
+                    <span className="text-sm text-muted-foreground">Notes</span>
                     <p className="mt-1">{requisition.notes ?? '-'}</p>
                 </div>
                 <div>
                     <span className="text-sm text-muted-foreground">
                         Approval Notes
                     </span>
-                    <p className="mt-1">
-                        {requisition.approval_notes ?? '-'}
-                    </p>
+                    <p className="mt-1">{requisition.approval_notes ?? '-'}</p>
                 </div>
                 <div>
                     <span className="text-sm text-muted-foreground">

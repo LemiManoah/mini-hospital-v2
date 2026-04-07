@@ -7,8 +7,8 @@ use App\Enums\GeneralStatus;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
-use App\Models\Supplier;
 use App\Models\SubscriptionPackage;
+use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
@@ -94,7 +94,7 @@ it('lists suppliers for authorized user', function (): void {
         ->get(route('suppliers.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/suppliers/index')
             ->has('suppliers.data', 1));
 });
@@ -163,6 +163,7 @@ it('updates a supplier', function (): void {
         ]);
 
     $response->assertRedirectToRoute('suppliers.index');
+
     expect($supplier->fresh()->name)->toBe('Updated Supplier Name');
 });
 
@@ -196,7 +197,7 @@ it('searches suppliers', function (): void {
         ->get(route('suppliers.index', ['search' => 'Alpha']));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->has('suppliers.data', 1)
             ->where('suppliers.data.0.name', 'Alpha Pharma'));
 });

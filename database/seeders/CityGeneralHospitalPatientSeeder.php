@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\Tenant;
-use App\Models\Country;
 use App\Enums\BloodGroup;
 use App\Enums\Gender;
 use App\Enums\KinRelationship;
 use App\Enums\MaritalStatus;
 use App\Enums\Religion;
+use App\Models\Country;
 use App\Models\Patient;
+use App\Models\Tenant;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
 use Illuminate\Database\Seeder;
 
@@ -24,7 +24,7 @@ final class CityGeneralHospitalPatientSeeder extends Seeder
         $tenant = $this->cityGeneralTenant();
         $country = $this->ugandaCountry();
 
-        if (!$tenant instanceof Tenant || !$country instanceof Country) {
+        if (! $tenant instanceof Tenant || ! $country instanceof Country) {
             return;
         }
 

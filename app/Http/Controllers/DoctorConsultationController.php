@@ -248,5 +248,4 @@ final readonly class DoctorConsultationController implements HasMiddleware
 
         return to_route('doctors.consultations.show', $visit)->with('success', 'Consultation saved successfully.');
     }
-
 }

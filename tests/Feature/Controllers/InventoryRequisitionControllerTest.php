@@ -199,7 +199,7 @@ it('limits pharmacy users to pharmacy requisition destinations and main store so
         ->get(route('pharmacy.requisitions.create'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->where('fulfillingInventoryLocations', [
                 [
                     'id' => $sourceLocation->id,
@@ -253,7 +253,7 @@ it('creates a draft requisition', function (): void {
             ],
         ]);
 
-    $requisition = InventoryRequisition::withoutGlobalScopes()
+    $requisition = InventoryRequisition::query()->withoutGlobalScopes()
         ->latest('created_at')
         ->first();
 
@@ -338,7 +338,7 @@ it('shows only submitted incoming requisitions for the main store queue', functi
         ->get(route('inventory-requisitions.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/requisitions/index')
             ->where('navigation.requisitions_title', 'Incoming Requisitions')
             ->has('requisitions.data', 2)
@@ -373,7 +373,7 @@ it('allows admin users to open an incoming requisition detail page', function ()
         ->get(route('inventory-requisitions.show', $requisition));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/requisitions/show')
             ->where('requisition.fulfilling_location.name', $sourceLocation->name)
             ->where('requisition.requesting_location.name', $destinationLocation->name)
@@ -625,12 +625,12 @@ it('submits approves and partially issues a requisition', function (): void {
         ->and((float) $line->approved_quantity)->toBe(6.0)
         ->and((float) $line->issued_quantity)->toBe(4.0);
 
-    $outbound = StockMovement::withoutGlobalScopes()
+    $outbound = StockMovement::query()->withoutGlobalScopes()
         ->where('source_document_type', InventoryRequisition::class)
         ->where('source_document_id', $requisition->id)
         ->where('movement_type', StockMovementType::RequisitionOut)
         ->first();
-    $inbound = StockMovement::withoutGlobalScopes()
+    $inbound = StockMovement::query()->withoutGlobalScopes()
         ->where('source_document_type', InventoryRequisition::class)
         ->where('source_document_id', $requisition->id)
         ->where('movement_type', StockMovementType::RequisitionIn)
@@ -784,7 +784,7 @@ it('shows only laboratory destinations on the dedicated laboratory requisition c
         ->get(route('laboratory.requisitions.create'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('laboratory/requisitions/create')
             ->where('fulfillingInventoryLocations', [
                 [

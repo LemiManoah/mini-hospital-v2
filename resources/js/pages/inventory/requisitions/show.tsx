@@ -5,10 +5,10 @@ import { type BreadcrumbItem } from '@/types';
 import { type InventoryRequisitionShowPageProps } from '@/types/inventory-requisition';
 import { Head, Link, useForm } from '@inertiajs/react';
 
+import { RequesterActionsPanel } from './components/requester-actions-panel';
 import { RequisitionIssuePanel } from './components/requisition-issue-panel';
 import { RequisitionLinesTable } from './components/requisition-lines-table';
 import { RequisitionReviewPanel } from './components/requisition-review-panel';
-import { RequesterActionsPanel } from './components/requester-actions-panel';
 import { RequisitionSummaryCard } from './components/requisition-summary-card';
 import type {
     AllocationLine,
@@ -169,8 +169,7 @@ export default function InventoryRequisitionShow({
                         <p className="text-sm text-muted-foreground">
                             {isRequesterWorkspace
                                 ? `${requisition.requesting_location?.name ?? '-'} requesting stock from ${requisition.fulfilling_location?.name ?? '-'}`
-                                : `Incoming request from ${requisition.requesting_location?.name ?? '-'} to be fulfilled by ${requisition.fulfilling_location?.name ?? '-'}`
-                            }
+                                : `Incoming request from ${requisition.requesting_location?.name ?? '-'} to be fulfilled by ${requisition.fulfilling_location?.name ?? '-'}`}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -184,7 +183,9 @@ export default function InventoryRequisitionShow({
                             </a>
                         </Button>
                         <Button variant="outline" asChild>
-                            <Link href={navigation.requisitions_href}>Back</Link>
+                            <Link href={navigation.requisitions_href}>
+                                Back
+                            </Link>
                         </Button>
                     </div>
                 </div>

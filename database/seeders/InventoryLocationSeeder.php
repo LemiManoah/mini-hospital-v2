@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Enums\InventoryLocationType;
+use App\Models\FacilityBranch;
 use App\Models\InventoryLocation;
+use App\Models\Tenant;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
 use Illuminate\Database\Seeder;
 
@@ -16,10 +18,10 @@ final class InventoryLocationSeeder extends Seeder
     public function run(): void
     {
         $tenant = $this->cityGeneralTenant();
-        $creator = $tenant ? $this->cityGeneralRegistrar($tenant) : null;
-        $mainBranch = $tenant ? $this->cityGeneralMainBranch($tenant) : null;
+        $creator = $tenant instanceof Tenant ? $this->cityGeneralRegistrar($tenant) : null;
+        $mainBranch = $tenant instanceof Tenant ? $this->cityGeneralMainBranch($tenant) : null;
 
-        if ($tenant === null || $mainBranch === null) {
+        if (! $tenant instanceof Tenant || ! $mainBranch instanceof FacilityBranch) {
             return;
         }
 

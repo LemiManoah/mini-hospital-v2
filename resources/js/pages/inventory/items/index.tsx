@@ -49,7 +49,9 @@ export default function InventoryItemsIndex({
     itemTypes,
 }: InventoryItemIndexPageProps) {
     const { hasPermission } = usePermissions();
-    const rows: InventoryItem[] = Array.isArray(items) ? items : (items.data ?? []);
+    const rows: InventoryItem[] = Array.isArray(items)
+        ? items
+        : (items.data ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
     const [type, setType] = useState(filters.type ?? 'all');
 
@@ -180,8 +182,14 @@ export default function InventoryItemsIndex({
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
                                             <div className="flex flex-col">
-                                                <span>Min: {item.minimum_stock_level}</span>
-                                                <span>Reorder: {item.reorder_level}</span>
+                                                <span>
+                                                    Min:{' '}
+                                                    {item.minimum_stock_level}
+                                                </span>
+                                                <span>
+                                                    Reorder:{' '}
+                                                    {item.reorder_level}
+                                                </span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -273,7 +281,9 @@ export default function InventoryItemsIndex({
                                 <PaginationContent>
                                     <PaginationItem>
                                         <PaginationPrevious
-                                            href={items.prev_page_url ?? undefined}
+                                            href={
+                                                items.prev_page_url ?? undefined
+                                            }
                                         />
                                     </PaginationItem>
                                     {items.links.map((link, idx) => {
@@ -295,7 +305,10 @@ export default function InventoryItemsIndex({
                                             return (
                                                 <PaginationItem key={label}>
                                                     <PaginationLink
-                                                        href={link.url ?? undefined}
+                                                        href={
+                                                            link.url ??
+                                                            undefined
+                                                        }
                                                         isActive={link.active}
                                                     >
                                                         {label}
@@ -308,7 +321,9 @@ export default function InventoryItemsIndex({
                                     })}
                                     <PaginationItem>
                                         <PaginationNext
-                                            href={items.next_page_url ?? undefined}
+                                            href={
+                                                items.next_page_url ?? undefined
+                                            }
                                         />
                                     </PaginationItem>
                                 </PaginationContent>

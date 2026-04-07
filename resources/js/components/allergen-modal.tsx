@@ -129,9 +129,7 @@ export function AllergenModal({
                                 }
                                 placeholder="Select an allergen"
                                 emptyMessage="No allergens available."
-                                invalid={Boolean(
-                                    assignForm.errors.allergen_id,
-                                )}
+                                invalid={Boolean(assignForm.errors.allergen_id)}
                             />
                             <InputError
                                 message={assignForm.errors.allergen_id}
@@ -149,7 +147,9 @@ export function AllergenModal({
                                         assignForm.setData('severity', value)
                                     }
                                     placeholder="Select severity"
-                                    invalid={Boolean(assignForm.errors.severity)}
+                                    invalid={Boolean(
+                                        assignForm.errors.severity,
+                                    )}
                                 />
                                 <InputError
                                     message={assignForm.errors.severity}
@@ -167,7 +167,9 @@ export function AllergenModal({
                                         assignForm.setData('reaction', value)
                                     }
                                     placeholder="Select reaction"
-                                    invalid={Boolean(assignForm.errors.reaction)}
+                                    invalid={Boolean(
+                                        assignForm.errors.reaction,
+                                    )}
                                 />
                                 <InputError
                                     message={assignForm.errors.reaction}

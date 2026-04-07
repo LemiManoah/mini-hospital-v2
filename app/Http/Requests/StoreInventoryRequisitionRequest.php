@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Closure;
-use App\Enums\Priority;
 use App\Enums\InventoryLocationType;
+use App\Enums\Priority;
 use App\Models\InventoryLocation;
 use App\Support\BranchContext;
 use App\Support\InventoryLocationAccess;
 use App\Support\InventoryWorkspace;
+use Closure;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

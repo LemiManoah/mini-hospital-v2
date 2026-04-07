@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Closure;
 use App\Models\InventoryRequisition;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -54,6 +54,7 @@ final class ApproveInventoryRequisitionRequest extends FormRequest
                     if (! is_string($lineId)) {
                         continue;
                     }
+
                     if (! is_numeric($approvedQuantity)) {
                         continue;
                     }

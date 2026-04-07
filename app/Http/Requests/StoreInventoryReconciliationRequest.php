@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Closure;
 use App\Models\InventoryBatch;
 use App\Support\BranchContext;
 use App\Support\InventoryStockLedger;
+use Closure;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -99,9 +99,11 @@ final class StoreInventoryReconciliationRequest extends FormRequest
                     if (! is_string($inventoryItemId)) {
                         continue;
                     }
+
                     if ($inventoryItemId === '') {
                         continue;
                     }
+
                     if (! is_numeric($actualQuantity)) {
                         continue;
                     }
@@ -117,9 +119,11 @@ final class StoreInventoryReconciliationRequest extends FormRequest
 
                         continue;
                     }
+
                     if (! is_string($inventoryBatchId)) {
                         continue;
                     }
+
                     if ($inventoryBatchId === '') {
                         continue;
                     }

@@ -70,7 +70,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             )
             ->when(
                 $status !== '',
-                fn (Builder $query) => $this->applyWorkflowStatusFilter($query, $status),
+                fn (Builder $query): Builder => $this->applyWorkflowStatusFilter($query, $status),
             )
             ->latest('adjustment_date')
             ->paginate(10)

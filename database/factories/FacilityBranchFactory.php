@@ -22,7 +22,7 @@ final class FacilityBranchFactory extends Factory
     {
         return [
             'tenant_id' => Tenant::factory(),
-            'name' => fake()->company() . ' Branch',
+            'name' => fake()->company().' Branch',
             'branch_code' => fake()->unique()->bothify('BR-###'),
             'currency_id' => Currency::factory(),
             'status' => GeneralStatus::ACTIVE,

@@ -18,15 +18,16 @@ import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { Boxes, Building2, Pill, ShieldAlert, TrendingUp } from 'lucide-react';
 import {
-    Boxes,
-    Building2,
-    LayoutDashboard,
-    Pill,
-    ShieldAlert,
-    TrendingUp,
-} from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts';
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Pie,
+    PieChart,
+    XAxis,
+} from 'recharts';
 
 interface InventoryDashboardProps {
     stats: {
@@ -66,9 +67,7 @@ const COLORS = [
     'var(--chart-5)',
 ];
 
-export default function InventoryDashboard({
-    stats,
-}: InventoryDashboardProps) {
+export default function InventoryDashboard({ stats }: InventoryDashboardProps) {
     const { hasPermission } = usePermissions();
 
     const typeData = Object.entries(stats.distribution_by_type).map(
@@ -76,7 +75,7 @@ export default function InventoryDashboard({
             name: name.charAt(0).toUpperCase() + name.slice(1),
             value,
             fill: COLORS[index % COLORS.length],
-        })
+        }),
     );
 
     const categoryData = Object.entries(stats.distribution_by_category)
@@ -102,7 +101,7 @@ export default function InventoryDashboard({
             typeData.map((d, i) => [
                 d.name,
                 { label: d.name, color: COLORS[i % COLORS.length] },
-            ])
+            ]),
         ),
     } satisfies ChartConfig;
 
@@ -127,13 +126,13 @@ export default function InventoryDashboard({
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-2">
-                        
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">
                                 Inventory Analytics
                             </h1>
                             <p className="text-sm text-muted-foreground">
-                                Critical business metrics and stock health overview.
+                                Critical business metrics and stock health
+                                overview.
                             </p>
                         </div>
                     </div>
@@ -157,9 +156,9 @@ export default function InventoryDashboard({
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {/* Row 1 */}
-                    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-destructive/20 bg-destructive/5">
+                    <Card className="overflow-hidden border-none bg-destructive/5 shadow-sm ring-1 ring-destructive/20">
                         <CardHeader className="space-y-0 pb-2">
-                            <CardDescription className="text-xs font-medium uppercase tracking-wider text-destructive">
+                            <CardDescription className="text-xs font-medium tracking-wider text-destructive uppercase">
                                 Out of Stock
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold text-destructive">
@@ -174,9 +173,9 @@ export default function InventoryDashboard({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-amber-500/20 bg-amber-500/5">
+                    <Card className="overflow-hidden border-none bg-amber-500/5 shadow-sm ring-1 ring-amber-500/20">
                         <CardHeader className="space-y-0 pb-2">
-                            <CardDescription className="text-xs font-medium uppercase tracking-wider text-amber-600">
+                            <CardDescription className="text-xs font-medium tracking-wider text-amber-600 uppercase">
                                 Low Stock
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold text-amber-600">
@@ -191,9 +190,9 @@ export default function InventoryDashboard({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-orange-500/20 bg-orange-500/5">
+                    <Card className="overflow-hidden border-none bg-orange-500/5 shadow-sm ring-1 ring-orange-500/20">
                         <CardHeader className="space-y-0 pb-2">
-                            <CardDescription className="text-xs font-medium uppercase tracking-wider text-orange-600">
+                            <CardDescription className="text-xs font-medium tracking-wider text-orange-600 uppercase">
                                 Expiring Soon
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold text-orange-600">
@@ -208,9 +207,9 @@ export default function InventoryDashboard({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-primary/20 bg-primary/5">
+                    <Card className="overflow-hidden border-none bg-primary/5 shadow-sm ring-1 ring-primary/20">
                         <CardHeader className="space-y-0 pb-2">
-                            <CardDescription className="text-xs font-medium uppercase tracking-wider text-primary">
+                            <CardDescription className="text-xs font-medium tracking-wider text-primary uppercase">
                                 Total Stock Value
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold text-primary">
@@ -231,7 +230,7 @@ export default function InventoryDashboard({
                     {/* Row 2 */}
                     <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader className="space-y-0 pb-2">
-                            <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                            <CardDescription className="text-xs font-medium tracking-wider uppercase">
                                 Active Suppliers
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold">
@@ -248,7 +247,7 @@ export default function InventoryDashboard({
 
                     <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader className="space-y-0 pb-2">
-                            <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                            <CardDescription className="text-xs font-medium tracking-wider uppercase">
                                 Total Catalog
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold">
@@ -265,7 +264,7 @@ export default function InventoryDashboard({
 
                     <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader className="space-y-0 pb-2">
-                            <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                            <CardDescription className="text-xs font-medium tracking-wider uppercase">
                                 Pharmaceuticals
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold">
@@ -282,7 +281,7 @@ export default function InventoryDashboard({
 
                     <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader className="space-y-0 pb-2">
-                            <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                            <CardDescription className="text-xs font-medium tracking-wider uppercase">
                                 Storage Nodes
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold">
@@ -314,7 +313,9 @@ export default function InventoryDashboard({
                                 <PieChart>
                                     <ChartTooltip
                                         cursor={false}
-                                        content={<ChartTooltipContent hideLabel />}
+                                        content={
+                                            <ChartTooltipContent hideLabel />
+                                        }
                                     />
                                     <Pie
                                         data={typeData}
@@ -331,7 +332,9 @@ export default function InventoryDashboard({
                                         ))}
                                     </Pie>
                                     <ChartLegend
-                                        content={<ChartLegendContent nameKey="name" />}
+                                        content={
+                                            <ChartLegendContent nameKey="name" />
+                                        }
                                         className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
                                     />
                                 </PieChart>
@@ -367,7 +370,9 @@ export default function InventoryDashboard({
                                     />
                                     <ChartTooltip
                                         cursor={false}
-                                        content={<ChartTooltipContent hideLabel />}
+                                        content={
+                                            <ChartTooltipContent hideLabel />
+                                        }
                                     />
                                     <Bar
                                         dataKey="count"
@@ -426,13 +431,13 @@ export default function InventoryDashboard({
                                                     )}
                                                 </td>
                                                 <td className="p-2 align-middle">
-                                                    <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                                                    <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
                                                         {item.item_type}
                                                     </span>
                                                 </td>
                                                 <td className="p-2 text-right align-middle text-muted-foreground">
                                                     {new Date(
-                                                        item.created_at
+                                                        item.created_at,
                                                     ).toLocaleDateString()}
                                                 </td>
                                             </tr>
@@ -504,7 +509,7 @@ export default function InventoryDashboard({
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-primary/5 border-none shadow-sm ring-1 ring-primary/20">
+                        <Card className="border-none bg-primary/5 shadow-sm ring-1 ring-primary/20">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-lg text-primary">
                                     Stock Foundation
@@ -512,9 +517,9 @@ export default function InventoryDashboard({
                             </CardHeader>
                             <CardContent>
                                 <p className="text-sm text-muted-foreground">
-                                    Ensure your catalog is complete with
-                                    correct unit types, reorder levels, and
-                                    tax settings before initiating stock movements.
+                                    Ensure your catalog is complete with correct
+                                    unit types, reorder levels, and tax settings
+                                    before initiating stock movements.
                                 </p>
                             </CardContent>
                         </Card>

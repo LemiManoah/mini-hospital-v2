@@ -33,7 +33,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const statusColor = (status: string) => {
-    const map: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    const map: Record<
+        string,
+        'default' | 'secondary' | 'destructive' | 'outline'
+    > = {
         draft: 'secondary',
         submitted: 'outline',
         approved: 'default',
@@ -151,12 +154,20 @@ export default function PurchaseOrdersIndex({
                                         <TableCell>
                                             {po.supplier?.name ?? '-'}
                                         </TableCell>
-                                        <TableCell>{formatDate(po.order_date)}</TableCell>
                                         <TableCell>
-                                            {formatDate(po.expected_delivery_date)}
+                                            {formatDate(po.order_date)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {formatDate(
+                                                po.expected_delivery_date,
+                                            )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            {Number(po.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            {Number(
+                                                po.total_amount,
+                                            ).toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                            })}
                                         </TableCell>
                                         <TableCell>
                                             <Badge

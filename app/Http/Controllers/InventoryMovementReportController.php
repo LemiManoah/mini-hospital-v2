@@ -8,8 +8,8 @@ use App\Enums\StockMovementType;
 use App\Models\InventoryLocation;
 use App\Models\StockMovement;
 use App\Support\BranchContext;
-use App\Support\InventoryNavigationContext;
 use App\Support\InventoryLocationAccess;
+use App\Support\InventoryNavigationContext;
 use App\Support\InventoryWorkspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -52,8 +52,7 @@ final readonly class InventoryMovementReportController implements HasMiddleware
                 'inventoryLocation:id,name,location_code',
                 'inventoryBatch:id,batch_number,expiry_date',
             ])
-            ->orderByDesc('occurred_at')
-            ->orderByDesc('created_at');
+            ->latest('occurred_at')->latest();
 
         if (is_string($activeBranchId) && $activeBranchId !== '' && $locationIds !== []) {
             $query

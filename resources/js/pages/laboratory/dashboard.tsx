@@ -215,7 +215,9 @@ export default function LaboratoryDashboard({
                                         <ChartTooltip
                                             cursor={false}
                                             content={
-                                                <ChartTooltipContent hideLabel />
+                                                <ChartTooltipContent
+                                                    hideLabel
+                                                />
                                             }
                                         />
                                         <Pie
@@ -416,7 +418,7 @@ function MetricCard({ metric }: { metric: LaboratoryDashboardMetric }) {
         >
             <CardHeader className="space-y-0 pb-2">
                 <CardDescription
-                    className={`text-xs font-medium uppercase tracking-wider ${style.text}`}
+                    className={`text-xs font-medium tracking-wider uppercase ${style.text}`}
                 >
                     {metric.label}
                 </CardDescription>

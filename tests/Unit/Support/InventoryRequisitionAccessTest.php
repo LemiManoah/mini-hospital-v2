@@ -88,9 +88,8 @@ it('matches inventory workspaces only for incoming queue requisitions', function
 function inventoryWorkspace(string $routeName): InventoryWorkspace
 {
     $request = Request::create('/');
-    $route = (new Route('GET', '/', static fn () => null))->name($routeName);
+    $route = new Route('GET', '/', static fn (): null => null)->name($routeName);
     $request->setRouteResolver(static fn (): Route => $route);
 
     return InventoryWorkspace::fromRequest($request);
 }
-

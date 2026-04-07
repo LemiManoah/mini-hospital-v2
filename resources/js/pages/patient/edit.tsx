@@ -23,8 +23,10 @@ const ageUnitOptions = [
     { value: 'day', label: 'Days' },
 ];
 
-const formatAddressLabel = (address: { city: string; district: string | null }) =>
-    `${address.city}${address.district ? `, ${address.district}` : ''}`;
+const formatAddressLabel = (address: {
+    city: string;
+    district: string | null;
+}) => `${address.city}${address.district ? `, ${address.district}` : ''}`;
 
 export default function PatientEdit({
     patient,

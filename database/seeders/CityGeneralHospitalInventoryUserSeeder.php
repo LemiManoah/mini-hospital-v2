@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\Tenant;
-use App\Models\FacilityBranch;
 use App\Enums\StaffType;
+use App\Models\FacilityBranch;
 use App\Models\Staff;
+use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
 use Illuminate\Database\Seeder;
@@ -22,7 +22,7 @@ final class CityGeneralHospitalInventoryUserSeeder extends Seeder
         $tenant = $this->cityGeneralTenant();
         $mainBranch = $tenant instanceof Tenant ? $this->cityGeneralMainBranch($tenant) : null;
 
-        if (!$tenant instanceof Tenant || !$mainBranch instanceof FacilityBranch) {
+        if (! $tenant instanceof Tenant || ! $mainBranch instanceof FacilityBranch) {
             return;
         }
 

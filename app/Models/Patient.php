@@ -59,10 +59,10 @@ final class Patient extends Model
         return $this->hasMany(PatientVisit::class);
     }
 
-    //scopes
+    // scopes
     public function fullname(): string
     {
-        return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+        return mb_trim(sprintf('%s %s %s', $this->first_name, $this->middle_name, $this->last_name));
     }
 
     public function ageWithUnits(): ?string
@@ -78,8 +78,6 @@ final class Patient extends Model
             default => $this->age_units,
         };
 
-        return "{$this->age} {$units}";
+        return sprintf('%s %s', $this->age, $units);
     }
-
-    
 }

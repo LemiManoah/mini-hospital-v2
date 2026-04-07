@@ -29,10 +29,10 @@ final readonly class PostGoodsReceipt
                 ->whereKey($goodsReceipt->id)
                 ->where('status', GoodsReceiptStatus::Draft)
                 ->update([
-                'status' => GoodsReceiptStatus::Posted,
-                'posted_by' => Auth::id(),
-                'posted_at' => now(),
-                'updated_by' => Auth::id(),
+                    'status' => GoodsReceiptStatus::Posted,
+                    'posted_by' => Auth::id(),
+                    'posted_at' => now(),
+                    'updated_by' => Auth::id(),
                 ]);
 
             abort_unless(

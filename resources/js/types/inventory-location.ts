@@ -44,7 +44,6 @@ export interface InventoryLocationFormPageProps {
     locationTypes: InventoryLocationSummaryOption[];
 }
 
-export interface InventoryLocationEditPageProps
-    extends InventoryLocationFormPageProps {
+export interface InventoryLocationEditPageProps extends InventoryLocationFormPageProps {
     inventoryLocation: InventoryLocation;
 }

@@ -49,7 +49,10 @@ export default function InventoryLocationsIndex({
     const [type, setType] = useState(filters.type ?? 'all');
 
     useEffect(() => {
-        if (search === (filters.search ?? '') && type === (filters.type ?? 'all')) {
+        if (
+            search === (filters.search ?? '') &&
+            type === (filters.type ?? 'all')
+        ) {
             return;
         }
 
@@ -232,7 +235,8 @@ export default function InventoryLocationsIndex({
                         </TableBody>
                     </Table>
 
-                    {!Array.isArray(locations) && locations.links?.length > 3 ? (
+                    {!Array.isArray(locations) &&
+                    locations.links?.length > 3 ? (
                         <div className="mt-4">
                             <Pagination>
                                 <PaginationContent>
@@ -263,7 +267,10 @@ export default function InventoryLocationsIndex({
                                             return (
                                                 <PaginationItem key={label}>
                                                     <PaginationLink
-                                                        href={link.url ?? undefined}
+                                                        href={
+                                                            link.url ??
+                                                            undefined
+                                                        }
                                                         isActive={link.active}
                                                     >
                                                         {label}

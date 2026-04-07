@@ -35,7 +35,9 @@ export interface GoodsReceipt {
     posted_at: string | null;
     created_at: string;
     updated_at: string;
-    purchase_order?: PurchaseOrder & { supplier?: { id: string; name: string } };
+    purchase_order?: PurchaseOrder & {
+        supplier?: { id: string; name: string };
+    };
     inventory_location?: InventoryLocationOption;
     items?: GoodsReceiptItem[];
 }

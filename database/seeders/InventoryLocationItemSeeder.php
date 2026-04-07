@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\FacilityBranch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\InventoryLocationItem;
+use App\Models\Tenant;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
 use Illuminate\Database\Seeder;
 
@@ -17,10 +19,10 @@ final class InventoryLocationItemSeeder extends Seeder
     public function run(): void
     {
         $tenant = $this->cityGeneralTenant();
-        $creator = $tenant ? $this->cityGeneralRegistrar($tenant) : null;
-        $mainBranch = $tenant ? $this->cityGeneralMainBranch($tenant) : null;
+        $creator = $tenant instanceof Tenant ? $this->cityGeneralRegistrar($tenant) : null;
+        $mainBranch = $tenant instanceof Tenant ? $this->cityGeneralMainBranch($tenant) : null;
 
-        if ($tenant === null || $mainBranch === null) {
+        if (! $tenant instanceof Tenant || ! $mainBranch instanceof FacilityBranch) {
             return;
         }
 
@@ -38,8 +40,10 @@ final class InventoryLocationItemSeeder extends Seeder
         foreach ($this->assignments() as $assignment) {
             $location = $locations->get($assignment['location_code']);
             $item = $items->get($assignment['item_name']);
-
-            if ($location === null || $item === null) {
+            if ($location === null) {
+                continue;
+            }
+            if ($item === null) {
                 continue;
             }
 

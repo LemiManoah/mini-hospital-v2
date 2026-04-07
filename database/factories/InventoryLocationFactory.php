@@ -23,7 +23,7 @@ final class InventoryLocationFactory extends Factory
         return [
             'tenant_id' => Tenant::factory(),
             'branch_id' => FacilityBranch::factory(),
-            'name' => fake()->words(2, true) . ' Store',
+            'name' => fake()->words(2, true).' Store',
             'location_code' => fake()->unique()->bothify('LOC-###'),
             'type' => InventoryLocationType::MAIN_STORE,
             'is_active' => true,

@@ -30,9 +30,9 @@ trait InteractsWithCityGeneralHospital
             ->first()
             ?? FacilityBranch::query()
                 ->where('tenant_id', $tenant->id)
-            ->orderByDesc('is_main_branch')
-            ->orderBy('name')
-            ->first();
+                ->orderByDesc('is_main_branch')
+                ->orderBy('name')
+                ->first();
     }
 
     protected function cityGeneralRegistrar(Tenant $tenant): ?User

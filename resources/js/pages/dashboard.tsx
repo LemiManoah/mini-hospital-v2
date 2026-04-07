@@ -327,7 +327,9 @@ export default function Dashboard({
                                         <ChartTooltip
                                             cursor={false}
                                             content={
-                                                <ChartTooltipContent hideLabel />
+                                                <ChartTooltipContent
+                                                    hideLabel
+                                                />
                                             }
                                         />
                                         <Pie
@@ -551,7 +553,7 @@ function MetricCard({ metric }: { metric: Metric }) {
     return (
         <Card className="border-none shadow-sm ring-1 ring-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                <CardDescription className="text-xs font-medium tracking-wider uppercase">
                     {metric.label}
                 </CardDescription>
                 <Icon className="h-4 w-4 text-muted-foreground" />

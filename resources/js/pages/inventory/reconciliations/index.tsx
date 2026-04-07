@@ -37,7 +37,9 @@ const labelize = (value: string): string =>
         .replaceAll('_', ' ')
         .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-const badgeVariant = (status: string): 'default' | 'secondary' | 'destructive' =>
+const badgeVariant = (
+    status: string,
+): 'default' | 'secondary' | 'destructive' =>
     status === 'posted'
         ? 'default'
         : status === 'rejected'

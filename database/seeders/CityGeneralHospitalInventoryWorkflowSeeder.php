@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\Tenant;
-use App\Models\FacilityBranch;
-use App\Models\User;
+use App\Actions\IssueInventoryRequisition;
 use App\Actions\PostGoodsReceipt;
 use App\Actions\PostInventoryReconciliation;
-use App\Actions\IssueInventoryRequisition;
 use App\Enums\GoodsReceiptStatus;
 use App\Enums\InventoryRequisitionStatus;
 use App\Enums\Priority;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\ReconciliationStatus;
+use App\Models\FacilityBranch;
 use App\Models\GoodsReceipt;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
@@ -24,6 +22,8 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Reconciliation;
 use App\Models\Supplier;
+use App\Models\Tenant;
+use App\Models\User;
 use App\Support\InventoryStockLedger;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
 use Illuminate\Database\Seeder;
@@ -38,7 +38,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         $mainBranch = $tenant instanceof Tenant ? $this->cityGeneralMainBranch($tenant) : null;
         $creator = $tenant instanceof Tenant ? $this->cityGeneralRegistrar($tenant) : null;
 
-        if (!$tenant instanceof Tenant || !$mainBranch instanceof FacilityBranch || !$creator instanceof User) {
+        if (! $tenant instanceof Tenant || ! $mainBranch instanceof FacilityBranch || ! $creator instanceof User) {
             return;
         }
 

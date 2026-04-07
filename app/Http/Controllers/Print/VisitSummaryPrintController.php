@@ -11,7 +11,6 @@ use App\Enums\PrescriptionStatus;
 use App\Models\PatientVisit;
 use App\Support\ActiveBranchWorkspace;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controllers\HasMiddleware;

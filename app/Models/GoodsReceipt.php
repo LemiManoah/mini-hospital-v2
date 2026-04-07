@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Database\Factories\GoodsReceiptFactory;
 use App\Enums\GoodsReceiptStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
+use Database\Factories\GoodsReceiptFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

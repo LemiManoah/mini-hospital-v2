@@ -193,15 +193,15 @@ export default function InventoryItemEdit({
                                                 <SearchableSelect
                                                     options={dosageForms}
                                                     value={dosageForm}
-                                                    onValueChange={setDosageForm}
+                                                    onValueChange={
+                                                        setDosageForm
+                                                    }
                                                     placeholder="Select a dosage form"
                                                     emptyMessage="No dosage forms found."
                                                     allowClear
                                                 />
                                                 <InputError
-                                                    message={
-                                                        errors.dosage_form
-                                                    }
+                                                    message={errors.dosage_form}
                                                 />
                                             </div>
 
@@ -228,7 +228,9 @@ export default function InventoryItemEdit({
                                             <Input
                                                 id="name"
                                                 name="name"
-                                                defaultValue={inventoryItem.name}
+                                                defaultValue={
+                                                    inventoryItem.name
+                                                }
                                                 autoFocus
                                                 required
                                             />
@@ -284,9 +286,7 @@ export default function InventoryItemEdit({
                                             }
                                         />
                                         <InputError
-                                            message={
-                                                errors.minimum_stock_level
-                                            }
+                                            message={errors.minimum_stock_level}
                                         />
                                     </div>
 
@@ -401,7 +401,11 @@ export default function InventoryItemEdit({
                                         )}
                                         Save Changes
                                     </Button>
-                                    <Button variant="ghost" type="button" asChild>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        asChild
+                                    >
                                         <Link href="/inventory-items">
                                             Cancel
                                         </Link>

@@ -293,7 +293,7 @@ it('lists stock by location using posted receipts and configured location items'
         ->get(route('inventory.stock-by-location.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/stock-by-location/index')
             ->has('locations', 2)
             ->where('locations.0.id', $locationA->id)
@@ -336,7 +336,7 @@ it('shows only pharmacy-managed stock locations for pharmacists', function (): v
         ->get(route('inventory.stock-by-location.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->has('locations', 1)
             ->where('locations.0.id', $locationB->id)
             ->has('rows.data', 1)
@@ -373,7 +373,7 @@ it('shows only laboratory locations on the dedicated laboratory stock page', fun
         ->get(route('laboratory.stock.index'));
 
     $response->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('laboratory/stock/index')
             ->has('locations', 1)
             ->where('locations.0.id', $labLocation->id)

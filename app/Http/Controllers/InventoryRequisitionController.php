@@ -23,11 +23,11 @@ use App\Models\InventoryRequisition;
 use App\Models\InventoryRequisitionItem;
 use App\Models\StockMovement;
 use App\Support\BranchContext;
-use App\Support\InventoryRequisitionAccess;
-use App\Support\InventoryNavigationContext;
 use App\Support\InventoryLocationAccess;
-use App\Support\InventoryStockLedger;
+use App\Support\InventoryNavigationContext;
+use App\Support\InventoryRequisitionAccess;
 use App\Support\InventoryRequisitionWorkflow;
+use App\Support\InventoryStockLedger;
 use App\Support\InventoryWorkspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -99,10 +99,10 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             )
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
-                        $inner
-                            ->where('requisition_number', 'like', sprintf('%%%s%%', $search))
-                            ->orWhereHas('fulfillingLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)))
-                            ->orWhereHas('requestingLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)));
+                    $inner
+                        ->where('requisition_number', 'like', sprintf('%%%s%%', $search))
+                        ->orWhereHas('fulfillingLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)))
+                        ->orWhereHas('requestingLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)));
                 });
             })
             ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))
@@ -460,8 +460,6 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         );
     }
 
-    /**
-     */
     private function abortUnlessMatchesWorkspace(InventoryRequisition $requisition, InventoryWorkspace $workspace): void
     {
         abort_unless(

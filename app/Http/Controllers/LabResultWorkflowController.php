@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\CollectLabSpecimen;
 use App\Actions\ApproveLabResultEntry;
+use App\Actions\CollectLabSpecimen;
 use App\Actions\ReceiveLabRequestItem;
 use App\Actions\ReviewLabResultEntry;
 use App\Actions\StoreLabResultEntry;
-use App\Http\Requests\CollectLabSpecimenRequest;
 use App\Http\Requests\ApproveLabResultEntryRequest;
+use App\Http\Requests\CollectLabSpecimenRequest;
 use App\Http\Requests\ReviewLabResultEntryRequest;
 use App\Http\Requests\StoreLabResultEntryRequest;
 use App\Models\LabRequestItem;

@@ -77,7 +77,7 @@ final class HandleInertiaRequests extends Middleware
 
         $relations = [
             'tenant' => static fn (BelongsTo $query): BelongsTo => $query
-                ->select('tenants.id', 'tenants.name')
+                ->select('tenants.id', 'tenants.name', 'tenants.onboarding_completed_at')
                 ->with([
                     'currentSubscription' => static fn (HasOne $subscriptionQuery): HasOne => $subscriptionQuery
                         ->select(

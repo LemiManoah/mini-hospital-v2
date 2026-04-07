@@ -28,7 +28,9 @@ export default function InventoryLocationEdit({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Edit Inventory Location: ${inventoryLocation.name}`} />
+            <Head
+                title={`Edit Inventory Location: ${inventoryLocation.name}`}
+            />
 
             <div className="m-4 max-w-4xl space-y-6">
                 <div className="flex items-center justify-between">
@@ -37,8 +39,8 @@ export default function InventoryLocationEdit({
                             Edit Inventory Location
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Update location settings for {inventoryLocation.name}
-                            .
+                            Update location settings for{' '}
+                            {inventoryLocation.name}.
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -67,7 +69,9 @@ export default function InventoryLocationEdit({
                                         <Input
                                             id="name"
                                             name="name"
-                                            defaultValue={inventoryLocation.name}
+                                            defaultValue={
+                                                inventoryLocation.name
+                                            }
                                             required
                                         />
                                         <InputError message={errors.name} />
@@ -163,7 +167,11 @@ export default function InventoryLocationEdit({
                                         )}
                                         Save Changes
                                     </Button>
-                                    <Button variant="ghost" type="button" asChild>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        asChild
+                                    >
                                         <Link href="/inventory-locations">
                                             Cancel
                                         </Link>

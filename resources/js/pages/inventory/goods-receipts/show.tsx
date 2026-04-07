@@ -41,7 +41,9 @@ export default function GoodsReceiptShow({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`${navigation.receipts_title}: ${gr.receipt_number}`} />
+            <Head
+                title={`${navigation.receipts_title}: ${gr.receipt_number}`}
+            />
 
             <div className="m-4 max-w-6xl space-y-6">
                 <div className="flex items-center justify-between">

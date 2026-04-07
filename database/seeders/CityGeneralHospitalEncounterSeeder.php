@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\Tenant;
 use App\Actions\RecalculateVisitBilling;
 use App\Actions\SyncFacilityServiceOrderCharge;
 use App\Actions\SyncLabRequestCharge;
@@ -32,6 +31,7 @@ use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Payment;
 use App\Models\Staff;
+use App\Models\Tenant;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
@@ -48,7 +48,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         $tenant = $this->cityGeneralTenant();
         $registrar = $tenant instanceof Tenant ? $this->cityGeneralRegistrar($tenant) : null;
 
-        if (!$tenant instanceof Tenant) {
+        if (! $tenant instanceof Tenant) {
             return;
         }
 
@@ -133,12 +133,15 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             if (! $patient instanceof Patient) {
                 continue;
             }
+
             if (! $branch instanceof FacilityBranch) {
                 continue;
             }
+
             if (! $clinic instanceof Clinic) {
                 continue;
             }
+
             if (! $doctor instanceof Staff) {
                 continue;
             }

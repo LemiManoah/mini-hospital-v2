@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
+use App\Enums\InventoryItemType;
 use App\Enums\InventoryLocationType;
 use App\Enums\InventoryRequisitionStatus;
 use App\Enums\Priority;
-use App\Enums\InventoryItemType;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
