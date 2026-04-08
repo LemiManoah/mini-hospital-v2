@@ -200,6 +200,64 @@ it('picks a sample for a laboratory request item from the incoming queue', funct
         ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('sample_collected');
 });
 
+it('marks a collected sample as received and moves the request item into processing', function (): void {
+    [$branch, $user, $requestItem] = createLabResultWorkflowContext();
+
+    $user->givePermissionTo('lab_requests.update');
+    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+            'specimen_type_id' => $specimenType->id,
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.receive', $requestItem));
+
+    $response->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+    $response->assertSessionHas('success', 'Lab request item received successfully.');
+
+    $requestItem->refresh();
+
+    expect($requestItem->status->value)->toBe('in_progress')
+        ->and($requestItem->received_at)->not()->toBeNull()
+        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('in_progress');
+});
+
+it('rejects a collected specimen with a reason and returns the request item for recollection', function (): void {
+    [$branch, $user, $requestItem] = createLabResultWorkflowContext();
+
+    $user->givePermissionTo('lab_requests.update');
+    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+            'specimen_type_id' => $specimenType->id,
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.reject', $requestItem), [
+            'rejection_reason' => 'Specimen clotted during handling.',
+        ]);
+
+    $response->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+    $response->assertSessionHas('success', 'Specimen rejected and returned for recollection.');
+
+    $requestItem = $requestItem->fresh()->load('specimen');
+
+    expect($requestItem->workflow_stage)->toBe('rejected')
+        ->and($requestItem->received_at)->toBeNull()
+        ->and($requestItem->specimen?->status->value)->toBe('rejected')
+        ->and($requestItem->specimen?->rejection_reason)->toBe('Specimen clotted during handling.')
+        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('rejected');
+});
+
 it('stores reviews and approves parameter-panel lab results', function (): void {
     [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
 

@@ -8,6 +8,7 @@ use App\Enums\PayerType;
 use App\Enums\VisitStatus;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Support\BranchScopedNumberGenerator;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\BranchContext;
@@ -16,6 +17,10 @@ use Illuminate\Support\Facades\DB;
 
 final class RegisterPatientAndStartVisit
 {
+    public function __construct(
+        private readonly BranchScopedNumberGenerator $numberGenerator,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $data
      * @return array{patient: Patient, visit: PatientVisit}
@@ -47,7 +52,7 @@ final class RegisterPatientAndStartVisit
                 'religion' => $data['religion'] ?? null,
                 'country_id' => $data['country_id'] ?? null,
                 'blood_group' => $data['blood_group'] ?? null,
-                'patient_number' => $this->generatePatientNumber(),
+                'patient_number' => $this->numberGenerator->nextPatientNumber($activeBranch?->name),
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ]);
@@ -56,7 +61,7 @@ final class RegisterPatientAndStartVisit
                 'tenant_id' => $patient->tenant_id,
                 'patient_id' => $patient->id,
                 'facility_branch_id' => $activeBranch?->id,
-                'visit_number' => $this->generateVisitNumber($activeBranch?->name),
+                'visit_number' => $this->numberGenerator->nextVisitNumber($activeBranch?->name),
                 'visit_type' => $data['visit_type'],
                 'status' => VisitStatus::REGISTERED,
                 'clinic_id' => $data['clinic_id'] ?? null,
@@ -97,67 +102,5 @@ final class RegisterPatientAndStartVisit
                 'visit' => $visit,
             ];
         });
-    }
-
-    private function generatePatientNumber(): string
-    {
-        $activeBranch = BranchContext::getActiveBranch();
-        $prefix = $this->branchInitials($activeBranch?->name ?? null, 'HSP');
-
-        $latest = Patient::query()
-            ->where('patient_number', 'like', sprintf('%s-%%', $prefix))
-            ->lockForUpdate()
-            ->latest('patient_number')
-            ->value('patient_number');
-
-        $nextNumber = 1;
-        if (is_string($latest) && preg_match('/^(?<prefix>[A-Z]+)-(?<num>\d+)$/', $latest, $matches) === 1) {
-            $nextNumber = ((int) $matches['num']) + 1;
-        }
-
-        return sprintf('%s-%06d', $prefix, $nextNumber);
-    }
-
-    private function generateVisitNumber(?string $branchName): string
-    {
-        $prefix = $this->branchInitials($branchName, 'VIS');
-
-        $latest = PatientVisit::query()
-            ->where('visit_number', 'like', sprintf('%s-%%', $prefix))
-            ->lockForUpdate()
-            ->latest('visit_number')
-            ->value('visit_number');
-
-        $nextNumber = 1;
-        if (is_string($latest) && preg_match('/^(?<prefix>[A-Z]+)-(?<num>\d+)$/', $latest, $matches) === 1) {
-            $nextNumber = ((int) $matches['num']) + 1;
-        }
-
-        return sprintf('%s-%06d', $prefix, $nextNumber);
-    }
-
-    private function branchInitials(?string $branchName, string $fallback): string
-    {
-        $name = mb_strtoupper(mb_trim((string) $branchName));
-        if ($name === '') {
-            return $fallback;
-        }
-
-        $parts = preg_split('/\s+/', $name) ?: [];
-        $initials = '';
-
-        foreach ($parts as $part) {
-            if ($part === '') {
-                continue;
-            }
-
-            $initials .= mb_substr($part, 0, 1);
-
-            if (mb_strlen($initials) >= 3) {
-                break;
-            }
-        }
-
-        return mb_str_pad(mb_substr($initials, 0, 3), 3, 'X');
     }
 }

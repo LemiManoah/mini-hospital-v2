@@ -44,8 +44,9 @@ final readonly class LabResultPrintController implements HasMiddleware
             'request.visit:id,visit_number,patient_id,facility_branch_id',
             'request.visit.patient:id,patient_number,first_name,last_name,middle_name,date_of_birth,age,age_units,gender,phone_number',
             'request.visit.branch:id,name,branch_code',
-            'resultEntry:id,lab_request_item_id,entered_at,reviewed_at,approved_at,released_at,result_notes,review_notes,approval_notes,approved_by',
+            'resultEntry:id,lab_request_item_id,entered_at,reviewed_at,approved_at,released_by,released_at,result_notes,review_notes,approval_notes,approved_by',
             'resultEntry.approvedBy:id,first_name,last_name',
+            'resultEntry.releasedBy:id,first_name,last_name',
             'resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,gender,age_min,age_max,reference_range,sort_order',
         ]);
 

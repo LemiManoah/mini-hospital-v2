@@ -120,10 +120,9 @@ export default function ActiveVisits({
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Patient</TableHead>
-                                <TableHead>Status</TableHead>
                                 <TableHead>Clinic</TableHead>
                                 <TableHead>Payer</TableHead>
-                                <TableHead>Completion Check</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead>Registered</TableHead>
                                 <TableHead>Actions</TableHead>
                             </TableRow>
@@ -167,16 +166,7 @@ export default function ActiveVisits({
                                                     </p>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <span
-                                                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses(visit.status)}`}
-                                                >
-                                                    {visit.status.replaceAll(
-                                                        '_',
-                                                        ' ',
-                                                    )}
-                                                </span>
-                                            </TableCell>
+                                            
                                             <TableCell>
                                                 <div>
                                                     <p className="font-medium">
@@ -205,22 +195,33 @@ export default function ActiveVisits({
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                {completionCheck?.has_pending_services ? (
-                                                    <p className="text-xs font-medium text-red-600">
-                                                        Pending services:{' '}
-                                                        {
-                                                            completionCheck.pending_services_count
-                                                        }
-                                                    </p>
-                                                ) : completionCheck?.has_unpaid_balance ? (
-                                                    <p className="text-xs font-medium text-amber-600">
-                                                        Unpaid balance warning
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-xs font-medium text-emerald-600">
-                                                        Ready to complete
-                                                    </p>
-                                                )}
+                                                <div className="space-y-2">
+                                                    <span
+                                                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize ${statusClasses(visit.status)}`}
+                                                    >
+                                                        {visit.status.replace(
+                                                            '_',
+                                                            ' ',
+                                                        )}
+                                                    </span>
+                                                    {completionCheck?.has_pending_services ? (
+                                                        <p className="text-xs font-medium text-red-600">
+                                                            Pending services:{' '}
+                                                            {
+                                                                completionCheck.pending_services_count
+                                                            }
+                                                        </p>
+                                                    ) : completionCheck?.has_unpaid_balance ? (
+                                                        <p className="text-xs font-medium text-amber-600">
+                                                            Unpaid balance
+                                                            warning
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-xs font-medium text-emerald-600">
+                                                            Ready to complete
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div>
@@ -286,7 +287,7 @@ export default function ActiveVisits({
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={7}
+                                        colSpan={6}
                                         className="py-12 text-center text-zinc-500 italic"
                                     >
                                         No active visits found.

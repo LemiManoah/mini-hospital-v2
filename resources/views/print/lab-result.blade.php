@@ -2,6 +2,26 @@
 
 @section('title', 'Laboratory Result')
 
+@section('styles')
+    .signature-grid {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 28px;
+    }
+
+    .signature-grid td {
+        width: 50%;
+        padding-right: 24px;
+        vertical-align: top;
+    }
+
+    .signature-line {
+        margin-top: 32px;
+        border-top: 1px solid #94a3b8;
+        padding-top: 6px;
+    }
+@endsection
+
 @section('content')
     @include('print.partials.header', [
         'facilityName' => $visit?->branch?->name ?? config('app.name'),
@@ -119,6 +139,34 @@
             <div class="note-box">{{ $labRequest->clinical_notes }}</div>
         </div>
     @endif
+
+    @php
+        $releasedBy = $labRequestItem->resultEntry?->releasedBy ?? $labRequestItem->resultEntry?->approvedBy;
+        $releasedByName = $releasedBy
+            ? trim($releasedBy->first_name.' '.$releasedBy->last_name)
+            : 'Pending sign-off';
+        $releasedAt = $labRequestItem->resultEntry?->released_at ?? $labRequestItem->resultEntry?->approved_at;
+    @endphp
+
+    <table class="signature-grid">
+        <tr>
+            <td>
+                <span class="label">Authorized By</span>
+                <div class="signature-line">
+                    <div class="value">{{ $releasedByName }}</div>
+                    <div class="muted">
+                        {{ $releasedAt?->format('d M Y H:i') ?? 'Awaiting release' }}
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="label">Signature</span>
+                <div class="signature-line">
+                    <div class="muted">Authorized laboratory sign-off</div>
+                </div>
+            </td>
+        </tr>
+    </table>
 
     @include('print.partials.footer', [
         'printedAt' => $printedAt,

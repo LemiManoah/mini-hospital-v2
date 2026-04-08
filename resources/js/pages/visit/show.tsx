@@ -9,6 +9,7 @@ import { VisitBillingTab } from './components/visit-billing-tab';
 import { VisitClinicalTab } from './components/visit-clinical-tab';
 import { VisitHeader } from './components/visit-header';
 import { VisitOverviewTab } from './components/visit-overview-tab';
+import { VisitOrdersTab } from './components/visit-orders-tab';
 import { formatDateTime } from './components/visit-show-utils';
 
 export default function VisitShow({
@@ -82,6 +83,7 @@ export default function VisitShow({
                     <TabsList variant="line" className="w-full justify-start">
                         <TabsTrigger value="overview">Overview</TabsTrigger>
                         <TabsTrigger value="clinical">Clinical</TabsTrigger>
+                        <TabsTrigger value="orders">Orders</TabsTrigger>
                         <TabsTrigger value="billing">Billing</TabsTrigger>
                     </TabsList>
 
@@ -102,6 +104,13 @@ export default function VisitShow({
                             triageGrades={triageGrades}
                             canViewTriage={canViewTriage}
                             canViewConsultation={canViewConsultation}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="orders" className="space-y-6">
+                        <VisitOrdersTab
+                            visit={visit}
+                            consultation={visit.consultation}
                             canManageOrders={hasPermission(
                                 'consultations.update',
                             )}

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\LabRequestItemStatus;
+use App\Enums\LabSpecimenStatus;
 use App\Models\LabRequestItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -28,6 +29,12 @@ final readonly class ReviewLabResultEntry
         if ($labRequestItem->approved_at !== null || $labRequestItem->status === LabRequestItemStatus::COMPLETED) {
             throw ValidationException::withMessages([
                 'review' => 'Approved results cannot be reviewed again.',
+            ]);
+        }
+
+        if ($labRequestItem->specimen()->where('status', LabSpecimenStatus::REJECTED->value)->exists()) {
+            throw ValidationException::withMessages([
+                'review' => 'Rejected specimens cannot move into review until a new sample is collected.',
             ]);
         }
 

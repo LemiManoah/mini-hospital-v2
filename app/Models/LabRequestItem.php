@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\LabRequestItemStatus;
+use App\Enums\LabSpecimenStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -94,6 +95,14 @@ final class LabRequestItem extends Model
         return Attribute::get(function (): string {
             if ($this->status === LabRequestItemStatus::CANCELLED) {
                 return 'cancelled';
+            }
+
+            $specimenStatus = $this->relationLoaded('specimen')
+                ? $this->specimen?->status
+                : $this->specimen()->value('status');
+
+            if ($specimenStatus === LabSpecimenStatus::REJECTED->value || $specimenStatus === LabSpecimenStatus::REJECTED) {
+                return 'rejected';
             }
 
             if ($this->approved_at !== null) {

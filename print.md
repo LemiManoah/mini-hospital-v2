@@ -7,7 +7,7 @@
 
 ## 1) Current Read
 
-Printing is now **partially implemented**, in five focused places.
+Printing is now **partially implemented**, in six focused places.
 
 What exists now:
 
@@ -23,12 +23,14 @@ What exists now:
 - the goods-receipt PDF is generated through Dompdf
 - visit summaries can be exported as PDF
 - the visit-summary PDF is generated through Dompdf
+- prescriptions can be exported as PDF
+- the prescription PDF is generated through Dompdf
 - the output uses a dedicated print controller and Blade view instead of trying to print a normal app page
 - the current printable documents now share a common Blade print layout and shared header/footer partials
 
 What still does **not** exist yet:
 
-- print routes for prescriptions
+- broad printable output across every operational module
 
 The only older nearby signal outside this new lab print flow is that [InsuranceCompanyInvoice.php](c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Models/InsuranceCompanyInvoice.php) has an `is_printed` field, but that is still just a data flag and not a complete print workflow.
 
@@ -345,7 +347,7 @@ Printing needs focused feature coverage.
 
 ### Current implemented coverage
 
-The first five print slices should now be covered by tests for:
+The first six print slices should now be covered by tests for:
 
 - successful PDF export of a released lab result
 - rejection of unreleased lab-result printing
@@ -357,6 +359,8 @@ The first five print slices should now be covered by tests for:
 - rejection of goods-receipt printing from the wrong workspace route
 - successful PDF export of a visit summary
 - rejection of visit-summary printing from another active branch
+- successful PDF export of a prescription
+- rejection of prescription printing from another active branch
 
 ---
 
@@ -403,9 +407,9 @@ This phase is now fully implemented:
 
 ## 12) Best Immediate Next Step
 
-Now that released laboratory result, payment receipt, requisition, goods receipt, and visit summary PDF output exist, the next best print implementation is:
+Now that released laboratory result, payment receipt, requisition, goods receipt, visit summary, and prescription PDF output exist, the next best print implementation is:
 
-### Prescription printing when the prescription workflow is ready
+### Shared print styling and branding refinements
 
 After that:
 
@@ -423,6 +427,7 @@ Printing is operationally important in this system, and the first real print doc
 - inventory requisition PDF output
 - goods receipt PDF output
 - visit summary PDF output
+- prescription PDF output
 
 Today the app supports:
 
@@ -434,6 +439,7 @@ Today the app supports:
 - PDF export for inventory requisitions
 - PDF export for goods receipts
 - PDF export for visit summaries
+- PDF export for prescriptions
 
 But it still does **not** yet fully support:
 
@@ -443,6 +449,5 @@ But it still does **not** yet fully support:
 The best ongoing implementation path is:
 
 1. keep the dedicated print-controller + PDF-view pattern
-2. keep prescription printing deferred until the prescription and dispensing flow is stable
-3. keep new printable documents on the shared layout infrastructure
-4. then refine shared print styling and branding
+2. keep new printable documents on the shared layout infrastructure
+3. then refine shared print styling and branding

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\LabRequestItemStatus;
+use App\Enums\LabSpecimenStatus;
 use App\Models\LabRequestItem;
 use App\Models\LabTestResultParameter;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,12 @@ final readonly class StoreLabResultEntry
         if ($labRequestItem->received_at === null && ! $labRequestItem->specimen()->exists()) {
             throw ValidationException::withMessages([
                 'result' => 'Pick a sample before entering results.',
+            ]);
+        }
+
+        if ($labRequestItem->specimen()->where('status', LabSpecimenStatus::REJECTED->value)->exists()) {
+            throw ValidationException::withMessages([
+                'result' => 'Rejected specimens must be recollected before entering results.',
             ]);
         }
 

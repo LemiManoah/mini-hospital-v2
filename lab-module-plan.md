@@ -22,7 +22,6 @@ The lab module is **not fully complete yet**, but it is already much further alo
 
 The biggest remaining gaps are:
 
-- specimen rejection workflow
 - post-release amendment/correction workflow
 - stronger branch-isolation test coverage
 - a few richer clinician/result-detail presentation pieces
@@ -57,7 +56,6 @@ What is already implemented beyond the original draft:
 
 What is not yet fully implemented:
 
-- specimen rejection workflow
 - amendment/correction workflow after release
 - richer branch-isolation coverage for lab-specific records
 - broader end-to-end test coverage around the remaining gaps
@@ -125,7 +123,7 @@ The lab module should be considered complete when all of the following are true:
 
 - [x] Milestone 1 completed: lab catalog administration is live
 - [x] Milestone 2 completed: lab worklist, intake queues, and dashboard summary are live
-- [ ] Milestone 3 in progress: specimen workflow is substantially live, but rejection is still missing
+- [x] Milestone 3 completed: specimen workflow now includes collection, receipt, rejection, and test coverage
 - [ ] Milestone 4 in progress: structured result entry is substantially live
 - [ ] Milestone 5 in progress: review and release are live, but amendment is still missing
 - [ ] Milestone 6 in progress: clinician result visibility is substantially live
@@ -269,15 +267,15 @@ Capture specimen collection as a real workflow event instead of treating all tes
 - [x] Define specimen statuses
 - [x] Add specimen collection action
 - [x] Add specimen receive or accept action
-- [ ] Add specimen rejection action
+- [x] Add specimen rejection action
 - [x] Add specimen collection UI
 - [x] Add specimen timeline or status display on request detail
 - [x] Update status transitions from real specimen actions
-- [ ] Add tests for collection, receipt, and rejection
+- [x] Add tests for collection, receipt, and rejection
 
 ### Current Status
 
-This milestone is substantially implemented. `lab_specimens` is real, accession numbers are generated, and sample collection and receipt drive workflow state. The main missing piece is an explicit rejection path with reason capture, plus test coverage for that path.
+This milestone is complete. `lab_specimens` is real, accession numbers are generated, collection and receipt drive workflow state, and rejected specimens now carry explicit reason and actor capture with test coverage.
 
 ### Definition Of Done
 
@@ -456,11 +454,10 @@ Permission hooks and focused workflow tests exist, but the branch-isolation matr
 
 ## 7) Recommended Build Order From Here
 
-1. add specimen rejection flow and tests
-2. add amendment or correction flow for released results
-3. add dedicated clinician result-detail presentation
-4. expand branch-isolation tests for requests, specimens, and result records
-5. add clinical enrichment such as abnormal flags and stronger reference range snapshots
+1. add amendment or correction flow for released results
+2. add dedicated clinician result-detail presentation
+3. expand branch-isolation tests for requests, specimens, and result records
+4. add clinical enrichment such as abnormal flags and stronger reference range snapshots
 
 ---
 
@@ -529,7 +526,6 @@ The lab module is no longer just "started" at the ordering layer. It already spa
 
 The remaining work is mainly finishing and hardening the workflow:
 
-- specimen rejection
 - amendment or correction after release
 - richer clinician-facing result presentation
 - broader branch-isolation coverage

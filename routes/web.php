@@ -49,6 +49,7 @@ use App\Http\Controllers\PatientVisitController;
 use App\Http\Controllers\Print\GoodsReceiptPrintController;
 use App\Http\Controllers\Print\InventoryRequisitionPrintController;
 use App\Http\Controllers\Print\LabResultPrintController;
+use App\Http\Controllers\Print\PrescriptionPrintController;
 use App\Http\Controllers\Print\VisitPaymentPrintController;
 use App\Http\Controllers\Print\VisitSummaryPrintController;
 use App\Http\Controllers\PurchaseOrderController;
@@ -155,6 +156,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('visits/{visit}/summary/print', [VisitSummaryPrintController::class, 'show'])->name('visits.summary.print');
     Route::post('visits/{visit}/payments', [VisitPaymentController::class, 'store'])->name('visits.payments.store');
     Route::get('visits/{visit}/payments/{payment}/print', [VisitPaymentPrintController::class, 'show'])->name('visits.payments.print');
+    Route::get('prescriptions/{prescription}/print', [PrescriptionPrintController::class, 'show'])->name('prescriptions.print');
     Route::post('visits/{visit}/lab-requests', [VisitOrderController::class, 'storeLabRequest'])->name('visits.lab-requests.store');
     Route::post('visits/{visit}/imaging-requests', [VisitOrderController::class, 'storeImagingRequest'])->name('visits.imaging-requests.store');
     Route::post('visits/{visit}/prescriptions', [VisitOrderController::class, 'storePrescription'])->name('visits.prescriptions.store');
@@ -235,6 +237,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('laboratory/request-items/{labRequestItem}', [LaboratoryWorklistController::class, 'show'])->name('laboratory.request-items.show');
     Route::post('laboratory/request-items/{labRequestItem}/collect-sample', [LabResultWorkflowController::class, 'collectSample'])->name('laboratory.request-items.collect-sample');
     Route::post('laboratory/request-items/{labRequestItem}/receive', [LabResultWorkflowController::class, 'receive'])->name('laboratory.request-items.receive');
+    Route::post('laboratory/request-items/{labRequestItem}/reject', [LabResultWorkflowController::class, 'reject'])->name('laboratory.request-items.reject');
     Route::post('laboratory/request-items/{labRequestItem}/results', [LabResultWorkflowController::class, 'store'])->name('laboratory.request-items.results.store');
     Route::post('laboratory/request-items/{labRequestItem}/review', [LabResultWorkflowController::class, 'review'])->name('laboratory.request-items.review');
     Route::post('laboratory/request-items/{labRequestItem}/approve', [LabResultWorkflowController::class, 'approve'])->name('laboratory.request-items.approve');

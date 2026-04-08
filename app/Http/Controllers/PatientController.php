@@ -137,13 +137,18 @@ final readonly class PatientController implements HasMiddleware
 
         $registration = $action->handle($validated);
         $patient = $registration['patient'];
-        $redirectTo = $request->input('redirect_to', 'show');
+        $visit = $registration['visit'];
+        $redirectTo = $request->input('redirect_to', 'visit');
 
         if ($redirectTo === 'list') {
             return to_route('patients.index')->with('success', 'Patient registered and visit started successfully.');
         }
 
-        return to_route('patients.show', $patient)->with('success', 'Patient registered and visit started successfully.');
+        if (in_array($redirectTo, ['show', 'patient'], true)) {
+            return to_route('patients.show', $patient)->with('success', 'Patient registered and visit started successfully.');
+        }
+
+        return to_route('visits.show', $visit)->with('success', 'Patient registered and visit started successfully.');
     }
 
     public function edit(Patient $patient): Response

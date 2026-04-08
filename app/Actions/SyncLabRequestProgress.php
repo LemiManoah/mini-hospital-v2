@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\LabRequestItemStatus;
 use App\Enums\LabRequestStatus;
+use App\Enums\LabSpecimenStatus;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 
@@ -14,7 +15,8 @@ final readonly class SyncLabRequestProgress
     public function handle(LabRequest $labRequest): LabRequest
     {
         $items = $labRequest->items()
-            ->get(['status', 'completed_at', 'received_at', 'result_entered_at', 'reviewed_at', 'approved_at']);
+            ->with(['specimen:id,lab_request_item_id,status'])
+            ->get(['id', 'status', 'completed_at', 'received_at', 'result_entered_at', 'reviewed_at', 'approved_at']);
 
         if ($items->isEmpty()) {
             return $labRequest;
@@ -54,6 +56,15 @@ final readonly class SyncLabRequestProgress
         if ($items->contains(static fn (LabRequestItem $item): bool => $item->received_at !== null)) {
             $labRequest->forceFill([
                 'status' => LabRequestStatus::SAMPLE_COLLECTED,
+                'completed_at' => null,
+            ])->save();
+
+            return $labRequest->refresh();
+        }
+
+        if ($items->every(static fn (LabRequestItem $item): bool => $item->specimen?->status === LabSpecimenStatus::REJECTED)) {
+            $labRequest->forceFill([
+                'status' => LabRequestStatus::REJECTED,
                 'completed_at' => null,
             ])->save();
 

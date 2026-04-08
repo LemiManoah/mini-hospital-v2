@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -17,7 +16,6 @@ type ManagementSection = {
     description: string;
     href: string | null;
     permission: string | null;
-    status: 'live' | 'coming_soon';
 };
 
 export default function LaboratoryManagement({
@@ -41,8 +39,7 @@ export default function LaboratoryManagement({
                     <h1 className="text-2xl font-semibold">Lab Management</h1>
                     <p className="text-sm text-muted-foreground">
                         Manage the laboratory setup behind services, specimen
-                        collection, and result workflows from one place. Stock
-                        management is reserved for the next phase.
+                        collection, and result workflows from one place.
                     </p>
                 </div>
 
@@ -55,26 +52,11 @@ export default function LaboratoryManagement({
                         return (
                             <Card key={section.title}>
                                 <CardHeader className="gap-3">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex flex-col gap-1">
-                                            <CardTitle>
-                                                {section.title}
-                                            </CardTitle>
-                                            <CardDescription>
-                                                {section.description}
-                                            </CardDescription>
-                                        </div>
-                                        <Badge
-                                            variant={
-                                                section.status === 'live'
-                                                    ? 'outline'
-                                                    : 'secondary'
-                                            }
-                                        >
-                                            {section.status === 'live'
-                                                ? 'Live'
-                                                : 'Coming Soon'}
-                                        </Badge>
+                                    <div className="flex flex-col gap-1">
+                                        <CardTitle>{section.title}</CardTitle>
+                                        <CardDescription>
+                                            {section.description}
+                                        </CardDescription>
                                     </div>
                                 </CardHeader>
                                 <CardContent>
@@ -88,9 +70,7 @@ export default function LaboratoryManagement({
                                         <Button disabled>
                                             Permission Needed
                                         </Button>
-                                    ) : (
-                                        <Button disabled>Coming Soon</Button>
-                                    )}
+                                    ) : null}
                                 </CardContent>
                             </Card>
                         );

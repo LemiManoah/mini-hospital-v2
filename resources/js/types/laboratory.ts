@@ -76,10 +76,13 @@ export interface LaboratorySpecimen {
     specimen_type_name: string;
     status: string;
     collected_at: string | null;
+    rejected_at?: string | null;
+    rejection_reason?: string | null;
     outside_sample: boolean;
     outside_sample_origin: string | null;
     notes: string | null;
     collectedBy?: { id: string; first_name: string; last_name: string } | null;
+    rejectedBy?: { id: string; first_name: string; last_name: string } | null;
 }
 
 export interface LaboratoryRequestItem {

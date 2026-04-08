@@ -67,7 +67,9 @@ const workflowVariant = (
 ): 'default' | 'secondary' | 'destructive' | 'outline' => {
     if (workflowStage === 'approved') return 'default';
     if (workflowStage === 'reviewed') return 'secondary';
-    if (workflowStage === 'cancelled') return 'destructive';
+    if (workflowStage === 'cancelled' || workflowStage === 'rejected') {
+        return 'destructive';
+    }
 
     return 'outline';
 };
@@ -135,6 +137,11 @@ export default function LaboratoryRequestItemShow({
     const releaseForm = useForm({
         review_notes: resultEntry?.review_notes ?? '',
         approval_notes: resultEntry?.approval_notes ?? '',
+    });
+    const rejectSpecimenForm = useForm({
+        rejection_reason:
+            labRequestItem.specimen?.rejection_reason ?? '',
+        redirect_to: `/laboratory/request-items/${labRequestItem.id}`,
     });
     const consumableForm = useForm({
         consumable_name: '',
@@ -588,6 +595,159 @@ export default function LaboratoryRequestItemShow({
                         </Card>
                     </div>
                     <div className="flex flex-col gap-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Specimen Workflow</CardTitle>
+                            </CardHeader>
+                            <CardContent className="flex flex-col gap-4 text-sm">
+                                <SummaryRow
+                                    label="Specimen Status"
+                                    value={labelize(
+                                        labRequestItem.specimen?.status ??
+                                            'not_picked',
+                                    )}
+                                />
+                                <SummaryRow
+                                    label="Accession Number"
+                                    value={
+                                        labRequestItem.specimen
+                                            ?.accession_number ?? 'Not assigned'
+                                    }
+                                />
+                                <SummaryRow
+                                    label="Specimen Type"
+                                    value={
+                                        labRequestItem.specimen
+                                            ?.specimen_type_name ??
+                                        labRequestItem.test?.specimen_type ??
+                                        'Not recorded'
+                                    }
+                                />
+                                <SummaryRow
+                                    label="Collected By"
+                                    value={actorName(
+                                        labRequestItem.specimen?.collectedBy,
+                                    )}
+                                />
+                                <SummaryRow
+                                    label="Collected At"
+                                    value={formatDateTime(
+                                        labRequestItem.specimen?.collected_at,
+                                    )}
+                                />
+                                {labRequestItem.specimen?.outside_sample ? (
+                                    <div className="rounded-lg border bg-amber-50 p-3 text-amber-900">
+                                        Outside sample
+                                        {labRequestItem.specimen
+                                            ?.outside_sample_origin
+                                            ? ` from ${labRequestItem.specimen.outside_sample_origin}`
+                                            : ''}
+                                        .
+                                    </div>
+                                ) : null}
+                                {labRequestItem.specimen?.status ===
+                                'rejected' ? (
+                                    <div className="flex flex-col gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+                                        <SummaryRow
+                                            label="Rejected By"
+                                            value={actorName(
+                                                labRequestItem.specimen
+                                                    ?.rejectedBy,
+                                            )}
+                                        />
+                                        <SummaryRow
+                                            label="Rejected At"
+                                            value={formatDateTime(
+                                                labRequestItem.specimen
+                                                    ?.rejected_at,
+                                            )}
+                                        />
+                                        <div>
+                                            <p className="text-muted-foreground">
+                                                Rejection Reason
+                                            </p>
+                                            <p className="font-medium">
+                                                {labRequestItem.specimen
+                                                    ?.rejection_reason ??
+                                                    'Not recorded'}
+                                            </p>
+                                        </div>
+                                        <p className="text-muted-foreground">
+                                            This test item now needs a new
+                                            sample collection before results can
+                                            be entered.
+                                        </p>
+                                    </div>
+                                ) : labRequestItem.specimen ? (
+                                    <form
+                                        onSubmit={(event) => {
+                                            event.preventDefault();
+                                            rejectSpecimenForm.post(
+                                                `/laboratory/request-items/${labRequestItem.id}/reject`,
+                                                { preserveScroll: true },
+                                            );
+                                        }}
+                                        className="flex flex-col gap-3 rounded-lg border p-4"
+                                    >
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="rejection_reason">
+                                                Reject Specimen
+                                            </Label>
+                                            <Textarea
+                                                id="rejection_reason"
+                                                rows={3}
+                                                value={
+                                                    rejectSpecimenForm.data
+                                                        .rejection_reason
+                                                }
+                                                onChange={(event) =>
+                                                    rejectSpecimenForm.setData(
+                                                        'rejection_reason',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Why was this sample rejected?"
+                                                disabled={
+                                                    rejectSpecimenForm.processing ||
+                                                    labRequestItem.result_entered_at !==
+                                                        null ||
+                                                    labRequestItem.approved_at !==
+                                                        null
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    rejectSpecimenForm.errors
+                                                        .rejection_reason
+                                                }
+                                            />
+                                        </div>
+                                        <div className="flex justify-end">
+                                            <Button
+                                                type="submit"
+                                                variant="destructive"
+                                                disabled={
+                                                    rejectSpecimenForm.processing ||
+                                                    labRequestItem.result_entered_at !==
+                                                        null ||
+                                                    labRequestItem.approved_at !==
+                                                        null
+                                                }
+                                            >
+                                                Reject Specimen
+                                            </Button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <div className="rounded-lg border border-dashed p-4 text-muted-foreground">
+                                        Pick the sample from the incoming queue
+                                        to start specimen tracking for this
+                                        request item.
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
                         <Card>
                             <CardHeader>
                                 <CardTitle>Released Result</CardTitle>

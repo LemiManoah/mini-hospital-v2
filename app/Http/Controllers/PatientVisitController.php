@@ -22,13 +22,13 @@ use App\Enums\TriageGrade;
 use App\Enums\VisitStatus;
 use App\Models\Allergen;
 use App\Models\Clinic;
-use App\Models\FacilityBranch;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Staff;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\ActiveBranchWorkspace;
+use App\Support\BranchScopedNumberGenerator;
 use App\Support\BranchContext;
 use App\Support\VisitOrderOptions;
 use Illuminate\Database\Eloquent\Builder;
@@ -237,7 +237,11 @@ final readonly class PatientVisitController implements HasMiddleware
         ]);
     }
 
-    public function store(Request $request, Patient $patient): RedirectResponse
+    public function store(
+        Request $request,
+        Patient $patient,
+        BranchScopedNumberGenerator $numberGenerator,
+    ): RedirectResponse
     {
         $hasActiveVisit = $patient->visits()
             ->whereNotIn('status', ['completed', 'cancelled'])
@@ -283,27 +287,15 @@ final readonly class PatientVisitController implements HasMiddleware
             return back()->with('error', 'The selected doctor is not available in the active branch.');
         }
 
-        $visit = DB::transaction(static function () use ($patient, $validated): PatientVisit {
+        $visit = DB::transaction(function () use ($patient, $validated, $numberGenerator): PatientVisit {
             $activeBranch = BranchContext::getActiveBranch();
-            $prefix = $activeBranch instanceof FacilityBranch ? mb_strtoupper(mb_substr($activeBranch->name, 0, 3)) : 'VIS';
             $userId = Auth::id();
-
-            $latest = PatientVisit::query()
-                ->where('visit_number', 'like', sprintf('%s-%%', $prefix))
-                ->lockForUpdate()
-                ->latest('visit_number')
-                ->value('visit_number');
-
-            $nextNumber = 1;
-            if (is_string($latest) && preg_match('/^(?<prefix>[A-Z]+)-(?<num>\d+)$/', $latest, $matches) === 1) {
-                $nextNumber = ((int) $matches['num']) + 1;
-            }
 
             $visit = PatientVisit::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_id' => $patient->id,
                 'facility_branch_id' => $activeBranch?->id,
-                'visit_number' => sprintf('%s-%06d', $prefix, $nextNumber),
+                'visit_number' => $numberGenerator->nextVisitNumber($activeBranch?->name),
                 'visit_type' => $validated['visit_type'],
                 'status' => VisitStatus::REGISTERED,
                 'clinic_id' => $validated['clinic_id'] ?? null,

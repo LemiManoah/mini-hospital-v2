@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { type Prescription } from '@/types/patient';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Printer, Trash2 } from 'lucide-react';
 import { formatDateTime, labelize, staffName } from '../visit-ordering';
 
 const statusBadgeClasses = (status: string): string =>
@@ -51,11 +51,7 @@ export function PrescriptionOrdersTable({
                         <TableHead>Status</TableHead>
                         <TableHead>Prescribed By</TableHead>
                         <TableHead>Date</TableHead>
-                        {canManageOrders && (
-                            <TableHead className="text-right">
-                                Actions
-                            </TableHead>
-                        )}
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -102,9 +98,24 @@ export function PrescriptionOrdersTable({
                             <TableCell>
                                 {formatDateTime(prescription.prescription_date)}
                             </TableCell>
-                            {canManageOrders && (
-                                <TableCell className="text-right">
-                                    <div className="flex justify-end gap-2">
+                            <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        asChild
+                                        title="Print prescription"
+                                    >
+                                        <a
+                                            href={`/prescriptions/${prescription.id}/print`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            <Printer className="h-4 w-4" />
+                                        </a>
+                                    </Button>
+                                    {canManageOrders ? (
+                                        <>
                                         <Button
                                             variant="ghost"
                                             size="icon"
@@ -126,9 +137,10 @@ export function PrescriptionOrdersTable({
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
-                                    </div>
-                                </TableCell>
-                            )}
+                                        </>
+                                    ) : null}
+                                </div>
+                            </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>

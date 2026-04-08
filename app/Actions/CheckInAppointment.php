@@ -9,8 +9,8 @@ use App\Enums\PayerType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Appointment;
-use App\Models\FacilityBranch;
 use App\Models\PatientVisit;
+use App\Support\BranchScopedNumberGenerator;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\BranchContext;
@@ -20,13 +20,17 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class CheckInAppointment
 {
+    public function __construct(
+        private BranchScopedNumberGenerator $numberGenerator,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $attributes
      */
     public function handle(Appointment $appointment, array $attributes): PatientVisit
     {
         /** @var PatientVisit */
-        return DB::transaction(static function () use ($appointment, $attributes): PatientVisit {
+        return DB::transaction(function () use ($appointment, $attributes): PatientVisit {
             if ($appointment->visit()->exists()) {
                 throw ValidationException::withMessages([
                     'appointment' => 'This appointment has already been checked in.',
@@ -50,25 +54,13 @@ final readonly class CheckInAppointment
             }
 
             $activeBranch = BranchContext::getActiveBranch();
-            $prefix = $activeBranch instanceof FacilityBranch ? mb_strtoupper(mb_substr($activeBranch->name, 0, 3)) : 'VIS';
             $userId = Auth::id();
-
-            $latest = PatientVisit::query()
-                ->where('visit_number', 'like', sprintf('%s-%%', $prefix))
-                ->lockForUpdate()
-                ->latest('visit_number')
-                ->value('visit_number');
-
-            $nextNumber = 1;
-            if (is_string($latest) && preg_match('/^(?<prefix>[A-Z]+)-(?<num>\d+)$/', $latest, $matches) === 1) {
-                $nextNumber = ((int) $matches['num']) + 1;
-            }
 
             $visit = PatientVisit::query()->create([
                 'tenant_id' => $appointment->tenant_id,
                 'patient_id' => $appointment->patient_id,
                 'facility_branch_id' => $appointment->facility_branch_id ?? $activeBranch?->id,
-                'visit_number' => sprintf('%s-%06d', $prefix, $nextNumber),
+                'visit_number' => $this->numberGenerator->nextVisitNumber($activeBranch?->name),
                 'visit_type' => $attributes['visit_type'] ?? VisitType::OPD_CONSULTATION->value,
                 'status' => VisitStatus::REGISTERED,
                 'clinic_id' => $appointment->clinic_id,

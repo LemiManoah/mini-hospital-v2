@@ -97,7 +97,7 @@ export default function PatientCreate({
         () =>
             clinics.map((clinic) => ({
                 value: clinic.id,
-                label: clinic.clinic_name,
+                label: clinic.name ?? clinic.clinic_name ?? '',
             })),
         [clinics],
     );
@@ -246,7 +246,7 @@ export default function PatientCreate({
                                 type="hidden"
                                 name="redirect_to"
                                 id="redirect_to"
-                                value="show"
+                                value="visit"
                             />
 
                             <Card>
@@ -675,7 +675,7 @@ export default function PatientCreate({
                                         const input = document.getElementById(
                                             'redirect_to',
                                         ) as HTMLInputElement | null;
-                                        if (input) input.value = 'show';
+                                        if (input) input.value = 'visit';
                                     }}
                                 >
                                     {processing ? (
@@ -683,7 +683,7 @@ export default function PatientCreate({
                                     ) : (
                                         <UserRoundPlus className="mr-2 h-4 w-4" />
                                     )}
-                                    Register & Open Profile
+                                    Register & Open Visit
                                 </Button>
                                 <Button
                                     type="submit"

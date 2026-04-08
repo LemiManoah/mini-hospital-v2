@@ -23,6 +23,8 @@ final class LabSpecimen extends Model
         'status' => LabSpecimenStatus::class,
         'collected_by' => 'string',
         'collected_at' => 'datetime',
+        'rejected_by' => 'string',
+        'rejected_at' => 'datetime',
         'outside_sample' => 'boolean',
     ];
 
@@ -39,5 +41,10 @@ final class LabSpecimen extends Model
     public function collectedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'collected_by');
+    }
+
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'rejected_by');
     }
 }

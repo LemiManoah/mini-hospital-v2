@@ -86,7 +86,9 @@ const workflowVariant = (
     if (workflowStage === 'reviewed' || workflowStage === 'result_entered') {
         return 'secondary';
     }
-    if (workflowStage === 'cancelled') return 'destructive';
+    if (workflowStage === 'cancelled' || workflowStage === 'rejected') {
+        return 'destructive';
+    }
 
     return 'outline';
 };

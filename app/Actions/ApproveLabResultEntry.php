@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\LabRequestItemStatus;
+use App\Enums\LabSpecimenStatus;
 use App\Models\LabRequestItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -26,6 +27,12 @@ final readonly class ApproveLabResultEntry
         if ($resultEntry === null || ! $resultEntry->values()->exists()) {
             throw ValidationException::withMessages([
                 'approve' => 'Enter results before approving and releasing them.',
+            ]);
+        }
+
+        if ($labRequestItem->specimen()->where('status', LabSpecimenStatus::REJECTED->value)->exists()) {
+            throw ValidationException::withMessages([
+                'approve' => 'Rejected specimens cannot be released. Recollect the sample first.',
             ]);
         }
 

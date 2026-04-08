@@ -437,6 +437,146 @@ with:
 
 This keeps the stock ledger consistent and audit-friendly.
 
+### 7.1 Optional Pharmacy POS Layer
+
+If the pharmacy should support cashier-style checkout for walk-ins and OTC sales, add a small POS layer that runs **alongside** the prescription-dispensing workflow, not inside it.
+
+In this codebase, the POS should be:
+
+- tenant-aware and branch-aware
+- tied to a real `inventory_location_id`
+- batch-aware so stock still depletes correctly from `inventory_batches`
+- intentionally separate from the normal visit, prescription, and billing flow
+- simple enough for fast walk-in checkout at the pharmacy counter
+
+Use a `pharmacy_pos_` prefix so these tables stay clearly pharmacy-specific and do not collide with future general cashier or retail flows.
+
+#### `pharmacy_pos_sales` - Completed POS Sales
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| tenant_id | UUID | FK -> tenants |
+| facility_branch_id | UUID | FK -> facility_branches |
+| inventory_location_id | UUID | FK -> inventory_locations; should be a pharmacy location with `is_dispensing_point = true` |
+| sale_number | VARCHAR(50) | Unique POS reference/receipt seed |
+| sale_type | ENUM('walk_in', 'otc', 'retail') | Distinguishes common pharmacy POS sale types |
+| gross_amount | DECIMAL(15,2) | Sum of line totals before discount |
+| discount_amount | DECIMAL(15,2) | Header-level discount total |
+| paid_amount | DECIMAL(15,2) | Amount collected at checkout |
+| balance_amount | DECIMAL(15,2) | Remaining unpaid amount |
+| change_amount | DECIMAL(15,2) | Cash change returned to patient/customer |
+| customer_name | VARCHAR(150) | Nullable; free-text walk-in customer name if captured |
+| customer_phone | VARCHAR(30) | Nullable |
+| status | ENUM('draft', 'completed', 'cancelled', 'refunded') | `draft` is useful while the cashier is still building the checkout |
+| sold_at | TIMESTAMP | When the sale is finalized |
+| notes | TEXT | Nullable |
+| created_by | UUID | FK -> users, nullable |
+| updated_by | UUID | FK -> users, nullable |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+| deleted_at | TIMESTAMP | Soft delete |
+
+#### `pharmacy_pos_sale_items` - POS Sale Line Items
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| pharmacy_pos_sale_id | UUID | FK -> pharmacy_pos_sales |
+| inventory_item_id | UUID | FK -> inventory_items |
+| quantity | DECIMAL(14,3) | Quantity actually sold/handed over |
+| unit_price | DECIMAL(15,2) | Selling price snapshot at time of sale |
+| discount_amount | DECIMAL(15,2) | Line-level discount |
+| line_total | DECIMAL(15,2) | Net line amount after discount |
+| notes | TEXT | Nullable |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+#### `pharmacy_pos_sale_item_allocations` - Sold Batch Allocation
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| pharmacy_pos_sale_item_id | UUID | FK -> pharmacy_pos_sale_items |
+| inventory_batch_id | UUID | FK -> inventory_batches |
+| quantity | DECIMAL(14,3) | Quantity taken from this batch |
+| unit_cost_snapshot | DECIMAL(14,2) | Optional audit snapshot for margin/reporting |
+| batch_number_snapshot | VARCHAR(100) | Nullable |
+| expiry_date_snapshot | DATE | Nullable |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+#### `pharmacy_pos_payments` - POS Sale Payments
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| pharmacy_pos_sale_id | UUID | FK -> pharmacy_pos_sales |
+| receipt_number | VARCHAR(50) | Nullable |
+| amount | DECIMAL(15,2) | Amount received |
+| payment_method | VARCHAR(50) | Cash, card, mobile money, etc. |
+| reference_number | VARCHAR(100) | Nullable transaction/reference code |
+| payment_date | TIMESTAMP | When payment was received |
+| is_refund | BOOLEAN | Default: false |
+| notes | TEXT | Nullable |
+| created_by | UUID | FK -> users, nullable |
+| updated_by | UUID | FK -> users, nullable |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+#### `pharmacy_pos_carts` - Active and Held POS Carts
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| tenant_id | UUID | FK -> tenants |
+| facility_branch_id | UUID | FK -> facility_branches |
+| inventory_location_id | UUID | FK -> inventory_locations |
+| user_id | UUID | FK -> users |
+| cart_number | VARCHAR(50) | Unique working-cart reference |
+| hold_reference | VARCHAR(50) | Nullable quick-recall code for parked carts |
+| customer_name | VARCHAR(150) | Nullable |
+| customer_phone | VARCHAR(30) | Nullable |
+| status | ENUM('active', 'held', 'converted', 'abandoned') | `converted` means turned into `pharmacy_pos_sales` |
+| notes | TEXT | Nullable |
+| held_at | TIMESTAMP | Nullable |
+| converted_at | TIMESTAMP | Nullable |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+#### `pharmacy_pos_cart_items` - POS Cart Line Items
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| pharmacy_pos_cart_id | UUID | FK -> pharmacy_pos_carts |
+| inventory_item_id | UUID | FK -> inventory_items |
+| quantity | DECIMAL(14,3) | Requested/selected quantity before checkout |
+| unit_price | DECIMAL(15,2) | Current selling price snapshot |
+| discount_amount | DECIMAL(15,2) | Nullable |
+| notes | TEXT | Nullable |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+#### `pharmacy_pos_cart_item_allocations` - Cart Batch Allocation
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| pharmacy_pos_cart_item_id | UUID | FK -> pharmacy_pos_cart_items |
+| inventory_batch_id | UUID | FK -> inventory_batches |
+| quantity | DECIMAL(14,3) | Reserved/planned quantity from this batch |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+### POS Integration Rules
+
+- the POS should remain separate from the visit, prescription, and dispensing workflow used for regular patients
+- finalizing a POS sale should post `stock_movements` using the chosen batch allocations
+- POS payments can be stored directly against the sale instead of routing through `visit_billings`
+- walk-in sales should still remain branch-scoped and location-scoped
+- only pharmacy users with access to the selected dispensing location should be able to open or finalize carts there
+
 ---
 
 ## 8) Recommended Pages
