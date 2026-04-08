@@ -83,7 +83,9 @@ export default function VisitShow({
                     <TabsList variant="line" className="w-full justify-start">
                         <TabsTrigger value="overview">Overview</TabsTrigger>
                         <TabsTrigger value="clinical">Clinical</TabsTrigger>
-                        <TabsTrigger value="orders">Orders</TabsTrigger>
+                        <TabsTrigger value="orders">
+                            Visit Services
+                        </TabsTrigger>
                         <TabsTrigger value="billing">Billing</TabsTrigger>
                     </TabsList>
 

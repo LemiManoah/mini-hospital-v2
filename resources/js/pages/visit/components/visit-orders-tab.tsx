@@ -148,10 +148,10 @@ export function VisitOrdersTab({
             <Card>
                 <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <CardTitle>Orders Workspace</CardTitle>
+                        <CardTitle>Visit Services</CardTitle>
                         <p className="text-sm text-muted-foreground">
-                            Manage all visit orders from one tab, with each order
-                            category in its own table.
+                            Manage medications, investigations, imaging, and
+                            other services from one workspace.
                         </p>
                     </div>
                     {canEditOrders ? (

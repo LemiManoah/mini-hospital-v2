@@ -1,23 +1,23 @@
 import {
-    Combobox,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxInput,
-    ComboboxItem,
-    ComboboxList,
-} from '@/components/ui/combobox';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { type ReactNode } from 'react';
 
 type SearchableOption = {
     value: string;
     label: string;
 };
 
+const CLEAR_VALUE = '__clear_selection__';
+
 const optionString = (value: unknown): string =>
     typeof value === 'string' ? value : '';
-
-const normalizeOptionString = (value: unknown): string =>
-    optionString(value).trim().toLocaleLowerCase();
 
 export function SearchableSelect({
     options,
@@ -25,9 +25,8 @@ export function SearchableSelect({
     onValueChange,
     inputId,
     placeholder,
-    emptyMessage = 'No matches found.',
+    emptyMessage = 'No options available.',
     allowClear = false,
-    allowCustomInput = false,
     disabled = false,
     invalid = false,
     renderOption,
@@ -39,109 +38,51 @@ export function SearchableSelect({
     placeholder: string;
     emptyMessage?: string;
     allowClear?: boolean;
-    allowCustomInput?: boolean;
     disabled?: boolean;
     invalid?: boolean;
     renderOption?: (option: SearchableOption) => ReactNode;
 }) {
-    const selectedOption =
-        options.find((option) => optionString(option.value) === value) ?? null;
-    const [inputValue, setInputValue] = useState(
-        optionString(selectedOption?.label) || (allowCustomInput ? value : ''),
-    );
-
-    const normalizedOptions = useMemo(
-        () =>
-            options.map((option) => ({
-                option,
-                normalizedLabel: normalizeOptionString(option.label),
-                normalizedValue: normalizeOptionString(option.value),
-            })),
-        [options],
-    );
-
-    useEffect(() => {
-        setInputValue(
-            optionString(selectedOption?.label) || (allowCustomInput ? value : ''),
-        );
-    }, [allowCustomInput, selectedOption, value]);
-
-    const findMatchingOption = (nextInputValue: string): SearchableOption | null => {
-        const normalizedInputValue = nextInputValue.trim().toLocaleLowerCase();
-
-        if (normalizedInputValue === '') {
-            return null;
-        }
-
-        return (
-            normalizedOptions.find(
-                ({ normalizedLabel, normalizedValue }) =>
-                    normalizedLabel === normalizedInputValue ||
-                    normalizedValue === normalizedInputValue,
-            )?.option ?? null
-        );
-    };
-
-    const restoreDisplayValue = () => {
-        setInputValue(
-            optionString(selectedOption?.label) || (allowCustomInput ? value : ''),
-        );
-    };
-
-    const commitInputValue = (nextInputValue: string) => {
-        const matchedOption = findMatchingOption(nextInputValue);
-
-        if (matchedOption) {
-            onValueChange(optionString(matchedOption.value));
-            setInputValue(optionString(matchedOption.label));
-
-            return;
-        }
-
-        if (allowCustomInput) {
-            onValueChange(nextInputValue.trim());
-            setInputValue(nextInputValue.trim());
-
-            return;
-        }
-
-        restoreDisplayValue();
-    };
-
     return (
-        <Combobox
-            items={options}
-            itemToStringValue={(option) => optionString(option?.label)}
-            value={selectedOption}
-            onValueChange={(option) => onValueChange(optionString(option?.value))}
-            inputValue={inputValue}
-            onInputValueChange={setInputValue}
+        <Select
+            value={value === '' ? undefined : value}
+            onValueChange={(nextValue) =>
+                onValueChange(nextValue === CLEAR_VALUE ? '' : nextValue)
+            }
+            disabled={disabled}
         >
-            <ComboboxInput
+            <SelectTrigger
                 id={inputId}
-                placeholder={placeholder}
+                className="w-full"
                 aria-invalid={invalid || undefined}
-                showClear={allowClear}
-                disabled={disabled}
-                onBlur={(event) => {
-                    commitInputValue(event.target.value);
-                }}
-            />
-            <ComboboxContent>
-                <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
-                <ComboboxList>
-                    {(option) => (
-                        <ComboboxItem
-                            key={optionString(option.value)}
-                            value={option}
-                        >
-                            {renderOption
-                                ? renderOption(option)
-                                : optionString(option.label)}
-                        </ComboboxItem>
-                    )}
-                </ComboboxList>
-            </ComboboxContent>
-        </Combobox>
+            >
+                <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+                {allowClear && value !== '' ? (
+                    <SelectGroup>
+                        <SelectItem value={CLEAR_VALUE}>Clear selection</SelectItem>
+                    </SelectGroup>
+                ) : null}
+
+                {options.length === 0 ? (
+                    <SelectGroup>
+                        <SelectLabel>{emptyMessage}</SelectLabel>
+                    </SelectGroup>
+                ) : (
+                    <SelectGroup>
+                        {options.map((option) => (
+                            <SelectItem
+                                key={optionString(option.value)}
+                                value={optionString(option.value)}
+                            >
+                                {renderOption
+                                    ? renderOption(option)
+                                    : optionString(option.label)}
+                            </SelectItem>
+                        ))}
+                    </SelectGroup>
+                )}
+            </SelectContent>
+        </Select>
     );
 }

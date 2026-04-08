@@ -1,14 +1,7 @@
 import InputError from '@/components/input-error';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-    Combobox,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxInput,
-    ComboboxItem,
-    ComboboxList,
-} from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -217,77 +210,65 @@ export function PrescriptionOrderModal({
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="grid gap-2">
                                         <Label>Drug</Label>
-                                        <Combobox
-                                            items={drugOptions}
-                                            itemToStringValue={(drug) =>
-                                                [
+                                        <SearchableSelect
+                                            inputId={`prescription_drug_${index}`}
+                                            options={drugOptions.map((drug) => ({
+                                                value: drug.id,
+                                                label: [
                                                     drug.generic_name,
                                                     drug.brand_name,
                                                     drug.strength,
                                                     drug.dosage_form,
                                                 ]
                                                     .filter(Boolean)
-                                                    .join(' ')
-                                            }
-                                            value={
-                                                drugOptions.find(
-                                                    (drug) =>
-                                                        drug.id ===
-                                                        item.inventory_item_id,
-                                                ) ?? null
-                                            }
+                                                    .join(' '),
+                                            }))}
+                                            value={item.inventory_item_id}
                                             onValueChange={(drug) =>
                                                 updatePrescriptionItem(
                                                     index,
                                                     'inventory_item_id',
-                                                    drug?.id ?? '',
+                                                    drug,
                                                 )
                                             }
-                                        >
-                                            <ComboboxInput
-                                                placeholder="Search drug"
-                                                showClear
-                                            />
-                                            <ComboboxContent>
-                                                <ComboboxEmpty>
-                                                    No drugs found.
-                                                </ComboboxEmpty>
-                                                <ComboboxList>
-                                                    {(drug) => (
-                                                        <ComboboxItem
-                                                            key={drug.id}
-                                                            value={drug}
-                                                        >
-                                                            <div className="flex flex-col gap-0.5">
-                                                                <span>
-                                                                    {
-                                                                        drug.generic_name
-                                                                    }
-                                                                    {drug.brand_name
-                                                                        ? ` (${drug.brand_name})`
-                                                                        : ''}
-                                                                </span>
-                                                                {drug.strength ||
-                                                                drug.dosage_form ? (
-                                                                    <span className="text-xs text-muted-foreground">
-                                                                        {[
-                                                                            drug.strength,
-                                                                            drug.dosage_form,
-                                                                        ]
-                                                                            .filter(
-                                                                                Boolean,
-                                                                            )
-                                                                            .join(
-                                                                                ' | ',
-                                                                            )}
-                                                                    </span>
-                                                                ) : null}
-                                                            </div>
-                                                        </ComboboxItem>
-                                                    )}
-                                                </ComboboxList>
-                                            </ComboboxContent>
-                                        </Combobox>
+                                            placeholder="Search drug"
+                                            emptyMessage="No drugs found."
+                                            allowClear
+                                            renderOption={(option) => {
+                                                const drug = drugOptions.find(
+                                                    (itemOption) =>
+                                                        itemOption.id ===
+                                                        option.value,
+                                                );
+
+                                                return (
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span>
+                                                            {drug?.generic_name ??
+                                                                option.label}
+                                                            {drug?.brand_name
+                                                                ? ` (${drug.brand_name})`
+                                                                : ''}
+                                                        </span>
+                                                        {drug?.strength ||
+                                                        drug?.dosage_form ? (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {[
+                                                                    drug.strength,
+                                                                    drug.dosage_form,
+                                                                ]
+                                                                    .filter(
+                                                                        Boolean,
+                                                                    )
+                                                                    .join(
+                                                                        ' | ',
+                                                                    )}
+                                                            </span>
+                                                        ) : null}
+                                                    </div>
+                                                );
+                                            }}
+                                        />
                                         <InputError
                                             message={
                                                 (form.errors as any)[

@@ -10,7 +10,6 @@ import { type PatientCreatePageProps } from '@/types/patient';
 import { Form, Head, Link } from '@inertiajs/react';
 import { CheckCircle2, LoaderCircle, UserRoundPlus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Patients', href: '/patients' },
@@ -162,11 +161,6 @@ export default function PatientCreate({
                 <Form
                     action="/patients"
                     method="post"
-                    onSuccess={() =>
-                        toast.success(
-                            'Patient registered and visit started successfully.',
-                        )
-                    }
                     className="space-y-6"
                 >
                     {({ processing, errors }) => (
@@ -176,7 +170,11 @@ export default function PatientCreate({
                                 name="age_input_mode"
                                 value={ageInputMode}
                             />
-                            <input type="hidden" name="gender" value={gender} />
+                            <input
+                                type="hidden"
+                                name="gender"
+                                value={gender}
+                            />
                             <input
                                 type="hidden"
                                 name="age_units"
@@ -242,13 +240,6 @@ export default function PatientCreate({
                                 name="insurance_package_id"
                                 value={packageId}
                             />
-                            <input
-                                type="hidden"
-                                name="redirect_to"
-                                id="redirect_to"
-                                value="visit"
-                            />
-
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Patient Details</CardTitle>
@@ -320,6 +311,12 @@ export default function PatientCreate({
                                                 )
                                             }
                                             placeholder="Select mode"
+                                            invalid={Boolean(
+                                                errors.age_input_mode,
+                                            )}
+                                        />
+                                        <InputError
+                                            message={errors.age_input_mode}
                                         />
                                     </div>
                                     {ageInputMode === 'dob' ? (
@@ -367,6 +364,12 @@ export default function PatientCreate({
                                                         )
                                                     }
                                                     placeholder="Select units"
+                                                    invalid={Boolean(
+                                                        errors.age_units,
+                                                    )}
+                                                />
+                                                <InputError
+                                                    message={errors.age_units}
                                                 />
                                             </div>
                                         </>
@@ -417,6 +420,10 @@ export default function PatientCreate({
                                             placeholder="Select country"
                                             emptyMessage="No countries available."
                                             allowClear
+                                            invalid={Boolean(errors.country_id)}
+                                        />
+                                        <InputError
+                                            message={errors.country_id}
                                         />
                                     </div>
                                     <div className="grid gap-2">
@@ -431,6 +438,10 @@ export default function PatientCreate({
                                             placeholder="Select address"
                                             emptyMessage="No addresses available."
                                             allowClear
+                                            invalid={Boolean(errors.address_id)}
+                                        />
+                                        <InputError
+                                            message={errors.address_id}
                                         />
                                     </div>
                                     <div className="grid gap-2">
@@ -445,6 +456,12 @@ export default function PatientCreate({
                                             placeholder="Select marital status"
                                             emptyMessage="No marital status options available."
                                             allowClear
+                                            invalid={Boolean(
+                                                errors.marital_status,
+                                            )}
+                                        />
+                                        <InputError
+                                            message={errors.marital_status}
                                         />
                                     </div>
                                     <div className="grid gap-2">
@@ -468,6 +485,10 @@ export default function PatientCreate({
                                             placeholder="Select religion"
                                             emptyMessage="No religion options available."
                                             allowClear
+                                            invalid={Boolean(errors.religion)}
+                                        />
+                                        <InputError
+                                            message={errors.religion}
                                         />
                                     </div>
                                     <div className="grid gap-2">
@@ -482,6 +503,12 @@ export default function PatientCreate({
                                             placeholder="Select blood group"
                                             emptyMessage="No blood group options available."
                                             allowClear
+                                            invalid={Boolean(
+                                                errors.blood_group,
+                                            )}
+                                        />
+                                        <InputError
+                                            message={errors.blood_group}
                                         />
                                     </div>
                                 </CardContent>
@@ -522,6 +549,14 @@ export default function PatientCreate({
                                             placeholder="Select relationship"
                                             emptyMessage="No relationship options available."
                                             allowClear
+                                            invalid={Boolean(
+                                                errors.next_of_kin_relationship,
+                                            )}
+                                        />
+                                        <InputError
+                                            message={
+                                                errors.next_of_kin_relationship
+                                            }
                                         />
                                     </div>
                                 </CardContent>
@@ -561,6 +596,10 @@ export default function PatientCreate({
                                             placeholder="Select clinic"
                                             emptyMessage="No clinics available."
                                             allowClear
+                                            invalid={Boolean(errors.clinic_id)}
+                                        />
+                                        <InputError
+                                            message={errors.clinic_id}
                                         />
                                     </div>
                                     <div className="grid gap-2">
@@ -575,6 +614,10 @@ export default function PatientCreate({
                                             placeholder="Select doctor"
                                             emptyMessage="No doctors available."
                                             allowClear
+                                            invalid={Boolean(errors.doctor_id)}
+                                        />
+                                        <InputError
+                                            message={errors.doctor_id}
                                         />
                                     </div>
                                     <div className="grid gap-2">
@@ -670,13 +713,9 @@ export default function PatientCreate({
                             <div className="flex flex-wrap gap-3">
                                 <Button
                                     type="submit"
+                                    name="redirect_to"
+                                    value="visit"
                                     disabled={processing}
-                                    onClick={() => {
-                                        const input = document.getElementById(
-                                            'redirect_to',
-                                        ) as HTMLInputElement | null;
-                                        if (input) input.value = 'visit';
-                                    }}
                                 >
                                     {processing ? (
                                         <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -687,14 +726,10 @@ export default function PatientCreate({
                                 </Button>
                                 <Button
                                     type="submit"
+                                    name="redirect_to"
+                                    value="list"
                                     variant="secondary"
                                     disabled={processing}
-                                    onClick={() => {
-                                        const input = document.getElementById(
-                                            'redirect_to',
-                                        ) as HTMLInputElement | null;
-                                        if (input) input.value = 'list';
-                                    }}
                                 >
                                     {processing ? (
                                         <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
