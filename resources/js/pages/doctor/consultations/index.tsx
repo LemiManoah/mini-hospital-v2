@@ -131,7 +131,7 @@ export default function DoctorConsultationsIndex({
                 </div>
 
                 <div className="overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <Table className="min-w-[1100px]">
+                    <Table className="min-w-[980px]">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Patient</TableHead>
@@ -139,7 +139,6 @@ export default function DoctorConsultationsIndex({
                                 <TableHead>Chief Complaint</TableHead>
                                 <TableHead>Clinic / Doctor</TableHead>
                                 <TableHead>Consultation</TableHead>
-                                <TableHead>Last Activity</TableHead>
                                 <TableHead>Action</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -155,10 +154,6 @@ export default function DoctorConsultationsIndex({
                                         .join(' ');
                                     const consultation =
                                         consultationState(visit);
-                                    const activityDate =
-                                        visit.consultation?.started_at ??
-                                        visit.triage?.triage_datetime ??
-                                        visit.registered_at;
 
                                     return (
                                         <TableRow key={visit.id}>
@@ -254,33 +249,6 @@ export default function DoctorConsultationsIndex({
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {new Date(
-                                                            activityDate,
-                                                        ).toLocaleDateString(
-                                                            'en-US',
-                                                            {
-                                                                year: 'numeric',
-                                                                month: 'short',
-                                                                day: 'numeric',
-                                                            },
-                                                        )}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {new Date(
-                                                            activityDate,
-                                                        ).toLocaleTimeString(
-                                                            'en-US',
-                                                            {
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                            },
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
                                                 {canViewConsultation ? (
                                                     <Button size="sm" asChild>
                                                         <Link
@@ -303,7 +271,7 @@ export default function DoctorConsultationsIndex({
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={7}
+                                        colSpan={6}
                                         className="py-12 text-center text-zinc-500 italic"
                                     >
                                         No triaged visits are ready for

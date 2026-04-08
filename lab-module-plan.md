@@ -485,6 +485,7 @@ If only one slice should be taken first, start with:
 
 These are good ideas from the production module, but they should be treated as later extensions instead of first-pass blockers:
 
+- walk-in lab-only workflow for patients who come without a doctor visit
 - specialized culture and sensitivity workflow:
   - organism selection
   - antibiotic sensitivity matrices
@@ -497,7 +498,135 @@ These are good ideas from the production module, but they should be treated as l
 
 ---
 
-## 10) Boundaries For This Plan
+## 10) Planned Extension: Walk-In Lab-Only Patients
+
+### Why This Matters
+
+Some patients come to the hospital specifically for laboratory services:
+
+- employer or school screening
+- antenatal or wellness follow-up labs without same-day consultation
+- externally referred tests from another clinician or facility
+- self-requested checkups where policy allows cash laboratory testing
+
+That flow should be supported alongside the normal visit-driven workflow without forcing the patient through the full consultation pipeline.
+
+### Recommended Approach
+
+Build this as a parallel intake path that still ends inside the same operational laboratory queues.
+
+That means:
+
+- do not force a normal doctor consultation before lab ordering
+- do not overload the current visit workflow with fake consultation data
+- do reuse the existing lab request, specimen, result, review, and release workflow after intake
+
+### Proposed Workflow
+
+1. patient is identified or quickly registered
+2. staff chooses `Lab Only` intake instead of a normal clinical visit
+3. staff records referral source and request basis:
+   - walk-in self-request
+   - external clinician request
+   - corporate or screening request
+4. staff selects tests directly from the lab catalog
+5. billing is created and settled using the same cash or insurance rules where allowed
+6. request lands in the same lab intake and specimen workflow queues
+7. released results are printed or shared back to the patient or referring source
+
+### Recommended Data Shape
+
+Prefer one of these two approaches:
+
+#### Option A: Lightweight `lab-only visit` on the existing visit table
+
+Add a distinct visit type such as `lab_only`.
+
+Benefits:
+
+- reuses existing patient, billing, branch, and print relationships
+- keeps lab requests linked to a patient visit consistently
+- requires fewer special cases across reports and permissions
+
+Important rules:
+
+- no consultation is required
+- triage is not required
+- doctor assignment is optional
+- completion rules differ from a normal clinical visit
+
+#### Option B: Separate `lab_direct_requests` intake record
+
+Create a dedicated intake model outside `patient_visits`.
+
+Benefits:
+
+- cleaner separation from the normal clinical workflow
+- easier to support pure external referrals later
+
+Tradeoff:
+
+- introduces more duplicate billing, reporting, and permission logic
+- would require extra adapters anywhere the app assumes lab requests belong to visits
+
+### Recommended Choice
+
+Start with **Option A: a dedicated `lab_only` visit type**.
+
+It fits this codebase better because the app already depends heavily on visit-based billing, printing, permissions, and patient timelines. A `lab_only` visit is much cheaper than building a second parallel transaction model.
+
+### Suggested Fields For Lab-Only Intake
+
+- patient id
+- facility branch id
+- visit type = `lab_only`
+- referral source type
+- referring clinician name
+- referring facility
+- external request reference
+- clinical notes or indication
+- billing type
+- payer snapshot
+- requested tests
+
+### Rules To Add
+
+- `lab_only` visits should bypass triage and consultation requirements
+- `lab_only` visits should still create visit billing and lab request charges
+- result release should work exactly like normal lab requests
+- completion should depend on:
+  - all lab request items resolved
+  - billing state acceptable for the payer type
+- patient result access and print access should remain permission-controlled
+
+### UI Surfaces Needed
+
+- `Register Lab-Only Patient` action from laboratory or front desk
+- quick intake form for referral details and test selection
+- queue badge or label showing `Lab Only`
+- visit or request detail treatment that hides irrelevant triage and consultation prompts
+- print-ready released lab result for patient pickup
+
+### Suggested Delivery Slices
+
+1. add `lab_only` visit type and allow completion without triage or consultation
+2. add front-desk or lab intake UI for lab-only registration
+3. attach direct test ordering and billing at intake
+4. update lab queues and visit views to label lab-only requests clearly
+5. add tests for registration, billing, request flow, and completion rules
+
+### Definition Of Done
+
+This extension is complete when:
+
+- staff can register a patient for laboratory service without creating a normal consultation flow
+- the request still enters the standard lab queues
+- billing still works through the existing visit-billing foundations
+- result release and printing work without triage or doctor workflow dependencies
+
+---
+
+## 11) Boundaries For This Plan
 
 This plan intentionally does not include:
 
@@ -511,7 +640,7 @@ Those can be handled in later iterations after the core lab workflow is stable.
 
 ---
 
-## 11) Bottom Line
+## 12) Bottom Line
 
 The lab module is no longer just "started" at the ordering layer. It already spans most of the operational lifecycle:
 

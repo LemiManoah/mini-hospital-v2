@@ -414,7 +414,7 @@ export default function TriageShow({
                                                                     setTriageGrade
                                                                 }
                                                             >
-                                                                <SelectTrigger>
+                                                                <SelectTrigger className="w-full">
                                                                     <SelectValue placeholder="Select triage grade" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
@@ -456,7 +456,7 @@ export default function TriageShow({
                                                                     setAttendanceType
                                                                 }
                                                             >
-                                                                <SelectTrigger>
+                                                                <SelectTrigger className="w-full">
                                                                     <SelectValue placeholder="Select attendance type" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
@@ -498,7 +498,7 @@ export default function TriageShow({
                                                                     setConsciousLevel
                                                                 }
                                                             >
-                                                                <SelectTrigger>
+                                                                <SelectTrigger className="w-full">
                                                                     <SelectValue placeholder="Select conscious level" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
@@ -540,7 +540,7 @@ export default function TriageShow({
                                                                     setMobilityStatus
                                                                 }
                                                             >
-                                                                <SelectTrigger>
+                                                                <SelectTrigger className="w-full">
                                                                     <SelectValue placeholder="Select mobility status" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
@@ -609,7 +609,7 @@ export default function TriageShow({
                                                                     setAssignedClinicId
                                                                 }
                                                             >
-                                                                <SelectTrigger>
+                                                                <SelectTrigger className="w-full">
                                                                     <SelectValue placeholder="Select clinic" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
@@ -670,23 +670,38 @@ export default function TriageShow({
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid gap-4 md:grid-cols-3">
-                                                        <Input
-                                                            id="poisoning_agent"
-                                                            name="poisoning_agent"
-                                                            placeholder="Poisoning agent"
-                                                        />
-                                                        <Input
-                                                            id="referred_by"
-                                                            name="referred_by"
-                                                            placeholder="Referred by"
-                                                        />
-                                                        <Textarea
-                                                            id="nurse_notes"
-                                                            name="nurse_notes"
-                                                            rows={3}
-                                                            placeholder="Nurse notes"
-                                                        />
+                                                    <div className="grid gap-4 md:grid-cols-2">
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="poisoning_agent">
+                                                                Poisoning Agent
+                                                            </Label>
+                                                            <Input
+                                                                id="poisoning_agent"
+                                                                name="poisoning_agent"
+                                                                placeholder="Enter poisoning agent"
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="referred_by">
+                                                                Referred By
+                                                            </Label>
+                                                            <Input
+                                                                id="referred_by"
+                                                                name="referred_by"
+                                                                placeholder="Enter referral source"
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2 md:col-span-2">
+                                                            <Label htmlFor="nurse_notes">
+                                                                Nurse Notes
+                                                            </Label>
+                                                            <Textarea
+                                                                id="nurse_notes"
+                                                                name="nurse_notes"
+                                                                rows={4}
+                                                                placeholder="Add any nursing notes"
+                                                            />
+                                                        </div>
                                                     </div>
 
                                                     <div className="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">

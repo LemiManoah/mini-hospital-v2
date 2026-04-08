@@ -152,10 +152,6 @@ export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
                                                             'Unknown patient'}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {
-                                                            visit.patient
-                                                                ?.patient_number
-                                                        }{' '}
                                                         {visit.patient
                                                             ?.phone_number
                                                             ? `${visit.patient.phone_number}`
