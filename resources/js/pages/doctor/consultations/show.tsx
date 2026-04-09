@@ -1044,6 +1044,24 @@ export default function DoctorConsultationShow({
                                                     );
                                                 }
                                             }}
+                                            onDeleteItem={(request, item) => {
+                                                if (
+                                                    confirm(
+                                                        'Are you sure you want to remove this test from the lab request?',
+                                                    )
+                                                ) {
+                                                    router.delete(
+                                                        `/visits/${visit.id}/lab-requests/${request.id}/items/${item.id}`,
+                                                        {
+                                                            data: {
+                                                                redirect_to:
+                                                                    'consultation',
+                                                            },
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
+                                                }
+                                            }}
                                         />
                                     </CardContent>
                                 </Card>

@@ -160,6 +160,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('visits/{visit}/lab-requests', [VisitOrderController::class, 'storeLabRequest'])->name('visits.lab-requests.store');
     Route::patch('visits/{visit}/lab-requests/{labRequest}', [VisitOrderController::class, 'updateLabRequest'])->name('visits.lab-requests.update');
     Route::delete('visits/{visit}/lab-requests/{labRequest}', [VisitOrderController::class, 'destroyLabRequest'])->name('visits.lab-requests.destroy');
+    Route::delete('visits/{visit}/lab-requests/{labRequest}/items/{labRequestItem}', [VisitOrderController::class, 'destroyLabRequestItem'])->name('visits.lab-requests.items.destroy');
     Route::post('visits/{visit}/imaging-requests', [VisitOrderController::class, 'storeImagingRequest'])->name('visits.imaging-requests.store');
     Route::post('visits/{visit}/prescriptions', [VisitOrderController::class, 'storePrescription'])->name('visits.prescriptions.store');
     Route::post('visits/{visit}/facility-service-orders', [VisitOrderController::class, 'storeFacilityServiceOrder'])->name('visits.facility-service-orders.store');

@@ -168,7 +168,7 @@ export function LabOrderModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="flex max-h-[95vh] flex-col gap-0 overflow-hidden border-none bg-white p-0 shadow-2xl sm:max-w-5xl">
+            <DialogContent className="max-h-[95vh] overflow-y-auto border-none bg-white p-0 shadow-2xl sm:max-w-5xl">
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle className="text-xl font-bold">
                         {labRequest ? 'Edit Lab Request' : 'New Lab Request'}
@@ -181,12 +181,12 @@ export function LabOrderModal({
                 </DialogHeader>
 
                 <form
-                    className="flex flex-1 flex-col overflow-hidden"
+                    className="flex flex-col"
                     onSubmit={onSubmit}
                 >
-                    <div className="grid flex-1 overflow-hidden lg:grid-cols-[1fr_300px]">
+                    <div className="grid lg:grid-cols-[minmax(0,1fr)_300px]">
                         {/* Left Side: Test Selection */}
-                        <div className="flex min-h-0 flex-col overflow-hidden border-r">
+                        <div className="border-b lg:border-r lg:border-b-0">
                             <div className="border-b bg-zinc-50/50 p-4">
                                 <div className="relative">
                                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -212,7 +212,7 @@ export function LabOrderModal({
                                 </div>
                             </div>
 
-                            <ScrollArea className="h-[400px] flex-1 p-4 lg:h-auto">
+                            <ScrollArea className="max-h-[48vh] p-4 lg:max-h-[68vh]">
                                 <div className="space-y-6">
                                     {Object.entries(groupedLabTests).length ===
                                     0 ? (
@@ -289,150 +289,138 @@ export function LabOrderModal({
                         </div>
 
                         {/* Right Side: Request Details */}
-                        <div className="flex min-h-0 flex-col overflow-hidden bg-zinc-50/30">
-                            <ScrollArea className="flex-1 p-6">
-                                <div className="space-y-6">
-                                    <div className="space-y-3">
-                                        <Label className="text-xs font-bold tracking-wider text-zinc-500 uppercase">
-                                            Selected Tests (
-                                            {form.data.test_ids.length})
-                                        </Label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {selectedTestsList.length === 0 ? (
-                                                <p className="text-sm text-muted-foreground italic">
-                                                    No tests selected yet.
-                                                </p>
-                                            ) : (
-                                                selectedTestsList.map((t) => (
-                                                    <Badge
-                                                        key={t.id}
-                                                        variant="secondary"
-                                                        className="gap-1 py-1 pr-1 pl-2"
+                        <div className="bg-zinc-50/30 p-6">
+                            <div className="space-y-6">
+                                <div className="space-y-3">
+                                    <Label className="text-xs font-bold tracking-wider text-zinc-500 uppercase">
+                                        Selected Tests (
+                                        {form.data.test_ids.length})
+                                    </Label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedTestsList.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground italic">
+                                                No tests selected yet.
+                                            </p>
+                                        ) : (
+                                            selectedTestsList.map((t) => (
+                                                <Badge
+                                                    key={t.id}
+                                                    variant="secondary"
+                                                    className="gap-1 py-1 pr-1 pl-2"
+                                                >
+                                                    {t.test_name}
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-4 w-4 rounded-full hover:bg-zinc-200"
+                                                        onClick={() =>
+                                                            removeTest(t.id)
+                                                        }
                                                     >
-                                                        {t.test_name}
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-4 w-4 rounded-full hover:bg-zinc-200"
-                                                            onClick={() =>
-                                                                removeTest(t.id)
+                                                        <X className="h-2 w-2" />
+                                                    </Button>
+                                                </Badge>
+                                            ))
+                                        )}
+                                    </div>
+                                    <InputError message={form.errors.test_ids} />
+                                    {hasPendingSelectedTests ? (
+                                        <p className="text-sm text-amber-700">
+                                            One or more selected tests already
+                                            have pending orders for this visit.
+                                        </p>
+                                    ) : null}
+                                </div>
+
+                                <div className="grid gap-4">
+                                    <div className="grid gap-2">
+                                        <Label>Priority</Label>
+                                        <Select
+                                            value={form.data.priority}
+                                            onValueChange={(value) =>
+                                                form.setData('priority', value)
+                                            }
+                                        >
+                                            <SelectTrigger className="bg-white">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white">
+                                                {labPriorities.map(
+                                                    (priority) => (
+                                                        <SelectItem
+                                                            key={
+                                                                priority.value
+                                                            }
+                                                            value={
+                                                                priority.value
                                                             }
                                                         >
-                                                            <X className="h-2 w-2" />
-                                                        </Button>
-                                                    </Badge>
-                                                ))
-                                            )}
-                                        </div>
-                                        <InputError
-                                            message={form.errors.test_ids}
+                                                            {priority.label}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="diagnosis_code">
+                                            Diagnosis Code
+                                        </Label>
+                                        <Input
+                                            id="diagnosis_code"
+                                            className="bg-white"
+                                            value={form.data.diagnosis_code}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'diagnosis_code',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
-                                        {hasPendingSelectedTests ? (
-                                            <p className="text-sm text-amber-700">
-                                                One or more selected tests
-                                                already have pending orders for
-                                                this visit.
-                                            </p>
-                                        ) : null}
+                                        <InputError
+                                            message={form.errors.diagnosis_code}
+                                        />
                                     </div>
 
-                                    <div className="grid gap-4">
-                                        <div className="grid gap-2">
-                                            <Label>Priority</Label>
-                                            <Select
-                                                value={form.data.priority}
-                                                onValueChange={(value) =>
-                                                    form.setData(
-                                                        'priority',
-                                                        value,
-                                                    )
-                                                }
-                                            >
-                                                <SelectTrigger className="bg-white">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent className="bg-white">
-                                                    {labPriorities.map(
-                                                        (priority) => (
-                                                            <SelectItem
-                                                                key={
-                                                                    priority.value
-                                                                }
-                                                                value={
-                                                                    priority.value
-                                                                }
-                                                            >
-                                                                {priority.label}
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="diagnosis_code">
-                                                Diagnosis Code
-                                            </Label>
-                                            <Input
-                                                id="diagnosis_code"
-                                                className="bg-white"
-                                                value={form.data.diagnosis_code}
-                                                onChange={(e) =>
-                                                    form.setData(
-                                                        'diagnosis_code',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            <InputError
-                                                message={
-                                                    form.errors.diagnosis_code
-                                                }
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="lab_clinical_notes">
-                                                Clinical Notes
-                                            </Label>
-                                            <Textarea
-                                                id="lab_clinical_notes"
-                                                className="bg-white"
-                                                rows={4}
-                                                value={form.data.clinical_notes}
-                                                onChange={(e) =>
-                                                    form.setData(
-                                                        'clinical_notes',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            <InputError
-                                                message={
-                                                    form.errors.clinical_notes
-                                                }
-                                            />
-                                        </div>
-
-                                        <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
-                                            <Checkbox
-                                                checked={form.data.is_stat}
-                                                onCheckedChange={(checked) =>
-                                                    form.setData(
-                                                        'is_stat',
-                                                        checked === true,
-                                                    )
-                                                }
-                                            />
-                                            Mark as STAT (Urgent)
-                                        </label>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="lab_clinical_notes">
+                                            Clinical Notes
+                                        </Label>
+                                        <Textarea
+                                            id="lab_clinical_notes"
+                                            className="bg-white"
+                                            rows={4}
+                                            value={form.data.clinical_notes}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'clinical_notes',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        <InputError
+                                            message={form.errors.clinical_notes}
+                                        />
                                     </div>
+
+                                    <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
+                                        <Checkbox
+                                            checked={form.data.is_stat}
+                                            onCheckedChange={(checked) =>
+                                                form.setData(
+                                                    'is_stat',
+                                                    checked === true,
+                                                )
+                                            }
+                                        />
+                                        Mark as STAT (Urgent)
+                                    </label>
                                 </div>
-                            </ScrollArea>
+                            </div>
 
-                            <div className="mt-auto flex flex-col gap-3 border-t bg-white p-6">
+                            <div className="mt-6 flex flex-col gap-3 border-t bg-white pt-6">
                                 <div className="flex justify-between text-sm font-medium">
                                     <span className="text-muted-foreground">
                                         Total Estimate:

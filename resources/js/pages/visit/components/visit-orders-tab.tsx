@@ -232,6 +232,12 @@ export function VisitOrdersTab({
                             'Are you sure you want to remove this lab request?',
                         )
                     }
+                    onDeleteItem={(request, item) =>
+                        deleteVisitOrder(
+                            `/visits/${visit.id}/lab-requests/${request.id}/items/${item.id}`,
+                            'Are you sure you want to remove this test from the lab request?',
+                        )
+                    }
                 />
             </OrderSection>
 

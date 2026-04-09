@@ -9,6 +9,7 @@ use App\Actions\CreateImagingRequest;
 use App\Actions\CreateLabRequest;
 use App\Actions\CreatePrescription;
 use App\Actions\DeletePendingLabRequest;
+use App\Actions\DeletePendingLabRequestItem;
 use App\Actions\DeletePendingFacilityServiceOrder;
 use App\Actions\UpdateFacilityServiceOrder;
 use App\Actions\UpdateLabRequest;
@@ -20,6 +21,7 @@ use App\Http\Requests\StoreConsultationLabRequest;
 use App\Http\Requests\StoreConsultationPrescriptionRequest;
 use App\Models\FacilityServiceOrder;
 use App\Models\LabRequest;
+use App\Models\LabRequestItem;
 use App\Models\PatientVisit;
 use App\Support\DoctorConsultationAccess;
 use Illuminate\Http\RedirectResponse;
@@ -37,6 +39,7 @@ final class VisitOrderController implements HasMiddleware
                 'storeLabRequest',
                 'updateLabRequest',
                 'destroyLabRequest',
+                'destroyLabRequestItem',
                 'storeImagingRequest',
                 'storePrescription',
                 'storeFacilityServiceOrder',
@@ -124,6 +127,34 @@ final class VisitOrderController implements HasMiddleware
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
             ->with('success', 'Laboratory request removed successfully.');
+    }
+
+    public function destroyLabRequestItem(
+        Request $request,
+        PatientVisit $visit,
+        LabRequest $labRequest,
+        LabRequestItem $labRequestItem,
+        DoctorConsultationAccess $consultationAccess,
+        DeletePendingLabRequestItem $deletePendingLabRequestItem,
+    ): RedirectResponse {
+        $staffId = $this->resolveStaffId($visit, $consultationAccess, $request->input('redirect_to'));
+        if (! is_string($staffId) || $staffId === '') {
+            return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
+                ->with('error', 'Clinical lab orders require a linked staff profile for audit tracking.');
+        }
+
+        abort_unless($labRequest->visit_id === $visit->id, 404);
+        abort_unless($labRequestItem->request_id === $labRequest->id, 404);
+
+        if (! $this->labRequestIsEditable($labRequest) || $labRequestItem->status !== 'pending') {
+            return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
+                ->with('error', 'Only pending lab tests can be removed one by one.');
+        }
+
+        $deletePendingLabRequestItem->handle($labRequestItem);
+
+        return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
+            ->with('success', 'Laboratory test removed successfully.');
     }
 
     public function storeImagingRequest(

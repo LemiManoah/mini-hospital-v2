@@ -292,17 +292,17 @@ export default function LaboratoryQueuePage({
                             return (
                                 <Card
                                     key={request.id}
-                                    className="overflow-hidden border-border/70 shadow-sm"
+                                    className="overflow-hidden border-border/60 shadow-none"
                                 >
-                                    <CardHeader className="gap-3 border-b bg-muted/10 px-5 py-4">
+                                    <CardHeader className="gap-2 border-b bg-muted/5 px-4 py-3">
                                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                                             <div className="flex flex-col gap-1">
-                                                <CardTitle className="text-lg">
+                                                <CardTitle className="text-base">
                                                     {patient
                                                         ? `${patient.first_name} ${patient.last_name}`
                                                         : 'Unknown patient'}
                                                 </CardTitle>
-                                                <p className="text-sm leading-5 text-muted-foreground">
+                                                <p className="text-xs leading-4 text-muted-foreground">
                                                     Visit{' '}
                                                     {request.visit
                                                         ?.visit_number ??
@@ -320,17 +320,21 @@ export default function LaboratoryQueuePage({
                                                     {formatPatientAge(patient)}
                                                 </p>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-2 lg:max-w-xs lg:justify-end">
+                                            <div className="flex flex-wrap items-center gap-1.5 lg:max-w-xs lg:justify-end">
                                                 <Badge
                                                     variant={priorityVariant(
                                                         request.priority,
                                                     )}
+                                                    className="px-2 py-0.5 text-[11px]"
                                                 >
                                                     {labelize(request.priority)}
                                                 </Badge>
                                                 {page.stage === 'incoming' ? (
                                                     <>
-                                                        <Badge variant="outline">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="px-2 py-0.5 text-[11px]"
+                                                        >
                                                             {request.items.length}{' '}
                                                             {request.items.length ===
                                                             1
@@ -339,7 +343,10 @@ export default function LaboratoryQueuePage({
                                                         </Badge>
                                                         {request.request_count >
                                                         1 ? (
-                                                            <Badge variant="outline">
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="px-2 py-0.5 text-[11px]"
+                                                            >
                                                                 {
                                                                     request.request_count
                                                                 }{' '}
@@ -348,7 +355,10 @@ export default function LaboratoryQueuePage({
                                                         ) : null}
                                                     </>
                                                 ) : (
-                                                    <Badge variant="outline">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="px-2 py-0.5 text-[11px]"
+                                                    >
                                                         {labelize(
                                                             request.status,
                                                         )}
@@ -362,19 +372,19 @@ export default function LaboratoryQueuePage({
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead className="px-4 py-3">
+                                                        <TableHead className="px-3 py-2 text-xs">
                                                             Order
                                                         </TableHead>
-                                                        <TableHead>
+                                                        <TableHead className="py-2 text-xs">
                                                             Specimen
                                                         </TableHead>
-                                                        <TableHead>
+                                                        <TableHead className="py-2 text-xs">
                                                             Workflow
                                                         </TableHead>
-                                                        <TableHead>
+                                                        <TableHead className="py-2 text-xs">
                                                             Timeline
                                                         </TableHead>
-                                                        <TableHead className="text-right">
+                                                        <TableHead className="py-2 text-right text-xs">
                                                             Action
                                                         </TableHead>
                                                     </TableRow>
@@ -386,16 +396,16 @@ export default function LaboratoryQueuePage({
                                                                 key={item.id}
                                                                 className="align-top"
                                                             >
-                                                                <TableCell className="px-4 py-3 align-top">
-                                                                    <div className="flex max-w-sm flex-col gap-2 whitespace-normal">
-                                                                        <p className="text-sm font-semibold">
+                                                                <TableCell className="px-3 py-2 align-top">
+                                                                    <div className="flex max-w-sm flex-col gap-1.5 whitespace-normal">
+                                                                        <p className="text-sm font-medium">
                                                                             {item
                                                                                 .test
                                                                                 ?.test_name ??
                                                                                 'Lab test'}
                                                                         </p>
                                                                         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                                                            <span className="rounded-full bg-muted px-2.5 py-1">
+                                                                            <span className="rounded-full bg-muted px-2 py-0.5">
                                                                                 {item
                                                                                     .test
                                                                                     ?.category ??
@@ -404,9 +414,9 @@ export default function LaboratoryQueuePage({
                                                                         </div>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="px-4 py-3 align-top">
-                                                                    <div className="flex min-w-40 flex-col gap-2 whitespace-normal">
-                                                                        <span className="text-sm font-medium">
+                                                                <TableCell className="px-3 py-2 align-top">
+                                                                    <div className="flex min-w-32 flex-col gap-1.5 whitespace-normal">
+                                                                        <span className="text-sm">
                                                                             {item
                                                                                 .specimen
                                                                                 ?.specimen_type_name ??
@@ -418,35 +428,35 @@ export default function LaboratoryQueuePage({
                                                                         {item
                                                                             .specimen
                                                                             ?.outside_sample ? (
-                                                                            <span className="w-fit rounded-full bg-amber-50 px-2.5 py-1 text-xs text-amber-700">
+                                                                            <span className="w-fit rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700">
                                                                                 Outside
                                                                                 sample
                                                                             </span>
                                                                         ) : null}
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="px-4 py-3 align-top">
-                                                                    <div className="flex flex-col gap-2">
+                                                                <TableCell className="px-3 py-2 align-top">
+                                                                    <div className="flex flex-col gap-1.5">
                                                                         <Badge
                                                                             variant={workflowVariant(
                                                                                 item.workflow_stage,
                                                                             )}
-                                                                            className="w-fit"
+                                                                            className="w-fit px-2 py-0.5 text-[11px]"
                                                                         >
                                                                             {labelize(
                                                                                 item.workflow_stage,
                                                                             )}
                                                                         </Badge>
-                                                                        <span className="text-xs text-muted-foreground">
+                                                                        <span className="text-[11px] text-muted-foreground">
                                                                             {labelize(
                                                                                 item.status,
                                                                             )}
                                                                         </span>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="px-4 py-3 align-top">
-                                                                    <div className="grid gap-2 text-sm whitespace-normal text-muted-foreground">
-                                                                        <div className="rounded-lg bg-muted/30 px-2.5 py-2">
+                                                                <TableCell className="px-3 py-2 align-top">
+                                                                    <div className="grid gap-1.5 text-xs whitespace-normal text-muted-foreground">
+                                                                        <div className="rounded-md bg-muted/20 px-2 py-1.5">
                                                                             <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                                                 Requested
                                                                             </span>
@@ -459,7 +469,7 @@ export default function LaboratoryQueuePage({
                                                                                 )}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="rounded-lg bg-muted/30 px-2.5 py-2">
+                                                                        <div className="rounded-md bg-muted/20 px-2 py-1.5">
                                                                             <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                                                 Sample
                                                                             </span>
@@ -472,7 +482,7 @@ export default function LaboratoryQueuePage({
                                                                                 )}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="rounded-lg bg-muted/30 px-2.5 py-2">
+                                                                        <div className="rounded-md bg-muted/20 px-2 py-1.5">
                                                                             <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                                                 Result
                                                                             </span>
@@ -482,7 +492,7 @@ export default function LaboratoryQueuePage({
                                                                                 )}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="rounded-lg bg-muted/30 px-2.5 py-2">
+                                                                        <div className="rounded-md bg-muted/20 px-2 py-1.5">
                                                                             <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                                                 Release
                                                                             </span>
@@ -494,11 +504,12 @@ export default function LaboratoryQueuePage({
                                                                         </div>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="px-4 py-3 text-right align-top">
+                                                                <TableCell className="px-3 py-2 text-right align-top">
                                                                     <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
                                                                         <Button
                                                                             type="button"
                                                                             variant="outline"
+                                                                            size="sm"
                                                                             onClick={() =>
                                                                                 setActiveModal(
                                                                                     {
@@ -506,7 +517,7 @@ export default function LaboratoryQueuePage({
                                                                                             page.stage,
                                                                                         ),
                                                                                         item,
-                                                                                        item.request ??
+                                                                                        request: item.request ??
                                                                                             request,
                                                                                     },
                                                                                 )
@@ -521,6 +532,7 @@ export default function LaboratoryQueuePage({
                                                                         item.result_visible ? (
                                                                             <Button
                                                                                 type="button"
+                                                                                size="sm"
                                                                                 asChild
                                                                             >
                                                                                 <a
