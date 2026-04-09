@@ -27,6 +27,8 @@ final class LabResultEntry extends Model
         'approved_at' => 'datetime',
         'released_by' => 'string',
         'released_at' => 'datetime',
+        'corrected_by' => 'string',
+        'corrected_at' => 'datetime',
     ];
 
     public function requestItem(): BelongsTo
@@ -59,5 +61,10 @@ final class LabResultEntry extends Model
     public function releasedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'released_by');
+    }
+
+    public function correctedBy(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'corrected_by');
     }
 }

@@ -52,10 +52,11 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
             'specimen:id,lab_request_item_id,accession_number,specimen_type_id,specimen_type_name,status,collected_by,collected_at,rejected_by,rejected_at,rejection_reason,outside_sample,outside_sample_origin,notes',
             'specimen.collectedBy:id,first_name,last_name',
             'specimen.rejectedBy:id,first_name,last_name',
-            'resultEntry:id,lab_request_item_id,entered_by,entered_at,reviewed_by,reviewed_at,approved_by,approved_at,released_by,released_at,result_notes,review_notes,approval_notes',
+            'resultEntry:id,lab_request_item_id,entered_by,entered_at,reviewed_by,reviewed_at,approved_by,approved_at,released_by,released_at,corrected_by,corrected_at,result_notes,review_notes,approval_notes,correction_reason',
             'resultEntry.enteredBy:id,first_name,last_name',
             'resultEntry.reviewedBy:id,first_name,last_name',
             'resultEntry.approvedBy:id,first_name,last_name',
+            'resultEntry.correctedBy:id,first_name,last_name',
             'resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,reference_range,sort_order',
             'consumables' => static fn (HasMany $query): HasMany => $query
                 ->with('recordedBy:id,first_name,last_name')

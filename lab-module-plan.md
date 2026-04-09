@@ -22,9 +22,8 @@ The lab module is **not fully complete yet**, but it is already much further alo
 
 The biggest remaining gaps are:
 
-- post-release amendment/correction workflow
 - stronger branch-isolation test coverage
-- a few richer clinician/result-detail presentation pieces
+- richer clinical enrichment such as abnormal flags and reference range hardening
 
 ---
 
@@ -56,9 +55,9 @@ What is already implemented beyond the original draft:
 
 What is not yet fully implemented:
 
-- amendment/correction workflow after release
 - richer branch-isolation coverage for lab-specific records
-- broader end-to-end test coverage around the remaining gaps
+- broader branch-isolation coverage around the remaining gaps
+- clinical enrichment such as abnormal flag handling and reference range snapshots
 
 This means the right implementation strategy is to extend and harden the current workflow, not redesign it from scratch.
 
@@ -125,8 +124,8 @@ The lab module should be considered complete when all of the following are true:
 - [x] Milestone 2 completed: lab worklist, intake queues, and dashboard summary are live
 - [x] Milestone 3 completed: specimen workflow now includes collection, receipt, rejection, and test coverage
 - [ ] Milestone 4 in progress: structured result entry is substantially live
-- [ ] Milestone 5 in progress: review and release are live, but amendment is still missing
-- [ ] Milestone 6 in progress: clinician result visibility is substantially live
+- [x] Milestone 5 completed: review, release, and correction workflow are live
+- [x] Milestone 6 completed: clinician result visibility, modal result review, and release hardening are live
 - [ ] Milestone 7 in progress: permissions are strong, but branch-isolation coverage is still incomplete
 
 ---
@@ -362,13 +361,13 @@ Separate result entry from final release so the lab workflow is clinically safe 
 - [x] Add release-result action
 - [x] Add reviewer attribution fields
 - [x] Add edit-lock behavior after verification
-- [ ] Add amendment or correction workflow
+- [x] Add amendment or correction workflow
 - [x] Add UI controls for verify and release
-- [x] Add tests for verification, release, and edit-lock rules
+- [x] Add tests for verification, release, edit-lock, and correction rules
 
 ### Current Status
 
-Review and release are operational now. Approval also makes results visible to clinicians. The remaining gap is a true amendment or correction flow for post-release changes rather than simple edit prevention.
+Review, release, and post-release correction are now operational. Released results can be reopened through an explicit correction action that records who corrected the result and why, clears release visibility, and forces the corrected result back through review and release before clinicians can see it again.
 
 ### Definition Of Done
 
@@ -397,12 +396,12 @@ Return verified lab output back into the visit and consultation workflow where i
 - [x] Add clinician-facing lab result UI
 - [x] Add printable released result view
 - [x] Add pending vs released state labels
-- [ ] Add dedicated result detail view or drawer
-- [ ] Add tests confirming unreleased results are hidden from clinicians where intended
+- [x] Add reusable result modal in visit and consultation workspace
+- [x] Add tests confirming unreleased and corrected-but-unreleased results are hidden from clinicians where intended
 
 ### Current Status
 
-Clinicians can already see released results in the visit and consultation workspaces, and released lab results can now be exported as PDF. The remaining work is a richer result-detail presentation layer and explicit tests proving unreleased work stays hidden.
+Clinicians can now review released results from the visit and consultation workspaces through the shared laboratory result modal, and released lab results can be exported as PDF. The visit and consultation payloads now explicitly hide unreleased work, including corrected results that have not yet been re-released.
 
 ### Definition Of Done
 
@@ -454,10 +453,9 @@ Permission hooks and focused workflow tests exist, but the branch-isolation matr
 
 ## 7) Recommended Build Order From Here
 
-1. add amendment or correction flow for released results
-2. add dedicated clinician result-detail presentation
-3. expand branch-isolation tests for requests, specimens, and result records
-4. add clinical enrichment such as abnormal flags and stronger reference range snapshots
+1. expand branch-isolation tests for requests, specimens, and result records
+2. add clinical enrichment such as abnormal flags and stronger reference range snapshots
+3. harden laboratory print and audit coverage further where needed
 
 ---
 
@@ -465,19 +463,19 @@ Permission hooks and focused workflow tests exist, but the branch-isolation matr
 
 The next implementation step for the lab module should be:
 
-### Build The Amendment And Result Hardening Layer
+### Build The Branch Isolation And Clinical Enrichment Layer
 
 Why this is next:
 
-- the core lab workflow is already operational
-- the biggest remaining gaps are now at the safety and hardening layer, not the intake layer
-- released results already have printable PDF output, so the next missing clinical safeguard is amendment/correction and stronger visibility hardening
+- the core lab workflow and correction flow are already operational
+- the biggest remaining gaps are now in branch isolation and deeper clinical enrichment
+- clinician visibility hardening is in place, so the next useful step is protecting cross-branch boundaries and enriching the reported output
 
 If only one slice should be taken first, start with:
 
-1. amendment or correction workflow
-2. branch-isolation tests
-3. richer clinician result-detail presentation
+1. branch-isolation tests
+2. specimen and result record isolation tests
+3. abnormal flag and reference-range enrichment
 
 ---
 
@@ -655,6 +653,5 @@ The lab module is no longer just "started" at the ordering layer. It already spa
 
 The remaining work is mainly finishing and hardening the workflow:
 
-- amendment or correction after release
-- richer clinician-facing result presentation
 - broader branch-isolation coverage
+- abnormal flag and stronger reference-range handling

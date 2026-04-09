@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
+use App\Enums\AttendanceType;
+use App\Enums\ConsciousLevel;
+use App\Enums\MobilityStatus;
 use App\Enums\StaffType;
+use App\Enums\TriageGrade;
+use App\Models\Consultation;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
@@ -19,11 +24,14 @@ use App\Models\SpecimenType;
 use App\Models\Staff;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
+use App\Models\TriageRecord;
 use App\Models\User;
+use App\Models\VisitPayer;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 
 beforeEach(function (): void {
     $this->seed(PermissionSeeder::class);
@@ -174,6 +182,106 @@ function createLabResultWorkflowContext(): array
     $sequence++;
 
     return [$branch, $user, $requestItem, $parameter];
+}
+
+function collectWorkflowSample(FacilityBranch $branch, User $user, LabRequestItem $requestItem): void
+{
+    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+
+    test()->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+            'specimen_type_id' => $specimenType->id,
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+}
+
+function storeWorkflowResult(
+    FacilityBranch $branch,
+    User $user,
+    LabRequestItem $requestItem,
+    LabTestResultParameter $parameter,
+    string $value,
+    string $notes = 'Sample quality acceptable.',
+): void {
+    test()->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.results.store', $requestItem), [
+            'result_notes' => $notes,
+            'parameter_values' => [
+                [
+                    'lab_test_result_parameter_id' => $parameter->id,
+                    'value' => $value,
+                ],
+            ],
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+}
+
+function approveWorkflowResult(
+    FacilityBranch $branch,
+    User $user,
+    LabRequestItem $requestItem,
+    string $reviewNotes = 'Reviewed against analyzer output.',
+    string $approvalNotes = 'Released to clinician.',
+): void {
+    test()->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.approve', $requestItem), [
+            'review_notes' => $reviewNotes,
+            'approval_notes' => $approvalNotes,
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+}
+
+function prepareClinicianWorkspaceContext(LabRequestItem $requestItem, User $user): PatientVisit
+{
+    $request = $requestItem->request()->firstOrFail();
+    $visit = $request->visit()->firstOrFail();
+
+    $visit->forceFill([
+        'doctor_id' => $user->staff_id,
+        'status' => 'in_progress',
+    ])->save();
+
+    if (! $visit->payer()->exists()) {
+        VisitPayer::query()->create([
+            'tenant_id' => $visit->tenant_id,
+            'patient_visit_id' => $visit->id,
+            'billing_type' => 'cash',
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ]);
+    }
+
+    if (! $visit->triage()->exists()) {
+        TriageRecord::query()->create([
+            'tenant_id' => $visit->tenant_id,
+            'facility_branch_id' => $visit->facility_branch_id,
+            'visit_id' => $visit->id,
+            'nurse_id' => $user->staff_id,
+            'triage_datetime' => now(),
+            'triage_grade' => TriageGrade::GREEN->value,
+            'attendance_type' => AttendanceType::NEW->value,
+            'conscious_level' => ConsciousLevel::ALERT->value,
+            'mobility_status' => MobilityStatus::INDEPENDENT->value,
+            'chief_complaint' => 'Headache',
+        ]);
+    }
+
+    if (! $visit->consultation()->exists()) {
+        Consultation::query()->create([
+            'tenant_id' => $visit->tenant_id,
+            'facility_branch_id' => $visit->facility_branch_id,
+            'visit_id' => $visit->id,
+            'doctor_id' => $user->staff_id,
+            'started_at' => now(),
+            'chief_complaint' => 'Headache',
+            'assessment' => 'Clinical review started',
+        ]);
+    }
+
+    return $visit->refresh();
 }
 
 it('picks a sample for a laboratory request item from the incoming queue', function (): void {
@@ -404,4 +512,166 @@ it('moves a request item between the incoming and enter-results queues after sam
             ->where('page.stage', 'enter_results')
             ->has('requests.data', 1)
             ->has('requests.data.0.items', 1));
+});
+
+it('corrects a released result, records the audit reason, and requires release again', function (): void {
+    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+
+    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
+
+    collectWorkflowSample($branch, $user, $requestItem);
+    storeWorkflowResult($branch, $user, $requestItem, $parameter, '13.4');
+    approveWorkflowResult($branch, $user, $requestItem);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.correct', $requestItem), [
+            'correction_reason' => 'Analyzer decimal point was entered incorrectly.',
+            'result_notes' => 'Corrected after bench reconciliation.',
+            'parameter_values' => [
+                [
+                    'lab_test_result_parameter_id' => $parameter->id,
+                    'value' => '11.4',
+                ],
+            ],
+        ]);
+
+    $response->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+    $response->assertSessionHas(
+        'success',
+        'Lab result correction saved. Review and release it again before clinicians can see it.',
+    );
+
+    $requestItem->refresh();
+    $resultEntry = $requestItem->resultEntry()->with('values')->firstOrFail();
+
+    expect($requestItem->status->value)->toBe('in_progress')
+        ->and($requestItem->workflow_stage)->toBe('result_entered')
+        ->and($requestItem->approved_at)->toBeNull()
+        ->and($requestItem->completed_at)->toBeNull()
+        ->and($requestItem->result_visible)->toBeFalse()
+        ->and($resultEntry->corrected_at)->not->toBeNull()
+        ->and($resultEntry->correction_reason)->toBe('Analyzer decimal point was entered incorrectly.')
+        ->and($resultEntry->values->first()?->value_numeric)->toBe(11.4)
+        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('in_progress');
+
+    approveWorkflowResult(
+        $branch,
+        $user,
+        $requestItem,
+        reviewNotes: 'Correction reviewed against analyzer rerun.',
+        approvalNotes: 'Corrected result released.',
+    );
+
+    $requestItem->refresh();
+
+    expect($requestItem->status->value)->toBe('completed')
+        ->and($requestItem->approved_at)->not->toBeNull()
+        ->and($requestItem->result_visible)->toBeTrue();
+});
+
+it('hides unreleased and corrected-again results from the visit workspace until release', function (): void {
+    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+
+    $user->givePermissionTo(['visits.view', 'lab_requests.update']);
+    $visit = prepareClinicianWorkspaceContext($requestItem, $user);
+
+    collectWorkflowSample($branch, $user, $requestItem);
+    storeWorkflowResult($branch, $user, $requestItem, $parameter, '13.4');
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('visits.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('visit/show')
+            ->where('visit.lab_requests.0.items.0.result_visible', false)
+            ->where('visit.lab_requests.0.items.0.result_entry', null));
+
+    approveWorkflowResult($branch, $user, $requestItem);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('visits.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('visit/show')
+            ->where('visit.lab_requests.0.items.0.result_visible', true)
+            ->has('visit.lab_requests.0.items.0.result_entry.values', 1));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.correct', $requestItem), [
+            'correction_reason' => 'Reference sample confirmed a different value.',
+            'result_notes' => 'Corrected after quality control review.',
+            'parameter_values' => [
+                [
+                    'lab_test_result_parameter_id' => $parameter->id,
+                    'value' => '12.1',
+                ],
+            ],
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('visits.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('visit/show')
+            ->where('visit.lab_requests.0.items.0.result_visible', false)
+            ->where('visit.lab_requests.0.items.0.result_entry', null));
+});
+
+it('hides unreleased and corrected-again results from the consultation workspace until release', function (): void {
+    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+
+    $user->givePermissionTo(['consultations.view', 'lab_requests.update']);
+    $visit = prepareClinicianWorkspaceContext($requestItem, $user);
+
+    collectWorkflowSample($branch, $user, $requestItem);
+    storeWorkflowResult($branch, $user, $requestItem, $parameter, '13.4');
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('doctors.consultations.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('doctor/consultations/show')
+            ->where('visit.lab_requests.0.items.0.result_visible', false)
+            ->where('visit.lab_requests.0.items.0.result_entry', null));
+
+    approveWorkflowResult($branch, $user, $requestItem);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('doctors.consultations.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('doctor/consultations/show')
+            ->where('visit.lab_requests.0.items.0.result_visible', true)
+            ->has('visit.lab_requests.0.items.0.result_entry.values', 1));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.correct', $requestItem), [
+            'correction_reason' => 'Quality control repeat required a corrected value.',
+            'result_notes' => 'Corrected before final clinician release.',
+            'parameter_values' => [
+                [
+                    'lab_test_result_parameter_id' => $parameter->id,
+                    'value' => '12.7',
+                ],
+            ],
+        ])
+        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('doctors.consultations.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('doctor/consultations/show')
+            ->where('visit.lab_requests.0.items.0.result_visible', false)
+            ->where('visit.lab_requests.0.items.0.result_entry', null));
 });

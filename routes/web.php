@@ -243,6 +243,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('laboratory/request-items/{labRequestItem}/receive', [LabResultWorkflowController::class, 'receive'])->name('laboratory.request-items.receive');
     Route::post('laboratory/request-items/{labRequestItem}/reject', [LabResultWorkflowController::class, 'reject'])->name('laboratory.request-items.reject');
     Route::post('laboratory/request-items/{labRequestItem}/results', [LabResultWorkflowController::class, 'store'])->name('laboratory.request-items.results.store');
+    Route::post('laboratory/request-items/{labRequestItem}/correct', [LabResultWorkflowController::class, 'correct'])->name('laboratory.request-items.correct');
     Route::post('laboratory/request-items/{labRequestItem}/review', [LabResultWorkflowController::class, 'review'])->name('laboratory.request-items.review');
     Route::post('laboratory/request-items/{labRequestItem}/approve', [LabResultWorkflowController::class, 'approve'])->name('laboratory.request-items.approve');
     Route::get('laboratory/request-items/{labRequestItem}/print', [LabResultPrintController::class, 'show'])->name('laboratory.request-items.print');

@@ -166,6 +166,8 @@ final readonly class DoctorConsultationController implements HasMiddleware
             },
         ]);
 
+        $this->hideUnreleasedLabResults($visit);
+
         return Inertia::render('doctor/consultations/show', [
             'visit' => $visit,
             'activeTab' => $request->query('tab', 'overview'),
@@ -247,5 +249,18 @@ final readonly class DoctorConsultationController implements HasMiddleware
         $updateConsultation->handle($consultation, $validated);
 
         return to_route('doctors.consultations.show', $visit)->with('success', 'Consultation saved successfully.');
+    }
+
+    private function hideUnreleasedLabResults(PatientVisit $visit): void
+    {
+        $visit->labRequests?->each(function (mixed $labRequest): void {
+            $labRequest->items?->each(function (mixed $item): void {
+                if ($item->result_visible) {
+                    return;
+                }
+
+                $item->setRelation('resultEntry', null);
+            });
+        });
     }
 }

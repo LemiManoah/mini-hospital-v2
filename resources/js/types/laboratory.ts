@@ -56,16 +56,20 @@ export interface LaboratoryResultEntry {
     result_notes: string | null;
     review_notes: string | null;
     approval_notes: string | null;
+    correction_reason: string | null;
     entered_at: string | null;
     reviewed_at: string | null;
     approved_at: string | null;
     released_at: string | null;
+    corrected_at: string | null;
     enteredBy?: { id: string; first_name: string; last_name: string } | null;
     reviewedBy?: { id: string; first_name: string; last_name: string } | null;
     approvedBy?: { id: string; first_name: string; last_name: string } | null;
+    correctedBy?: { id: string; first_name: string; last_name: string } | null;
     entered_by?: { id: string; first_name: string; last_name: string } | null;
     reviewed_by?: { id: string; first_name: string; last_name: string } | null;
     approved_by?: { id: string; first_name: string; last_name: string } | null;
+    corrected_by?: { id: string; first_name: string; last_name: string } | null;
     values?: LaboratoryResultValue[] | null;
 }
 

@@ -195,6 +195,8 @@ final readonly class PatientVisitController implements HasMiddleware
                 ->latest('ordered_at'),
         ]);
 
+        $this->hideUnreleasedLabResults($visit);
+
         return Inertia::render('visit/show', [
             'visit' => $visit,
             'activeTab' => $request->query('tab', 'overview'),
@@ -419,5 +421,18 @@ final readonly class PatientVisitController implements HasMiddleware
         return $redirectTo === 'index'
             ? to_route('visits.index')
             : to_route('visits.show', $visit);
+    }
+
+    private function hideUnreleasedLabResults(PatientVisit $visit): void
+    {
+        $visit->labRequests?->each(function (mixed $labRequest): void {
+            $labRequest->items?->each(function (mixed $item): void {
+                if ($item->result_visible) {
+                    return;
+                }
+
+                $item->setRelation('resultEntry', null);
+            });
+        });
     }
 }

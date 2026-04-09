@@ -27,6 +27,7 @@ import {
     type LaboratoryResultValue,
 } from '@/types/laboratory';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 
 type ResultParameterDraft = {
     lab_test_result_parameter_id: string;
@@ -57,8 +58,8 @@ const actorName = (
 
 const actorFromResultEntry = (
     resultEntry: LaboratoryResultEntry | null,
-    field: 'enteredBy' | 'reviewedBy' | 'approvedBy',
-    legacyField: 'entered_by' | 'reviewed_by' | 'approved_by',
+    field: 'enteredBy' | 'reviewedBy' | 'approvedBy' | 'correctedBy',
+    legacyField: 'entered_by' | 'reviewed_by' | 'approved_by' | 'corrected_by',
 ): string =>
     actorName(resultEntry?.[field] ?? resultEntry?.[legacyField] ?? null);
 
@@ -103,6 +104,8 @@ export default function LaboratoryRequestItemShow({
         labRequestItem.workflow_stage === 'result_entered' ||
         labRequestItem.workflow_stage === 'reviewed' ||
         labRequestItem.workflow_stage === 'approved';
+    const [correctionMode, setCorrectionMode] = useState(false);
+    const resultEditingLocked = isApproved && !correctionMode;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Laboratory', href: '/laboratory/incoming-investigations' },
@@ -122,6 +125,7 @@ export default function LaboratoryRequestItemShow({
             resultValues[0]?.value_text ?? resultValues[0]?.display_value ?? '',
         selected_option_label:
             resultValues[0]?.value_text ?? resultValues[0]?.display_value ?? '',
+        correction_reason: '',
         parameter_values: resultParameters.map(
             (parameter): ResultParameterDraft => ({
                 lab_test_result_parameter_id: parameter.id ?? '',
@@ -268,12 +272,24 @@ export default function LaboratoryRequestItemShow({
                                     onSubmit={(event) => {
                                         event.preventDefault();
                                         resultForm.post(
-                                            `/laboratory/request-items/${labRequestItem.id}/results`,
+                                            correctionMode
+                                                ? `/laboratory/request-items/${labRequestItem.id}/correct`
+                                                : `/laboratory/request-items/${labRequestItem.id}/results`,
                                             { preserveScroll: true },
                                         );
                                     }}
                                     className="flex flex-col gap-4"
                                 >
+                                    {isApproved && !correctionMode ? (
+                                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                                            This result has already been
+                                            released. Start a correction to
+                                            reopen it, update the values, and
+                                            send it back through review and
+                                            release.
+                                        </div>
+                                    ) : null}
+
                                     {resultType === 'free_entry' ? (
                                         <div className="grid gap-2">
                                             <Label htmlFor="free_entry_value">
@@ -292,7 +308,7 @@ export default function LaboratoryRequestItemShow({
                                                         event.target.value,
                                                     )
                                                 }
-                                                disabled={isApproved}
+                                                disabled={resultEditingLocked}
                                             />
                                             <InputError
                                                 message={
@@ -319,7 +335,7 @@ export default function LaboratoryRequestItemShow({
                                                         value,
                                                     )
                                                 }
-                                                disabled={isApproved}
+                                                disabled={resultEditingLocked}
                                             >
                                                 <SelectTrigger id="selected_option_label">
                                                     <SelectValue placeholder="Choose a result option" />
@@ -429,7 +445,7 @@ export default function LaboratoryRequestItemShow({
                                                                 )
                                                             }
                                                             disabled={
-                                                                isApproved
+                                                                resultEditingLocked
                                                             }
                                                         />
                                                     </div>
@@ -458,7 +474,7 @@ export default function LaboratoryRequestItemShow({
                                                     event.target.value,
                                                 )
                                             }
-                                            disabled={isApproved}
+                                            disabled={resultEditingLocked}
                                         />
                                         <InputError
                                             message={
@@ -467,16 +483,75 @@ export default function LaboratoryRequestItemShow({
                                         />
                                     </div>
 
+                                    {correctionMode ? (
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="correction_reason">
+                                                Correction Reason
+                                            </Label>
+                                            <Textarea
+                                                id="correction_reason"
+                                                rows={3}
+                                                value={
+                                                    resultForm.data
+                                                        .correction_reason
+                                                }
+                                                onChange={(event) =>
+                                                    resultForm.setData(
+                                                        'correction_reason',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Explain what was wrong with the released result and why it is being corrected."
+                                            />
+                                            <InputError
+                                                message={
+                                                    resultForm.errors
+                                                        .correction_reason
+                                                }
+                                            />
+                                        </div>
+                                    ) : null}
+
                                     <div className="flex justify-end">
-                                        <Button
-                                            type="submit"
-                                            disabled={
-                                                isApproved ||
-                                                resultForm.processing
-                                            }
-                                        >
-                                            Save Results
-                                        </Button>
+                                        <div className="flex flex-wrap justify-end gap-2">
+                                            {isApproved ? (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setCorrectionMode(
+                                                            (current) =>
+                                                                !current,
+                                                        );
+
+                                                        if (correctionMode) {
+                                                            resultForm.setData(
+                                                                'correction_reason',
+                                                                '',
+                                                            );
+                                                        }
+                                                    }}
+                                                    disabled={
+                                                        resultForm.processing
+                                                    }
+                                                >
+                                                    {correctionMode
+                                                        ? 'Cancel Correction'
+                                                        : 'Start Correction'}
+                                                </Button>
+                                            ) : null}
+                                            <Button
+                                                type="submit"
+                                                disabled={
+                                                    resultEditingLocked ||
+                                                    resultForm.processing
+                                                }
+                                            >
+                                                {correctionMode
+                                                    ? 'Save Corrected Result'
+                                                    : 'Save Results'}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </form>
                             </CardContent>
@@ -526,6 +601,31 @@ export default function LaboratoryRequestItemShow({
                                             )}
                                         </p>
                                     </div>
+                                    {resultEntry?.corrected_at ? (
+                                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                                            <p className="font-medium">
+                                                Last correction
+                                            </p>
+                                            <p className="mt-1">
+                                                {actorFromResultEntry(
+                                                    resultEntry,
+                                                    'correctedBy',
+                                                    'corrected_by',
+                                                )}{' '}
+                                                on{' '}
+                                                {formatDateTime(
+                                                    resultEntry.corrected_at,
+                                                )}
+                                            </p>
+                                            {resultEntry.correction_reason ? (
+                                                <p className="mt-2">
+                                                    {
+                                                        resultEntry.correction_reason
+                                                    }
+                                                </p>
+                                            ) : null}
+                                        </div>
+                                    ) : null}
                                     <div className="grid gap-2">
                                         <Label htmlFor="review_notes">
                                             Review Notes

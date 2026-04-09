@@ -6,12 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Actions\ApproveLabResultEntry;
 use App\Actions\CollectLabSpecimen;
+use App\Actions\CorrectLabResultEntry;
 use App\Actions\RejectLabSpecimen;
 use App\Actions\ReceiveLabRequestItem;
 use App\Actions\ReviewLabResultEntry;
 use App\Actions\StoreLabResultEntry;
 use App\Http\Requests\ApproveLabResultEntryRequest;
 use App\Http\Requests\CollectLabSpecimenRequest;
+use App\Http\Requests\CorrectLabResultEntryRequest;
 use App\Http\Requests\RejectLabSpecimenRequest;
 use App\Http\Requests\ReviewLabResultEntryRequest;
 use App\Http\Requests\StoreLabResultEntryRequest;
@@ -33,7 +35,7 @@ final readonly class LabResultWorkflowController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:lab_requests.update', only: ['collectSample', 'receive', 'reject', 'store', 'review', 'approve']),
+            new Middleware('permission:lab_requests.update', only: ['collectSample', 'receive', 'reject', 'store', 'correct', 'review', 'approve']),
         ];
     }
 
@@ -90,6 +92,19 @@ final readonly class LabResultWorkflowController implements HasMiddleware
             $labRequestItem,
             fn (string $staffId): LabRequestItem => $action->handle($labRequestItem, $request->validated(), $staffId),
             'Lab results saved successfully.',
+        );
+    }
+
+    public function correct(
+        CorrectLabResultEntryRequest $request,
+        LabRequestItem $labRequestItem,
+        CorrectLabResultEntry $action,
+    ): RedirectResponse {
+        return $this->handleAction(
+            $request,
+            $labRequestItem,
+            fn (string $staffId): LabRequestItem => $action->handle($labRequestItem, $request->validated(), $staffId),
+            'Lab result correction saved. Review and release it again before clinicians can see it.',
         );
     }
 
