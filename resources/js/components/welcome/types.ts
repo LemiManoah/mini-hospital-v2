@@ -18,6 +18,14 @@ export type OperationalStat = {
     value: string;
 };
 
+export type ShowcaseShot = {
+    eyebrow: string;
+    title: string;
+    description: string;
+    image: string;
+    accent: string;
+};
+
 export type Testimonial = {
     quote: string;
     name: string;

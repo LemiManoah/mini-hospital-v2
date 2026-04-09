@@ -1,16 +1,16 @@
 export function WelcomeCtaSection() {
     return (
         <section className="px-6 py-24 md:px-10 md:py-32">
-            <div className="relative mx-auto max-w-7xl overflow-hidden border border-white/8 bg-[#161717] p-10 md:p-16">
+            <div className="relative mx-auto max-w-7xl overflow-hidden border border-stone-200 bg-white p-10 shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/8 dark:bg-[#161717] dark:shadow-none md:p-16">
                 <div className="pointer-events-none absolute top-0 right-0 h-80 w-80 bg-[#4A6FA5]/10 blur-[120px]" />
                 <div className="relative grid gap-12 md:grid-cols-[1.15fr_0.85fr] md:items-center">
                     <div>
-                        <h2 className="font-[Manrope] text-4xl font-extrabold tracking-[-0.07em] text-stone-100 md:text-6xl">
+                        <h2 className="font-[Manrope] text-4xl font-extrabold tracking-[-0.07em] text-stone-950 dark:text-stone-100 md:text-6xl">
                             Ready to modernize
                             <br />
                             the hospital floor?
                         </h2>
-                        <p className="mt-6 max-w-md text-sm leading-7 text-stone-400">
+                        <p className="mt-6 max-w-md text-sm leading-7 text-stone-600 dark:text-stone-400">
                             Start with QrooEMR, then extend into the exact workflows your facility needs without losing coherence across the system.
                         </p>
                     </div>
@@ -18,13 +18,13 @@ export function WelcomeCtaSection() {
                     <div className="w-full max-w-md">
                         <div className="flex flex-col gap-6">
                             <div>
-                                <label className="mb-2 block text-[9px] font-bold tracking-[0.3em] text-stone-600 uppercase">
+                                <label className="mb-2 block text-[9px] font-bold tracking-[0.3em] text-stone-500 uppercase dark:text-stone-600">
                                     Identification
                                 </label>
                                 <input
                                     type="email"
                                     placeholder="Your work email address"
-                                    className="w-full border-b border-white/12 bg-transparent px-0 py-3 text-sm text-stone-100 outline-none transition placeholder:text-stone-600 focus:border-[#4A6FA5]"
+                                    className="w-full border-b border-stone-300 bg-transparent px-0 py-3 text-sm text-stone-950 outline-none transition placeholder:text-stone-400 focus:border-[#4A6FA5] dark:border-white/12 dark:text-stone-100 dark:placeholder:text-stone-600"
                                 />
                             </div>
                             <a
@@ -33,7 +33,7 @@ export function WelcomeCtaSection() {
                             >
                                 Begin Implementation
                             </a>
-                            <p className="text-center text-[8px] font-semibold tracking-[0.38em] text-stone-600 uppercase">
+                            <p className="text-center text-[8px] font-semibold tracking-[0.38em] text-stone-500 uppercase dark:text-stone-600">
                                 Structured rollout | Hosted or managed
                             </p>
                         </div>

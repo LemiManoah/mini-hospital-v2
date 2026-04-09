@@ -4,8 +4,9 @@ import { WelcomeFooter } from '@/components/welcome/welcome-footer';
 import { WelcomeHeader } from '@/components/welcome/welcome-header';
 import { WelcomeHeroSection } from '@/components/welcome/welcome-hero-section';
 import { WelcomeProofStrip } from '@/components/welcome/welcome-proof-strip';
+import { WelcomeShowcaseSection } from '@/components/welcome/welcome-showcase-section';
 import { WelcomeSolutionsSection } from '@/components/welcome/welcome-solutions-section';
-import { type FooterColumn, type HeaderFact, type OperationalStat, type SolutionCard, type Testimonial } from '@/components/welcome/types';
+import { type FooterColumn, type HeaderFact, type OperationalStat, type ShowcaseShot, type SolutionCard, type Testimonial } from '@/components/welcome/types';
 import { type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { ClipboardPlus, DollarSign, FlaskConical, ShieldCheck, Stethoscope } from 'lucide-react';
@@ -18,6 +19,33 @@ const headerFacts: HeaderFact[] = [
 ];
 
 const proofLogos = ['Front Desk', 'Triage', 'Consultation', 'Laboratory', 'Pharmacy'];
+
+const showcaseShots: ShowcaseShot[] = [
+    {
+        eyebrow: 'Dashboard',
+        title: 'Facility pulse in one operational view',
+        description:
+            'A clean daily dashboard for front-desk and admin teams, showing current visits, appointments, pending results, and the shape of the day.',
+        image: '/images/welcome/dashboard-overview.png',
+        accent: 'Daily pulse',
+    },
+    {
+        eyebrow: 'Consultation',
+        title: 'Consultation queue for doctor handoff',
+        description:
+            'Doctors can move from triage into review quickly, with patient identity, chief complaint, assignment, and action all visible at once.',
+        image: '/images/welcome/consultation-queue.png',
+        accent: 'Doctor workflow',
+    },
+    {
+        eyebrow: 'Laboratory',
+        title: 'Bench queue for incoming investigations',
+        description:
+            'Laboratory staff can pick samples, track specimen progress, and follow request timelines without losing clarity on the queue.',
+        image: '/images/welcome/laboratory-queue.png',
+        accent: 'Bench operations',
+    },
+];
 
 const solutionCards: SolutionCard[] = [
     {
@@ -119,7 +147,7 @@ export default function Welcome() {
                 />
             </Head>
 
-            <div className="min-h-screen bg-[#0e0e0e] font-[Inter] text-stone-200 selection:bg-[#4A6FA5] selection:text-white">
+            <div className="min-h-screen bg-stone-50 font-[Inter] text-stone-900 selection:bg-[#4A6FA5] selection:text-white dark:bg-[#0e0e0e] dark:text-stone-200">
                 <WelcomeHeader authenticated={authenticated} />
                 <main className="pt-0">
                     <WelcomeHeroSection
@@ -128,6 +156,8 @@ export default function Welcome() {
                     />
                     <WelcomeProofStrip logos={proofLogos} />
                     <WelcomeSolutionsSection solutionCards={solutionCards} />
+                    <WelcomeShowcaseSection showcaseShots={showcaseShots} />
+
                     <WelcomeEvidenceSection
                         operationalStats={operationalStats}
                         testimonials={testimonials}
