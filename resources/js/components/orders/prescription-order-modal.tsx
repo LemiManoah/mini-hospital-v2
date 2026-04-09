@@ -152,6 +152,7 @@ export function PrescriptionOrderModal({
                             </Label>
                             <Input
                                 id="primary_diagnosis"
+                                placeholder="e.g. Community acquired pneumonia"
                                 value={form.data.primary_diagnosis}
                                 onChange={(event) =>
                                     form.setData(
@@ -170,6 +171,7 @@ export function PrescriptionOrderModal({
                             </Label>
                             <Input
                                 id="pharmacy_notes"
+                                placeholder="e.g. Dispense full course if available"
                                 value={form.data.pharmacy_notes}
                                 onChange={(event) =>
                                     form.setData(
@@ -280,6 +282,7 @@ export function PrescriptionOrderModal({
                                     <div className="grid gap-2">
                                         <Label>Dosage</Label>
                                         <Input
+                                            placeholder="e.g. 500 mg"
                                             value={item.dosage}
                                             onChange={(event) =>
                                                 updatePrescriptionItem(
@@ -293,6 +296,7 @@ export function PrescriptionOrderModal({
                                     <div className="grid gap-2">
                                         <Label>Frequency</Label>
                                         <Input
+                                            placeholder="e.g. 1 tablet twice daily"
                                             value={item.frequency}
                                             onChange={(event) =>
                                                 updatePrescriptionItem(
@@ -306,6 +310,7 @@ export function PrescriptionOrderModal({
                                     <div className="grid gap-2">
                                         <Label>Route</Label>
                                         <Input
+                                            placeholder="e.g. Oral"
                                             value={item.route}
                                             onChange={(event) =>
                                                 updatePrescriptionItem(
@@ -322,6 +327,7 @@ export function PrescriptionOrderModal({
                                             type="number"
                                             min={1}
                                             max={365}
+                                            placeholder="e.g. 5"
                                             value={item.duration_days}
                                             onChange={(event) =>
                                                 updatePrescriptionItem(
@@ -338,6 +344,7 @@ export function PrescriptionOrderModal({
                                             type="number"
                                             min={1}
                                             max={1000}
+                                            placeholder="e.g. 10"
                                             value={item.quantity}
                                             onChange={(event) =>
                                                 updatePrescriptionItem(
@@ -354,6 +361,7 @@ export function PrescriptionOrderModal({
                                         <Label>Instructions</Label>
                                         <Textarea
                                             rows={3}
+                                            placeholder="e.g. Take after meals and complete the full course"
                                             value={item.instructions}
                                             onChange={(event) =>
                                                 updatePrescriptionItem(
@@ -379,7 +387,7 @@ export function PrescriptionOrderModal({
                                             Prescribe as needed
                                         </label>
                                         <Input
-                                            placeholder="PRN reason"
+                                            placeholder="e.g. For pain or fever above 38C"
                                             value={item.prn_reason}
                                             onChange={(event) =>
                                                 updatePrescriptionItem(

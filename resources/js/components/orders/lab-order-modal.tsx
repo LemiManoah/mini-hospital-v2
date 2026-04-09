@@ -37,7 +37,10 @@ export function LabOrderModal({
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    visit: Pick<PatientVisit, 'id' | 'consultation' | 'triage'>;
+    visit: Pick<
+        PatientVisit,
+        'id' | 'consultation' | 'triage' | 'labRequests' | 'lab_requests'
+    >;
     labRequest?: LabRequest | null;
     labTestOptions: Array<{
         id: string;
@@ -53,6 +56,7 @@ export function LabOrderModal({
 }) {
     const consultation = visit.consultation as any;
     const triage = visit.triage as any;
+    const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
     const [searchTerm, setSearchTerm] = useState('');
 
     const form = useForm({
@@ -108,6 +112,23 @@ export function LabOrderModal({
     const selectedTestsList = useMemo(() => {
         return labTestOptions.filter((t) => form.data.test_ids.includes(t.id));
     }, [labTestOptions, form.data.test_ids]);
+    const pendingLabTestIds = useMemo(
+        () =>
+            new Set(
+                labRequests.flatMap((request) =>
+                    request.id === labRequest?.id
+                        ? []
+                        : request.items
+                              .filter((item) => item.status === 'pending')
+                              .map((item) => item.test_id ?? item.test?.id)
+                              .filter((id): id is string => Boolean(id)),
+                ),
+            ),
+        [labRequest?.id, labRequests],
+    );
+    const hasPendingSelectedTests = form.data.test_ids.some((testId) =>
+        pendingLabTestIds.has(testId),
+    );
 
     const toggleLabTest = (testId: string, checked: boolean) =>
         form.setData(
@@ -127,7 +148,13 @@ export function LabOrderModal({
     const onSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         if (labRequest) {
-            // Edit logic if routes existed
+            form.patch(`/visits/${visit.id}/lab-requests/${labRequest.id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    form.reset();
+                    onOpenChange(false);
+                },
+            });
         } else {
             form.post(`/visits/${visit.id}/lab-requests`, {
                 preserveScroll: true,
@@ -301,6 +328,13 @@ export function LabOrderModal({
                                         <InputError
                                             message={form.errors.test_ids}
                                         />
+                                        {hasPendingSelectedTests ? (
+                                            <p className="text-sm text-amber-700">
+                                                One or more selected tests
+                                                already have pending orders for
+                                                this visit.
+                                            </p>
+                                        ) : null}
                                     </div>
 
                                     <div className="grid gap-4">
@@ -430,7 +464,8 @@ export function LabOrderModal({
                                         className="flex-1"
                                         disabled={
                                             form.processing ||
-                                            form.data.test_ids.length === 0
+                                            form.data.test_ids.length === 0 ||
+                                            hasPendingSelectedTests
                                         }
                                     >
                                         {labRequest

@@ -31,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import {
+    type LaboratoryQueueRequest,
     type LaboratoryQueuePageProps,
     type LaboratoryRequestItem,
     type LaboratoryRequestSummary,
@@ -38,7 +39,7 @@ import {
     type LaboratoryResultValue,
 } from '@/types/laboratory';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const labelize = (value: string | null | undefined): string =>
     value
@@ -113,6 +114,97 @@ type ActiveModal = {
     request: LaboratoryRequestSummary | null;
 } | null;
 
+type QueueCardRequest = LaboratoryQueueRequest & {
+    request_count: number;
+};
+
+const priorityWeight = (priority: string): number =>
+    ({
+        critical: 0,
+        stat: 1,
+        urgent: 2,
+        routine: 3,
+    })[priority] ?? 4;
+
+const toRequestSummary = (
+    request: LaboratoryQueueRequest,
+): LaboratoryRequestSummary => ({
+    id: request.id,
+    request_date: request.request_date,
+    priority: request.priority,
+    status: request.status,
+    clinical_notes: request.clinical_notes,
+    requestedBy: request.requestedBy,
+    visit: request.visit,
+});
+
+const withRequestSummary = (
+    request: LaboratoryQueueRequest,
+): QueueCardRequest => {
+    const summary = toRequestSummary(request);
+
+    return {
+        ...request,
+        request_count: 1,
+        items: request.items.map((item) => ({
+            ...item,
+            request: item.request ?? summary,
+        })),
+    };
+};
+
+const groupIncomingRequests = (
+    requests: LaboratoryQueueRequest[],
+): QueueCardRequest[] => {
+    const groupedRequests = new Map<string, QueueCardRequest>();
+
+    requests.forEach((request) => {
+        const visitId = request.visit?.id ?? `request:${request.id}`;
+        const patientId = request.visit?.patient?.id ?? 'unknown-patient';
+        const groupKey = `${visitId}:${patientId}`;
+        const normalizedRequest = withRequestSummary(request);
+        const existing = groupedRequests.get(groupKey);
+
+        if (!existing) {
+            groupedRequests.set(groupKey, {
+                ...normalizedRequest,
+                id: groupKey,
+            });
+            return;
+        }
+
+        groupedRequests.set(groupKey, {
+            ...existing,
+            request_date:
+                new Date(normalizedRequest.request_date).getTime() >
+                new Date(existing.request_date).getTime()
+                    ? normalizedRequest.request_date
+                    : existing.request_date,
+            priority:
+                priorityWeight(normalizedRequest.priority) <
+                priorityWeight(existing.priority)
+                    ? normalizedRequest.priority
+                    : existing.priority,
+            items: [...existing.items, ...normalizedRequest.items].sort(
+                (left, right) =>
+                    new Date(
+                        right.request?.request_date ?? normalizedRequest.request_date,
+                    ).getTime() -
+                    new Date(
+                        left.request?.request_date ?? normalizedRequest.request_date,
+                    ).getTime(),
+            ),
+            request_count: existing.request_count + 1,
+        });
+    });
+
+    return [...groupedRequests.values()].sort(
+        (left, right) =>
+            new Date(right.request_date).getTime() -
+            new Date(left.request_date).getTime(),
+    );
+};
+
 export default function LaboratoryQueuePage({
     page,
     requests,
@@ -147,6 +239,13 @@ export default function LaboratoryQueuePage({
         { title: 'Laboratory', href: '/laboratory/dashboard' },
         { title: page.title, href: page.route },
     ];
+    const queueRequests = useMemo(
+        () =>
+            page.stage === 'incoming'
+                ? groupIncomingRequests(requests.data)
+                : requests.data.map(withRequestSummary),
+        [page.stage, requests.data],
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -180,14 +279,14 @@ export default function LaboratoryQueuePage({
                 </div>
 
                 <div className="flex flex-col gap-4">
-                    {requests.data.length === 0 ? (
+                    {queueRequests.length === 0 ? (
                         <Card>
                             <CardContent className="py-12 text-center text-sm text-muted-foreground">
                                 No patients matched this queue.
                             </CardContent>
                         </Card>
                     ) : (
-                        requests.data.map((request) => {
+                        queueRequests.map((request) => {
                             const patient = request.visit?.patient;
 
                             return (
@@ -195,15 +294,15 @@ export default function LaboratoryQueuePage({
                                     key={request.id}
                                     className="overflow-hidden border-border/70 shadow-sm"
                                 >
-                                    <CardHeader className="gap-4 border-b bg-muted/15 pb-5">
+                                    <CardHeader className="gap-3 border-b bg-muted/10 px-5 py-4">
                                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                                             <div className="flex flex-col gap-1">
-                                                <CardTitle className="text-xl">
+                                                <CardTitle className="text-lg">
                                                     {patient
                                                         ? `${patient.first_name} ${patient.last_name}`
                                                         : 'Unknown patient'}
                                                 </CardTitle>
-                                                <p className="text-sm leading-6 text-muted-foreground">
+                                                <p className="text-sm leading-5 text-muted-foreground">
                                                     Visit{' '}
                                                     {request.visit
                                                         ?.visit_number ??
@@ -229,9 +328,32 @@ export default function LaboratoryQueuePage({
                                                 >
                                                     {labelize(request.priority)}
                                                 </Badge>
-                                                <Badge variant="outline">
-                                                    {labelize(request.status)}
-                                                </Badge>
+                                                {page.stage === 'incoming' ? (
+                                                    <>
+                                                        <Badge variant="outline">
+                                                            {request.items.length}{' '}
+                                                            {request.items.length ===
+                                                            1
+                                                                ? 'test'
+                                                                : 'tests'}
+                                                        </Badge>
+                                                        {request.request_count >
+                                                        1 ? (
+                                                            <Badge variant="outline">
+                                                                {
+                                                                    request.request_count
+                                                                }{' '}
+                                                                batches
+                                                            </Badge>
+                                                        ) : null}
+                                                    </>
+                                                ) : (
+                                                    <Badge variant="outline">
+                                                        {labelize(
+                                                            request.status,
+                                                        )}
+                                                    </Badge>
+                                                )}
                                             </div>
                                         </div>
                                     </CardHeader>
@@ -240,7 +362,7 @@ export default function LaboratoryQueuePage({
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead className="px-6 py-4">
+                                                        <TableHead className="px-4 py-3">
                                                             Order
                                                         </TableHead>
                                                         <TableHead>
@@ -264,7 +386,7 @@ export default function LaboratoryQueuePage({
                                                                 key={item.id}
                                                                 className="align-top"
                                                             >
-                                                                <TableCell className="px-6 py-5 align-top">
+                                                                <TableCell className="px-4 py-3 align-top">
                                                                     <div className="flex max-w-sm flex-col gap-2 whitespace-normal">
                                                                         <p className="text-sm font-semibold">
                                                                             {item
@@ -282,7 +404,7 @@ export default function LaboratoryQueuePage({
                                                                         </div>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="px-4 py-5 align-top">
+                                                                <TableCell className="px-4 py-3 align-top">
                                                                     <div className="flex min-w-40 flex-col gap-2 whitespace-normal">
                                                                         <span className="text-sm font-medium">
                                                                             {item
@@ -303,7 +425,7 @@ export default function LaboratoryQueuePage({
                                                                         ) : null}
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="px-4 py-5 align-top">
+                                                                <TableCell className="px-4 py-3 align-top">
                                                                     <div className="flex flex-col gap-2">
                                                                         <Badge
                                                                             variant={workflowVariant(
@@ -322,19 +444,22 @@ export default function LaboratoryQueuePage({
                                                                         </span>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="px-4 py-5 align-top">
+                                                                <TableCell className="px-4 py-3 align-top">
                                                                     <div className="grid gap-2 text-sm whitespace-normal text-muted-foreground">
-                                                                        <div className="rounded-lg bg-muted/35 px-3 py-2">
+                                                                        <div className="rounded-lg bg-muted/30 px-2.5 py-2">
                                                                             <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                                                 Requested
                                                                             </span>
                                                                             <span>
                                                                                 {formatDateTime(
-                                                                                    request.request_date,
+                                                                                    item
+                                                                                        .request
+                                                                                        ?.request_date ??
+                                                                                        request.request_date,
                                                                                 )}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="rounded-lg bg-muted/35 px-3 py-2">
+                                                                        <div className="rounded-lg bg-muted/30 px-2.5 py-2">
                                                                             <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                                                 Sample
                                                                             </span>
@@ -347,7 +472,7 @@ export default function LaboratoryQueuePage({
                                                                                 )}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="rounded-lg bg-muted/35 px-3 py-2">
+                                                                        <div className="rounded-lg bg-muted/30 px-2.5 py-2">
                                                                             <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                                                 Result
                                                                             </span>
@@ -357,7 +482,7 @@ export default function LaboratoryQueuePage({
                                                                                 )}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="rounded-lg bg-muted/35 px-3 py-2">
+                                                                        <div className="rounded-lg bg-muted/30 px-2.5 py-2">
                                                                             <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                                                 Release
                                                                             </span>
@@ -369,7 +494,7 @@ export default function LaboratoryQueuePage({
                                                                         </div>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="px-6 py-5 text-right align-top">
+                                                                <TableCell className="px-4 py-3 text-right align-top">
                                                                     <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
                                                                         <Button
                                                                             type="button"
@@ -381,7 +506,8 @@ export default function LaboratoryQueuePage({
                                                                                             page.stage,
                                                                                         ),
                                                                                         item,
-                                                                                        request,
+                                                                                        item.request ??
+                                                                                            request,
                                                                                     },
                                                                                 )
                                                                             }

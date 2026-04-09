@@ -158,9 +158,12 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('visits/{visit}/payments/{payment}/print', [VisitPaymentPrintController::class, 'show'])->name('visits.payments.print');
     Route::get('prescriptions/{prescription}/print', [PrescriptionPrintController::class, 'show'])->name('prescriptions.print');
     Route::post('visits/{visit}/lab-requests', [VisitOrderController::class, 'storeLabRequest'])->name('visits.lab-requests.store');
+    Route::patch('visits/{visit}/lab-requests/{labRequest}', [VisitOrderController::class, 'updateLabRequest'])->name('visits.lab-requests.update');
+    Route::delete('visits/{visit}/lab-requests/{labRequest}', [VisitOrderController::class, 'destroyLabRequest'])->name('visits.lab-requests.destroy');
     Route::post('visits/{visit}/imaging-requests', [VisitOrderController::class, 'storeImagingRequest'])->name('visits.imaging-requests.store');
     Route::post('visits/{visit}/prescriptions', [VisitOrderController::class, 'storePrescription'])->name('visits.prescriptions.store');
     Route::post('visits/{visit}/facility-service-orders', [VisitOrderController::class, 'storeFacilityServiceOrder'])->name('visits.facility-service-orders.store');
+    Route::patch('visits/{visit}/facility-service-orders/{facilityServiceOrder}', [VisitOrderController::class, 'updateFacilityServiceOrder'])->name('visits.facility-service-orders.update');
     Route::delete('visits/{visit}/facility-service-orders/{facilityServiceOrder}', [VisitOrderController::class, 'destroyFacilityServiceOrder'])->name('visits.facility-service-orders.destroy');
     Route::patch('visits/{visit}/status', [PatientVisitController::class, 'updateStatus'])->name('visits.update-status');
     Route::get('doctors/consultations', [DoctorConsultationController::class, 'index'])->name('doctors.consultations.index');

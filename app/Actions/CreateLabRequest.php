@@ -7,9 +7,11 @@ namespace App\Actions;
 use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\LabRequest;
+use App\Models\LabRequestItem;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreateLabRequest
@@ -31,6 +33,8 @@ final readonly class CreateLabRequest
             ->whereIn('id', $testIds)
             ->where('is_active', true)
             ->get(['id', 'base_price']);
+
+        $this->ensureNoPendingDuplicates($visit, $testIds);
 
         return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $tests): LabRequest {
             $request = LabRequest::query()->create([
@@ -101,5 +105,31 @@ final readonly class CreateLabRequest
         if ($visit->status === VisitStatus::REGISTERED) {
             $this->transitionStatus->handle($visit, VisitStatus::IN_PROGRESS);
         }
+    }
+
+    /**
+     * @param  array<int, string>  $testIds
+     */
+    private function ensureNoPendingDuplicates(PatientVisit $visit, array $testIds): void
+    {
+        if ($testIds === []) {
+            return;
+        }
+
+        $hasPendingDuplicate = LabRequestItem::query()
+            ->whereIn('test_id', $testIds)
+            ->where('status', 'pending')
+            ->whereHas('request', static function ($query) use ($visit): void {
+                $query->where('visit_id', $visit->id);
+            })
+            ->exists();
+
+        if (! $hasPendingDuplicate) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'test_ids' => 'One or more selected lab tests already have pending orders for this visit.',
+        ]);
     }
 }

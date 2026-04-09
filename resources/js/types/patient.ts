@@ -133,6 +133,7 @@ export interface LabResultEntry {
 
 export interface LabRequestItem {
     id: string;
+    test_id: string;
     status: string;
     price: number;
     is_external: boolean;

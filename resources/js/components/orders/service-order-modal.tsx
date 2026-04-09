@@ -79,7 +79,16 @@ export function ServiceOrderModal({
     const onSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         if (serviceOrder) {
-            // Edit logic
+            form.patch(
+                `/visits/${visit.id}/facility-service-orders/${serviceOrder.id}`,
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        form.reset();
+                        onOpenChange(false);
+                    },
+                },
+            );
         } else {
             form.post(`/visits/${visit.id}/facility-service-orders`, {
                 preserveScroll: true,

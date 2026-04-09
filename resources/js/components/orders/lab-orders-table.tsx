@@ -48,7 +48,7 @@ export function LabOrdersTable({
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Tests</TableHead>
+                        <TableHead>Test</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Priority</TableHead>
                         <TableHead>Ordered By</TableHead>
@@ -61,68 +61,95 @@ export function LabOrdersTable({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {labRequests.map((request) => (
-                        <TableRow key={request.id}>
-                            <TableCell className="max-w-[300px] truncate font-medium">
-                                {request.items
-                                    .map((item) => item.test?.test_name)
-                                    .filter(Boolean)
-                                    .join(', ') || 'Lab request'}
-                            </TableCell>
-                            <TableCell>
-                                <Badge
-                                    className={cn(
-                                        'border-0',
-                                        statusBadgeClasses(request.status),
-                                    )}
-                                >
-                                    {labelize(request.status)}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                <div className="flex items-center gap-1">
-                                    {labelize(request.priority)}
-                                    {request.is_stat && (
+                    {labRequests.flatMap((request) => {
+                        const items = request.items;
+
+                        if (items.length === 0) {
+                            return [];
+                        }
+
+                        return items.map((item, index) => {
+                            const itemStatus =
+                                item.workflow_stage ?? item.status ?? request.status;
+
+                            return (
+                                <TableRow key={`${request.id}-${item.id}`}>
+                                    <TableCell className="max-w-[320px] font-medium">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="truncate">
+                                                {item.test?.test_name ?? 'Lab request'}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {item.test?.test_code ??
+                                                    'Code not assigned'}
+                                            </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
                                         <Badge
-                                            variant="destructive"
-                                            className="h-4 px-1 text-[10px]"
+                                            className={cn(
+                                                'border-0',
+                                                statusBadgeClasses(itemStatus),
+                                            )}
                                         >
-                                            STAT
+                                            {labelize(itemStatus)}
                                         </Badge>
+                                    </TableCell>
+                                    {index === 0 && (
+                                        <TableCell rowSpan={items.length}>
+                                            <div className="flex items-center gap-1">
+                                                {labelize(request.priority)}
+                                                {request.is_stat && (
+                                                    <Badge
+                                                        variant="destructive"
+                                                        className="h-4 px-1 text-[10px]"
+                                                    >
+                                                        STAT
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                     )}
-                                </div>
-                            </TableCell>
-                            <TableCell>
-                                {staffName(request.requestedBy)}
-                            </TableCell>
-                            <TableCell>
-                                {formatDateTime(request.request_date)}
-                            </TableCell>
-                            {canManageOrders && (
-                                <TableCell className="text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => onEdit?.(request)}
-                                            title="Edit request"
+                                    {index === 0 && (
+                                        <TableCell rowSpan={items.length}>
+                                            {staffName(request.requestedBy)}
+                                        </TableCell>
+                                    )}
+                                    {index === 0 && (
+                                        <TableCell rowSpan={items.length}>
+                                            {formatDateTime(request.request_date)}
+                                        </TableCell>
+                                    )}
+                                    {canManageOrders && index === 0 && (
+                                        <TableCell
+                                            rowSpan={items.length}
+                                            className="text-right align-top"
                                         >
-                                            <Edit2 className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => onDelete?.(request)}
-                                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                            title="Remove request"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            )}
-                        </TableRow>
-                    ))}
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => onEdit?.(request)}
+                                                    title="Edit request"
+                                                >
+                                                    <Edit2 className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => onDelete?.(request)}
+                                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                    title="Remove request"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            );
+                        });
+                    })}
                 </TableBody>
             </Table>
         </div>
