@@ -221,6 +221,21 @@ export function QueuePatientCard({
                                             item.result_visible ? (
                                                 <Button
                                                     type="button"
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={`/laboratory/request-items/${item.id}`}
+                                                    >
+                                                        Details
+                                                    </a>
+                                                </Button>
+                                            ) : null}
+                                            {pageStage === 'view_results' &&
+                                            item.result_visible ? (
+                                                <Button
+                                                    type="button"
                                                     size="sm"
                                                     asChild
                                                 >

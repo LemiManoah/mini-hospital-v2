@@ -180,7 +180,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
                 'stage' => $stage,
                 'title' => 'View Results',
                 'description' => 'Open finalized laboratory results for each patient without exposing unreleased bench work.',
-                'action_label' => 'View Full Result',
+                'action_label' => 'View Result',
                 'route' => '/laboratory/view-results',
             ],
             default => [

@@ -37,6 +37,14 @@ export interface LaboratoryConsumableUsage {
     recordedBy?: { id: string; first_name: string; last_name: string } | null;
 }
 
+export interface LaboratoryConsumableOption {
+    id: string;
+    name: string;
+    label: string;
+    unit_label: string | null;
+    default_unit_cost: number | null;
+}
+
 export interface LaboratoryResultValue {
     id: string;
     lab_test_result_parameter_id?: string | null;
@@ -171,6 +179,7 @@ export interface LaboratoryWorklistPageProps {
 
 export interface LaboratoryRequestItemPageProps {
     labRequestItem: LaboratoryRequestItem;
+    consumableOptions: LaboratoryConsumableOption[];
 }
 
 export interface LaboratoryDashboardMetric {

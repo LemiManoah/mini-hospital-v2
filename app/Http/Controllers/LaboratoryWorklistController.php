@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\InventoryItem;
 use App\Models\LabRequestItem;
 use App\Support\ActiveBranchWorkspace;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -36,7 +37,8 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
 
     public function show(LabRequestItem $labRequestItem): Response
     {
-        $this->activeBranchWorkspace->authorizeModel($labRequestItem->request);
+        $labRequest = $labRequestItem->request()->firstOrFail();
+        $this->activeBranchWorkspace->authorizeModel($labRequest);
 
         $labRequestItem->load([
             'request:id,visit_id,facility_branch_id,requested_by,request_date,priority,status,clinical_notes',
@@ -63,8 +65,28 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
                 ->latest('used_at'),
         ]);
 
+        $consumableOptions = InventoryItem::query()
+            ->where('tenant_id', $labRequest->tenant_id)
+            ->active()
+            ->consumables()
+            ->with('unit:id,name,symbol')
+            ->orderBy('name')
+            ->get(['id', 'tenant_id', 'name', 'unit_id', 'default_purchase_price'])
+            ->map(static fn (InventoryItem $inventoryItem): array => [
+                'id' => $inventoryItem->id,
+                'name' => $inventoryItem->name,
+                'label' => $inventoryItem->name,
+                'unit_label' => $inventoryItem->unit?->symbol ?: $inventoryItem->unit?->name,
+                'default_unit_cost' => $inventoryItem->default_purchase_price !== null
+                    ? (float) $inventoryItem->default_purchase_price
+                    : null,
+            ])
+            ->values()
+            ->all();
+
         return Inertia::render('laboratory/request-item', [
             'labRequestItem' => $labRequestItem,
+            'consumableOptions' => $consumableOptions,
         ]);
     }
 }

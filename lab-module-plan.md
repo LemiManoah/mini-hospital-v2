@@ -43,10 +43,10 @@ What is already implemented beyond the original draft:
 - lab lookup CRUD for categories, specimen types, and result types
 - laboratory dashboard with queue metrics and recent requests
 - dedicated laboratory queue pages for:
-  - incoming investigations
-  - result entry
-  - result review
-  - released result viewing
+    - incoming investigations
+    - result entry
+    - result review
+    - released result viewing
 - lab worklist and request-item workflow pages
 - specimen collection and receipt actions
 - result entry, review, approval, and release actions
@@ -80,9 +80,9 @@ The production module design still has several strong ideas worth carrying into 
 ### Worth Borrowing, But In A Lighter Form
 
 - use result templates, but keep the starting result types simple:
-  - defined options
-  - parameter panels
-  - free text or numeric
+    - defined options
+    - parameter panels
+    - free text or numeric
 - use standardized specimen definitions, but avoid over-modeling too early
 - add reporting and dashboard metrics after the operational workflow is stable
 
@@ -126,7 +126,7 @@ The lab module should be considered complete when all of the following are true:
 - [ ] Milestone 4 in progress: structured result entry is substantially live
 - [x] Milestone 5 completed: review, release, and correction workflow are live
 - [x] Milestone 6 completed: clinician result visibility, modal result review, and release hardening are live
-- [ ] Milestone 7 in progress: permissions are strong, but branch-isolation coverage is still incomplete
+- [x] Milestone 7 completed: permissions are strong and branch-isolation coverage is verified
 
 ---
 
@@ -146,18 +146,18 @@ Turn the lab test catalog into a first-class admin surface that operations can m
 - Inertia pages for list, create, and edit flows
 - result capture metadata on the test definition
 - catalog fields such as:
-  - test code
-  - test name
-  - lab service category
-  - specimen type
-  - container type
-  - volume required
-  - turnaround time
-  - base price
-  - fasting requirement
-  - reference ranges
-  - result capture type
-  - active flag
+    - test code
+    - test name
+    - lab service category
+    - specimen type
+    - container type
+    - volume required
+    - turnaround time
+    - base price
+    - fasting requirement
+    - reference ranges
+    - result capture type
+    - active flag
 
 ### Milestone Checklist
 
@@ -196,12 +196,12 @@ Give lab staff a dedicated operational surface to receive, triage, and track inc
 - request detail page
 - operational queue counts by status
 - filters for:
-  - status
-  - priority
-  - date
-  - branch
-  - requesting clinician
-  - patient
+    - status
+    - priority
+    - date
+    - branch
+    - requesting clinician
+    - patient
 - request actions for intake progression
 
 ### Milestone Checklist
@@ -308,10 +308,10 @@ This keeps the module flexible for:
 - result entry action
 - result entry page or section on request detail
 - result value types such as:
-  - numeric
-  - text
-  - boolean
-  - option
+    - numeric
+    - text
+    - boolean
+    - option
 - result comments and interpretation notes
 
 ### Milestone Checklist
@@ -417,14 +417,14 @@ Finish the module with strong workflow safety, not just functional screens.
 ### Deliverables
 
 - permission matrix for:
-  - ordering
-  - receiving lab work
-  - specimen collection
-  - result entry
-  - verification
-  - release
-  - amendment
-  - cancellation or rejection
+    - ordering
+    - receiving lab work
+    - specimen collection
+    - result entry
+    - verification
+    - release
+    - amendment
+    - cancellation or rejection
 - branch isolation across lab worklist and data access
 - feature and unit coverage for critical lab workflows
 
@@ -434,8 +434,8 @@ Finish the module with strong workflow safety, not just functional screens.
 - [x] Add permission coverage for lab worklist access
 - [x] Add permission coverage for result entry
 - [x] Add permission coverage for verification and release
-- [ ] Add branch isolation tests for lab requests
-- [ ] Add branch isolation tests for specimen and result records
+- [x] Add branch isolation tests for lab requests
+- [x] Add branch isolation tests for specimen and result records
 - [x] Add end-to-end feature test for request to release flow
 - [x] Add documentation updates in implementation notes
 - [x] Mark completed milestones in this file
@@ -485,8 +485,8 @@ These are good ideas from the production module, but they should be treated as l
 
 - walk-in lab-only workflow for patients who come without a doctor visit
 - specialized culture and sensitivity workflow:
-  - organism selection
-  - antibiotic sensitivity matrices
+    - organism selection
+    - antibiotic sensitivity matrices
 - fertility-specific result packs
 - lab attachments and uploaded external reports
 - consumables stock, requisitions, reconciliation, and restocking
@@ -524,9 +524,9 @@ That means:
 1. patient is identified or quickly registered
 2. staff chooses `Lab Only` intake instead of a normal clinical visit
 3. staff records referral source and request basis:
-   - walk-in self-request
-   - external clinician request
-   - corporate or screening request
+    - walk-in self-request
+    - external clinician request
+    - corporate or screening request
 4. staff selects tests directly from the lab catalog
 5. billing is created and settled using the same cash or insurance rules where allowed
 6. request lands in the same lab intake and specimen workflow queues
@@ -593,8 +593,8 @@ It fits this codebase better because the app already depends heavily on visit-ba
 - `lab_only` visits should still create visit billing and lab request charges
 - result release should work exactly like normal lab requests
 - completion should depend on:
-  - all lab request items resolved
-  - billing state acceptable for the payer type
+    - all lab request items resolved
+    - billing state acceptable for the payer type
 - patient result access and print access should remain permission-controlled
 
 ### UI Surfaces Needed
@@ -655,3 +655,4 @@ The remaining work is mainly finishing and hardening the workflow:
 
 - broader branch-isolation coverage
 - abnormal flag and stronger reference-range handling
+  e handling

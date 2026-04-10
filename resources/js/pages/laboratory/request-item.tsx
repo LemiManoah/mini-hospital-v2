@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import {
+    type LaboratoryConsumableOption,
     type LaboratoryRequestItemPageProps,
     type LaboratoryResultEntry,
     type LaboratoryResultValue,
@@ -89,6 +90,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 
 export default function LaboratoryRequestItemShow({
     labRequestItem,
+    consumableOptions,
 }: LaboratoryRequestItemPageProps) {
     const patient = labRequestItem.request?.visit?.patient ?? null;
     const resultEntry: LaboratoryResultEntry | null =
@@ -105,16 +107,24 @@ export default function LaboratoryRequestItemShow({
         labRequestItem.workflow_stage === 'reviewed' ||
         labRequestItem.workflow_stage === 'approved';
     const [correctionMode, setCorrectionMode] = useState(false);
+    const [selectedConsumableId, setSelectedConsumableId] = useState('');
     const resultEditingLocked = isApproved && !correctionMode;
+    const pageTitle = 'Result Correction & Consumables';
+    const resultManagementTitle =
+        isApproved || correctionMode ? 'Result Correction' : 'Result Entry';
+    const resultManagementDescription =
+        isApproved || correctionMode
+            ? 'Correct a released result when needed. Saving a correction hides it from clinicians until it is reviewed and released again.'
+            : 'Save the bench result in the configured format for this test.';
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Laboratory', href: '/laboratory/incoming-investigations' },
+        { title: 'Laboratory', href: '/laboratory/dashboard' },
         {
-            title: 'Incoming Lab Investigations Queue',
-            href: '/laboratory/incoming-investigations',
+            title: 'View Results',
+            href: '/laboratory/view-results',
         },
         {
-            title: labRequestItem.test?.test_name ?? 'Request Item',
+            title: pageTitle,
             href: `/laboratory/request-items/${labRequestItem.id}`,
         },
     ];
@@ -155,17 +165,42 @@ export default function LaboratoryRequestItemShow({
         used_at: '',
         notes: '',
     });
+    const applyConsumableDefaults = (consumableId: string) => {
+        setSelectedConsumableId(consumableId);
+
+        const selectedConsumable = consumableOptions.find(
+            (option: LaboratoryConsumableOption) => option.id === consumableId,
+        );
+
+        if (!selectedConsumable) {
+            return;
+        }
+
+        consumableForm.setData('consumable_name', selectedConsumable.name);
+        consumableForm.setData(
+            'unit_label',
+            selectedConsumable.unit_label ?? '',
+        );
+
+        if (selectedConsumable.default_unit_cost !== null) {
+            consumableForm.setData(
+                'unit_cost',
+                `${selectedConsumable.default_unit_cost}`,
+            );
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head
-                title={`Lab Workflow ${labRequestItem.test?.test_name ?? ''}`}
-            />
+            <Head title={`${pageTitle} ${labRequestItem.test?.test_name ?? ''}`} />
             <div className="m-4 flex flex-col gap-6">
                 <Card>
                     <CardHeader>
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                             <div className="flex flex-col gap-2">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    {pageTitle}
+                                </p>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <CardTitle>
                                         {labRequestItem.test?.test_name ??
@@ -203,11 +238,16 @@ export default function LaboratoryRequestItemShow({
                                     {labRequestItem.test?.specimen_type ??
                                         'Specimen not set'}
                                 </p>
+                                <p className="text-sm text-muted-foreground">
+                                    Use this page to review the released result,
+                                    start a correction when needed, and record
+                                    consumables used during this test.
+                                </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 <Button variant="outline" asChild>
-                                    <Link href="/laboratory/incoming-investigations">
-                                        Back to Queue
+                                    <Link href="/laboratory/view-results">
+                                        Back to View Results
                                     </Link>
                                 </Button>
                                 {labRequestItem.result_visible ? (
@@ -219,17 +259,6 @@ export default function LaboratoryRequestItemShow({
                                         >
                                             Download PDF Result
                                         </a>
-                                    </Button>
-                                ) : null}
-                                {labRequestItem.workflow_stage === 'pending' ? (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        asChild
-                                    >
-                                        <Link href="/laboratory/incoming-investigations">
-                                            Pick Sample in Queue
-                                        </Link>
                                     </Button>
                                 ) : null}
                             </div>
@@ -261,10 +290,9 @@ export default function LaboratoryRequestItemShow({
                     <div className="flex flex-col gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Result Entry</CardTitle>
+                                <CardTitle>{resultManagementTitle}</CardTitle>
                                 <CardDescription>
-                                    Save the bench result in the configured
-                                    format for this test.
+                                    {resultManagementDescription}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-4">
@@ -537,7 +565,7 @@ export default function LaboratoryRequestItemShow({
                                                 >
                                                     {correctionMode
                                                         ? 'Cancel Correction'
-                                                        : 'Start Correction'}
+                                                        : 'Start Result Correction'}
                                                 </Button>
                                             ) : null}
                                             <Button
@@ -905,7 +933,12 @@ export default function LaboratoryRequestItemShow({
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Consumables Used</CardTitle>
+                                <CardTitle>Consumables & Bench Costing</CardTitle>
+                                <CardDescription>
+                                    Pick a consumable from inventory to prefill
+                                    its name, unit, and unit cost. You can still
+                                    edit the values before saving.
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-4">
                                 <form
@@ -918,12 +951,65 @@ export default function LaboratoryRequestItemShow({
                                     }}
                                     className="grid gap-4 rounded-lg border p-4 md:grid-cols-2"
                                 >
+                                    <div className="grid gap-2 md:col-span-2">
+                                        <Label htmlFor="consumable_picker">
+                                            Inventory Consumable
+                                        </Label>
+                                        <Select
+                                            value={selectedConsumableId}
+                                            onValueChange={applyConsumableDefaults}
+                                            disabled={
+                                                consumableForm.processing ||
+                                                consumableOptions.length === 0
+                                            }
+                                        >
+                                            <SelectTrigger id="consumable_picker">
+                                                <SelectValue
+                                                    placeholder={
+                                                        consumableOptions.length
+                                                            ? 'Choose a consumable to prefill this usage entry'
+                                                            : 'No active consumables are configured in inventory yet'
+                                                    }
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {consumableOptions.map(
+                                                        (option) => (
+                                                            <SelectItem
+                                                                key={option.id}
+                                                                value={
+                                                                    option.id
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                                {option.unit_label
+                                                                    ? ` (${option.unit_label})`
+                                                                    : ''}
+                                                                {option.default_unit_cost !==
+                                                                null
+                                                                    ? ` - ${formatMoney(option.default_unit_cost)}`
+                                                                    : ''}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Inventory defaults help you start
+                                            faster, but the saved usage entry
+                                            will use whatever name, unit, and
+                                            price you confirm below.
+                                        </p>
+                                    </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="consumable_name">
                                             Consumable Name
                                         </Label>
                                         <Input
                                             id="consumable_name"
+                                            placeholder="e.g. EDTA Tube"
                                             value={
                                                 consumableForm.data
                                                     .consumable_name
@@ -946,6 +1032,7 @@ export default function LaboratoryRequestItemShow({
                                         <Label htmlFor="unit_label">Unit</Label>
                                         <Input
                                             id="unit_label"
+                                            placeholder="e.g. pcs"
                                             value={
                                                 consumableForm.data.unit_label
                                             }
@@ -971,6 +1058,7 @@ export default function LaboratoryRequestItemShow({
                                             type="number"
                                             min="0.01"
                                             step="0.01"
+                                            placeholder="1"
                                             value={consumableForm.data.quantity}
                                             onChange={(event) =>
                                                 consumableForm.setData(
@@ -994,6 +1082,7 @@ export default function LaboratoryRequestItemShow({
                                             type="number"
                                             min="0"
                                             step="0.01"
+                                            placeholder="0.00"
                                             value={
                                                 consumableForm.data.unit_cost
                                             }
@@ -1009,6 +1098,19 @@ export default function LaboratoryRequestItemShow({
                                                 consumableForm.errors.unit_cost
                                             }
                                         />
+                                        <p className="text-xs text-muted-foreground">
+                                            Line cost preview:{' '}
+                                            {formatMoney(
+                                                Number(
+                                                    consumableForm.data
+                                                        .quantity || 0,
+                                                ) *
+                                                    Number(
+                                                        consumableForm.data
+                                                            .unit_cost || 0,
+                                                    ),
+                                            )}
+                                        </p>
                                     </div>
                                     <div className="grid gap-2 md:col-span-2">
                                         <Label htmlFor="used_at">Used At</Label>
@@ -1034,6 +1136,7 @@ export default function LaboratoryRequestItemShow({
                                         <Textarea
                                             id="notes"
                                             rows={4}
+                                            placeholder="Optional note about why this consumable was used or adjusted."
                                             value={consumableForm.data.notes}
                                             onChange={(event) =>
                                                 consumableForm.setData(
@@ -1163,37 +1266,6 @@ export default function LaboratoryRequestItemShow({
                                 <SummaryRow
                                     label="Status"
                                     value={labelize(labRequestItem.status)}
-                                />
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Patient and Visit</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-3 text-sm">
-                                <SummaryRow
-                                    label="Patient"
-                                    value={
-                                        patient
-                                            ? `${patient.first_name} ${patient.last_name}`
-                                            : 'Unknown patient'
-                                    }
-                                />
-                                <SummaryRow
-                                    label="MRN"
-                                    value={patient?.patient_number ?? 'N/A'}
-                                />
-                                <SummaryRow
-                                    label="Visit Number"
-                                    value={
-                                        labRequestItem.request?.visit
-                                            ?.visit_number ?? 'N/A'
-                                    }
-                                />
-                                <SummaryRow
-                                    label="Phone"
-                                    value={patient?.phone_number ?? 'N/A'}
                                 />
                             </CardContent>
                         </Card>

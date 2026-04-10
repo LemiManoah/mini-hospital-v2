@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
+use App\Enums\UnitType;
 use App\Enums\StaffType;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
+use App\Models\InventoryItem;
 use App\Models\LabRequestItem;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
@@ -18,6 +20,7 @@ use App\Models\SpecimenType;
 use App\Models\Staff;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
+use App\Models\Unit;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Support\Facades\DB;
@@ -195,6 +198,38 @@ it('shows the laboratory dashboard to authorized users', function (): void {
             ->has('workflow_stage_counts')
             ->has('recent_requests', 1)
             ->where('metrics.0.value', 1));
+});
+
+it('shows inventory consumable defaults on the result correction and consumables page', function (): void {
+    [$branch, $user, $requestItem] = createLaboratoryWorklistContext();
+
+    $user->givePermissionTo('lab_requests.view');
+
+    $unit = Unit::query()->create([
+        'tenant_id' => $branch->tenant_id,
+        'name' => 'Pieces',
+        'symbol' => 'pcs',
+        'type' => UnitType::COUNT,
+    ]);
+
+    InventoryItem::factory()->consumable()->create([
+        'tenant_id' => $branch->tenant_id,
+        'name' => 'EDTA Tube',
+        'unit_id' => $unit->id,
+        'default_purchase_price' => 1500,
+    ]);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('laboratory.request-items.show', $requestItem));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('laboratory/request-item')
+            ->has('consumableOptions', 1)
+            ->where('consumableOptions.0.label', 'EDTA Tube')
+            ->where('consumableOptions.0.unit_label', 'pcs')
+            ->where('consumableOptions.0.default_unit_cost', 1500));
 });
 
 it('records and removes consumable usage while syncing actual cost', function (): void {
