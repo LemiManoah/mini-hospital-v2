@@ -46,12 +46,12 @@ export function WelcomeHeroSection({
     return (
         <section
             id="home"
-            className="relative overflow-hidden border-b border-stone-200 px-6 pt-20 pb-12 dark:border-white/6 md:px-10 md:pt-24"
+            className="relative overflow-hidden border-b border-stone-200 px-6 pt-20 pb-12 md:px-10 md:pt-24 dark:border-white/6"
         >
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(74,111,165,0.12),transparent_34%),radial-gradient(circle_at_84%_78%,rgba(74,111,165,0.09),transparent_28%)] dark:bg-[radial-gradient(circle_at_50%_18%,rgba(74,111,165,0.16),transparent_34%),radial-gradient(circle_at_84%_78%,rgba(74,111,165,0.08),transparent_28%)]" />
 
             <div className="relative mx-auto flex w-full max-w-[1440px] flex-col gap-12">
-                <div className="grid gap-8 border-b border-stone-200 pb-8 dark:border-white/8 md:grid-cols-4">
+                <div className="grid gap-8 border-b border-stone-200 pb-8 md:grid-cols-4 dark:border-white/8">
                     {headerFacts.map((fact) => (
                         <div key={fact.label} className="flex flex-col gap-1">
                             <span className="text-[10px] font-semibold tracking-[0.32em] text-stone-500 uppercase dark:text-stone-600">
@@ -65,7 +65,7 @@ export function WelcomeHeroSection({
                 </div>
 
                 <div className="max-w-6xl">
-                    <h1 className="font-[Manrope] text-[3rem] leading-[0.86] font-extrabold tracking-[-0.08em] text-stone-950 dark:text-stone-100 sm:text-[4.4rem] lg:text-[7.4rem]">
+                    <h1 className="font-[Manrope] text-[3rem] leading-[0.86] font-extrabold tracking-[-0.08em] text-stone-950 sm:text-[4.4rem] lg:text-[7.4rem] dark:text-stone-100">
                         CLINICAL
                         <br />
                         FLOW MADE
@@ -80,7 +80,10 @@ export function WelcomeHeroSection({
                             About QrooEMR
                         </span>
                         <p className="max-w-sm text-sm leading-7 text-stone-600 dark:text-stone-400">
-                            QrooEMR is built for hospitals that want cleaner patient movement, calmer documentation, and operational visibility across registration, consultation, laboratory, pharmacy, and billing.
+                            QrooEMR is built for hospitals that want cleaner
+                            patient movement, calmer documentation, and
+                            operational visibility across registration,
+                            consultation, laboratory, pharmacy, and billing.
                         </p>
 
                         <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
@@ -95,7 +98,8 @@ export function WelcomeHeroSection({
                                     Structured. Calm. Operational.
                                 </p>
                                 <p className="mt-3 text-sm leading-7 text-stone-600 dark:text-stone-400">
-                                    Designed for facilities that want clarity on screen without clutter in the workflow.
+                                    Designed for facilities that want clarity on
+                                    screen without clutter in the workflow.
                                 </p>
                             </div>
 
@@ -106,8 +110,10 @@ export function WelcomeHeroSection({
                                     </span>
                                     <HeartPulse className="h-4 w-4 text-[#4A6FA5] dark:text-[#7ea2d6]" />
                                 </div>
-                                <p className="mt-4 text-sm font-medium leading-6 text-stone-700 dark:text-stone-300">
-                                    Front desk, triage, consultation, laboratory, pharmacy, and reporting working in one flow.
+                                <p className="mt-4 text-sm leading-6 font-medium text-stone-700 dark:text-stone-300">
+                                    Front desk, triage, consultation,
+                                    laboratory, pharmacy, and reporting working
+                                    in one flow.
                                 </p>
                             </div>
                         </div>
@@ -143,7 +149,7 @@ export function WelcomeHeroSection({
 
                     <div className="order-1 xl:order-2">
                         <div className="overflow-hidden border border-stone-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/8 dark:bg-[#131313] dark:shadow-none">
-                            <div className="border-b border-stone-200 px-5 py-4 dark:border-white/8 sm:px-6">
+                            <div className="border-b border-stone-200 px-5 py-4 sm:px-6 dark:border-white/8">
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                                     <div>
                                         <p className="text-[10px] font-bold tracking-[0.32em] text-stone-500 uppercase dark:text-stone-500">
@@ -159,11 +165,14 @@ export function WelcomeHeroSection({
                                     </div>
                                 </div>
                                 <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-600 dark:text-stone-400">
-                                    A compact surface showing queue pressure, patient movement, and module readiness without looking overloaded on smaller screens.
+                                    A compact surface showing queue pressure,
+                                    patient movement, and module readiness
+                                    without looking overloaded on smaller
+                                    screens.
                                 </p>
                             </div>
 
-                            <div className="grid gap-4 bg-stone-100 p-3 dark:bg-[#0b0b0b] sm:p-4 2xl:grid-cols-[minmax(0,1.08fr)_minmax(240px,0.92fr)]">
+                            <div className="grid gap-4 bg-stone-100 p-3 sm:p-4 2xl:grid-cols-[minmax(0,1.08fr)_minmax(240px,0.92fr)] dark:bg-[#0b0b0b]">
                                 <div className="grid gap-4">
                                     <div className="border border-stone-200 bg-white p-4 dark:border-white/8 dark:bg-[#161717]">
                                         <div className="mb-4 flex items-center justify-between border-b border-stone-200 pb-4 dark:border-white/8">
@@ -208,7 +217,10 @@ export function WelcomeHeroSection({
                                             </div>
                                             <div className="space-y-3">
                                                 {patientFlow.map((item) => (
-                                                    <div key={item} className="flex items-start gap-3">
+                                                    <div
+                                                        key={item}
+                                                        className="flex items-start gap-3"
+                                                    >
                                                         <span className="mt-1.5 size-2 rounded-full bg-[#4A6FA5]" />
                                                         <span className="text-sm leading-6 text-stone-700 dark:text-stone-300">
                                                             {item}

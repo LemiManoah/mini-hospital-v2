@@ -8,7 +8,6 @@ use App\Enums\StaffType;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
-use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
@@ -132,7 +131,7 @@ function createLabIsolationContext(): array
         'registered_by' => $user->id,
     ]);
 
-    $visitB = PatientVisit::query()->create([
+    PatientVisit::query()->create([
         'tenant_id' => $tenant->id,
         'patient_id' => $patient->id,
         'facility_branch_id' => $branchB->id,
@@ -190,7 +189,7 @@ function createLabIsolationContext(): array
     return [$tenant, $branchA, $branchB, $user, $requestItemA, $specimenType];
 }
 
-test('lab requests from Branch A are not visible when Branch B is active', function () {
+test('lab requests from Branch A are not visible when Branch B is active', function (): void {
     [$tenant, $branchA, $branchB, $user, $requestItemA] = createLabIsolationContext();
 
     // Active Branch A: Should see the request
@@ -213,7 +212,7 @@ test('lab requests from Branch A are not visible when Branch B is active', funct
         );
 });
 
-test('lab request items from Branch A are not accessible when Branch B is active', function () {
+test('lab request items from Branch A are not accessible when Branch B is active', function (): void {
     [$tenant, $branchA, $branchB, $user, $requestItemA] = createLabIsolationContext();
 
     // Active Branch A: Should be able to view details
@@ -229,7 +228,7 @@ test('lab request items from Branch A are not accessible when Branch B is active
         ->assertStatus(403);
 });
 
-test('lab workflow actions from Branch A are not allowed when Branch B is active', function () {
+test('lab workflow actions from Branch A are not allowed when Branch B is active', function (): void {
     [$tenant, $branchA, $branchB, $user, $requestItemA, $specimenType] = createLabIsolationContext();
 
     // Active Branch B: Attempt to collect sample for Branch A request
@@ -241,7 +240,7 @@ test('lab workflow actions from Branch A are not allowed when Branch B is active
         ->assertStatus(403);
 });
 
-test('specimen and result records follow branch isolation of their lab request', function () {
+test('specimen and result records follow branch isolation of their lab request', function (): void {
     [$tenant, $branchA, $branchB, $user, $requestItemA, $specimenType] = createLabIsolationContext();
 
     // 1. Collect sample in Branch A

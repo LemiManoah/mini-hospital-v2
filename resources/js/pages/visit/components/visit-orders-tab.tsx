@@ -106,11 +106,13 @@ export function VisitOrdersTab({
 }: VisitOrdersTabProps) {
     const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
     const prescriptions = visit.prescriptions ?? [];
-    const imagingRequests = visit.imagingRequests ?? visit.imaging_requests ?? [];
+    const imagingRequests =
+        visit.imagingRequests ?? visit.imaging_requests ?? [];
     const facilityServiceOrders =
         visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
     const isConsultationFinalized =
-        (consultation?.completed_at ?? visit.consultation?.completed_at) != null;
+        (consultation?.completed_at ?? visit.consultation?.completed_at) !=
+        null;
     const canEditOrders = canManageOrders && !isConsultationFinalized;
 
     const [labModalOpen, setLabModalOpen] = useState(false);
@@ -119,9 +121,8 @@ export function VisitOrdersTab({
     const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
     const [allergenModalOpen, setAllergenModalOpen] = useState(false);
 
-    const [editingLabRequest, setEditingLabRequest] = useState<LabRequest | null>(
-        null,
-    );
+    const [editingLabRequest, setEditingLabRequest] =
+        useState<LabRequest | null>(null);
     const [editingPrescription, setEditingPrescription] =
         useState<Prescription | null>(null);
     const [editingImagingRequest, setEditingImagingRequest] =

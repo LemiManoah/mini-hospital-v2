@@ -60,7 +60,9 @@ export function SearchableSelect({
             <SelectContent>
                 {allowClear && value !== '' ? (
                     <SelectGroup>
-                        <SelectItem value={CLEAR_VALUE}>Clear selection</SelectItem>
+                        <SelectItem value={CLEAR_VALUE}>
+                            Clear selection
+                        </SelectItem>
                     </SelectGroup>
                 ) : null}
 

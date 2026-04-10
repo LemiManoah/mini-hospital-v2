@@ -87,7 +87,7 @@ type ResultItem = {
 function ResultMetaRow({ label, value }: { label: string; value: string }) {
     return (
         <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 {label}
             </p>
             <p className="text-sm font-medium">{value}</p>
@@ -277,7 +277,11 @@ export function LabResultDialog({
                 <DialogFooter className="justify-between sm:justify-between">
                     <Button type="button" asChild>
                         <a
-                            href={item ? `/laboratory/request-items/${item.id}/print` : '#'}
+                            href={
+                                item
+                                    ? `/laboratory/request-items/${item.id}/print`
+                                    : '#'
+                            }
                             target="_blank"
                             rel="noreferrer"
                         >

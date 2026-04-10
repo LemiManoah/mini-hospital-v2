@@ -78,7 +78,10 @@ export function CollectSampleDialog({
                             </SelectTrigger>
                             <SelectContent>
                                 {options.map((option) => (
-                                    <SelectItem key={option.id} value={option.id}>
+                                    <SelectItem
+                                        key={option.id}
+                                        value={option.id}
+                                    >
                                         {option.label}
                                     </SelectItem>
                                 ))}

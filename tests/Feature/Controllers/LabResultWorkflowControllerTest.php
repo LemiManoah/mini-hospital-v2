@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Enums\FacilityLevel;
-use App\Enums\GeneralStatus;
 use App\Enums\AttendanceType;
 use App\Enums\ConsciousLevel;
+use App\Enums\FacilityLevel;
+use App\Enums\GeneralStatus;
 use App\Enums\MobilityStatus;
 use App\Enums\StaffType;
 use App\Enums\TriageGrade;

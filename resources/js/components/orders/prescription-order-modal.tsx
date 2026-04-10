@@ -214,17 +214,19 @@ export function PrescriptionOrderModal({
                                         <Label>Drug</Label>
                                         <SearchableSelect
                                             inputId={`prescription_drug_${index}`}
-                                            options={drugOptions.map((drug) => ({
-                                                value: drug.id,
-                                                label: [
-                                                    drug.generic_name,
-                                                    drug.brand_name,
-                                                    drug.strength,
-                                                    drug.dosage_form,
-                                                ]
-                                                    .filter(Boolean)
-                                                    .join(' '),
-                                            }))}
+                                            options={drugOptions.map(
+                                                (drug) => ({
+                                                    value: drug.id,
+                                                    label: [
+                                                        drug.generic_name,
+                                                        drug.brand_name,
+                                                        drug.strength,
+                                                        drug.dosage_form,
+                                                    ]
+                                                        .filter(Boolean)
+                                                        .join(' '),
+                                                }),
+                                            )}
                                             value={item.inventory_item_id}
                                             onValueChange={(drug) =>
                                                 updatePrescriptionItem(

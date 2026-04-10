@@ -1,4 +1,3 @@
-import { LabResultDialog } from '@/pages/laboratory/components/lab-result-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +9,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { LabResultDialog } from '@/pages/laboratory/components/lab-result-dialog';
 import { type LabRequest, type LabRequestItem } from '@/types/patient';
 import { Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';

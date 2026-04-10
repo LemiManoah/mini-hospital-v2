@@ -1,8 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    type VitalSign,
-} from '@/types/patient';
+import { type VitalSign } from '@/types/patient';
 import { Link } from '@inertiajs/react';
 import {
     findLabel,
@@ -246,7 +244,6 @@ export function VisitClinicalTab({
                     )}
                 </CardContent>
             </Card>
-
         </div>
     );
 }

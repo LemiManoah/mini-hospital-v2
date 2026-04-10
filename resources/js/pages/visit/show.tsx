@@ -8,8 +8,8 @@ import { useState } from 'react';
 import { VisitBillingTab } from './components/visit-billing-tab';
 import { VisitClinicalTab } from './components/visit-clinical-tab';
 import { VisitHeader } from './components/visit-header';
-import { VisitOverviewTab } from './components/visit-overview-tab';
 import { VisitOrdersTab } from './components/visit-orders-tab';
+import { VisitOverviewTab } from './components/visit-overview-tab';
 import { formatDateTime } from './components/visit-show-utils';
 
 export default function VisitShow({
@@ -83,9 +83,7 @@ export default function VisitShow({
                     <TabsList variant="line" className="w-full justify-start">
                         <TabsTrigger value="overview">Overview</TabsTrigger>
                         <TabsTrigger value="clinical">Clinical</TabsTrigger>
-                        <TabsTrigger value="orders">
-                            Visit Services
-                        </TabsTrigger>
+                        <TabsTrigger value="orders">Visit Services</TabsTrigger>
                         <TabsTrigger value="billing">Billing</TabsTrigger>
                     </TabsList>
 

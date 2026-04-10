@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
-use App\Enums\UnitType;
 use App\Enums\StaffType;
+use App\Enums\UnitType;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;

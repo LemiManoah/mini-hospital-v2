@@ -153,8 +153,7 @@ export default function LaboratoryRequestItemShow({
         approval_notes: resultEntry?.approval_notes ?? '',
     });
     const rejectSpecimenForm = useForm({
-        rejection_reason:
-            labRequestItem.specimen?.rejection_reason ?? '',
+        rejection_reason: labRequestItem.specimen?.rejection_reason ?? '',
         redirect_to: `/laboratory/request-items/${labRequestItem.id}`,
     });
     const consumableForm = useForm({
@@ -192,7 +191,9 @@ export default function LaboratoryRequestItemShow({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`${pageTitle} ${labRequestItem.test?.test_name ?? ''}`} />
+            <Head
+                title={`${pageTitle} ${labRequestItem.test?.test_name ?? ''}`}
+            />
             <div className="m-4 flex flex-col gap-6">
                 <Card>
                     <CardHeader>
@@ -933,7 +934,9 @@ export default function LaboratoryRequestItemShow({
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Consumables & Bench Costing</CardTitle>
+                                <CardTitle>
+                                    Consumables & Bench Costing
+                                </CardTitle>
                                 <CardDescription>
                                     Pick a consumable from inventory to prefill
                                     its name, unit, and unit cost. You can still
@@ -957,7 +960,9 @@ export default function LaboratoryRequestItemShow({
                                         </Label>
                                         <Select
                                             value={selectedConsumableId}
-                                            onValueChange={applyConsumableDefaults}
+                                            onValueChange={
+                                                applyConsumableDefaults
+                                            }
                                             disabled={
                                                 consumableForm.processing ||
                                                 consumableOptions.length === 0

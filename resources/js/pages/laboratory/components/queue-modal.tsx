@@ -1,8 +1,8 @@
 import { CollectSampleDialog } from './collect-sample-dialog';
 import { EnterResultDialog } from './enter-result-dialog';
 import { LabResultDialog } from './lab-result-dialog';
-import { ReviewResultDialog } from './review-result-dialog';
 import { type ActiveModal } from './queue-utils';
+import { ReviewResultDialog } from './review-result-dialog';
 
 export function QueueModal({
     activeModal,

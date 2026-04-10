@@ -13,7 +13,9 @@ use App\Enums\FacilityServiceOrderStatus;
 use App\Enums\ImagingModality;
 use App\Enums\InventoryItemType;
 use App\Enums\Priority;
+use App\Enums\VisitStatus;
 use App\Models\Consultation;
+use App\Models\PatientVisit;
 use App\Models\VisitCharge;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -228,7 +230,7 @@ it('moves a registered visit into progress when a visit-level lab request is cre
         'updated_at' => now(),
     ]);
 
-    $visit = \App\Models\PatientVisit::query()->findOrFail($context['visit_id']);
+    $visit = PatientVisit::query()->findOrFail($context['visit_id']);
 
     resolve(CreateLabRequest::class)->handle($visit, [
         'test_ids' => [$testId],
@@ -238,7 +240,7 @@ it('moves a registered visit into progress when a visit-level lab request is cre
         'is_stat' => false,
     ], $context['staff_id']);
 
-    expect($visit->fresh()->status)->toBe(\App\Enums\VisitStatus::IN_PROGRESS)
+    expect($visit->fresh()->status)->toBe(VisitStatus::IN_PROGRESS)
         ->and($visit->fresh()->started_at)->not->toBeNull();
 });
 

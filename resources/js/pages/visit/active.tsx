@@ -166,7 +166,7 @@ export default function ActiveVisits({
                                                     </p>
                                                 </div>
                                             </TableCell>
-                                            
+
                                             <TableCell>
                                                 <div>
                                                     <p className="font-medium">

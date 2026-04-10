@@ -11,8 +11,8 @@ use App\Models\LabRequestItem;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final readonly class CreateLabRequest
 {

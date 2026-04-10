@@ -12,21 +12,24 @@ export function WelcomeShowcaseSection({
     }
 
     return (
-        <section className="border-b border-stone-200 py-20 dark:border-white/6 md:py-24">
+        <section className="border-b border-stone-200 py-20 md:py-24 dark:border-white/6">
             <div className="mx-auto max-w-7xl px-6 md:px-10">
                 <div className="mb-16 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
                     <div className="max-w-3xl">
                         <span className="mb-5 block font-[Manrope] text-[10px] font-bold tracking-[0.38em] text-[#4A6FA5] uppercase dark:text-[#7ea2d6]">
                             Product Views
                         </span>
-                        <h2 className="font-[Manrope] text-4xl leading-none font-extrabold tracking-[-0.07em] text-stone-950 dark:text-stone-100 md:text-6xl">
+                        <h2 className="font-[Manrope] text-4xl leading-none font-extrabold tracking-[-0.07em] text-stone-950 md:text-6xl dark:text-stone-100">
                             Real screens from the
                             <br />
                             working product.
                         </h2>
                     </div>
                     <p className="max-w-md text-sm leading-7 text-stone-600 dark:text-stone-400">
-                        The landing page now shows actual application surfaces so visitors can see the tone of the dashboard, doctor queue, and laboratory workflow before they enter the product.
+                        The landing page now shows actual application surfaces
+                        so visitors can see the tone of the dashboard, doctor
+                        queue, and laboratory workflow before they enter the
+                        product.
                     </p>
                 </div>
 
@@ -51,7 +54,7 @@ export function WelcomeShowcaseSection({
                             </div>
                         </div>
 
-                        <div className="bg-stone-100 p-3 dark:bg-[#0b0b0b] sm:p-4">
+                        <div className="bg-stone-100 p-3 sm:p-4 dark:bg-[#0b0b0b]">
                             <img
                                 src={featuredShot.image}
                                 alt={featuredShot.title}

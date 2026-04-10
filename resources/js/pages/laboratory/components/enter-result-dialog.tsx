@@ -69,10 +69,13 @@ export function EnterResultDialog({
                     className="flex flex-col gap-4"
                     onSubmit={(event) => {
                         event.preventDefault();
-                        form.post(`/laboratory/request-items/${item.id}/results`, {
-                            preserveScroll: true,
-                            onSuccess: () => onOpenChange(false),
-                        });
+                        form.post(
+                            `/laboratory/request-items/${item.id}/results`,
+                            {
+                                preserveScroll: true,
+                                onSuccess: () => onOpenChange(false),
+                            },
+                        );
                     }}
                 >
                     {resultType === 'free_entry' ? (

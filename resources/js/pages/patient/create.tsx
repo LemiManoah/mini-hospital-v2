@@ -158,11 +158,7 @@ export default function PatientCreate({
                     </Button>
                 </div>
 
-                <Form
-                    action="/patients"
-                    method="post"
-                    className="space-y-6"
-                >
+                <Form action="/patients" method="post" className="space-y-6">
                     {({ processing, errors }) => (
                         <>
                             <input
@@ -170,11 +166,7 @@ export default function PatientCreate({
                                 name="age_input_mode"
                                 value={ageInputMode}
                             />
-                            <input
-                                type="hidden"
-                                name="gender"
-                                value={gender}
-                            />
+                            <input type="hidden" name="gender" value={gender} />
                             <input
                                 type="hidden"
                                 name="age_units"
@@ -487,9 +479,7 @@ export default function PatientCreate({
                                             allowClear
                                             invalid={Boolean(errors.religion)}
                                         />
-                                        <InputError
-                                            message={errors.religion}
-                                        />
+                                        <InputError message={errors.religion} />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="blood_group">

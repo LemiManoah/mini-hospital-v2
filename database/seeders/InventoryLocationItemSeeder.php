@@ -43,6 +43,7 @@ final class InventoryLocationItemSeeder extends Seeder
             if ($location === null) {
                 continue;
             }
+
             if ($item === null) {
                 continue;
             }

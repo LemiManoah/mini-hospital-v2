@@ -180,10 +180,7 @@ export function LabOrderModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <form
-                    className="flex flex-col"
-                    onSubmit={onSubmit}
-                >
+                <form className="flex flex-col" onSubmit={onSubmit}>
                     <div className="grid lg:grid-cols-[minmax(0,1fr)_300px]">
                         {/* Left Side: Test Selection */}
                         <div className="border-b lg:border-r lg:border-b-0">
@@ -324,7 +321,9 @@ export function LabOrderModal({
                                             ))
                                         )}
                                     </div>
-                                    <InputError message={form.errors.test_ids} />
+                                    <InputError
+                                        message={form.errors.test_ids}
+                                    />
                                     {hasPendingSelectedTests ? (
                                         <p className="text-sm text-amber-700">
                                             One or more selected tests already
@@ -349,9 +348,7 @@ export function LabOrderModal({
                                                 {labPriorities.map(
                                                     (priority) => (
                                                         <SelectItem
-                                                            key={
-                                                                priority.value
-                                                            }
+                                                            key={priority.value}
                                                             value={
                                                                 priority.value
                                                             }

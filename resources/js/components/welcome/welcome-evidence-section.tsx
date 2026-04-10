@@ -10,7 +10,7 @@ export function WelcomeEvidenceSection({
     return (
         <section
             id="evidence"
-            className="border-y border-stone-200 bg-stone-100 py-24 dark:border-white/6 dark:bg-[#080808] md:py-32"
+            className="border-y border-stone-200 bg-stone-100 py-24 md:py-32 dark:border-white/6 dark:bg-[#080808]"
         >
             <div className="mx-auto max-w-7xl px-6 md:px-10">
                 <div className="mb-20 flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
@@ -18,7 +18,7 @@ export function WelcomeEvidenceSection({
                         <span className="mb-6 block font-[Manrope] text-[10px] font-bold tracking-[0.38em] text-[#4A6FA5] uppercase dark:text-[#7ea2d6]">
                             Why teams stay with it
                         </span>
-                        <h2 className="font-[Manrope] text-4xl font-extrabold tracking-[-0.07em] text-stone-950 dark:text-stone-100 md:text-6xl">
+                        <h2 className="font-[Manrope] text-4xl font-extrabold tracking-[-0.07em] text-stone-950 md:text-6xl dark:text-stone-100">
                             Interfaces that
                             <br />
                             reduce operational noise.
@@ -27,7 +27,10 @@ export function WelcomeEvidenceSection({
 
                     <div className="grid gap-4 sm:grid-cols-3">
                         {operationalStats.map((stat) => (
-                            <div key={stat.label} className="border border-stone-200 bg-white px-5 py-4 dark:border-white/8 dark:bg-[#111212]">
+                            <div
+                                key={stat.label}
+                                className="border border-stone-200 bg-white px-5 py-4 dark:border-white/8 dark:bg-[#111212]"
+                            >
                                 <p className="text-[10px] font-bold tracking-[0.32em] text-stone-500 uppercase dark:text-stone-600">
                                     {stat.label}
                                 </p>

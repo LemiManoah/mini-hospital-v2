@@ -28,8 +28,8 @@ use App\Models\Staff;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\ActiveBranchWorkspace;
-use App\Support\BranchScopedNumberGenerator;
 use App\Support\BranchContext;
+use App\Support\BranchScopedNumberGenerator;
 use App\Support\VisitOrderOptions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -243,8 +243,7 @@ final readonly class PatientVisitController implements HasMiddleware
         Request $request,
         Patient $patient,
         BranchScopedNumberGenerator $numberGenerator,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $hasActiveVisit = $patient->visits()
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->exists();

@@ -1,3 +1,11 @@
+import {
+    type FooterColumn,
+    type HeaderFact,
+    type OperationalStat,
+    type ShowcaseShot,
+    type SolutionCard,
+    type Testimonial,
+} from '@/components/welcome/types';
 import { WelcomeCtaSection } from '@/components/welcome/welcome-cta-section';
 import { WelcomeEvidenceSection } from '@/components/welcome/welcome-evidence-section';
 import { WelcomeFooter } from '@/components/welcome/welcome-footer';
@@ -6,10 +14,15 @@ import { WelcomeHeroSection } from '@/components/welcome/welcome-hero-section';
 import { WelcomeProofStrip } from '@/components/welcome/welcome-proof-strip';
 import { WelcomeShowcaseSection } from '@/components/welcome/welcome-showcase-section';
 import { WelcomeSolutionsSection } from '@/components/welcome/welcome-solutions-section';
-import { type FooterColumn, type HeaderFact, type OperationalStat, type ShowcaseShot, type SolutionCard, type Testimonial } from '@/components/welcome/types';
 import { type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { ClipboardPlus, DollarSign, FlaskConical, ShieldCheck, Stethoscope } from 'lucide-react';
+import {
+    ClipboardPlus,
+    DollarSign,
+    FlaskConical,
+    ShieldCheck,
+    Stethoscope,
+} from 'lucide-react';
 
 const headerFacts: HeaderFact[] = [
     { label: 'Focus', value: 'Hospital Operations' },
@@ -18,7 +31,13 @@ const headerFacts: HeaderFact[] = [
     { label: 'Mode', value: 'Cloud or Managed Hosting' },
 ];
 
-const proofLogos = ['Front Desk', 'Triage', 'Consultation', 'Laboratory', 'Pharmacy'];
+const proofLogos = [
+    'Front Desk',
+    'Triage',
+    'Consultation',
+    'Laboratory',
+    'Pharmacy',
+];
 
 const showcaseShots: ShowcaseShot[] = [
     {
@@ -140,7 +159,11 @@ export default function Welcome() {
         <>
             <Head title="QrooEMR | Digital Clinical Operations">
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link
+                    rel="preconnect"
+                    href="https://fonts.gstatic.com"
+                    crossOrigin="anonymous"
+                />
                 <link
                     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
                     rel="stylesheet"

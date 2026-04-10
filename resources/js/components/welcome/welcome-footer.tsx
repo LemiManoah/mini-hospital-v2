@@ -10,7 +10,7 @@ export function WelcomeFooter({
     authenticated: boolean;
 }) {
     return (
-        <footer className="border-t border-stone-200 bg-stone-100 px-6 py-16 dark:border-white/6 dark:bg-[#080808] md:px-10">
+        <footer className="border-t border-stone-200 bg-stone-100 px-6 py-16 md:px-10 dark:border-white/6 dark:bg-[#080808]">
             <div className="mx-auto max-w-7xl">
                 <div className="mb-16 grid gap-12 md:grid-cols-12">
                     <div className="md:col-span-4">
@@ -21,7 +21,9 @@ export function WelcomeFooter({
                             </span>
                         </div>
                         <p className="max-w-xs text-xs leading-7 text-stone-600 dark:text-stone-500">
-                            QrooEMR is a hospital workflow platform focused on calm interfaces, operational structure, and growth-ready clinical tooling.
+                            QrooEMR is a hospital workflow platform focused on
+                            calm interfaces, operational structure, and
+                            growth-ready clinical tooling.
                         </p>
                         <p className="mt-8 text-[10px] font-semibold tracking-[0.28em] text-stone-500 uppercase dark:text-stone-700">
                             (c) 2026 Qroo Systems
@@ -30,7 +32,10 @@ export function WelcomeFooter({
 
                     <div className="grid gap-8 md:col-span-8 md:grid-cols-4">
                         {footerColumns.map((column) => (
-                            <div key={column.title} className="flex flex-col gap-5">
+                            <div
+                                key={column.title}
+                                className="flex flex-col gap-5"
+                            >
                                 <span className="text-[9px] font-bold tracking-[0.28em] text-stone-950 uppercase dark:text-stone-100">
                                     {column.title}
                                 </span>
@@ -83,7 +88,7 @@ export function WelcomeFooter({
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-4 border-t border-stone-200 pt-8 dark:border-white/6 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-4 border-t border-stone-200 pt-8 md:flex-row md:items-center md:justify-between dark:border-white/6">
                     <div className="flex gap-8">
                         <a
                             href="#"

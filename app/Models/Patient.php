@@ -86,7 +86,7 @@ final class Patient extends Model
         if ($this->date_of_birth === null) {
             return null;
         }
-        
+
         return $this->date_of_birth->age;
     }
 }

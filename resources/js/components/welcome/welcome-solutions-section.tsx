@@ -6,28 +6,33 @@ export function WelcomeSolutionsSection({
     solutionCards: SolutionCard[];
 }) {
     return (
-        <section id="solutions" className="mx-auto max-w-7xl px-6 py-24 md:px-10 md:py-32">
+        <section
+            id="solutions"
+            className="mx-auto max-w-7xl px-6 py-24 md:px-10 md:py-32"
+        >
             <div className="mb-20 flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
                 <div className="max-w-3xl">
                     <span className="mb-6 block font-[Manrope] text-[10px] font-bold tracking-[0.38em] text-[#4A6FA5] uppercase dark:text-[#7ea2d6]">
                         Services and Product Direction
                     </span>
-                    <h2 className="font-[Manrope] text-4xl leading-none font-extrabold tracking-[-0.07em] text-stone-950 dark:text-stone-100 md:text-6xl">
+                    <h2 className="font-[Manrope] text-4xl leading-none font-extrabold tracking-[-0.07em] text-stone-950 md:text-6xl dark:text-stone-100">
                         Architecture for
                         <br />
                         clinical movement.
                     </h2>
                 </div>
                 <p className="max-w-sm text-sm leading-7 text-stone-600 dark:text-stone-400">
-                    This surface mirrors the actual product direction: patient flow, orders, laboratory operations, pharmacy, and control layers for administrators.
+                    This surface mirrors the actual product direction: patient
+                    flow, orders, laboratory operations, pharmacy, and control
+                    layers for administrators.
                 </p>
             </div>
 
-            <div className="grid gap-px border border-stone-200 bg-stone-200 dark:border-white/8 dark:bg-white/8 md:grid-cols-2">
+            <div className="grid gap-px border border-stone-200 bg-stone-200 md:grid-cols-2 dark:border-white/8 dark:bg-white/8">
                 {solutionCards.map((card) => (
                     <div
                         key={card.title}
-                        className="group bg-white p-10 transition-colors duration-500 hover:bg-stone-50 dark:bg-[#0e0e0e] dark:hover:bg-[#171818] md:p-12"
+                        className="group bg-white p-10 transition-colors duration-500 hover:bg-stone-50 md:p-12 dark:bg-[#0e0e0e] dark:hover:bg-[#171818]"
                     >
                         <div className="mb-14 flex items-start justify-between">
                             <span className="font-[Manrope] text-3xl font-bold text-[#4A6FA5] dark:text-[#7ea2d6]">

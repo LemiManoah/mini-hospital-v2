@@ -542,7 +542,9 @@ export function VisitOrderDialog({
                                                                 ?.inventory_item_id ??
                                                             ''
                                                         }
-                                                        onValueChange={(value) =>
+                                                        onValueChange={(
+                                                            value,
+                                                        ) =>
                                                             updatePrescriptionItem(
                                                                 index,
                                                                 'inventory_item_id',

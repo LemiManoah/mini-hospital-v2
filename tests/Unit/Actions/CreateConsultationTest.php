@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\CreateConsultation;
+use App\Enums\VisitStatus;
 use App\Models\PatientVisit;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -92,6 +93,6 @@ it('creates a consultation using triage context and the authenticated clinician'
         ->and($consultation->assessment)->toBe('Likely migraine')
         ->and($consultation->plan)->toBe('Analgesia and review if symptoms persist')
         ->and($consultation->started_at)->not->toBeNull()
-        ->and($visit->fresh()->status)->toBe(\App\Enums\VisitStatus::IN_PROGRESS)
+        ->and($visit->fresh()->status)->toBe(VisitStatus::IN_PROGRESS)
         ->and($visit->fresh()->started_at)->not->toBeNull();
 });

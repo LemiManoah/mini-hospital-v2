@@ -50,7 +50,9 @@ export function WelcomeHeader({ authenticated }: { authenticated: boolean }) {
                     <div className="flex items-center rounded-full border border-stone-200 bg-white/80 p-0.5 shadow-sm dark:border-white/10 dark:bg-white/5 dark:shadow-none">
                         <button
                             type="button"
-                            className={themeButtonClass(resolvedAppearance === 'light')}
+                            className={themeButtonClass(
+                                resolvedAppearance === 'light',
+                            )}
                             onClick={() => updateAppearance('light')}
                             aria-label="Use light mode"
                             title="Light mode"
@@ -59,7 +61,9 @@ export function WelcomeHeader({ authenticated }: { authenticated: boolean }) {
                         </button>
                         <button
                             type="button"
-                            className={themeButtonClass(resolvedAppearance === 'dark')}
+                            className={themeButtonClass(
+                                resolvedAppearance === 'dark',
+                            )}
                             onClick={() => updateAppearance('dark')}
                             aria-label="Use dark mode"
                             title="Dark mode"
@@ -71,7 +75,7 @@ export function WelcomeHeader({ authenticated }: { authenticated: boolean }) {
                     {authenticated ? (
                         <Link
                             href={dashboard()}
-                            className="border border-stone-200 bg-white px-4 py-2 font-[Manrope] text-[10px] font-bold uppercase tracking-[0.28em] text-stone-950 transition hover:border-[#4A6FA5] hover:text-[#4A6FA5] dark:border-white/10 dark:bg-transparent dark:text-stone-100 dark:hover:border-[#4A6FA5] dark:hover:text-[#9bb5da]"
+                            className="border border-stone-200 bg-white px-4 py-2 font-[Manrope] text-[10px] font-bold tracking-[0.28em] text-stone-950 uppercase transition hover:border-[#4A6FA5] hover:text-[#4A6FA5] dark:border-white/10 dark:bg-transparent dark:text-stone-100 dark:hover:border-[#4A6FA5] dark:hover:text-[#9bb5da]"
                         >
                             Open Workspace
                         </Link>
@@ -79,13 +83,13 @@ export function WelcomeHeader({ authenticated }: { authenticated: boolean }) {
                         <>
                             <Link
                                 href={login()}
-                                className="hidden font-[Manrope] text-[10px] font-bold uppercase tracking-[0.28em] text-stone-500 transition hover:text-stone-950 sm:inline-flex dark:text-stone-400 dark:hover:text-stone-100"
+                                className="hidden font-[Manrope] text-[10px] font-bold tracking-[0.28em] text-stone-500 uppercase transition hover:text-stone-950 sm:inline-flex dark:text-stone-400 dark:hover:text-stone-100"
                             >
                                 Log In
                             </Link>
                             <Link
                                 href="/create-workspace"
-                                className="bg-[#4A6FA5] px-5 py-2 font-[Manrope] text-[10px] font-bold uppercase tracking-[0.28em] text-white transition hover:bg-[#5f84bb]"
+                                className="bg-[#4A6FA5] px-5 py-2 font-[Manrope] text-[10px] font-bold tracking-[0.28em] text-white uppercase transition hover:bg-[#5f84bb]"
                             >
                                 Get Started
                             </Link>

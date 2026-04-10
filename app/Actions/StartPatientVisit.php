@@ -8,17 +8,17 @@ use App\Enums\PayerType;
 use App\Enums\VisitStatus;
 use App\Models\Patient;
 use App\Models\PatientVisit;
-use App\Support\BranchScopedNumberGenerator;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\BranchContext;
+use App\Support\BranchScopedNumberGenerator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-final class StartPatientVisit
+final readonly class StartPatientVisit
 {
     public function __construct(
-        private readonly BranchScopedNumberGenerator $numberGenerator,
+        private BranchScopedNumberGenerator $numberGenerator,
     ) {}
 
     /**

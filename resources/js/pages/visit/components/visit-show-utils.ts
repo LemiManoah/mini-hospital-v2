@@ -36,7 +36,9 @@ export function formatAge(
             months: 'month',
             day: 'day',
             days: 'day',
-        }[ageUnits ?? ''] ?? ageUnits ?? 'unit';
+        }[ageUnits ?? ''] ??
+        ageUnits ??
+        'unit';
 
     return `${age} ${unitLabel}${age === 1 ? '' : 's'}`;
 }

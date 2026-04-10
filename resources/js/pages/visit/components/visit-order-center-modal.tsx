@@ -112,10 +112,7 @@ export function VisitOrderCenterModal({
                 <div className="space-y-4 overflow-y-auto pr-1">
                     <div className="flex flex-wrap justify-end gap-2">
                         {canEditOrders ? (
-                            <Button
-                                variant="outline"
-                                onClick={onRecordAllergy}
-                            >
+                            <Button variant="outline" onClick={onRecordAllergy}>
                                 Record Allergy
                             </Button>
                         ) : null}
@@ -153,10 +150,7 @@ export function VisitOrderCenterModal({
                         description="Tests requested for this encounter."
                         action={
                             canEditOrders ? (
-                                <Button
-                                    variant="outline"
-                                    onClick={onOrderLab}
-                                >
+                                <Button variant="outline" onClick={onOrderLab}>
                                     Order Investigation
                                 </Button>
                             ) : null

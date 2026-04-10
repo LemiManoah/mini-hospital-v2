@@ -48,8 +48,8 @@ export function QueuePatientCard({
                         <p className="text-xs leading-4 text-muted-foreground">
                             Visit {request.visit?.visit_number ?? 'N/A'} | MRN{' '}
                             {patient?.patient_number ?? 'N/A'} | Gender{' '}
-                            {patient?.gender ? labelize(patient.gender) : 'N/A'} |
-                            Age {formatPatientAge(patient)}
+                            {patient?.gender ? labelize(patient.gender) : 'N/A'}{' '}
+                            | Age {formatPatientAge(patient)}
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 lg:max-w-xs lg:justify-end">
@@ -66,7 +66,9 @@ export function QueuePatientCard({
                                     className="px-2 py-0.5 text-[11px]"
                                 >
                                     {request.items.length}{' '}
-                                    {request.items.length === 1 ? 'test' : 'tests'}
+                                    {request.items.length === 1
+                                        ? 'test'
+                                        : 'tests'}
                                 </Badge>
                                 {request.request_count > 1 ? (
                                     <Badge
@@ -160,7 +162,7 @@ export function QueuePatientCard({
                                     <TableCell className="px-3 py-2 align-top">
                                         <div className="grid gap-1.5 text-xs whitespace-normal text-muted-foreground">
                                             <div className="rounded-md bg-muted/20 px-2 py-1.5">
-                                                <span className="block text-[11px] font-medium uppercase tracking-wide text-foreground/70">
+                                                <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                     Requested
                                                 </span>
                                                 <span>
@@ -172,7 +174,7 @@ export function QueuePatientCard({
                                                 </span>
                                             </div>
                                             <div className="rounded-md bg-muted/20 px-2 py-1.5">
-                                                <span className="block text-[11px] font-medium uppercase tracking-wide text-foreground/70">
+                                                <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                     Sample
                                                 </span>
                                                 <span>
@@ -184,7 +186,7 @@ export function QueuePatientCard({
                                                 </span>
                                             </div>
                                             <div className="rounded-md bg-muted/20 px-2 py-1.5">
-                                                <span className="block text-[11px] font-medium uppercase tracking-wide text-foreground/70">
+                                                <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                     Result
                                                 </span>
                                                 <span>
@@ -194,7 +196,7 @@ export function QueuePatientCard({
                                                 </span>
                                             </div>
                                             <div className="rounded-md bg-muted/20 px-2 py-1.5">
-                                                <span className="block text-[11px] font-medium uppercase tracking-wide text-foreground/70">
+                                                <span className="block text-[11px] font-medium tracking-wide text-foreground/70 uppercase">
                                                     Release
                                                 </span>
                                                 <span>

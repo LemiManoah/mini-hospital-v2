@@ -116,27 +116,27 @@ export function PrescriptionOrdersTable({
                                     </Button>
                                     {canManageOrders ? (
                                         <>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() =>
-                                                onEdit?.(prescription)
-                                            }
-                                            title="Edit prescription"
-                                        >
-                                            <Edit2 className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() =>
-                                                onDelete?.(prescription)
-                                            }
-                                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                            title="Remove prescription"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() =>
+                                                    onEdit?.(prescription)
+                                                }
+                                                title="Edit prescription"
+                                            >
+                                                <Edit2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() =>
+                                                    onDelete?.(prescription)
+                                                }
+                                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                title="Remove prescription"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </>
                                     ) : null}
                                 </div>

@@ -1,6 +1,6 @@
-import VisitCompletionModal from '@/components/visit-completion-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import VisitCompletionModal from '@/components/visit-completion-modal';
 import { type VisitCompletionCheck } from '@/types/patient';
 import { CalendarClock } from 'lucide-react';
 import {
@@ -53,16 +53,10 @@ type VisitOverviewTabProps = {
     canUpdateVisit: boolean;
 };
 
-function SummaryItem({
-    label,
-    value,
-}: {
-    label: string;
-    value: string;
-}) {
+function SummaryItem({ label, value }: { label: string; value: string }) {
     return (
         <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 {label}
             </p>
             <p className="mt-1 font-medium">{value}</p>
@@ -196,9 +190,7 @@ export function VisitOverviewTab({
                         />
                         <SummaryItem
                             label="Balance"
-                            value={formatMoney(
-                                visit.billing?.balance_amount,
-                            )}
+                            value={formatMoney(visit.billing?.balance_amount)}
                         />
                     </div>
 
@@ -244,8 +236,11 @@ export function VisitOverviewTab({
                         </div>
                         <div className="space-y-4 border-l pl-4">
                             {timeline.map((entry) => (
-                                <div key={entry.label} className="relative pl-3">
-                                    <span className="absolute -left-[1.1875rem] top-1.5 h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
+                                <div
+                                    key={entry.label}
+                                    className="relative pl-3"
+                                >
+                                    <span className="absolute top-1.5 -left-[1.1875rem] h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
                                     <p className="font-medium">{entry.label}</p>
                                     <p className="text-sm text-muted-foreground">
                                         {entry.value}

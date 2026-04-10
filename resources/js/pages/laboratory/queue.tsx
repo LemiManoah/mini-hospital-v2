@@ -11,8 +11,8 @@ import { QueuePatientCard } from './components/queue-patient-card';
 import {
     groupIncomingRequests,
     modalModeForStage,
-    type ActiveModal,
     withRequestSummary,
+    type ActiveModal,
 } from './components/queue-utils';
 
 export default function LaboratoryQueuePage({
@@ -107,7 +107,8 @@ export default function LaboratoryQueuePage({
                                     setActiveModal({
                                         mode: modalModeForStage(page.stage),
                                         item,
-                                        request: item.request ?? selectedRequest,
+                                        request:
+                                            item.request ?? selectedRequest,
                                     })
                                 }
                             />
