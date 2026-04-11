@@ -1,72 +1,62 @@
 # Facility Manager Panel Plan
 
 **Date:** April 11, 2026  
-**Goal:** Answer how to manage SaaS and tenant/facility operations in a detailed way without creating a completely separate application.
+**Goal:** Manage SaaS tenants and facilities in a rich way without creating a separate application.
 
 ---
 
 ## 1) Short Answer
 
-Yes, you can make this detailed **without building another app**.
+Yes, this should stay in the same app.
 
-The cleanest approach is to build a **support-only / platform-admin module inside the same codebase** and treat it as a separate panel area in the navigation and permissions, rather than a separate deployed application.
+The better approach is a **support-only Facility Manager panel** inside the existing Laravel + Inertia codebase, with its own route prefix, navigation identity, permissions, and pages.
 
-That gives you:
+Why this is better than a second app:
 
 - one codebase
-- one authentication system
+- one auth/session system
 - shared models and business rules
-- less duplicated infrastructure
-- a much richer tenant-management experience than the current simple facility switcher
-
-So instead of a second app, I recommend a **Facility Manager panel** or **Platform Manager panel** inside this app.
-
----
-
-## 2) Why The Current Facility Switcher Feels Too Small
-
-The current facility switcher is useful for quick workspace switching, but it is not a true management console.
-
-It does not feel like a full management tool because it is mostly optimized for:
-
-- finding a tenant
-- jumping into a tenant
-- doing a few support actions
-
-What you are describing is broader. You want to manage:
-
-- all onboarded facilities
-- their onboarding state
-- subscription state
-- branch structure
-- user counts
-- staff counts
-- activity and usage
-- health/status indicators
-- operational flags and exceptions
-
-That needs a more deliberate management panel.
+- less duplication
+- faster support workflows
+- lower maintenance cost
 
 ---
 
-## 3) Recommended Direction
+## 2) Current Implementation Status
 
-Create a new internal module called something like:
+Implemented now:
 
-- `Facility Manager`
-- `Platform Manager`
-- `Tenant Manager`
+- support-only `Facility Manager` sidebar entry
+- `/facility-manager/dashboard`
+- `/facility-manager/facilities`
+- `/facility-manager/facilities/{tenant}`
+- `/facility-manager/facilities/{tenant}/branches`
+- `/facility-manager/facilities/{tenant}/users`
+- `/facility-manager/facilities/{tenant}/subscriptions`
+- `/facility-manager/facilities/{tenant}/activity`
+- `/facility-manager/facilities/{tenant}/support-notes`
 
-I would personally recommend:
+Also implemented:
 
-- `Facility Manager` if the language should feel hospital-facing
-- `Platform Manager` if the language should feel SaaS/internal-facing
+- support note storage through `tenant_support_notes`
+- tenant switch action
+- activate subscription
+- mark subscription past due
+- complete onboarding
+- reopen onboarding
 
-Since your users think in terms of facilities and branches, `Facility Manager` is probably the clearer name.
+Still pending:
+
+- health checks
+- configuration audits
+- snapshot-based analytics
+- inactive-facility detection
+- exports
+- richer support tooling
 
 ---
 
-## 4) Recommended Access Model
+## 3) Recommended Access Model
 
 This module should be visible only to:
 
@@ -74,20 +64,22 @@ This module should be visible only to:
 - super admins
 - selected platform admins
 
-It should not be part of normal hospital-admin navigation.
-
 Recommended permission family:
 
 - `tenants.view`
-- `tenants.manage`
-- `tenants.switch`
+- `tenants.update`
 - `tenants.manage_subscription`
-- `tenants.manage_onboarding`
-- `tenants.view_usage`
+- `tenants.onboard`
+
+Notes:
+
+- right now the implemented Facility Manager pages use `tenants.view`
+- support actions and support-note creation use `tenants.update`
+- this is enough for the current slice, and more granular permissions can be introduced later if needed
 
 ---
 
-## 5) Recommended IA For The Facility Manager Panel
+## 4) Implemented IA
 
 ### Main Pages
 
@@ -98,291 +90,145 @@ Recommended permission family:
 - `facility-manager/facilities/{tenant}/users`
 - `facility-manager/facilities/{tenant}/subscriptions`
 - `facility-manager/facilities/{tenant}/activity`
-- `facility-manager/facilities/{tenant}/support-tools`
+- `facility-manager/facilities/{tenant}/support-notes`
 
-### Why This Works
+### Why This Structure Works
 
-It gives you:
+It gives us:
 
-- one global overview
+- one platform overview
 - one searchable facilities list
-- one deep detail page per tenant
-- focused tabs for the most important management areas
+- one tenant overview page
+- focused detail pages for the most important management areas
 
 ---
 
-## 6) What The Facilities List Page Should Show
+## 5) What The Facilities List Should Do
 
-The facilities index should be a proper management table, not just a switcher list.
+The facilities page should behave like a real management table, not just a switcher.
 
-Recommended columns:
-
-- facility name
-- tenant code / slug
-- onboarding status
-- subscription status
-- current package
-- active branch count
-- active user count
-- active patient count
-- last activity date
-- trial end / renewal date
-- health flags
-
-Recommended filters:
-
-- onboarding status
-- subscription status
-- package
-- active/inactive
-- branch count
-- last activity date
-- trial ending soon
-- overdue subscription
-
-Recommended quick actions:
-
-- view details
-- switch into facility
-- activate subscription
-- mark past due
-- reopen onboarding
-- suspend / reactivate
-
----
-
-## 7) What The Facility Detail Page Should Show
-
-This page should become the real control center for each tenant.
-
-### Suggested Sections
-
-#### Overview
+Implemented already:
 
 - facility name
-- tenant id / slug
-- created date
+- domain
 - onboarding state
 - subscription state
-- package
 - branch count
 - user count
 - patient count
-- current active branch count
-- recent usage summary
+- visit count
+- lab count
+- prescription count
+- search and status filters
 
-#### Branches
+Still worth adding later:
 
-- all branches
+- package filter
+- trial ending soon filter
+- last activity column
+- health flags column
+- suspend/reactivate controls
+
+---
+
+## 6) What The Facility Detail Experience Should Do
+
+The overview page should act as the control center for the tenant, then hand off to focused child pages.
+
+Implemented now:
+
+### Overview
+
+- facility identity
+- onboarding state
+- subscription state
+- branch summary
+- department summary
+- recent users
+- recent subscription history
+- high-level usage cards
+
+### Branches
+
+- full branch list
 - branch status
-- branch users
-- branch activity
-- which branch is primary
+- staff count
+- store-enabled flag
+- main-branch indicator
 
-#### Users
+### Users
 
-- total users
-- active users
-- verified users
-- users by role
+- tenant-linked users
+- search/filter
+- position
+- role list
+- branch assignments
+- verification state
+- active/inactive state
 - last login
-- disabled users
 
-#### Subscription
+### Subscriptions
 
-- package
-- billing state
-- trial end
-- activation history
-- past-due state
-- manual overrides
+- current subscription summary
+- full subscription history
+- support actions
 
-#### Activity
+### Activity
 
-- visits created this week
-- consultations this week
-- lab requests this week
-- prescriptions this week
-- inventory transactions this week
-- latest sign-in / latest operational action
-
-#### Support Tools
-
-- switch into tenant
-- complete onboarding
-- reopen onboarding
-- reset branch selection
-- trigger support notes / flags
-
----
-
-## 8) What “Detailed” Should Mean In Practice
-
-To make the panel truly useful, each tenant should show both **business state** and **operational state**.
-
-### Business State
-
-- subscription package
-- billing status
-- trial status
-- overdue status
-- activation date
-- payment issues
-
-### Operational State
-
-- how many branches exist
-- how many users are active
-- what modules are being used
-- whether onboarding is incomplete
-- whether the facility has recent activity
-- whether configuration is missing
-
-This is what will make the panel feel real, not just administrative.
-
----
-
-## 9) Useful Metrics Per Facility
-
-Here are the most useful metrics to show in a tenant detail page:
-
-- total users
-- active users in last 7 / 30 days
-- total branches
-- active branches
-- total patients
-- total visits
-- visits in last 30 days
+- visits in last 7 days
 - consultations in last 30 days
 - lab requests in last 30 days
 - prescriptions in last 30 days
-- stock movements in last 30 days
-- most recently active user
-- last activity timestamp
+- service orders in last 30 days
+- recent activity feed
 
-These tell you whether the facility is alive, underused, inactive, or stuck.
+### Support Notes
+
+- internal note history
+- pinned notes
+- create support note
 
 ---
 
-## 10) Important Support Features Worth Adding
+## 7) Support Features To Keep Building
 
-### 10.1 Onboarding Control
+### Onboarding Control
 
-Support staff should be able to:
-
-- view onboarding stage
+- view onboarding state
 - mark onboarding complete
 - reopen onboarding
-- see missing onboarding steps
 
-### 10.2 Subscription Operations
+### Subscription Operations
 
-Support staff should be able to:
-
-- assign package
 - activate subscription
 - mark past due
-- pause access if needed
 - view subscription history
+- later: assign/change package directly from this panel
 
-### 10.3 Facility Health Checks
+### Support Notes
 
-Add simple health indicators like:
+- implementation notes
+- billing notes
+- support reminders
+- special configuration instructions
+
+### Health Checks
+
+Still to add:
 
 - no active branch
 - no active users
 - no clinicians configured
-- no inventory locations
 - no lab catalog
+- no inventory locations
 - no facility services
 - onboarding incomplete
 
-This gives fast operational visibility.
-
-### 10.4 Impersonation / Workspace Switching
-
-Keep the current switcher capability, but place it as one action inside a richer tenant detail page.
-
-### 10.5 Support Notes
-
-Add internal-only notes for each facility:
-
-- implementation notes
-- billing notes
-- support issues
-- special configuration reminders
-
 ---
 
-## 11) Recommended Technical Approach
+## 8) Suggested Data Sources
 
-### Keep It In The Same App
-
-I recommend:
-
-- same Laravel backend
-- same database
-- same frontend app
-- separate support-only routes and pages
-- strict permission gates
-
-This gives you a “different panel” experience without a second application.
-
-### Why This Is Better Than Another App Right Now
-
-- less duplication
-- shared auth/session
-- shared models
-- easier support workflows
-- fewer sync problems
-- faster implementation
-
----
-
-## 12) Suggested Route Structure
-
-Recommended route prefix:
-
-- `/facility-manager`
-
-Suggested routes:
-
-- `/facility-manager/dashboard`
-- `/facility-manager/facilities`
-- `/facility-manager/facilities/{tenant}`
-- `/facility-manager/facilities/{tenant}/branches`
-- `/facility-manager/facilities/{tenant}/users`
-- `/facility-manager/facilities/{tenant}/subscriptions`
-- `/facility-manager/facilities/{tenant}/activity`
-
-This makes it feel like its own panel, while still living inside the same app.
-
----
-
-## 13) Suggested Sidebar Placement
-
-Do **not** put this under ordinary hospital Administration.
-
-Recommended:
-
-- a separate support-only sidebar item called `Facility Manager`
-
-Visible only to:
-
-- support
-- super admin
-- platform admin
-
-That way:
-
-- normal facility users never see it
-- platform users get a dedicated management area
-
----
-
-## 14) Suggested Data Sources
-
-You can build most of this from tables you already have:
+Current pages are already drawing from:
 
 - `tenants`
 - `facility_branches`
@@ -390,22 +236,23 @@ You can build most of this from tables you already have:
 - `staff`
 - `patients`
 - `patient_visits`
-- `doctor_consultations`
+- `consultations`
 - `lab_requests`
 - `prescriptions`
-- `subscriptions`
-
-Add small support tables later if needed:
-
+- `tenant_subscriptions`
 - `tenant_support_notes`
+
+Useful future support tables:
+
 - `tenant_health_snapshots`
 - `tenant_usage_snapshots`
+- `tenant_support_flags`
 
-Snapshots are useful if you want the panel to remain fast at scale.
+Snapshots will matter when this grows and needs to stay fast.
 
 ---
 
-## 15) Recommended Implementation Plan
+## 9) Updated Implementation Plan
 
 ### Phase 1: Better Facility List
 
@@ -417,6 +264,10 @@ Deliverables:
 - user count and branch count
 - switch-into-tenant action
 
+Status:
+
+- completed
+
 ### Phase 2: Facility Detail Page
 
 Deliverables:
@@ -427,6 +278,10 @@ Deliverables:
 - subscription summary
 - last activity indicators
 
+Status:
+
+- completed
+
 ### Phase 3: Operational And Support Controls
 
 Deliverables:
@@ -434,6 +289,20 @@ Deliverables:
 - onboarding controls
 - subscription actions
 - support notes
+- health checks
+
+Status:
+
+- partially completed
+
+Done:
+
+- onboarding controls
+- subscription actions
+- support notes
+
+Pending:
+
 - health checks
 
 ### Phase 4: Usage Analytics
@@ -445,6 +314,21 @@ Deliverables:
 - module usage trends
 - inactive facility detection
 
+Status:
+
+- partially completed
+
+Done:
+
+- 7-day / 30-day usage summaries
+- recent activity feed
+
+Pending:
+
+- charts
+- module usage trends
+- inactive detection
+
 ### Phase 5: Advanced Support Tooling
 
 Deliverables:
@@ -454,34 +338,36 @@ Deliverables:
 - missing setup warnings
 - exports
 
----
+Status:
 
-## 16) Recommended First Version
-
-The first useful version should include:
-
-- facility list
-- status filters
-- subscription status
-- onboarding status
-- user counts
-- branch counts
-- facility detail page
-- switch-into-facility action
-
-That alone would already feel far more complete than the current switcher.
+- not started
 
 ---
 
-## 17) Bottom Line
+## 10) Recommended Next Slice
 
-You do not need a second app to get a rich tenant-management experience.
+The next most valuable additions are:
 
-The best path is:
+1. facility health checks on dashboard and tenant overview
+2. tenant configuration audit page
+3. activity trend charts
+4. inactive / low-usage facility detection
+5. support flags and escalations
 
-- build a **Facility Manager** panel inside this same app
-- keep it support-only
-- give it its own route prefix and navigation identity
-- make it detailed enough to manage facilities, subscriptions, onboarding, users, branches, and activity from one place
+---
 
-That will give you the depth you want without the maintenance cost of a separate application.
+## 11) Bottom Line
+
+We do not need a second app.
+
+The right direction is to keep growing **Facility Manager** inside this same app until it becomes the real support/admin console for:
+
+- facilities
+- subscriptions
+- onboarding
+- branches
+- users
+- activity
+- internal support operations
+
+That gives the depth you want without doubling infrastructure and maintenance.

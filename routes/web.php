@@ -110,6 +110,12 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
             Route::get('dashboard', [FacilityManagerController::class, 'dashboard'])->name('dashboard');
             Route::get('facilities', [FacilityManagerController::class, 'index'])->name('facilities.index');
             Route::get('facilities/{tenant}', [FacilityManagerController::class, 'show'])->name('facilities.show');
+            Route::get('facilities/{tenant}/branches', [FacilityManagerController::class, 'branches'])->name('facilities.branches');
+            Route::get('facilities/{tenant}/users', [FacilityManagerController::class, 'users'])->name('facilities.users');
+            Route::get('facilities/{tenant}/subscriptions', [FacilityManagerController::class, 'subscriptions'])->name('facilities.subscriptions');
+            Route::get('facilities/{tenant}/activity', [FacilityManagerController::class, 'activity'])->name('facilities.activity');
+            Route::get('facilities/{tenant}/support-notes', [FacilityManagerController::class, 'notes'])->name('facilities.notes');
+            Route::post('facilities/{tenant}/support-notes', [FacilityManagerController::class, 'storeNote'])->name('facilities.notes.store');
         });
 
     Route::middleware('support.only')

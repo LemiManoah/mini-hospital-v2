@@ -129,4 +129,12 @@ final class Tenant extends Model
         return $this->hasMany(LabRequest::class);
     }
 
+    /**
+     * @return HasMany<TenantSupportNote, $this>
+     */
+    public function supportNotes(): HasMany
+    {
+        return $this->hasMany(TenantSupportNote::class);
+    }
+
 }

@@ -62,11 +62,10 @@ export default function AdministrationSection({
                             <CardContent className="mt-auto pt-0">
                                 <Button
                                     asChild
-                                    className="w-full justify-between"
+                                    className="w-15px justify-between"
                                 >
                                     <Link href={item.href}>
                                         Open {item.title}
-                                        <ArrowRight className="h-4 w-4" />
                                     </Link>
                                 </Button>
                             </CardContent>

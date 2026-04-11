@@ -8,45 +8,17 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
-import { Form, Head, Link } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Building2,
-    CalendarClock,
-    CreditCard,
-    FlaskConical,
-    ShieldCheck,
-    Users,
-} from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { ArrowLeft, Building2, ClipboardList, CreditCard, LineChart, Users } from 'lucide-react';
 import { type ReactNode } from 'react';
 
-interface TenantDetail {
-    id: string;
-    name: string;
-    domain: string;
-    status: string | null;
-    facility_level: string | null;
-    onboarding_completed_at: string | null;
-    address?: {
-        display_name: string;
-    } | null;
-    country?: {
-        country_name?: string;
-    } | null;
-    current_subscription?: {
-        id: string;
-        status: string;
-        status_label: string;
-        trial_ends_at: string | null;
-        activated_at: string | null;
-        current_period_ends_at: string | null;
-        package?: {
-            name: string;
-            price: string;
-        } | null;
-    } | null;
+import { FacilityManagerMetrics } from './components/facility-manager-metrics';
+import { FacilityManagerNav } from './components/facility-manager-nav';
+import { FacilityManagerTenantHeader } from './components/facility-manager-tenant-header';
+import { type FacilityManagerMetric, type FacilityManagerTenantSummary } from './types';
+
+interface OverviewTenant extends FacilityManagerTenantSummary {
     counts: {
         branches: number;
         departments: number;
@@ -78,7 +50,10 @@ interface SubscriptionHistoryItem {
     id: string;
     status: string;
     status_label: string;
-    package?: string | null;
+    package?: {
+        name: string;
+        price?: string;
+    } | null;
     trial_ends_at: string | null;
     activated_at: string | null;
     current_period_ends_at: string | null;
@@ -91,13 +66,15 @@ interface UsageSummary {
     lab_requests: number;
     prescriptions: number;
     verified_users: number;
+    support_notes: number;
     last_visit_at: string | null;
     last_lab_request_at: string | null;
     last_prescription_at: string | null;
+    last_support_note_at: string | null;
 }
 
 interface FacilityManagerShowProps {
-    tenant: TenantDetail;
+    tenant: OverviewTenant;
     recent_users: RecentUser[];
     subscription_history: SubscriptionHistoryItem[];
     usage: UsageSummary;
@@ -118,15 +95,34 @@ export default function FacilityManagerShow({
     subscription_history,
     usage,
 }: FacilityManagerShowProps) {
-    const { hasPermission } = usePermissions();
-
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
         { title: 'Facilities', href: '/facility-manager/facilities' },
         { title: tenant.name, href: `/facility-manager/facilities/${tenant.id}` },
     ];
 
-    const onboardingComplete = tenant.onboarding_completed_at !== null;
+    const metrics: FacilityManagerMetric[] = [
+        {
+            label: 'Users',
+            value: tenant.counts.users,
+            hint: `${usage.verified_users} verified accounts`,
+        },
+        {
+            label: 'Patients',
+            value: usage.patients,
+            hint: 'Registered patient records',
+        },
+        {
+            label: 'Visits',
+            value: usage.visits,
+            hint: `Last visit ${formatDate(usage.last_visit_at)}`,
+        },
+        {
+            label: 'Lab / Pharmacy',
+            value: usage.lab_requests + usage.prescriptions,
+            hint: `${usage.lab_requests} lab requests, ${usage.prescriptions} prescriptions`,
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -142,92 +138,45 @@ export default function FacilityManagerShow({
                     </Button>
                 </div>
 
-                <Card className="border-none shadow-sm ring-1 ring-border/50">
-                    <CardHeader className="gap-6 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                                    <Building2 className="h-7 w-7" />
-                                </div>
-                                <div>
-                                    <CardTitle className="text-3xl tracking-tight">
-                                        {tenant.name}
-                                    </CardTitle>
-                                    <CardDescription className="mt-1">
-                                        {tenant.domain}.mini-hospital.com
-                                    </CardDescription>
-                                </div>
-                            </div>
+                <FacilityManagerTenantHeader
+                    tenant={tenant}
+                    title="Facility Overview"
+                    description="Use the focused sections below to inspect branches, users, subscriptions, activity, and internal support notes."
+                />
 
-                            <div className="flex flex-wrap gap-2">
-                                <Badge
-                                    variant={
-                                        onboardingComplete
-                                            ? 'secondary'
-                                            : 'outline'
-                                    }
-                                >
-                                    {onboardingComplete
-                                        ? 'Onboarding Complete'
-                                        : 'Onboarding Open'}
-                                </Badge>
-                                <Badge variant="outline">
-                                    {tenant.current_subscription?.status_label ??
-                                        'No subscription'}
-                                </Badge>
-                                {tenant.status ? (
-                                    <Badge variant="outline">
-                                        {tenant.status}
-                                    </Badge>
-                                ) : null}
-                            </div>
-                        </div>
+                <FacilityManagerNav tenantId={tenant.id} current="overview" />
 
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            <div className="rounded-2xl bg-muted/50 p-4">
-                                <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-                                    Country
-                                </p>
-                                <p className="mt-2 font-medium">
-                                    {tenant.country?.country_name ?? 'Not set'}
-                                </p>
-                            </div>
-                            <div className="rounded-2xl bg-muted/50 p-4">
-                                <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-                                    Address
-                                </p>
-                                <p className="mt-2 font-medium">
-                                    {tenant.address?.display_name ?? 'Not set'}
-                                </p>
-                            </div>
-                        </div>
-                    </CardHeader>
-                </Card>
+                <FacilityManagerMetrics metrics={metrics} />
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <UsageCard
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                    <OverviewLinkCard
+                        title="Branches"
+                        description="Inspect branch status, staffing coverage, and store-enabled locations."
+                        href={`/facility-manager/facilities/${tenant.id}/branches`}
+                    />
+                    <OverviewLinkCard
                         title="Users"
-                        value={tenant.counts.users}
-                        hint={`${usage.verified_users} verified`}
+                        description="Review tenant-linked users, positions, and branch assignments."
+                        href={`/facility-manager/facilities/${tenant.id}/users`}
                         icon={<Users className="h-4 w-4" />}
                     />
-                    <UsageCard
-                        title="Patients"
-                        value={usage.patients}
-                        hint="Registered patient records"
-                        icon={<Users className="h-4 w-4" />}
+                    <OverviewLinkCard
+                        title="Subscriptions"
+                        description="Track package status, billing windows, and support actions."
+                        href={`/facility-manager/facilities/${tenant.id}/subscriptions`}
+                        icon={<CreditCard className="h-4 w-4" />}
                     />
-                    <UsageCard
-                        title="Visits"
-                        value={usage.visits}
-                        hint={`Last visit ${formatDate(usage.last_visit_at)}`}
-                        icon={<CalendarClock className="h-4 w-4" />}
+                    <OverviewLinkCard
+                        title="Activity"
+                        description="See operational volume and the latest facility events."
+                        href={`/facility-manager/facilities/${tenant.id}/activity`}
+                        icon={<LineChart className="h-4 w-4" />}
                     />
-                    <UsageCard
-                        title="Lab / Pharmacy"
-                        value={usage.lab_requests + usage.prescriptions}
-                        hint={`${usage.lab_requests} lab, ${usage.prescriptions} prescriptions`}
-                        icon={<FlaskConical className="h-4 w-4" />}
+                    <OverviewLinkCard
+                        title="Support Notes"
+                        description="Capture onboarding notes, billing context, and internal reminders."
+                        href={`/facility-manager/facilities/${tenant.id}/support-notes`}
+                        icon={<ClipboardList className="h-4 w-4" />}
                     />
                 </div>
 
@@ -237,8 +186,7 @@ export default function FacilityManagerShow({
                             <CardHeader>
                                 <CardTitle>Facility Structure</CardTitle>
                                 <CardDescription>
-                                    Branches and departments configured inside
-                                    the tenant workspace.
+                                    Quick look at branch and department coverage.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-4 md:grid-cols-2">
@@ -251,7 +199,7 @@ export default function FacilityManagerShow({
                                     </p>
                                     <div className="mt-3 space-y-2 text-sm text-muted-foreground">
                                         {tenant.branches.length > 0 ? (
-                                            tenant.branches.map((branch) => (
+                                            tenant.branches.slice(0, 5).map((branch) => (
                                                 <div key={branch.id}>
                                                     {branch.branch_code
                                                         ? `${branch.name} (${branch.branch_code})`
@@ -272,13 +220,11 @@ export default function FacilityManagerShow({
                                     </p>
                                     <div className="mt-3 space-y-2 text-sm text-muted-foreground">
                                         {tenant.departments.length > 0 ? (
-                                            tenant.departments.map(
-                                                (department) => (
-                                                    <div key={department.id}>
-                                                        {department.name}
-                                                    </div>
-                                                ),
-                                            )
+                                            tenant.departments.slice(0, 5).map((department) => (
+                                                <div key={department.id}>
+                                                    {department.name}
+                                                </div>
+                                            ))
                                         ) : (
                                             <div>No departments configured.</div>
                                         )}
@@ -291,8 +237,7 @@ export default function FacilityManagerShow({
                             <CardHeader>
                                 <CardTitle>Recent Users</CardTitle>
                                 <CardDescription>
-                                    Latest tenant-linked users for support and
-                                    onboarding follow-up.
+                                    Latest tenant-linked users for support follow-up.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
@@ -320,10 +265,7 @@ export default function FacilityManagerShow({
                                                     </Badge>
                                                 ) : null}
                                                 {user.roles.slice(0, 2).map((role) => (
-                                                    <Badge
-                                                        key={role}
-                                                        variant="secondary"
-                                                    >
+                                                    <Badge key={role} variant="secondary">
                                                         {role}
                                                     </Badge>
                                                 ))}
@@ -332,8 +274,7 @@ export default function FacilityManagerShow({
                                     ))
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        No users have been created for this
-                                        tenant yet.
+                                        No users have been created for this tenant yet.
                                     </p>
                                 )}
                             </CardContent>
@@ -343,57 +284,47 @@ export default function FacilityManagerShow({
                     <div className="space-y-6">
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
                             <CardHeader>
-                                <CardTitle>Subscription State</CardTitle>
+                                <CardTitle>Current Subscription</CardTitle>
                                 <CardDescription>
-                                    Current package information and renewal
-                                    window.
+                                    Present package state and renewal window.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-3">
                                 <div className="rounded-2xl border p-4">
-                                    <div className="flex items-center gap-2 text-sm font-medium">
-                                        <CreditCard className="h-4 w-4 text-primary" />
+                                    <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
                                         Package
-                                    </div>
-                                    <p className="mt-2">
-                                        {tenant.current_subscription?.package
-                                            ?.name ?? 'Not set'}
+                                    </p>
+                                    <p className="mt-2 font-medium">
+                                        {tenant.current_subscription?.package?.name ??
+                                            'No package'}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        {tenant.current_subscription?.package
-                                            ?.price ?? 'No price available'}
+                                        {tenant.current_subscription?.status_label ??
+                                            'No active subscription'}
                                     </p>
                                 </div>
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <StatBox
-                                        title="Status"
-                                        value={
-                                            tenant.current_subscription
-                                                ?.status_label ??
-                                            'No subscription'
-                                        }
-                                    />
+                                <div className="grid gap-3 sm:grid-cols-2">
                                     <StatBox
                                         title="Trial Ends"
                                         value={formatDate(
-                                            tenant.current_subscription
-                                                ?.trial_ends_at ?? null,
-                                        )}
-                                    />
-                                    <StatBox
-                                        title="Activated"
-                                        value={formatDate(
-                                            tenant.current_subscription
-                                                ?.activated_at ?? null,
-                                        )}
-                                    />
-                                    <StatBox
-                                        title="Current Period Ends"
-                                        value={formatDate(
-                                            tenant.current_subscription
-                                                ?.current_period_ends_at ??
+                                            tenant.current_subscription?.trial_ends_at ??
                                                 null,
                                         )}
+                                    />
+                                    <StatBox
+                                        title="Period Ends"
+                                        value={formatDate(
+                                            tenant.current_subscription
+                                                ?.current_period_ends_at ?? null,
+                                        )}
+                                    />
+                                    <StatBox
+                                        title="Support Notes"
+                                        value={`${usage.support_notes}`}
+                                    />
+                                    <StatBox
+                                        title="Last Note"
+                                        value={formatDate(usage.last_support_note_at)}
                                     />
                                 </div>
                             </CardContent>
@@ -401,9 +332,9 @@ export default function FacilityManagerShow({
 
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
                             <CardHeader>
-                                <CardTitle>Subscription History</CardTitle>
+                                <CardTitle>Recent Subscription History</CardTitle>
                                 <CardDescription>
-                                    Recent subscription records and transitions.
+                                    Latest subscription transitions for quick context.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
@@ -415,131 +346,27 @@ export default function FacilityManagerShow({
                                         >
                                             <div className="flex items-center justify-between gap-3">
                                                 <Badge variant="outline">
-                                                    {
-                                                        subscription.status_label
-                                                    }
+                                                    {subscription.status_label}
                                                 </Badge>
                                                 <span className="text-xs text-muted-foreground">
-                                                    {formatDate(
-                                                        subscription.created_at,
-                                                    )}
+                                                    {formatDate(subscription.created_at)}
                                                 </span>
                                             </div>
                                             <p className="mt-2 font-medium">
-                                                {subscription.package ??
-                                                    'No package'}
+                                                {subscription.package?.name ?? 'No package'}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                Trial ends{' '}
-                                                {formatDate(
-                                                    subscription.trial_ends_at,
-                                                )}
+                                                Trial ends {formatDate(subscription.trial_ends_at)}
                                             </p>
                                         </div>
                                     ))
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        No subscription history is available
-                                        yet.
+                                        No subscription history is available yet.
                                     </p>
                                 )}
                             </CardContent>
                         </Card>
-
-                        {hasPermission('tenants.update') ? (
-                            <Card className="border-none shadow-sm ring-1 ring-border/50">
-                                <CardHeader>
-                                    <CardTitle>Support Actions</CardTitle>
-                                    <CardDescription>
-                                        Lifecycle and intervention controls for
-                                        the tenant.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <Form
-                                        method="post"
-                                        action={`/facility-switcher/${tenant.id}`}
-                                        className="w-full"
-                                    >
-                                        {() => (
-                                            <Button className="w-full">
-                                                <ShieldCheck className="h-4 w-4" />
-                                                Switch Into Tenant
-                                            </Button>
-                                        )}
-                                    </Form>
-
-                                    <Form
-                                        method="post"
-                                        action={`/facility-switcher/${tenant.id}/activate-subscription`}
-                                        className="w-full"
-                                    >
-                                        {({ processing }) => (
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                                className="w-full"
-                                            >
-                                                Activate Subscription
-                                            </Button>
-                                        )}
-                                    </Form>
-
-                                    <Form
-                                        method="post"
-                                        action={`/facility-switcher/${tenant.id}/mark-subscription-past-due`}
-                                        className="w-full"
-                                    >
-                                        {({ processing }) => (
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                                variant="outline"
-                                                className="w-full"
-                                            >
-                                                Mark Subscription Past Due
-                                            </Button>
-                                        )}
-                                    </Form>
-
-                                    {onboardingComplete ? (
-                                        <Form
-                                            method="post"
-                                            action={`/facility-switcher/${tenant.id}/reopen-onboarding`}
-                                            className="w-full"
-                                        >
-                                            {({ processing }) => (
-                                                <Button
-                                                    type="submit"
-                                                    disabled={processing}
-                                                    variant="outline"
-                                                    className="w-full"
-                                                >
-                                                    Reopen Onboarding
-                                                </Button>
-                                            )}
-                                        </Form>
-                                    ) : (
-                                        <Form
-                                            method="post"
-                                            action={`/facility-switcher/${tenant.id}/complete-onboarding`}
-                                            className="w-full"
-                                        >
-                                            {({ processing }) => (
-                                                <Button
-                                                    type="submit"
-                                                    disabled={processing}
-                                                    variant="secondary"
-                                                    className="w-full"
-                                                >
-                                                    Mark Onboarding Complete
-                                                </Button>
-                                            )}
-                                        </Form>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        ) : null}
                     </div>
                 </div>
             </div>
@@ -547,32 +374,29 @@ export default function FacilityManagerShow({
     );
 }
 
-function UsageCard({
+function OverviewLinkCard({
     title,
-    value,
-    hint,
+    description,
+    href,
     icon,
 }: {
     title: string;
-    value: number;
-    hint: string;
+    description: string;
+    href: string;
     icon: ReactNode;
 }) {
     return (
         <Card className="border-none shadow-sm ring-1 ring-border/50">
-            <CardHeader className="space-y-0 pb-2">
-                <CardDescription className="text-xs font-medium tracking-wider text-primary uppercase">
+            <CardHeader className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     {title}
-                </CardDescription>
-                <CardTitle className="text-3xl font-bold text-primary">
-                    {value}
-                </CardTitle>
+                </div>
+                <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {icon}
-                    <span>{hint}</span>
-                </div>
+                <Button asChild size="sm">
+                    <Link href={href}>Open</Link>
+                </Button>
             </CardContent>
         </Card>
     );
