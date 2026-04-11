@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\LabRequestStatus;
 use App\Enums\InventoryLocationType;
+use App\Enums\LabRequestStatus;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLocationItem;
 use App\Models\LabRequest;

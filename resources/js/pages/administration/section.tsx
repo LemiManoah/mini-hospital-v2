@@ -9,7 +9,6 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowRight } from 'lucide-react';
 
 interface AdministrationSectionPageProps {
     title: string;

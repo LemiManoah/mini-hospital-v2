@@ -131,7 +131,9 @@ export default function LaboratoryRequestItemConsumablesPage({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`${pageTitle} ${labRequestItem.test?.test_name ?? ''}`} />
+            <Head
+                title={`${pageTitle} ${labRequestItem.test?.test_name ?? ''}`}
+            />
 
             <div className="m-4 flex flex-col gap-6">
                 <Card>
@@ -192,8 +194,8 @@ export default function LaboratoryRequestItemConsumablesPage({
                                 <CardTitle>Record Consumables</CardTitle>
                                 <CardDescription>
                                     Pick a consumable from inventory to prefill
-                                    its name, unit, and unit cost. You can
-                                    still edit the values before saving.
+                                    its name, unit, and unit cost. You can still
+                                    edit the values before saving.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-4">
@@ -317,9 +319,7 @@ export default function LaboratoryRequestItemConsumablesPage({
                                             min="0.01"
                                             step="0.01"
                                             placeholder="1"
-                                            value={
-                                                consumableForm.data.quantity
-                                            }
+                                            value={consumableForm.data.quantity}
                                             onChange={(event) =>
                                                 consumableForm.setData(
                                                     'quantity',
@@ -423,56 +423,63 @@ export default function LaboratoryRequestItemConsumablesPage({
 
                                 {(labRequestItem.consumables ?? []).length ? (
                                     <div className="flex flex-col gap-3">
-                                        {labRequestItem.consumables?.map((usage) => (
-                                            <div
-                                                key={usage.id}
-                                                className="rounded-lg border p-4"
-                                            >
-                                                <div className="flex flex-col gap-3 lg:flex-row lg:justify-between">
-                                                    <div className="flex flex-col gap-1">
-                                                        <p className="font-medium">
-                                                            {usage.consumable_name}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {usage.quantity}{' '}
-                                                            {usage.unit_label ?? ''}{' '}
-                                                            |{' '}
-                                                            {formatMoney(
-                                                                usage.line_cost,
-                                                            )}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {actorName(
-                                                                usage.recordedBy,
-                                                            )}{' '}
-                                                            |{' '}
-                                                            {formatDateTime(
-                                                                usage.used_at,
-                                                            )}
-                                                        </p>
-                                                        {usage.notes ? (
-                                                            <p className="text-sm">
-                                                                {usage.notes}
-                                                            </p>
-                                                        ) : null}
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            router.delete(
-                                                                `/laboratory/request-items/${labRequestItem.id}/consumables/${usage.id}`,
+                                        {labRequestItem.consumables?.map(
+                                            (usage) => (
+                                                <div
+                                                    key={usage.id}
+                                                    className="rounded-lg border p-4"
+                                                >
+                                                    <div className="flex flex-col gap-3 lg:flex-row lg:justify-between">
+                                                        <div className="flex flex-col gap-1">
+                                                            <p className="font-medium">
                                                                 {
-                                                                    preserveScroll: true,
-                                                                },
-                                                            )
-                                                        }
-                                                    >
-                                                        Remove
-                                                    </Button>
+                                                                    usage.consumable_name
+                                                                }
+                                                            </p>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                {usage.quantity}{' '}
+                                                                {usage.unit_label ??
+                                                                    ''}{' '}
+                                                                |{' '}
+                                                                {formatMoney(
+                                                                    usage.line_cost,
+                                                                )}
+                                                            </p>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                {actorName(
+                                                                    usage.recordedBy,
+                                                                )}{' '}
+                                                                |{' '}
+                                                                {formatDateTime(
+                                                                    usage.used_at,
+                                                                )}
+                                                            </p>
+                                                            {usage.notes ? (
+                                                                <p className="text-sm">
+                                                                    {
+                                                                        usage.notes
+                                                                    }
+                                                                </p>
+                                                            ) : null}
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                router.delete(
+                                                                    `/laboratory/request-items/${labRequestItem.id}/consumables/${usage.id}`,
+                                                                    {
+                                                                        preserveScroll: true,
+                                                                    },
+                                                                )
+                                                            }
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ),
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">

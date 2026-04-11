@@ -71,7 +71,10 @@ export default function FacilityManagerSubscriptions({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
         { title: 'Facilities', href: '/facility-manager/facilities' },
-        { title: tenant.name, href: `/facility-manager/facilities/${tenant.id}` },
+        {
+            title: tenant.name,
+            href: `/facility-manager/facilities/${tenant.id}`,
+        },
         {
             title: 'Subscriptions',
             href: `/facility-manager/facilities/${tenant.id}/subscriptions`,
@@ -85,7 +88,9 @@ export default function FacilityManagerSubscriptions({
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-center justify-between gap-3">
                     <Button variant="outline" asChild>
-                        <Link href={`/facility-manager/facilities/${tenant.id}`}>
+                        <Link
+                            href={`/facility-manager/facilities/${tenant.id}`}
+                        >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Overview
                         </Link>
@@ -149,7 +154,8 @@ export default function FacilityManagerSubscriptions({
                             <CardHeader>
                                 <CardTitle>Support Actions</CardTitle>
                                 <CardDescription>
-                                    Tenant switch, billing intervention, and onboarding controls.
+                                    Tenant switch, billing intervention, and
+                                    onboarding controls.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
@@ -259,37 +265,42 @@ export default function FacilityManagerSubscriptions({
                             </TableHeader>
                             <TableBody>
                                 {subscription_history.data.length > 0 ? (
-                                    subscription_history.data.map((subscription) => (
-                                        <TableRow key={subscription.id}>
-                                            <TableCell>
-                                                {formatDate(subscription.created_at)}
-                                            </TableCell>
-                                            <TableCell>
-                                                {subscription.status_label}
-                                            </TableCell>
-                                            <TableCell>
-                                                {subscription.package?.name ??
-                                                    'No package'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {formatDate(
-                                                    subscription.trial_ends_at,
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {formatDate(
-                                                    subscription.current_period_ends_at,
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
+                                    subscription_history.data.map(
+                                        (subscription) => (
+                                            <TableRow key={subscription.id}>
+                                                <TableCell>
+                                                    {formatDate(
+                                                        subscription.created_at,
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {subscription.status_label}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {subscription.package
+                                                        ?.name ?? 'No package'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {formatDate(
+                                                        subscription.trial_ends_at,
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {formatDate(
+                                                        subscription.current_period_ends_at,
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        ),
+                                    )
                                 ) : (
                                     <TableRow>
                                         <TableCell
                                             colSpan={5}
                                             className="py-12 text-center text-sm text-muted-foreground"
                                         >
-                                            No subscription history is available yet.
+                                            No subscription history is available
+                                            yet.
                                         </TableCell>
                                     </TableRow>
                                 )}

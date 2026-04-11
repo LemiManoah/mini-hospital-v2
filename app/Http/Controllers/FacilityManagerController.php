@@ -163,8 +163,7 @@ final class FacilityManagerController implements HasMiddleware
 
         $recentUsers = User::query()
             ->where('tenant_id', $tenant->id)
-            ->with(['staff.position', 'roles'])
-            ->orderByDesc('created_at')
+            ->with(['staff.position', 'roles'])->latest()
             ->limit(8)
             ->get()
             ->map(fn (User $user): array => $this->userPayload($user))
@@ -172,8 +171,7 @@ final class FacilityManagerController implements HasMiddleware
 
         $subscriptionHistory = TenantSubscription::query()
             ->where('tenant_id', $tenant->id)
-            ->with('subscriptionPackage')
-            ->orderByDesc('created_at')
+            ->with('subscriptionPackage')->latest()
             ->limit(5)
             ->get()
             ->map(fn (TenantSubscription $subscription): array => $this->subscriptionPayload($subscription))
@@ -306,12 +304,12 @@ final class FacilityManagerController implements HasMiddleware
                         $search = $filters['search'];
 
                         $userQuery
-                            ->where('email', 'like', "%{$search}%")
+                            ->where('email', 'like', sprintf('%%%s%%', $search))
                             ->orWhereHas('staff', static function (Builder $staffQuery) use ($search): void {
                                 $staffQuery
-                                    ->where('first_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%")
-                                    ->orWhere('employee_number', 'like', "%{$search}%");
+                                    ->where('first_name', 'like', sprintf('%%%s%%', $search))
+                                    ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
+                                    ->orWhere('employee_number', 'like', sprintf('%%%s%%', $search));
                             });
                     },
                 ),
@@ -323,8 +321,7 @@ final class FacilityManagerController implements HasMiddleware
             ->when(
                 $filters['status'] === 'inactive',
                 static fn (Builder $query): Builder => $query->whereHas('staff', static fn (Builder $staffQuery): Builder => $staffQuery->where('is_active', false)),
-            )
-            ->orderByDesc('created_at');
+            )->latest();
 
         $users = $userQuery
             ->paginate(12)
@@ -366,8 +363,7 @@ final class FacilityManagerController implements HasMiddleware
 
         $historyQuery = TenantSubscription::query()
             ->where('tenant_id', $tenant->id)
-            ->with('subscriptionPackage')
-            ->orderByDesc('created_at');
+            ->with('subscriptionPackage')->latest();
 
         return Inertia::render('facility-manager/subscriptions', [
             'tenant' => $this->tenantSummaryPayload($tenant),
@@ -470,8 +466,7 @@ final class FacilityManagerController implements HasMiddleware
         $notes = TenantSupportNote::query()
             ->where('tenant_id', $tenant->id)
             ->with('author.staff')
-            ->orderByDesc('is_pinned')
-            ->orderByDesc('created_at')
+            ->orderByDesc('is_pinned')->latest()
             ->paginate(10)
             ->withQueryString()
             ->through(fn (TenantSupportNote $note): array => [
@@ -539,8 +534,8 @@ final class FacilityManagerController implements HasMiddleware
                 static fn (Builder $query): Builder => $query->where(
                     static function (Builder $tenantQuery) use ($search): void {
                         $tenantQuery
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhere('domain', 'like', "%{$search}%");
+                            ->where('name', 'like', sprintf('%%%s%%', $search))
+                            ->orWhere('domain', 'like', sprintf('%%%s%%', $search));
                     },
                 ),
             )
@@ -725,7 +720,7 @@ final class FacilityManagerController implements HasMiddleware
         $visitEvents = PatientVisit::query()
             ->where('tenant_id', $tenantId)
             ->with('patient')
-            ->orderByDesc('registered_at')
+            ->latest('registered_at')
             ->limit(5)
             ->get()
             ->map(static fn (PatientVisit $visit): array => [
@@ -738,7 +733,7 @@ final class FacilityManagerController implements HasMiddleware
         $consultationEvents = Consultation::query()
             ->where('tenant_id', $tenantId)
             ->with(['visit.patient'])
-            ->orderByDesc('started_at')
+            ->latest('started_at')
             ->limit(5)
             ->get()
             ->map(static fn (Consultation $consultation): array => [
@@ -752,7 +747,7 @@ final class FacilityManagerController implements HasMiddleware
             ->where('tenant_id', $tenantId)
             ->with(['visit.patient'])
             ->withCount('items')
-            ->orderByDesc('request_date')
+            ->latest('request_date')
             ->limit(5)
             ->get()
             ->map(static fn (LabRequest $request): array => [
@@ -780,7 +775,7 @@ final class FacilityManagerController implements HasMiddleware
         $serviceOrderEvents = FacilityServiceOrder::query()
             ->where('tenant_id', $tenantId)
             ->with(['visit.patient', 'service'])
-            ->orderByDesc('ordered_at')
+            ->latest('ordered_at')
             ->limit(5)
             ->get()
             ->map(static fn (FacilityServiceOrder $order): array => [

@@ -184,12 +184,14 @@ export default function FacilityManagerDashboard({
                                             <TableCell>
                                                 <div className="flex flex-col gap-1">
                                                     <Badge variant="outline">
-                                                        {tenant.current_subscription
+                                                        {tenant
+                                                            .current_subscription
                                                             ?.status_label ??
                                                             'No subscription'}
                                                     </Badge>
                                                     <span className="text-xs text-muted-foreground">
-                                                        {tenant.current_subscription
+                                                        {tenant
+                                                            .current_subscription
                                                             ?.package?.name ??
                                                             'No package'}
                                                     </span>

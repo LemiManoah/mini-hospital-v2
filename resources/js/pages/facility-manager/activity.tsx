@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -5,7 +6,6 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
     Table,
     TableBody,
@@ -59,7 +59,10 @@ export default function FacilityManagerActivity({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
         { title: 'Facilities', href: '/facility-manager/facilities' },
-        { title: tenant.name, href: `/facility-manager/facilities/${tenant.id}` },
+        {
+            title: tenant.name,
+            href: `/facility-manager/facilities/${tenant.id}`,
+        },
         {
             title: 'Activity',
             href: `/facility-manager/facilities/${tenant.id}/activity`,
@@ -73,7 +76,9 @@ export default function FacilityManagerActivity({
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-center justify-between gap-3">
                     <Button variant="outline" asChild>
-                        <Link href={`/facility-manager/facilities/${tenant.id}`}>
+                        <Link
+                            href={`/facility-manager/facilities/${tenant.id}`}
+                        >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Overview
                         </Link>
@@ -94,7 +99,8 @@ export default function FacilityManagerActivity({
                     <CardHeader>
                         <CardTitle>Recent Activity</CardTitle>
                         <CardDescription>
-                            Latest operational events across visits, consultations, laboratory, pharmacy, and services.
+                            Latest operational events across visits,
+                            consultations, laboratory, pharmacy, and services.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -119,7 +125,9 @@ export default function FacilityManagerActivity({
                                                 {event.subject ?? 'No subject'}
                                             </TableCell>
                                             <TableCell>
-                                                {formatDateTime(event.timestamp)}
+                                                {formatDateTime(
+                                                    event.timestamp,
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -129,7 +137,8 @@ export default function FacilityManagerActivity({
                                             colSpan={4}
                                             className="py-12 text-center text-sm text-muted-foreground"
                                         >
-                                            No recent activity has been recorded yet.
+                                            No recent activity has been recorded
+                                            yet.
                                         </TableCell>
                                     </TableRow>
                                 )}

@@ -1,9 +1,5 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Card,
     CardContent,
@@ -11,6 +7,10 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
@@ -73,7 +73,10 @@ export default function FacilityManagerSupportNotes({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
         { title: 'Facilities', href: '/facility-manager/facilities' },
-        { title: tenant.name, href: `/facility-manager/facilities/${tenant.id}` },
+        {
+            title: tenant.name,
+            href: `/facility-manager/facilities/${tenant.id}`,
+        },
         {
             title: 'Support Notes',
             href: `/facility-manager/facilities/${tenant.id}/support-notes`,
@@ -94,7 +97,9 @@ export default function FacilityManagerSupportNotes({
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-center justify-between gap-3">
                     <Button variant="outline" asChild>
-                        <Link href={`/facility-manager/facilities/${tenant.id}`}>
+                        <Link
+                            href={`/facility-manager/facilities/${tenant.id}`}
+                        >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Overview
                         </Link>
@@ -117,7 +122,8 @@ export default function FacilityManagerSupportNotes({
                             <CardHeader>
                                 <CardTitle>Add Support Note</CardTitle>
                                 <CardDescription>
-                                    Capture internal context for onboarding, billing, or support follow-up.
+                                    Capture internal context for onboarding,
+                                    billing, or support follow-up.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -216,7 +222,7 @@ export default function FacilityManagerSupportNotes({
                                                 </span>
                                             ) : null}
                                         </div>
-                                        <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">
+                                        <p className="mt-3 text-sm whitespace-pre-wrap text-muted-foreground">
                                             {note.body}
                                         </p>
                                     </div>

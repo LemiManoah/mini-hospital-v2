@@ -694,7 +694,6 @@ export default function LaboratoryRequestItemShow({
                                 ) : null}
                             </CardContent>
                         </Card>
-
                     </div>
                 </div>
             </div>

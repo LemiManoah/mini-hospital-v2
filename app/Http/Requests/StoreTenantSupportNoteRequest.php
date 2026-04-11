@@ -28,8 +28,8 @@ final class StoreTenantSupportNoteRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'title' => is_string($this->input('title')) ? trim($this->input('title')) : null,
-            'body' => is_string($this->input('body')) ? trim($this->input('body')) : null,
+            'title' => is_string($this->input('title')) ? mb_trim($this->input('title')) : null,
+            'body' => is_string($this->input('body')) ? mb_trim($this->input('body')) : null,
             'is_pinned' => $this->boolean('is_pinned'),
         ]);
     }

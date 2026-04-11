@@ -53,7 +53,10 @@ export default function FacilityManagerBranches({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
         { title: 'Facilities', href: '/facility-manager/facilities' },
-        { title: tenant.name, href: `/facility-manager/facilities/${tenant.id}` },
+        {
+            title: tenant.name,
+            href: `/facility-manager/facilities/${tenant.id}`,
+        },
         {
             title: 'Branches',
             href: `/facility-manager/facilities/${tenant.id}/branches`,
@@ -67,7 +70,9 @@ export default function FacilityManagerBranches({
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-center justify-between gap-3">
                     <Button variant="outline" asChild>
-                        <Link href={`/facility-manager/facilities/${tenant.id}`}>
+                        <Link
+                            href={`/facility-manager/facilities/${tenant.id}`}
+                        >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Overview
                         </Link>

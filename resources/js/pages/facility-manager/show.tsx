@@ -10,13 +10,22 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Building2, ClipboardList, CreditCard, LineChart, Users } from 'lucide-react';
+import {
+    ArrowLeft,
+    ClipboardList,
+    CreditCard,
+    LineChart,
+    Users,
+} from 'lucide-react';
 import { type ReactNode } from 'react';
 
 import { FacilityManagerMetrics } from './components/facility-manager-metrics';
 import { FacilityManagerNav } from './components/facility-manager-nav';
 import { FacilityManagerTenantHeader } from './components/facility-manager-tenant-header';
-import { type FacilityManagerMetric, type FacilityManagerTenantSummary } from './types';
+import {
+    type FacilityManagerMetric,
+    type FacilityManagerTenantSummary,
+} from './types';
 
 interface OverviewTenant extends FacilityManagerTenantSummary {
     counts: {
@@ -98,7 +107,10 @@ export default function FacilityManagerShow({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
         { title: 'Facilities', href: '/facility-manager/facilities' },
-        { title: tenant.name, href: `/facility-manager/facilities/${tenant.id}` },
+        {
+            title: tenant.name,
+            href: `/facility-manager/facilities/${tenant.id}`,
+        },
     ];
 
     const metrics: FacilityManagerMetric[] = [
@@ -186,7 +198,8 @@ export default function FacilityManagerShow({
                             <CardHeader>
                                 <CardTitle>Facility Structure</CardTitle>
                                 <CardDescription>
-                                    Quick look at branch and department coverage.
+                                    Quick look at branch and department
+                                    coverage.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-4 md:grid-cols-2">
@@ -199,13 +212,15 @@ export default function FacilityManagerShow({
                                     </p>
                                     <div className="mt-3 space-y-2 text-sm text-muted-foreground">
                                         {tenant.branches.length > 0 ? (
-                                            tenant.branches.slice(0, 5).map((branch) => (
-                                                <div key={branch.id}>
-                                                    {branch.branch_code
-                                                        ? `${branch.name} (${branch.branch_code})`
-                                                        : branch.name}
-                                                </div>
-                                            ))
+                                            tenant.branches
+                                                .slice(0, 5)
+                                                .map((branch) => (
+                                                    <div key={branch.id}>
+                                                        {branch.branch_code
+                                                            ? `${branch.name} (${branch.branch_code})`
+                                                            : branch.name}
+                                                    </div>
+                                                ))
                                         ) : (
                                             <div>No branches configured.</div>
                                         )}
@@ -220,13 +235,17 @@ export default function FacilityManagerShow({
                                     </p>
                                     <div className="mt-3 space-y-2 text-sm text-muted-foreground">
                                         {tenant.departments.length > 0 ? (
-                                            tenant.departments.slice(0, 5).map((department) => (
-                                                <div key={department.id}>
-                                                    {department.name}
-                                                </div>
-                                            ))
+                                            tenant.departments
+                                                .slice(0, 5)
+                                                .map((department) => (
+                                                    <div key={department.id}>
+                                                        {department.name}
+                                                    </div>
+                                                ))
                                         ) : (
-                                            <div>No departments configured.</div>
+                                            <div>
+                                                No departments configured.
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -237,7 +256,8 @@ export default function FacilityManagerShow({
                             <CardHeader>
                                 <CardTitle>Recent Users</CardTitle>
                                 <CardDescription>
-                                    Latest tenant-linked users for support follow-up.
+                                    Latest tenant-linked users for support
+                                    follow-up.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
@@ -255,7 +275,10 @@ export default function FacilityManagerShow({
                                                     {user.email}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Added {formatDate(user.created_at)}
+                                                    Added{' '}
+                                                    {formatDate(
+                                                        user.created_at,
+                                                    )}
                                                 </p>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
@@ -264,17 +287,23 @@ export default function FacilityManagerShow({
                                                         {user.position}
                                                     </Badge>
                                                 ) : null}
-                                                {user.roles.slice(0, 2).map((role) => (
-                                                    <Badge key={role} variant="secondary">
-                                                        {role}
-                                                    </Badge>
-                                                ))}
+                                                {user.roles
+                                                    .slice(0, 2)
+                                                    .map((role) => (
+                                                        <Badge
+                                                            key={role}
+                                                            variant="secondary"
+                                                        >
+                                                            {role}
+                                                        </Badge>
+                                                    ))}
                                             </div>
                                         </div>
                                     ))
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        No users have been created for this tenant yet.
+                                        No users have been created for this
+                                        tenant yet.
                                     </p>
                                 )}
                             </CardContent>
@@ -295,11 +324,12 @@ export default function FacilityManagerShow({
                                         Package
                                     </p>
                                     <p className="mt-2 font-medium">
-                                        {tenant.current_subscription?.package?.name ??
-                                            'No package'}
+                                        {tenant.current_subscription?.package
+                                            ?.name ?? 'No package'}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        {tenant.current_subscription?.status_label ??
+                                        {tenant.current_subscription
+                                            ?.status_label ??
                                             'No active subscription'}
                                     </p>
                                 </div>
@@ -307,15 +337,16 @@ export default function FacilityManagerShow({
                                     <StatBox
                                         title="Trial Ends"
                                         value={formatDate(
-                                            tenant.current_subscription?.trial_ends_at ??
-                                                null,
+                                            tenant.current_subscription
+                                                ?.trial_ends_at ?? null,
                                         )}
                                     />
                                     <StatBox
                                         title="Period Ends"
                                         value={formatDate(
                                             tenant.current_subscription
-                                                ?.current_period_ends_at ?? null,
+                                                ?.current_period_ends_at ??
+                                                null,
                                         )}
                                     />
                                     <StatBox
@@ -324,7 +355,9 @@ export default function FacilityManagerShow({
                                     />
                                     <StatBox
                                         title="Last Note"
-                                        value={formatDate(usage.last_support_note_at)}
+                                        value={formatDate(
+                                            usage.last_support_note_at,
+                                        )}
                                     />
                                 </div>
                             </CardContent>
@@ -332,9 +365,12 @@ export default function FacilityManagerShow({
 
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
                             <CardHeader>
-                                <CardTitle>Recent Subscription History</CardTitle>
+                                <CardTitle>
+                                    Recent Subscription History
+                                </CardTitle>
                                 <CardDescription>
-                                    Latest subscription transitions for quick context.
+                                    Latest subscription transitions for quick
+                                    context.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
@@ -349,20 +385,27 @@ export default function FacilityManagerShow({
                                                     {subscription.status_label}
                                                 </Badge>
                                                 <span className="text-xs text-muted-foreground">
-                                                    {formatDate(subscription.created_at)}
+                                                    {formatDate(
+                                                        subscription.created_at,
+                                                    )}
                                                 </span>
                                             </div>
                                             <p className="mt-2 font-medium">
-                                                {subscription.package?.name ?? 'No package'}
+                                                {subscription.package?.name ??
+                                                    'No package'}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                Trial ends {formatDate(subscription.trial_ends_at)}
+                                                Trial ends{' '}
+                                                {formatDate(
+                                                    subscription.trial_ends_at,
+                                                )}
                                             </p>
                                         </div>
                                     ))
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        No subscription history is available yet.
+                                        No subscription history is available
+                                        yet.
                                     </p>
                                 )}
                             </CardContent>

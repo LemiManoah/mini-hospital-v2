@@ -107,8 +107,14 @@ export default function FacilityManagerUsers({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
         { title: 'Facilities', href: '/facility-manager/facilities' },
-        { title: tenant.name, href: `/facility-manager/facilities/${tenant.id}` },
-        { title: 'Users', href: `/facility-manager/facilities/${tenant.id}/users` },
+        {
+            title: tenant.name,
+            href: `/facility-manager/facilities/${tenant.id}`,
+        },
+        {
+            title: 'Users',
+            href: `/facility-manager/facilities/${tenant.id}/users`,
+        },
     ];
 
     return (
@@ -118,7 +124,9 @@ export default function FacilityManagerUsers({
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-center justify-between gap-3">
                     <Button variant="outline" asChild>
-                        <Link href={`/facility-manager/facilities/${tenant.id}`}>
+                        <Link
+                            href={`/facility-manager/facilities/${tenant.id}`}
+                        >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Overview
                         </Link>
@@ -199,7 +207,9 @@ export default function FacilityManagerUsers({
                                                 {user.branches.length > 0 ? (
                                                     user.branches.map(
                                                         (branch) => (
-                                                            <span key={branch.id}>
+                                                            <span
+                                                                key={branch.id}
+                                                            >
                                                                 {branch.name}
                                                                 {branch.is_primary_location
                                                                     ? ' (Primary)'

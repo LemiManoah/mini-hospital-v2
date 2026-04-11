@@ -161,9 +161,7 @@ export default function FacilityManagerIndex({
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All onboarding</SelectItem>
-                            <SelectItem value="completed">
-                                Completed
-                            </SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
                             <SelectItem value="open">Open</SelectItem>
                         </SelectContent>
                     </Select>
@@ -281,8 +279,7 @@ export default function FacilityManagerIndex({
                                         colSpan={10}
                                         className="py-12 text-center text-sm text-muted-foreground"
                                     >
-                                        No facilities match the current
-                                        filters.
+                                        No facilities match the current filters.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -305,7 +302,9 @@ export default function FacilityManagerIndex({
 
                             if (label === '') {
                                 return (
-                                    <PaginationItem key={`${idx}-${link.label}`}>
+                                    <PaginationItem
+                                        key={`${idx}-${link.label}`}
+                                    >
                                         <PaginationEllipsis />
                                     </PaginationItem>
                                 );

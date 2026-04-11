@@ -31,7 +31,15 @@ import {
     type LaboratoryQueueRequest,
 } from '@/types/laboratory';
 import { Head, Link } from '@inertiajs/react';
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis } from 'recharts';
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Pie,
+    PieChart,
+    XAxis,
+} from 'recharts';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Laboratory', href: '/laboratory/dashboard' },
@@ -98,7 +106,11 @@ const badgeVariant = (
     value: string,
 ): 'default' | 'secondary' | 'destructive' | 'outline' => {
     if (value === 'critical' || value === 'stat') return 'destructive';
-    if (value === 'urgent' || value === 'result_entered' || value === 'reviewed') {
+    if (
+        value === 'urgent' ||
+        value === 'result_entered' ||
+        value === 'reviewed'
+    ) {
         return 'secondary';
     }
     if (value === 'approved') return 'default';
@@ -130,9 +142,7 @@ const queueMetaForRequest = (
     }
 
     if (
-        request.items.some(
-            (item) => item.workflow_stage === 'sample_collected',
-        )
+        request.items.some((item) => item.workflow_stage === 'sample_collected')
     ) {
         return {
             label: 'Enter Results',
@@ -246,7 +256,9 @@ export default function LaboratoryDashboard({
                                         <ChartTooltip
                                             cursor={false}
                                             content={
-                                                <ChartTooltipContent hideLabel />
+                                                <ChartTooltipContent
+                                                    hideLabel
+                                                />
                                             }
                                         />
                                         <Pie
@@ -279,8 +291,8 @@ export default function LaboratoryDashboard({
                         <CardHeader>
                             <CardTitle>Lab Workflow Stages</CardTitle>
                             <CardDescription>
-                                Item-level workload across the laboratory
-                                result process.
+                                Item-level workload across the laboratory result
+                                process.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>

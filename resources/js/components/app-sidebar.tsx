@@ -2,8 +2,8 @@
 
 import {
     Bot,
-    Building,
     Boxes,
+    Building,
     CalendarDays,
     FlaskConical,
     HeartPulse,
@@ -441,9 +441,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             'facility_services.view',
                         ],
                     },
-                    ...((canSwitchFacility ||
+                    ...(canSwitchFacility ||
                     hasPermission('subscription_packages.view') ||
-                    hasPermission('facility_branches.view'))
+                    hasPermission('facility_branches.view')
                         ? [
                               {
                                   title: 'Platform',

@@ -96,7 +96,7 @@ final class Patient extends Model
         return $this->date_of_birth->age;
     }
 
-    public function getDisplayAgeAttribute(): ?int
+    protected function getDisplayAgeAttribute(): ?int
     {
         if (
             array_key_exists('age', $this->attributes)
@@ -111,7 +111,7 @@ final class Patient extends Model
             return null;
         }
 
-        $today = now()->startOfDay();
+        $today = today();
         $dob = $dateOfBirth->startOfDay();
 
         if ($dob->greaterThan($today)) {
@@ -133,7 +133,7 @@ final class Patient extends Model
         return (int) $dob->diffInDays($today);
     }
 
-    public function getDisplayAgeUnitsAttribute(): ?string
+    protected function getDisplayAgeUnitsAttribute(): ?string
     {
         if (
             array_key_exists('age', $this->attributes)
@@ -150,7 +150,7 @@ final class Patient extends Model
             return null;
         }
 
-        $today = now()->startOfDay();
+        $today = today();
         $dob = $dateOfBirth->startOfDay();
 
         if ($dob->greaterThan($today)) {

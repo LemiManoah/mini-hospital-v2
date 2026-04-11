@@ -41,7 +41,9 @@ export function FacilityManagerTenantHeader({
 
                     <div className="flex flex-wrap gap-2">
                         <Badge
-                            variant={onboardingComplete ? 'secondary' : 'outline'}
+                            variant={
+                                onboardingComplete ? 'secondary' : 'outline'
+                            }
                         >
                             {onboardingComplete
                                 ? 'Onboarding Complete'

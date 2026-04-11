@@ -62,9 +62,7 @@ export const formatPatientAge = (
 
     const units = patient?.display_age_units ?? patient?.age_units;
 
-    const normalizedUnits = units
-        ? units.replaceAll('_', ' ')
-        : 'years';
+    const normalizedUnits = units ? units.replaceAll('_', ' ') : 'years';
 
     return `${age} ${normalizedUnits}`;
 };

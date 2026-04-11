@@ -136,5 +136,4 @@ final class Tenant extends Model
     {
         return $this->hasMany(TenantSupportNote::class);
     }
-
 }
