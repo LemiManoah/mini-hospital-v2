@@ -6,11 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Actions\DeleteLabRequestItemConsumable;
 use App\Actions\RecordLabRequestItemConsumable;
+use App\Enums\InventoryLocationType;
 use App\Http\Requests\StoreLabRequestItemConsumableRequest;
 use App\Models\InventoryItem;
+use App\Models\InventoryLocation;
 use App\Models\LabRequestItem;
 use App\Models\LabRequestItemConsumable;
 use App\Support\ActiveBranchWorkspace;
+use App\Support\InventoryStockLedger;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -22,6 +25,7 @@ final readonly class LabRequestItemConsumableController implements HasMiddleware
 {
     public function __construct(
         private ActiveBranchWorkspace $activeBranchWorkspace,
+        private InventoryStockLedger $inventoryStockLedger,
     ) {}
 
     public static function middleware(): array
@@ -50,21 +54,43 @@ final readonly class LabRequestItemConsumableController implements HasMiddleware
                 ->latest('used_at'),
         ]);
 
+        $laboratoryLocationIds = InventoryLocation::query()
+            ->where('tenant_id', $labRequest->tenant_id)
+            ->where('branch_id', $labRequest->facility_branch_id)
+            ->where('type', InventoryLocationType::LABORATORY)
+            ->where('is_active', true)
+            ->pluck('id')
+            ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
+            ->values()
+            ->all();
+
+        $availableBalances = $this->inventoryStockLedger
+            ->summarizeByLocation($labRequest->facility_branch_id)
+            ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $laboratoryLocationIds, true))
+            ->groupBy('inventory_item_id')
+            ->map(static fn ($balances): float => (float) collect($balances)->sum('quantity'));
+
         $consumableOptions = InventoryItem::query()
             ->where('tenant_id', $labRequest->tenant_id)
             ->active()
-            ->consumables()
             ->with('unit:id,name,symbol')
             ->orderBy('name')
-            ->get(['id', 'tenant_id', 'name', 'unit_id', 'default_purchase_price'])
-            ->map(static fn (InventoryItem $inventoryItem): array => [
+            ->get(['id', 'tenant_id', 'name', 'item_type', 'unit_id', 'default_purchase_price'])
+            ->map(static fn (InventoryItem $inventoryItem) => [
                 'id' => $inventoryItem->id,
                 'name' => $inventoryItem->name,
-                'label' => $inventoryItem->name,
+                'item_type' => $inventoryItem->item_type?->value,
+                'label' => sprintf(
+                    '%s | Qty %.3f%s',
+                    $inventoryItem->name,
+                    (float) ($availableBalances->get($inventoryItem->id) ?? 0),
+                    $inventoryItem->unit?->symbol ? ' '.$inventoryItem->unit->symbol : '',
+                ),
                 'unit_label' => $inventoryItem->unit?->symbol ?: $inventoryItem->unit?->name,
                 'default_unit_cost' => $inventoryItem->default_purchase_price !== null
                     ? (float) $inventoryItem->default_purchase_price
                     : null,
+                'available_quantity' => (float) ($availableBalances->get($inventoryItem->id) ?? 0),
             ])
             ->values()
             ->all();

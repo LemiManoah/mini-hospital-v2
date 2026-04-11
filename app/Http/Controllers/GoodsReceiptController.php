@@ -92,7 +92,7 @@ final readonly class GoodsReceiptController implements HasMiddleware
         $purchaseOrders = PurchaseOrder::query()
             ->with([
                 'supplier:id,name',
-                'items.inventoryItem:id,name,generic_name',
+                'items.inventoryItem:id,name,generic_name,expires',
                 'goodsReceipts:id,purchase_order_id,receipt_number,status,receipt_date',
             ])
             ->whereIn('status', $receivableStatuses)

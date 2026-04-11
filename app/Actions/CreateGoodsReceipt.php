@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Enums\GoodsReceiptStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Models\GoodsReceipt;
+use App\Models\InventoryItem;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Support\BranchContext;
@@ -29,6 +30,11 @@ final readonly class CreateGoodsReceipt
     public function handle(array $attributes, array $items, array $allowedLocationTypes = []): GoodsReceipt
     {
         return DB::transaction(function () use ($attributes, $items, $allowedLocationTypes): GoodsReceipt {
+            $receiptItems = collect($items)
+                ->filter(static fn (array $item): bool => is_numeric($item['quantity_received'] ?? null) && (float) $item['quantity_received'] > 0)
+                ->values()
+                ->all();
+
             $purchaseOrder = PurchaseOrder::query()
                 ->lockForUpdate()
                 ->with('items:id,purchase_order_id,inventory_item_id,quantity_ordered,quantity_received')
@@ -64,7 +70,7 @@ final readonly class CreateGoodsReceipt
             );
 
             $this->ensureNoDraftGoodsReceiptExists($purchaseOrder);
-            $this->validateReceiptItems($purchaseOrder, $items);
+            $this->validateReceiptItems($purchaseOrder, $receiptItems);
 
             $tenantId = is_string($attributes['tenant_id'] ?? null)
                 ? $attributes['tenant_id']
@@ -77,7 +83,7 @@ final readonly class CreateGoodsReceipt
                 'created_by' => Auth::id(),
             ]);
 
-            foreach ($items as $item) {
+            foreach ($receiptItems as $item) {
                 $goodsReceipt->items()->create([
                     'purchase_order_item_id' => $item['purchase_order_item_id'],
                     'inventory_item_id' => $item['inventory_item_id'],
@@ -107,10 +113,28 @@ final readonly class CreateGoodsReceipt
      */
     private function validateReceiptItems(PurchaseOrder $purchaseOrder, array $items): void
     {
+        if ($items === []) {
+            throw ValidationException::withMessages([
+                'items' => 'Receive at least one item quantity greater than zero before saving the goods receipt.',
+            ]);
+        }
+
         /** @var array<string, PurchaseOrderItem> $purchaseOrderItems */
         $purchaseOrderItems = $purchaseOrder->items
             ->keyBy('id')
             ->all();
+
+        $inventoryItems = InventoryItem::query()
+            ->whereIn(
+                'id',
+                collect($items)
+                    ->pluck('inventory_item_id')
+                    ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
+                    ->values()
+                    ->all(),
+            )
+            ->get(['id', 'expires'])
+            ->keyBy('id');
 
         foreach ($items as $index => $item) {
             $purchaseOrderItemId = $item['purchase_order_item_id'] ?? null;
@@ -138,6 +162,28 @@ final readonly class CreateGoodsReceipt
                 throw ValidationException::withMessages([
                     sprintf('items.%d.quantity_received', $index) => 'The received quantity cannot be greater than the remaining purchase order quantity.',
                 ]);
+            }
+
+            $inventoryItem = is_string($inventoryItemId)
+                ? $inventoryItems->get($inventoryItemId)
+                : null;
+
+            if (
+                $inventoryItem instanceof InventoryItem
+                && $inventoryItem->expires
+                && (float) $quantityReceived > 0
+            ) {
+                if (! is_string($item['batch_number'] ?? null) || mb_trim((string) $item['batch_number']) === '') {
+                    throw ValidationException::withMessages([
+                        sprintf('items.%d.batch_number', $index) => 'Batch number is required for expirable items.',
+                    ]);
+                }
+
+                if (! is_string($item['expiry_date'] ?? null) || mb_trim((string) $item['expiry_date']) === '') {
+                    throw ValidationException::withMessages([
+                        sprintf('items.%d.expiry_date', $index) => 'Expiry date is required for expirable items.',
+                    ]);
+                }
             }
         }
     }

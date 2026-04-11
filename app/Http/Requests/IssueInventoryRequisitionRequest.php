@@ -31,6 +31,18 @@ final class IssueInventoryRequisitionRequest extends FormRequest
     }
 
     /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'items.*.allocations.*.inventory_batch_id.required' => 'Select a source batch for each batch allocation line.',
+            'items.*.allocations.*.quantity.required' => 'Enter the quantity to issue from this selected source batch.',
+            'items.*.allocations.*.quantity.gt' => 'Batch allocation quantity must be greater than zero.',
+        ];
+    }
+
+    /**
      * @return array<int, Closure(Validator):void>
      */
     public function after(): array

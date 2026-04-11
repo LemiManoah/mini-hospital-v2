@@ -347,6 +347,96 @@ it('prevents receiving more than the remaining purchase order quantity', functio
     expect(GoodsReceipt::query()->count())->toBe(0);
 });
 
+it('requires batch number and expiry date when receiving an expirable item', function (): void {
+    [$tenant, $branch, $user, , $item, $location, $po, $poItem] = createGRTestContext();
+    $user->givePermissionTo('goods_receipts.create');
+
+    $item->update(['expires' => true]);
+
+    $response = $this->from(route('goods-receipts.create'))
+        ->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('goods-receipts.store'), [
+            'purchase_order_id' => $po->id,
+            'inventory_location_id' => $location->id,
+            'receipt_date' => now()->toDateString(),
+            'items' => [
+                [
+                    'purchase_order_item_id' => $poItem->id,
+                    'inventory_item_id' => $item->id,
+                    'quantity_received' => 10,
+                    'unit_cost' => 50,
+                    'batch_number' => '',
+                    'expiry_date' => '',
+                ],
+            ],
+        ]);
+
+    $response->assertRedirect(route('goods-receipts.create'))
+        ->assertSessionHasErrors(['items.0.batch_number', 'items.0.expiry_date']);
+
+    expect(GoodsReceipt::query()->count())->toBe(0);
+});
+
+it('allows zero-quantity receipt lines without requiring batch details', function (): void {
+    [$tenant, $branch, $user, $supplier, $item, $location, $po, $poItem] = createGRTestContext();
+    $user->givePermissionTo(['goods_receipts.view', 'goods_receipts.create']);
+
+    $item->update(['expires' => true]);
+
+    $secondItem = InventoryItem::query()->create([
+        'tenant_id' => $tenant->id,
+        'name' => 'GR Second Item',
+        'item_type' => InventoryItemType::CONSUMABLE,
+        'expires' => true,
+        'is_active' => true,
+    ]);
+
+    $secondPoItem = PurchaseOrderItem::query()->create([
+        'purchase_order_id' => $po->id,
+        'inventory_item_id' => $secondItem->id,
+        'quantity_ordered' => 40,
+        'unit_cost' => 30,
+        'total_cost' => 1200,
+    ]);
+
+    $po->update(['total_amount' => 6200]);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('goods-receipts.store'), [
+            'purchase_order_id' => $po->id,
+            'inventory_location_id' => $location->id,
+            'receipt_date' => now()->toDateString(),
+            'items' => [
+                [
+                    'purchase_order_item_id' => $poItem->id,
+                    'inventory_item_id' => $item->id,
+                    'quantity_received' => 0,
+                    'unit_cost' => 50,
+                    'batch_number' => '',
+                    'expiry_date' => '',
+                ],
+                [
+                    'purchase_order_item_id' => $secondPoItem->id,
+                    'inventory_item_id' => $secondItem->id,
+                    'quantity_received' => 10,
+                    'unit_cost' => 30,
+                    'batch_number' => 'BATCH-SECOND-001',
+                    'expiry_date' => now()->addMonths(10)->toDateString(),
+                ],
+            ],
+        ]);
+
+    $gr = GoodsReceipt::query()->latest('created_at')->first();
+
+    expect($gr)->not->toBeNull()
+        ->and($gr->items)->toHaveCount(1)
+        ->and($gr->items->first()->inventory_item_id)->toBe($secondItem->id);
+
+    $response->assertRedirect(route('goods-receipts.show', $gr));
+});
+
 it('posts a goods receipt and updates PO item quantities', function (): void {
     [$tenant, $branch, $user, , $item, $location, $po, $poItem] = createGRTestContext();
     $user->givePermissionTo('goods_receipts.update');

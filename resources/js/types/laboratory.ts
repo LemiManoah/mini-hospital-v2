@@ -43,9 +43,11 @@ export interface LaboratoryConsumableUsage {
 export interface LaboratoryConsumableOption {
     id: string;
     name: string;
+    item_type?: string | null;
     label: string;
     unit_label: string | null;
     default_unit_cost: number | null;
+    available_quantity: number;
 }
 
 export interface LaboratoryResultValue {

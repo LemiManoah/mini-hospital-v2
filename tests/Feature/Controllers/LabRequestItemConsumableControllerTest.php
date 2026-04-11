@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
+use App\Enums\InventoryLocationType;
+use App\Enums\InventoryItemType;
 use App\Enums\StaffType;
+use App\Enums\StockMovementType;
 use App\Enums\UnitType;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
+use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
+use App\Models\InventoryLocation;
 use App\Models\LabRequestItem;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
@@ -22,6 +27,8 @@ use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
+use App\Models\StockMovement;
+use App\Support\InventoryStockLedger;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -169,6 +176,51 @@ function createLaboratoryWorklistContext(): array
     return [$branch, $user, $requestItem];
 }
 
+function seedLaboratoryConsumableStock(
+    FacilityBranch $branch,
+    User $user,
+    InventoryItem $inventoryItem,
+    float $quantity,
+): InventoryLocation {
+    $labLocation = InventoryLocation::query()->create([
+        'tenant_id' => $branch->tenant_id,
+        'branch_id' => $branch->id,
+        'name' => 'Lab Stock '.$inventoryItem->name,
+        'location_code' => 'LAB-'.strtoupper(substr((string) $inventoryItem->id, 0, 6)),
+        'type' => InventoryLocationType::LABORATORY,
+        'is_active' => true,
+    ]);
+
+    $batch = InventoryBatch::query()->create([
+        'tenant_id' => $branch->tenant_id,
+        'branch_id' => $branch->id,
+        'inventory_location_id' => $labLocation->id,
+        'inventory_item_id' => $inventoryItem->id,
+        'batch_number' => 'LAB-BATCH-001',
+        'expiry_date' => now()->addMonths(12)->toDateString(),
+        'unit_cost' => $inventoryItem->default_purchase_price ?? 0,
+        'quantity_received' => $quantity,
+        'received_at' => now(),
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    StockMovement::query()->create([
+        'tenant_id' => $branch->tenant_id,
+        'branch_id' => $branch->id,
+        'inventory_location_id' => $labLocation->id,
+        'inventory_item_id' => $inventoryItem->id,
+        'inventory_batch_id' => $batch->id,
+        'movement_type' => StockMovementType::Receipt,
+        'quantity' => $quantity,
+        'unit_cost' => $inventoryItem->default_purchase_price ?? 0,
+        'occurred_at' => now(),
+        'created_by' => $user->id,
+    ]);
+
+    return $labLocation;
+}
+
 it('shows the laboratory worklist to authorized users', function (): void {
     [$branch, $user] = createLaboratoryWorklistContext();
 
@@ -219,6 +271,18 @@ it('shows inventory consumable defaults on the dedicated consumables page', func
         'default_purchase_price' => 1500,
     ]);
 
+    InventoryItem::factory()->consumable()->create([
+        'tenant_id' => $branch->tenant_id,
+        'name' => 'Plain Tube',
+        'item_type' => InventoryItemType::SUPPLY,
+        'unit_id' => $unit->id,
+        'default_purchase_price' => 900,
+    ]);
+
+    $inventoryItem = InventoryItem::query()->where('tenant_id', $branch->tenant_id)->where('name', 'EDTA Tube')->firstOrFail();
+
+    seedLaboratoryConsumableStock($branch, $user, $inventoryItem, 12);
+
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
         ->get(route('laboratory.request-items.consumables.show', $requestItem));
@@ -226,10 +290,39 @@ it('shows inventory consumable defaults on the dedicated consumables page', func
     $response->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('laboratory/request-item-consumables')
-            ->has('consumableOptions', 1)
-            ->where('consumableOptions.0.label', 'EDTA Tube')
+            ->has('consumableOptions', 2)
+            ->where('consumableOptions.0.label', 'EDTA Tube | Qty 12.000 pcs')
             ->where('consumableOptions.0.unit_label', 'pcs')
-            ->where('consumableOptions.0.default_unit_cost', 1500));
+            ->where('consumableOptions.0.default_unit_cost', 1500)
+            ->where('consumableOptions.1.label', 'Plain Tube | Qty 0.000 pcs')
+            ->where('consumableOptions.1.available_quantity', 0));
+});
+
+it('shows any stocked lab item type on the dedicated consumables page', function (): void {
+    [$branch, $user, $requestItem] = createLaboratoryWorklistContext();
+
+    $user->givePermissionTo('lab_requests.view');
+
+    $drug = InventoryItem::query()->create([
+        'tenant_id' => $branch->tenant_id,
+        'name' => 'Lab Reference Tablet',
+        'generic_name' => 'Lab Reference Tablet',
+        'item_type' => InventoryItemType::DRUG,
+        'default_purchase_price' => 500,
+        'is_active' => true,
+    ]);
+
+    seedLaboratoryConsumableStock($branch, $user, $drug, 4);
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('laboratory.request-items.consumables.show', $requestItem));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('laboratory/request-item-consumables')
+            ->where('consumableOptions.0.name', 'Lab Reference Tablet')
+            ->where('consumableOptions.0.available_quantity', 4));
 });
 
 it('shows a computed patient age on queue cards when date of birth is available', function (): void {
@@ -254,12 +347,29 @@ it('shows a computed patient age on queue cards when date of birth is available'
             ->where('requests.data.0.visit.patient.display_age_units', 'year'));
 });
 
-it('records and removes consumable usage while syncing actual cost', function (): void {
+it('records and removes consumable usage while syncing actual cost and stock', function (): void {
     [$branch, $user, $requestItem] = createLaboratoryWorklistContext();
 
     $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
 
+    $unit = Unit::query()->create([
+        'tenant_id' => $branch->tenant_id,
+        'name' => 'Pieces',
+        'symbol' => 'pcs',
+        'type' => UnitType::COUNT,
+    ]);
+
+    $inventoryItem = InventoryItem::factory()->consumable()->create([
+        'tenant_id' => $branch->tenant_id,
+        'name' => 'EDTA Tube',
+        'unit_id' => $unit->id,
+        'default_purchase_price' => 1500,
+    ]);
+
+    $labLocation = seedLaboratoryConsumableStock($branch, $user, $inventoryItem, 12);
+
     $payload = [
+        'inventory_item_id' => $inventoryItem->id,
         'consumable_name' => 'EDTA Tube',
         'unit_label' => 'pcs',
         'quantity' => 2,
@@ -279,6 +389,12 @@ it('records and removes consumable usage while syncing actual cost', function ()
     expect((float) $requestItem->actual_cost)->toBe(3000.0)
         ->and($requestItem->status->value)->toBe('in_progress');
 
+    $labBalanceAfterStore = resolve(InventoryStockLedger::class)
+        ->summarizeByLocation($branch->id)
+        ->firstWhere('inventory_location_id', $labLocation->id)['quantity'] ?? 0.0;
+
+    expect((float) $labBalanceAfterStore)->toBe(10.0);
+
     $usage = DB::table('lab_request_item_consumables')
         ->where('lab_request_item_id', $requestItem->id)
         ->first();
@@ -295,5 +411,10 @@ it('records and removes consumable usage while syncing actual cost', function ()
     $deleteResponse->assertRedirectToRoute('laboratory.request-items.consumables.show', $requestItem);
     $deleteResponse->assertSessionHas('success', 'Consumable usage removed successfully.');
 
-    expect((float) $requestItem->fresh()->actual_cost)->toBe(0.0);
+    $labBalanceAfterDelete = resolve(InventoryStockLedger::class)
+        ->summarizeByLocation($branch->id)
+        ->firstWhere('inventory_location_id', $labLocation->id)['quantity'] ?? 0.0;
+
+    expect((float) $requestItem->fresh()->actual_cost)->toBe(0.0)
+        ->and((float) $labBalanceAfterDelete)->toBe(12.0);
 });

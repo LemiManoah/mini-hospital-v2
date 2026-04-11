@@ -377,5 +377,8 @@ it('shows only laboratory locations on the dedicated laboratory stock page', fun
             ->component('laboratory/stock/index')
             ->has('locations', 1)
             ->where('locations.0.id', $labLocation->id)
+            ->has('rows.data', 2)
+            ->where('rows.data.0.location_quantities.'.$labLocation->id, 0)
+            ->where('rows.data.1.location_quantities.'.$labLocation->id, 0)
             ->where('navigation.stock_title', 'Lab Stock'));
 });

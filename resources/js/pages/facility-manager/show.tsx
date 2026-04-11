@@ -170,25 +170,21 @@ export default function FacilityManagerShow({
                         title="Users"
                         description="Review tenant-linked users, positions, and branch assignments."
                         href={`/facility-manager/facilities/${tenant.id}/users`}
-                        icon={<Users className="h-4 w-4" />}
                     />
                     <OverviewLinkCard
                         title="Subscriptions"
                         description="Track package status, billing windows, and support actions."
                         href={`/facility-manager/facilities/${tenant.id}/subscriptions`}
-                        icon={<CreditCard className="h-4 w-4" />}
                     />
                     <OverviewLinkCard
                         title="Activity"
                         description="See operational volume and the latest facility events."
                         href={`/facility-manager/facilities/${tenant.id}/activity`}
-                        icon={<LineChart className="h-4 w-4" />}
                     />
                     <OverviewLinkCard
                         title="Support Notes"
                         description="Capture onboarding notes, billing context, and internal reminders."
                         href={`/facility-manager/facilities/${tenant.id}/support-notes`}
-                        icon={<ClipboardList className="h-4 w-4" />}
                     />
                 </div>
 
@@ -421,12 +417,10 @@ function OverviewLinkCard({
     title,
     description,
     href,
-    icon,
 }: {
     title: string;
     description: string;
     href: string;
-    icon: ReactNode;
 }) {
     return (
         <Card className="border-none shadow-sm ring-1 ring-border/50">

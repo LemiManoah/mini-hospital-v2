@@ -58,7 +58,7 @@ export default function PurchaseOrderEdit({
 
     const itemOptions = inventoryItems.map((item) => ({
         value: item.id,
-        label: item.generic_name ?? item.name,
+        label: `${item.generic_name ?? item.name} | Qty ${item.current_quantity.toFixed(3)}`,
     }));
 
     const addLine = () => {

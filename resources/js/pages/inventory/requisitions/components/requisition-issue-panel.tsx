@@ -84,6 +84,15 @@ export function RequisitionIssuePanel({
                         key={line.id}
                         className="rounded border border-zinc-200 p-4 dark:border-zinc-800"
                     >
+                        {(() => {
+                            const issueLine = issueForm.data.items[lineIndex];
+                            const allocations = issueLine?.allocations ?? [];
+                            const totalIssueQuantity = Number(
+                                issueLine?.issue_quantity ?? 0,
+                            );
+
+                            return (
+                                <>
                         <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <h3 className="font-medium">
@@ -99,28 +108,16 @@ export function RequisitionIssuePanel({
                                     {line.remaining_quantity.toFixed(3)}
                                 </p>
                             </div>
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => onAddAllocation(lineIndex)}
-                            >
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add Batch
-                            </Button>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label>Issue Quantity</Label>
+                                <Label>Total Issue Quantity</Label>
                                 <Input
                                     type="number"
                                     step="any"
                                     min="0"
-                                    value={
-                                        issueForm.data.items[lineIndex]
-                                            ?.issue_quantity ?? ''
-                                    }
+                                    value={issueLine?.issue_quantity ?? ''}
                                     onChange={(event) =>
                                         onIssueLineChange(
                                             lineIndex,
@@ -138,13 +135,10 @@ export function RequisitionIssuePanel({
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label>Line Notes</Label>
+                                <Label>Issue Line Notes</Label>
                                 <Textarea
                                     rows={2}
-                                    value={
-                                        issueForm.data.items[lineIndex]
-                                            ?.notes ?? ''
-                                    }
+                                    value={issueLine?.notes ?? ''}
                                     onChange={(event) =>
                                         onIssueLineChange(
                                             lineIndex,
@@ -157,9 +151,14 @@ export function RequisitionIssuePanel({
                         </div>
 
                         <div className="mt-4 space-y-3">
-                            {issueForm.data.items[lineIndex]?.allocations
-                                .length ? (
-                                issueForm.data.items[lineIndex].allocations.map(
+                            {totalIssueQuantity <= 0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    Enter the total issue quantity first, then
+                                    add one or more source batches to allocate
+                                    it.
+                                </p>
+                            ) : allocations.length > 0 ? (
+                                allocations.map(
                                     (allocation, allocationIndex) => (
                                         <div
                                             key={`${line.id}-${allocationIndex}`}
@@ -236,9 +235,22 @@ export function RequisitionIssuePanel({
                                     ),
                                 )
                             ) : (
-                                <p className="text-sm text-muted-foreground">
-                                    No source batches selected yet.
-                                </p>
+                                <div className="flex items-center justify-between rounded border border-dashed border-zinc-200 p-3 dark:border-zinc-700">
+                                    <p className="text-sm text-muted-foreground">
+                                        No source batches selected yet.
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                            onAddAllocation(lineIndex)
+                                        }
+                                    >
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add Batch
+                                    </Button>
+                                </div>
                             )}
                             <InputError
                                 message={
@@ -248,6 +260,9 @@ export function RequisitionIssuePanel({
                                 }
                             />
                         </div>
+                                </>
+                            );
+                        })()}
                     </div>
                 ))}
             </div>

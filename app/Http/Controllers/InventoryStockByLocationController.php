@@ -44,7 +44,10 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
         $page = max(1, (int) $request->integer('page', 1));
         $perPage = 15;
 
-        ['rows' => $allRows, 'locations' => $locations] = $this->buildRows($workspace->locationTypeValues());
+        ['rows' => $allRows, 'locations' => $locations] = $this->buildRows(
+            $workspace->locationTypeValues(),
+            $workspace->key(),
+        );
 
         $rows = $allRows
             ->when(
@@ -100,7 +103,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
      *     locations: Collection<int, array<string, mixed>>
      * }
      */
-    private function buildRows(array $locationTypes = []): array
+    private function buildRows(array $locationTypes = [], ?string $workspaceKey = null): array
     {
         $activeBranchId = BranchContext::getActiveBranchId();
 
@@ -167,6 +170,8 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
         /** @var array<string, array<string, mixed>> $rows */
         $rows = [];
 
+        $tenantId = $accessibleLocations->first()?->tenant_id;
+
         $locationItems
             ->each(function (InventoryLocationItem $locationItem) use (&$rows, $locationQuantitiesTemplate): void {
                 $item = $locationItem->item;
@@ -189,6 +194,30 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                     'location_quantities' => $locationQuantitiesTemplate,
                 ];
             });
+
+        if ($workspaceKey === 'laboratory' && is_string($tenantId) && $tenantId !== '') {
+            InventoryItem::query()
+                ->where('tenant_id', $tenantId)
+                ->active()
+                ->with('unit:id,name,symbol')
+                ->orderBy('name')
+                ->get(['id', 'name', 'generic_name', 'item_type', 'minimum_stock_level', 'unit_id'])
+                ->each(function (InventoryItem $item) use (&$rows, $locationQuantitiesTemplate): void {
+                    if (array_key_exists($item->id, $rows)) {
+                        return;
+                    }
+
+                    $rows[$item->id] = [
+                        'item_id' => $item->id,
+                        'item_name' => $item->generic_name ?? $item->name,
+                        'item_type' => $item->item_type?->value,
+                        'unit' => $item->unit?->symbol,
+                        'minimum_stock_level' => (float) $item->minimum_stock_level,
+                        'total_quantity' => 0.0,
+                        'location_quantities' => $locationQuantitiesTemplate,
+                    ];
+                });
+        }
 
         $this->inventoryStockLedger
             ->summarizeByLocation($activeBranchId)

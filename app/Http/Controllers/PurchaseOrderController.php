@@ -15,6 +15,8 @@ use App\Http\Requests\UpdatePurchaseOrderRequest;
 use App\Models\InventoryItem;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use App\Support\BranchContext;
+use App\Support\InventoryStockLedger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +27,10 @@ use Inertia\Response;
 
 final readonly class PurchaseOrderController implements HasMiddleware
 {
+    public function __construct(
+        private InventoryStockLedger $inventoryStockLedger,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -65,9 +71,27 @@ final readonly class PurchaseOrderController implements HasMiddleware
 
     public function create(): Response
     {
+        $branchId = BranchContext::getActiveBranchId();
+        $itemQuantities = is_string($branchId) && $branchId !== ''
+            ? $this->inventoryStockLedger
+                ->summarizeByLocation($branchId)
+                ->groupBy('inventory_item_id')
+                ->map(static fn ($balances): float => (float) collect($balances)->sum('quantity'))
+            : collect();
+
         return Inertia::render('inventory/purchase-orders/create', [
             'suppliers' => Supplier::query()->active()->orderBy('name')->get(['id', 'name']),
-            'inventoryItems' => InventoryItem::query()->active()->orderBy('name')->get(['id', 'name', 'generic_name', 'item_type']),
+            'inventoryItems' => InventoryItem::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'name', 'generic_name', 'item_type'])
+                ->map(static fn (InventoryItem $item): array => [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'generic_name' => $item->generic_name,
+                    'item_type' => $item->item_type?->value ?? $item->item_type,
+                    'current_quantity' => (float) ($itemQuantities->get($item->id) ?? 0),
+                ]),
         ]);
     }
 
@@ -101,10 +125,28 @@ final readonly class PurchaseOrderController implements HasMiddleware
 
         $purchaseOrder->load('items.inventoryItem');
 
+        $branchId = BranchContext::getActiveBranchId();
+        $itemQuantities = is_string($branchId) && $branchId !== ''
+            ? $this->inventoryStockLedger
+                ->summarizeByLocation($branchId)
+                ->groupBy('inventory_item_id')
+                ->map(static fn ($balances): float => (float) collect($balances)->sum('quantity'))
+            : collect();
+
         return Inertia::render('inventory/purchase-orders/edit', [
             'purchaseOrder' => $purchaseOrder,
             'suppliers' => Supplier::query()->active()->orderBy('name')->get(['id', 'name']),
-            'inventoryItems' => InventoryItem::query()->active()->orderBy('name')->get(['id', 'name', 'generic_name', 'item_type']),
+            'inventoryItems' => InventoryItem::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'name', 'generic_name', 'item_type'])
+                ->map(static fn (InventoryItem $item): array => [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'generic_name' => $item->generic_name,
+                    'item_type' => $item->item_type?->value ?? $item->item_type,
+                    'current_quantity' => (float) ($itemQuantities->get($item->id) ?? 0),
+                ]),
         ]);
     }
 

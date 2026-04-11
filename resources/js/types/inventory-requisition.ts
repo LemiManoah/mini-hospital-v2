@@ -67,6 +67,12 @@ export interface InventoryRequisitionLocationOption {
     location_code: string;
 }
 
+export interface InventoryRequisitionLocationBalance {
+    inventory_location_id: string;
+    inventory_item_id: string;
+    quantity: number;
+}
+
 export interface InventoryRequisitionAvailableBatch {
     inventory_batch_id: string;
     inventory_item_id: string;
@@ -108,6 +114,7 @@ export interface InventoryRequisitionFormPageProps {
         InventoryItem,
         'id' | 'name' | 'generic_name' | 'item_type'
     >[];
+    sourceLocationBalances: InventoryRequisitionLocationBalance[];
     priorityOptions: InventoryRequisitionOption[];
 }
 

@@ -10,7 +10,10 @@ export interface PurchaseOrderItem {
     total_cost: string;
     quantity_received: string;
     notes: string | null;
-    inventory_item?: InventoryItem;
+    inventory_item?: Pick<
+        InventoryItem,
+        'id' | 'name' | 'generic_name' | 'expires'
+    >;
 }
 
 export interface PurchaseOrder {
@@ -67,10 +70,11 @@ export interface PurchaseOrderIndexPageProps {
 
 export interface PurchaseOrderFormPageProps {
     suppliers: Pick<Supplier, 'id' | 'name'>[];
-    inventoryItems: Pick<
-        InventoryItem,
-        'id' | 'name' | 'generic_name' | 'item_type'
-    >[];
+    inventoryItems: Array<
+        Pick<InventoryItem, 'id' | 'name' | 'generic_name' | 'item_type'> & {
+            current_quantity: number;
+        }
+    >;
 }
 
 export interface PurchaseOrderEditPageProps extends PurchaseOrderFormPageProps {

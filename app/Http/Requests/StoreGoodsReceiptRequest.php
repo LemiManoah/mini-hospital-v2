@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\GoodsReceiptStatus;
 use App\Models\GoodsReceipt;
+use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\PurchaseOrderItem;
 use App\Support\BranchContext;
@@ -49,7 +50,7 @@ final class StoreGoodsReceiptRequest extends FormRequest
                 Rule::exists('inventory_items', 'id')
                     ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
             ],
-            'items.*.quantity_received' => ['required', 'numeric', 'gt:0'],
+            'items.*.quantity_received' => ['required', 'numeric', 'min:0'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.batch_number' => ['nullable', 'string', 'max:100'],
             'items.*.expiry_date' => ['nullable', 'date'],
@@ -155,6 +156,20 @@ final class StoreGoodsReceiptRequest extends FormRequest
                     ->keyBy('id')
                     ->all();
 
+                $inventoryItems = InventoryItem::query()
+                    ->whereIn(
+                        'id',
+                        collect($items)
+                            ->pluck('inventory_item_id')
+                            ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
+                            ->values()
+                            ->all(),
+                    )
+                    ->get(['id', 'expires'])
+                    ->keyBy('id');
+
+                $positiveQuantityCount = 0;
+
                 foreach ($items as $index => $item) {
                     if (! is_array($item)) {
                         continue;
@@ -197,6 +212,10 @@ final class StoreGoodsReceiptRequest extends FormRequest
                     $submittedQuantity = $item['quantity_received'] ?? null;
 
                     if (is_numeric($submittedQuantity)) {
+                        if ((float) $submittedQuantity > 0) {
+                            $positiveQuantityCount++;
+                        }
+
                         $remainingQuantity = (float) $purchaseOrderItem->quantity_ordered - (float) $purchaseOrderItem->quantity_received;
 
                         if ((float) $submittedQuantity > $remainingQuantity) {
@@ -206,6 +225,38 @@ final class StoreGoodsReceiptRequest extends FormRequest
                             );
                         }
                     }
+
+                    $inventoryItem = is_string($inventoryItemId)
+                        ? $inventoryItems->get($inventoryItemId)
+                        : null;
+
+                    if (
+                        $inventoryItem instanceof InventoryItem
+                        && $inventoryItem->expires
+                        && is_numeric($submittedQuantity)
+                        && (float) $submittedQuantity > 0
+                    ) {
+                        if (! is_string($item['batch_number'] ?? null) || mb_trim((string) $item['batch_number']) === '') {
+                            $validator->errors()->add(
+                                sprintf('items.%s.batch_number', $index),
+                                'Batch number is required for expirable items.',
+                            );
+                        }
+
+                        if (! is_string($item['expiry_date'] ?? null) || mb_trim((string) $item['expiry_date']) === '') {
+                            $validator->errors()->add(
+                                sprintf('items.%s.expiry_date', $index),
+                                'Expiry date is required for expirable items.',
+                            );
+                        }
+                    }
+                }
+
+                if ($positiveQuantityCount === 0) {
+                    $validator->errors()->add(
+                        'items',
+                        'Receive at least one item quantity greater than zero before saving the goods receipt.',
+                    );
                 }
             },
         ];

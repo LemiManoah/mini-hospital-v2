@@ -25,6 +25,7 @@ interface ReceiptLine {
     purchase_order_item_id: string;
     inventory_item_id: string;
     item_label: string;
+    item_expires: boolean;
     quantity_remaining: number;
     quantity_received: string;
     unit_cost: string;
@@ -80,6 +81,7 @@ export default function GoodsReceiptCreate({
                     item.inventory_item?.generic_name ??
                     item.inventory_item?.name ??
                     '-',
+                item_expires: Boolean(item.inventory_item?.expires),
                 quantity_remaining:
                     Number(item.quantity_ordered) -
                     Number(item.quantity_received),
@@ -93,7 +95,7 @@ export default function GoodsReceiptCreate({
 
     const form = useForm({
         purchase_order_id: selectedPO?.id ?? '',
-        inventory_location_id: '',
+        inventory_location_id: inventoryLocations[0]?.id ?? '',
         receipt_date: new Date().toISOString().split('T')[0],
         supplier_invoice_number: '',
         supplier_delivery_note: '',
@@ -377,32 +379,81 @@ export default function GoodsReceiptCreate({
                                                             )
                                                         }
                                                     />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        value={
-                                                            line.batch_number
+                                                    <InputError
+                                                        message={
+                                                            form.errors[
+                                                                `items.${index}.unit_cost` as keyof typeof form.errors
+                                                            ]
                                                         }
-                                                        onChange={(e) =>
-                                                            updateLine(
-                                                                index,
-                                                                'batch_number',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        placeholder="Batch"
                                                     />
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Input
-                                                        type="date"
-                                                        value={line.expiry_date}
-                                                        onChange={(e) =>
-                                                            updateLine(
-                                                                index,
-                                                                'expiry_date',
-                                                                e.target.value,
-                                                            )
+                                                    {line.item_expires &&
+                                                    Number(
+                                                        line.quantity_received ||
+                                                            0,
+                                                    ) > 0 ? (
+                                                        <Input
+                                                            value={
+                                                                line.batch_number
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateLine(
+                                                                    index,
+                                                                    'batch_number',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            placeholder="Batch"
+                                                        />
+                                                    ) : (
+                                                        <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
+                                                            {line.item_expires
+                                                                ? 'Not required until quantity is greater than zero'
+                                                                : 'Not required for this item'}
+                                                        </div>
+                                                    )}
+                                                    <InputError
+                                                        message={
+                                                            form.errors[
+                                                                `items.${index}.batch_number` as keyof typeof form.errors
+                                                            ]
+                                                        }
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    {line.item_expires &&
+                                                    Number(
+                                                        line.quantity_received ||
+                                                            0,
+                                                    ) > 0 ? (
+                                                        <Input
+                                                            type="date"
+                                                            value={
+                                                                line.expiry_date
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateLine(
+                                                                    index,
+                                                                    'expiry_date',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                    ) : (
+                                                        <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
+                                                            {line.item_expires
+                                                                ? 'Not required until quantity is greater than zero'
+                                                                : 'Not required for this item'}
+                                                        </div>
+                                                    )}
+                                                    <InputError
+                                                        message={
+                                                            form.errors[
+                                                                `items.${index}.expiry_date` as keyof typeof form.errors
+                                                            ]
                                                         }
                                                     />
                                                 </TableCell>

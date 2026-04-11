@@ -36,6 +36,7 @@ export default function InventoryRequisitionCreate({
     fulfillingInventoryLocations,
     requestingInventoryLocations,
     inventoryItems,
+    sourceLocationBalances,
     priorityOptions,
 }: InventoryRequisitionFormPageProps) {
     const isRequesterWorkspace = navigation.key !== 'inventory';
@@ -78,9 +79,20 @@ export default function InventoryRequisitionCreate({
         }),
     );
 
+    const sourceBalanceFor = (inventoryItemId: string): number => {
+        const balance = sourceLocationBalances.find(
+            (entry) =>
+                entry.inventory_location_id ===
+                    form.data.source_inventory_location_id &&
+                entry.inventory_item_id === inventoryItemId,
+        );
+
+        return balance?.quantity ?? 0;
+    };
+
     const itemOptions = inventoryItems.map((item) => ({
         value: item.id,
-        label: item.generic_name ?? item.name,
+        label: `${item.generic_name ?? item.name} | Qty ${sourceBalanceFor(item.id).toFixed(3)}`,
     }));
 
     const updateLine = (

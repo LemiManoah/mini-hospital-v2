@@ -45,6 +45,13 @@ const labelize = (value: string | null | undefined): string =>
               .replace(/\b\w/g, (letter) => letter.toUpperCase())
         : 'Not set';
 
+const itemTypeLabel = (value: string | null | undefined): string =>
+    value
+        ? value
+              .replaceAll('_', ' ')
+              .replace(/\b\w/g, (letter) => letter.toUpperCase())
+        : 'Other';
+
 const actorName = (
     actor?: { first_name: string; last_name: string } | null,
 ): string =>
@@ -85,6 +92,14 @@ export default function LaboratoryRequestItemConsumablesPage({
         ? '/laboratory/view-results'
         : '/laboratory/enter-results';
     const [selectedConsumableId, setSelectedConsumableId] = useState('');
+    const groupedConsumableOptions = consumableOptions.reduce<
+        Record<string, LaboratoryConsumableOption[]>
+    >((groups, option) => {
+        const key = itemTypeLabel(option.item_type);
+        groups[key] = [...(groups[key] ?? []), option];
+
+        return groups;
+    }, {});
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Laboratory', href: '/laboratory/dashboard' },
@@ -96,6 +111,7 @@ export default function LaboratoryRequestItemConsumablesPage({
     ];
 
     const consumableForm = useForm({
+        inventory_item_id: '',
         consumable_name: '',
         unit_label: '',
         quantity: '1',
@@ -115,6 +131,7 @@ export default function LaboratoryRequestItemConsumablesPage({
             return;
         }
 
+        consumableForm.setData('inventory_item_id', selectedConsumable.id);
         consumableForm.setData('consumable_name', selectedConsumable.name);
         consumableForm.setData(
             'unit_label',
@@ -233,9 +250,15 @@ export default function LaboratoryRequestItemConsumablesPage({
                                                 />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectGroup>
-                                                    {consumableOptions.map(
-                                                        (option) => (
+                                                {Object.entries(
+                                                    groupedConsumableOptions,
+                                                ).map(([group, options]) => (
+                                                    <SelectGroup key={group}>
+                                                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                                                            {group}
+                                                        </div>
+                                                        {options.map(
+                                                            (option) => (
                                                             <SelectItem
                                                                 key={option.id}
                                                                 value={
@@ -246,21 +269,19 @@ export default function LaboratoryRequestItemConsumablesPage({
                                                                 {option.unit_label
                                                                     ? ` (${option.unit_label})`
                                                                     : ''}
-                                                                {option.default_unit_cost !==
-                                                                null
-                                                                    ? ` - ${formatMoney(option.default_unit_cost)}`
-                                                                    : ''}
                                                             </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectGroup>
+                                                            ),
+                                                        )}
+                                                    </SelectGroup>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <p className="text-xs text-muted-foreground">
                                             Inventory defaults help you start
                                             faster, but the saved usage entry
                                             will use whatever name, unit, and
-                                            price you confirm below.
+                                            cost you confirm below. The dropdown
+                                            shows current lab-store quantity.
                                         </p>
                                     </div>
                                     <div className="grid gap-2">

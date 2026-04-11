@@ -135,6 +135,11 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         $branchId = BranchContext::getActiveBranchId();
         $fulfillingLocations = $this->inventoryRequisitionAccess->fulfillingLocations(Auth::user(), $branchId);
         $requestingLocations = $this->inventoryRequisitionAccess->requestingLocations(Auth::user(), $workspace, $branchId);
+        $fulfillingLocationIds = $fulfillingLocations
+            ->pluck('id')
+            ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
+            ->values()
+            ->all();
 
         return Inertia::render($workspace->requisitionCreateComponent(), [
             'navigation' => InventoryNavigationContext::fromRequest($request),
@@ -156,6 +161,12 @@ final readonly class InventoryRequisitionController implements HasMiddleware
                 ->active()
                 ->orderBy('name')
                 ->get(['id', 'name', 'generic_name', 'item_type']),
+            'sourceLocationBalances' => is_string($branchId) && $branchId !== ''
+                ? $this->inventoryStockLedger
+                    ->summarizeByLocation($branchId)
+                    ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $fulfillingLocationIds, true))
+                    ->values()
+                : collect(),
             'priorityOptions' => collect(Priority::cases())
                 ->map(static fn (Priority $priority): array => [
                     'value' => $priority->value,

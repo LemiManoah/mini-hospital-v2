@@ -65,11 +65,6 @@ export default function InventoryReconciliationCreate({
         label: `${location.name} (${location.location_code})`,
     }));
 
-    const itemOptions = inventoryItems.map((item) => ({
-        value: item.id,
-        label: item.generic_name ?? item.name,
-    }));
-
     const locationBalanceFor = (inventoryItemId: string): number => {
         const balance = locationBalances.find(
             (entry) =>
@@ -80,6 +75,11 @@ export default function InventoryReconciliationCreate({
 
         return balance?.quantity ?? 0;
     };
+
+    const itemOptions = inventoryItems.map((item) => ({
+        value: item.id,
+        label: `${item.generic_name ?? item.name} | Qty ${locationBalanceFor(item.id).toFixed(3)}`,
+    }));
 
     const batchOptionsFor = (inventoryItemId: string) =>
         batchBalances
@@ -411,38 +411,44 @@ export default function InventoryReconciliationCreate({
                                                     {variance.toFixed(3)}
                                                 </TableCell>
                                                 <TableCell className="align-top">
-                                                    <SearchableSelect
-                                                        options={[
-                                                            {
-                                                                value: '',
-                                                                label: isLoss
-                                                                    ? 'Select batch for loss'
-                                                                    : 'No batch selected',
-                                                            },
-                                                            ...availableBatchOptions,
-                                                        ]}
-                                                        value={
-                                                            line.inventory_batch_id
-                                                        }
-                                                        onValueChange={(
-                                                            value,
-                                                        ) =>
-                                                            updateLine(
-                                                                index,
-                                                                'inventory_batch_id',
-                                                                value,
-                                                            )
-                                                        }
-                                                        placeholder="Select batch"
-                                                        emptyMessage="No matching batches."
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            form.errors[
-                                                                `items.${index}.inventory_batch_id` as keyof typeof form.errors
-                                                            ]
-                                                        }
-                                                    />
+                                                    {isLoss ? (
+                                                        <>
+                                                            <SearchableSelect
+                                                                options={
+                                                                    availableBatchOptions
+                                                                }
+                                                                value={
+                                                                    line.inventory_batch_id
+                                                                }
+                                                                onValueChange={(
+                                                                    value,
+                                                                ) =>
+                                                                    updateLine(
+                                                                        index,
+                                                                        'inventory_batch_id',
+                                                                        value,
+                                                                    )
+                                                                }
+                                                                placeholder="Select batch for loss"
+                                                                emptyMessage="No matching batches."
+                                                                allowClear
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    form.errors[
+                                                                        `items.${index}.inventory_batch_id` as keyof typeof form.errors
+                                                                    ]
+                                                                }
+                                                            />
+                                                        </>
+                                                    ) : (
+                                                        <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
+                                                            Only needed when
+                                                            actual quantity is
+                                                            lower than system
+                                                            quantity.
+                                                        </div>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="align-top">
                                                     <Input
