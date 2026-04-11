@@ -104,4 +104,29 @@ final class Tenant extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    /**
+     * @return HasMany<Patient, $this>
+     */
+    public function patients(): HasMany
+    {
+        return $this->hasMany(Patient::class);
+    }
+
+    /**
+     * @return HasMany<PatientVisit, $this>
+     */
+    public function visits(): HasMany
+    {
+        return $this->hasMany(PatientVisit::class);
+    }
+
+    /**
+     * @return HasMany<LabRequest, $this>
+     */
+    public function labRequests(): HasMany
+    {
+        return $this->hasMany(LabRequest::class);
+    }
+
 }

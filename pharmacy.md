@@ -803,3 +803,173 @@ So the best path forward is:
 3. post batch-aware dispense stock movements
 4. update prescription statuses from actual dispense outcomes
 5. then add substitution, external pharmacy, and print polish later
+
+---
+
+## 15) Additional Features Worth Adding
+
+Once the core dispensing workflow is stable, these are strong next-step pharmacy features to consider.
+
+### 15.1 Progressive Treatment
+
+I do think the idea is useful, but I would frame it more clearly as:
+
+- staged treatment
+- scheduled dispensing
+- treatment plan dispensing
+
+`Progressive treatment` can mean different things to different users, so if it becomes a feature name in the UI, it may confuse staff. The underlying workflow is still very valuable.
+
+### What It Should Mean Operationally
+
+This feature should support situations where a patient is **not meant to receive the full medication course at once**, but instead receives treatment in controlled stages.
+
+Common examples:
+
+- chronic disease refills
+- TB / HIV refill cycles
+- dose-escalation treatment plans
+- steroid tapers
+- post-operative step-down treatment
+- weekly or monthly controlled-drug refills
+
+### Why It Belongs In Pharmacy
+
+It fits well after dispensing because it extends the dispensing workflow rather than replacing it.
+
+It helps pharmacy manage:
+
+- scheduled refill dates
+- remaining authorized quantities
+- missed pickups
+- partial handovers that are intentional, not just stock shortages
+
+### Recommended Design
+
+Add a treatment-plan layer on top of prescriptions, not inside stock movements directly.
+
+Suggested tables later:
+
+- `pharmacy_treatment_plans`
+- `pharmacy_treatment_plan_items`
+- `pharmacy_treatment_plan_cycles`
+
+Suggested fields:
+
+- linked `prescription_id`
+- plan start date
+- cycle frequency
+- expected dispense quantity per cycle
+- next refill date
+- total authorized cycles
+- completed cycles
+- status
+
+### Recommended Position In Roadmap
+
+This should come **after**:
+
+- pharmacy queue
+- dispensing records
+- batch-aware dispensing
+- partial/full dispensing
+
+So yes, it is a good feature, but it is a **phase-2 or phase-3 enhancement**, not the first pharmacy milestone.
+
+### 15.2 Substitution Approval Workflow
+
+Useful when:
+
+- prescribed drug is unavailable
+- equivalent generic exists
+- approval must be captured
+
+Should record:
+
+- original drug
+- substituted drug
+- who approved
+- reason
+
+### 15.3 Refill Management
+
+Useful for long-term care patients.
+
+Should support:
+
+- refill due date
+- refill history
+- refill remaining
+- missed refill tracking
+
+### 15.4 Controlled Drug Register
+
+Important if the hospital handles narcotics or highly restricted medications.
+
+Should support:
+
+- stricter dispense audit
+- witness / supervisor requirement where needed
+- balance tracking
+- register-style reporting
+
+### 15.5 Dispense Return / Reversal Workflow
+
+Useful when:
+
+- medication was posted wrongly
+- patient returned medication before use
+- a transaction must be corrected
+
+This should be tightly permissioned and auditable.
+
+### 15.6 Pharmacy Clinical Screening
+
+Before dispense, pharmacy can flag:
+
+- allergy conflict
+- interaction risk
+- duplicate therapy
+- dose concern
+
+This does not need to block version one, but it becomes very valuable later.
+
+### 15.7 FEFO Suggestions And Expiry Protection
+
+If batch tracking is enabled, the system should later:
+
+- suggest the earliest-expiring valid batch
+- warn on near-expiry dispense
+- block already expired stock
+
+### 15.8 Patient Counselling And Handover Capture
+
+This should capture:
+
+- counselling done or not
+- key instructions
+- who handed over the medication
+- when it was handed over
+
+### 15.9 Pharmacy Billing Reconciliation
+
+If the hospital needs tighter control, add views for:
+
+- prescribed but not dispensed
+- dispensed but unpaid
+- externally sourced items
+- partial dispense balances
+
+---
+
+## 16) Updated Recommendation
+
+The next pharmacy roadmap should be:
+
+1. pharmacy queue
+2. dispensing records
+3. batch-aware stock depletion
+4. partial/full dispensing status resolution
+5. substitution and external pharmacy handling
+6. refill and progressive-treatment style workflows
+7. counselling, screening, and advanced audit features

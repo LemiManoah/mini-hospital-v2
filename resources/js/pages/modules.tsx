@@ -78,10 +78,11 @@ const modules: Module[] = [
     },
     {
         name: 'Administration',
-        description: 'Configure hospital systems, staff, and roles.',
+        description:
+            'General settings, facility setup, master data, and administrative controls.',
         icon: Settings,
         permission: 'users.view',
-        href: dashboard().url,
+        href: '/administration/general-settings',
         category: 'Administration',
     },
 ];

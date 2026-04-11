@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\AdministrationController;
 use App\Http\Controllers\AllergenController;
 use App\Http\Controllers\AppointmentCategoryController;
 use App\Http\Controllers\AppointmentController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\DoctorConsultationPrescriptionController;
 use App\Http\Controllers\DoctorScheduleController;
 use App\Http\Controllers\DoctorScheduleExceptionController;
 use App\Http\Controllers\FacilityBranchController;
+use App\Http\Controllers\FacilityManagerController;
 use App\Http\Controllers\FacilityServiceController;
 use App\Http\Controllers\FacilitySwitcherController;
 use App\Http\Controllers\GoodsReceiptController;
@@ -102,6 +104,15 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
         ->name('dashboard');
 
     Route::middleware('support.only')
+        ->prefix('facility-manager')
+        ->name('facility-manager.')
+        ->group(function (): void {
+            Route::get('dashboard', [FacilityManagerController::class, 'dashboard'])->name('dashboard');
+            Route::get('facilities', [FacilityManagerController::class, 'index'])->name('facilities.index');
+            Route::get('facilities/{tenant}', [FacilityManagerController::class, 'show'])->name('facilities.show');
+        });
+
+    Route::middleware('support.only')
         ->prefix('facility-switcher')
         ->name('facility-switcher.')
         ->group(function (): void {
@@ -141,6 +152,10 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
     Route::post('appointments/{appointment}/check-in', [AppointmentController::class, 'checkIn'])->name('appointments.check-in');
     Route::resource('addresses', AddressController::class)->except(['show']);
+    Route::get('administration/general-settings', [AdministrationController::class, 'generalSettings'])->name('administration.general-settings');
+    Route::get('administration/insurance-setup', [AdministrationController::class, 'insuranceSetup'])->name('administration.insurance-setup');
+    Route::get('administration/master-data', [AdministrationController::class, 'masterData'])->name('administration.master-data');
+    Route::get('administration/platform', [AdministrationController::class, 'platform'])->name('administration.platform');
     Route::resource('currencies', CurrencyController::class)->except(['show']);
     Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
     Route::resource('staff-positions', StaffPositionController::class)->except(['show']);

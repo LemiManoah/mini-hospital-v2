@@ -2,13 +2,14 @@
 
 import {
     Bot,
+    Building,
     Boxes,
     CalendarDays,
     FlaskConical,
     HeartPulse,
     LayoutGrid,
     PillBottle,
-    Settings2,
+    Shield,
     UserCog,
     UserRoundSearch,
     Users,
@@ -28,14 +29,7 @@ import {
 } from '@/components/ui/sidebar';
 import { usePermissions } from '@/lib/permissions';
 import { dashboard } from '@/routes';
-import { index as indexAddresses } from '@/routes/addresses';
-import { index as indexAllergens } from '@/routes/allergens';
-import { index as indexClinics } from '@/routes/clinics';
-import { index as indexCurrencies } from '@/routes/currencies';
 import { index as indexDepartments } from '@/routes/departments';
-import { index as indexFacilitySwitcher } from '@/routes/facility-switcher';
-import { index as indexInsuranceCompanies } from '@/routes/insurance-companies';
-import { index as indexInsurancePackages } from '@/routes/insurance-packages';
 import {
     create as createPatients,
     index as indexPatients,
@@ -44,8 +38,6 @@ import {
 import { index as indexRoles } from '@/routes/roles';
 import { index as indexStaff } from '@/routes/staff';
 import { index as indexStaffPositions } from '@/routes/staff-positions';
-import { index as indexSubscriptionPackages } from '@/routes/subscription-packages';
-import { index as indexUnits } from '@/routes/units';
 import { create as createUsers, index as indexUsers } from '@/routes/users';
 
 type NavChild = {
@@ -88,6 +80,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     )?.name;
     const canSwitchFacility =
         Boolean(user.is_support) || hasRole('super_admin');
+    const canAccessFacilityManager =
+        hasPermission('tenants.view') &&
+        (Boolean(user.is_support) || hasRole('super_admin'));
     const canAccessIncomingRequisitions =
         hasPermission('inventory_requisitions.view') &&
         (hasPermission('inventory_requisitions.review') ||
@@ -402,77 +397,57 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ),
         },
         {
-            title: 'Settings',
-            url: indexAddresses(),
-            icon: Settings2,
+            title: 'Administration',
+            url: '/administration/general-settings',
+            icon: Shield,
             items: filterItems(
                 [
                     {
-                        title: 'Addresses',
-                        url: indexAddresses().url,
-                        permission: 'addresses.view',
+                        title: 'General Settings',
+                        url: '/administration/general-settings',
+                        permissions: [
+                            'facility_branches.view',
+                            'clinics.view',
+                            'departments.view',
+                            'facility_services.view',
+                            'insurance_companies.view',
+                            'insurance_packages.view',
+                            'addresses.view',
+                            'allergens.view',
+                            'currencies.view',
+                            'units.view',
+                            'subscription_packages.view',
+                            'tenants.view',
+                        ],
                     },
                     {
-                        title: 'Allergens',
-                        url: indexAllergens().url,
-                        permission: 'allergens.view',
+                        title: 'Insurance Setup',
+                        url: '/administration/insurance-setup',
+                        permissions: [
+                            'insurance_companies.view',
+                            'insurance_packages.view',
+                        ],
                     },
                     {
-                        title: 'Currencies',
-                        url: indexCurrencies().url,
-                        permission: 'currencies.view',
+                        title: 'Master Data',
+                        url: '/administration/master-data',
+                        permissions: [
+                            'addresses.view',
+                            'allergens.view',
+                            'currencies.view',
+                            'units.view',
+                            'clinics.view',
+                            'departments.view',
+                            'facility_services.view',
+                        ],
                     },
-                    {
-                        title: 'Subscription Packages',
-                        url: indexSubscriptionPackages().url,
-                        permission: 'subscription_packages.view',
-                    },
-                    {
-                        title: 'Units',
-                        url: indexUnits().url,
-                        permission: 'units.view',
-                    },
-                    {
-                        title: 'Inventory Items',
-                        url: '/inventory-items',
-                        permission: 'inventory_items.view',
-                    },
-                    {
-                        title: 'Inventory Locations',
-                        url: '/inventory-locations',
-                        permission: 'inventory_locations.view',
-                    },
-                    {
-                        title: 'Insurance Companies',
-                        url: indexInsuranceCompanies().url,
-                        permission: 'insurance_companies.view',
-                    },
-                    {
-                        title: 'Clinics',
-                        url: indexClinics().url,
-                        permission: 'clinics.view',
-                    },
-                    {
-                        title: 'Facility Branches',
-                        url: '/facility-branches',
-                        permission: 'facility_branches.view',
-                    },
-                    {
-                        title: 'Insurance Packages',
-                        url: indexInsurancePackages().url,
-                        permission: 'insurance_packages.view',
-                    },
-                    {
-                        title: 'Facility Services',
-                        url: '/facility-services',
-                        permission: 'facility_services.view',
-                    },
-                    ...(canSwitchFacility
+                    ...((canSwitchFacility ||
+                    hasPermission('subscription_packages.view') ||
+                    hasPermission('facility_branches.view'))
                         ? [
                               {
-                                  title: 'Facility Switcher',
-                                  url: indexFacilitySwitcher().url,
-                                  permission: 'tenants.view',
+                                  title: 'Platform',
+                                  url: '/administration/platform',
                               },
                           ]
                         : []),
@@ -480,6 +455,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 hasPermission,
             ),
         },
+        ...(canAccessFacilityManager
+            ? [
+                  {
+                      title: 'Facility Manager',
+                      url: '/facility-manager/dashboard',
+                      icon: Building,
+                      items: filterItems(
+                          [
+                              {
+                                  title: 'Dashboard',
+                                  url: '/facility-manager/dashboard',
+                                  permission: 'tenants.view',
+                              },
+                              {
+                                  title: 'Facilities',
+                                  url: '/facility-manager/facilities',
+                                  permission: 'tenants.view',
+                              },
+                          ],
+                          hasPermission,
+                      ),
+                  },
+              ]
+            : []),
     ].filter((group) => group.items.length > 0);
 
     return (
