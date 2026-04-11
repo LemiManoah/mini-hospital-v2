@@ -6,6 +6,9 @@ export interface LaboratoryPatientSummary {
     gender?: string | null;
     age?: number | null;
     age_units?: string | null;
+    date_of_birth?: string | null;
+    display_age?: number | null;
+    display_age_units?: string | null;
     phone_number?: string | null;
 }
 
@@ -88,13 +91,10 @@ export interface LaboratorySpecimen {
     specimen_type_name: string;
     status: string;
     collected_at: string | null;
-    rejected_at?: string | null;
-    rejection_reason?: string | null;
     outside_sample: boolean;
     outside_sample_origin: string | null;
     notes: string | null;
     collectedBy?: { id: string; first_name: string; last_name: string } | null;
-    rejectedBy?: { id: string; first_name: string; last_name: string } | null;
 }
 
 export interface LaboratoryRequestItem {
@@ -179,6 +179,10 @@ export interface LaboratoryWorklistPageProps {
 
 export interface LaboratoryRequestItemPageProps {
     labRequestItem: LaboratoryRequestItem;
+}
+
+export interface LaboratoryRequestItemConsumablesPageProps {
+    labRequestItem: LaboratoryRequestItem;
     consumableOptions: LaboratoryConsumableOption[];
 }
 
@@ -190,6 +194,7 @@ export interface LaboratoryDashboardMetric {
 
 export interface LaboratoryDashboardPageProps {
     metrics: LaboratoryDashboardMetric[];
+    stock_metrics: LaboratoryDashboardMetric[];
     request_status_counts: { label: string; value: string; count: number }[];
     workflow_stage_counts: { label: string; value: string; count: number }[];
     recent_requests: LaboratoryQueueRequest[];

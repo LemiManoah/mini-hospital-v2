@@ -18,7 +18,8 @@ The lab module is **not fully complete yet**, but it is already much further alo
 - structured result entry
 - review and approval/release
 - clinician visibility of released results
-- consumables tracking on executed tests
+- consumables tracking on executed tests through a dedicated page
+- post-release result correction through a dedicated page
 
 The biggest remaining gaps are:
 
@@ -47,7 +48,7 @@ What is already implemented beyond the original draft:
     - result entry
     - result review
     - released result viewing
-- lab worklist and request-item workflow pages
+- dedicated request-item pages for consumables and result correction
 - specimen collection and receipt actions
 - result entry, review, approval, and release actions
 - doctor-facing and visit-facing released-result visibility
@@ -122,7 +123,7 @@ The lab module should be considered complete when all of the following are true:
 
 - [x] Milestone 1 completed: lab catalog administration is live
 - [x] Milestone 2 completed: lab worklist, intake queues, and dashboard summary are live
-- [x] Milestone 3 completed: specimen workflow now includes collection, receipt, rejection, and test coverage
+- [x] Milestone 3 completed: specimen workflow now includes collection, receipt, and test coverage
 - [ ] Milestone 4 in progress: structured result entry is substantially live
 - [x] Milestone 5 completed: review, release, and correction workflow are live
 - [x] Milestone 6 completed: clinician result visibility, modal result review, and release hardening are live
@@ -222,7 +223,7 @@ This milestone is complete. The system already has:
 
 - a laboratory dashboard with queue and release metrics
 - dedicated queue pages for intake, result entry, review, and released-result viewing
-- request-item workflow pages that lab staff can work from directly
+- dedicated request-item pages for bench consumables and released-result correction
 
 ### Definition Of Done
 
@@ -242,7 +243,6 @@ Capture specimen collection as a real workflow event instead of treating all tes
 - optional barcode-ready accession format
 - specimen collection action
 - specimen receipt or acceptance action
-- rejection flow with reason capture
 - request and request item status updates tied to specimen state
 
 ### Suggested First Fields
@@ -256,7 +256,6 @@ Capture specimen collection as a real workflow event instead of treating all tes
 - received by
 - received at
 - status
-- rejection reason
 - notes
 
 ### Milestone Checklist
@@ -266,15 +265,14 @@ Capture specimen collection as a real workflow event instead of treating all tes
 - [x] Define specimen statuses
 - [x] Add specimen collection action
 - [x] Add specimen receive or accept action
-- [x] Add specimen rejection action
 - [x] Add specimen collection UI
 - [x] Add specimen timeline or status display on request detail
 - [x] Update status transitions from real specimen actions
-- [x] Add tests for collection, receipt, and rejection
+- [x] Add tests for collection and receipt
 
 ### Current Status
 
-This milestone is complete. `lab_specimens` is real, accession numbers are generated, collection and receipt drive workflow state, and rejected specimens now carry explicit reason and actor capture with test coverage.
+This milestone is complete. `lab_specimens` is real, accession numbers are generated, and collection plus receipt drive workflow state.
 
 ### Definition Of Done
 
@@ -368,6 +366,11 @@ Separate result entry from final release so the lab workflow is clinically safe 
 ### Current Status
 
 Review, release, and post-release correction are now operational. Released results can be reopened through an explicit correction action that records who corrected the result and why, clears release visibility, and forces the corrected result back through review and release before clinicians can see it again.
+
+The detailed lab surfaces are now intentionally split into:
+
+- a dedicated consumables page for bench costing and execution details
+- a dedicated result correction page for released-result review and correction
 
 ### Definition Of Done
 

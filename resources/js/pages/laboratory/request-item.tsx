@@ -22,25 +22,17 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import {
-    type LaboratoryConsumableOption,
     type LaboratoryRequestItemPageProps,
     type LaboratoryResultEntry,
     type LaboratoryResultValue,
 } from '@/types/laboratory';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
 type ResultParameterDraft = {
     lab_test_result_parameter_id: string;
     value: string;
 };
-
-const formatMoney = (amount: number | null | undefined): string =>
-    new Intl.NumberFormat('en-UG', {
-        style: 'currency',
-        currency: 'UGX',
-        maximumFractionDigits: 0,
-    }).format(amount ?? 0);
 
 const formatDateTime = (value: string | null | undefined): string =>
     value ? new Date(value).toLocaleString() : 'Not yet recorded';
@@ -79,18 +71,8 @@ const workflowVariant = (
 const resultValueDisplay = (value: LaboratoryResultValue): string =>
     value.display_value ?? value.value_text ?? `${value.value_numeric ?? ''}`;
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
-    return (
-        <div>
-            <p className="text-muted-foreground">{label}</p>
-            <p className="font-medium">{value}</p>
-        </div>
-    );
-}
-
 export default function LaboratoryRequestItemShow({
     labRequestItem,
-    consumableOptions,
 }: LaboratoryRequestItemPageProps) {
     const patient = labRequestItem.request?.visit?.patient ?? null;
     const resultEntry: LaboratoryResultEntry | null =
@@ -99,17 +81,14 @@ export default function LaboratoryRequestItemShow({
     const resultOptions = labRequestItem.test?.result_options ?? [];
     const resultParameters = labRequestItem.test?.result_parameters ?? [];
     const resultType = labRequestItem.test?.result_capture_type ?? 'free_entry';
-    const variance =
-        (labRequestItem.price ?? 0) - (labRequestItem.actual_cost ?? 0);
     const isApproved = labRequestItem.workflow_stage === 'approved';
     const canRelease =
         labRequestItem.workflow_stage === 'result_entered' ||
         labRequestItem.workflow_stage === 'reviewed' ||
         labRequestItem.workflow_stage === 'approved';
     const [correctionMode, setCorrectionMode] = useState(false);
-    const [selectedConsumableId, setSelectedConsumableId] = useState('');
     const resultEditingLocked = isApproved && !correctionMode;
-    const pageTitle = 'Result Correction & Consumables';
+    const pageTitle = 'Result Correction';
     const resultManagementTitle =
         isApproved || correctionMode ? 'Result Correction' : 'Result Entry';
     const resultManagementDescription =
@@ -152,43 +131,6 @@ export default function LaboratoryRequestItemShow({
         review_notes: resultEntry?.review_notes ?? '',
         approval_notes: resultEntry?.approval_notes ?? '',
     });
-    const rejectSpecimenForm = useForm({
-        rejection_reason: labRequestItem.specimen?.rejection_reason ?? '',
-        redirect_to: `/laboratory/request-items/${labRequestItem.id}`,
-    });
-    const consumableForm = useForm({
-        consumable_name: '',
-        unit_label: '',
-        quantity: '1',
-        unit_cost: '0',
-        used_at: '',
-        notes: '',
-    });
-    const applyConsumableDefaults = (consumableId: string) => {
-        setSelectedConsumableId(consumableId);
-
-        const selectedConsumable = consumableOptions.find(
-            (option: LaboratoryConsumableOption) => option.id === consumableId,
-        );
-
-        if (!selectedConsumable) {
-            return;
-        }
-
-        consumableForm.setData('consumable_name', selectedConsumable.name);
-        consumableForm.setData(
-            'unit_label',
-            selectedConsumable.unit_label ?? '',
-        );
-
-        if (selectedConsumable.default_unit_cost !== null) {
-            consumableForm.setData(
-                'unit_cost',
-                `${selectedConsumable.default_unit_cost}`,
-            );
-        }
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head
@@ -222,28 +164,15 @@ export default function LaboratoryRequestItemShow({
                                         )}
                                     </Badge>
                                 </div>
-                                <CardDescription>
+                                <p className="text-sm text-muted-foreground">
                                     {patient
                                         ? `${patient.first_name} ${patient.last_name}`
-                                        : 'Unknown patient'}{' '}
-                                    | Visit{' '}
-                                    {labRequestItem.request?.visit
-                                        ?.visit_number ?? 'N/A'}{' '}
-                                    | MRN {patient?.patient_number ?? 'N/A'}
+                                        : 'Unknown patient'}
+                                </p>
+                                <CardDescription>
+                                    Review the released result and only reopen
+                                    it when a correction is necessary.
                                 </CardDescription>
-                                <p className="text-sm text-muted-foreground">
-                                    {labRequestItem.test?.test_code ?? 'N/A'} |{' '}
-                                    {labRequestItem.test?.category ??
-                                        'Uncategorized'}{' '}
-                                    |{' '}
-                                    {labRequestItem.test?.specimen_type ??
-                                        'Specimen not set'}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    Use this page to review the released result,
-                                    start a correction when needed, and record
-                                    consumables used during this test.
-                                </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 <Button variant="outline" asChild>
@@ -262,29 +191,16 @@ export default function LaboratoryRequestItemShow({
                                         </a>
                                     </Button>
                                 ) : null}
+                                <Button variant="outline" asChild>
+                                    <Link
+                                        href={`/laboratory/request-items/${labRequestItem.id}/consumables`}
+                                    >
+                                        Consumables
+                                    </Link>
+                                </Button>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <SummaryRow
-                            label="Sample Picked"
-                            value={formatDateTime(labRequestItem.received_at)}
-                        />
-                        <SummaryRow
-                            label="Result Entered"
-                            value={formatDateTime(
-                                labRequestItem.result_entered_at,
-                            )}
-                        />
-                        <SummaryRow
-                            label="Reviewed"
-                            value={formatDateTime(labRequestItem.reviewed_at)}
-                        />
-                        <SummaryRow
-                            label="Approved"
-                            value={formatDateTime(labRequestItem.approved_at)}
-                        />
-                    </CardContent>
                 </Card>
 
                 <div className="grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
@@ -726,159 +642,6 @@ export default function LaboratoryRequestItemShow({
                     <div className="flex flex-col gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Specimen Workflow</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-4 text-sm">
-                                <SummaryRow
-                                    label="Specimen Status"
-                                    value={labelize(
-                                        labRequestItem.specimen?.status ??
-                                            'not_picked',
-                                    )}
-                                />
-                                <SummaryRow
-                                    label="Accession Number"
-                                    value={
-                                        labRequestItem.specimen
-                                            ?.accession_number ?? 'Not assigned'
-                                    }
-                                />
-                                <SummaryRow
-                                    label="Specimen Type"
-                                    value={
-                                        labRequestItem.specimen
-                                            ?.specimen_type_name ??
-                                        labRequestItem.test?.specimen_type ??
-                                        'Not recorded'
-                                    }
-                                />
-                                <SummaryRow
-                                    label="Collected By"
-                                    value={actorName(
-                                        labRequestItem.specimen?.collectedBy,
-                                    )}
-                                />
-                                <SummaryRow
-                                    label="Collected At"
-                                    value={formatDateTime(
-                                        labRequestItem.specimen?.collected_at,
-                                    )}
-                                />
-                                {labRequestItem.specimen?.outside_sample ? (
-                                    <div className="rounded-lg border bg-amber-50 p-3 text-amber-900">
-                                        Outside sample
-                                        {labRequestItem.specimen
-                                            ?.outside_sample_origin
-                                            ? ` from ${labRequestItem.specimen.outside_sample_origin}`
-                                            : ''}
-                                        .
-                                    </div>
-                                ) : null}
-                                {labRequestItem.specimen?.status ===
-                                'rejected' ? (
-                                    <div className="flex flex-col gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
-                                        <SummaryRow
-                                            label="Rejected By"
-                                            value={actorName(
-                                                labRequestItem.specimen
-                                                    ?.rejectedBy,
-                                            )}
-                                        />
-                                        <SummaryRow
-                                            label="Rejected At"
-                                            value={formatDateTime(
-                                                labRequestItem.specimen
-                                                    ?.rejected_at,
-                                            )}
-                                        />
-                                        <div>
-                                            <p className="text-muted-foreground">
-                                                Rejection Reason
-                                            </p>
-                                            <p className="font-medium">
-                                                {labRequestItem.specimen
-                                                    ?.rejection_reason ??
-                                                    'Not recorded'}
-                                            </p>
-                                        </div>
-                                        <p className="text-muted-foreground">
-                                            This test item now needs a new
-                                            sample collection before results can
-                                            be entered.
-                                        </p>
-                                    </div>
-                                ) : labRequestItem.specimen ? (
-                                    <form
-                                        onSubmit={(event) => {
-                                            event.preventDefault();
-                                            rejectSpecimenForm.post(
-                                                `/laboratory/request-items/${labRequestItem.id}/reject`,
-                                                { preserveScroll: true },
-                                            );
-                                        }}
-                                        className="flex flex-col gap-3 rounded-lg border p-4"
-                                    >
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="rejection_reason">
-                                                Reject Specimen
-                                            </Label>
-                                            <Textarea
-                                                id="rejection_reason"
-                                                rows={3}
-                                                value={
-                                                    rejectSpecimenForm.data
-                                                        .rejection_reason
-                                                }
-                                                onChange={(event) =>
-                                                    rejectSpecimenForm.setData(
-                                                        'rejection_reason',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="Why was this sample rejected?"
-                                                disabled={
-                                                    rejectSpecimenForm.processing ||
-                                                    labRequestItem.result_entered_at !==
-                                                        null ||
-                                                    labRequestItem.approved_at !==
-                                                        null
-                                                }
-                                            />
-                                            <InputError
-                                                message={
-                                                    rejectSpecimenForm.errors
-                                                        .rejection_reason
-                                                }
-                                            />
-                                        </div>
-                                        <div className="flex justify-end">
-                                            <Button
-                                                type="submit"
-                                                variant="destructive"
-                                                disabled={
-                                                    rejectSpecimenForm.processing ||
-                                                    labRequestItem.result_entered_at !==
-                                                        null ||
-                                                    labRequestItem.approved_at !==
-                                                        null
-                                                }
-                                            >
-                                                Reject Specimen
-                                            </Button>
-                                        </div>
-                                    </form>
-                                ) : (
-                                    <div className="rounded-lg border border-dashed p-4 text-muted-foreground">
-                                        Pick the sample from the incoming queue
-                                        to start specimen tracking for this
-                                        request item.
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
                                 <CardTitle>Released Result</CardTitle>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-4">
@@ -932,390 +695,6 @@ export default function LaboratoryRequestItemShow({
                             </CardContent>
                         </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>
-                                    Consumables & Bench Costing
-                                </CardTitle>
-                                <CardDescription>
-                                    Pick a consumable from inventory to prefill
-                                    its name, unit, and unit cost. You can still
-                                    edit the values before saving.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-4">
-                                <form
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        consumableForm.post(
-                                            `/laboratory/request-items/${labRequestItem.id}/consumables`,
-                                            { preserveScroll: true },
-                                        );
-                                    }}
-                                    className="grid gap-4 rounded-lg border p-4 md:grid-cols-2"
-                                >
-                                    <div className="grid gap-2 md:col-span-2">
-                                        <Label htmlFor="consumable_picker">
-                                            Inventory Consumable
-                                        </Label>
-                                        <Select
-                                            value={selectedConsumableId}
-                                            onValueChange={
-                                                applyConsumableDefaults
-                                            }
-                                            disabled={
-                                                consumableForm.processing ||
-                                                consumableOptions.length === 0
-                                            }
-                                        >
-                                            <SelectTrigger id="consumable_picker">
-                                                <SelectValue
-                                                    placeholder={
-                                                        consumableOptions.length
-                                                            ? 'Choose a consumable to prefill this usage entry'
-                                                            : 'No active consumables are configured in inventory yet'
-                                                    }
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    {consumableOptions.map(
-                                                        (option) => (
-                                                            <SelectItem
-                                                                key={option.id}
-                                                                value={
-                                                                    option.id
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                                {option.unit_label
-                                                                    ? ` (${option.unit_label})`
-                                                                    : ''}
-                                                                {option.default_unit_cost !==
-                                                                null
-                                                                    ? ` - ${formatMoney(option.default_unit_cost)}`
-                                                                    : ''}
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-xs text-muted-foreground">
-                                            Inventory defaults help you start
-                                            faster, but the saved usage entry
-                                            will use whatever name, unit, and
-                                            price you confirm below.
-                                        </p>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="consumable_name">
-                                            Consumable Name
-                                        </Label>
-                                        <Input
-                                            id="consumable_name"
-                                            placeholder="e.g. EDTA Tube"
-                                            value={
-                                                consumableForm.data
-                                                    .consumable_name
-                                            }
-                                            onChange={(event) =>
-                                                consumableForm.setData(
-                                                    'consumable_name',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                consumableForm.errors
-                                                    .consumable_name
-                                            }
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="unit_label">Unit</Label>
-                                        <Input
-                                            id="unit_label"
-                                            placeholder="e.g. pcs"
-                                            value={
-                                                consumableForm.data.unit_label
-                                            }
-                                            onChange={(event) =>
-                                                consumableForm.setData(
-                                                    'unit_label',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                consumableForm.errors.unit_label
-                                            }
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="quantity">
-                                            Quantity
-                                        </Label>
-                                        <Input
-                                            id="quantity"
-                                            type="number"
-                                            min="0.01"
-                                            step="0.01"
-                                            placeholder="1"
-                                            value={consumableForm.data.quantity}
-                                            onChange={(event) =>
-                                                consumableForm.setData(
-                                                    'quantity',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                consumableForm.errors.quantity
-                                            }
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="unit_cost">
-                                            Unit Cost
-                                        </Label>
-                                        <Input
-                                            id="unit_cost"
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="0.00"
-                                            value={
-                                                consumableForm.data.unit_cost
-                                            }
-                                            onChange={(event) =>
-                                                consumableForm.setData(
-                                                    'unit_cost',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                consumableForm.errors.unit_cost
-                                            }
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Line cost preview:{' '}
-                                            {formatMoney(
-                                                Number(
-                                                    consumableForm.data
-                                                        .quantity || 0,
-                                                ) *
-                                                    Number(
-                                                        consumableForm.data
-                                                            .unit_cost || 0,
-                                                    ),
-                                            )}
-                                        </p>
-                                    </div>
-                                    <div className="grid gap-2 md:col-span-2">
-                                        <Label htmlFor="used_at">Used At</Label>
-                                        <Input
-                                            id="used_at"
-                                            type="datetime-local"
-                                            value={consumableForm.data.used_at}
-                                            onChange={(event) =>
-                                                consumableForm.setData(
-                                                    'used_at',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                consumableForm.errors.used_at
-                                            }
-                                        />
-                                    </div>
-                                    <div className="grid gap-2 md:col-span-2">
-                                        <Label htmlFor="notes">Notes</Label>
-                                        <Textarea
-                                            id="notes"
-                                            rows={4}
-                                            placeholder="Optional note about why this consumable was used or adjusted."
-                                            value={consumableForm.data.notes}
-                                            onChange={(event) =>
-                                                consumableForm.setData(
-                                                    'notes',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                consumableForm.errors.notes
-                                            }
-                                        />
-                                    </div>
-                                    <div className="flex justify-end md:col-span-2">
-                                        <Button
-                                            type="submit"
-                                            disabled={consumableForm.processing}
-                                        >
-                                            Add Consumable Usage
-                                        </Button>
-                                    </div>
-                                </form>
-
-                                {(labRequestItem.consumables ?? []).length ? (
-                                    <div className="flex flex-col gap-3">
-                                        {labRequestItem.consumables?.map(
-                                            (usage) => (
-                                                <div
-                                                    key={usage.id}
-                                                    className="rounded-lg border p-4"
-                                                >
-                                                    <div className="flex flex-col gap-3 lg:flex-row lg:justify-between">
-                                                        <div className="flex flex-col gap-1">
-                                                            <p className="font-medium">
-                                                                {
-                                                                    usage.consumable_name
-                                                                }
-                                                            </p>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                {usage.quantity}{' '}
-                                                                {usage.unit_label ??
-                                                                    ''}{' '}
-                                                                |{' '}
-                                                                {formatMoney(
-                                                                    usage.line_cost,
-                                                                )}
-                                                            </p>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                {actorName(
-                                                                    usage.recordedBy,
-                                                                )}{' '}
-                                                                |{' '}
-                                                                {formatDateTime(
-                                                                    usage.used_at,
-                                                                )}
-                                                            </p>
-                                                            {usage.notes ? (
-                                                                <p className="text-sm">
-                                                                    {
-                                                                        usage.notes
-                                                                    }
-                                                                </p>
-                                                            ) : null}
-                                                        </div>
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                router.delete(
-                                                                    `/laboratory/request-items/${labRequestItem.id}/consumables/${usage.id}`,
-                                                                    {
-                                                                        preserveScroll: true,
-                                                                    },
-                                                                )
-                                                            }
-                                                        >
-                                                            Remove
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ),
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                                        No consumables recorded yet.
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Request Item Summary</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-3 text-sm">
-                                <SummaryRow
-                                    label="Test"
-                                    value={
-                                        labRequestItem.test?.test_name ??
-                                        'Lab test'
-                                    }
-                                />
-                                <SummaryRow
-                                    label="Result Type"
-                                    value={
-                                        labRequestItem.test?.result_type_name ??
-                                        labelize(
-                                            labRequestItem.test
-                                                ?.result_capture_type,
-                                        )
-                                    }
-                                />
-                                <SummaryRow
-                                    label="Ordered At"
-                                    value={formatDateTime(
-                                        labRequestItem.request?.request_date,
-                                    )}
-                                />
-                                <SummaryRow
-                                    label="Ordered By"
-                                    value={actorName(
-                                        labRequestItem.request?.requestedBy,
-                                    )}
-                                />
-                                <SummaryRow
-                                    label="Status"
-                                    value={labelize(labRequestItem.status)}
-                                />
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Cost Snapshot</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-3 text-sm">
-                                <SummaryRow
-                                    label="Billed Price"
-                                    value={formatMoney(labRequestItem.price)}
-                                />
-                                <SummaryRow
-                                    label="Actual Cost"
-                                    value={formatMoney(
-                                        labRequestItem.actual_cost,
-                                    )}
-                                />
-                                <SummaryRow
-                                    label="Variance"
-                                    value={formatMoney(variance)}
-                                />
-                                <SummaryRow
-                                    label="Costed At"
-                                    value={formatDateTime(
-                                        labRequestItem.costed_at,
-                                    )}
-                                />
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Clinical Notes</CardTitle>
-                            </CardHeader>
-                            <CardContent className="text-sm">
-                                {labRequestItem.request?.clinical_notes ?? (
-                                    <p className="text-muted-foreground">
-                                        No clinical notes were attached to this
-                                        request.
-                                    </p>
-                                )}
-                            </CardContent>
-                        </Card>
                     </div>
                 </div>
             </div>

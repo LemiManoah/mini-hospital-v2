@@ -8,13 +8,11 @@ use App\Actions\ApproveLabResultEntry;
 use App\Actions\CollectLabSpecimen;
 use App\Actions\CorrectLabResultEntry;
 use App\Actions\ReceiveLabRequestItem;
-use App\Actions\RejectLabSpecimen;
 use App\Actions\ReviewLabResultEntry;
 use App\Actions\StoreLabResultEntry;
 use App\Http\Requests\ApproveLabResultEntryRequest;
 use App\Http\Requests\CollectLabSpecimenRequest;
 use App\Http\Requests\CorrectLabResultEntryRequest;
-use App\Http\Requests\RejectLabSpecimenRequest;
 use App\Http\Requests\ReviewLabResultEntryRequest;
 use App\Http\Requests\StoreLabResultEntryRequest;
 use App\Models\LabRequestItem;
@@ -35,7 +33,7 @@ final readonly class LabResultWorkflowController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:lab_requests.update', only: ['collectSample', 'receive', 'reject', 'store', 'correct', 'review', 'approve']),
+            new Middleware('permission:lab_requests.update', only: ['collectSample', 'receive', 'store', 'correct', 'review', 'approve']),
         ];
     }
 
@@ -62,23 +60,6 @@ final readonly class LabResultWorkflowController implements HasMiddleware
             $labRequestItem,
             fn (string $staffId): LabRequestItem => $action->handle($labRequestItem, $staffId),
             'Lab request item received successfully.',
-        );
-    }
-
-    public function reject(
-        RejectLabSpecimenRequest $request,
-        LabRequestItem $labRequestItem,
-        RejectLabSpecimen $action,
-    ): RedirectResponse {
-        return $this->handleAction(
-            $request,
-            $labRequestItem,
-            fn (string $staffId): LabRequestItem => $action->handle(
-                $labRequestItem,
-                $staffId,
-                (string) $request->validated('rejection_reason'),
-            ),
-            'Specimen rejected and returned for recollection.',
         );
     }
 

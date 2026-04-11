@@ -50,17 +50,23 @@ export const formatPatientAge = (
     patient?: {
         age?: number | null;
         age_units?: string | null;
+        display_age?: number | null;
+        display_age_units?: string | null;
     } | null,
 ): string => {
-    if (patient?.age === null || patient?.age === undefined) {
+    const age = patient?.display_age ?? patient?.age;
+
+    if (age === null || age === undefined) {
         return 'N/A';
     }
 
-    const units = patient.age_units
-        ? patient.age_units.replaceAll('_', ' ')
+    const units = patient?.display_age_units ?? patient?.age_units;
+
+    const normalizedUnits = units
+        ? units.replaceAll('_', ' ')
         : 'years';
 
-    return `${patient.age} ${units}`;
+    return `${age} ${normalizedUnits}`;
 };
 
 export const workflowVariant = (

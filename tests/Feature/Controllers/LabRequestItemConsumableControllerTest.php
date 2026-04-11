@@ -200,7 +200,7 @@ it('shows the laboratory dashboard to authorized users', function (): void {
             ->where('metrics.0.value', 1));
 });
 
-it('shows inventory consumable defaults on the result correction and consumables page', function (): void {
+it('shows inventory consumable defaults on the dedicated consumables page', function (): void {
     [$branch, $user, $requestItem] = createLaboratoryWorklistContext();
 
     $user->givePermissionTo('lab_requests.view');
@@ -221,15 +221,37 @@ it('shows inventory consumable defaults on the result correction and consumables
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->get(route('laboratory.request-items.show', $requestItem));
+        ->get(route('laboratory.request-items.consumables.show', $requestItem));
 
     $response->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
-            ->component('laboratory/request-item')
+            ->component('laboratory/request-item-consumables')
             ->has('consumableOptions', 1)
             ->where('consumableOptions.0.label', 'EDTA Tube')
             ->where('consumableOptions.0.unit_label', 'pcs')
             ->where('consumableOptions.0.default_unit_cost', 1500));
+});
+
+it('shows a computed patient age on queue cards when date of birth is available', function (): void {
+    [$branch, $user, $requestItem] = createLaboratoryWorklistContext();
+
+    $user->givePermissionTo('lab_requests.view');
+
+    $requestItem->request?->visit?->patient?->forceFill([
+        'date_of_birth' => now()->subYears(10)->toDateString(),
+        'age' => null,
+        'age_units' => null,
+    ])->save();
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('laboratory.incoming.index'));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('laboratory/queue')
+            ->where('requests.data.0.visit.patient.display_age', 10)
+            ->where('requests.data.0.visit.patient.display_age_units', 'year'));
 });
 
 it('records and removes consumable usage while syncing actual cost', function (): void {
@@ -249,7 +271,7 @@ it('records and removes consumable usage while syncing actual cost', function ()
         ->actingAs($user)
         ->post(route('laboratory.request-items.consumables.store', $requestItem), $payload);
 
-    $storeResponse->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+    $storeResponse->assertRedirectToRoute('laboratory.request-items.consumables.show', $requestItem);
     $storeResponse->assertSessionHas('success', 'Consumable usage recorded successfully.');
 
     $requestItem->refresh();
@@ -270,7 +292,7 @@ it('records and removes consumable usage while syncing actual cost', function ()
             'labRequestItemConsumable' => $usage->id,
         ]));
 
-    $deleteResponse->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+    $deleteResponse->assertRedirectToRoute('laboratory.request-items.consumables.show', $requestItem);
     $deleteResponse->assertSessionHas('success', 'Consumable usage removed successfully.');
 
     expect((float) $requestItem->fresh()->actual_cost)->toBe(0.0);

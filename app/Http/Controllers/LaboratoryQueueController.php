@@ -74,7 +74,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
             ->with([
                 'requestedBy:id,first_name,last_name',
                 'visit:id,visit_number,patient_id',
-                'visit.patient:id,patient_number,first_name,last_name,gender,age,age_units,phone_number',
+                'visit.patient:id,patient_number,first_name,last_name,gender,age,age_units,date_of_birth,phone_number',
                 'items' => function (HasMany $query) use ($stage): void {
                     $this->applyStageFilter($query, $stage)
                         ->with([
@@ -84,9 +84,8 @@ final readonly class LaboratoryQueueController implements HasMiddleware
                             'test.resultTypeDefinition:id,code,name',
                             'test.resultOptions:id,lab_test_catalog_id,label,sort_order',
                             'test.resultParameters:id,lab_test_catalog_id,label,unit,gender,age_min,age_max,reference_range,value_type,sort_order',
-                            'specimen:id,lab_request_item_id,accession_number,specimen_type_id,specimen_type_name,status,collected_by,collected_at,rejected_by,rejected_at,rejection_reason,outside_sample,outside_sample_origin,notes',
+                            'specimen:id,lab_request_item_id,accession_number,specimen_type_id,specimen_type_name,status,collected_by,collected_at,outside_sample,outside_sample_origin,notes',
                             'specimen.collectedBy:id,first_name,last_name',
-                            'specimen.rejectedBy:id,first_name,last_name',
                             'resultEntry:id,lab_request_item_id,entered_by,entered_at,reviewed_by,reviewed_at,approved_by,approved_at,released_by,released_at,result_notes,review_notes,approval_notes',
                             'resultEntry.enteredBy:id,first_name,last_name',
                             'resultEntry.reviewedBy:id,first_name,last_name',
@@ -115,19 +114,13 @@ final readonly class LaboratoryQueueController implements HasMiddleware
             'incoming' => $query
                 ->where('status', '!=', 'cancelled')
                 ->whereNull('approved_at')
-                ->where(function (Builder $stageQuery): void {
-                    $stageQuery
-                        ->whereDoesntHave('specimen')
-                        ->orWhereHas('specimen', static fn (Builder $specimenQuery): Builder => $specimenQuery
-                            ->where('status', 'rejected'));
-                }),
+                ->whereDoesntHave('specimen'),
             'enter_results' => $query
                 ->where('status', '!=', 'cancelled')
                 ->whereNull('result_entered_at')
                 ->where(static function (Builder $stageQuery): void {
                     $stageQuery
-                        ->whereHas('specimen', static fn (Builder $specimenQuery): Builder => $specimenQuery
-                            ->where('status', '!=', 'rejected'))
+                        ->whereHas('specimen')
                         ->orWhere(static fn (Builder $fallbackQuery): Builder => $fallbackQuery
                             ->whereDoesntHave('specimen')
                             ->whereNotNull('received_at'));

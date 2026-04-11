@@ -102,7 +102,7 @@ export function QueuePatientCard({
                                     Specimen
                                 </TableHead>
                                 <TableHead className="py-2 text-xs">
-                                    Workflow
+                                    Stage
                                 </TableHead>
                                 <TableHead className="py-2 text-xs">
                                     Timeline
@@ -219,6 +219,20 @@ export function QueuePatientCard({
                                             >
                                                 {actionLabel}
                                             </Button>
+                                            {pageStage === 'enter_results' ? (
+                                                <Button
+                                                    type="button"
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={`/laboratory/request-items/${item.id}/consumables`}
+                                                    >
+                                                        Consumables
+                                                    </a>
+                                                </Button>
+                                            ) : null}
                                             {pageStage === 'view_results' &&
                                             item.result_visible ? (
                                                 <Button
@@ -228,9 +242,24 @@ export function QueuePatientCard({
                                                     asChild
                                                 >
                                                     <a
+                                                        href={`/laboratory/request-items/${item.id}/consumables`}
+                                                    >
+                                                        Consumables
+                                                    </a>
+                                                </Button>
+                                            ) : null}
+                                            {pageStage === 'view_results' &&
+                                            item.result_visible ? (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <a
                                                         href={`/laboratory/request-items/${item.id}`}
                                                     >
-                                                        Details
+                                                        Result Correction
                                                     </a>
                                                 </Button>
                                             ) : null}

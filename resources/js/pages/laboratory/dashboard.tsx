@@ -15,6 +15,14 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from '@/components/ui/chart';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import {
@@ -23,25 +31,7 @@ import {
     type LaboratoryQueueRequest,
 } from '@/types/laboratory';
 import { Head, Link } from '@inertiajs/react';
-import {
-    Activity,
-    AlertTriangle,
-    CheckCircle2,
-    ClipboardList,
-    FlaskConical,
-    Microscope,
-    ShieldCheck,
-    TestTube,
-} from 'lucide-react';
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell,
-    Pie,
-    PieChart,
-    XAxis,
-} from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis } from 'recharts';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Laboratory', href: '/laboratory/dashboard' },
@@ -59,40 +49,41 @@ const COLORS = [
 const METRIC_STYLES: Record<
     string,
     {
-        ring: string;
-        bg: string;
-        text: string;
-        subtext: string;
-        icon: typeof Activity;
+        label: string;
+        number: string;
     }
 > = {
     'Requests Today': {
-        ring: 'ring-primary/20',
-        bg: 'bg-primary/5',
-        text: 'text-primary',
-        subtext: 'text-primary/80',
-        icon: ClipboardList,
+        label: 'text-primary',
+        number: 'text-primary',
     },
     'Urgent Open Requests': {
-        ring: 'ring-destructive/20',
-        bg: 'bg-destructive/5',
-        text: 'text-destructive',
-        subtext: 'text-destructive/80',
-        icon: AlertTriangle,
+        label: 'text-rose-600',
+        number: 'text-rose-600',
     },
     'Pending Review': {
-        ring: 'ring-amber-500/20',
-        bg: 'bg-amber-500/5',
-        text: 'text-amber-600',
-        subtext: 'text-amber-600/80',
-        icon: Microscope,
+        label: 'text-amber-600',
+        number: 'text-amber-600',
     },
     'Released Today': {
-        ring: 'ring-emerald-500/20',
-        bg: 'bg-emerald-500/5',
-        text: 'text-emerald-600',
-        subtext: 'text-emerald-600/80',
-        icon: CheckCircle2,
+        label: 'text-emerald-600',
+        number: 'text-emerald-600',
+    },
+    'Out of Stock': {
+        label: 'text-rose-600',
+        number: 'text-rose-600',
+    },
+    'Low Stock': {
+        label: 'text-amber-600',
+        number: 'text-amber-600',
+    },
+    'Expiring Soon': {
+        label: 'text-amber-600',
+        number: 'text-amber-600',
+    },
+    'Expired Stock': {
+        label: 'text-slate-700',
+        number: 'text-slate-700',
     },
 };
 
@@ -103,27 +94,61 @@ const labelize = (value: string | null | undefined): string =>
               .replace(/\b\w/g, (letter) => letter.toUpperCase())
         : 'Not set';
 
-const requestVariant = (
-    priority: string,
+const badgeVariant = (
+    value: string,
 ): 'default' | 'secondary' | 'destructive' | 'outline' => {
-    if (priority === 'critical' || priority === 'stat') return 'destructive';
-    if (priority === 'urgent') return 'secondary';
+    if (value === 'critical' || value === 'stat') return 'destructive';
+    if (value === 'urgent' || value === 'result_entered' || value === 'reviewed') {
+        return 'secondary';
+    }
+    if (value === 'approved') return 'default';
 
     return 'outline';
 };
 
-const workflowVariant = (
-    value: string,
-): 'default' | 'secondary' | 'destructive' | 'outline' => {
-    if (value === 'approved') return 'default';
-    if (value === 'reviewed' || value === 'result_entered') return 'secondary';
-    if (value === 'cancelled' || value === 'rejected') return 'destructive';
+const queueMetaForRequest = (
+    request: LaboratoryQueueRequest,
+): { label: string; href: string } => {
+    if (request.items.some((item) => item.workflow_stage === 'approved')) {
+        return {
+            label: 'View Results',
+            href: '/laboratory/view-results',
+        };
+    }
 
-    return 'outline';
+    if (
+        request.items.some(
+            (item) =>
+                item.workflow_stage === 'reviewed' ||
+                item.workflow_stage === 'result_entered',
+        )
+    ) {
+        return {
+            label: 'Review Results',
+            href: '/laboratory/review-results',
+        };
+    }
+
+    if (
+        request.items.some(
+            (item) => item.workflow_stage === 'sample_collected',
+        )
+    ) {
+        return {
+            label: 'Enter Results',
+            href: '/laboratory/enter-results',
+        };
+    }
+
+    return {
+        label: 'Incoming Queue',
+        href: '/laboratory/incoming-investigations',
+    };
 };
 
 export default function LaboratoryDashboard({
     metrics,
+    stock_metrics,
     request_status_counts,
     workflow_stage_counts,
     recent_requests,
@@ -168,11 +193,11 @@ export default function LaboratoryDashboard({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">
-                            Laboratory Analytics
+                            Laboratory Dashboard
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Queue pressure, review load, and the latest patient
-                            requests in the active branch.
+                            Queue load, released results, and lab stock for the
+                            active branch.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-3">
@@ -182,7 +207,7 @@ export default function LaboratoryDashboard({
                             </Link>
                         </Button>
                         <Button asChild variant="outline">
-                            <Link href="/lab-test-catalogs">Test Catalog</Link>
+                            <Link href="/laboratory/stock">Lab Stock</Link>
                         </Button>
                     </div>
                 </div>
@@ -193,12 +218,18 @@ export default function LaboratoryDashboard({
                     ))}
                 </div>
 
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    {stock_metrics.map((metric) => (
+                        <MetricCard key={metric.label} metric={metric} />
+                    ))}
+                </div>
+
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <Card className="flex flex-col border-none shadow-sm ring-1 ring-border/50">
+                    <Card className="border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader>
                             <CardTitle>Request Status Mix</CardTitle>
                             <CardDescription>
-                                High-level request volume by status
+                                High-level request volume by status.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-1 pb-0">
@@ -215,9 +246,7 @@ export default function LaboratoryDashboard({
                                         <ChartTooltip
                                             cursor={false}
                                             content={
-                                                <ChartTooltipContent
-                                                    hideLabel
-                                                />
+                                                <ChartTooltipContent hideLabel />
                                             }
                                         />
                                         <Pie
@@ -248,9 +277,10 @@ export default function LaboratoryDashboard({
 
                     <Card className="border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader>
-                            <CardTitle>Bench Workflow Pressure</CardTitle>
+                            <CardTitle>Lab Workflow Stages</CardTitle>
                             <CardDescription>
-                                Item-level workload across the result lifecycle
+                                Item-level workload across the laboratory
+                                result process.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -278,7 +308,7 @@ export default function LaboratoryDashboard({
                                     />
                                     <Bar
                                         dataKey="count"
-                                        fill="var(--color-count)"
+                                        fill="var(--chart-2)"
                                         radius={8}
                                     />
                                 </BarChart>
@@ -287,116 +317,51 @@ export default function LaboratoryDashboard({
                     </Card>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3">
-                    <Card className="col-span-2 border-none shadow-sm ring-1 ring-border/50">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Recent Requests</CardTitle>
-                                <CardDescription>
-                                    The newest requests, with urgent work pushed
-                                    to the top.
-                                </CardDescription>
+                <Card className="border-none shadow-sm ring-1 ring-border/50">
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <CardTitle>Recent Requests</CardTitle>
+                            <CardDescription>
+                                Latest patients and the tests they were sent
+                                for.
+                            </CardDescription>
+                        </div>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link href="/laboratory/incoming-investigations">
+                                View all
+                            </Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {recent_requests.length === 0 ? (
+                            <div className="rounded-lg border border-dashed px-4 py-12 text-center text-sm text-muted-foreground">
+                                No lab requests are available in the active
+                                branch yet.
                             </div>
-                            <Button variant="ghost" size="sm" asChild>
-                                <Link href="/laboratory/incoming-investigations">
-                                    View all
-                                </Link>
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="flex flex-col gap-4">
-                            {recent_requests.length === 0 ? (
-                                <div className="rounded-lg border border-dashed px-4 py-12 text-center text-sm text-muted-foreground">
-                                    No lab requests are available in the active
-                                    branch yet.
-                                </div>
-                            ) : (
-                                recent_requests.map((request) => (
-                                    <RecentRequestCard
-                                        key={request.id}
-                                        request={request}
-                                    />
-                                ))
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <div className="flex flex-col gap-6">
-                        <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-lg">
-                                    Quick Management
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid gap-3">
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/laboratory/incoming-investigations">
-                                        <ClipboardList className="mr-2 h-4 w-4" />
-                                        Incoming Queue
-                                    </Link>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/laboratory/enter-results">
-                                        <TestTube className="mr-2 h-4 w-4" />
-                                        Enter Results
-                                    </Link>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/laboratory/review-results">
-                                        <Microscope className="mr-2 h-4 w-4" />
-                                        Review Results
-                                    </Link>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/laboratory/view-results">
-                                        <ShieldCheck className="mr-2 h-4 w-4" />
-                                        Approved Results
-                                    </Link>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/lab-test-catalogs">
-                                        <FlaskConical className="mr-2 h-4 w-4" />
-                                        Test Catalog
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-none bg-primary/5 shadow-sm ring-1 ring-primary/20">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-lg text-primary">
-                                    Turnaround Discipline
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Keep urgent and critical requests flowing
-                                    through review promptly. Results sitting in
-                                    the bench queue delay clinical decisions.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Patient</TableHead>
+                                        <TableHead>Tests</TableHead>
+                                        <TableHead>Requested</TableHead>
+                                        <TableHead>Priority</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Queue</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {recent_requests.map((request) => (
+                                        <RecentRequestRow
+                                            key={request.id}
+                                            request={request}
+                                        />
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </AppLayout>
     );
@@ -404,112 +369,71 @@ export default function LaboratoryDashboard({
 
 function MetricCard({ metric }: { metric: LaboratoryDashboardMetric }) {
     const style = METRIC_STYLES[metric.label] ?? {
-        ring: 'ring-border/50',
-        bg: '',
-        text: '',
-        subtext: 'text-muted-foreground',
-        icon: Activity,
+        label: 'text-foreground',
+        number: 'text-foreground',
     };
-    const Icon = style.icon;
 
     return (
-        <Card
-            className={`overflow-hidden border-none shadow-sm ring-1 ${style.ring} ${style.bg}`}
-        >
+        <Card className="border-none shadow-sm ring-1 ring-border/50">
             <CardHeader className="space-y-0 pb-2">
                 <CardDescription
-                    className={`text-xs font-medium tracking-wider uppercase ${style.text}`}
+                    className={`text-xs font-medium tracking-wider uppercase ${style.label}`}
                 >
                     {metric.label}
                 </CardDescription>
-                <CardTitle className={`text-3xl font-bold ${style.text}`}>
+                <CardTitle className={`text-3xl font-bold ${style.number}`}>
                     {metric.value}
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div
-                    className={`flex items-center gap-1 text-xs ${style.subtext}`}
-                >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span>{metric.hint}</span>
-                </div>
+                <p className="text-xs text-muted-foreground">{metric.hint}</p>
             </CardContent>
         </Card>
     );
 }
 
-function RecentRequestCard({ request }: { request: LaboratoryQueueRequest }) {
+function RecentRequestRow({ request }: { request: LaboratoryQueueRequest }) {
     const patient = request.visit?.patient ?? null;
+    const queue = queueMetaForRequest(request);
 
     return (
-        <div className="rounded-lg border p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex flex-col gap-1">
-                    <p className="font-medium">
+        <TableRow>
+            <TableCell className="align-top">
+                <div className="flex flex-col">
+                    <span className="font-medium">
                         {patient
                             ? `${patient.first_name} ${patient.last_name}`
                             : 'Unknown patient'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        Visit {request.visit?.visit_number ?? 'N/A'} | MRN{' '}
-                        {patient?.patient_number ?? 'N/A'} | Requested{' '}
-                        {new Date(request.request_date).toLocaleString()}
-                    </p>
+                    </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={requestVariant(request.priority)}>
-                        {labelize(request.priority)}
-                    </Badge>
-                    <Badge variant="outline">{labelize(request.status)}</Badge>
+            </TableCell>
+            <TableCell className="max-w-[28rem] align-top">
+                <div className="flex flex-col gap-1 whitespace-normal">
+                    {request.items.map((item) => (
+                        <span key={item.id} className="text-sm">
+                            {item.test?.test_name ?? 'Lab test'}
+                        </span>
+                    ))}
                 </div>
-            </div>
-
-            <div className="mt-4 flex flex-col gap-3">
-                {request.items.map((item) => (
-                    <div
-                        key={item.id}
-                        className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 lg:flex-row lg:items-center lg:justify-between"
-                    >
-                        <div className="flex flex-col gap-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-medium">
-                                    {item.test?.test_name ?? 'Lab test'}
-                                </p>
-                                <Badge
-                                    variant={workflowVariant(
-                                        item.workflow_stage,
-                                    )}
-                                >
-                                    {labelize(item.workflow_stage)}
-                                </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                                {item.test?.test_code ?? 'N/A'} |{' '}
-                                {item.test?.category ?? 'Uncategorized'} |{' '}
-                                {item.test?.specimen_type ?? 'Specimen not set'}
-                            </p>
-                        </div>
-                        <Button variant="outline" asChild>
-                            <Link
-                                href={
-                                    item.workflow_stage === 'approved'
-                                        ? '/laboratory/view-results'
-                                        : item.workflow_stage ===
-                                                'result_entered' ||
-                                            item.workflow_stage === 'reviewed'
-                                          ? '/laboratory/review-results'
-                                          : item.workflow_stage ===
-                                              'sample_collected'
-                                            ? '/laboratory/enter-results'
-                                            : '/laboratory/incoming-investigations'
-                                }
-                            >
-                                Open Queue
-                            </Link>
-                        </Button>
-                    </div>
-                ))}
-            </div>
-        </div>
+            </TableCell>
+            <TableCell className="align-top text-sm text-muted-foreground">
+                {new Date(request.request_date).toLocaleString()}
+            </TableCell>
+            <TableCell className="align-top">
+                <Badge variant={badgeVariant(request.priority)}>
+                    {labelize(request.priority)}
+                </Badge>
+            </TableCell>
+            <TableCell className="align-top">
+                <Badge variant={badgeVariant(request.status)}>
+                    {labelize(request.status)}
+                </Badge>
+            </TableCell>
+            <TableCell className="align-top">
+                <Button variant="outline" size="sm" asChild>
+                    <Link href={queue.href}>{queue.label}</Link>
+                </Button>
+            </TableCell>
+        </TableRow>
     );
 }

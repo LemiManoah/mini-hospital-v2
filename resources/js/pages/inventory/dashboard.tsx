@@ -156,7 +156,7 @@ export default function InventoryDashboard({ stats }: InventoryDashboardProps) {
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {/* Row 1 */}
-                    <Card className="overflow-hidden border-none bg-destructive/5 shadow-sm ring-1 ring-destructive/20">
+                    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader className="space-y-0 pb-2">
                             <CardDescription className="text-xs font-medium tracking-wider text-destructive uppercase">
                                 Out of Stock
@@ -166,14 +166,14 @@ export default function InventoryDashboard({ stats }: InventoryDashboardProps) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex items-center gap-1 text-xs text-destructive/80">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <ShieldAlert className="h-3.5 w-3.5" />
                                 <span>Zero balance items</span>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden border-none bg-amber-500/5 shadow-sm ring-1 ring-amber-500/20">
+                    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader className="space-y-0 pb-2">
                             <CardDescription className="text-xs font-medium tracking-wider text-amber-600 uppercase">
                                 Low Stock
@@ -183,14 +183,14 @@ export default function InventoryDashboard({ stats }: InventoryDashboardProps) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex items-center gap-1 text-xs text-amber-600/80">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <TrendingUp className="h-3.5 w-3.5" />
                                 <span>Below minimum level</span>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden border-none bg-orange-500/5 shadow-sm ring-1 ring-orange-500/20">
+                    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader className="space-y-0 pb-2">
                             <CardDescription className="text-xs font-medium tracking-wider text-orange-600 uppercase">
                                 Expiring Soon
@@ -200,27 +200,28 @@ export default function InventoryDashboard({ stats }: InventoryDashboardProps) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex items-center gap-1 text-xs text-orange-600/80">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <ShieldAlert className="h-3.5 w-3.5" />
                                 <span>Expiring within 30 days</span>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden border-none bg-primary/5 shadow-sm ring-1 ring-primary/20">
+                    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader className="space-y-0 pb-2">
                             <CardDescription className="text-xs font-medium tracking-wider text-primary uppercase">
                                 Total Stock Value
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold text-primary">
-                                {new Intl.NumberFormat('en-US', {
+                                {new Intl.NumberFormat('en-UG', {
                                     style: 'currency',
-                                    currency: 'USD',
+                                    currency: 'UGX',
+                                    maximumFractionDigits: 0,
                                 }).format(stats.total_value)}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex items-center gap-1 text-xs text-primary/80">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Boxes className="h-3.5 w-3.5" />
                                 <span>Monetary value of inventory</span>
                             </div>
@@ -509,7 +510,7 @@ export default function InventoryDashboard({ stats }: InventoryDashboardProps) {
                             </CardContent>
                         </Card>
 
-                        <Card className="border-none bg-primary/5 shadow-sm ring-1 ring-primary/20">
+                        <Card className="border-none shadow-sm ring-1 ring-border/50">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-lg text-primary">
                                     Stock Foundation

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,11 @@ final class Patient extends Model
 
     use HasUuids;
     use SoftDeletes;
+
+    protected $appends = [
+        'display_age',
+        'display_age_units',
+    ];
 
     protected $casts = [
         'tenant_id' => 'string',
@@ -88,5 +94,96 @@ final class Patient extends Model
         }
 
         return $this->date_of_birth->age;
+    }
+
+    public function getDisplayAgeAttribute(): ?int
+    {
+        if (
+            array_key_exists('age', $this->attributes)
+            && $this->attributes['age'] !== null
+        ) {
+            return (int) $this->attributes['age'];
+        }
+
+        $dateOfBirth = $this->resolvedDateOfBirth();
+
+        if (! $dateOfBirth instanceof CarbonInterface) {
+            return null;
+        }
+
+        $today = now()->startOfDay();
+        $dob = $dateOfBirth->startOfDay();
+
+        if ($dob->greaterThan($today)) {
+            return null;
+        }
+
+        $years = (int) $dob->diffInYears($today);
+
+        if ($years >= 1) {
+            return $years;
+        }
+
+        $months = (int) $dob->diffInMonths($today);
+
+        if ($months >= 1) {
+            return $months;
+        }
+
+        return (int) $dob->diffInDays($today);
+    }
+
+    public function getDisplayAgeUnitsAttribute(): ?string
+    {
+        if (
+            array_key_exists('age', $this->attributes)
+            && $this->attributes['age'] !== null
+            && array_key_exists('age_units', $this->attributes)
+            && $this->attributes['age_units'] !== null
+        ) {
+            return (string) $this->attributes['age_units'];
+        }
+
+        $dateOfBirth = $this->resolvedDateOfBirth();
+
+        if (! $dateOfBirth instanceof CarbonInterface) {
+            return null;
+        }
+
+        $today = now()->startOfDay();
+        $dob = $dateOfBirth->startOfDay();
+
+        if ($dob->greaterThan($today)) {
+            return null;
+        }
+
+        $years = (int) $dob->diffInYears($today);
+
+        if ($years >= 1) {
+            return 'year';
+        }
+
+        $months = (int) $dob->diffInMonths($today);
+
+        if ($months >= 1) {
+            return 'month';
+        }
+
+        return 'day';
+    }
+
+    private function resolvedDateOfBirth(): ?CarbonInterface
+    {
+        if (! array_key_exists('date_of_birth', $this->attributes)) {
+            return null;
+        }
+
+        $value = $this->attributes['date_of_birth'];
+
+        if ($value === null) {
+            return null;
+        }
+
+        return $this->asDate($value);
     }
 }
