@@ -73,6 +73,8 @@ const resultValueDisplay = (value: LaboratoryResultValue): string =>
 
 export default function LaboratoryRequestItemShow({
     labRequestItem,
+    labReleasePolicy,
+    paymentBlockMessage,
 }: LaboratoryRequestItemPageProps) {
     const patient = labRequestItem.request?.visit?.patient ?? null;
     const resultEntry: LaboratoryResultEntry | null =
@@ -86,8 +88,11 @@ export default function LaboratoryRequestItemShow({
         labRequestItem.workflow_stage === 'result_entered' ||
         labRequestItem.workflow_stage === 'reviewed' ||
         labRequestItem.workflow_stage === 'approved';
+    const requiresApproval =
+        labReleasePolicy.require_approval_before_release;
+    const paymentBlocked = paymentBlockMessage !== null;
     const [correctionMode, setCorrectionMode] = useState(false);
-    const resultEditingLocked = isApproved && !correctionMode;
+    const resultEditingLocked = paymentBlocked || (isApproved && !correctionMode);
     const pageTitle = 'Result Correction';
     const resultManagementTitle =
         isApproved || correctionMode ? 'Result Correction' : 'Result Entry';
@@ -95,6 +100,10 @@ export default function LaboratoryRequestItemShow({
         isApproved || correctionMode
             ? 'Correct a released result when needed. Saving a correction hides it from clinicians until it is reviewed and released again.'
             : 'Save the bench result in the configured format for this test.';
+    const releaseSubmitUrl =
+        !requiresApproval && !isApproved
+            ? `/laboratory/request-items/${labRequestItem.id}/review`
+            : `/laboratory/request-items/${labRequestItem.id}/approve`;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Laboratory', href: '/laboratory/dashboard' },
@@ -137,6 +146,14 @@ export default function LaboratoryRequestItemShow({
                 title={`${pageTitle} ${labRequestItem.test?.test_name ?? ''}`}
             />
             <div className="m-4 flex flex-col gap-6">
+                {paymentBlocked ? (
+                    <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
+                        <Badge variant="destructive" className="shrink-0">
+                            Payment Required
+                        </Badge>
+                        <p>{paymentBlockMessage}</p>
+                    </div>
+                ) : null}
                 <Card>
                     <CardHeader>
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -477,6 +494,7 @@ export default function LaboratoryRequestItemShow({
                                                         }
                                                     }}
                                                     disabled={
+                                                        paymentBlocked ||
                                                         resultForm.processing
                                                     }
                                                 >
@@ -488,6 +506,7 @@ export default function LaboratoryRequestItemShow({
                                             <Button
                                                 type="submit"
                                                 disabled={
+                                                    paymentBlocked ||
                                                     resultEditingLocked ||
                                                     resultForm.processing
                                                 }
@@ -504,19 +523,24 @@ export default function LaboratoryRequestItemShow({
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Review and Release</CardTitle>
+                                <CardTitle>
+                                    {requiresApproval
+                                        ? 'Review and Release'
+                                        : 'Review Results'}
+                                </CardTitle>
                                 <CardDescription>
-                                    Review and release the result in one step.
+                                    {requiresApproval
+                                        ? 'Review and release the result in one step.'
+                                        : 'Review the result and release it directly from this step.'}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-6">
                                 <form
                                     onSubmit={(event) => {
                                         event.preventDefault();
-                                        releaseForm.post(
-                                            `/laboratory/request-items/${labRequestItem.id}/approve`,
-                                            { preserveScroll: true },
-                                        );
+                                        releaseForm.post(releaseSubmitUrl, {
+                                            preserveScroll: true,
+                                        });
                                     }}
                                     className="flex flex-col gap-4 rounded-lg border p-4"
                                 >
@@ -596,43 +620,49 @@ export default function LaboratoryRequestItemShow({
                                             }
                                         />
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="approval_notes">
-                                            Release Notes
-                                        </Label>
-                                        <Textarea
-                                            id="approval_notes"
-                                            rows={3}
-                                            value={
-                                                releaseForm.data.approval_notes
-                                            }
-                                            onChange={(event) =>
-                                                releaseForm.setData(
-                                                    'approval_notes',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            disabled={!canRelease}
-                                            placeholder="Optional release notes"
-                                        />
-                                        <InputError
-                                            message={
-                                                releaseForm.errors
-                                                    .approval_notes
-                                            }
-                                        />
-                                    </div>
+                                    {requiresApproval ? (
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="approval_notes">
+                                                Release Notes
+                                            </Label>
+                                            <Textarea
+                                                id="approval_notes"
+                                                rows={3}
+                                                value={
+                                                    releaseForm.data
+                                                        .approval_notes
+                                                }
+                                                onChange={(event) =>
+                                                    releaseForm.setData(
+                                                        'approval_notes',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                disabled={!canRelease}
+                                                placeholder="Optional release notes"
+                                            />
+                                            <InputError
+                                                message={
+                                                    releaseForm.errors
+                                                        .approval_notes
+                                                }
+                                            />
+                                        </div>
+                                    ) : null}
                                     <div className="flex justify-end">
                                         <Button
                                             type="submit"
                                             disabled={
+                                                paymentBlocked ||
                                                 !canRelease ||
                                                 releaseForm.processing
                                             }
                                         >
                                             {isApproved
                                                 ? 'Update Release Notes'
-                                                : 'Review and Release'}
+                                                : requiresApproval
+                                                  ? 'Review and Release'
+                                                  : 'Review Results'}
                                         </Button>
                                     </div>
                                 </form>

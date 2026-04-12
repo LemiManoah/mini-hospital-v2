@@ -515,6 +515,19 @@ To keep the first version manageable, I recommend launching with:
 
 That will already make the module valuable without becoming too big.
 
+Implementation update:
+
+- A first saved `General Settings` page now exists under `Administration`
+- The first-release scope above is now persisted per tenant
+- This initial slice stores the rules and makes them manageable from one page
+- Initial workflow enforcement is now in place for:
+- consultation payment gate
+- laboratory order payment gate
+- prescription payment gate
+- facility service order payment gate
+- laboratory release policy, including optional release directly from review when approval is disabled
+- Additional workflow-by-workflow enforcement can now be added incrementally on top of that settings base
+
 ---
 
 ## 15) Bottom Line

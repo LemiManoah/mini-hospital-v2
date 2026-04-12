@@ -90,6 +90,18 @@ export function RequisitionIssuePanel({
                             const totalIssueQuantity = Number(
                                 issueLine?.issue_quantity ?? 0,
                             );
+                            const allocatedQuantity = allocations.reduce(
+                                (sum, allocation) =>
+                                    sum + Number(allocation.quantity || 0),
+                                0,
+                            );
+                            const remainingAllocation = Math.max(
+                                totalIssueQuantity - allocatedQuantity,
+                                0,
+                            );
+                            const batchOptions = batchOptionsFor(
+                                line.inventory_item_id,
+                            );
 
                             return (
                                 <>
@@ -158,7 +170,8 @@ export function RequisitionIssuePanel({
                                     it.
                                 </p>
                             ) : allocations.length > 0 ? (
-                                allocations.map(
+                                <>
+                                {allocations.map(
                                     (allocation, allocationIndex) => (
                                         <div
                                             key={`${line.id}-${allocationIndex}`}
@@ -233,7 +246,38 @@ export function RequisitionIssuePanel({
                                             </div>
                                         </div>
                                     ),
-                                )
+                                )}
+                                <div className="flex flex-col gap-3 rounded border border-dashed border-zinc-200 p-3 md:flex-row md:items-center md:justify-between dark:border-zinc-700">
+                                    <div className="text-sm text-muted-foreground">
+                                        Allocated: {allocatedQuantity.toFixed(3)}{' '}
+                                        of {totalIssueQuantity.toFixed(3)}
+                                        {remainingAllocation > 0 ? (
+                                            <span>
+                                                {' '}
+                                                | Remaining:{' '}
+                                                {remainingAllocation.toFixed(3)}
+                                            </span>
+                                        ) : (
+                                            <span> | Fully allocated</span>
+                                        )}
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                            onAddAllocation(lineIndex)
+                                        }
+                                        disabled={
+                                            batchOptions.length === 0 ||
+                                            remainingAllocation <= 0
+                                        }
+                                    >
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add Batch
+                                    </Button>
+                                </div>
+                                </>
                             ) : (
                                 <div className="flex items-center justify-between rounded border border-dashed border-zinc-200 p-3 dark:border-zinc-700">
                                     <p className="text-sm text-muted-foreground">
@@ -246,6 +290,7 @@ export function RequisitionIssuePanel({
                                         onClick={() =>
                                             onAddAllocation(lineIndex)
                                         }
+                                        disabled={batchOptions.length === 0}
                                     >
                                         <PlusCircle className="mr-2 h-4 w-4" />
                                         Add Batch

@@ -40,6 +40,14 @@ export default function InventoryStockByLocationIndex({
 }: InventoryStockByLocationPageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
+        ...(navigation.management_href
+            ? [
+                  {
+                      title: navigation.management_title ?? 'Management',
+                      href: navigation.management_href,
+                  },
+              ]
+            : []),
         { title: navigation.stock_title, href: navigation.stock_href },
     ];
 

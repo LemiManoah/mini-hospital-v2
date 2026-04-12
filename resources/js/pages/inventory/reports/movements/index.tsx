@@ -33,6 +33,14 @@ export default function InventoryMovementReportIndex({
 }: InventoryMovementReportPageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
+        ...(navigation.management_href
+            ? [
+                  {
+                      title: navigation.management_title ?? 'Management',
+                      href: navigation.management_href,
+                  },
+              ]
+            : []),
         { title: navigation.movements_title, href: navigation.movements_href },
     ];
 

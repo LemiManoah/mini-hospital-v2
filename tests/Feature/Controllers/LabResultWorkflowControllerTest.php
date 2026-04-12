@@ -24,6 +24,7 @@ use App\Models\SpecimenType;
 use App\Models\Staff;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
+use App\Models\TenantGeneralSetting;
 use App\Models\TriageRecord;
 use App\Models\User;
 use App\Models\VisitPayer;
@@ -447,6 +448,43 @@ it('can review and release parameter-panel lab results in one approval step', fu
         ->and($requestItem->result_visible)->toBeTrue();
 
     expect($resultEntry?->reviewed_at)->not()->toBeNull();
+});
+
+it('auto releases reviewed results when approval is not required by general settings', function (): void {
+    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+
+    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
+
+    TenantGeneralSetting::query()->updateOrCreate(
+        [
+            'tenant_id' => $branch->tenant_id,
+            'key' => 'laboratory.require_approval_before_release',
+        ],
+        [
+            'value' => '0',
+        ],
+    );
+
+    collectWorkflowSample($branch, $user, $requestItem);
+    storeWorkflowResult($branch, $user, $requestItem, $parameter, '13.4');
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.request-items.review', $requestItem), [
+            'review_notes' => 'Reviewed and released from the review step.',
+        ]);
+
+    $response->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+    $response->assertSessionHas('success', 'Lab results reviewed and released successfully.');
+
+    $requestItem->refresh();
+    $resultEntry = $requestItem->resultEntry()->firstOrFail();
+
+    expect($requestItem->status->value)->toBe('completed')
+        ->and($requestItem->approved_at)->not()->toBeNull()
+        ->and($requestItem->result_visible)->toBeTrue()
+        ->and($resultEntry->approved_at)->not()->toBeNull()
+        ->and($resultEntry->released_at)->not()->toBeNull();
 });
 
 it('moves a request item between the incoming and enter-results queues after sample picking', function (): void {

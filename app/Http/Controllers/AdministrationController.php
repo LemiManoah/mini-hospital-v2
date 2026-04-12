@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateGeneralSettingsRequest;
+use App\Models\Currency;
+use App\Models\TenantGeneralSetting;
+use App\Support\GeneralSettings\GeneralSettingsRegistry;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -12,64 +17,61 @@ final class AdministrationController
 {
     public function generalSettings(Request $request): Response
     {
-        $this->abortUnlessCanAccess(
-            $request,
-            [
-                'facility_branches.view',
-                'clinics.view',
-                'departments.view',
-                'facility_services.view',
-                'insurance_companies.view',
-                'insurance_packages.view',
-                'addresses.view',
-                'allergens.view',
-                'currencies.view',
-                'units.view',
-                'subscription_packages.view',
-                'tenants.view',
-            ],
-        );
+        $this->abortUnlessCanAccess($request, $this->generalSettingsPermissions());
+
+        $tenantId = $request->user()?->tenant_id;
+
+        abort_unless(is_string($tenantId) && $tenantId !== '', 403);
+
+        $storedValues = TenantGeneralSetting::query()
+            ->where('tenant_id', $tenantId)
+            ->pluck('value', 'key')
+            ->all();
 
         return Inertia::render('administration/general-settings', [
-            'categories' => [
-                [
-                    'title' => 'Billing And Payment Rules',
-                    'description' => 'Control when services can be rendered relative to payment and insurance handling.',
-                    'examples' => [
-                        'Require payment before consultation, laboratory, pharmacy, or procedures',
-                        'Allow insured patients to bypass upfront payment',
-                        'Require bill settlement before discharge',
-                    ],
-                ],
-                [
-                    'title' => 'Currency And Pricing',
-                    'description' => 'Define the facility currency, display behavior, and pricing defaults.',
-                    'examples' => [
-                        'Default operating currency',
-                        'Decimal precision and rounding behavior',
-                        'Price override and tax display rules',
-                    ],
-                ],
-                [
-                    'title' => 'Laboratory And Pharmacy Rules',
-                    'description' => 'Centralize operational controls that should differ by hospital policy.',
-                    'examples' => [
-                        'Require review before lab result release',
-                        'Enable batch tracking during dispensing',
-                        'Allow partial dispensing and substitution with reasons',
-                    ],
-                ],
-                [
-                    'title' => 'Clinical And Registration Rules',
-                    'description' => 'Set workflow guardrails for triage, consultation, numbering, and document output.',
-                    'examples' => [
-                        'Require triage before consultation',
-                        'Patient, visit, receipt, and lab numbering formats',
-                        'Print layout and signature defaults',
-                    ],
-                ],
-            ],
+            'sections' => GeneralSettingsRegistry::sections(),
+            'values' => GeneralSettingsRegistry::resolveValues($storedValues),
+            'currencies' => Currency::query()
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'symbol'])
+                ->map(static fn (Currency $currency): array => [
+                    'value' => $currency->id,
+                    'label' => sprintf(
+                        '%s (%s%s)',
+                        $currency->name,
+                        $currency->code,
+                        $currency->symbol !== null && $currency->symbol !== ''
+                            ? ' - '.$currency->symbol
+                            : '',
+                    ),
+                ])
+                ->values()
+                ->all(),
         ]);
+    }
+
+    public function updateGeneralSettings(UpdateGeneralSettingsRequest $request): RedirectResponse
+    {
+        $this->abortUnlessCanAccess($request, $this->generalSettingsPermissions());
+
+        $tenantId = $request->user()?->tenant_id;
+
+        abort_unless(is_string($tenantId) && $tenantId !== '', 403);
+
+        foreach (GeneralSettingsRegistry::serializeValues($request->validated()) as $key => $value) {
+            TenantGeneralSetting::query()->updateOrCreate(
+                [
+                    'tenant_id' => $tenantId,
+                    'key' => $key,
+                ],
+                [
+                    'value' => $value,
+                ],
+            );
+        }
+
+        return to_route('administration.general-settings')
+            ->with('success', 'General settings updated successfully.');
     }
 
     public function insuranceSetup(Request $request): Response
@@ -231,5 +233,26 @@ final class AdministrationController
             ),
             403,
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function generalSettingsPermissions(): array
+    {
+        return [
+            'facility_branches.view',
+            'clinics.view',
+            'departments.view',
+            'facility_services.view',
+            'insurance_companies.view',
+            'insurance_packages.view',
+            'addresses.view',
+            'allergens.view',
+            'currencies.view',
+            'units.view',
+            'subscription_packages.view',
+            'tenants.view',
+        ];
     }
 }

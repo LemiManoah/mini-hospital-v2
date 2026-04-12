@@ -159,6 +159,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('appointments/{appointment}/check-in', [AppointmentController::class, 'checkIn'])->name('appointments.check-in');
     Route::resource('addresses', AddressController::class)->except(['show']);
     Route::get('administration/general-settings', [AdministrationController::class, 'generalSettings'])->name('administration.general-settings');
+    Route::patch('administration/general-settings', [AdministrationController::class, 'updateGeneralSettings'])->name('administration.general-settings.update');
     Route::get('administration/insurance-setup', [AdministrationController::class, 'insuranceSetup'])->name('administration.insurance-setup');
     Route::get('administration/master-data', [AdministrationController::class, 'masterData'])->name('administration.master-data');
     Route::get('administration/platform', [AdministrationController::class, 'platform'])->name('administration.platform');

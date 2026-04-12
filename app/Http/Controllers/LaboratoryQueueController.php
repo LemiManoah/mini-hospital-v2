@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LabRequest;
 use App\Support\ActiveBranchWorkspace;
+use App\Support\VisitWorkflowGuard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
 {
     public function __construct(
         private ActiveBranchWorkspace $activeBranchWorkspace,
+        private VisitWorkflowGuard $visitWorkflowGuard,
     ) {}
 
     public static function middleware(): array
@@ -99,12 +101,20 @@ final readonly class LaboratoryQueueController implements HasMiddleware
             ->paginate(10)
             ->withQueryString();
 
+        $tenantId = $requests->getCollection()->first()?->tenant_id;
+
         return Inertia::render('laboratory/queue', [
             'page' => $this->pageMeta($stage),
             'requests' => $requests,
             'filters' => [
                 'search' => $search,
             ],
+            'labReleasePolicy' => is_string($tenantId) && $tenantId !== ''
+                ? $this->visitWorkflowGuard->labReleasePolicy($tenantId)
+                : [
+                    'require_review_before_release' => true,
+                    'require_approval_before_release' => true,
+                ],
         ]);
     }
 

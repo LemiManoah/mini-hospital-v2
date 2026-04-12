@@ -28,6 +28,14 @@ export default function GoodsReceiptShow({
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
+        ...(navigation.management_href
+            ? [
+                  {
+                      title: navigation.management_title ?? 'Management',
+                      href: navigation.management_href,
+                  },
+              ]
+            : []),
         { title: navigation.receipts_title, href: navigation.receipts_href },
         {
             title: gr.receipt_number,

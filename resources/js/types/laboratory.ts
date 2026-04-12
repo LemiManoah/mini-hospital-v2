@@ -181,6 +181,11 @@ export interface LaboratoryWorklistPageProps {
 
 export interface LaboratoryRequestItemPageProps {
     labRequestItem: LaboratoryRequestItem;
+    labReleasePolicy: {
+        require_review_before_release: boolean;
+        require_approval_before_release: boolean;
+    };
+    paymentBlockMessage: string | null;
 }
 
 export interface LaboratoryRequestItemConsumablesPageProps {
@@ -215,5 +220,9 @@ export interface LaboratoryQueuePageProps {
     requests: PaginatedLaboratoryItemList<LaboratoryQueueRequest>;
     filters: {
         search: string | null;
+    };
+    labReleasePolicy: {
+        require_review_before_release: boolean;
+        require_approval_before_release: boolean;
     };
 }

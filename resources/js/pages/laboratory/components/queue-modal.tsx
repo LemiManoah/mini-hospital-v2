@@ -8,10 +8,15 @@ export function QueueModal({
     activeModal,
     onOpenChange,
     redirectTo,
+    labReleasePolicy,
 }: {
     activeModal: ActiveModal;
     onOpenChange: (open: boolean) => void;
     redirectTo: string;
+    labReleasePolicy: {
+        require_review_before_release: boolean;
+        require_approval_before_release: boolean;
+    };
 }) {
     if (activeModal === null) {
         return null;
@@ -37,6 +42,7 @@ export function QueueModal({
             open
             onOpenChange={onOpenChange}
             redirectTo={redirectTo}
+            labReleasePolicy={labReleasePolicy}
         />
     ) : (
         <LabResultDialog

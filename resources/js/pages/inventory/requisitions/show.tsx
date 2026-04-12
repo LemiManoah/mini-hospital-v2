@@ -29,6 +29,14 @@ export default function InventoryRequisitionShow({
     const { hasPermission } = usePermissions();
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
+        ...(navigation.management_href
+            ? [
+                  {
+                      title: navigation.management_title ?? 'Management',
+                      href: navigation.management_href,
+                  },
+              ]
+            : []),
         {
             title: navigation.requisitions_title,
             href: navigation.requisitions_href,

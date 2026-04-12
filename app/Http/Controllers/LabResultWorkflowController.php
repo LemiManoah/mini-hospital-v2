@@ -102,7 +102,9 @@ final readonly class LabResultWorkflowController implements HasMiddleware
                 $staffId,
                 $this->nullableText($request->input('review_notes')),
             ),
-            'Lab results reviewed successfully.',
+            static fn (LabRequestItem $updatedItem): string => $updatedItem->approved_at !== null
+                ? 'Lab results reviewed and released successfully.'
+                : 'Lab results reviewed successfully.',
         );
     }
 
@@ -126,12 +128,13 @@ final readonly class LabResultWorkflowController implements HasMiddleware
 
     /**
      * @param  Closure(string):mixed  $callback
+     * @param  string|Closure(mixed):string  $successMessage
      */
     private function handleAction(
         Request $request,
         LabRequestItem $labRequestItem,
         Closure $callback,
-        string $successMessage,
+        string|Closure $successMessage,
     ): RedirectResponse {
         $labRequest = $labRequestItem->request()->firstOrFail();
         $this->activeBranchWorkspace->authorizeModel($labRequest);
@@ -144,14 +147,14 @@ final readonly class LabResultWorkflowController implements HasMiddleware
         }
 
         try {
-            $callback($staffId);
+            $result = $callback($staffId);
         } catch (ValidationException $validationException) {
             return $this->redirectToTarget($request, $labRequestItem)
                 ->with('error', $validationException->validator->errors()->first() ?: 'The lab workflow action could not be completed.');
         }
 
         return $this->redirectToTarget($request, $labRequestItem)
-            ->with('success', $successMessage);
+            ->with('success', is_string($successMessage) ? $successMessage : $successMessage($result));
     }
 
     private function redirectToTarget(Request $request, LabRequestItem $labRequestItem): RedirectResponse
