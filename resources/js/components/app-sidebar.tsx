@@ -255,10 +255,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
         {
             title: 'Pharmacy',
-            url: '/pharmacy/stock',
+            url: '/pharmacy/queue',
             icon: PillBottle,
             items: filterItems(
                 [
+                    {
+                        title: 'Pharmacy Queue',
+                        url: '/pharmacy/queue',
+                        permission: 'visits.view',
+                    },
                     {
                         title: 'Pharmacy Stock',
                         url: '/pharmacy/stock',

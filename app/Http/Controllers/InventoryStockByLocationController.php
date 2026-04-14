@@ -195,7 +195,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                 ];
             });
 
-        if ($workspaceKey === 'laboratory' && is_string($tenantId) && $tenantId !== '') {
+        if (in_array($workspaceKey, ['laboratory', 'pharmacy'], true) && is_string($tenantId) && $tenantId !== '') {
             InventoryItem::query()
                 ->where('tenant_id', $tenantId)
                 ->active()

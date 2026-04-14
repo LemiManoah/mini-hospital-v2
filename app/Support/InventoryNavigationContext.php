@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 final class InventoryNavigationContext
 {
     /**
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
     public static function fromRequest(Request $request): array
     {
@@ -22,6 +22,8 @@ final class InventoryNavigationContext
                 'section_href' => '/laboratory/dashboard',
                 'management_title' => 'Lab Management',
                 'management_href' => '/laboratory/management',
+                'queue_title' => null,
+                'queue_href' => null,
                 'stock_title' => 'Lab Stock',
                 'stock_href' => '/laboratory/stock',
                 'requisitions_title' => 'Lab Requisitions',
@@ -32,13 +34,17 @@ final class InventoryNavigationContext
                 'receipts_title' => 'Lab Receipts',
                 'receipts_href' => '/laboratory/receipts',
                 'receipt_create_title' => 'Create Lab Receipt',
+                'dispenses_title' => null,
+                'dispenses_href' => null,
             ],
             'pharmacy' => [
                 'key' => 'pharmacy',
                 'section_title' => 'Pharmacy',
-                'section_href' => '/pharmacy/stock',
+                'section_href' => '/pharmacy/queue',
                 'management_title' => null,
                 'management_href' => null,
+                'queue_title' => 'Pharmacy Queue',
+                'queue_href' => '/pharmacy/queue',
                 'stock_title' => 'Pharmacy Stock',
                 'stock_href' => '/pharmacy/stock',
                 'requisitions_title' => 'Pharmacy Requisitions',
@@ -49,6 +55,8 @@ final class InventoryNavigationContext
                 'receipts_title' => 'Pharmacy Receipts',
                 'receipts_href' => '/pharmacy/receipts',
                 'receipt_create_title' => 'Create Pharmacy Receipt',
+                'dispenses_title' => 'Dispense Records',
+                'dispenses_href' => '/pharmacy/queue',
             ],
             default => [
                 'key' => 'inventory',
@@ -56,6 +64,8 @@ final class InventoryNavigationContext
                 'section_href' => '/inventory/dashboard',
                 'management_title' => null,
                 'management_href' => null,
+                'queue_title' => null,
+                'queue_href' => null,
                 'stock_title' => 'Stock By Location',
                 'stock_href' => '/inventory/stock-by-location',
                 'requisitions_title' => 'Incoming Requisitions',
@@ -66,6 +76,8 @@ final class InventoryNavigationContext
                 'receipts_title' => 'Goods Receipts',
                 'receipts_href' => '/goods-receipts',
                 'receipt_create_title' => 'Create Goods Receipt',
+                'dispenses_title' => null,
+                'dispenses_href' => null,
             ],
         };
     }
