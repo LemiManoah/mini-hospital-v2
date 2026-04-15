@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class PrescriptionItem extends Model
 {
@@ -36,5 +37,10 @@ final class PrescriptionItem extends Model
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
+    }
+
+    public function dispensingRecordItems(): HasMany
+    {
+        return $this->hasMany(DispensingRecordItem::class);
     }
 }

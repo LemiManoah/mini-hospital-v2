@@ -19,11 +19,16 @@ export function ReviewResultDialog({
     open,
     onOpenChange,
     redirectTo,
+    labReleasePolicy,
 }: {
     item: LaboratoryRequestItem;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     redirectTo: string;
+    labReleasePolicy: {
+        require_review_before_release: boolean;
+        require_approval_before_release: boolean;
+    };
 }) {
     const resultEntry = item.resultEntry ?? item.result_entry ?? null;
     const values = resultEntry?.values ?? [];
@@ -32,15 +37,26 @@ export function ReviewResultDialog({
         approval_notes: resultEntry?.approval_notes ?? '',
         redirect_to: redirectTo,
     });
+    const requiresApproval = labReleasePolicy.require_approval_before_release;
+    const submitUrl = requiresApproval
+        ? `/laboratory/request-items/${item.id}/approve`
+        : `/laboratory/request-items/${item.id}/review`;
+    const dialogTitle = requiresApproval
+        ? 'Review and Release Results'
+        : 'Review Results';
+    const dialogDescription = requiresApproval
+        ? 'Confirm the entered result and release it in one step.'
+        : 'Confirm the entered result and release it directly from the review step.';
+    const submitLabel = requiresApproval
+        ? 'Review and Release'
+        : 'Review and Release';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
                 <DialogHeader>
-                    <DialogTitle>Review and Release Results</DialogTitle>
-                    <DialogDescription>
-                        Confirm the entered result and release it in one step.
-                    </DialogDescription>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
+                    <DialogDescription>{dialogDescription}</DialogDescription>
                 </DialogHeader>
 
                 <div className="rounded-lg border p-4">
@@ -82,21 +98,27 @@ export function ReviewResultDialog({
                         />
                         <InputError message={form.errors.review_notes} />
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="approval_notes">Release Notes</Label>
-                        <Textarea
-                            id="approval_notes"
-                            rows={4}
-                            value={form.data.approval_notes}
-                            onChange={(event) =>
-                                form.setData(
-                                    'approval_notes',
-                                    event.target.value,
-                                )
-                            }
-                        />
-                        <InputError message={form.errors.approval_notes} />
-                    </div>
+                    {requiresApproval ? (
+                        <div className="grid gap-2">
+                            <Label htmlFor="approval_notes">
+                                Release Notes
+                            </Label>
+                            <Textarea
+                                id="approval_notes"
+                                rows={4}
+                                value={form.data.approval_notes}
+                                onChange={(event) =>
+                                    form.setData(
+                                        'approval_notes',
+                                        event.target.value,
+                                    )
+                                }
+                            />
+                            <InputError
+                                message={form.errors.approval_notes}
+                            />
+                        </div>
+                    ) : null}
                 </div>
 
                 <DialogFooter className="justify-between sm:justify-between">
@@ -111,16 +133,13 @@ export function ReviewResultDialog({
                         type="button"
                         disabled={form.processing}
                         onClick={() =>
-                            form.post(
-                                `/laboratory/request-items/${item.id}/approve`,
-                                {
-                                    preserveScroll: true,
-                                    onSuccess: () => onOpenChange(false),
-                                },
-                            )
+                            form.post(submitUrl, {
+                                preserveScroll: true,
+                                onSuccess: () => onOpenChange(false),
+                            })
                         }
                     >
-                        Review and Release
+                        {submitLabel}
                     </Button>
                 </DialogFooter>
             </DialogContent>

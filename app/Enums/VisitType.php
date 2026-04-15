@@ -14,6 +14,7 @@ enum VisitType: string
     case EMERGENCY = 'emergency';
     case INPATIENT = 'inpatient';
     case OUTPATIENT = 'outpatient';
+    case LAB_INVESTIGATION = 'lab_investigation';
     case OPD_CONSULTATION = 'opd_consultation';
     case DAY_CARE = 'day_care';
     case PROCEDURE = 'procedure';
@@ -31,6 +32,7 @@ enum VisitType: string
             self::DAY_CARE => 'Day Care',
             self::PROCEDURE => 'Procedure',
             self::TELEMEDICINE => 'Telemedicine',
+            self::LAB_INVESTIGATION => 'Lab Investigation',
         };
     }
 
@@ -43,6 +45,8 @@ enum VisitType: string
             self::INPATIENT, self::DAY_CARE => 'purple',
             self::PROCEDURE => 'yellow',
             self::TELEMEDICINE => 'cyan',
+            self::LAB_INVESTIGATION => 'gray',
+
         };
     }
 }

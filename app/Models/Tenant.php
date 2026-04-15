@@ -136,4 +136,12 @@ final class Tenant extends Model
     {
         return $this->hasMany(TenantSupportNote::class);
     }
+
+    /**
+     * @return HasMany<TenantGeneralSetting, $this>
+     */
+    public function generalSettings(): HasMany
+    {
+        return $this->hasMany(TenantGeneralSetting::class);
+    }
 }

@@ -343,6 +343,33 @@ it('shows only pharmacy-managed stock locations for pharmacists', function (): v
             ->where('rows.data.0.location_quantities.'.$locationB->id, 0));
 });
 
+it('shows all inventory items on the dedicated pharmacy stock page while keeping quantities pharmacy scoped', function (): void {
+    $context = createInventoryStockContext();
+    $branch = $context['branch'];
+    $user = $context['user'];
+    $locationB = $context['locationB'];
+
+    $user->assignRole('pharmacist');
+
+    $response = $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('pharmacy.stock.index'));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('pharmacy/stock/index')
+            ->has('locations', 1)
+            ->where('locations.0.id', $locationB->id)
+            ->has('rows.data', 2)
+            ->where('rows.data.0.item_name', 'Amoxicillin 4')
+            ->where('rows.data.0.location_quantities.'.$locationB->id, 0)
+            ->where('rows.data.0.total_quantity', 0)
+            ->where('rows.data.1.item_name', 'Gloves 4')
+            ->where('rows.data.1.location_quantities.'.$locationB->id, 0)
+            ->where('rows.data.1.total_quantity', 0)
+            ->where('navigation.stock_title', 'Pharmacy Stock'));
+});
+
 it('shows only laboratory locations on the dedicated laboratory stock page', function (): void {
     $context = createInventoryStockContext();
     $branch = $context['branch'];

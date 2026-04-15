@@ -47,4 +47,9 @@ final class Prescription extends Model
     {
         return $this->hasMany(PrescriptionItem::class, 'prescription_id');
     }
+
+    public function dispensingRecords(): HasMany
+    {
+        return $this->hasMany(DispensingRecord::class, 'prescription_id');
+    }
 }

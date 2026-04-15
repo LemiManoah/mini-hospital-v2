@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LabRequestItem;
 use App\Support\ActiveBranchWorkspace;
+use App\Support\VisitWorkflowGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -17,6 +18,7 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
 {
     public function __construct(
         private ActiveBranchWorkspace $activeBranchWorkspace,
+        private VisitWorkflowGuard $visitWorkflowGuard,
     ) {}
 
     public static function middleware(): array
@@ -41,7 +43,7 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
         $labRequestItem->load([
             'request:id,visit_id,facility_branch_id,requested_by,request_date,priority,status,clinical_notes',
             'request.requestedBy:id,first_name,last_name',
-            'request.visit:id,visit_number,patient_id',
+            'request.visit:id,visit_number,patient_id,tenant_id',
             'request.visit.patient:id,patient_number,first_name,last_name,gender,phone_number',
             'test:id,test_code,test_name,description,lab_test_category_id,result_type_id,base_price',
             'test.labCategory:id,name',
@@ -57,8 +59,15 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
             'resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,reference_range,sort_order',
         ]);
 
+        $visit = $labRequestItem->request?->visit;
+        $paymentBlockMessage = $visit
+            ? $this->visitWorkflowGuard->paymentBlockMessage($visit, 'laboratory')
+            : null;
+
         return Inertia::render('laboratory/request-item', [
             'labRequestItem' => $labRequestItem,
+            'labReleasePolicy' => $this->visitWorkflowGuard->labReleasePolicy($labRequest->tenant_id),
+            'paymentBlockMessage' => $paymentBlockMessage,
         ]);
     }
 }

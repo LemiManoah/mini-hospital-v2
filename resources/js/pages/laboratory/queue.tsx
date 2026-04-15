@@ -19,6 +19,7 @@ export default function LaboratoryQueuePage({
     page,
     requests,
     filters,
+    labReleasePolicy,
 }: LaboratoryQueuePageProps) {
     const inertiaPage = usePage<SharedData>();
     const [search, setSearch] = useState(filters.search ?? '');
@@ -152,6 +153,7 @@ export default function LaboratoryQueuePage({
                 activeModal={activeModal}
                 onOpenChange={(open) => !open && setActiveModal(null)}
                 redirectTo={inertiaPage.url}
+                labReleasePolicy={labReleasePolicy}
             />
         </AppLayout>
     );

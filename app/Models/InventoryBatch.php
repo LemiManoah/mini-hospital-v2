@@ -56,6 +56,11 @@ final class InventoryBatch extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function dispensingAllocations(): HasMany
+    {
+        return $this->hasMany(DispensingRecordItemAllocation::class);
+    }
+
     public function reconciliationItems(): HasMany
     {
         return $this->hasMany(ReconciliationItem::class);

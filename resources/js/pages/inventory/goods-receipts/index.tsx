@@ -40,6 +40,14 @@ export default function GoodsReceiptsIndex({
 }: GoodsReceiptIndexPageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
+        ...(navigation.management_href
+            ? [
+                  {
+                      title: navigation.management_title ?? 'Management',
+                      href: navigation.management_href,
+                  },
+              ]
+            : []),
         { title: navigation.receipts_title, href: navigation.receipts_href },
     ];
 

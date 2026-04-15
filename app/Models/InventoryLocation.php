@@ -66,6 +66,11 @@ final class InventoryLocation extends Model
         return $this->fulfillingRequisitions();
     }
 
+    public function dispensingRecords(): HasMany
+    {
+        return $this->hasMany(DispensingRecord::class);
+    }
+
     public function requestingRequisitions(): HasMany
     {
         return $this->hasMany(InventoryRequisition::class, 'destination_inventory_location_id');
