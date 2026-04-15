@@ -17,7 +17,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-final class StoreDispenseRequest extends FormRequest
+class StoreDispenseRequest extends FormRequest
 {
     /**
      * @return array<string, array<mixed>>
