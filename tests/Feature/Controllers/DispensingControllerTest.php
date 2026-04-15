@@ -478,3 +478,74 @@ it('blocks partial dispense drafts when partial dispensing is disabled', functio
             'items.0.dispensed_quantity',
         ]);
 });
+
+it('dispenses directly from the pharmacy queue flow and posts stock immediately', function (): void {
+    [
+        $branch,
+        ,
+        $user,
+        $staff,
+        $pharmacyLocation,
+        ,
+        ,
+        $readyDrug,
+        ,
+        ,
+        $readyDrugBatch,
+    ] = createPharmacyModuleContext();
+
+    $prescription = createPharmacyPrescription(
+        $branch,
+        $branch->tenant,
+        $user,
+        $staff,
+        [
+            [
+                'inventory_item_id' => $readyDrug->id,
+                'quantity' => 4,
+            ],
+        ],
+        PrescriptionStatus::PENDING,
+        'queue-direct-dispense',
+    );
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->withHeader('referer', route('pharmacy.queue.index'))
+        ->actingAs($user)
+        ->post(route('pharmacy.prescriptions.dispense', $prescription), [
+            'inventory_location_id' => $pharmacyLocation->id,
+            'dispensed_at' => now()->format('Y-m-d H:i:s'),
+            'notes' => 'Dispensed directly from the queue.',
+            'items' => [
+                [
+                    'prescription_item_id' => $prescription->items[0]->id,
+                    'dispensed_quantity' => 4,
+                    'external_pharmacy' => false,
+                    'external_reason' => '',
+                    'notes' => '',
+                    'allocations' => [
+                        [
+                            'inventory_batch_id' => $readyDrugBatch->id,
+                            'quantity' => 4,
+                        ],
+                    ],
+                ],
+            ],
+        ])
+        ->assertRedirect(route('pharmacy.queue.index'));
+
+    $record = DispensingRecord::query()->with('items.allocations')->latest('created_at')->firstOrFail();
+    $prescription->refresh()->load('items');
+
+    expect($record->status)->toBe(DispensingRecordStatus::POSTED)
+        ->and($record->inventory_location_id)->toBe($pharmacyLocation->id)
+        ->and($record->items[0]->allocations)->toHaveCount(1)
+        ->and($record->items[0]->allocations[0]->inventory_batch_id)->toBe($readyDrugBatch->id)
+        ->and($prescription->status)->toBe(PrescriptionStatus::FULLY_DISPENSED)
+        ->and($prescription->items[0]->status)->toBe(PrescriptionItemStatus::DISPENSED)
+        ->and(StockMovement::query()
+            ->where('source_document_type', DispensingRecord::class)
+            ->where('source_document_id', $record->id)
+            ->where('movement_type', StockMovementType::Dispense)
+            ->count())->toBe(1);
+});

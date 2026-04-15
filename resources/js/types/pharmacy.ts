@@ -95,6 +95,8 @@ export interface PharmacyQueuePageProps {
     };
     statusOptions: PharmacyQueueStatusOption[];
     dispensingLocations: PharmacyLocationOption[];
+    availableBatchBalances: PharmacyAvailableBatchBalance[];
+    pharmacyPolicy: PharmacyPolicy;
 }
 
 export interface PrescriptionDispensingRecordSummary {
@@ -150,6 +152,7 @@ export interface PharmacyPolicy {
 
 export interface PharmacyAvailableBatchBalance {
     inventory_batch_id: string;
+    inventory_location_id: string;
     inventory_item_id: string;
     batch_number: string | null;
     expiry_date: string | null;

@@ -26,7 +26,6 @@ const badgeTone = (value: string | null | undefined): string => {
 export default function PharmacyPrescriptionShowPage({
     navigation,
     prescription,
-    dispensingLocations,
 }: PharmacyPrescriptionShowPageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
@@ -101,16 +100,6 @@ export default function PharmacyPrescriptionShowPage({
                                 Back To Queue
                             </Link>
                         </Button>
-                        <Button
-                            asChild
-                            disabled={dispensingLocations.length === 0}
-                        >
-                            <Link
-                                href={`/pharmacy/prescriptions/${prescription.id}/dispenses/create`}
-                            >
-                                Create Dispense Record
-                            </Link>
-                        </Button>
                     </div>
                 </div>
 
@@ -131,11 +120,11 @@ export default function PharmacyPrescriptionShowPage({
                                             'Medication'}
                                     </div>
                                     <div className="text-sm text-muted-foreground">
-                                        {item.dosage} • {item.frequency} •{' '}
-                                        {item.route} • {item.duration_days} days
+                                        {item.dosage} / {item.frequency} /{' '}
+                                        {item.route} / {item.duration_days} days
                                     </div>
                                     <div className="text-sm text-muted-foreground">
-                                        Requested: {item.quantity.toFixed(3)} •
+                                        Requested: {item.quantity.toFixed(3)} /
                                         Available:{' '}
                                         {item.available_quantity?.toFixed(3) ??
                                             '0.000'}
@@ -167,27 +156,13 @@ export default function PharmacyPrescriptionShowPage({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Dispensing Preparation</CardTitle>
+                        <CardTitle>Dispensing</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="text-sm text-muted-foreground">
-                            Available dispensing points:{' '}
-                            {dispensingLocations.length}
-                        </div>
-                        <div className="grid gap-3 md:grid-cols-2">
-                            {dispensingLocations.map((location) => (
-                                <div
-                                    key={location.id}
-                                    className="rounded-lg border p-3 text-sm"
-                                >
-                                    <div className="font-medium">
-                                        {location.name}
-                                    </div>
-                                    <div className="text-muted-foreground">
-                                        {location.location_code}
-                                    </div>
-                                </div>
-                            ))}
+                            Use the pharmacy queue to dispense this prescription
+                            directly. The queue modal is now the main dispense
+                            workflow.
                         </div>
 
                         {prescription.dispensing_records &&
@@ -208,7 +183,7 @@ export default function PharmacyPrescriptionShowPage({
                                                 </div>
                                                 <div className="text-muted-foreground">
                                                     {record.inventory_location
-                                                        ?.name ?? '-'} •{' '}
+                                                        ?.name ?? '-'} /{' '}
                                                     {record.dispensed_at
                                                         ? new Date(
                                                               record.dispensed_at,
@@ -234,7 +209,7 @@ export default function PharmacyPrescriptionShowPage({
                                                     <Link
                                                         href={`/pharmacy/dispenses/${record.id}`}
                                                     >
-                                                        Open
+                                                        View
                                                     </Link>
                                                 </Button>
                                             </div>
@@ -242,7 +217,12 @@ export default function PharmacyPrescriptionShowPage({
                                     ),
                                 )}
                             </div>
-                        ) : null}
+                        ) : (
+                            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                No dispense has been posted for this
+                                prescription yet.
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

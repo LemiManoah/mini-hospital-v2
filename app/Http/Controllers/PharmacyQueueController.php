@@ -6,9 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\PrescriptionItemStatus;
 use App\Enums\PrescriptionStatus;
+use App\Models\InventoryBatch;
 use App\Models\InventoryLocation;
 use App\Models\Prescription;
 use App\Support\BranchContext;
+use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryLocationAccess;
 use App\Support\InventoryNavigationContext;
 use App\Support\InventoryStockLedger;
@@ -27,6 +29,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
         private PrescriptionQueueQuery $prescriptionQueueQuery,
         private InventoryLocationAccess $inventoryLocationAccess,
         private InventoryStockLedger $inventoryStockLedger,
+        private TenantGeneralSettings $tenantGeneralSettings,
     ) {}
 
     public static function middleware(): array
@@ -76,6 +79,10 @@ final readonly class PharmacyQueueController implements HasMiddleware
                 ])
                 ->values()
                 ->all(),
+            'availableBatchBalances' => is_string($branchId) && $branchId !== ''
+                ? $this->availableBatchBalances($branchId, $dispensingLocations)
+                : [],
+            'pharmacyPolicy' => $this->pharmacyPolicy($dispensingLocations->first()?->tenant_id),
         ]);
     }
 
@@ -236,6 +243,96 @@ final readonly class PharmacyQueueController implements HasMiddleware
             'ready_items' => $readyCount,
             'partial_items' => $partialCount,
             'out_of_stock_items' => $outOfStockCount,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, InventoryLocation>  $locations
+     * @return array<int, array<string, mixed>>
+     */
+    private function availableBatchBalances(string $branchId, Collection $locations): array
+    {
+        $locationIds = $locations
+            ->pluck('id')
+            ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
+            ->values()
+            ->all();
+
+        /** @var array<string, InventoryBatch> $batches */
+        $batches = InventoryBatch::query()
+            ->with('inventoryItem:id,name,generic_name')
+            ->whereIn(
+                'id',
+                $this->inventoryStockLedger
+                    ->summarizeByBatch($branchId)
+                    ->filter(
+                        static fn (array $balance): bool => in_array($balance['inventory_location_id'], $locationIds, true)
+                            && $balance['quantity'] > 0
+                    )
+                    ->pluck('inventory_batch_id'),
+            )
+            ->get()
+            ->keyBy('id')
+            ->all();
+
+        return $this->inventoryStockLedger
+            ->summarizeByBatch($branchId)
+            ->filter(
+                static fn (array $balance): bool => in_array($balance['inventory_location_id'], $locationIds, true)
+                    && $balance['quantity'] > 0
+            )
+            ->filter(function (array $balance) use ($batches): bool {
+                $batch = $batches[$balance['inventory_batch_id']] ?? null;
+
+                return ! ($batch instanceof InventoryBatch)
+                    || $batch->expiry_date === null
+                    || ! $batch->expiry_date->startOfDay()->isBefore(now()->startOfDay());
+            })
+            ->map(static function (array $balance) use ($batches): array {
+                $batch = $batches[$balance['inventory_batch_id']] ?? null;
+
+                return [
+                    'inventory_batch_id' => $balance['inventory_batch_id'],
+                    'inventory_location_id' => $balance['inventory_location_id'],
+                    'inventory_item_id' => $balance['inventory_item_id'],
+                    'batch_number' => $balance['batch_number'],
+                    'expiry_date' => $balance['expiry_date'],
+                    'quantity' => (float) $balance['quantity'],
+                    'item_name' => $batch?->inventoryItem?->generic_name ?? $batch?->inventoryItem?->name,
+                ];
+            })
+            ->sortBy(static fn (array $batch): string => sprintf(
+                '%s|%s|%s|%s',
+                $batch['inventory_location_id'],
+                $batch['inventory_item_id'],
+                $batch['expiry_date'] ?? '9999-12-31',
+                $batch['batch_number'] ?? 'ZZZ',
+            ))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array{batch_tracking_enabled: bool, allow_partial_dispense: bool}
+     */
+    private function pharmacyPolicy(?string $tenantId): array
+    {
+        if (! is_string($tenantId) || $tenantId === '') {
+            return [
+                'batch_tracking_enabled' => true,
+                'allow_partial_dispense' => true,
+            ];
+        }
+
+        return [
+            'batch_tracking_enabled' => $this->tenantGeneralSettings->boolean(
+                $tenantId,
+                'enable_batch_tracking_when_dispensing',
+            ),
+            'allow_partial_dispense' => $this->tenantGeneralSettings->boolean(
+                $tenantId,
+                'allow_partial_dispense',
+            ),
         ];
     }
 }

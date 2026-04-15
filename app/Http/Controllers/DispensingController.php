@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\CreateDispensingRecord;
+use App\Actions\DispensePrescription;
 use App\Actions\PostDispense;
 use App\Enums\DispensingRecordStatus;
 use App\Http\Requests\PostDispenseRequest;
+use App\Http\Requests\QuickDispenseRequest;
 use App\Http\Requests\StoreDispenseRequest;
 use App\Models\DispensingRecord;
 use App\Models\InventoryBatch;
@@ -40,7 +42,7 @@ final readonly class DispensingController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:visits.view', only: ['create', 'store', 'show', 'post']),
+            new Middleware('permission:visits.view', only: ['create', 'store', 'show', 'post', 'dispense']),
         ];
     }
 
@@ -164,6 +166,24 @@ final readonly class DispensingController implements HasMiddleware
 
         return to_route('pharmacy.dispenses.show', ['dispensingRecord' => $postedRecord])
             ->with('success', 'Dispense posted successfully and pharmacy stock has been updated.');
+    }
+
+    public function dispense(
+        QuickDispenseRequest $request,
+        Prescription $prescription,
+        DispensePrescription $action,
+    ): RedirectResponse {
+        $record = $this->prescriptionQueueQuery->findForPharmacy($prescription->id);
+
+        abort_unless($record instanceof Prescription, 404);
+
+        $validated = $request->validated();
+        $items = $validated['items'];
+        unset($validated['items']);
+
+        $action->handle($record, $validated, $items);
+
+        return back()->with('success', 'Medication dispensed and pharmacy stock updated.');
     }
 
     public function show(Request $request, DispensingRecord $dispensingRecord): Response
@@ -348,6 +368,7 @@ final readonly class DispensingController implements HasMiddleware
 
                 return [
                     'inventory_batch_id' => $balance['inventory_batch_id'],
+                    'inventory_location_id' => $balance['inventory_location_id'],
                     'inventory_item_id' => $balance['inventory_item_id'],
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],

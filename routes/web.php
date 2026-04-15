@@ -277,6 +277,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('pharmacy/stock', [InventoryStockByLocationController::class, 'index'])->name('pharmacy.stock.index');
     Route::get('pharmacy/queue', [PharmacyQueueController::class, 'index'])->name('pharmacy.queue.index');
     Route::get('pharmacy/prescriptions/{prescription}', [PharmacyPrescriptionController::class, 'show'])->name('pharmacy.prescriptions.show');
+    Route::post('pharmacy/prescriptions/{prescription}/dispense', [DispensingController::class, 'dispense'])->name('pharmacy.prescriptions.dispense');
     Route::get('pharmacy/prescriptions/{prescription}/dispenses/create', [DispensingController::class, 'create'])->name('pharmacy.dispenses.create');
     Route::post('pharmacy/prescriptions/{prescription}/dispenses', [DispensingController::class, 'store'])->name('pharmacy.dispenses.store');
     Route::get('pharmacy/dispenses/{dispensingRecord}', [DispensingController::class, 'show'])->name('pharmacy.dispenses.show');

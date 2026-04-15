@@ -104,6 +104,8 @@ it('shows only active branch queue prescriptions with stock availability signals
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('pharmacy/queue')
             ->where('dispensingLocations.0.id', $pharmacyLocation->id)
+            ->where('pharmacyPolicy.batch_tracking_enabled', true)
+            ->where('availableBatchBalances.0.inventory_location_id', $pharmacyLocation->id)
             ->has('prescriptions.data', 2)
             ->where('prescriptions.data', function (array $rows): bool {
                 if (count($rows) !== 2) {
