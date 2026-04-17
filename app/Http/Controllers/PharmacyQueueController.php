@@ -236,9 +236,9 @@ final readonly class PharmacyQueueController implements HasMiddleware
         return [
             'status' => $status,
             'label' => match ($status) {
-                'ready' => 'Ready To Review',
-                'partial' => 'Needs Review',
-                default => 'Stock Short',
+                'ready' => 'Ready',
+                'partial' => 'Partial Stock',
+                default => 'Out Of Stock',
             },
             'ready_items' => $readyCount,
             'partial_items' => $partialCount,

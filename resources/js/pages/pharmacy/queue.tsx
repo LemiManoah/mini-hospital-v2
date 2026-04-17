@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -9,6 +9,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import {
@@ -119,11 +127,11 @@ export default function PharmacyQueuePage({
         },
     ];
 
+    const patientGroups = groupPrescriptionsByPatient(prescriptions.data);
     const activePrescription =
         prescriptions.data.find(
             (prescription) => prescription.id === activePrescriptionId,
         ) ?? null;
-    const patientGroups = groupPrescriptionsByPatient(prescriptions.data);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -136,19 +144,19 @@ export default function PharmacyQueuePage({
                             {navigation.queue_title ?? 'Pharmacy Queue'}
                         </h1>
                         <p className="max-w-3xl text-sm text-muted-foreground">
-                            Review incoming prescriptions and dispense straight
-                            from this queue when the medication is ready.
+                            Open pending prescriptions and dispense from this
+                            screen.
                         </p>
-                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                            <span>
-                                Dispensing locations:{' '}
-                                {dispensingLocations.length}
-                            </span>
+                        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                             <span>
                                 Patients in queue: {patientGroups.length}
                             </span>
                             <span>
                                 Active prescriptions: {prescriptions.total}
+                            </span>
+                            <span>
+                                Dispensing locations:{' '}
+                                {dispensingLocations.length}
                             </span>
                         </div>
                     </div>
@@ -157,7 +165,7 @@ export default function PharmacyQueuePage({
                         <Input
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Search patient, visit, diagnosis, or drug..."
+                            placeholder="Search patient, visit, or drug..."
                             className="min-w-72"
                         />
                         <Select value={status} onValueChange={setStatus}>
@@ -190,25 +198,18 @@ export default function PharmacyQueuePage({
                 ) : (
                     <div className="grid gap-4">
                         {patientGroups.map((group) => (
-                            <Card key={group.key}>
-                                <CardHeader className="gap-4">
-                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                                        <div className="space-y-2">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <CardTitle className="text-lg">
-                                                    {group.patient?.full_name ??
-                                                        'Unknown patient'}
-                                                </CardTitle>
-                                                <Badge variant="outline">
-                                                    {group.prescriptions.length}{' '}
-                                                    active
-                                                    {group.prescriptions.length ===
-                                                    1
-                                                        ? ' prescription'
-                                                        : ' prescriptions'}
-                                                </Badge>
-                                            </div>
-                                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                            <div
+                                key={group.key}
+                                className="overflow-hidden rounded-lg border border-border/60 bg-background"
+                            >
+                                <div className="border-b border-sidebar-border/20 bg-sidebar/10 px-3 pt-1.5 pb-2">
+                                    <div className="flex flex-col gap-2 lg:flex-row lg:items-baseline lg:justify-between">
+                                        <div className="space-y-0.5">
+                                            <h2 className="text-base font-semibold">
+                                                {group.patient?.full_name ??
+                                                    'Unknown patient'}
+                                            </h2>
+                                            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                                                 <span>
                                                     Patient No:{' '}
                                                     {group.patient
@@ -221,200 +222,151 @@ export default function PharmacyQueuePage({
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="text-sm text-muted-foreground">
-                                            Dispense per prescription below.
-                                        </div>
+                                        <Badge variant="outline">
+                                            {group.prescriptions.length} active
+                                            {group.prescriptions.length === 1
+                                                ? ' prescription'
+                                                : ' prescriptions'}
+                                        </Badge>
                                     </div>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    {group.prescriptions.map((prescription) => (
-                                        <section
-                                            key={prescription.id}
-                                            className="space-y-3 rounded-xl border p-4"
-                                        >
-                                            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                                                <div className="space-y-2">
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={badgeTone(
-                                                                prescription.status,
-                                                            )}
-                                                        >
-                                                            {prescription.status_label ??
-                                                                'Unknown'}
-                                                        </Badge>
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={badgeTone(
-                                                                prescription
-                                                                    .availability
-                                                                    .status,
-                                                            )}
-                                                        >
-                                                            {
-                                                                prescription
-                                                                    .availability
-                                                                    .label
-                                                            }
-                                                        </Badge>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                                                        <span>
-                                                            Visit:{' '}
-                                                            {prescription.visit_number ??
-                                                                '-'}
-                                                        </span>
-                                                        <span>
-                                                            Prescribed:{' '}
-                                                            {prescription.prescription_date
-                                                                ? new Date(
-                                                                      prescription.prescription_date,
-                                                                  ).toLocaleString()
-                                                                : '-'}
-                                                        </span>
-                                                        <span>
-                                                            Doctor:{' '}
-                                                            {prescription
-                                                                .prescribed_by
-                                                                ?.name ?? '-'}
-                                                        </span>
-                                                    </div>
-                                                    {prescription.primary_diagnosis ? (
-                                                        <p className="text-sm">
-                                                            Diagnosis:{' '}
-                                                            <span className="text-muted-foreground">
-                                                                {
-                                                                    prescription.primary_diagnosis
-                                                                }
-                                                            </span>
-                                                        </p>
-                                                    ) : null}
-                                                    {prescription.pharmacy_notes ? (
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {
-                                                                prescription.pharmacy_notes
-                                                            }
-                                                        </p>
-                                                    ) : null}
-                                                </div>
-
-                                                <div className="flex shrink-0 flex-col items-start gap-2 lg:items-end">
-                                                    <div className="text-right text-sm text-muted-foreground">
-                                                        <div>
-                                                            Ready lines:{' '}
-                                                            {
-                                                                prescription
-                                                                    .availability
-                                                                    .ready_items
-                                                            }
-                                                        </div>
-                                                        <div>
-                                                            Partial:{' '}
-                                                            {
-                                                                prescription
-                                                                    .availability
-                                                                    .partial_items
-                                                            }
-                                                        </div>
-                                                        <div>
-                                                            Out of stock:{' '}
-                                                            {
-                                                                prescription
-                                                                    .availability
-                                                                    .out_of_stock_items
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setActivePrescriptionId(
-                                                                    prescription.id,
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                dispensingLocations.length ===
-                                                                0
-                                                            }
-                                                        >
-                                                            Dispense
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            asChild
-                                                        >
-                                                            <Link
-                                                                href={`/pharmacy/prescriptions/${prescription.id}`}
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>
+                                                    Medication
+                                                </TableHead>
+                                                <TableHead>
+                                                    Quantity
+                                                </TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead>Stock</TableHead>
+                                                <TableHead>
+                                                    Prescribed
+                                                </TableHead>
+                                                <TableHead>Doctor</TableHead>
+                                                <TableHead className="text-right">
+                                                    Action
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {group.prescriptions.flatMap(
+                                                (prescription) =>
+                                                    prescription.items.map(
+                                                        (
+                                                            item,
+                                                            itemIndex,
+                                                        ) => (
+                                                            <TableRow
+                                                                key={`${prescription.id}-${item.id}`}
                                                             >
-                                                                Review
-                                                            </Link>
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                {prescription.items.map((item) => (
-                                                    <div
-                                                        key={item.id}
-                                                        className="flex flex-col gap-2 rounded-lg border p-3 lg:flex-row lg:items-center lg:justify-between"
-                                                    >
-                                                        <div className="space-y-1">
-                                                            <div className="font-medium">
-                                                                {item.item_name ??
-                                                                    item.generic_name ??
-                                                                    'Medication'}
-                                                            </div>
-                                                            <div className="text-sm text-muted-foreground">
-                                                                {item.dosage} /{' '}
-                                                                {item.frequency}{' '}
-                                                                / {item.route} /
-                                                                Qty{' '}
-                                                                {item.quantity}
-                                                            </div>
-                                                            {item.instructions ? (
-                                                                <div className="text-sm text-muted-foreground">
-                                                                    {
-                                                                        item.instructions
-                                                                    }
-                                                                </div>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="flex flex-wrap items-center gap-2 text-sm">
-                                                            <Badge
-                                                                variant="outline"
-                                                                className={badgeTone(
-                                                                    item.status,
-                                                                )}
-                                                            >
-                                                                {item.status_label ??
-                                                                    'Pending'}
-                                                            </Badge>
-                                                            <Badge
-                                                                variant="outline"
-                                                                className={badgeTone(
-                                                                    item.stock_status,
-                                                                )}
-                                                            >
-                                                                {item.stock_status_label ??
-                                                                    'Unknown'}
-                                                            </Badge>
-                                                            <span className="text-muted-foreground">
-                                                                Available:{' '}
-                                                                {item.available_quantity?.toFixed(
-                                                                    3,
-                                                                ) ?? '0.000'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </section>
-                                    ))}
-                                </CardContent>
-                            </Card>
+                                                                <TableCell className="max-w-[320px]">
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <span className="font-medium">
+                                                                            {item.item_name ??
+                                                                                item.generic_name ??
+                                                                                'Medication'}
+                                                                        </span>
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            {[
+                                                                                item.dosage,
+                                                                                item.frequency,
+                                                                                item.route,
+                                                                            ].join(
+                                                                                ' / ',
+                                                                            )}
+                                                                        </span>
+                                                                        {itemIndex ===
+                                                                        0 ? (
+                                                                            <span className="text-xs text-muted-foreground">
+                                                                                Visit{' '}
+                                                                                {prescription.visit_number ??
+                                                                                    '-'}
+                                                                            </span>
+                                                                        ) : null}
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {item.quantity.toFixed(
+                                                                        3,
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className={badgeTone(
+                                                                            item.status ??
+                                                                                prescription.status,
+                                                                        )}
+                                                                    >
+                                                                        {item.status_label ??
+                                                                            prescription.status_label ??
+                                                                            'Pending'}
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={badgeTone(
+                                                                                item.stock_status,
+                                                                            )}
+                                                                        >
+                                                                            {item.stock_status_label ??
+                                                                                'Unknown'}
+                                                                        </Badge>
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            Available:{' '}
+                                                                            {item.available_quantity?.toFixed(
+                                                                                3,
+                                                                            ) ??
+                                                                                '0.000'}
+                                                                        </span>
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell className="text-sm text-muted-foreground">
+                                                                    {prescription.prescription_date
+                                                                        ? new Date(
+                                                                              prescription.prescription_date,
+                                                                          ).toLocaleString()
+                                                                        : '-'}
+                                                                </TableCell>
+                                                                <TableCell className="text-sm text-muted-foreground">
+                                                                    {prescription
+                                                                        .prescribed_by
+                                                                        ?.name ??
+                                                                        '-'}
+                                                                </TableCell>
+                                                                <TableCell className="text-right">
+                                                                    {itemIndex ===
+                                                                    0 ? (
+                                                                        <Button
+                                                                            type="button"
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                                setActivePrescriptionId(
+                                                                                    prescription.id,
+                                                                                )
+                                                                            }
+                                                                            disabled={
+                                                                                dispensingLocations.length ===
+                                                                                0
+                                                                            }
+                                                                        >
+                                                                            Dispense
+                                                                        </Button>
+                                                                    ) : null}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ),
+                                                    ),
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 )}

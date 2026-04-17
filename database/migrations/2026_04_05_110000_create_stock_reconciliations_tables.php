@@ -27,17 +27,17 @@ return new class extends Migration
             $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUuid('posted_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('posted_at')->nullable();
-            $table->foreignUuid('submitted_by')->nullable()->after('updated_by')->constrained('users')->nullOnDelete();
-            $table->timestamp('submitted_at')->nullable()->after('submitted_by');
-            $table->foreignUuid('reviewed_by')->nullable()->after('submitted_at')->constrained('users')->nullOnDelete();
-            $table->timestamp('reviewed_at')->nullable()->after('reviewed_by');
-            $table->text('review_notes')->nullable()->after('reviewed_at');
-            $table->foreignUuid('approved_by')->nullable()->after('review_notes')->constrained('users')->nullOnDelete();
-            $table->timestamp('approved_at')->nullable()->after('approved_by');
-            $table->text('approval_notes')->nullable()->after('approved_at');
-            $table->foreignUuid('rejected_by')->nullable()->after('approval_notes')->constrained('users')->nullOnDelete();
-            $table->timestamp('rejected_at')->nullable()->after('rejected_by');
-            $table->text('rejection_reason')->nullable()->after('rejected_at');
+            $table->foreignUuid('submitted_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('submitted_at')->nullable();
+            $table->foreignUuid('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('reviewed_at')->nullable();
+            $table->text('review_notes')->nullable();
+            $table->foreignUuid('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('approved_at')->nullable();
+            $table->text('approval_notes')->nullable();
+            $table->foreignUuid('rejected_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('rejected_at')->nullable();
+            $table->text('rejection_reason')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
@@ -55,9 +55,9 @@ return new class extends Migration
             $table->string('batch_number', 100)->nullable();
             $table->date('expiry_date')->nullable();
             $table->text('notes')->nullable();
-            $table->decimal('expected_quantity', 14, 3)->nullable()->after('inventory_batch_id');
-            $table->decimal('actual_quantity', 14, 3)->nullable()->after('expected_quantity');
-            $table->decimal('variance_quantity', 14, 3)->nullable()->after('actual_quantity');
+            $table->decimal('expected_quantity', 14, 3)->nullable();
+            $table->decimal('actual_quantity', 14, 3)->nullable();
+            $table->decimal('variance_quantity', 14, 3)->nullable();
 
             $table->timestamps();
 

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -192,50 +191,19 @@ export function DispenseModal({
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>Dispense Medication</DialogTitle>
-                    <DialogDescription>
-                        Confirm what this patient is taking now. Saving this
-                        modal will dispense immediately and reduce pharmacy
-                        stock.
-                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
-                    <div className="rounded-lg border p-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <div className="font-medium">
-                                {prescription.patient?.full_name ??
-                                    'Unknown patient'}
-                            </div>
-                            <Badge
-                                variant="outline"
-                                className={badgeTone(prescription.status)}
-                            >
-                                {prescription.status_label ?? 'Unknown'}
-                            </Badge>
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                            <span>
-                                Patient No:{' '}
-                                {prescription.patient?.patient_number ?? '-'}
-                            </span>
-                            <span>Visit: {prescription.visit_number ?? '-'}</span>
-                            <span>
-                                Ready lines:{' '}
-                                {prescription.availability.ready_items}
-                            </span>
-                        </div>
-                    </div>
-
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="quick_inventory_location_id">
+                            <Label htmlFor="inventory_location_id">
                                 Dispensing Location
                             </Label>
                             <Select
                                 value={form.data.inventory_location_id}
                                 onValueChange={setLocation}
                             >
-                                <SelectTrigger id="quick_inventory_location_id">
+                                <SelectTrigger id="inventory_location_id">
                                     <SelectValue placeholder="Select dispensing point" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -256,11 +224,11 @@ export function DispenseModal({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="quick_dispensed_at">
+                            <Label htmlFor="dispensed_at">
                                 Dispense Time
                             </Label>
                             <Input
-                                id="quick_dispensed_at"
+                                id="dispensed_at"
                                 type="datetime-local"
                                 value={form.data.dispensed_at}
                                 onChange={(event) =>
@@ -272,21 +240,6 @@ export function DispenseModal({
                             />
                             <InputError message={form.errors.dispensed_at} />
                         </div>
-                    </div>
-
-                    <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                        <p>
-                            Batch tracking:{' '}
-                            {pharmacyPolicy.batch_tracking_enabled
-                                ? 'choose source batches in this modal before confirming.'
-                                : 'batch allocation is hidden here because the system will auto-allocate available stock.'}
-                        </p>
-                        <p>
-                            Partial dispensing:{' '}
-                            {pharmacyPolicy.allow_partial_dispense
-                                ? 'allowed.'
-                                : 'disabled, so each line must be zero or the full prescribed quantity.'}
-                        </p>
                     </div>
 
                     <InputError message={form.errors.items} />
@@ -317,7 +270,7 @@ export function DispenseModal({
                             return (
                                 <div
                                     key={item.id}
-                                    className="rounded-lg border p-4"
+                                    className="space-y-4 border-b pb-5 last:border-b-0 last:pb-0"
                                 >
                                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                                         <div className="space-y-1">
@@ -332,8 +285,8 @@ export function DispenseModal({
                                             </div>
                                             <div className="text-sm text-muted-foreground">
                                                 Prescribed:{' '}
-                                                {item.quantity.toFixed(3)} |
-                                                Available here:{' '}
+                                                {item.quantity.toFixed(3)} /
+                                                Available:{' '}
                                                 {selectedLocationAvailable.toFixed(
                                                     3,
                                                 )}
@@ -364,7 +317,7 @@ export function DispenseModal({
                                             </Badge>
                                         </div>
                                     </div>
-                                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                    <div className="grid gap-4 lg:grid-cols-3">
                                         <div className="space-y-2">
                                             <Label>
                                                 Quantity To Dispense
@@ -425,6 +378,57 @@ export function DispenseModal({
                                         </div>
 
                                         <div className="space-y-2">
+                                            <Label>External Pharmacy</Label>
+                                            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                <input
+                                                    type="checkbox"
+                                                    className="h-4 w-4"
+                                                    checked={
+                                                        form.data.items[index]
+                                                            ?.external_pharmacy ??
+                                                        false
+                                                    }
+                                                    onChange={(event) =>
+                                                        updateItem(
+                                                            index,
+                                                            'external_pharmacy',
+                                                            event.target.checked,
+                                                        )
+                                                    }
+                                                />
+                                                Mark any remainder as external
+                                            </label>
+                                            <InputError
+                                                message={
+                                                    form.errors[
+                                                        `items.${index}.external_pharmacy`
+                                                    ]
+                                                }
+                                            />
+                                            <Textarea
+                                                value={
+                                                    form.data.items[index]
+                                                        ?.external_reason ?? ''
+                                                }
+                                                onChange={(event) =>
+                                                    updateItem(
+                                                        index,
+                                                        'external_reason',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Reason for external sourcing, if applicable"
+                                            />
+                                            <InputError
+                                                message={
+                                                    form.errors[
+                                                        `items.${index}.external_reason`
+                                                    ]
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
                                             <Label>Line Note</Label>
                                             <Textarea
                                                 value={
@@ -438,67 +442,14 @@ export function DispenseModal({
                                                         event.target.value,
                                                     )
                                                 }
-                                                placeholder="Optional counselling or handover note"
+                                                placeholder="Optional note"
                                             />
                                         </div>
-                                    </div>
-
-                                    <div className="mt-4 space-y-3 rounded-md border border-dashed p-3">
-                                        <div className="flex items-center justify-between gap-3">
-                                            <Label>
-                                                Mark remainder for external
-                                                pharmacy
-                                            </Label>
-                                            <input
-                                                type="checkbox"
-                                                className="h-4 w-4"
-                                                checked={
-                                                    form.data.items[index]
-                                                        ?.external_pharmacy ??
-                                                    false
-                                                }
-                                                onChange={(event) =>
-                                                    updateItem(
-                                                        index,
-                                                        'external_pharmacy',
-                                                        event.target.checked,
-                                                    )
-                                                }
-                                            />
-                                        </div>
-                                        <InputError
-                                            message={
-                                                form.errors[
-                                                    `items.${index}.external_pharmacy`
-                                                ]
-                                            }
-                                        />
-                                        <Textarea
-                                            value={
-                                                form.data.items[index]
-                                                    ?.external_reason ?? ''
-                                            }
-                                            onChange={(event) =>
-                                                updateItem(
-                                                    index,
-                                                    'external_reason',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Reason for external sourcing, if applicable"
-                                        />
-                                        <InputError
-                                            message={
-                                                form.errors[
-                                                    `items.${index}.external_reason`
-                                                ]
-                                            }
-                                        />
                                     </div>
 
                                     {pharmacyPolicy.batch_tracking_enabled &&
                                     numericQuantity > 0 ? (
-                                        <div className="mt-4 space-y-3">
+                                        <div className="space-y-3 rounded-lg bg-muted/30 p-3">
                                             {allocations.length > 0 ? (
                                                 <>
                                                     {allocations.map(
@@ -508,7 +459,7 @@ export function DispenseModal({
                                                         ) => (
                                                             <div
                                                                 key={`${item.id}-${allocationIndex}`}
-                                                                className="grid gap-3 rounded border border-dashed p-3 md:grid-cols-[1.6fr_1fr_auto]"
+                                                                className="grid gap-3 md:grid-cols-[1.6fr_1fr_auto]"
                                                             >
                                                                 <div className="grid gap-2">
                                                                     <Label>
@@ -594,13 +545,13 @@ export function DispenseModal({
                                                             </div>
                                                         ),
                                                     )}
-                                                    <div className="flex flex-col gap-3 rounded border border-dashed p-3 md:flex-row md:items-center md:justify-between">
+                                                    <div className="flex flex-col gap-3 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
                                                         <div className="text-sm text-muted-foreground">
                                                             Allocated:{' '}
                                                             {allocatedQuantity.toFixed(
                                                                 3,
                                                             )}{' '}
-                                                            of{' '}
+                                                            /{' '}
                                                             {numericQuantity.toFixed(
                                                                 3,
                                                             )}
@@ -609,7 +560,7 @@ export function DispenseModal({
                                                                 <span>
                                                                     {' '}
                                                                     |
-                                                                    Remaining:{' '}
+                                                                    Remaining{' '}
                                                                     {remainingAllocation.toFixed(
                                                                         3,
                                                                     )}
@@ -617,8 +568,7 @@ export function DispenseModal({
                                                             ) : (
                                                                 <span>
                                                                     {' '}
-                                                                    | Fully
-                                                                    allocated
+                                                                    | Complete
                                                                 </span>
                                                             )}
                                                         </div>
@@ -644,7 +594,7 @@ export function DispenseModal({
                                                     </div>
                                                 </>
                                             ) : (
-                                                <div className="flex items-center justify-between rounded border border-dashed p-3">
+                                                <div className="flex items-center justify-between gap-3">
                                                     <p className="text-sm text-muted-foreground">
                                                         No batches selected yet.
                                                     </p>
@@ -681,9 +631,9 @@ export function DispenseModal({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="quick_notes">Pharmacy Note</Label>
+                        <Label htmlFor="notes">Pharmacy Note</Label>
                         <Textarea
-                            id="quick_notes"
+                            id="notes"
                             value={form.data.notes}
                             onChange={(event) =>
                                 form.setData('notes', event.target.value)

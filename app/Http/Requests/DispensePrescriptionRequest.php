@@ -13,7 +13,7 @@ use App\Support\InventoryStockLedger;
 use Closure;
 use Illuminate\Validation\Validator;
 
-final class QuickDispenseRequest extends StoreDispenseRequest
+final class DispensePrescriptionRequest extends StoreDispenseRequest
 {
     /**
      * @return array<string, array<mixed>>

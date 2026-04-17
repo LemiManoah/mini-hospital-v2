@@ -20,8 +20,11 @@ return new class extends Migration
                 $table->string('name', 100);
                 $table->text('description')->nullable();
                 $table->boolean('is_active')->default(true);
-                $table->foreignUuid('created_by')->nullable()->constrained('users')->onDelete('set null');
-                $table->foreignUuid('updated_by')->nullable()->constrained('users')->onDelete('set null');
+
+                // Audit fields are added as plain UUIDs first to avoid a creation-order cycle
+                // between staff_positions, staff, and users. Their foreign keys are added later.
+                $table->uuid('created_by')->nullable()->index();
+                $table->uuid('updated_by')->nullable()->index();
                 $table->timestamps();
                 $table->softDeletes();
 

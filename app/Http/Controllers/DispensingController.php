@@ -8,8 +8,8 @@ use App\Actions\CreateDispensingRecord;
 use App\Actions\DispensePrescription;
 use App\Actions\PostDispense;
 use App\Enums\DispensingRecordStatus;
+use App\Http\Requests\DispensePrescriptionRequest;
 use App\Http\Requests\PostDispenseRequest;
-use App\Http\Requests\QuickDispenseRequest;
 use App\Http\Requests\StoreDispenseRequest;
 use App\Models\DispensingRecord;
 use App\Models\InventoryBatch;
@@ -137,7 +137,7 @@ final readonly class DispensingController implements HasMiddleware
         $dispensingRecord = $action->handle($record, $validated, $items);
 
         return to_route('pharmacy.dispenses.show', ['dispensingRecord' => $dispensingRecord])
-            ->with('success', 'Dispensing record created. Review and post it when you are ready to update stock.');
+            ->with('success', 'Dispensing record created. Post it when you are ready to update stock.');
     }
 
     public function post(
@@ -169,7 +169,7 @@ final readonly class DispensingController implements HasMiddleware
     }
 
     public function dispense(
-        QuickDispenseRequest $request,
+        DispensePrescriptionRequest $request,
         Prescription $prescription,
         DispensePrescription $action,
     ): RedirectResponse {

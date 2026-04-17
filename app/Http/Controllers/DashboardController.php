@@ -36,7 +36,7 @@ final readonly class DashboardController implements HasMiddleware
         $visitQuery = $this->activeBranchWorkspace->apply(PatientVisit::query());
         $appointmentQuery = $this->activeBranchWorkspace->apply(Appointment::query());
         $labRequestQuery = $this->activeBranchWorkspace->apply(LabRequest::query());
-        $patientQuery = $this->activeBranchWorkspace->apply(Patient::query());
+        $patientQuery = Patient::query();
 
         $metrics = [
             [

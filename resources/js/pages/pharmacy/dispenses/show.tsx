@@ -259,7 +259,7 @@ export default function DispenseShowPage({
                             <p className="text-sm text-muted-foreground">
                                 {pharmacyPolicy.batch_tracking_enabled
                                     ? 'Allocate each dispensed quantity to a pharmacy batch, then post the dispense to write stock movements.'
-                                    : 'Review the drafted quantities and post. The system will auto-allocate available pharmacy batches for you.'}
+                                    : 'Post this dispense and the system will auto-allocate available pharmacy batches for you.'}
                             </p>
 
                             <InputError message={postForm.errors.items} />

@@ -98,22 +98,27 @@ export default function LaboratoryQueuePage({
                             </CardContent>
                         </Card>
                     ) : (
-                        queueRequests.map((request) => (
-                            <QueuePatientCard
-                                key={request.id}
-                                pageStage={page.stage}
-                                actionLabel={page.action_label}
-                                request={request}
-                                onAction={(item, selectedRequest) =>
-                                    setActiveModal({
-                                        mode: modalModeForStage(page.stage),
-                                        item,
-                                        request:
-                                            item.request ?? selectedRequest,
-                                    })
-                                }
-                            />
-                        ))
+                        <div className="grid gap-4">
+                            {queueRequests.map((request) => (
+                                <QueuePatientCard
+                                    key={request.id}
+                                    pageStage={page.stage}
+                                    actionLabel={page.action_label}
+                                    request={request}
+                                    onAction={(item, selectedRequest) =>
+                                        setActiveModal({
+                                            mode: modalModeForStage(
+                                                page.stage,
+                                            ),
+                                            item,
+                                            request:
+                                                item.request ??
+                                                selectedRequest,
+                                        })
+                                    }
+                                />
+                            ))}
+                        </div>
                     )}
                 </div>
 

@@ -60,6 +60,30 @@ return new class extends Migration
                 }
             });
         }
+
+        if (
+            Schema::hasTable('staff_positions')
+            && Schema::hasColumn('staff_positions', 'created_by')
+            && Schema::hasColumn('staff_positions', 'updated_by')
+        ) {
+            $foreignKeys = collect(Schema::getForeignKeys('staff_positions'));
+
+            Schema::table('staff_positions', function (Blueprint $table) use ($foreignKeys): void {
+                if ($foreignKeys->doesntContain(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_positions_created_by_foreign')) {
+                    $table->foreign('created_by', 'staff_positions_created_by_foreign')
+                        ->references('id')
+                        ->on('users')
+                        ->nullOnDelete();
+                }
+
+                if ($foreignKeys->doesntContain(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_positions_updated_by_foreign')) {
+                    $table->foreign('updated_by', 'staff_positions_updated_by_foreign')
+                        ->references('id')
+                        ->on('users')
+                        ->nullOnDelete();
+                }
+            });
+        }
     }
 
     /**
@@ -91,6 +115,20 @@ return new class extends Migration
 
                 if ($foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_updated_by_foreign')) {
                     $table->dropForeign('staff_updated_by_foreign');
+                }
+            });
+        }
+
+        if (Schema::hasTable('staff_positions')) {
+            $foreignKeys = collect(Schema::getForeignKeys('staff_positions'));
+
+            Schema::table('staff_positions', function (Blueprint $table) use ($foreignKeys): void {
+                if ($foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_positions_created_by_foreign')) {
+                    $table->dropForeign('staff_positions_created_by_foreign');
+                }
+
+                if ($foreignKeys->contains(fn (array $foreignKey): bool => $foreignKey['name'] === 'staff_positions_updated_by_foreign')) {
+                    $table->dropForeign('staff_positions_updated_by_foreign');
                 }
             });
         }
