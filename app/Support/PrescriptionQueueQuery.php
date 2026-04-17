@@ -27,6 +27,7 @@ final readonly class PrescriptionQueueQuery
                 'prescribedBy:id,first_name,last_name',
                 'items:id,prescription_id,inventory_item_id,dosage,frequency,route,duration_days,quantity,instructions,is_external_pharmacy,status,dispensed_at',
                 'items.inventoryItem:id,name,generic_name,brand_name,strength,dosage_form',
+                'pharmacyTreatmentPlans:id,prescription_id,status,next_refill_date,total_authorized_cycles,completed_cycles',
             ])
             ->latest('prescription_date');
 
@@ -70,6 +71,7 @@ final readonly class PrescriptionQueueQuery
                 'prescribedBy:id,first_name,last_name',
                 'items:id,prescription_id,inventory_item_id,dosage,frequency,route,duration_days,quantity,instructions,is_external_pharmacy,status,dispensed_at',
                 'items.inventoryItem:id,name,generic_name,brand_name,strength,dosage_form',
+                'pharmacyTreatmentPlans:id,prescription_id,status,start_date,next_refill_date,frequency_unit,frequency_interval,total_authorized_cycles,completed_cycles',
                 'dispensingRecords:id,branch_id,visit_id,prescription_id,inventory_location_id,dispense_number,dispensed_by,dispensed_at,status',
                 'dispensingRecords.inventoryLocation:id,name,location_code',
                 'dispensingRecords.dispensedBy:id,staff_id,email',

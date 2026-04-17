@@ -74,6 +74,7 @@ export interface PharmacyQueuePrescription {
     availability: PharmacyAvailabilitySummary;
     items_count: number;
     pending_items_count: number;
+    active_treatment_plan?: PharmacyTreatmentPlanQueueSummary | null;
 }
 
 export interface PaginatedPharmacyQueue {
@@ -103,6 +104,15 @@ export interface PharmacyQueuePageProps {
     pharmacyPolicy: PharmacyPolicy;
 }
 
+export interface PharmacyTreatmentPlanQueueSummary {
+    id: string;
+    status: string | null;
+    status_label: string | null;
+    next_refill_date: string | null;
+    completed_cycles: number;
+    total_authorized_cycles: number;
+}
+
 export interface PrescriptionDispensingRecordSummary {
     id: string;
     dispense_number: string;
@@ -130,6 +140,7 @@ export interface PharmacyPrescriptionDetail {
     prescribed_by: PharmacyPrescriberSummary | null;
     items: PharmacyPrescriptionItem[];
     dispensing_records?: PrescriptionDispensingRecordSummary[];
+    treatment_plans?: PharmacyTreatmentPlanSummary[];
 }
 
 export interface PharmacyPrescriptionShowPageProps {
@@ -258,5 +269,166 @@ export interface DispensingHistoryPageProps {
         status: string | null;
         from: string | null;
         to: string | null;
+    };
+}
+
+export interface PharmacyTreatmentPlanItemSummary {
+    id: string;
+    item_name: string | null;
+    generic_name: string | null;
+    quantity_per_cycle: number;
+    authorized_total_quantity?: number;
+    total_cycles?: number;
+    completed_cycles?: number;
+    remaining_cycles?: number;
+}
+
+export interface PharmacyTreatmentPlanCycleSummary {
+    id: string;
+    cycle_number: number;
+    scheduled_for: string | null;
+    status: string | null;
+    status_label: string | null;
+    completed_at?: string | null;
+    state?: string;
+    dispensing_record?: {
+        id: string;
+        dispense_number: string;
+    } | null;
+}
+
+export interface PharmacyTreatmentPlanSummary {
+    id: string;
+    status: string | null;
+    status_label: string | null;
+    start_date?: string | null;
+    next_refill_date: string | null;
+    frequency_unit?: string | null;
+    frequency_unit_label?: string | null;
+    frequency_interval?: number;
+    total_authorized_cycles: number;
+    completed_cycles: number;
+}
+
+export interface PaginatedPharmacyTreatmentPlans {
+    data: Array<{
+        id: string;
+        status: string | null;
+        status_label: string | null;
+        visit_number: string | null;
+        patient_name: string | null;
+        patient_number: string | null;
+        frequency_unit_label: string | null;
+        frequency_interval: number;
+        total_authorized_cycles: number;
+        completed_cycles: number;
+        remaining_cycles: number;
+        next_refill_date: string | null;
+        due_state: string;
+        item_names: string[];
+    }>;
+    prev_page_url: string | null;
+    next_page_url: string | null;
+    current_page: number;
+    last_page: number;
+    total: number;
+    links: {
+        url: string | null;
+        label: string;
+        active: boolean;
+    }[];
+}
+
+export interface PharmacyTreatmentPlansIndexPageProps {
+    navigation: InventoryNavigationContext;
+    plans: PaginatedPharmacyTreatmentPlans;
+    filters: {
+        search: string | null;
+        status: string | null;
+        due: string | null;
+    };
+    statusOptions: PharmacyQueueStatusOption[];
+    dueOptions: PharmacyQueueStatusOption[];
+}
+
+export interface PharmacyTreatmentPlanCreatePageProps {
+    navigation: InventoryNavigationContext;
+    prescription: {
+        id: string;
+        visit_number: string | null;
+        prescription_date: string | null;
+        patient: Pick<PharmacyPatientSummary, 'id' | 'patient_number' | 'full_name'> | null;
+        items: Array<{
+            id: string;
+            inventory_item_id: string;
+            item_name: string | null;
+            generic_name: string | null;
+            dosage: string | null;
+            frequency: string | null;
+            route: string | null;
+            ordered_quantity: number;
+            remaining_quantity: number;
+        }>;
+    };
+}
+
+export interface PharmacyTreatmentPlanShowPageProps {
+    navigation: InventoryNavigationContext;
+    treatmentPlan: {
+        id: string;
+        status: string | null;
+        status_label: string | null;
+        visit_number: string | null;
+        patient: Pick<PharmacyPatientSummary, 'id' | 'patient_number' | 'full_name'> | null;
+        prescribed_by: PharmacyPrescriberSummary | null;
+        start_date: string | null;
+        frequency_unit: string | null;
+        frequency_unit_label: string | null;
+        frequency_interval: number;
+        total_authorized_cycles: number;
+        completed_cycles: number;
+        next_refill_date: string | null;
+        notes: string | null;
+        items: PharmacyTreatmentPlanItemSummary[];
+        cycles: PharmacyTreatmentPlanCycleSummary[];
+        next_pending_cycle: {
+            id: string;
+            cycle_number: number;
+            scheduled_for: string | null;
+            state: string;
+        } | null;
+    };
+}
+
+export interface PharmacyTreatmentPlanCycleDispensePageProps {
+    navigation: InventoryNavigationContext;
+    treatmentPlan: {
+        id: string;
+        visit_number: string | null;
+        patient: Pick<PharmacyPatientSummary, 'id' | 'patient_number' | 'full_name'> | null;
+        cycle: {
+            id: string;
+            cycle_number: number;
+            scheduled_for: string | null;
+        };
+        items: Array<{
+            id: string;
+            prescription_item_id: string;
+            inventory_item_id: string;
+            item_name: string | null;
+            generic_name: string | null;
+            dosage: string | null;
+            frequency: string | null;
+            route: string | null;
+            instructions: string | null;
+            quantity_per_cycle: number;
+        }>;
+    };
+    dispensingLocations: PharmacyLocationOption[];
+    availableBatchBalances: PharmacyAvailableBatchBalance[];
+    pharmacyPolicy: PharmacyPolicy;
+    defaults: {
+        inventory_location_id: string | null;
+        dispensed_at: string;
     };
 }

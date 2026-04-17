@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\DispensingRecordStatus;
+use App\Enums\PharmacyTreatmentPlanFrequencyUnit;
+use App\Enums\PharmacyTreatmentPlanStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -13,11 +14,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-final class DispensingRecord extends Model
+final class PharmacyTreatmentPlan extends Model
 {
     use BelongsToBranch;
     use BelongsToTenant;
-
     use HasFactory;
     use HasUuids;
 
@@ -26,10 +26,15 @@ final class DispensingRecord extends Model
         'branch_id' => 'string',
         'visit_id' => 'string',
         'prescription_id' => 'string',
-        'inventory_location_id' => 'string',
-        'dispensed_by' => 'string',
-        'dispensed_at' => 'datetime',
-        'status' => DispensingRecordStatus::class,
+        'start_date' => 'date',
+        'frequency_unit' => PharmacyTreatmentPlanFrequencyUnit::class,
+        'frequency_interval' => 'integer',
+        'total_authorized_cycles' => 'integer',
+        'completed_cycles' => 'integer',
+        'next_refill_date' => 'date',
+        'status' => PharmacyTreatmentPlanStatus::class,
+        'created_by' => 'string',
+        'updated_by' => 'string',
     ];
 
     public function visit(): BelongsTo
@@ -42,22 +47,12 @@ final class DispensingRecord extends Model
         return $this->belongsTo(Prescription::class, 'prescription_id');
     }
 
-    public function inventoryLocation(): BelongsTo
-    {
-        return $this->belongsTo(InventoryLocation::class);
-    }
-
-    public function dispensedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'dispensed_by');
-    }
-
     public function items(): HasMany
     {
-        return $this->hasMany(DispensingRecordItem::class);
+        return $this->hasMany(PharmacyTreatmentPlanItem::class);
     }
 
-    public function treatmentPlanCycles(): HasMany
+    public function cycles(): HasMany
     {
         return $this->hasMany(PharmacyTreatmentPlanCycle::class);
     }

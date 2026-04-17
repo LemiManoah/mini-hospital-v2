@@ -289,6 +289,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         url: '/pharmacy/dispenses',
                         permission: 'visits.view',
                     },
+                    {
+                        title: 'Treatment Plans',
+                        url: '/pharmacy/treatment-plans',
+                        permission: 'visits.view',
+                    },
                 ],
                 hasPermission,
             ),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\InventoryLocation;
+use App\Models\PharmacyTreatmentPlan;
 use App\Models\Prescription;
 use App\Support\BranchContext;
 use App\Support\InventoryLocationAccess;
@@ -148,6 +149,22 @@ final readonly class PharmacyPrescriptionController implements HasMiddleware
                             )),
                     ])
                     ->values()
+                    ->all(),
+                'treatment_plans' => $record->pharmacyTreatmentPlans
+                    ->sortByDesc('created_at')
+                    ->values()
+                    ->map(static fn (PharmacyTreatmentPlan $plan): array => [
+                        'id' => $plan->id,
+                        'status' => $plan->status?->value,
+                        'status_label' => $plan->status?->label(),
+                        'start_date' => $plan->start_date?->toDateString(),
+                        'next_refill_date' => $plan->next_refill_date?->toDateString(),
+                        'frequency_unit' => $plan->frequency_unit?->value,
+                        'frequency_unit_label' => $plan->frequency_unit?->label(),
+                        'frequency_interval' => $plan->frequency_interval,
+                        'total_authorized_cycles' => $plan->total_authorized_cycles,
+                        'completed_cycles' => $plan->completed_cycles,
+                    ])
                     ->all(),
             ],
             'dispensingLocations' => $locations

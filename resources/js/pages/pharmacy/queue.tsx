@@ -362,26 +362,77 @@ export default function PharmacyQueuePage({
                                                                 <TableCell className="text-right">
                                                                     {itemIndex ===
                                                                     0 ? (
-                                                                        <Button
-                                                                            type="button"
-                                                                            size="sm"
-                                                                            onClick={() =>
-                                                                                setActivePrescriptionId(
-                                                                                    prescription.id,
-                                                                                )
-                                                                            }
-                                                                            disabled={
-                                                                                dispensingLocations.length ===
-                                                                                0
-                                                                            }
-                                                                        >
-                                                                            Dispense
-                                                                        </Button>
+                                                                        prescription.active_treatment_plan ? (
+                                                                            <Button
+                                                                                type="button"
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                asChild
+                                                                            >
+                                                                                <Link
+                                                                                    href={`/pharmacy/treatment-plans/${prescription.active_treatment_plan.id}`}
+                                                                                >
+                                                                                    Open Plan
+                                                                                </Link>
+                                                                            </Button>
+                                                                        ) : (
+                                                                            <div className="flex justify-end gap-2">
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                    asChild
+                                                                                >
+                                                                                    <Link
+                                                                                        href={`/pharmacy/prescriptions/${prescription.id}/treatment-plans/create`}
+                                                                                    >
+                                                                                        Treatment Plan
+                                                                                    </Link>
+                                                                                </Button>
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    onClick={() =>
+                                                                                        setActivePrescriptionId(
+                                                                                            prescription.id,
+                                                                                        )
+                                                                                    }
+                                                                                    disabled={
+                                                                                        dispensingLocations.length ===
+                                                                                        0
+                                                                                    }
+                                                                                >
+                                                                                    Dispense
+                                                                                </Button>
+                                                                            </div>
+                                                                        )
                                                                     ) : null}
                                                                 </TableCell>
                                                             </TableRow>
                                                         ),
                                                     ),
+                                            )}
+                                            {group.prescriptions.map((prescription) =>
+                                                prescription.active_treatment_plan ? (
+                                                    <TableRow
+                                                        key={`${prescription.id}-treatment-plan`}
+                                                        className="bg-muted/20"
+                                                    >
+                                                        <TableCell
+                                                            colSpan={7}
+                                                            className="text-sm text-muted-foreground"
+                                                        >
+                                                            Staged treatment active.
+                                                            Next refill:{' '}
+                                                            {prescription.active_treatment_plan.next_refill_date ??
+                                                                '-'}{' '}
+                                                            / Cycles:{' '}
+                                                            {prescription.active_treatment_plan.completed_cycles}
+                                                            {' of '}
+                                                            {prescription.active_treatment_plan.total_authorized_cycles}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ) : null,
                                             )}
                                         </TableBody>
                                     </Table>

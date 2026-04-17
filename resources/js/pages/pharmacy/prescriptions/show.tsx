@@ -28,6 +28,10 @@ export default function PharmacyPrescriptionShowPage({
     navigation,
     prescription,
 }: PharmacyPrescriptionShowPageProps) {
+    const activeTreatmentPlan =
+        prescription.treatment_plans?.find((plan) => plan.status === 'active') ??
+        null;
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },
         {
@@ -95,7 +99,24 @@ export default function PharmacyPrescriptionShowPage({
                         ) : null}
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
+                        {activeTreatmentPlan ? (
+                            <Button variant="outline" asChild>
+                                <Link
+                                    href={`/pharmacy/treatment-plans/${activeTreatmentPlan.id}`}
+                                >
+                                    Open Treatment Plan
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Button variant="outline" asChild>
+                                <Link
+                                    href={`/pharmacy/prescriptions/${prescription.id}/treatment-plans/create`}
+                                >
+                                    Create Treatment Plan
+                                </Link>
+                            </Button>
+                        )}
                         <Button variant="outline" asChild>
                             <a
                                 href={`/prescriptions/${prescription.id}/print`}
@@ -177,6 +198,58 @@ export default function PharmacyPrescriptionShowPage({
                                 </div>
                             </div>
                         ))}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Treatment Plans</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {prescription.treatment_plans &&
+                        prescription.treatment_plans.length > 0 ? (
+                            prescription.treatment_plans.map((plan) => (
+                                <div
+                                    key={plan.id}
+                                    className="flex flex-col gap-3 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between"
+                                >
+                                    <div className="space-y-1 text-sm">
+                                        <div className="font-medium">
+                                            {plan.frequency_unit_label ?? 'Cycle'}{' '}
+                                            every {plan.frequency_interval}
+                                        </div>
+                                        <div className="text-muted-foreground">
+                                            Start: {plan.start_date ?? '-'} / Next
+                                            refill: {plan.next_refill_date ?? '-'}
+                                        </div>
+                                        <div className="text-muted-foreground">
+                                            Cycles: {plan.completed_cycles} of{' '}
+                                            {plan.total_authorized_cycles}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge
+                                            variant="outline"
+                                            className={badgeTone(plan.status)}
+                                        >
+                                            {plan.status_label ?? 'Unknown'}
+                                        </Badge>
+                                        <Button variant="outline" asChild>
+                                            <Link
+                                                href={`/pharmacy/treatment-plans/${plan.id}`}
+                                            >
+                                                View Plan
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                No staged treatment plan has been created for this
+                                prescription yet.
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

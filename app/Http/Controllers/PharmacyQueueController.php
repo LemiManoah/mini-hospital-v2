@@ -6,8 +6,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\PrescriptionItemStatus;
 use App\Enums\PrescriptionStatus;
+use App\Enums\PharmacyTreatmentPlanStatus;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLocation;
+use App\Models\PharmacyTreatmentPlan;
 use App\Models\Prescription;
 use App\Support\BranchContext;
 use App\Support\GeneralSettings\TenantGeneralSettings;
@@ -177,6 +179,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
             'availability' => $availability,
             'items_count' => $items->count(),
             'pending_items_count' => $items->where('status', PrescriptionItemStatus::PENDING->value)->count(),
+            'active_treatment_plan' => $this->serializeActiveTreatmentPlan($prescription),
         ];
     }
 
@@ -265,6 +268,25 @@ final readonly class PharmacyQueueController implements HasMiddleware
             'ready_items' => $readyCount,
             'partial_items' => $partialCount,
             'out_of_stock_items' => $outOfStockCount,
+        ];
+    }
+
+    private function serializeActiveTreatmentPlan(Prescription $prescription): ?array
+    {
+        $activePlan = $prescription->pharmacyTreatmentPlans
+            ->first(static fn (PharmacyTreatmentPlan $plan): bool => $plan->status === PharmacyTreatmentPlanStatus::ACTIVE);
+
+        if (! $activePlan instanceof PharmacyTreatmentPlan) {
+            return null;
+        }
+
+        return [
+            'id' => $activePlan->id,
+            'status' => $activePlan->status?->value,
+            'status_label' => $activePlan->status?->label(),
+            'next_refill_date' => $activePlan->next_refill_date?->toDateString(),
+            'completed_cycles' => $activePlan->completed_cycles,
+            'total_authorized_cycles' => $activePlan->total_authorized_cycles,
         ];
     }
 
