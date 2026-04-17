@@ -10,6 +10,7 @@ use App\Support\BranchContext;
 use App\Support\InventoryLocationAccess;
 use App\Support\InventoryNavigationContext;
 use App\Support\InventoryStockLedger;
+use App\Support\PrescriptionDispenseProgress;
 use App\Support\PrescriptionQueueQuery;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -25,6 +26,7 @@ final readonly class PharmacyPrescriptionController implements HasMiddleware
         private PrescriptionQueueQuery $prescriptionQueueQuery,
         private InventoryLocationAccess $inventoryLocationAccess,
         private InventoryStockLedger $inventoryStockLedger,
+        private PrescriptionDispenseProgress $prescriptionDispenseProgress,
     ) {}
 
     public static function middleware(): array
@@ -45,13 +47,18 @@ final readonly class PharmacyPrescriptionController implements HasMiddleware
         $stockBalances = is_string($branchId) && $branchId !== ''
             ? $this->itemBalancesForLocations($branchId, $locations)
             : collect();
+        $progress = $this->prescriptionDispenseProgress->postedLineSummaries($record->id);
 
         $serializedItems = $record->items
-            ->map(function ($item) use ($stockBalances): array {
-                $availableQuantity = round((float) ($stockBalances->get((string) $item->inventory_item_id) ?? 0), 3);
+            ->map(function ($item) use ($stockBalances, $progress): array {
                 $requestedQuantity = round((float) $item->quantity, 3);
+                $coveredQuantity = min($requestedQuantity, round((float) ($progress->get($item->id)['covered_quantity'] ?? 0), 3));
+                $locallyDispensedQuantity = min($requestedQuantity, round((float) ($progress->get($item->id)['dispensed_quantity'] ?? 0), 3));
+                $remainingQuantity = max(0, round($requestedQuantity - $coveredQuantity, 3));
+                $availableQuantity = round((float) ($stockBalances->get((string) $item->inventory_item_id) ?? 0), 3);
                 $stockStatus = match (true) {
-                    $availableQuantity >= $requestedQuantity && $requestedQuantity > 0 => 'ready',
+                    $remainingQuantity <= 0 => 'ready',
+                    $availableQuantity >= $remainingQuantity && $remainingQuantity > 0 => 'ready',
                     $availableQuantity > 0 => 'partial',
                     default => 'out_of_stock',
                 };
@@ -69,14 +76,18 @@ final readonly class PharmacyPrescriptionController implements HasMiddleware
                     'route' => $item->route,
                     'duration_days' => $item->duration_days,
                     'quantity' => $requestedQuantity,
+                    'remaining_quantity' => $remainingQuantity,
+                    'covered_quantity' => $coveredQuantity,
+                    'locally_dispensed_quantity' => $locallyDispensedQuantity,
                     'instructions' => $item->instructions,
                     'status' => $item->status?->value,
                     'status_label' => $item->status?->label(),
                     'dispensed_at' => $item->dispensed_at?->toISOString(),
+                    'external_pharmacy' => (bool) ($item->is_external_pharmacy ?? false),
                     'available_quantity' => $availableQuantity,
                     'stock_status' => $stockStatus,
                     'stock_status_label' => match ($stockStatus) {
-                        'ready' => 'Ready',
+                        'ready' => $remainingQuantity <= 0 ? 'Handled' : 'Ready',
                         'partial' => 'Partial Stock',
                         default => 'Out Of Stock',
                     },

@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type DispenseShowPageProps } from '@/types/pharmacy';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { Printer, PlusCircle, Trash2 } from 'lucide-react';
 
 const badgeTone = (value: string | null | undefined): string => {
     switch (value) {
@@ -175,6 +175,18 @@ export default function DispenseShowPage({
                     </div>
 
                     <div className="flex gap-2">
+                        {dispensingRecord.status === 'posted' ? (
+                            <Button variant="outline" asChild>
+                                <a
+                                    href={`/pharmacy/dispenses/${dispensingRecord.id}/print`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Print Slip
+                                </a>
+                            </Button>
+                        ) : null}
                         {dispensingRecord.prescription?.id ? (
                             <Button variant="outline" asChild>
                                 <Link
@@ -593,7 +605,9 @@ export default function DispenseShowPage({
 
                                 {item.external_pharmacy ? (
                                     <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-                                        External pharmacy:{' '}
+                                        External quantity:{' '}
+                                        {item.balance_quantity.toFixed(3)}{' '}
+                                        {' | '}Reason:{' '}
                                         {item.external_reason ?? 'Marked'}
                                     </div>
                                 ) : null}

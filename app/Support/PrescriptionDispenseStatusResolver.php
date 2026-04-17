@@ -14,8 +14,13 @@ final class PrescriptionDispenseStatusResolver
     public function itemStatus(
         float $dispensedQuantity,
         float $prescribedQuantity,
+        bool $externalPharmacy = false,
         PrescriptionItemStatus|string|null $fallbackStatus = null,
     ): PrescriptionItemStatus {
+        if ($externalPharmacy) {
+            return PrescriptionItemStatus::DISPENSED;
+        }
+
         if ($dispensedQuantity <= 0) {
             return $fallbackStatus instanceof PrescriptionItemStatus
                 ? $fallbackStatus

@@ -38,10 +38,14 @@ export interface PharmacyPrescriptionItem {
     route: string;
     duration_days: number;
     quantity: number;
+    remaining_quantity: number;
+    covered_quantity: number;
+    locally_dispensed_quantity: number;
     instructions: string | null;
     status: string | null;
     status_label: string | null;
     dispensed_at?: string | null;
+    external_pharmacy: boolean;
     available_quantity?: number;
     stock_status?: string;
     stock_status_label?: string;
@@ -217,4 +221,42 @@ export interface DispenseShowPageProps {
     dispensingRecord: DispensingRecordDetail;
     availableBatchBalances: PharmacyAvailableBatchBalance[];
     pharmacyPolicy: PharmacyPolicy;
+}
+
+export interface DispensingHistoryRecord {
+    id: string;
+    dispense_number: string;
+    status: string | null;
+    status_label: string | null;
+    dispensed_at: string | null;
+    visit_number: string | null;
+    patient_name: string | null;
+    patient_number: string | null;
+    inventory_location_name: string | null;
+    dispensed_by: string | null;
+}
+
+export interface PaginatedDispensingHistory {
+    data: DispensingHistoryRecord[];
+    prev_page_url: string | null;
+    next_page_url: string | null;
+    current_page: number;
+    last_page: number;
+    total: number;
+    links: {
+        url: string | null;
+        label: string;
+        active: boolean;
+    }[];
+}
+
+export interface DispensingHistoryPageProps {
+    navigation: InventoryNavigationContext;
+    records: PaginatedDispensingHistory;
+    filters: {
+        search: string | null;
+        status: string | null;
+        from: string | null;
+        to: string | null;
+    };
 }

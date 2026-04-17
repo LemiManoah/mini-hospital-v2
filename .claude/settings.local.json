@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(php.exe artisan *)",
+      "Bash(\"/c/Users/Manoah/.config/herd/bin/php.bat\" artisan *)",
+      "Bash(\"/c/Users/Manoah/.config/herd/bin/php.bat\" vendor/bin/pint --dirty)",
+      "Bash(echo \"EXIT:$?\")"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
+}

@@ -10,6 +10,7 @@ use App\Models\PrescriptionItem;
 use App\Support\BranchContext;
 use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryLocationAccess;
+use App\Support\PrescriptionDispenseProgress;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -104,6 +105,8 @@ class StoreDispenseRequest extends FormRequest
                 }
 
                 $prescriptionItems = $prescription->items->keyBy('id');
+                $postedLineSummaries = resolve(PrescriptionDispenseProgress::class)
+                    ->postedLineSummaries($prescription->id);
                 $allowPartialDispense = resolve(TenantGeneralSettings::class)->boolean(
                     $prescription->visit->tenant_id,
                     'allow_partial_dispense',
@@ -134,6 +137,15 @@ class StoreDispenseRequest extends FormRequest
                         continue;
                     }
 
+                    $remainingQuantity = max(
+                        0,
+                        round(
+                            (float) $prescriptionItem->quantity
+                            - (float) ($postedLineSummaries->get($prescriptionItem->id)['covered_quantity'] ?? 0.0),
+                            3,
+                        ),
+                    );
+
                     if (is_numeric($dispensedQuantity) && (float) $dispensedQuantity > 0) {
                         $hasActionableLine = true;
                     }
@@ -149,10 +161,10 @@ class StoreDispenseRequest extends FormRequest
                         }
                     }
 
-                    if (is_numeric($dispensedQuantity) && (float) $dispensedQuantity > (float) $prescriptionItem->quantity) {
+                    if (is_numeric($dispensedQuantity) && (float) $dispensedQuantity > $remainingQuantity) {
                         $validator->errors()->add(
                             sprintf('items.%d.dispensed_quantity', $index),
-                            'Dispensed quantity cannot be greater than the prescribed quantity.',
+                            'Dispensed quantity cannot be greater than the remaining quantity on the prescription.',
                         );
                     }
 
@@ -160,22 +172,22 @@ class StoreDispenseRequest extends FormRequest
                         ! $allowPartialDispense
                         && is_numeric($dispensedQuantity)
                         && (float) $dispensedQuantity > 0
-                        && (float) $dispensedQuantity < (float) $prescriptionItem->quantity
+                        && (float) $dispensedQuantity < $remainingQuantity
                     ) {
                         $validator->errors()->add(
                             sprintf('items.%d.dispensed_quantity', $index),
-                            'Partial dispensing is disabled for this facility. Use zero or the full prescribed quantity.',
+                            'Partial dispensing is disabled for this facility. Use zero or the full remaining quantity.',
                         );
                     }
 
                     if (
                         $externalPharmacy
                         && is_numeric($dispensedQuantity)
-                        && (float) $dispensedQuantity >= (float) $prescriptionItem->quantity
+                        && (float) $dispensedQuantity >= $remainingQuantity
                     ) {
                         $validator->errors()->add(
                             sprintf('items.%d.external_pharmacy', $index),
-                            'External pharmacy can only be marked when part of the prescribed quantity remains unfulfilled locally.',
+                            'External pharmacy can only be marked when part of the remaining quantity stays unfulfilled locally.',
                         );
                     }
                 }

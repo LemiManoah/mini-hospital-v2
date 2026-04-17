@@ -14,6 +14,7 @@ use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryLocationAccess;
 use App\Support\InventoryNavigationContext;
 use App\Support\InventoryStockLedger;
+use App\Support\PrescriptionDispenseProgress;
 use App\Support\PrescriptionQueueQuery;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -29,6 +30,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
         private PrescriptionQueueQuery $prescriptionQueueQuery,
         private InventoryLocationAccess $inventoryLocationAccess,
         private InventoryStockLedger $inventoryStockLedger,
+        private PrescriptionDispenseProgress $prescriptionDispenseProgress,
         private TenantGeneralSettings $tenantGeneralSettings,
     ) {}
 
@@ -135,8 +137,10 @@ final readonly class PharmacyQueueController implements HasMiddleware
      */
     private function serializePrescriptionSummary(Prescription $prescription, Collection $stockBalances): array
     {
+        $progress = $this->prescriptionDispenseProgress->postedLineSummaries($prescription->id);
         $items = $prescription->items
-            ->map(fn ($item): array => $this->serializeItem($item, $stockBalances))
+            ->map(fn ($item): array => $this->serializeItem($item, $stockBalances, $progress->get($item->id)))
+            ->filter(static fn (array $item): bool => $item['remaining_quantity'] > 0.0005)
             ->values();
 
         $availability = $this->resolveAvailabilitySummary($items);
@@ -180,12 +184,16 @@ final readonly class PharmacyQueueController implements HasMiddleware
      * @param  Collection<string, float>  $stockBalances
      * @return array<string, mixed>
      */
-    private function serializeItem(mixed $item, Collection $stockBalances): array
+    private function serializeItem(mixed $item, Collection $stockBalances, ?array $progress): array
     {
-        $availableQuantity = round((float) ($stockBalances->get((string) $item->inventory_item_id) ?? 0), 3);
         $requestedQuantity = round((float) $item->quantity, 3);
+        $coveredQuantity = min($requestedQuantity, round((float) ($progress['covered_quantity'] ?? 0), 3));
+        $locallyDispensedQuantity = min($requestedQuantity, round((float) ($progress['dispensed_quantity'] ?? 0), 3));
+        $remainingQuantity = max(0, round($requestedQuantity - $coveredQuantity, 3));
+        $availableQuantity = round((float) ($stockBalances->get((string) $item->inventory_item_id) ?? 0), 3);
         $stockStatus = match (true) {
-            $availableQuantity >= $requestedQuantity && $requestedQuantity > 0 => 'ready',
+            $remainingQuantity <= 0 => 'ready',
+            $availableQuantity >= $remainingQuantity && $remainingQuantity > 0 => 'ready',
             $availableQuantity > 0 => 'partial',
             default => 'out_of_stock',
         };
@@ -203,14 +211,18 @@ final readonly class PharmacyQueueController implements HasMiddleware
             'route' => $item->route,
             'duration_days' => $item->duration_days,
             'quantity' => $requestedQuantity,
+            'remaining_quantity' => $remainingQuantity,
+            'covered_quantity' => $coveredQuantity,
+            'locally_dispensed_quantity' => $locallyDispensedQuantity,
             'instructions' => $item->instructions,
             'status' => $item->status?->value,
             'status_label' => $item->status?->label(),
             'dispensed_at' => $item->dispensed_at?->toISOString(),
+            'external_pharmacy' => (bool) ($item->is_external_pharmacy ?? false),
             'available_quantity' => $availableQuantity,
             'stock_status' => $stockStatus,
             'stock_status_label' => match ($stockStatus) {
-                'ready' => 'Ready',
+                'ready' => $remainingQuantity <= 0 ? 'Handled' : 'Ready',
                 'partial' => 'Partial Stock',
                 default => 'Out Of Stock',
             },
@@ -223,6 +235,16 @@ final readonly class PharmacyQueueController implements HasMiddleware
      */
     private function resolveAvailabilitySummary(Collection $items): array
     {
+        if ($items->isEmpty()) {
+            return [
+                'status' => 'out_of_stock',
+                'label' => 'No Pending Lines',
+                'ready_items' => 0,
+                'partial_items' => 0,
+                'out_of_stock_items' => 0,
+            ];
+        }
+
         $readyCount = $items->where('stock_status', 'ready')->count();
         $partialCount = $items->where('stock_status', 'partial')->count();
         $outOfStockCount = $items->where('stock_status', 'out_of_stock')->count();

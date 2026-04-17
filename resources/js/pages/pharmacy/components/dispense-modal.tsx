@@ -89,7 +89,7 @@ export function DispenseModal({
         notes: '',
         items: prescription.items.map((item) => ({
             prescription_item_id: item.id,
-            dispensed_quantity: item.quantity.toFixed(3),
+            dispensed_quantity: item.remaining_quantity.toFixed(3),
             external_pharmacy: false,
             external_reason: '',
             notes: '',
@@ -284,13 +284,26 @@ export function DispenseModal({
                                                 / {item.route}
                                             </div>
                                             <div className="text-sm text-muted-foreground">
-                                                Prescribed:{' '}
+                                                Remaining:{' '}
+                                                {item.remaining_quantity.toFixed(
+                                                    3,
+                                                )}{' '}
+                                                / Ordered:{' '}
                                                 {item.quantity.toFixed(3)} /
                                                 Available:{' '}
                                                 {selectedLocationAvailable.toFixed(
                                                     3,
                                                 )}
                                             </div>
+                                            {item.locally_dispensed_quantity >
+                                            0 ? (
+                                                <div className="text-sm text-muted-foreground">
+                                                    Already dispensed locally:{' '}
+                                                    {item.locally_dispensed_quantity.toFixed(
+                                                        3,
+                                                    )}
+                                                </div>
+                                            ) : null}
                                             {item.instructions ? (
                                                 <div className="text-sm text-muted-foreground">
                                                     {item.instructions}
@@ -327,6 +340,9 @@ export function DispenseModal({
                                                     type="number"
                                                     step="0.001"
                                                     min="0"
+                                                    max={item.remaining_quantity.toFixed(
+                                                        3,
+                                                    )}
                                                     value={selectedQuantity}
                                                     onChange={(event) =>
                                                         updateItem(
@@ -355,12 +371,12 @@ export function DispenseModal({
                                                             No local dispense
                                                         </SelectItem>
                                                         <SelectItem
-                                                            value={item.quantity.toFixed(
+                                                            value={item.remaining_quantity.toFixed(
                                                                 3,
                                                             )}
                                                         >
-                                                            Full quantity (
-                                                            {item.quantity.toFixed(
+                                                            Full remaining quantity (
+                                                            {item.remaining_quantity.toFixed(
                                                                 3,
                                                             )}
                                                             )
@@ -396,7 +412,7 @@ export function DispenseModal({
                                                         )
                                                     }
                                                 />
-                                                Mark any remainder as external
+                                                Send the remainder externally
                                             </label>
                                             <InputError
                                                 message={
@@ -417,7 +433,7 @@ export function DispenseModal({
                                                         event.target.value,
                                                     )
                                                 }
-                                                placeholder="Reason for external sourcing, if applicable"
+                                                placeholder="Why the remaining quantity will be sourced externally"
                                             />
                                             <InputError
                                                 message={

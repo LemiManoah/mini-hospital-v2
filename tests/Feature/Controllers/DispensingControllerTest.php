@@ -549,3 +549,69 @@ it('dispenses directly from the pharmacy queue flow and posts stock immediately'
             ->where('movement_type', StockMovementType::Dispense)
             ->count())->toBe(1);
 });
+
+it('completes a prescription through the external pharmacy workflow without reducing local stock', function (): void {
+    [
+        $branch,
+        ,
+        $user,
+        $staff,
+        $pharmacyLocation,
+        ,
+        ,
+        $readyDrug,
+        ,
+        ,
+    ] = createPharmacyModuleContext();
+
+    $prescription = createPharmacyPrescription(
+        $branch,
+        $branch->tenant,
+        $user,
+        $staff,
+        [
+            [
+                'inventory_item_id' => $readyDrug->id,
+                'quantity' => 4,
+            ],
+        ],
+        PrescriptionStatus::PENDING,
+        'queue-external-dispense',
+    );
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->withHeader('referer', route('pharmacy.queue.index'))
+        ->actingAs($user)
+        ->post(route('pharmacy.prescriptions.dispense', $prescription), [
+            'inventory_location_id' => $pharmacyLocation->id,
+            'dispensed_at' => now()->format('Y-m-d H:i:s'),
+            'notes' => 'Patient will buy this from an outside pharmacy.',
+            'items' => [
+                [
+                    'prescription_item_id' => $prescription->items[0]->id,
+                    'dispensed_quantity' => 0,
+                    'external_pharmacy' => true,
+                    'external_reason' => 'Medicine currently unavailable at the facility pharmacy.',
+                    'notes' => '',
+                    'allocations' => [],
+                ],
+            ],
+        ])
+        ->assertRedirect(route('pharmacy.queue.index'));
+
+    $record = DispensingRecord::query()->with('items')->latest('created_at')->firstOrFail();
+    $prescription->refresh()->load('items');
+
+    expect($record->status)->toBe(DispensingRecordStatus::POSTED)
+        ->and($record->items[0]->external_pharmacy)->toBeTrue()
+        ->and((float) $record->items[0]->dispensed_quantity)->toBe(0.0)
+        ->and((float) $record->items[0]->balance_quantity)->toBe(4.0)
+        ->and($prescription->status)->toBe(PrescriptionStatus::FULLY_DISPENSED)
+        ->and($prescription->items[0]->status)->toBe(PrescriptionItemStatus::DISPENSED)
+        ->and($prescription->items[0]->is_external_pharmacy)->toBeTrue()
+        ->and(StockMovement::query()
+            ->where('source_document_type', DispensingRecord::class)
+            ->where('source_document_id', $record->id)
+            ->where('movement_type', StockMovementType::Dispense)
+            ->count())->toBe(0);
+});

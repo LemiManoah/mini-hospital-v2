@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type PharmacyPrescriptionShowPageProps } from '@/types/pharmacy';
 import { Head, Link } from '@inertiajs/react';
+import { Printer } from 'lucide-react';
 
 const badgeTone = (value: string | null | undefined): string => {
     switch (value) {
@@ -96,6 +97,16 @@ export default function PharmacyPrescriptionShowPage({
 
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" asChild>
+                            <a
+                                href={`/prescriptions/${prescription.id}/print`}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                <Printer className="mr-2 h-4 w-4" />
+                                Print Prescription
+                            </a>
+                        </Button>
+                        <Button variant="outline" asChild>
                             <Link href={navigation.queue_href ?? '/pharmacy/queue'}>
                                 Back To Queue
                             </Link>
@@ -124,11 +135,26 @@ export default function PharmacyPrescriptionShowPage({
                                         {item.route} / {item.duration_days} days
                                     </div>
                                     <div className="text-sm text-muted-foreground">
-                                        Requested: {item.quantity.toFixed(3)} /
+                                        Ordered: {item.quantity.toFixed(3)} /
+                                        Remaining:{' '}
+                                        {item.remaining_quantity.toFixed(3)} /
                                         Available:{' '}
                                         {item.available_quantity?.toFixed(3) ??
                                             '0.000'}
                                     </div>
+                                    {item.locally_dispensed_quantity > 0 ? (
+                                        <div className="text-sm text-muted-foreground">
+                                            Already dispensed locally:{' '}
+                                            {item.locally_dispensed_quantity.toFixed(
+                                                3,
+                                            )}
+                                        </div>
+                                    ) : null}
+                                    {item.external_pharmacy ? (
+                                        <div className="text-sm text-muted-foreground">
+                                            A previous remainder for this line was handled through an external pharmacy.
+                                        </div>
+                                    ) : null}
                                     {item.instructions ? (
                                         <div className="text-sm text-muted-foreground">
                                             {item.instructions}

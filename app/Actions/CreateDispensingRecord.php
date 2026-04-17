@@ -11,6 +11,7 @@ use App\Models\InventoryLocation;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Support\InventoryLocationAccess;
+use App\Support\PrescriptionDispenseProgress;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,6 +21,7 @@ final readonly class CreateDispensingRecord
 {
     public function __construct(
         private InventoryLocationAccess $inventoryLocationAccess,
+        private PrescriptionDispenseProgress $prescriptionDispenseProgress,
     ) {}
 
     /**
@@ -72,6 +74,7 @@ final readonly class CreateDispensingRecord
                 ->with('inventoryItem:id,name,generic_name,brand_name,strength,dosage_form')
                 ->get()
                 ->keyBy('id');
+            $postedLineSummaries = $this->prescriptionDispenseProgress->postedLineSummaries($prescription->id);
 
             foreach ($items as $item) {
                 $prescriptionItemId = (string) ($item['prescription_item_id'] ?? '');
@@ -83,7 +86,12 @@ final readonly class CreateDispensingRecord
                 }
 
                 $dispensedQuantity = round((float) ($item['dispensed_quantity'] ?? 0), 3);
-                $prescribedQuantity = round((float) $prescriptionItem->quantity, 3);
+                $alreadyCoveredQuantity = (float) ($postedLineSummaries->get($prescriptionItem->id)['covered_quantity'] ?? 0.0);
+                $prescribedQuantity = max(
+                    0,
+                    round((float) $prescriptionItem->quantity - $alreadyCoveredQuantity, 3),
+                );
+                $externalPharmacy = (bool) ($item['external_pharmacy'] ?? false);
                 $balanceQuantity = max(0, $prescribedQuantity - $dispensedQuantity);
 
                 $record->items()->create([
@@ -92,9 +100,9 @@ final readonly class CreateDispensingRecord
                     'prescribed_quantity' => $prescribedQuantity,
                     'dispensed_quantity' => $dispensedQuantity,
                     'balance_quantity' => $balanceQuantity,
-                    'dispense_status' => $this->resolveItemStatus($dispensedQuantity, $prescribedQuantity),
+                    'dispense_status' => $this->resolveItemStatus($dispensedQuantity, $prescribedQuantity, $externalPharmacy),
                     'substitution_inventory_item_id' => $item['substitution_inventory_item_id'] ?? null,
-                    'external_pharmacy' => (bool) ($item['external_pharmacy'] ?? false),
+                    'external_pharmacy' => $externalPharmacy,
                     'external_reason' => ($item['external_reason'] ?? '') !== '' ? $item['external_reason'] : null,
                     'notes' => ($item['notes'] ?? '') !== '' ? $item['notes'] : null,
                 ]);
@@ -112,8 +120,12 @@ final readonly class CreateDispensingRecord
         });
     }
 
-    private function resolveItemStatus(float $dispensedQuantity, float $prescribedQuantity): PrescriptionItemStatus
+    private function resolveItemStatus(float $dispensedQuantity, float $prescribedQuantity, bool $externalPharmacy): PrescriptionItemStatus
     {
+        if ($externalPharmacy) {
+            return PrescriptionItemStatus::DISPENSED;
+        }
+
         if ($dispensedQuantity <= 0) {
             return PrescriptionItemStatus::PENDING;
         }

@@ -289,9 +289,20 @@ export default function PharmacyQueuePage({
                                                                     </div>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {item.quantity.toFixed(
-                                                                        3,
-                                                                    )}
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <span>
+                                                                            Ordered:{' '}
+                                                                            {item.quantity.toFixed(
+                                                                                3,
+                                                                            )}
+                                                                        </span>
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            Remaining:{' '}
+                                                                            {item.remaining_quantity.toFixed(
+                                                                                3,
+                                                                            )}
+                                                                        </span>
+                                                                    </div>
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <Badge
@@ -324,6 +335,15 @@ export default function PharmacyQueuePage({
                                                                             ) ??
                                                                                 '0.000'}
                                                                         </span>
+                                                                        {item.locally_dispensed_quantity >
+                                                                        0 ? (
+                                                                            <span className="text-xs text-muted-foreground">
+                                                                                Local so far:{' '}
+                                                                                {item.locally_dispensed_quantity.toFixed(
+                                                                                    3,
+                                                                                )}
+                                                                            </span>
+                                                                        ) : null}
                                                                     </div>
                                                                 </TableCell>
                                                                 <TableCell className="text-sm text-muted-foreground">

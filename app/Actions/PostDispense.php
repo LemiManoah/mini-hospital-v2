@@ -14,8 +14,8 @@ use App\Models\PrescriptionItem;
 use App\Models\StockMovement;
 use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryStockLedger;
+use App\Support\PrescriptionDispenseProgress;
 use App\Support\PrescriptionDispenseStatusResolver;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +26,7 @@ final readonly class PostDispense
     public function __construct(
         private InventoryStockLedger $inventoryStockLedger,
         private TenantGeneralSettings $tenantGeneralSettings,
+        private PrescriptionDispenseProgress $prescriptionDispenseProgress,
         private PrescriptionDispenseStatusResolver $statusResolver,
     ) {}
 
@@ -70,8 +71,8 @@ final readonly class PostDispense
                     $batch['inventory_batch_id'] => (float) $batch['quantity'],
                 ]);
 
-            /** @var Collection<string, array{dispensed_quantity: float, latest_dispensed_at: Carbon|null, external_pharmacy: bool}> $postedLineSummaries */
-            $postedLineSummaries = $this->postedLineSummaries(
+            /** @var Collection<string, array{dispensed_quantity: float, external_quantity: float, covered_quantity: float, latest_dispensed_at: Carbon|null, external_pharmacy: bool}> $postedLineSummaries */
+            $postedLineSummaries = $this->prescriptionDispenseProgress->postedLineSummaries(
                 $dispensingRecord->prescription_id,
                 $dispensingRecord->id,
             );
@@ -91,9 +92,11 @@ final readonly class PostDispense
                 }
 
                 $dispensedQuantity = round((float) $recordItem->dispensed_quantity, 3);
-                $prescribedQuantity = round((float) $recordItem->prescribed_quantity, 3);
-                $alreadyPostedQuantity = (float) ($postedLineSummaries->get($recordItem->prescription_item_id)['dispensed_quantity'] ?? 0.0);
-                $remainingQuantity = max(0, $prescribedQuantity - $alreadyPostedQuantity);
+                $alreadyCoveredQuantity = (float) ($postedLineSummaries->get($recordItem->prescription_item_id)['covered_quantity'] ?? 0.0);
+                $remainingQuantity = max(
+                    0,
+                    round((float) $prescriptionItem->quantity - $alreadyCoveredQuantity, 3),
+                );
 
                 if ($dispensedQuantity > $remainingQuantity + 0.0005) {
                     throw ValidationException::withMessages([
@@ -378,33 +381,6 @@ final readonly class PostDispense
         return $allocations;
     }
 
-    /**
-     * @return Collection<string, array{dispensed_quantity: float, latest_dispensed_at: Carbon|null, external_pharmacy: bool}>
-     */
-    private function postedLineSummaries(string $prescriptionId, string $ignoreRecordId): Collection
-    {
-        return DispensingRecordItem::query()
-            ->selectRaw('dispensing_record_items.prescription_item_id')
-            ->selectRaw('SUM(dispensing_record_items.dispensed_quantity) as dispensed_quantity')
-            ->selectRaw('MAX(dispensing_records.dispensed_at) as latest_dispensed_at')
-            ->selectRaw('MAX(CASE WHEN dispensing_record_items.external_pharmacy = 1 THEN 1 ELSE 0 END) as external_pharmacy')
-            ->join('dispensing_records', 'dispensing_records.id', '=', 'dispensing_record_items.dispensing_record_id')
-            ->where('dispensing_records.prescription_id', $prescriptionId)
-            ->where('dispensing_records.status', DispensingRecordStatus::POSTED->value)
-            ->where('dispensing_records.id', '!=', $ignoreRecordId)
-            ->groupBy('dispensing_record_items.prescription_item_id')
-            ->get()
-            ->mapWithKeys(static fn (object $row): array => [
-                (string) $row->prescription_item_id => [
-                    'dispensed_quantity' => (float) $row->dispensed_quantity,
-                    'latest_dispensed_at' => $row->latest_dispensed_at !== null
-                        ? Carbon::parse((string) $row->latest_dispensed_at)
-                        : null,
-                    'external_pharmacy' => (bool) $row->external_pharmacy,
-                ],
-            ]);
-    }
-
     private function syncPrescriptionStatuses(string $prescriptionId): void
     {
         $prescription = Prescription::query()
@@ -412,26 +388,8 @@ final readonly class PostDispense
             ->lockForUpdate()
             ->findOrFail($prescriptionId);
 
-        /** @var Collection<string, array{dispensed_quantity: float, latest_dispensed_at: Carbon|null, external_pharmacy: bool}> $postedLineSummaries */
-        $postedLineSummaries = DispensingRecordItem::query()
-            ->selectRaw('dispensing_record_items.prescription_item_id')
-            ->selectRaw('SUM(dispensing_record_items.dispensed_quantity) as dispensed_quantity')
-            ->selectRaw('MAX(dispensing_records.dispensed_at) as latest_dispensed_at')
-            ->selectRaw('MAX(CASE WHEN dispensing_record_items.external_pharmacy = 1 THEN 1 ELSE 0 END) as external_pharmacy')
-            ->join('dispensing_records', 'dispensing_records.id', '=', 'dispensing_record_items.dispensing_record_id')
-            ->where('dispensing_records.prescription_id', $prescription->id)
-            ->where('dispensing_records.status', DispensingRecordStatus::POSTED->value)
-            ->groupBy('dispensing_record_items.prescription_item_id')
-            ->get()
-            ->mapWithKeys(static fn (object $row): array => [
-                (string) $row->prescription_item_id => [
-                    'dispensed_quantity' => (float) $row->dispensed_quantity,
-                    'latest_dispensed_at' => $row->latest_dispensed_at !== null
-                        ? Carbon::parse((string) $row->latest_dispensed_at)
-                        : null,
-                    'external_pharmacy' => (bool) $row->external_pharmacy,
-                ],
-            ]);
+        /** @var Collection<string, array{dispensed_quantity: float, external_quantity: float, covered_quantity: float, latest_dispensed_at: Carbon|null, external_pharmacy: bool}> $postedLineSummaries */
+        $postedLineSummaries = $this->prescriptionDispenseProgress->postedLineSummaries($prescription->id);
 
         foreach ($prescription->items as $prescriptionItem) {
             if (! $prescriptionItem instanceof PrescriptionItem) {
@@ -442,11 +400,13 @@ final readonly class PostDispense
             $dispensedQuantity = (float) ($summary['dispensed_quantity'] ?? 0.0);
             $latestDispensedAt = $summary['latest_dispensed_at'] ?? null;
             $isExternalPharmacy = (bool) ($summary['external_pharmacy'] ?? false);
+            $coveredQuantity = (float) ($summary['covered_quantity'] ?? 0.0);
 
             $prescriptionItem->update([
                 'status' => $this->statusResolver->itemStatus(
-                    $dispensedQuantity,
+                    $coveredQuantity,
                     round((float) $prescriptionItem->quantity, 3),
+                    $isExternalPharmacy,
                     $prescriptionItem->status,
                 ),
                 'dispensed_at' => $latestDispensedAt?->toDateTimeString(),

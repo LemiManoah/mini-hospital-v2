@@ -196,6 +196,109 @@ it('filters the pharmacy queue by search and status', function (): void {
             ->where('prescriptions.data.0.status', PrescriptionStatus::PARTIALLY_DISPENSED->value));
 });
 
+it('shows only the remaining quantity after a partial local dispense and removes fully external prescriptions from the queue', function (): void {
+    [
+        $branch,
+        ,
+        $user,
+        $staff,
+        $pharmacyLocation,
+        ,
+        ,
+        $readyDrug,
+        ,
+        ,
+        $readyDrugBatch,
+    ] = createPharmacyModuleContext();
+
+    $partialPrescription = createPharmacyPrescription(
+        $branch,
+        $branch->tenant,
+        $user,
+        $staff,
+        [
+            [
+                'inventory_item_id' => $readyDrug->id,
+                'quantity' => 10,
+            ],
+        ],
+        PrescriptionStatus::PENDING,
+        'queue-remaining-local',
+    );
+
+    $externalPrescription = createPharmacyPrescription(
+        $branch,
+        $branch->tenant,
+        $user,
+        $staff,
+        [
+            [
+                'inventory_item_id' => $readyDrug->id,
+                'quantity' => 3,
+            ],
+        ],
+        PrescriptionStatus::PENDING,
+        'queue-remaining-external',
+    );
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->withHeader('referer', route('pharmacy.queue.index'))
+        ->actingAs($user)
+        ->post(route('pharmacy.prescriptions.dispense', $partialPrescription), [
+            'inventory_location_id' => $pharmacyLocation->id,
+            'dispensed_at' => now()->format('Y-m-d H:i:s'),
+            'notes' => 'First partial local issue.',
+            'items' => [
+                [
+                    'prescription_item_id' => $partialPrescription->items[0]->id,
+                    'dispensed_quantity' => 4,
+                    'external_pharmacy' => false,
+                    'external_reason' => '',
+                    'notes' => '',
+                    'allocations' => [
+                        [
+                            'inventory_batch_id' => $readyDrugBatch->id,
+                            'quantity' => 4,
+                        ],
+                    ],
+                ],
+            ],
+        ])
+        ->assertRedirect(route('pharmacy.queue.index'));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->withHeader('referer', route('pharmacy.queue.index'))
+        ->actingAs($user)
+        ->post(route('pharmacy.prescriptions.dispense', $externalPrescription), [
+            'inventory_location_id' => $pharmacyLocation->id,
+            'dispensed_at' => now()->format('Y-m-d H:i:s'),
+            'notes' => 'Handled outside the facility pharmacy.',
+            'items' => [
+                [
+                    'prescription_item_id' => $externalPrescription->items[0]->id,
+                    'dispensed_quantity' => 0,
+                    'external_pharmacy' => true,
+                    'external_reason' => 'Not available at the facility pharmacy.',
+                    'notes' => '',
+                    'allocations' => [],
+                ],
+            ],
+        ])
+        ->assertRedirect(route('pharmacy.queue.index'));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('pharmacy.queue.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->has('prescriptions.data', 1)
+            ->where('prescriptions.data.0.id', $partialPrescription->id)
+            ->where('prescriptions.data.0.items.0.quantity', 10.0)
+            ->where('prescriptions.data.0.items.0.locally_dispensed_quantity', 4.0)
+            ->where('prescriptions.data.0.items.0.remaining_quantity', 6.0)
+            ->where('prescriptions.data.0.items.0.available_quantity', 26.0));
+});
+
 it('shows the pharmacy prescription review page with line availability and dispensing locations', function (): void {
     [
         $branch,
