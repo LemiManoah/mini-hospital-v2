@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\PrescriptionStatus;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia;
 
@@ -107,7 +108,11 @@ it('shows only active branch queue prescriptions with stock availability signals
             ->where('pharmacyPolicy.batch_tracking_enabled', true)
             ->where('availableBatchBalances.0.inventory_location_id', $pharmacyLocation->id)
             ->has('prescriptions.data', 2)
-            ->where('prescriptions.data', function (array $rows): bool {
+            ->where('prescriptions.data', function (Collection|array $rows): bool {
+                if ($rows instanceof Collection) {
+                    $rows = $rows->all();
+                }
+
                 if (count($rows) !== 2) {
                     return false;
                 }
