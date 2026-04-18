@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\DispensingRecord;
 use App\Models\InventoryLocation;
 use App\Models\Prescription;
+use App\Models\PrescriptionItem;
 use App\Support\BranchContext;
 use App\Support\InventoryLocationAccess;
 use App\Support\InventoryNavigationContext;
@@ -50,7 +52,7 @@ final readonly class PharmacyPrescriptionController implements HasMiddleware
         $progress = $this->prescriptionDispenseProgress->postedLineSummaries($record->id);
 
         $serializedItems = $record->items
-            ->map(function ($item) use ($stockBalances, $progress): array {
+            ->map(function (PrescriptionItem $item) use ($stockBalances, $progress): array {
                 $requestedQuantity = round((float) $item->quantity, 3);
                 $coveredQuantity = min($requestedQuantity, round((float) ($progress->get($item->id)['covered_quantity'] ?? 0), 3));
                 $locallyDispensedQuantity = min($requestedQuantity, round((float) ($progress->get($item->id)['dispensed_quantity'] ?? 0), 3));
@@ -128,7 +130,7 @@ final readonly class PharmacyPrescriptionController implements HasMiddleware
                 ],
                 'items' => $serializedItems,
                 'dispensing_records' => $record->dispensingRecords
-                    ->map(static fn ($dispense): array => [
+                    ->map(static fn (DispensingRecord $dispense): array => [
                         'id' => $dispense->id,
                         'dispense_number' => $dispense->dispense_number,
                         'status' => $dispense->status?->value,
