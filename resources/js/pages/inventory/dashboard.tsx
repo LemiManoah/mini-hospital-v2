@@ -78,16 +78,6 @@ export default function InventoryDashboard({ stats }: InventoryDashboardProps) {
         }),
     );
 
-    const categoryData = Object.entries(stats.distribution_by_category)
-        .map(([name, value]) => ({
-            name: name
-                .split('_')
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' '),
-            value,
-        }))
-        .sort((a, b) => b.value - a.value);
-
     const poData = Object.entries(stats.po_stats).map(([status, count]) => ({
         status: status.charAt(0).toUpperCase() + status.slice(1),
         count,
@@ -103,13 +93,6 @@ export default function InventoryDashboard({ stats }: InventoryDashboardProps) {
                 { label: d.name, color: COLORS[i % COLORS.length] },
             ]),
         ),
-    } satisfies ChartConfig;
-
-    const categoryConfig = {
-        value: {
-            label: 'Items',
-            color: 'var(--chart-1)',
-        },
     } satisfies ChartConfig;
 
     const poConfig = {

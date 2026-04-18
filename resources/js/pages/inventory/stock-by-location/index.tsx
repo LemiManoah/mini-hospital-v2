@@ -36,7 +36,7 @@ export default function InventoryStockByLocationIndex({
     filters,
     itemTypes,
     locations,
-    note,
+    note: _note,
 }: InventoryStockByLocationPageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: navigation.section_title, href: navigation.section_href },

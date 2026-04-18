@@ -21,7 +21,7 @@ export interface PaginatedLabLookupList<T> {
     total: number;
 }
 
-export interface LabLookupIndexPageProps<T = LabLookupRecord> {
+export interface LabLookupIndexPageProps {
     filters: {
         search: string | null;
     };

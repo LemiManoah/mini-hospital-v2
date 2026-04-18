@@ -22,7 +22,6 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { type OrderTabValue } from '@/components/visit-ordering';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
@@ -58,48 +57,9 @@ const formatDateTime = (date: string | null | undefined): string =>
               minute: '2-digit',
           })
         : 'N/A';
-const formatMoney = (amount: number | null | undefined): string =>
-    amount === null || amount === undefined
-        ? 'Not priced'
-        : new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'UGX',
-              maximumFractionDigits: 0,
-          }).format(amount);
-const labelize = (value: string | null | undefined): string =>
-    value
-        ? value
-              .replaceAll('_', ' ')
-              .replace(/\b\w/g, (letter) => letter.toUpperCase())
-        : 'Not set';
 const staffName = (
     staff?: { first_name: string; last_name: string } | null,
 ): string => (staff ? `${staff.first_name} ${staff.last_name}` : 'Unknown');
-
-const labItemResultValues = (item: {
-    resultEntry?: {
-        values?: Array<{
-            id: string;
-            label: string;
-            display_value?: string | null;
-            value_text: string | null;
-            value_numeric: number | null;
-            unit: string | null;
-            reference_range: string | null;
-        }> | null;
-    } | null;
-    result_entry?: {
-        values?: Array<{
-            id: string;
-            label: string;
-            display_value?: string | null;
-            value_text: string | null;
-            value_numeric: number | null;
-            unit: string | null;
-            reference_range: string | null;
-        }> | null;
-    } | null;
-}) => item.resultEntry?.values ?? item.result_entry?.values ?? [];
 
 function vitalSummaryItems(
     vital: VitalSign | undefined,
@@ -144,21 +104,6 @@ function triageGradeClasses(grade: string | undefined): string {
             green: 'bg-emerald-100 text-emerald-800',
             black: 'bg-zinc-900 text-zinc-50',
         }[grade ?? ''] ?? 'bg-zinc-100 text-zinc-800'
-    );
-}
-
-function statusBadgeClasses(status: string): string {
-    return (
-        {
-            requested: 'bg-amber-100 text-amber-900',
-            pending: 'bg-amber-100 text-amber-900',
-            in_progress: 'bg-blue-100 text-blue-900',
-            completed: 'bg-emerald-100 text-emerald-900',
-            fully_dispensed: 'bg-emerald-100 text-emerald-900',
-            scheduled: 'bg-sky-100 text-sky-900',
-            cancelled: 'bg-zinc-200 text-zinc-900',
-            rejected: 'bg-rose-100 text-rose-900',
-        }[status] ?? 'bg-zinc-100 text-zinc-800'
     );
 }
 
@@ -267,13 +212,6 @@ export default function DoctorConsultationShow({
         useState<ImagingRequest | null>(null);
     const [editingServiceOrder, setEditingServiceOrder] =
         useState<FacilityServiceOrder | null>(null);
-
-    const openOrderDialog = (tab: OrderTabValue) => {
-        if (tab === 'lab') setLabModalOpen(true);
-        if (tab === 'prescriptions') setPrescriptionModalOpen(true);
-        if (tab === 'imaging') setImagingModalOpen(true);
-        if (tab === 'services') setServiceOrderModalOpen(true);
-    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
