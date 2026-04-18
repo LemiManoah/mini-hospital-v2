@@ -36,17 +36,23 @@ final class OnboardingController
     ): Response|RedirectResponse {
         $user = $request->user();
 
-        if (! $user instanceof User || $user->tenant === null) {
+        if (! $user instanceof User) {
             return to_route('home');
         }
 
-        if ($user->tenant->isOnboardingComplete()) {
+        $tenant = $user->tenant()->first();
+
+        if (! $tenant instanceof \App\Models\Tenant) {
             return to_route('home');
         }
 
-        Gate::authorize('onboard', $user->tenant);
+        if ($tenant->isOnboardingComplete()) {
+            return to_route('home');
+        }
 
-        $tenant = $user->tenant->loadMissing(['country', 'address']);
+        Gate::authorize('onboard', $tenant);
+
+        $tenant = $tenant->loadMissing(['country', 'address']);
         $ensureTenantStaffPositions->handle($tenant);
         $currentStep = is_string($tenant->onboarding_current_step)
             ? $tenant->onboarding_current_step

@@ -426,7 +426,7 @@ it('shows payment block message on lab delivery page when payment-before-laborat
     $visit = createGeneralSettingsWorkflowVisit($tenant, $branch, $clinic, $patient, $doctorUser);
     $labTest = createGeneralSettingsWorkflowLabTest($tenant);
 
-    $labUser = createGeneralSettingsWorkflowUser($tenant, $branch, StaffType::LABORATORY);
+    $labUser = createGeneralSettingsWorkflowUser($tenant, $branch, StaffType::TECHNICAL);
     $labUser->givePermissionTo('lab_requests.view');
 
     createGeneralSettingsWorkflowTriage($visit, $nurseUser->staff, $clinic);
@@ -477,12 +477,12 @@ it('does not show payment block message on lab delivery page when visit is paid'
         $clinic,
         $patient,
         $doctorUser,
-        billingStatus: BillingStatus::SETTLED,
+        billingStatus: BillingStatus::FULLY_PAID,
         balanceAmount: 0,
     );
     $labTest = createGeneralSettingsWorkflowLabTest($tenant);
 
-    $labUser = createGeneralSettingsWorkflowUser($tenant, $branch, StaffType::LABORATORY);
+    $labUser = createGeneralSettingsWorkflowUser($tenant, $branch, StaffType::TECHNICAL);
     $labUser->givePermissionTo('lab_requests.view');
 
     createGeneralSettingsWorkflowTriage($visit, $nurseUser->staff, $clinic);

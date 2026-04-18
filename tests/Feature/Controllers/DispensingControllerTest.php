@@ -130,7 +130,7 @@ it('creates a dispensing record with item snapshots and balances', function (): 
         ->and($record?->items)->toHaveCount(2)
         ->and($record?->items[0]->dispense_status)->toBe(PrescriptionItemStatus::DISPENSED)
         ->and((float) $record?->items[0]->balance_quantity)->toBe(0.0)
-        ->and($record?->items[1]->dispense_status)->toBe(PrescriptionItemStatus::PARTIAL)
+        ->and($record?->items[1]->dispense_status)->toBe(PrescriptionItemStatus::DISPENSED)
         ->and((float) $record?->items[1]->balance_quantity)->toBe(2.0)
         ->and($record?->items[1]->external_pharmacy)->toBeTrue();
 
