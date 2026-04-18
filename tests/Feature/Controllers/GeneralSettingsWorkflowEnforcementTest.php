@@ -447,7 +447,7 @@ it('shows payment block message on lab delivery page when payment-before-laborat
 
     $labRequestItem = App\Models\LabRequestItem::query()->create([
         'request_id' => $labRequest->id,
-        'lab_test_catalog_id' => $labTest->id,
+        'test_id' => $labTest->id,
         'status' => 'pending',
     ]);
 
@@ -503,7 +503,7 @@ it('does not show payment block message on lab delivery page when visit is paid'
 
     $labRequestItem = App\Models\LabRequestItem::query()->create([
         'request_id' => $labRequest->id,
-        'lab_test_catalog_id' => $labTest->id,
+        'test_id' => $labTest->id,
         'status' => 'pending',
     ]);
 

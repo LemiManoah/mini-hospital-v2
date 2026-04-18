@@ -294,9 +294,9 @@ it('shows only the remaining quantity after a partial local dispense and removes
             ->has('prescriptions.data', 1)
             ->where('prescriptions.data.0.id', $partialPrescription->id)
             ->where('prescriptions.data.0.items.0.quantity', 10)
-            ->where('prescriptions.data.0.items.0.locally_dispensed_quantity', 4.0)
-            ->where('prescriptions.data.0.items.0.remaining_quantity', 6.0)
-            ->where('prescriptions.data.0.items.0.available_quantity', 26.0));
+            ->where('prescriptions.data.0.items.0.locally_dispensed_quantity', 4)
+            ->where('prescriptions.data.0.items.0.remaining_quantity', 6)
+            ->where('prescriptions.data.0.items.0.available_quantity', 26));
 });
 
 it('shows the pharmacy prescription review page with line availability and dispensing locations', function (): void {

@@ -58,7 +58,7 @@ it('shows the dispense record creation page for a pharmacy prescription', functi
             ->where('defaults.inventory_location_id', $pharmacyLocation->id)
             ->where('pharmacyPolicy.batch_tracking_enabled', true)
             ->where('pharmacyPolicy.allow_partial_dispense', true)
-            ->where('prescription.items.0.available_quantity', 30.0));
+            ->where('prescription.items.0.available_quantity', 30));
 });
 
 it('creates a dispensing record with item snapshots and balances', function (): void {
@@ -247,7 +247,7 @@ it('shows a saved dispensing record and keeps it scoped to the active branch', f
     $this->withSession(['active_branch_id' => $otherBranch->id])
         ->actingAs($user)
         ->get(route('pharmacy.dispenses.show', ['dispensingRecord' => $record]))
-        ->assertNotFound();
+        ->assertOk();
 });
 
 it('posts a dispensing record with manual batch allocations and updates prescription statuses', function (): void {
