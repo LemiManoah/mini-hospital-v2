@@ -61,10 +61,12 @@ export default function GeneralSettings({
     currencies,
 }: GeneralSettingsPageProps) {
     const form = useForm({
-        require_payment_before_consultation:
-            Boolean(values.require_payment_before_consultation),
-        require_payment_before_laboratory:
-            Boolean(values.require_payment_before_laboratory),
+        require_payment_before_consultation: Boolean(
+            values.require_payment_before_consultation,
+        ),
+        require_payment_before_laboratory: Boolean(
+            values.require_payment_before_laboratory,
+        ),
         require_payment_before_pharmacy: Boolean(
             values.require_payment_before_pharmacy,
         ),

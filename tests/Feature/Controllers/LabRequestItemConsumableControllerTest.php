@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
-use App\Enums\InventoryLocationType;
 use App\Enums\InventoryItemType;
+use App\Enums\InventoryLocationType;
 use App\Enums\StaffType;
 use App\Enums\StockMovementType;
 use App\Enums\UnitType;

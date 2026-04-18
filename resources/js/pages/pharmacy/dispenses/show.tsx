@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type DispenseShowPageProps } from '@/types/pharmacy';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Printer, PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Printer, Trash2 } from 'lucide-react';
 
 const badgeTone = (value: string | null | undefined): string => {
     switch (value) {
@@ -197,7 +197,11 @@ export default function DispenseShowPage({
                             </Button>
                         ) : null}
                         <Button variant="outline" asChild>
-                            <Link href={navigation.queue_href ?? '/pharmacy/queue'}>
+                            <Link
+                                href={
+                                    navigation.queue_href ?? '/pharmacy/queue'
+                                }
+                            >
                                 Back To Queue
                             </Link>
                         </Button>
@@ -312,12 +316,11 @@ export default function DispenseShowPage({
                                                       ),
                                                   0,
                                               );
-                                          const remainingAllocation =
-                                              Math.max(
-                                                  item.dispensed_quantity -
-                                                      allocatedQuantity,
-                                                  0,
-                                              );
+                                          const remainingAllocation = Math.max(
+                                              item.dispensed_quantity -
+                                                  allocatedQuantity,
+                                              0,
+                                          );
                                           const batchOptions = batchOptionsFor(
                                               item.inventory_item_id,
                                           );
@@ -358,10 +361,13 @@ export default function DispenseShowPage({
                                                                   >
                                                                       <div className="grid gap-2">
                                                                           <Label>
-                                                                              Source Batch
+                                                                              Source
+                                                                              Batch
                                                                           </Label>
                                                                           <SearchableSelect
-                                                                              options={batchOptions}
+                                                                              options={
+                                                                                  batchOptions
+                                                                              }
                                                                               value={
                                                                                   allocation.inventory_batch_id
                                                                               }
@@ -406,7 +412,9 @@ export default function DispenseShowPage({
                                                                                       lineIndex,
                                                                                       allocationIndex,
                                                                                       'quantity',
-                                                                                      event.target.value,
+                                                                                      event
+                                                                                          .target
+                                                                                          .value,
                                                                                   )
                                                                               }
                                                                           />
@@ -492,8 +500,9 @@ export default function DispenseShowPage({
                                                   ) : (
                                                       <div className="flex items-center justify-between rounded border border-dashed p-3">
                                                           <p className="text-sm text-muted-foreground">
-                                                              No pharmacy batches
-                                                              selected yet.
+                                                              No pharmacy
+                                                              batches selected
+                                                              yet.
                                                           </p>
                                                           <Button
                                                               type="button"
@@ -544,7 +553,8 @@ export default function DispenseShowPage({
                                                   will be auto-allocated from
                                                   the earliest-expiring
                                                   available batches in{' '}
-                                                  {dispensingRecord.inventory_location
+                                                  {dispensingRecord
+                                                      .inventory_location
                                                       ?.name ?? 'the pharmacy'}
                                                   .
                                               </div>

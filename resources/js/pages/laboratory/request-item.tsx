@@ -88,11 +88,11 @@ export default function LaboratoryRequestItemShow({
         labRequestItem.workflow_stage === 'result_entered' ||
         labRequestItem.workflow_stage === 'reviewed' ||
         labRequestItem.workflow_stage === 'approved';
-    const requiresApproval =
-        labReleasePolicy.require_approval_before_release;
+    const requiresApproval = labReleasePolicy.require_approval_before_release;
     const paymentBlocked = paymentBlockMessage !== null;
     const [correctionMode, setCorrectionMode] = useState(false);
-    const resultEditingLocked = paymentBlocked || (isApproved && !correctionMode);
+    const resultEditingLocked =
+        paymentBlocked || (isApproved && !correctionMode);
     const pageTitle = 'Result Correction';
     const resultManagementTitle =
         isApproved || correctionMode ? 'Result Correction' : 'Result Entry';

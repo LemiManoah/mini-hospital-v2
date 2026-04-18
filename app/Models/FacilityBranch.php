@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\GeneralStatus;
 use App\Traits\BelongsToTenant;
+use Database\Factories\FacilityBranchFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ final class FacilityBranch extends Model
 {
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\FacilityBranchFactory> */
+    /** @use HasFactory<FacilityBranchFactory> */
     use HasFactory;
 
     use HasUuids;

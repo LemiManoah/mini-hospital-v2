@@ -107,7 +107,11 @@ export default function PharmacyPrescriptionShowPage({
                             </a>
                         </Button>
                         <Button variant="outline" asChild>
-                            <Link href={navigation.queue_href ?? '/pharmacy/queue'}>
+                            <Link
+                                href={
+                                    navigation.queue_href ?? '/pharmacy/queue'
+                                }
+                            >
                                 Back To Queue
                             </Link>
                         </Button>
@@ -152,7 +156,9 @@ export default function PharmacyPrescriptionShowPage({
                                     ) : null}
                                     {item.external_pharmacy ? (
                                         <div className="text-sm text-muted-foreground">
-                                            A previous remainder for this line was handled through an external pharmacy.
+                                            A previous remainder for this line
+                                            was handled through an external
+                                            pharmacy.
                                         </div>
                                     ) : null}
                                     {item.instructions ? (
@@ -209,7 +215,8 @@ export default function PharmacyPrescriptionShowPage({
                                                 </div>
                                                 <div className="text-muted-foreground">
                                                     {record.inventory_location
-                                                        ?.name ?? '-'} /{' '}
+                                                        ?.name ?? '-'}{' '}
+                                                    /{' '}
                                                     {record.dispensed_at
                                                         ? new Date(
                                                               record.dispensed_at,
@@ -231,7 +238,10 @@ export default function PharmacyPrescriptionShowPage({
                                                     {record.status_label ??
                                                         'Unknown'}
                                                 </Badge>
-                                                <Button variant="outline" asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    asChild
+                                                >
                                                     <Link
                                                         href={`/pharmacy/dispenses/${record.id}`}
                                                     >

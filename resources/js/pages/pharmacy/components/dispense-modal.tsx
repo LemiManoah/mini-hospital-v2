@@ -224,9 +224,7 @@ export function DispenseModal({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="dispensed_at">
-                                Dispense Time
-                            </Label>
+                            <Label htmlFor="dispensed_at">Dispense Time</Label>
                             <Input
                                 id="dispensed_at"
                                 type="datetime-local"
@@ -247,11 +245,13 @@ export function DispenseModal({
                     <div className="space-y-4">
                         {prescription.items.map((item, index) => {
                             const selectedQuantity =
-                                form.data.items[index]?.dispensed_quantity ?? '';
-                            const numericQuantity = Number(selectedQuantity || 0);
-                            const selectedLocationAvailable = quantityForLocation(
-                                item.inventory_item_id,
+                                form.data.items[index]?.dispensed_quantity ??
+                                '';
+                            const numericQuantity = Number(
+                                selectedQuantity || 0,
                             );
+                            const selectedLocationAvailable =
+                                quantityForLocation(item.inventory_item_id);
                             const allocations =
                                 form.data.items[index]?.allocations ?? [];
                             const allocatedQuantity = allocations.reduce(
@@ -332,9 +332,7 @@ export function DispenseModal({
                                     </div>
                                     <div className="grid gap-4 lg:grid-cols-3">
                                         <div className="space-y-2">
-                                            <Label>
-                                                Quantity To Dispense
-                                            </Label>
+                                            <Label>Quantity To Dispense</Label>
                                             {pharmacyPolicy.allow_partial_dispense ? (
                                                 <Input
                                                     type="number"
@@ -375,7 +373,8 @@ export function DispenseModal({
                                                                 3,
                                                             )}
                                                         >
-                                                            Full remaining quantity (
+                                                            Full remaining
+                                                            quantity (
                                                             {item.remaining_quantity.toFixed(
                                                                 3,
                                                             )}
@@ -408,7 +407,8 @@ export function DispenseModal({
                                                         updateItem(
                                                             index,
                                                             'external_pharmacy',
-                                                            event.target.checked,
+                                                            event.target
+                                                                .checked,
                                                         )
                                                     }
                                                 />
@@ -575,8 +575,7 @@ export function DispenseModal({
                                                             0 ? (
                                                                 <span>
                                                                     {' '}
-                                                                    |
-                                                                    Remaining{' '}
+                                                                    | Remaining{' '}
                                                                     {remainingAllocation.toFixed(
                                                                         3,
                                                                     )}
@@ -669,7 +668,9 @@ export function DispenseModal({
                     </Button>
                     <Button
                         type="button"
-                        disabled={form.processing || dispensingLocations.length === 0}
+                        disabled={
+                            form.processing || dispensingLocations.length === 0
+                        }
                         onClick={() =>
                             form.post(
                                 `/pharmacy/prescriptions/${prescription.id}/dispense`,

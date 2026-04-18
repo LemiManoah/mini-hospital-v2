@@ -84,26 +84,24 @@ final readonly class DispensingController implements HasMiddleware
                     'phone_number' => $record->visit->patient->phone_number,
                 ],
                 'items' => $record->items
-                    ->map(function (PrescriptionItem $item) use ($stockBalances): array {
-                        return [
-                            'id' => $item->id,
-                            'inventory_item_id' => $item->inventory_item_id,
-                            'item_name' => $item->inventoryItem?->name,
-                            'generic_name' => $item->inventoryItem?->generic_name,
-                            'brand_name' => $item->inventoryItem?->brand_name,
-                            'strength' => $item->inventoryItem?->strength,
-                            'dosage_form' => $item->inventoryItem?->dosage_form?->value ?? $item->inventoryItem?->dosage_form,
-                            'dosage' => $item->dosage,
-                            'frequency' => $item->frequency,
-                            'route' => $item->route,
-                            'duration_days' => $item->duration_days,
-                            'quantity' => round((float) $item->quantity, 3),
-                            'instructions' => $item->instructions,
-                            'status' => $item->status?->value,
-                            'status_label' => $item->status?->label(),
-                            'available_quantity' => round((float) ($stockBalances->get((string) $item->inventory_item_id) ?? 0), 3),
-                        ];
-                    })
+                    ->map(fn (PrescriptionItem $item): array => [
+                        'id' => $item->id,
+                        'inventory_item_id' => $item->inventory_item_id,
+                        'item_name' => $item->inventoryItem?->name,
+                        'generic_name' => $item->inventoryItem?->generic_name,
+                        'brand_name' => $item->inventoryItem?->brand_name,
+                        'strength' => $item->inventoryItem?->strength,
+                        'dosage_form' => $item->inventoryItem?->dosage_form?->value ?? $item->inventoryItem?->dosage_form,
+                        'dosage' => $item->dosage,
+                        'frequency' => $item->frequency,
+                        'route' => $item->route,
+                        'duration_days' => $item->duration_days,
+                        'quantity' => round((float) $item->quantity, 3),
+                        'instructions' => $item->instructions,
+                        'status' => $item->status?->value,
+                        'status_label' => $item->status?->label(),
+                        'available_quantity' => round((float) ($stockBalances->get((string) $item->inventory_item_id) ?? 0), 3),
+                    ])
                     ->values()
                     ->all(),
             ],
@@ -364,7 +362,7 @@ final readonly class DispensingController implements HasMiddleware
 
                 return ! ($batch instanceof InventoryBatch)
                     || $batch->expiry_date === null
-                    || ! $batch->expiry_date->startOfDay()->isBefore(now()->startOfDay());
+                    || ! $batch->expiry_date->startOfDay()->isBefore(today());
             })
             ->map(static function (array $balance) use ($batches): array {
                 $batch = $batches[$balance['inventory_batch_id']] ?? null;
@@ -375,7 +373,7 @@ final readonly class DispensingController implements HasMiddleware
                     'inventory_item_id' => $balance['inventory_item_id'],
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],
-                    'quantity' => (float) $balance['quantity'],
+                    'quantity' => $balance['quantity'],
                     'item_name' => $batch?->inventoryItem?->generic_name ?? $batch?->inventoryItem?->name,
                 ];
             })

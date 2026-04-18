@@ -77,7 +77,7 @@ final readonly class LabRequestItemConsumableController implements HasMiddleware
             ->with('unit:id,name,symbol')
             ->orderBy('name')
             ->get(['id', 'tenant_id', 'name', 'item_type', 'unit_id', 'default_purchase_price'])
-            ->map(static fn (InventoryItem $inventoryItem) => [
+            ->map(static fn (InventoryItem $inventoryItem): array => [
                 'id' => $inventoryItem->id,
                 'name' => $inventoryItem->name,
                 'item_type' => $inventoryItem->item_type?->value,

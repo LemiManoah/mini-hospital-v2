@@ -60,7 +60,7 @@ final readonly class PostDispense
             $payloadByItem = collect($items)
                 ->filter(static fn (mixed $item): bool => is_array($item))
                 ->mapWithKeys(static fn (array $item): array => is_string($item['dispensing_record_item_id'] ?? null)
-                    ? [(string) $item['dispensing_record_item_id'] => $item]
+                    ? [$item['dispensing_record_item_id'] => $item]
                     : []);
 
             $availableBatches = $this->availableBatches($dispensingRecord);
@@ -68,7 +68,7 @@ final readonly class PostDispense
             /** @var Collection<string, float> $availableQuantities */
             $availableQuantities = $availableBatches
                 ->mapWithKeys(static fn (array $batch): array => [
-                    $batch['inventory_batch_id'] => (float) $batch['quantity'],
+                    $batch['inventory_batch_id'] => $batch['quantity'],
                 ]);
 
             /** @var Collection<string, array{dispensed_quantity: float, external_quantity: float, covered_quantity: float, latest_dispensed_at: Carbon|null, external_pharmacy: bool}> $postedLineSummaries */
@@ -225,7 +225,7 @@ final readonly class PostDispense
                     return null;
                 }
 
-                if ($batch->expiry_date !== null && $batch->expiry_date->startOfDay()->isBefore(now()->startOfDay())) {
+                if ($batch->expiry_date !== null && $batch->expiry_date->startOfDay()->isBefore(today())) {
                     return null;
                 }
 
@@ -234,7 +234,7 @@ final readonly class PostDispense
                     'inventory_item_id' => $balance['inventory_item_id'],
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],
-                    'quantity' => (float) $balance['quantity'],
+                    'quantity' => $balance['quantity'],
                     'batch' => $batch,
                 ];
             })
@@ -273,8 +273,13 @@ final readonly class PostDispense
 
             $batchId = $allocation['inventory_batch_id'] ?? null;
             $quantity = $allocation['quantity'] ?? null;
-
-            if (! is_string($batchId) || $batchId === '' || ! is_numeric($quantity)) {
+            if (! is_string($batchId)) {
+                continue;
+            }
+            if ($batchId === '') {
+                continue;
+            }
+            if (! is_numeric($quantity)) {
                 continue;
             }
 

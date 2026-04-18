@@ -114,9 +114,7 @@ export function ReviewResultDialog({
                                     )
                                 }
                             />
-                            <InputError
-                                message={form.errors.approval_notes}
-                            />
+                            <InputError message={form.errors.approval_notes} />
                         </div>
                     ) : null}
                 </div>

@@ -13,6 +13,7 @@ use App\Models\LabRequestItem;
 use App\Models\LabRequestItemConsumable;
 use App\Models\StockMovement;
 use App\Support\InventoryStockLedger;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -101,7 +102,7 @@ final readonly class RecordLabRequestItemConsumable
             ->filter(static fn (array $balance): bool => $balance['quantity'] > 0)
             ->keyBy('inventory_batch_id');
 
-        /** @var \Illuminate\Support\Collection<string, InventoryBatch> $candidateBatches */
+        /** @var Collection<string, InventoryBatch> $candidateBatches */
         $candidateBatches = InventoryBatch::query()
             ->whereIn('inventory_location_id', $laboratoryLocationIds)
             ->where('inventory_item_id', $inventoryItemId)

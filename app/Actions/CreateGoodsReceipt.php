@@ -173,13 +173,13 @@ final readonly class CreateGoodsReceipt
                 && $inventoryItem->expires
                 && (float) $quantityReceived > 0
             ) {
-                if (! is_string($item['batch_number'] ?? null) || mb_trim((string) $item['batch_number']) === '') {
+                if (! is_string($item['batch_number'] ?? null) || mb_trim($item['batch_number']) === '') {
                     throw ValidationException::withMessages([
                         sprintf('items.%d.batch_number', $index) => 'Batch number is required for expirable items.',
                     ]);
                 }
 
-                if (! is_string($item['expiry_date'] ?? null) || mb_trim((string) $item['expiry_date']) === '') {
+                if (! is_string($item['expiry_date'] ?? null) || mb_trim($item['expiry_date']) === '') {
                     throw ValidationException::withMessages([
                         sprintf('items.%d.expiry_date', $index) => 'Expiry date is required for expirable items.',
                     ]);

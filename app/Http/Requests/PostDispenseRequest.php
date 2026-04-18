@@ -89,7 +89,7 @@ final class PostDispenseRequest extends FormRequest
                 $payloadByItem = collect($items)
                     ->filter(static fn (mixed $item): bool => is_array($item))
                     ->mapWithKeys(static fn (array $item): array => is_string($item['dispensing_record_item_id'] ?? null)
-                        ? [(string) $item['dispensing_record_item_id'] => $item]
+                        ? [$item['dispensing_record_item_id'] => $item]
                         : []);
 
                 $batchUsage = [];
@@ -126,8 +126,13 @@ final class PostDispenseRequest extends FormRequest
 
                         $batchId = $allocation['inventory_batch_id'] ?? null;
                         $quantity = $allocation['quantity'] ?? null;
-
-                        if (! is_string($batchId) || $batchId === '' || ! is_numeric($quantity)) {
+                        if (! is_string($batchId)) {
+                            continue;
+                        }
+                        if ($batchId === '') {
+                            continue;
+                        }
+                        if (! is_numeric($quantity)) {
                             continue;
                         }
 
@@ -151,7 +156,7 @@ final class PostDispenseRequest extends FormRequest
                             );
                         }
 
-                        if ($batch->expiry_date !== null && $batch->expiry_date->startOfDay()->isBefore(now()->startOfDay())) {
+                        if ($batch->expiry_date !== null && $batch->expiry_date->startOfDay()->isBefore(today())) {
                             $validator->errors()->add(
                                 sprintf('items.%s.allocations.%s.inventory_batch_id', $recordItem->id, $allocationIndex),
                                 'Expired batches cannot be used for dispensing.',

@@ -152,7 +152,7 @@ final class StoreDispenseRequest extends FormRequest
                     if ($externalPharmacy) {
                         $hasActionableLine = true;
 
-                        if (! is_string($item['external_reason'] ?? null) || mb_trim((string) $item['external_reason']) === '') {
+                        if (! is_string($item['external_reason'] ?? null) || mb_trim($item['external_reason']) === '') {
                             $validator->errors()->add(
                                 sprintf('items.%d.external_reason', $index),
                                 'Add a reason when marking a line for external pharmacy fulfilment.',

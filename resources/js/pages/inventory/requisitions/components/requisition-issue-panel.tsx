@@ -105,206 +105,257 @@ export function RequisitionIssuePanel({
 
                             return (
                                 <>
-                        <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-                            <div>
-                                <h3 className="font-medium">
-                                    {line.inventory_item?.generic_name ??
-                                        line.inventory_item?.name ??
-                                        '-'}
-                                </h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Approved:{' '}
-                                    {line.approved_quantity.toFixed(3)} |
-                                    Issued: {line.issued_quantity.toFixed(3)} |
-                                    Remaining:{' '}
-                                    {line.remaining_quantity.toFixed(3)}
-                                </p>
-                            </div>
-                        </div>
+                                    <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+                                        <div>
+                                            <h3 className="font-medium">
+                                                {line.inventory_item
+                                                    ?.generic_name ??
+                                                    line.inventory_item?.name ??
+                                                    '-'}
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Approved:{' '}
+                                                {line.approved_quantity.toFixed(
+                                                    3,
+                                                )}{' '}
+                                                | Issued:{' '}
+                                                {line.issued_quantity.toFixed(
+                                                    3,
+                                                )}{' '}
+                                                | Remaining:{' '}
+                                                {line.remaining_quantity.toFixed(
+                                                    3,
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label>Total Issue Quantity</Label>
-                                <Input
-                                    type="number"
-                                    step="any"
-                                    min="0"
-                                    value={issueLine?.issue_quantity ?? ''}
-                                    onChange={(event) =>
-                                        onIssueLineChange(
-                                            lineIndex,
-                                            'issue_quantity',
-                                            event.target.value,
-                                        )
-                                    }
-                                />
-                                <InputError
-                                    message={
-                                        issueForm.errors[
-                                            `items.${lineIndex}.issue_quantity` as keyof typeof issueForm.errors
-                                        ]
-                                    }
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label>Issue Line Notes</Label>
-                                <Textarea
-                                    rows={2}
-                                    value={issueLine?.notes ?? ''}
-                                    onChange={(event) =>
-                                        onIssueLineChange(
-                                            lineIndex,
-                                            'notes',
-                                            event.target.value,
-                                        )
-                                    }
-                                />
-                            </div>
-                        </div>
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label>Total Issue Quantity</Label>
+                                            <Input
+                                                type="number"
+                                                step="any"
+                                                min="0"
+                                                value={
+                                                    issueLine?.issue_quantity ??
+                                                    ''
+                                                }
+                                                onChange={(event) =>
+                                                    onIssueLineChange(
+                                                        lineIndex,
+                                                        'issue_quantity',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    issueForm.errors[
+                                                        `items.${lineIndex}.issue_quantity` as keyof typeof issueForm.errors
+                                                    ]
+                                                }
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Issue Line Notes</Label>
+                                            <Textarea
+                                                rows={2}
+                                                value={issueLine?.notes ?? ''}
+                                                onChange={(event) =>
+                                                    onIssueLineChange(
+                                                        lineIndex,
+                                                        'notes',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    </div>
 
-                        <div className="mt-4 space-y-3">
-                            {totalIssueQuantity <= 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    Enter the total issue quantity first, then
-                                    add one or more source batches to allocate
-                                    it.
-                                </p>
-                            ) : allocations.length > 0 ? (
-                                <>
-                                {allocations.map(
-                                    (allocation, allocationIndex) => (
-                                        <div
-                                            key={`${line.id}-${allocationIndex}`}
-                                            className="grid gap-3 rounded border border-dashed border-zinc-200 p-3 md:grid-cols-[1.6fr_1fr_auto] dark:border-zinc-700"
-                                        >
-                                            <div className="grid gap-2">
-                                                <Label>Source Batch</Label>
-                                                <SearchableSelect
-                                                    options={batchOptionsFor(
-                                                        line.inventory_item_id,
-                                                    )}
-                                                    value={
-                                                        allocation.inventory_batch_id
-                                                    }
-                                                    onValueChange={(value) =>
-                                                        onUpdateAllocation(
-                                                            lineIndex,
-                                                            allocationIndex,
-                                                            'inventory_batch_id',
-                                                            value,
-                                                        )
-                                                    }
-                                                    placeholder="Select batch"
-                                                    emptyMessage="No matching batches."
-                                                />
-                                                <InputError
-                                                    message={
-                                                        issueForm.errors[
-                                                            `items.${lineIndex}.allocations.${allocationIndex}.inventory_batch_id` as keyof typeof issueForm.errors
-                                                        ]
-                                                    }
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>Quantity</Label>
-                                                <Input
-                                                    type="number"
-                                                    step="any"
-                                                    min="0"
-                                                    value={allocation.quantity}
-                                                    onChange={(event) =>
-                                                        onUpdateAllocation(
-                                                            lineIndex,
-                                                            allocationIndex,
-                                                            'quantity',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={
-                                                        issueForm.errors[
-                                                            `items.${lineIndex}.allocations.${allocationIndex}.quantity` as keyof typeof issueForm.errors
-                                                        ]
-                                                    }
-                                                />
-                                            </div>
-                                            <div className="flex items-end">
+                                    <div className="mt-4 space-y-3">
+                                        {totalIssueQuantity <= 0 ? (
+                                            <p className="text-sm text-muted-foreground">
+                                                Enter the total issue quantity
+                                                first, then add one or more
+                                                source batches to allocate it.
+                                            </p>
+                                        ) : allocations.length > 0 ? (
+                                            <>
+                                                {allocations.map(
+                                                    (
+                                                        allocation,
+                                                        allocationIndex,
+                                                    ) => (
+                                                        <div
+                                                            key={`${line.id}-${allocationIndex}`}
+                                                            className="grid gap-3 rounded border border-dashed border-zinc-200 p-3 md:grid-cols-[1.6fr_1fr_auto] dark:border-zinc-700"
+                                                        >
+                                                            <div className="grid gap-2">
+                                                                <Label>
+                                                                    Source Batch
+                                                                </Label>
+                                                                <SearchableSelect
+                                                                    options={batchOptionsFor(
+                                                                        line.inventory_item_id,
+                                                                    )}
+                                                                    value={
+                                                                        allocation.inventory_batch_id
+                                                                    }
+                                                                    onValueChange={(
+                                                                        value,
+                                                                    ) =>
+                                                                        onUpdateAllocation(
+                                                                            lineIndex,
+                                                                            allocationIndex,
+                                                                            'inventory_batch_id',
+                                                                            value,
+                                                                        )
+                                                                    }
+                                                                    placeholder="Select batch"
+                                                                    emptyMessage="No matching batches."
+                                                                />
+                                                                <InputError
+                                                                    message={
+                                                                        issueForm
+                                                                            .errors[
+                                                                            `items.${lineIndex}.allocations.${allocationIndex}.inventory_batch_id` as keyof typeof issueForm.errors
+                                                                        ]
+                                                                    }
+                                                                />
+                                                            </div>
+                                                            <div className="grid gap-2">
+                                                                <Label>
+                                                                    Quantity
+                                                                </Label>
+                                                                <Input
+                                                                    type="number"
+                                                                    step="any"
+                                                                    min="0"
+                                                                    value={
+                                                                        allocation.quantity
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        onUpdateAllocation(
+                                                                            lineIndex,
+                                                                            allocationIndex,
+                                                                            'quantity',
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                />
+                                                                <InputError
+                                                                    message={
+                                                                        issueForm
+                                                                            .errors[
+                                                                            `items.${lineIndex}.allocations.${allocationIndex}.quantity` as keyof typeof issueForm.errors
+                                                                        ]
+                                                                    }
+                                                                />
+                                                            </div>
+                                                            <div className="flex items-end">
+                                                                <Button
+                                                                    type="button"
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    onClick={() =>
+                                                                        onRemoveAllocation(
+                                                                            lineIndex,
+                                                                            allocationIndex,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ),
+                                                )}
+                                                <div className="flex flex-col gap-3 rounded border border-dashed border-zinc-200 p-3 md:flex-row md:items-center md:justify-between dark:border-zinc-700">
+                                                    <div className="text-sm text-muted-foreground">
+                                                        Allocated:{' '}
+                                                        {allocatedQuantity.toFixed(
+                                                            3,
+                                                        )}{' '}
+                                                        of{' '}
+                                                        {totalIssueQuantity.toFixed(
+                                                            3,
+                                                        )}
+                                                        {remainingAllocation >
+                                                        0 ? (
+                                                            <span>
+                                                                {' '}
+                                                                | Remaining:{' '}
+                                                                {remainingAllocation.toFixed(
+                                                                    3,
+                                                                )}
+                                                            </span>
+                                                        ) : (
+                                                            <span>
+                                                                {' '}
+                                                                | Fully
+                                                                allocated
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            onAddAllocation(
+                                                                lineIndex,
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            batchOptions.length ===
+                                                                0 ||
+                                                            remainingAllocation <=
+                                                                0
+                                                        }
+                                                    >
+                                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                                        Add Batch
+                                                    </Button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="flex items-center justify-between rounded border border-dashed border-zinc-200 p-3 dark:border-zinc-700">
+                                                <p className="text-sm text-muted-foreground">
+                                                    No source batches selected
+                                                    yet.
+                                                </p>
                                                 <Button
                                                     type="button"
-                                                    size="icon"
-                                                    variant="ghost"
+                                                    size="sm"
+                                                    variant="outline"
                                                     onClick={() =>
-                                                        onRemoveAllocation(
+                                                        onAddAllocation(
                                                             lineIndex,
-                                                            allocationIndex,
                                                         )
                                                     }
+                                                    disabled={
+                                                        batchOptions.length ===
+                                                        0
+                                                    }
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                                    Add Batch
                                                 </Button>
                                             </div>
-                                        </div>
-                                    ),
-                                )}
-                                <div className="flex flex-col gap-3 rounded border border-dashed border-zinc-200 p-3 md:flex-row md:items-center md:justify-between dark:border-zinc-700">
-                                    <div className="text-sm text-muted-foreground">
-                                        Allocated: {allocatedQuantity.toFixed(3)}{' '}
-                                        of {totalIssueQuantity.toFixed(3)}
-                                        {remainingAllocation > 0 ? (
-                                            <span>
-                                                {' '}
-                                                | Remaining:{' '}
-                                                {remainingAllocation.toFixed(3)}
-                                            </span>
-                                        ) : (
-                                            <span> | Fully allocated</span>
                                         )}
+                                        <InputError
+                                            message={
+                                                issueForm.errors[
+                                                    `items.${lineIndex}.allocations` as keyof typeof issueForm.errors
+                                                ]
+                                            }
+                                        />
                                     </div>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() =>
-                                            onAddAllocation(lineIndex)
-                                        }
-                                        disabled={
-                                            batchOptions.length === 0 ||
-                                            remainingAllocation <= 0
-                                        }
-                                    >
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add Batch
-                                    </Button>
-                                </div>
-                                </>
-                            ) : (
-                                <div className="flex items-center justify-between rounded border border-dashed border-zinc-200 p-3 dark:border-zinc-700">
-                                    <p className="text-sm text-muted-foreground">
-                                        No source batches selected yet.
-                                    </p>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() =>
-                                            onAddAllocation(lineIndex)
-                                        }
-                                        disabled={batchOptions.length === 0}
-                                    >
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add Batch
-                                    </Button>
-                                </div>
-                            )}
-                            <InputError
-                                message={
-                                    issueForm.errors[
-                                        `items.${lineIndex}.allocations` as keyof typeof issueForm.errors
-                                    ]
-                                }
-                            />
-                        </div>
                                 </>
                             );
                         })()}

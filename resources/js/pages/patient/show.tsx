@@ -226,7 +226,7 @@ export default function PatientShow({
                                         return (
                                             <div
                                                 key={visit.id}
-                                                className=" border p-4"
+                                                className="border p-4"
                                             >
                                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                                     <div className="space-y-1">

@@ -259,17 +259,21 @@ export default function LaboratoryRequestItemConsumablesPage({
                                                         </div>
                                                         {options.map(
                                                             (option) => (
-                                                            <SelectItem
-                                                                key={option.id}
-                                                                value={
-                                                                    option.id
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                                {option.unit_label
-                                                                    ? ` (${option.unit_label})`
-                                                                    : ''}
-                                                            </SelectItem>
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.id
+                                                                    }
+                                                                    value={
+                                                                        option.id
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        option.label
+                                                                    }
+                                                                    {option.unit_label
+                                                                        ? ` (${option.unit_label})`
+                                                                        : ''}
+                                                                </SelectItem>
                                                             ),
                                                         )}
                                                     </SelectGroup>

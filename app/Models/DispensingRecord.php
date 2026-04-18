@@ -17,7 +17,10 @@ final class DispensingRecord extends Model
 {
     use BelongsToBranch;
     use BelongsToTenant;
+
+    /** @use HasFactory<\Database\Factories\DispensingRecordFactory> */
     use HasFactory;
+
     use HasUuids;
 
     protected $casts = [

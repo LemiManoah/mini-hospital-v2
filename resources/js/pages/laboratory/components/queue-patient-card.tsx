@@ -116,8 +116,7 @@ export function QueuePatientCard({
                                 <TableCell className="px-3 py-2 align-top">
                                     <div className="flex max-w-sm flex-col gap-1.5 whitespace-normal">
                                         <p className="text-sm font-medium">
-                                            {item.test?.test_name ??
-                                                'Lab test'}
+                                            {item.test?.test_name ?? 'Lab test'}
                                         </p>
                                         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                                             <span className="rounded-full bg-muted px-2 py-0.5">

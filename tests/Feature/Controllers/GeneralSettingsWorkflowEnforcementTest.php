@@ -8,6 +8,7 @@ use App\Enums\ConsciousLevel;
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Enums\InventoryItemType;
+use App\Enums\LabRequestStatus;
 use App\Enums\MobilityStatus;
 use App\Enums\Priority;
 use App\Enums\StaffType;
@@ -22,6 +23,8 @@ use App\Models\Department;
 use App\Models\FacilityBranch;
 use App\Models\FacilityService;
 use App\Models\InventoryItem;
+use App\Models\LabRequest;
+use App\Models\LabRequestItem;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
 use App\Models\LabTestCategory;
@@ -38,6 +41,7 @@ use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia;
 
 beforeEach(function (): void {
     $this->seed(PermissionSeeder::class);
@@ -433,7 +437,7 @@ it('shows payment block message on lab delivery page when payment-before-laborat
     $consultation = createGeneralSettingsWorkflowConsultation($visit, $doctorUser->staff);
     storeGeneralSetting($tenant, 'payments.require_payment_before_laboratory', '1');
 
-    $labRequest = App\Models\LabRequest::query()->create([
+    $labRequest = LabRequest::query()->create([
         'tenant_id' => $tenant->id,
         'facility_branch_id' => $branch->id,
         'visit_id' => $visit->id,
@@ -441,11 +445,11 @@ it('shows payment block message on lab delivery page when payment-before-laborat
         'requested_by' => $doctorUser->staff_id,
         'request_date' => now(),
         'priority' => Priority::ROUTINE->value,
-        'status' => App\Enums\LabRequestStatus::REQUESTED,
+        'status' => LabRequestStatus::REQUESTED,
         'clinical_notes' => 'Check baseline labs',
     ]);
 
-    $labRequestItem = App\Models\LabRequestItem::query()->create([
+    $labRequestItem = LabRequestItem::query()->create([
         'request_id' => $labRequest->id,
         'test_id' => $labTest->id,
         'status' => 'pending',
@@ -457,7 +461,7 @@ it('shows payment block message on lab delivery page when payment-before-laborat
 
     $response->assertSuccessful();
     $response->assertInertia(
-        fn (Inertia\Testing\AssertableInertia $page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('laboratory/request-item')
             ->where(
                 'paymentBlockMessage',
@@ -489,7 +493,7 @@ it('does not show payment block message on lab delivery page when visit is paid'
     $consultation = createGeneralSettingsWorkflowConsultation($visit, $doctorUser->staff);
     storeGeneralSetting($tenant, 'payments.require_payment_before_laboratory', '1');
 
-    $labRequest = App\Models\LabRequest::query()->create([
+    $labRequest = LabRequest::query()->create([
         'tenant_id' => $tenant->id,
         'facility_branch_id' => $branch->id,
         'visit_id' => $visit->id,
@@ -497,11 +501,11 @@ it('does not show payment block message on lab delivery page when visit is paid'
         'requested_by' => $doctorUser->staff_id,
         'request_date' => now(),
         'priority' => Priority::ROUTINE->value,
-        'status' => App\Enums\LabRequestStatus::REQUESTED,
+        'status' => LabRequestStatus::REQUESTED,
         'clinical_notes' => 'Paid visit labs',
     ]);
 
-    $labRequestItem = App\Models\LabRequestItem::query()->create([
+    $labRequestItem = LabRequestItem::query()->create([
         'request_id' => $labRequest->id,
         'test_id' => $labTest->id,
         'status' => 'pending',
@@ -513,7 +517,7 @@ it('does not show payment block message on lab delivery page when visit is paid'
 
     $response->assertSuccessful();
     $response->assertInertia(
-        fn (Inertia\Testing\AssertableInertia $page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('laboratory/request-item')
             ->where('paymentBlockMessage', null),
     );

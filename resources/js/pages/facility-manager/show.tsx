@@ -10,14 +10,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    ClipboardList,
-    CreditCard,
-    LineChart,
-    Users,
-} from 'lucide-react';
-import { type ReactNode } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 import { FacilityManagerMetrics } from './components/facility-manager-metrics';
 import { FacilityManagerNav } from './components/facility-manager-nav';

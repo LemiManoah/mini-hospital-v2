@@ -107,13 +107,10 @@ export default function LaboratoryQueuePage({
                                     request={request}
                                     onAction={(item, selectedRequest) =>
                                         setActiveModal({
-                                            mode: modalModeForStage(
-                                                page.stage,
-                                            ),
+                                            mode: modalModeForStage(page.stage),
                                             item,
                                             request:
-                                                item.request ??
-                                                selectedRequest,
+                                                item.request ?? selectedRequest,
                                         })
                                     }
                                 />

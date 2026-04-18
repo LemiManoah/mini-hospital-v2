@@ -237,9 +237,7 @@ export default function PharmacyQueuePage({
                                                 <TableHead>
                                                     Medication
                                                 </TableHead>
-                                                <TableHead>
-                                                    Quantity
-                                                </TableHead>
+                                                <TableHead>Quantity</TableHead>
                                                 <TableHead>Status</TableHead>
                                                 <TableHead>Stock</TableHead>
                                                 <TableHead>
@@ -255,10 +253,7 @@ export default function PharmacyQueuePage({
                                             {group.prescriptions.flatMap(
                                                 (prescription) =>
                                                     prescription.items.map(
-                                                        (
-                                                            item,
-                                                            itemIndex,
-                                                        ) => (
+                                                        (item, itemIndex) => (
                                                             <TableRow
                                                                 key={`${prescription.id}-${item.id}`}
                                                             >
@@ -338,7 +333,9 @@ export default function PharmacyQueuePage({
                                                                         {item.locally_dispensed_quantity >
                                                                         0 ? (
                                                                             <span className="text-xs text-muted-foreground">
-                                                                                Local so far:{' '}
+                                                                                Local
+                                                                                so
+                                                                                far:{' '}
                                                                                 {item.locally_dispensed_quantity.toFixed(
                                                                                     3,
                                                                                 )}
@@ -391,7 +388,8 @@ export default function PharmacyQueuePage({
                     </div>
                 )}
 
-                {(prescriptions.prev_page_url ?? prescriptions.next_page_url) ? (
+                {(prescriptions.prev_page_url ??
+                prescriptions.next_page_url) ? (
                     <div className="flex items-center justify-between">
                         <Button
                             type="button"
@@ -428,7 +426,9 @@ export default function PharmacyQueuePage({
             {activePrescription ? (
                 <DispenseModal
                     open
-                    onOpenChange={(open) => !open && setActivePrescriptionId(null)}
+                    onOpenChange={(open) =>
+                        !open && setActivePrescriptionId(null)
+                    }
                     prescription={activePrescription}
                     dispensingLocations={dispensingLocations}
                     availableBatchBalances={availableBatchBalances}

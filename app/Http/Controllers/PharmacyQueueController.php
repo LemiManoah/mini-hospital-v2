@@ -309,7 +309,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
 
                 return ! ($batch instanceof InventoryBatch)
                     || $batch->expiry_date === null
-                    || ! $batch->expiry_date->startOfDay()->isBefore(now()->startOfDay());
+                    || ! $batch->expiry_date->startOfDay()->isBefore(today());
             })
             ->map(static function (array $balance) use ($batches): array {
                 $batch = $batches[$balance['inventory_batch_id']] ?? null;
@@ -320,7 +320,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
                     'inventory_item_id' => $balance['inventory_item_id'],
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],
-                    'quantity' => (float) $balance['quantity'],
+                    'quantity' => $balance['quantity'],
                     'item_name' => $batch?->inventoryItem?->generic_name ?? $batch?->inventoryItem?->name,
                 ];
             })

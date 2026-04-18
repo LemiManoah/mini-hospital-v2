@@ -64,8 +64,10 @@ export function PrescriptionOrdersTable({
                                 <TableCell className="max-w-[400px]">
                                     <div className="flex flex-col gap-1">
                                         <span className="font-medium">
-                                            {item.inventory_item?.generic_name ||
-                                                item.inventory_item?.brand_name ||
+                                            {item.inventory_item
+                                                ?.generic_name ||
+                                                item.inventory_item
+                                                    ?.brand_name ||
                                                 'Medication'}
                                         </span>
                                         <span className="text-xs text-muted-foreground">
@@ -137,9 +139,7 @@ export function PrescriptionOrdersTable({
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() =>
-                                                        onDelete?.(
-                                                            prescription,
-                                                        )
+                                                        onDelete?.(prescription)
                                                     }
                                                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                                     title="Remove prescription"

@@ -85,7 +85,8 @@ final readonly class DispensingHistoryController implements HasMiddleware
                 'Balance Qty',
                 'Item Status',
                 'Batch Numbers',
-            ]);
+            ],
+                escape: '\\');
 
             $query->each(function (DispensingRecord $record) use ($handle): void {
                 foreach ($record->items as $item) {
@@ -117,7 +118,8 @@ final readonly class DispensingHistoryController implements HasMiddleware
                         number_format((float) $item->balance_quantity, 3),
                         $item->dispense_status?->label() ?? '',
                         $batchNumbers,
-                    ]);
+                    ],
+                        escape: '\\');
                 }
             });
 
@@ -142,11 +144,11 @@ final readonly class DispensingHistoryController implements HasMiddleware
                 function (Builder $q) use ($request): void {
                     $search = $request->query('search');
                     $q->where(function (Builder $inner) use ($search): void {
-                        $inner->where('dispense_number', 'like', "%{$search}%")
-                            ->orWhereHas('visit', static fn (Builder $v) => $v->where('visit_number', 'like', "%{$search}%"))
-                            ->orWhereHas('visit.patient', static fn (Builder $p) => $p->where('first_name', 'like', "%{$search}%")
-                                ->orWhere('last_name', 'like', "%{$search}%")
-                                ->orWhere('patient_number', 'like', "%{$search}%"));
+                        $inner->where('dispense_number', 'like', sprintf('%%%s%%', $search))
+                            ->orWhereHas('visit', static fn (Builder $v) => $v->where('visit_number', 'like', sprintf('%%%s%%', $search)))
+                            ->orWhereHas('visit.patient', static fn (Builder $p) => $p->where('first_name', 'like', sprintf('%%%s%%', $search))
+                                ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
+                                ->orWhere('patient_number', 'like', sprintf('%%%s%%', $search)));
                     });
                 }
             )

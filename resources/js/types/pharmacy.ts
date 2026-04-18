@@ -198,7 +198,10 @@ export interface DispensingRecordDetail {
     dispensed_at: string | null;
     notes: string | null;
     visit_number: string | null;
-    patient: Pick<PharmacyPatientSummary, 'id' | 'patient_number' | 'full_name'> | null;
+    patient: Pick<
+        PharmacyPatientSummary,
+        'id' | 'patient_number' | 'full_name'
+    > | null;
     prescription: {
         id: string;
         status: string | null;

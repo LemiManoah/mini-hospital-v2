@@ -222,9 +222,7 @@ export default function DispensingHistoryPage({
                                 variant={link.active ? 'default' : 'outline'}
                                 size="sm"
                                 disabled={link.url === null}
-                                onClick={() =>
-                                    link.url && router.get(link.url)
-                                }
+                                onClick={() => link.url && router.get(link.url)}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />
                         ))}
@@ -232,8 +230,7 @@ export default function DispensingHistoryPage({
                 ) : null}
 
                 <p className="text-sm text-muted-foreground">
-                    {records.total} record{records.total !== 1 ? 's' : ''}{' '}
-                    total
+                    {records.total} record{records.total !== 1 ? 's' : ''} total
                 </p>
             </div>
         </AppLayout>

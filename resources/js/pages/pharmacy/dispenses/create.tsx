@@ -96,7 +96,9 @@ export default function DispenseCreatePage({
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" asChild>
-                            <Link href={`/pharmacy/prescriptions/${prescription.id}`}>
+                            <Link
+                                href={`/pharmacy/prescriptions/${prescription.id}`}
+                            >
                                 Back To Prescription
                             </Link>
                         </Button>
@@ -233,7 +235,10 @@ export default function DispenseCreatePage({
                                     id="notes"
                                     value={form.data.notes}
                                     onChange={(event) =>
-                                        form.setData('notes', event.target.value)
+                                        form.setData(
+                                            'notes',
+                                            event.target.value,
+                                        )
                                     }
                                     placeholder="Capture counselling, handover, or preparation notes..."
                                 />
@@ -396,7 +401,9 @@ export default function DispenseCreatePage({
                                                     )
                                                 }
                                             />
-                                            <Label htmlFor={`external_${item.id}`}>
+                                            <Label
+                                                htmlFor={`external_${item.id}`}
+                                            >
                                                 Mark remainder for external
                                                 pharmacy fulfilment
                                             </Label>
@@ -451,7 +458,9 @@ export default function DispenseCreatePage({
 
                     <div className="flex items-center justify-end gap-2">
                         <Button variant="outline" asChild>
-                            <Link href={`/pharmacy/prescriptions/${prescription.id}`}>
+                            <Link
+                                href={`/pharmacy/prescriptions/${prescription.id}`}
+                            >
                                 Cancel
                             </Link>
                         </Button>

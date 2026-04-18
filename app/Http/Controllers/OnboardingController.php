@@ -21,6 +21,7 @@ use App\Models\Currency;
 use App\Models\Department;
 use App\Models\FacilityBranch;
 use App\Models\StaffPosition;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ final class OnboardingController
 
         $tenant = $user->tenant()->first();
 
-        if (! $tenant instanceof \App\Models\Tenant) {
+        if (! $tenant instanceof Tenant) {
             return to_route('home');
         }
 
