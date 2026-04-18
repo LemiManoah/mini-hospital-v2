@@ -252,12 +252,15 @@ final class DispensePrescriptionRequest extends FormRequest
                     $prescriptionItemId = $item['prescription_item_id'] ?? null;
                     $dispensedQuantity = $item['dispensed_quantity'] ?? null;
                     $allocations = $item['allocations'] ?? [];
+
                     if (! is_string($prescriptionItemId)) {
                         continue;
                     }
+
                     if (! is_numeric($dispensedQuantity)) {
                         continue;
                     }
+
                     if ((float) $dispensedQuantity <= 0) {
                         continue;
                     }
@@ -286,12 +289,15 @@ final class DispensePrescriptionRequest extends FormRequest
 
                         $batchId = $allocation['inventory_batch_id'] ?? null;
                         $quantity = $allocation['quantity'] ?? null;
+
                         if (! is_string($batchId)) {
                             continue;
                         }
+
                         if ($batchId === '') {
                             continue;
                         }
+
                         if (! is_numeric($quantity)) {
                             continue;
                         }

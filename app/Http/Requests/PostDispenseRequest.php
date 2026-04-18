@@ -126,12 +126,15 @@ final class PostDispenseRequest extends FormRequest
 
                         $batchId = $allocation['inventory_batch_id'] ?? null;
                         $quantity = $allocation['quantity'] ?? null;
+
                         if (! is_string($batchId)) {
                             continue;
                         }
+
                         if ($batchId === '') {
                             continue;
                         }
+
                         if (! is_numeric($quantity)) {
                             continue;
                         }
