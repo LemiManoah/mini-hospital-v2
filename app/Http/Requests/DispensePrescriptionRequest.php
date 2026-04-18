@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Models\InventoryLocation;
 use App\Models\InventoryBatch;
+use App\Models\InventoryLocation;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Support\BranchContext;
@@ -66,11 +66,11 @@ final class DispensePrescriptionRequest extends FormRequest
                 $items = $this->input('items');
 
                 if (
-                    ! is_string($branchId)
+                    !is_string($branchId)
                     || $branchId === ''
-                    || ! is_string($prescriptionId)
-                    || ! is_string($locationId)
-                    || ! is_array($items)
+                    || !is_string($prescriptionId)
+                    || !is_string($locationId)
+                    || !is_array($items)
                     || $validator->errors()->isNotEmpty()
                 ) {
                     return;
@@ -82,7 +82,7 @@ final class DispensePrescriptionRequest extends FormRequest
                     ->with(['visit:id,tenant_id', 'items:id,prescription_id,inventory_item_id,quantity'])
                     ->first();
 
-                if (! $prescription instanceof Prescription) {
+                if (!$prescription instanceof Prescription) {
                     $validator->errors()->add('items', 'This prescription is not available in the active branch.');
 
                     return;
@@ -90,7 +90,7 @@ final class DispensePrescriptionRequest extends FormRequest
 
                 $inventoryLocationAccess = resolve(InventoryLocationAccess::class);
 
-                if (! $inventoryLocationAccess->canAccessLocationForTypes($this->user(), $locationId, ['pharmacy'], $branchId)) {
+                if (!$inventoryLocationAccess->canAccessLocationForTypes($this->user(), $locationId, ['pharmacy'], $branchId)) {
                     $validator->errors()->add(
                         'inventory_location_id',
                         'You can only prepare dispensing records in pharmacy locations you manage.',
@@ -101,7 +101,7 @@ final class DispensePrescriptionRequest extends FormRequest
 
                 $location = InventoryLocation::query()->find($locationId);
 
-                if (! $location instanceof InventoryLocation || ! $location->is_dispensing_point) {
+                if (!$location instanceof InventoryLocation || !$location->is_dispensing_point) {
                     $validator->errors()->add(
                         'inventory_location_id',
                         'The selected pharmacy location must be an active dispensing point.',
@@ -118,7 +118,7 @@ final class DispensePrescriptionRequest extends FormRequest
                 $hasActionableLine = false;
 
                 foreach ($items as $index => $item) {
-                    if (! is_array($item)) {
+                    if (!is_array($item)) {
                         continue;
                     }
 
@@ -126,7 +126,7 @@ final class DispensePrescriptionRequest extends FormRequest
                     $dispensedQuantity = $item['dispensed_quantity'] ?? null;
                     $externalPharmacy = filter_var($item['external_pharmacy'] ?? false, FILTER_VALIDATE_BOOL);
 
-                    if (! is_string($prescriptionItemId) || ! $prescriptionItems->has($prescriptionItemId)) {
+                    if (!is_string($prescriptionItemId) || !$prescriptionItems->has($prescriptionItemId)) {
                         $validator->errors()->add(
                             sprintf('items.%d.prescription_item_id', $index),
                             'Each dispense line must belong to the selected prescription.',
@@ -137,7 +137,7 @@ final class DispensePrescriptionRequest extends FormRequest
 
                     $prescriptionItem = $prescriptionItems->get($prescriptionItemId);
 
-                    if (! $prescriptionItem instanceof PrescriptionItem) {
+                    if (!$prescriptionItem instanceof PrescriptionItem) {
                         continue;
                     }
 
@@ -157,7 +157,7 @@ final class DispensePrescriptionRequest extends FormRequest
                     if ($externalPharmacy) {
                         $hasActionableLine = true;
 
-                        if (! is_string($item['external_reason'] ?? null) || mb_trim((string) $item['external_reason']) === '') {
+                        if (!is_string($item['external_reason'] ?? null) || mb_trim((string) $item['external_reason']) === '') {
                             $validator->errors()->add(
                                 sprintf('items.%d.external_reason', $index),
                                 'Add a reason when marking a line for external pharmacy fulfilment.',
@@ -173,7 +173,7 @@ final class DispensePrescriptionRequest extends FormRequest
                     }
 
                     if (
-                        ! $allowPartialDispense
+                        !$allowPartialDispense
                         && is_numeric($dispensedQuantity)
                         && (float) $dispensedQuantity > 0
                         && (float) $dispensedQuantity < $remainingQuantity
@@ -196,7 +196,7 @@ final class DispensePrescriptionRequest extends FormRequest
                     }
                 }
 
-                if (! $hasActionableLine) {
+                if (!$hasActionableLine) {
                     $validator->errors()->add(
                         'items',
                         'Record at least one dispensed quantity or mark at least one line for external fulfilment.',
@@ -210,12 +210,12 @@ final class DispensePrescriptionRequest extends FormRequest
                 $items = $this->input('items', []);
 
                 if (
-                    ! $prescription instanceof Prescription
-                    || ! is_string($activeBranchId)
+                    !$prescription instanceof Prescription
+                    || !is_string($activeBranchId)
                     || $activeBranchId === ''
-                    || ! is_string($locationId)
+                    || !is_string($locationId)
                     || $locationId === ''
-                    || ! is_array($items)
+                    || !is_array($items)
                     || $validator->errors()->isNotEmpty()
                 ) {
                     return;
@@ -226,7 +226,7 @@ final class DispensePrescriptionRequest extends FormRequest
                     'enable_batch_tracking_when_dispensing',
                 );
 
-                if (! $batchTrackingEnabled) {
+                if (!$batchTrackingEnabled) {
                     return;
                 }
 
@@ -244,7 +244,7 @@ final class DispensePrescriptionRequest extends FormRequest
                 $batchUsage = [];
 
                 foreach ($items as $index => $item) {
-                    if (! is_array($item)) {
+                    if (!is_array($item)) {
                         continue;
                     }
 
@@ -253,8 +253,8 @@ final class DispensePrescriptionRequest extends FormRequest
                     $allocations = $item['allocations'] ?? [];
 
                     if (
-                        ! is_string($prescriptionItemId)
-                        || ! is_numeric($dispensedQuantity)
+                        !is_string($prescriptionItemId)
+                        || !is_numeric($dispensedQuantity)
                         || (float) $dispensedQuantity <= 0
                     ) {
                         continue;
@@ -262,11 +262,11 @@ final class DispensePrescriptionRequest extends FormRequest
 
                     /** @var PrescriptionItem|null $prescriptionItem */
                     $prescriptionItem = $prescriptionItems->get($prescriptionItemId);
-                    if (! $prescriptionItem instanceof PrescriptionItem) {
+                    if (!$prescriptionItem instanceof PrescriptionItem) {
                         continue;
                     }
 
-                    if (! is_array($allocations) || $allocations === []) {
+                    if (!is_array($allocations) || $allocations === []) {
                         $validator->errors()->add(
                             sprintf('items.%d.allocations', $index),
                             'Select source batches for each dispensed medication line.',
@@ -278,19 +278,19 @@ final class DispensePrescriptionRequest extends FormRequest
                     $allocationTotal = 0.0;
 
                     foreach ($allocations as $allocationIndex => $allocation) {
-                        if (! is_array($allocation)) {
+                        if (!is_array($allocation)) {
                             continue;
                         }
 
                         $batchId = $allocation['inventory_batch_id'] ?? null;
                         $quantity = $allocation['quantity'] ?? null;
 
-                        if (! is_string($batchId) || $batchId === '' || ! is_numeric($quantity)) {
+                        if (!is_string($batchId) || $batchId === '' || !is_numeric($quantity)) {
                             continue;
                         }
 
                         $batch = InventoryBatch::query()->find($batchId);
-                        if (! $batch instanceof InventoryBatch) {
+                        if (!$batch instanceof InventoryBatch) {
                             $validator->errors()->add(
                                 sprintf('items.%d.allocations.%d.inventory_batch_id', $index, $allocationIndex),
                                 'One of the selected pharmacy batches is invalid.',

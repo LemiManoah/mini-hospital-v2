@@ -16,11 +16,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 final class DispensingRecord extends Model
 {
     use BelongsToBranch;
-
     use BelongsToTenant;
-
     use HasFactory;
-
     use HasUuids;
 
     protected $casts = [
