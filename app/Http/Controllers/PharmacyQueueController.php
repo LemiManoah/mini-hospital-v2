@@ -9,6 +9,7 @@ use App\Enums\PrescriptionStatus;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLocation;
 use App\Models\Prescription;
+use App\Models\PrescriptionItem;
 use App\Support\BranchContext;
 use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryLocationAccess;
@@ -139,7 +140,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
     {
         $progress = $this->prescriptionDispenseProgress->postedLineSummaries($prescription->id);
         $items = $prescription->items
-            ->map(fn ($item): array => $this->serializeItem($item, $stockBalances, $progress->get($item->id)))
+            ->map(fn (PrescriptionItem $item): array => $this->serializeItem($item, $stockBalances, $progress->get($item->id)))
             ->filter(static fn (array $item): bool => $item['remaining_quantity'] > 0.0005)
             ->values();
 

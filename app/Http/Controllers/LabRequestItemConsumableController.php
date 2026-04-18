@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,7 +69,7 @@ final readonly class LabRequestItemConsumableController implements HasMiddleware
             ->summarizeByLocation($labRequest->facility_branch_id)
             ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $laboratoryLocationIds, true))
             ->groupBy('inventory_item_id')
-            ->map(static fn ($balances): float => (float) collect($balances)->sum('quantity'));
+            ->map(static fn (Collection $balances): float => (float) collect($balances)->sum('quantity'));
 
         $consumableOptions = InventoryItem::query()
             ->where('tenant_id', $labRequest->tenant_id)

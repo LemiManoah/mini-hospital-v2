@@ -22,6 +22,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -76,7 +77,7 @@ final readonly class PurchaseOrderController implements HasMiddleware
             ? $this->inventoryStockLedger
                 ->summarizeByLocation($branchId)
                 ->groupBy('inventory_item_id')
-                ->map(static fn ($balances): float => (float) collect($balances)->sum('quantity'))
+                ->map(static fn (Collection $balances): float => (float) collect($balances)->sum('quantity'))
             : collect();
 
         return Inertia::render('inventory/purchase-orders/create', [
@@ -130,7 +131,7 @@ final readonly class PurchaseOrderController implements HasMiddleware
             ? $this->inventoryStockLedger
                 ->summarizeByLocation($branchId)
                 ->groupBy('inventory_item_id')
-                ->map(static fn ($balances): float => (float) collect($balances)->sum('quantity'))
+                ->map(static fn (Collection $balances): float => (float) collect($balances)->sum('quantity'))
             : collect();
 
         return Inertia::render('inventory/purchase-orders/edit', [

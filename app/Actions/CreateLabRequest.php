@@ -10,6 +10,7 @@ use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -119,7 +120,7 @@ final readonly class CreateLabRequest
         $hasPendingDuplicate = LabRequestItem::query()
             ->whereIn('test_id', $testIds)
             ->where('status', 'pending')
-            ->whereHas('request', static function ($query) use ($visit): void {
+            ->whereHas('request', static function (Builder $query) use ($visit): void {
                 $query->where('visit_id', $visit->id);
             })
             ->exists();

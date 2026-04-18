@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -101,7 +102,7 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
 
         $minimumLevels = $labLocationItems
             ->groupBy('inventory_item_id')
-            ->map(static fn ($items): float => (float) $items->sum('minimum_stock_level'));
+            ->map(static fn (Collection $items): float => (float) $items->sum('minimum_stock_level'));
 
         $stockItemIds = $labLocationItems
             ->pluck('inventory_item_id')

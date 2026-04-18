@@ -12,9 +12,12 @@ use App\Http\Requests\DispensePrescriptionRequest;
 use App\Http\Requests\PostDispenseRequest;
 use App\Http\Requests\StoreDispenseRequest;
 use App\Models\DispensingRecord;
+use App\Models\DispensingRecordItem;
+use App\Models\DispensingRecordItemAllocation;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLocation;
 use App\Models\Prescription;
+use App\Models\PrescriptionItem;
 use App\Support\BranchContext;
 use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryLocationAccess;
@@ -81,7 +84,7 @@ final readonly class DispensingController implements HasMiddleware
                     'phone_number' => $record->visit->patient->phone_number,
                 ],
                 'items' => $record->items
-                    ->map(function ($item) use ($stockBalances): array {
+                    ->map(function (PrescriptionItem $item) use ($stockBalances): array {
                         return [
                             'id' => $item->id,
                             'inventory_item_id' => $item->inventory_item_id,
@@ -250,7 +253,7 @@ final readonly class DispensingController implements HasMiddleware
                         $dispensingRecord->dispensedBy->staff->last_name,
                     )),
                 'items' => $dispensingRecord->items
-                    ->map(static fn ($item): array => [
+                    ->map(static fn (DispensingRecordItem $item): array => [
                         'id' => $item->id,
                         'prescription_item_id' => $item->prescription_item_id,
                         'inventory_item_id' => $item->inventory_item_id,
@@ -266,7 +269,7 @@ final readonly class DispensingController implements HasMiddleware
                         'generic_name' => $item->inventoryItem?->generic_name,
                         'substitution_item_name' => $item->substitutionInventoryItem?->name,
                         'allocations' => $item->allocations
-                            ->map(static fn ($allocation): array => [
+                            ->map(static fn (DispensingRecordItemAllocation $allocation): array => [
                                 'id' => $allocation->id,
                                 'inventory_batch_id' => $allocation->inventory_batch_id,
                                 'quantity' => round((float) $allocation->quantity, 3),

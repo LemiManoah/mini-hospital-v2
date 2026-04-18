@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabTestCatalog;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -84,7 +85,7 @@ final readonly class UpdateLabRequest
             ->whereIn('test_id', $testIds)
             ->where('status', 'pending')
             ->where('request_id', '!=', $labRequest->id)
-            ->whereHas('request', static function ($query) use ($labRequest): void {
+            ->whereHas('request', static function (Builder $query) use ($labRequest): void {
                 $query->where('visit_id', $labRequest->visit_id);
             })
             ->exists();

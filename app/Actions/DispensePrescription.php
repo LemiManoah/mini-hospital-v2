@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Models\DispensingRecord;
+use App\Models\DispensingRecordItem;
 use App\Models\Prescription;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +26,7 @@ final readonly class DispensePrescription
             $record = $this->createDispensingRecord->handle($prescription, $attributes, $items);
 
             $postItems = $record->items
-                ->map(function ($recordItem) use ($items): array {
+                ->map(function (DispensingRecordItem $recordItem) use ($items): array {
                     $matchingItem = collect($items)->first(
                         static fn (array $item): bool => ($item['prescription_item_id'] ?? null) === $recordItem->prescription_item_id,
                     );

@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Enums\SubscriptionStatus;
 use App\Http\Requests\StoreTenantSupportNoteRequest;
 use App\Models\Consultation;
+use App\Models\Department;
 use App\Models\FacilityBranch;
 use App\Models\FacilityServiceOrder;
 use App\Models\LabRequest;
@@ -215,7 +216,7 @@ final class FacilityManagerController implements HasMiddleware
                     ->values()
                     ->all(),
                 'departments' => $tenant->departments
-                    ->map(static fn ($department): array => [
+                    ->map(static fn (Department $department): array => [
                         'id' => $department->id,
                         'name' => $department->department_name,
                     ])
