@@ -11,14 +11,13 @@ use App\Support\BranchContext;
 use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryLocationAccess;
 use App\Support\PrescriptionDispenseProgress;
-use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-class StoreDispenseRequest extends FormRequest
+final class StoreDispenseRequest extends FormRequest
 {
     /**
      * @return array<string, array<mixed>>

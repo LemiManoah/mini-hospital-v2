@@ -186,7 +186,7 @@ function seedLaboratoryConsumableStock(
         'tenant_id' => $branch->tenant_id,
         'branch_id' => $branch->id,
         'name' => 'Lab Stock '.$inventoryItem->name,
-        'location_code' => 'LAB-'.strtoupper(substr((string) $inventoryItem->id, 0, 6)),
+        'location_code' => 'LAB-'.mb_strtoupper(mb_substr((string) $inventoryItem->id, 0, 6)),
         'type' => InventoryLocationType::LABORATORY,
         'is_active' => true,
     ]);
