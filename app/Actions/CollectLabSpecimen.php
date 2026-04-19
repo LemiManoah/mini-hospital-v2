@@ -11,8 +11,8 @@ use App\Models\LabRequestItem;
 use App\Models\LabSpecimen;
 use App\Models\LabTestCatalog;
 use App\Models\SpecimenType;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final readonly class CollectLabSpecimen

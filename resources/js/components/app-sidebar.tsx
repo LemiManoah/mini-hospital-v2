@@ -265,6 +265,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'visits.view',
                     },
                     {
+                        title: 'Pharmacy POS',
+                        url: '/pharmacy/pos',
+                        permission: 'pharmacy_pos.create',
+                    },
+                    {
                         title: 'Pharmacy Stock',
                         url: '/pharmacy/stock',
                         permission: 'inventory_items.view',

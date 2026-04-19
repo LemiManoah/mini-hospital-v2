@@ -625,29 +625,36 @@ This matters especially in mixed environments where:
 
 ## 12) Recommended Implementation Phases
 
-### Phase 1: POS Shell and Cart
+### ✅ Phase 1: POS Shell and Cart — COMPLETED
 
 Deliverables:
 
-- sidebar link
-- POS page
-- draft cart creation
-- add/remove items
-- totals
+- [x] sidebar link (`Pharmacy POS` entry in app-sidebar.tsx)
+- [x] POS page (`pharmacy/pos/index.tsx` — open cart form + item search + cart view)
+- [x] draft cart creation (`OpenPharmacyPosCartAction`, `PharmacyPosController`)
+- [x] add/remove items (`AddItemToPharmacyPosCartAction`, `RemovePharmacyPosCartItemAction`, `PharmacyPosCartController`)
+- [x] totals (computed inline from cart items on the page)
+- [x] permissions seeded (`pharmacy_pos` permission group on pharmacist role)
+- [x] migrations (`pharmacy_pos_carts`, `pharmacy_pos_cart_items`, `pharmacy_pos_cart_item_allocations`)
+- [x] tests (5/5 passing in `PharmacyPosPhase1Test.php`)
 
 Why first:
 
 - gives the pharmacy a usable retail workspace fast
 - low risk to stock if finalization is not live yet
 
-### Phase 2: Sale Finalization and Payments
+### ✅ Phase 2: Sale Finalization and Payments — COMPLETED
 
 Deliverables:
 
-- finalize sale action
-- payment capture
-- receipt number
-- completed sale detail page
+- [x] finalize sale action (`FinalizePharmacyPosSaleAction`)
+- [x] payment capture (`RecordPharmacyPosPaymentAction`, `PharmacyPosPaymentController`)
+- [x] sale number generation (`PharmacyPosSaleNumberGenerator`)
+- [x] checkout page (`pharmacy/pos/checkout.tsx`)
+- [x] completed sale detail page (`pharmacy/pos/sales/show.tsx`)
+- [x] migrations (`pharmacy_pos_sales`, `pharmacy_pos_sale_items`, `pharmacy_pos_sale_item_allocations`, `pharmacy_pos_payments`)
+- [x] models (`PharmacyPosSale`, `PharmacyPosSaleItem`, `PharmacyPosSaleItemAllocation`, `PharmacyPosPayment`)
+- [x] tests (6/6 passing in `PharmacyPosPhase2Test.php`)
 
 Why next:
 
