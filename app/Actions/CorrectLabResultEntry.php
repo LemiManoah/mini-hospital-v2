@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\LabRequestItemStatus;
+use App\Models\LabRequest;
 use App\Models\LabRequestItem;
+use App\Models\LabResultEntry;
+use App\Models\LabTestCatalog;
 use App\Models\LabTestResultParameter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -27,6 +30,7 @@ final readonly class CorrectLabResultEntry
             ]);
         }
 
+        /** @var LabResultEntry|null $resultEntry */
         $resultEntry = $labRequestItem->resultEntry()->first();
 
         if ($resultEntry === null) {
@@ -57,7 +61,9 @@ final readonly class CorrectLabResultEntry
 
             $resultEntry->values()->delete();
 
-            $resultType = $labRequestItem->test()->with(['resultParameters', 'resultOptions'])->firstOrFail()->result_capture_type;
+            /** @var LabTestCatalog $labTest */
+            $labTest = $labRequestItem->test()->with(['resultParameters', 'resultOptions'])->firstOrFail();
+            $resultType = $this->resultCaptureType($labTest);
 
             if ($resultType === 'parameter_panel') {
                 /** @var array<int, array<string, mixed>> $parameterValues */
@@ -73,10 +79,11 @@ final readonly class CorrectLabResultEntry
                     $numericValue = $parameter?->value_type === 'numeric' && $rawValue !== null
                         ? (float) $rawValue
                         : null;
+                    $label = $this->nullableText($parameterValue['label'] ?? null) ?? 'Result';
 
                     $resultEntry->values()->create([
                         'lab_test_result_parameter_id' => $parameter?->id,
-                        'label' => $parameter?->label ?? (string) ($parameterValue['label'] ?? 'Result'),
+                        'label' => $parameter !== null ? $parameter->label : $label,
                         'value_numeric' => $numericValue,
                         'value_text' => $parameter?->value_type === 'numeric' ? null : $rawValue,
                         'unit' => $parameter?->unit,
@@ -110,10 +117,20 @@ final readonly class CorrectLabResultEntry
                 'completed_at' => null,
             ])->save();
 
-            $this->syncLabRequestProgress->handle($labRequestItem->request()->firstOrFail());
+            /** @var LabRequest $labRequest */
+            $labRequest = $labRequestItem->request()->firstOrFail();
+
+            $this->syncLabRequestProgress->handle($labRequest);
 
             return $labRequestItem->refresh();
         });
+    }
+
+    private function resultCaptureType(LabTestCatalog $labTest): ?string
+    {
+        $code = $labTest->resultTypeDefinition()->value('code');
+
+        return is_string($code) ? $code : null;
     }
 
     private function nullableText(mixed $value): ?string

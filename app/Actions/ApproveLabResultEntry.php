@@ -6,7 +6,9 @@ namespace App\Actions;
 
 use App\Enums\LabRequestItemStatus;
 use App\Enums\LabSpecimenStatus;
+use App\Models\LabRequest;
 use App\Models\LabRequestItem;
+use App\Models\LabResultEntry;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -22,6 +24,7 @@ final readonly class ApproveLabResultEntry
         ?string $reviewNotes,
         ?string $approvalNotes,
     ): LabRequestItem {
+        /** @var LabResultEntry|null $resultEntry */
         $resultEntry = $labRequestItem->resultEntry()->first();
 
         if ($resultEntry === null || ! $resultEntry->values()->exists()) {
@@ -61,7 +64,10 @@ final readonly class ApproveLabResultEntry
                 'completed_at' => $timestamp,
             ])->save();
 
-            $this->syncLabRequestProgress->handle($labRequestItem->request()->firstOrFail());
+            /** @var LabRequest $labRequest */
+            $labRequest = $labRequestItem->request()->firstOrFail();
+
+            $this->syncLabRequestProgress->handle($labRequest);
 
             return $labRequestItem->refresh();
         });

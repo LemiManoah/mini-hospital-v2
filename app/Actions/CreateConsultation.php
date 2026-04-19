@@ -16,7 +16,20 @@ final readonly class CreateConsultation
     ) {}
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param  array{
+     *     chief_complaint?: mixed,
+     *     history_of_present_illness?: mixed,
+     *     review_of_systems?: mixed,
+     *     past_medical_history_summary?: mixed,
+     *     family_history?: mixed,
+     *     social_history?: mixed,
+     *     subjective_notes?: mixed,
+     *     objective_findings?: mixed,
+     *     assessment?: mixed,
+     *     plan?: mixed,
+     *     primary_diagnosis?: mixed,
+     *     primary_icd10_code?: mixed
+     * }  $data
      */
     public function handle(PatientVisit $visit, array $data): Consultation
     {
@@ -55,7 +68,7 @@ final readonly class CreateConsultation
     }
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param  array{chief_complaint?: mixed}  $data
      */
     private function chiefComplaint(PatientVisit $visit, array $data): string
     {
@@ -65,7 +78,10 @@ final readonly class CreateConsultation
             return $complaint;
         }
 
-        return (string) ($visit->triage->chief_complaint ?? '');
+        /** @var string|null $chiefComplaint */
+        $chiefComplaint = $visit->triage?->getAttribute('chief_complaint');
+
+        return $chiefComplaint ?? '';
     }
 
     private function nullableText(mixed $value): ?string

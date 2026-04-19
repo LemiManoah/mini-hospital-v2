@@ -6,9 +6,12 @@ namespace App\Actions;
 
 use App\Enums\LabRequestItemStatus;
 use App\Enums\LabSpecimenStatus;
+use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabSpecimen;
+use App\Models\LabTestCatalog;
 use App\Models\SpecimenType;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -35,12 +38,15 @@ final readonly class CollectLabSpecimen
             ]);
         }
 
+        /** @var LabTestCatalog|null $labTest */
         $labTest = $labRequestItem->test()->first();
 
         /** @var SpecimenType|null $specimenType */
-        $specimenType = $labTest?->specimenTypes()
-            ->whereKey($payload['specimen_type_id'] ?? null)
-            ->first(['specimen_types.id', 'specimen_types.name']);
+        $specimenType = $labTest instanceof LabTestCatalog
+            ? $labTest->specimenTypes()
+                ->whereKey($payload['specimen_type_id'] ?? null)
+                ->first(['specimen_types.id', 'specimen_types.name'])
+            : null;
 
         if (! $specimenType instanceof SpecimenType) {
             throw ValidationException::withMessages([
@@ -49,13 +55,19 @@ final readonly class CollectLabSpecimen
         }
 
         return DB::transaction(function () use ($labRequestItem, $payload, $staffId, $specimenType): LabRequestItem {
+            /** @var LabSpecimen|null $existingSpecimen */
             $existingSpecimen = $labRequestItem->specimen()->first();
-            $collectedAt = $existingSpecimen?->collected_at ?? now();
+            $collectedAt = $existingSpecimen instanceof LabSpecimen
+                ? $existingSpecimen->collected_at ?? now()
+                : now();
+            $accessionNumber = $existingSpecimen instanceof LabSpecimen
+                ? $existingSpecimen->accession_number ?? $this->generateAccessionNumber()
+                : $this->generateAccessionNumber();
 
             $labRequestItem->specimen()->updateOrCreate(
                 [],
                 [
-                    'accession_number' => $existingSpecimen?->accession_number ?? $this->generateAccessionNumber(),
+                    'accession_number' => $accessionNumber,
                     'specimen_type_id' => $specimenType->id,
                     'specimen_type_name' => $specimenType->name,
                     'status' => LabSpecimenStatus::COLLECTED,
@@ -72,7 +84,10 @@ final readonly class CollectLabSpecimen
                 'received_at' => $labRequestItem->received_at ?? $collectedAt,
             ])->save();
 
-            $this->syncLabRequestProgress->handle($labRequestItem->request()->firstOrFail());
+            /** @var LabRequest $labRequest */
+            $labRequest = $labRequestItem->request()->firstOrFail();
+
+            $this->syncLabRequestProgress->handle($labRequest);
 
             return $labRequestItem->refresh()->loadMissing([
                 'specimen',
@@ -85,7 +100,7 @@ final readonly class CollectLabSpecimen
     private function generateAccessionNumber(): string
     {
         do {
-            $candidate = sprintf('LAB-%s-%s', now()->format('YmdHis'), mb_strtoupper((string) str()->random(4)));
+            $candidate = sprintf('LAB-%s-%s', now()->format('YmdHis'), Str::upper(Str::random(4)));
         } while (LabSpecimen::query()->where('accession_number', $candidate)->exists());
 
         return $candidate;

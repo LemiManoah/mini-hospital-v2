@@ -9,6 +9,7 @@ use App\Enums\PayerType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Appointment;
+use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
@@ -43,9 +44,12 @@ final readonly class CheckInAppointment
                 ]);
             }
 
-            $activeVisitExists = $appointment->patient->visits()
+            /** @var Patient|null $patient */
+            $patient = $appointment->patient()->first();
+
+            $activeVisitExists = $patient?->visits()
                 ->whereNotIn('status', [VisitStatus::COMPLETED->value, VisitStatus::CANCELLED->value])
-                ->exists();
+                ->exists() ?? false;
 
             if ($activeVisitExists) {
                 throw ValidationException::withMessages([

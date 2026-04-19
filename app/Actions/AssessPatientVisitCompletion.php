@@ -9,6 +9,7 @@ use App\Enums\ImagingRequestStatus;
 use App\Enums\LabRequestStatus;
 use App\Enums\PrescriptionStatus;
 use App\Models\PatientVisit;
+use App\Models\VisitBilling;
 
 final readonly class AssessPatientVisitCompletion
 {
@@ -106,10 +107,10 @@ final readonly class AssessPatientVisitCompletion
 
     private function pendingServicesCountFromLoaded(PatientVisit $visit): int
     {
-        return (int) ($visit->pending_lab_requests_count ?? 0)
-            + (int) ($visit->pending_imaging_requests_count ?? 0)
-            + (int) ($visit->pending_prescriptions_count ?? 0)
-            + (int) ($visit->pending_facility_service_orders_count ?? 0);
+        return $this->intValue($visit->pending_lab_requests_count ?? 0)
+            + $this->intValue($visit->pending_imaging_requests_count ?? 0)
+            + $this->intValue($visit->pending_prescriptions_count ?? 0)
+            + $this->intValue($visit->pending_facility_service_orders_count ?? 0);
     }
 
     private function unpaidBalanceFromLoaded(PatientVisit $visit): float
@@ -118,7 +119,9 @@ final readonly class AssessPatientVisitCompletion
             return 0.0;
         }
 
-        return (float) ($visit->billing->balance_amount ?? 0);
+        $billing = $visit->billing;
+
+        return $this->floatValue($billing->balance_amount ?? 0);
     }
 
     private function consultationBlockingReasonFromLoaded(PatientVisit $visit): ?string
@@ -135,7 +138,9 @@ final readonly class AssessPatientVisitCompletion
             return 'This visit cannot be completed until the consultation has been started.';
         }
 
-        if ($visit->consultation->completed_at === null) {
+        $consultation = $visit->consultation;
+
+        if ($consultation->completed_at === null) {
             return 'This visit cannot be completed until the consultation has been finalized.';
         }
 
@@ -178,15 +183,16 @@ final readonly class AssessPatientVisitCompletion
 
     private function unpaidBalance(PatientVisit $visit): float
     {
-        $visit->loadMissing('billing');
+        /** @var VisitBilling|null $billing */
+        $billing = $visit->billing()->first();
 
-        if ($visit->billing === null) {
+        if (! $billing instanceof VisitBilling) {
             return 0.0;
         }
 
-        return (float) $this->recalculateVisitBilling
-            ->handle($visit->billing)
-            ->balance_amount;
+        return $this->floatValue($this->recalculateVisitBilling
+            ->handle($billing)
+            ->balance_amount);
     }
 
     private function consultationBlockingReason(PatientVisit $visit): ?string
@@ -205,10 +211,30 @@ final readonly class AssessPatientVisitCompletion
             return 'This visit cannot be completed until the consultation has been started.';
         }
 
-        if ($visit->consultation->completed_at === null) {
+        $consultation = $visit->consultation;
+
+        if ($consultation->completed_at === null) {
             return 'This visit cannot be completed until the consultation has been finalized.';
         }
 
         return null;
+    }
+
+    private function intValue(mixed $value): int
+    {
+        if (! is_numeric($value)) {
+            return 0;
+        }
+
+        return (int) $value;
+    }
+
+    private function floatValue(mixed $value): float
+    {
+        if (! is_numeric($value)) {
+            return 0.0;
+        }
+
+        return (float) $value;
     }
 }

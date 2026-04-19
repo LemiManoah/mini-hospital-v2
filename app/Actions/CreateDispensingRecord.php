@@ -8,6 +8,7 @@ use App\Enums\DispensingRecordStatus;
 use App\Enums\PrescriptionItemStatus;
 use App\Models\DispensingRecord;
 use App\Models\InventoryLocation;
+use App\Models\PatientVisit;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Support\InventoryLocationAccess;
@@ -31,16 +32,21 @@ final readonly class CreateDispensingRecord
     public function handle(Prescription $prescription, array $attributes, array $items): DispensingRecord
     {
         return DB::transaction(function () use ($prescription, $attributes, $items): DispensingRecord {
+            /** @var PatientVisit $visit */
             $visit = $prescription->visit()->firstOrFail();
             $locationId = is_string($attributes['inventory_location_id'] ?? null)
                 ? $attributes['inventory_location_id']
                 : null;
+            $visitBranchId = $visit->facility_branch_id;
+            $visitTenantId = $visit->tenant_id;
+            $dispensedAt = $attributes['dispensed_at'] ?? null;
+            $recordNotes = $this->nullableText($attributes['notes'] ?? null);
 
             $canAccessLocation = $this->inventoryLocationAccess->canAccessLocationForTypes(
                 Auth::user(),
                 $locationId,
                 ['pharmacy'],
-                $visit->facility_branch_id,
+                $visitBranchId,
             );
 
             if (! $canAccessLocation) {
@@ -49,6 +55,7 @@ final readonly class CreateDispensingRecord
                 ]);
             }
 
+            /** @var InventoryLocation $inventoryLocation */
             $inventoryLocation = InventoryLocation::query()->findOrFail($locationId);
 
             if (! $inventoryLocation->is_dispensing_point) {
@@ -58,15 +65,15 @@ final readonly class CreateDispensingRecord
             }
 
             $record = DispensingRecord::query()->create([
-                'tenant_id' => $visit->tenant_id,
-                'branch_id' => $visit->facility_branch_id,
+                'tenant_id' => $visitTenantId,
+                'branch_id' => $visitBranchId,
                 'visit_id' => $visit->id,
                 'prescription_id' => $prescription->id,
                 'inventory_location_id' => $inventoryLocation->id,
-                'dispense_number' => $this->generateDispenseNumber($visit->tenant_id),
+                'dispense_number' => $this->generateDispenseNumber($visitTenantId),
                 'dispensed_by' => Auth::id(),
-                'dispensed_at' => $attributes['dispensed_at'],
-                'notes' => ($attributes['notes'] ?? '') !== '' ? $attributes['notes'] : null,
+                'dispensed_at' => $dispensedAt,
+                'notes' => $recordNotes,
                 'status' => DispensingRecordStatus::DRAFT,
             ]);
 
@@ -85,14 +92,16 @@ final readonly class CreateDispensingRecord
                     continue;
                 }
 
-                $dispensedQuantity = round((float) ($item['dispensed_quantity'] ?? 0), 3);
+                $dispensedQuantity = round($this->floatValue($item['dispensed_quantity'] ?? 0), 3);
                 $alreadyCoveredQuantity = (float) ($postedLineSummaries->get($prescriptionItem->id)['covered_quantity'] ?? 0.0);
                 $prescribedQuantity = max(
                     0,
-                    round((float) $prescriptionItem->quantity - $alreadyCoveredQuantity, 3),
+                    round($this->floatValue($prescriptionItem->quantity) - $alreadyCoveredQuantity, 3),
                 );
                 $externalPharmacy = (bool) ($item['external_pharmacy'] ?? false);
                 $balanceQuantity = max(0, $prescribedQuantity - $dispensedQuantity);
+                $externalReason = $this->nullableText($item['external_reason'] ?? null);
+                $itemNotes = $this->nullableText($item['notes'] ?? null);
 
                 $record->items()->create([
                     'prescription_item_id' => $prescriptionItem->id,
@@ -103,8 +112,8 @@ final readonly class CreateDispensingRecord
                     'dispense_status' => $this->resolveItemStatus($dispensedQuantity, $prescribedQuantity, $externalPharmacy),
                     'substitution_inventory_item_id' => $item['substitution_inventory_item_id'] ?? null,
                     'external_pharmacy' => $externalPharmacy,
-                    'external_reason' => ($item['external_reason'] ?? '') !== '' ? $item['external_reason'] : null,
-                    'notes' => ($item['notes'] ?? '') !== '' ? $item['notes'] : null,
+                    'external_reason' => $externalReason,
+                    'notes' => $itemNotes,
                 ]);
             }
 
@@ -150,5 +159,25 @@ final readonly class CreateDispensingRecord
         );
 
         return $dispenseNumber;
+    }
+
+    private function nullableText(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = mb_trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function floatValue(mixed $value): float
+    {
+        if (! is_numeric($value)) {
+            return 0.0;
+        }
+
+        return (float) $value;
     }
 }

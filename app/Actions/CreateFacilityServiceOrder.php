@@ -19,7 +19,7 @@ final readonly class CreateFacilityServiceOrder
     ) {}
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param  array{facility_service_id: mixed}  $data
      */
     public function handle(Consultation|PatientVisit $context, array $data, string $staffId): FacilityServiceOrder
     {
@@ -63,10 +63,16 @@ final readonly class CreateFacilityServiceOrder
     private function resolveContext(Consultation|PatientVisit $context): array
     {
         if ($context instanceof Consultation) {
-            return [$context->visit()->firstOrFail(), $context];
+            /** @var PatientVisit $visit */
+            $visit = $context->visit()->firstOrFail();
+
+            return [$visit, $context];
         }
 
-        return [$context, $context->consultation];
+        /** @var Consultation|null $consultation */
+        $consultation = $context->consultation;
+
+        return [$context, $consultation];
     }
 
     private function ensureVisitInProgress(PatientVisit $visit): void

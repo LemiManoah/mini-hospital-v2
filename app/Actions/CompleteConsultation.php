@@ -9,7 +9,27 @@ use App\Models\Consultation;
 final readonly class CompleteConsultation
 {
     /**
-     * @param  array<string, mixed>  $data
+     * @param  array{
+     *     chief_complaint?: mixed,
+     *     history_of_present_illness?: mixed,
+     *     review_of_systems?: mixed,
+     *     past_medical_history_summary?: mixed,
+     *     family_history?: mixed,
+     *     social_history?: mixed,
+     *     subjective_notes?: mixed,
+     *     objective_findings?: mixed,
+     *     assessment?: mixed,
+     *     plan?: mixed,
+     *     primary_diagnosis?: mixed,
+     *     primary_icd10_code?: mixed,
+     *     outcome?: mixed,
+     *     follow_up_instructions?: mixed,
+     *     follow_up_days?: mixed,
+     *     is_referred?: mixed,
+     *     referred_to_department?: mixed,
+     *     referred_to_facility?: mixed,
+     *     referral_reason?: mixed
+     * }  $data
      */
     public function handle(Consultation $consultation, array $data): Consultation
     {

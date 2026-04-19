@@ -6,17 +6,19 @@ namespace App\Actions;
 
 use App\Enums\InventoryRequisitionStatus;
 use App\Models\InventoryRequisition;
+use App\Models\InventoryRequisitionItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 final class ApproveInventoryRequisition
 {
     /**
-     * @param  array<int, array{inventory_requisition_item_id: string, approved_quantity: mixed}>  $items
+     * @param  array<int, array{inventory_requisition_item_id: string, approved_quantity: int|float|numeric-string|null}>  $items
      */
     public function handle(InventoryRequisition $requisition, array $items, ?string $approvalNotes = null): InventoryRequisition
     {
         return DB::transaction(function () use ($requisition, $items, $approvalNotes): InventoryRequisition {
+            /** @var InventoryRequisition $requisition */
             $requisition = InventoryRequisition::query()
                 ->with('items')
                 ->lockForUpdate()
@@ -30,7 +32,9 @@ final class ApproveInventoryRequisition
 
             $approvedQuantities = collect($items)
                 ->mapWithKeys(static fn (array $item): array => [
-                    $item['inventory_requisition_item_id'] => (float) $item['approved_quantity'],
+                    $item['inventory_requisition_item_id'] => is_numeric($item['approved_quantity'])
+                        ? (float) $item['approved_quantity']
+                        : 0.0,
                 ]);
 
             abort_if(
@@ -39,7 +43,10 @@ final class ApproveInventoryRequisition
                 'Approve at least one line quantity before continuing.',
             );
 
-            foreach ($requisition->items as $item) {
+            /** @var \Illuminate\Database\Eloquent\Collection<int, InventoryRequisitionItem> $requisitionItems */
+            $requisitionItems = $requisition->items;
+
+            foreach ($requisitionItems as $item) {
                 $item->update([
                     'approved_quantity' => $approvedQuantities[$item->id] ?? 0,
                 ]);
