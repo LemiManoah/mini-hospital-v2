@@ -15,6 +15,9 @@ final readonly class CreateImagingRequest
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function handle(Consultation|PatientVisit $context, array $data, string $staffId): ImagingRequest
     {
         [$visit, $consultation] = $this->resolveContext($context);

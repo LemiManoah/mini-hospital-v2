@@ -26,6 +26,7 @@ final readonly class CreateGoodsReceipt
     /**
      * @param  array<string, mixed>  $attributes
      * @param  array<int, array<string, mixed>>  $items
+     * @param  array<int, string>  $allowedLocationTypes
      */
     public function handle(array $attributes, array $items, array $allowedLocationTypes = []): GoodsReceipt
     {
@@ -38,7 +39,8 @@ final readonly class CreateGoodsReceipt
             $purchaseOrder = PurchaseOrder::query()
                 ->lockForUpdate()
                 ->with('items:id,purchase_order_id,inventory_item_id,quantity_ordered,quantity_received')
-                ->findOrFail($attributes['purchase_order_id']);
+                ->where('id', $attributes['purchase_order_id'])
+                ->firstOrFail();
 
             $inventoryLocationId = is_string($attributes['inventory_location_id'] ?? null)
                 ? $attributes['inventory_location_id']
@@ -164,9 +166,7 @@ final readonly class CreateGoodsReceipt
                 ]);
             }
 
-            $inventoryItem = is_string($inventoryItemId)
-                ? $inventoryItems->get($inventoryItemId)
-                : null;
+            $inventoryItem = $inventoryItems->get($inventoryItemId);
 
             if (
                 $inventoryItem instanceof InventoryItem

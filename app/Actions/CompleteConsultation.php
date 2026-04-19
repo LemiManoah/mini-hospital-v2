@@ -8,6 +8,9 @@ use App\Models\Consultation;
 
 final readonly class CompleteConsultation
 {
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function handle(Consultation $consultation, array $data): Consultation
     {
         $consultation->update([

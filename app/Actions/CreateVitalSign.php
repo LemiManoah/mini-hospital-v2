@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Auth;
 
 final readonly class CreateVitalSign
 {
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function handle(PatientVisit $visit, array $data): VitalSign
     {
         $triage = $visit->triage;
@@ -37,7 +40,7 @@ final readonly class CreateVitalSign
 
         return VitalSign::query()->create([
             ...$data,
-            'triage_id' => $triage->id,
+            'triage_id' => $triage?->id,
             'recorded_at' => now(),
             'on_supplemental_oxygen' => ! empty($data['on_supplemental_oxygen']),
             'recorded_by' => $staffId,

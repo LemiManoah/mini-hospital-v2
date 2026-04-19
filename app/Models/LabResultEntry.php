@@ -31,11 +31,13 @@ final class LabResultEntry extends Model
         'corrected_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<LabRequestItem, $this> */
     public function requestItem(): BelongsTo
     {
         return $this->belongsTo(LabRequestItem::class, 'lab_request_item_id');
     }
 
+    /** @return HasMany<LabResultValue, $this> */
     public function values(): HasMany
     {
         return $this->hasMany(LabResultValue::class, 'lab_result_entry_id')
@@ -43,26 +45,31 @@ final class LabResultEntry extends Model
             ->orderBy('label');
     }
 
+    /** @return BelongsTo<Staff, $this> */
     public function enteredBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'entered_by');
     }
 
+    /** @return BelongsTo<Staff, $this> */
     public function reviewedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'reviewed_by');
     }
 
+    /** @return BelongsTo<Staff, $this> */
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'approved_by');
     }
 
+    /** @return BelongsTo<Staff, $this> */
     public function releasedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'released_by');
     }
 
+    /** @return BelongsTo<Staff, $this> */
     public function correctedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'corrected_by');

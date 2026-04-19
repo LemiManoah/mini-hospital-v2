@@ -18,12 +18,15 @@ final readonly class CreatePrescription
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function handle(Consultation|PatientVisit $context, array $data, string $staffId): Prescription
     {
         [$visit, $consultation] = $this->resolveContext($context);
 
         /** @var array<int, array<string, mixed>> $items */
-        $items = $data['items'] ?? [];
+        $items = is_array($data['items'] ?? null) ? $data['items'] : [];
 
         /** @var Collection<int, InventoryItem> $inventoryItems */
         $inventoryItems = InventoryItem::query()
@@ -47,7 +50,8 @@ final readonly class CreatePrescription
             ]);
 
             foreach ($items as $item) {
-                $inventoryItem = $inventoryItems->get($item['inventory_item_id']);
+                $inventoryItemId = is_string($item['inventory_item_id'] ?? null) ? $item['inventory_item_id'] : null;
+                $inventoryItem = $inventoryItems->get($inventoryItemId);
                 if ($inventoryItem === null) {
                     continue;
                 }
@@ -57,8 +61,8 @@ final readonly class CreatePrescription
                     'dosage' => $this->stringValue($item['dosage'] ?? null),
                     'frequency' => $this->stringValue($item['frequency'] ?? null),
                     'route' => $this->stringValue($item['route'] ?? null),
-                    'duration_days' => (int) ($item['duration_days'] ?? 0),
-                    'quantity' => (int) ($item['quantity'] ?? 0),
+                    'duration_days' => is_numeric($item['duration_days'] ?? null) ? (int) $item['duration_days'] : 0,
+                    'quantity' => is_numeric($item['quantity'] ?? null) ? (int) $item['quantity'] : 0,
                     'instructions' => $this->nullableText($item['instructions'] ?? null),
                     'is_prn' => (bool) ($item['is_prn'] ?? false),
                     'prn_reason' => $this->nullableText($item['prn_reason'] ?? null),

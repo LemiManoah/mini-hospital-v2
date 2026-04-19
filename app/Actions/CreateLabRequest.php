@@ -22,12 +22,16 @@ final readonly class CreateLabRequest
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function handle(Consultation|PatientVisit $context, array $data, string $staffId): LabRequest
     {
         [$visit, $consultation] = $this->resolveContext($context);
 
+        $rawTestIds = is_array($data['test_ids'] ?? null) ? $data['test_ids'] : [];
         /** @var array<int, string> $testIds */
-        $testIds = array_values(array_unique(array_filter($data['test_ids'] ?? [], is_string(...))));
+        $testIds = array_values(array_unique(array_filter($rawTestIds, is_string(...))));
 
         /** @var Collection<int, LabTestCatalog> $tests */
         $tests = LabTestCatalog::query()

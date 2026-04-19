@@ -28,26 +28,31 @@ final class Prescription extends Model
         'status' => PrescriptionStatus::class,
     ];
 
+    /** @return BelongsTo<Consultation, $this> */
     public function consultation(): BelongsTo
     {
         return $this->belongsTo(Consultation::class, 'consultation_id');
     }
 
+    /** @return BelongsTo<PatientVisit, $this> */
     public function visit(): BelongsTo
     {
         return $this->belongsTo(PatientVisit::class, 'visit_id');
     }
 
+    /** @return BelongsTo<Staff, $this> */
     public function prescribedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'prescribed_by');
     }
 
+    /** @return HasMany<PrescriptionItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(PrescriptionItem::class, 'prescription_id');
     }
 
+    /** @return HasMany<DispensingRecord, $this> */
     public function dispensingRecords(): HasMany
     {
         return $this->hasMany(DispensingRecord::class, 'prescription_id');

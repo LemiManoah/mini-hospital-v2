@@ -18,6 +18,9 @@ final readonly class CreateFacilityServiceOrder
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function handle(Consultation|PatientVisit $context, array $data, string $staffId): FacilityServiceOrder
     {
         [$visit, $consultation] = $this->resolveContext($context);

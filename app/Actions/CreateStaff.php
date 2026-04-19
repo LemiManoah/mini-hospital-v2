@@ -17,7 +17,7 @@ final class CreateStaff
     {
         // Generate employee number if not provided
         if (empty($data['employee_number'])) {
-            $data['employee_number'] = $this->generateEmployeeNumber($data['type']);
+            $data['employee_number'] = $this->generateEmployeeNumber(is_string($data['type'] ?? null) ? $data['type'] : '');
         }
 
         return DB::transaction(function () use ($data): Staff {
@@ -31,7 +31,8 @@ final class CreateStaff
             if (is_array($branchIds) && $branchIds !== []) {
                 $pivotData = [];
                 foreach ($branchIds as $branchId) {
-                    $pivotData[(string) $branchId] = [
+                    /** @var string $branchId */
+                    $pivotData[$branchId] = [
                         'is_primary_location' => $branchId === $primaryBranchId,
                     ];
                 }

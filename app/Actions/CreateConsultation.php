@@ -15,6 +15,9 @@ final readonly class CreateConsultation
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function handle(PatientVisit $visit, array $data): Consultation
     {
         $doctorId = $visit->doctor_id ?? Auth::user()?->staff_id;
@@ -51,6 +54,9 @@ final readonly class CreateConsultation
         return $consultation;
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     private function chiefComplaint(PatientVisit $visit, array $data): string
     {
         $complaint = $this->nullableText($data['chief_complaint'] ?? null);
@@ -59,7 +65,7 @@ final readonly class CreateConsultation
             return $complaint;
         }
 
-        return $visit->triage?->chief_complaint ?? '';
+        return (string) ($visit->triage->chief_complaint ?? '');
     }
 
     private function nullableText(mixed $value): ?string

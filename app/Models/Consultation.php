@@ -34,31 +34,37 @@ final class Consultation extends Model
         'outcome' => ConsultationOutcome::class,
     ];
 
+    /** @return BelongsTo<PatientVisit, $this> */
     public function visit(): BelongsTo
     {
         return $this->belongsTo(PatientVisit::class, 'visit_id');
     }
 
+    /** @return BelongsTo<Staff, $this> */
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'doctor_id');
     }
 
+    /** @return HasMany<LabRequest, $this> */
     public function labRequests(): HasMany
     {
         return $this->hasMany(LabRequest::class, 'consultation_id');
     }
 
+    /** @return HasMany<ImagingRequest, $this> */
     public function imagingRequests(): HasMany
     {
         return $this->hasMany(ImagingRequest::class, 'consultation_id');
     }
 
+    /** @return HasMany<Prescription, $this> */
     public function prescriptions(): HasMany
     {
         return $this->hasMany(Prescription::class, 'consultation_id');
     }
 
+    /** @return HasMany<FacilityServiceOrder, $this> */
     public function facilityServiceOrders(): HasMany
     {
         return $this->hasMany(FacilityServiceOrder::class, 'consultation_id');

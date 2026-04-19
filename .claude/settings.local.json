@@ -5,7 +5,11 @@
       "Bash(php.exe artisan *)",
       "Bash(\"/c/Users/Manoah/.config/herd/bin/php.bat\" artisan *)",
       "Bash(\"/c/Users/Manoah/.config/herd/bin/php.bat\" vendor/bin/pint --dirty)",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(vendor/bin/phpstan analyse *)",
+      "Bash(herd php *)",
+      "Bash(\"/c/Users/Manoah/.config/herd/bin/php85\" vendor/bin/phpstan analyse --no-progress app/Models/Consultation.php app/Models/PatientVisit.php app/Models/Prescription.php app/Models/LabRequestItem.php app/Models/LabResultEntry.php app/Models/LabTestCatalog.php app/Actions/CompleteConsultation.php app/Actions/CreateConsultation.php app/Actions/CreateFacilityServiceOrder.php app/Actions/CreateImagingRequest.php app/Actions/CreateLabRequest.php app/Actions/CreatePrescription.php app/Actions/CreateTriageRecord.php app/Actions/CreateVitalSign.php app/Actions/DeleteAddress.php app/Actions/DeleteClinic.php app/Actions/CreateGoodsReceipt.php app/Actions/CreateStaff.php)",
+      "Bash(\"/c/Users/Manoah/.config/herd/bin/php85/php.exe\" vendor/bin/phpstan analyse --no-progress app/Models/Consultation.php app/Models/PatientVisit.php app/Models/Prescription.php app/Models/LabRequestItem.php app/Models/LabResultEntry.php app/Models/LabTestCatalog.php app/Actions/CompleteConsultation.php app/Actions/CreateConsultation.php app/Actions/CreateFacilityServiceOrder.php app/Actions/CreateImagingRequest.php app/Actions/CreateLabRequest.php app/Actions/CreatePrescription.php app/Actions/CreateTriageRecord.php app/Actions/CreateVitalSign.php app/Actions/DeleteAddress.php app/Actions/DeleteClinic.php app/Actions/CreateGoodsReceipt.php app/Actions/CreateStaff.php)"
     ]
   },
   "enableAllProjectMcpServers": true,

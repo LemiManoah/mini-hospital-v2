@@ -10,6 +10,6 @@ final readonly class DeleteAddress
 {
     public function handle(Address $address): bool
     {
-        return $address->delete();
+        return (bool) $address->delete();
     }
 }

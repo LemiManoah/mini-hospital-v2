@@ -10,6 +10,6 @@ final readonly class DeleteClinic
 {
     public function handle(Clinic $clinic): bool
     {
-        return $clinic->delete();
+        return (bool) $clinic->delete();
     }
 }

@@ -15,6 +15,9 @@ final readonly class CreateTriageRecord
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function handle(PatientVisit $visit, array $data): TriageRecord
     {
         $staffId = Auth::user()?->staff_id;
