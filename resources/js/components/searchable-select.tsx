@@ -44,7 +44,7 @@ export function SearchableSelect({
 }) {
     return (
         <Select
-            value={value === '' ? undefined : value}
+            value={value}
             onValueChange={(nextValue) =>
                 onValueChange(nextValue === CLEAR_VALUE ? '' : nextValue)
             }

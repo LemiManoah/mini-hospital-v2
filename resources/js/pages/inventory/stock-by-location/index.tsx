@@ -132,7 +132,6 @@ export default function InventoryStockByLocationIndex({
                                     >
                                         <div>{location.name}</div>
                                         <div className="text-xs font-normal text-muted-foreground">
-                                            {location.code} -{' '}
                                             {labelize(location.type)}
                                         </div>
                                     </TableHead>

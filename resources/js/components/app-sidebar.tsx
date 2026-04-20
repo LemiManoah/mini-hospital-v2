@@ -270,6 +270,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'pharmacy_pos.create',
                     },
                     {
+                        title: 'POS History',
+                        url: '/pharmacy/pos/history',
+                        permission: 'pharmacy_pos.view_history',
+                    },
+                    {
                         title: 'Pharmacy Stock',
                         url: '/pharmacy/stock',
                         permission: 'inventory_items.view',

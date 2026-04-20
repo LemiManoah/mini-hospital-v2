@@ -54,6 +54,23 @@ final readonly class PharmacyPosController implements HasMiddleware
                 ->first()
             : null;
 
+        $heldCarts = is_string($branchId)
+            ? PharmacyPosCart::query()
+                ->where('user_id', Auth::id())
+                ->where('branch_id', $branchId)
+                ->where('status', PharmacyPosCartStatus::Held)
+                ->latest('held_at')
+                ->get()
+                ->map(static fn (PharmacyPosCart $cart): array => [
+                    'id' => $cart->id,
+                    'cart_number' => $cart->cart_number,
+                    'held_at' => $cart->held_at?->toISOString(),
+                    'customer_name' => $cart->customer_name,
+                ])
+                ->values()
+                ->all()
+            : [];
+
         $stockBalances = is_string($branchId) && $activeCart !== null && is_string($activeCart->inventory_location_id)
             ? $this->itemBalancesForLocation($branchId, $activeCart->inventory_location_id)
             : collect();
@@ -72,6 +89,7 @@ final readonly class PharmacyPosController implements HasMiddleware
                 ->values()
                 ->all(),
             'activeCart' => $activeCart === null ? null : $this->serializeCart($activeCart, $stockBalances->all()),
+            'heldCarts' => $heldCarts,
             'searchableItems' => $searchableItems,
             'defaults' => [
                 'inventory_location_id' => $locations->first()?->id,

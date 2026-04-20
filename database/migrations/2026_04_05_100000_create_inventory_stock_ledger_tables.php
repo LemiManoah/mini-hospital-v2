@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\StockMovementType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -38,7 +37,7 @@ return new class extends Migration
             $table->foreignUuid('inventory_location_id')->constrained('inventory_locations')->onDelete('cascade');
             $table->foreignUuid('inventory_item_id')->constrained('inventory_items')->onDelete('cascade');
             $table->foreignUuid('inventory_batch_id')->nullable()->constrained('inventory_batches')->nullOnDelete();
-            $table->enum('movement_type', array_column(StockMovementType::cases(), 'value'))->index();
+            $table->string('movement_type', 50);
             $table->decimal('quantity', 14, 3);
             $table->decimal('unit_cost', 14, 2)->nullable();
             $table->string('source_document_type', 150)->nullable();

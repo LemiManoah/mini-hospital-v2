@@ -6,17 +6,21 @@ namespace App\Http\Controllers;
 
 use App\Actions\FinalizePharmacyPosSaleAction;
 use App\Enums\PharmacyPosCartStatus;
+use App\Enums\PharmacyPosSaleStatus;
 use App\Http\Requests\FinalizePharmacyPosSaleRequest;
 use App\Models\PharmacyPosCart;
+use App\Models\PharmacyPosCartItem;
 use App\Models\PharmacyPosPayment;
 use App\Models\PharmacyPosSale;
 use App\Models\PharmacyPosSaleItem;
 use App\Support\BranchContext;
 use App\Support\InventoryNavigationContext;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,7 +31,69 @@ final readonly class PharmacyPosSaleController implements HasMiddleware
         return [
             new Middleware('permission:pharmacy_pos.complete', only: ['store']),
             new Middleware('permission:pharmacy_pos.view', only: ['show', 'checkout']),
+            new Middleware('permission:pharmacy_pos.view_history', only: ['index']),
         ];
+    }
+
+    public function index(Request $request): Response
+    {
+        $branchId = BranchContext::getActiveBranchId();
+
+        $query = PharmacyPosSale::query()
+            ->where('branch_id', $branchId)
+            ->with(['inventoryLocation', 'createdBy.staff'])
+            ->latest('sold_at');
+
+        if ($search = $request->input('search')) {
+            $query->where(static function (Builder $q) use ($search): void {
+                $q->where('sale_number', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($from = $request->input('from')) {
+            $query->whereDate('sold_at', '>=', $from);
+        }
+
+        if ($to = $request->input('to')) {
+            $query->whereDate('sold_at', '<=', $to);
+        }
+
+        $sales = $query->paginate(25)->withQueryString();
+
+        return Inertia::render('pharmacy/pos/history', [
+            'navigation' => InventoryNavigationContext::fromRequest($request),
+            'sales' => $sales->through(static fn (PharmacyPosSale $sale): array => [
+                'id' => $sale->id,
+                'sale_number' => $sale->sale_number,
+                'status' => $sale->status?->value,
+                'status_label' => $sale->status?->label(),
+                'customer_name' => $sale->customer_name,
+                'gross_amount' => (float) $sale->gross_amount,
+                'discount_amount' => (float) $sale->discount_amount,
+                'paid_amount' => (float) $sale->paid_amount,
+                'balance_amount' => (float) $sale->balance_amount,
+                'sold_at' => $sale->sold_at?->toISOString(),
+                'location_name' => $sale->inventoryLocation?->name,
+                'sold_by' => $sale->createdBy?->staff === null
+                    ? $sale->createdBy?->email
+                    : mb_trim(sprintf('%s %s', $sale->createdBy->staff->first_name, $sale->createdBy->staff->last_name)),
+            ]),
+            'filters' => [
+                'search' => $request->input('search', ''),
+                'status' => $request->input('status', ''),
+                'from' => $request->input('from', ''),
+                'to' => $request->input('to', ''),
+            ],
+            'statuses' => array_map(
+                static fn (PharmacyPosSaleStatus $s): array => ['value' => $s->value, 'label' => $s->label()],
+                PharmacyPosSaleStatus::cases(),
+            ),
+        ]);
     }
 
     public function checkout(Request $request, PharmacyPosCart $cart): Response
@@ -38,9 +104,9 @@ final readonly class PharmacyPosSaleController implements HasMiddleware
         $cart->load(['items.inventoryItem', 'inventoryLocation']);
 
         $grossAmount = round($cart->items->sum(
-            fn ($item) => round((float) $item->quantity * (float) $item->unit_price, 2)
+            fn (PharmacyPosCartItem $item): float => round((float) $item->quantity * (float) $item->unit_price, 2)
         ), 2);
-        $discountAmount = round($cart->items->sum(fn ($item) => (float) $item->discount_amount), 2);
+        $discountAmount = round($cart->items->sum(fn (PharmacyPosCartItem $item): float => (float) $item->discount_amount), 2);
         $totalAmount = max(0.0, round($grossAmount - $discountAmount, 2));
 
         return Inertia::render('pharmacy/pos/checkout', [
@@ -54,7 +120,7 @@ final readonly class PharmacyPosSaleController implements HasMiddleware
                     'id' => $cart->inventoryLocation->id,
                     'name' => $cart->inventoryLocation->name,
                 ],
-                'items' => $cart->items->map(static fn ($item): array => [
+                'items' => $cart->items->map(static fn (PharmacyPosCartItem $item): array => [
                     'id' => $item->id,
                     'item_name' => $item->inventoryItem?->name,
                     'generic_name' => $item->inventoryItem?->generic_name,
@@ -93,8 +159,14 @@ final readonly class PharmacyPosSaleController implements HasMiddleware
 
         $sale->load(['items.inventoryItem', 'items.allocations.inventoryBatch', 'payments', 'inventoryLocation', 'createdBy.staff']);
 
+        $authUser = Auth::user();
+
         return Inertia::render('pharmacy/pos/sales/show', [
             'navigation' => InventoryNavigationContext::fromRequest($request),
+            'can' => [
+                'void' => $authUser?->can('pharmacy_pos.void') ?? false,
+                'refund' => $authUser?->can('pharmacy_pos.refund') ?? false,
+            ],
             'sale' => [
                 'id' => $sale->id,
                 'sale_number' => $sale->sale_number,

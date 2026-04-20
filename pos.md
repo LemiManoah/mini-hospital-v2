@@ -661,34 +661,49 @@ Why next:
 - gives the pharmacy a usable checkout flow
 - creates clear document boundaries before stock posting complexity grows
 
-### Phase 3: Batch-Aware Stock Posting
+### ✅ Phase 3: Batch-Aware Stock Posting — COMPLETED
 
 Deliverables:
 
-- batch allocation
-- stock validation
-- sale movement posting
-- completed stock reduction
+- [x] FEFO auto-allocation of inventory batches per sale item at finalization
+- [x] `PharmacyPosSaleItemAllocation` records created with batch/cost/expiry snapshots
+- [x] `StockMovement` records posted (`movement_type = pos_sale`, negative quantity)
+- [x] Stock validation at finalization — rejects sale if insufficient stock exists
+- [x] `StockMovementType::PosSale` added to the enum
+- [x] `FinalizePharmacyPosSaleAction` updated with `InventoryStockLedger` injection and batch allocation logic
+- [x] tests (5/5 passing in `PharmacyPosPhase3Test.php`)
 
-This is where the POS becomes inventory-controlled.
-
-### Phase 4: History and Operational Controls
-
-Deliverables:
-
-- sale history page
-- filtering
-- print receipt
-- hold cart
-
-### Phase 5: Reversals and Refunds
+### ✅ Phase 4: History and Operational Controls — COMPLETED
 
 Deliverables:
 
-- void draft sale
-- refund posted sale
-- reversal stock movements
-- supervisor controls
+- [x] sale history page (`pharmacy/pos/history.tsx`) with pagination
+- [x] filtering by search term, status, date from/to
+- [x] `POS History` sidebar link (`pharmacy_pos.view_history` permission)
+- [x] hold cart (`HoldPharmacyPosCartAction`, `POST /pharmacy/pos/carts/{cart}/hold`)
+- [x] resume held cart (`ResumePharmacyPosCartAction`, `DELETE /pharmacy/pos/carts/{cart}/hold`)
+- [x] held carts panel on POS index — resume button per held cart
+- [x] hold button in POS header when cart is active
+- [x] history link button in POS header
+- [x] fix for double-press add item bug (replaced `setData`+`post` with `router.post`)
+- [x] fix for Select uncontrolled→controlled warning (`value || undefined`)
+- [x] tests (5/5 passing in `PharmacyPosPhase4Test.php`)
+
+### ✅ Phase 5: Reversals and Refunds — COMPLETED
+
+Deliverables:
+
+- [x] void completed sale (`VoidPharmacyPosSaleAction`, `POST /pharmacy/pos/sales/{sale}/void`)
+- [x] refund completed sale (`RefundPharmacyPosSaleAction`, `POST /pharmacy/pos/sales/{sale}/refund`)
+- [x] reversal stock movements (`StockMovementType::PosSaleReversal`, positive quantity)
+- [x] `pos_sale_reversal` added to MySQL ENUM via migration
+- [x] refund payment record created on refund (`is_refund = true`)
+- [x] supervisor controls via `pharmacy_pos.void` and `pharmacy_pos.refund` permissions
+- [x] Void button on sale show page (confirmed dialog before action)
+- [x] Refund button on sale show page (modal with amount + payment method)
+- [x] Print receipt 404 fixed (`PharmacyPosSalePrintController`, route `pharmacy.pos.sales.print`)
+- [x] SearchableSelect uncontrolled warning fixed (`value={value}` not `value || undefined`)
+- [x] tests (5/5 passing in `PharmacyPosPhase5Test.php`)
 
 ---
 

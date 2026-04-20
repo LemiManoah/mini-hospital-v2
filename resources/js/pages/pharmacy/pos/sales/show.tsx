@@ -1,12 +1,29 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryNavigationContext } from '@/types/inventory-navigation';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { Printer } from 'lucide-react';
+import { useState } from 'react';
 
 interface SaleItem {
     id: string;
@@ -53,6 +70,7 @@ interface Sale {
 interface PharmacyPosSaleShowProps {
     navigation: InventoryNavigationContext;
     sale: Sale;
+    can: { void: boolean; refund: boolean };
 }
 
 const statusTone = (status: string | null): string => {
@@ -86,7 +104,41 @@ const breadcrumbs = (navigation: InventoryNavigationContext, sale: Sale): Breadc
     { title: sale.sale_number, href: `/pharmacy/pos/sales/${sale.id}` },
 ];
 
-export default function PharmacyPosSaleShow({ navigation, sale }: PharmacyPosSaleShowProps) {
+const paymentMethods = [
+    { value: 'cash', label: 'Cash' },
+    { value: 'mobile_money', label: 'Mobile Money' },
+    { value: 'card', label: 'Card' },
+    { value: 'bank_transfer', label: 'Bank Transfer' },
+    { value: 'insurance', label: 'Insurance' },
+    { value: 'other', label: 'Other' },
+];
+
+export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyPosSaleShowProps) {
+    const [showVoidConfirm, setShowVoidConfirm] = useState(false);
+    const [showRefundModal, setShowRefundModal] = useState(false);
+
+    const voidForm = useForm({});
+    const refundForm = useForm({
+        payment_method: 'cash',
+        refund_amount: sale.paid_amount.toFixed(2),
+        reference_number: '',
+        notes: '',
+    });
+
+    const isCompleted = sale.status === 'completed';
+
+    const submitVoid = () => {
+        voidForm.post(`/pharmacy/pos/sales/${sale.id}/void`, {
+            onSuccess: () => setShowVoidConfirm(false),
+        });
+    };
+
+    const submitRefund = () => {
+        refundForm.post(`/pharmacy/pos/sales/${sale.id}/refund`, {
+            onSuccess: () => setShowRefundModal(false),
+        });
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs(navigation, sale)}>
             <Head title={sale.sale_number} />
@@ -110,7 +162,7 @@ export default function PharmacyPosSaleShow({ navigation, sale }: PharmacyPosSal
                         </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <Button variant="outline" asChild>
                             <Link href="/pharmacy/pos">New Sale</Link>
                         </Button>
@@ -124,6 +176,24 @@ export default function PharmacyPosSaleShow({ navigation, sale }: PharmacyPosSal
                                 Print Receipt
                             </a>
                         </Button>
+                        {isCompleted && can.void && (
+                            <Button
+                                variant="outline"
+                                className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400"
+                                onClick={() => setShowVoidConfirm(true)}
+                            >
+                                Void Sale
+                            </Button>
+                        )}
+                        {isCompleted && can.refund && (
+                            <Button
+                                variant="outline"
+                                className="border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400"
+                                onClick={() => setShowRefundModal(true)}
+                            >
+                                Refund
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -163,7 +233,7 @@ export default function PharmacyPosSaleShow({ navigation, sale }: PharmacyPosSal
 
                             <Separator />
 
-                            <div className="flex justify-between font-semibold text-lg">
+                            <div className="flex justify-between text-lg font-semibold">
                                 <span>Total</span>
                                 <span>{(sale.gross_amount - sale.discount_amount).toFixed(2)}</span>
                             </div>
@@ -235,7 +305,8 @@ export default function PharmacyPosSaleShow({ navigation, sale }: PharmacyPosSal
                                                 )}
                                             </div>
                                             <span className={payment.is_refund ? 'text-rose-600' : ''}>
-                                                {payment.is_refund ? '−' : ''}{payment.amount.toFixed(2)}
+                                                {payment.is_refund ? '−' : ''}
+                                                {payment.amount.toFixed(2)}
                                             </span>
                                         </div>
                                     ))
@@ -245,6 +316,102 @@ export default function PharmacyPosSaleShow({ navigation, sale }: PharmacyPosSal
                     </div>
                 </div>
             </div>
+
+            {/* Void confirmation dialog */}
+            <Dialog open={showVoidConfirm} onOpenChange={setShowVoidConfirm}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Void Sale</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground">
+                        This will cancel <strong>{sale.sale_number}</strong> and reverse all stock
+                        movements. This action cannot be undone. Continue?
+                    </p>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowVoidConfirm(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            disabled={voidForm.processing}
+                            onClick={submitVoid}
+                        >
+                            {voidForm.processing ? 'Voiding…' : 'Void Sale'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Refund dialog */}
+            <Dialog open={showRefundModal} onOpenChange={setShowRefundModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Refund Sale</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-1.5">
+                            <Label>Refund Amount</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                value={refundForm.data.refund_amount}
+                                onChange={(e) => refundForm.setData('refund_amount', e.target.value)}
+                            />
+                            {refundForm.errors.refund_amount && (
+                                <p className="text-xs text-destructive">{refundForm.errors.refund_amount}</p>
+                            )}
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <Label>Payment Method</Label>
+                            <Select
+                                value={refundForm.data.payment_method}
+                                onValueChange={(v) => refundForm.setData('payment_method', v)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {paymentMethods.map((m) => (
+                                        <SelectItem key={m.value} value={m.value}>
+                                            {m.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <Label>Reference Number (optional)</Label>
+                            <Input
+                                value={refundForm.data.reference_number}
+                                onChange={(e) => refundForm.setData('reference_number', e.target.value)}
+                                placeholder="e.g. transaction ID"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <Label>Notes (optional)</Label>
+                            <Input
+                                value={refundForm.data.notes}
+                                onChange={(e) => refundForm.setData('notes', e.target.value)}
+                            />
+                        </div>
+                        {refundForm.errors.sale && (
+                            <p className="text-sm text-destructive">{refundForm.errors.sale}</p>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowRefundModal(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            disabled={refundForm.processing}
+                            onClick={submitRefund}
+                        >
+                            {refundForm.processing ? 'Processing…' : 'Confirm Refund'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

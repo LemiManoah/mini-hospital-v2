@@ -20,6 +20,8 @@ enum StockMovementType: string
     case ReturnOut = 'return_out';
     case Expiry = 'expiry';
     case Damage = 'damage';
+    case PosSale = 'pos_sale';
+    case PosSaleReversal = 'pos_sale_reversal';
 
     public function label(): string
     {
@@ -38,6 +40,8 @@ enum StockMovementType: string
             self::ReturnOut => 'Return Out',
             self::Expiry => 'Expiry',
             self::Damage => 'Damage',
+            self::PosSale => 'POS Sale',
+            self::PosSaleReversal => 'POS Sale Reversal',
         };
     }
 }

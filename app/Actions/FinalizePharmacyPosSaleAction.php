@@ -6,10 +6,16 @@ namespace App\Actions;
 
 use App\Enums\PharmacyPosCartStatus;
 use App\Enums\PharmacyPosSaleStatus;
+use App\Enums\StockMovementType;
+use App\Models\InventoryBatch;
 use App\Models\PharmacyPosCart;
 use App\Models\PharmacyPosCartItem;
 use App\Models\PharmacyPosSale;
+use App\Models\PharmacyPosSaleItem;
+use App\Models\StockMovement;
+use App\Support\InventoryStockLedger;
 use App\Support\PharmacyPosSaleNumberGenerator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +24,7 @@ final readonly class FinalizePharmacyPosSaleAction
 {
     public function __construct(
         private PharmacyPosSaleNumberGenerator $saleNumberGenerator,
+        private InventoryStockLedger $inventoryStockLedger,
     ) {}
 
     /**
@@ -57,6 +64,13 @@ final readonly class FinalizePharmacyPosSaleAction
             $changeAmount = max(0.0, round($paidAmount - $totalAmount, 2));
             $balanceAmount = max(0.0, round($totalAmount - $paidAmount, 2));
 
+            $availableBatches = $this->loadAvailableBatches($cart->branch_id, $cart->inventory_location_id);
+
+            /** @var Collection<string, float> $availableQuantities */
+            $availableQuantities = $availableBatches->mapWithKeys(
+                static fn (array $batch): array => [$batch['inventory_batch_id'] => $batch['quantity']]
+            );
+
             $sale = PharmacyPosSale::query()->create([
                 'tenant_id' => $cart->tenant_id,
                 'branch_id' => $cart->branch_id,
@@ -88,7 +102,7 @@ final readonly class FinalizePharmacyPosSaleAction
                     2
                 ));
 
-                $sale->items()->create([
+                $saleItem = $sale->items()->create([
                     'inventory_item_id' => $cartItem->inventory_item_id,
                     'quantity' => $cartItem->quantity,
                     'unit_price' => $cartItem->unit_price,
@@ -96,6 +110,13 @@ final readonly class FinalizePharmacyPosSaleAction
                     'line_total' => $lineTotal,
                     'notes' => $cartItem->notes,
                 ]);
+
+                $this->allocateAndPostStock(
+                    $sale,
+                    $saleItem,
+                    $availableBatches,
+                    $availableQuantities,
+                );
             }
 
             if ($paidAmount > 0) {
@@ -116,7 +137,140 @@ final readonly class FinalizePharmacyPosSaleAction
                 'converted_at' => now(),
             ]);
 
-            return $sale->refresh()->load(['items.inventoryItem', 'payments', 'inventoryLocation']);
+            return $sale->refresh()->load(['items.inventoryItem', 'items.allocations', 'payments', 'inventoryLocation']);
         });
+    }
+
+    /**
+     * @return Collection<string, array{
+     *     inventory_batch_id: string,
+     *     inventory_item_id: string,
+     *     batch_number: string|null,
+     *     expiry_date: string|null,
+     *     quantity: float,
+     *     batch: InventoryBatch
+     * }>
+     */
+    private function loadAvailableBatches(string $branchId, string $locationId): Collection
+    {
+        $balances = $this->inventoryStockLedger
+            ->summarizeByBatch($branchId)
+            ->filter(
+                static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId
+                    && $balance['quantity'] > 0
+            )
+            ->values();
+
+        $batches = InventoryBatch::query()
+            ->whereIn('id', $balances->pluck('inventory_batch_id'))
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        return $balances
+            ->map(function (array $balance) use ($batches): ?array {
+                $batch = $batches->get($balance['inventory_batch_id']);
+
+                if (! $batch instanceof InventoryBatch) {
+                    return null;
+                }
+
+                if ($batch->expiry_date !== null && $batch->expiry_date->startOfDay()->isBefore(today())) {
+                    return null;
+                }
+
+                return [
+                    'inventory_batch_id' => $balance['inventory_batch_id'],
+                    'inventory_item_id' => $balance['inventory_item_id'],
+                    'batch_number' => $balance['batch_number'],
+                    'expiry_date' => $balance['expiry_date'],
+                    'quantity' => $balance['quantity'],
+                    'batch' => $batch,
+                ];
+            })
+            ->filter(static fn (?array $batch): bool => is_array($batch))
+            ->mapWithKeys(static fn (array $batch): array => [$batch['inventory_batch_id'] => $batch]);
+    }
+
+    /**
+     * @param  Collection<string, array<string, mixed>>  $availableBatches
+     * @param  Collection<string, float>  $availableQuantities
+     */
+    private function allocateAndPostStock(
+        PharmacyPosSale $sale,
+        PharmacyPosSaleItem $saleItem,
+        Collection $availableBatches,
+        Collection $availableQuantities,
+    ): void {
+        $needed = round((float) $saleItem->quantity, 3);
+
+        $candidates = $availableBatches
+            ->filter(
+                static fn (array $batch): bool => $batch['inventory_item_id'] === $saleItem->inventory_item_id
+                    && (float) $availableQuantities->get($batch['inventory_batch_id'], 0.0) > 0
+            )
+            ->sortBy(
+                static fn (array $batch): string => sprintf(
+                    '%s|%s',
+                    $batch['expiry_date'] ?? '9999-12-31',
+                    $batch['batch_number'] ?? 'ZZZ',
+                )
+            )
+            ->values();
+
+        foreach ($candidates as $batchData) {
+            $batchId = $batchData['inventory_batch_id'];
+            $available = (float) $availableQuantities->get($batchId, 0.0);
+
+            if ($available <= 0 || $needed <= 0.0005) {
+                continue;
+            }
+
+            $allocated = round(min($needed, $available), 3);
+
+            /** @var InventoryBatch $batch */
+            $batch = $batchData['batch'];
+
+            $saleItem->allocations()->create([
+                'inventory_batch_id' => $batch->id,
+                'quantity' => $allocated,
+                'unit_cost_snapshot' => $batch->unit_cost,
+                'batch_number_snapshot' => $batch->batch_number,
+                'expiry_date_snapshot' => $batch->expiry_date,
+            ]);
+
+            StockMovement::query()->create([
+                'tenant_id' => $sale->tenant_id,
+                'branch_id' => $sale->branch_id,
+                'inventory_location_id' => $sale->inventory_location_id,
+                'inventory_item_id' => $saleItem->inventory_item_id,
+                'inventory_batch_id' => $batch->id,
+                'movement_type' => StockMovementType::PosSale,
+                'quantity' => -1 * $allocated,
+                'unit_cost' => $batch->unit_cost,
+                'source_document_type' => PharmacyPosSale::class,
+                'source_document_id' => $sale->id,
+                'source_line_type' => PharmacyPosSaleItem::class,
+                'source_line_id' => $saleItem->id,
+                'notes' => $saleItem->notes,
+                'occurred_at' => $sale->sold_at ?? now(),
+                'created_by' => Auth::id(),
+            ]);
+
+            $availableQuantities->put($batchId, max(0.0, $available - $allocated));
+            $needed = round($needed - $allocated, 3);
+
+            if ($needed <= 0.0005) {
+                break;
+            }
+        }
+
+        if ($needed > 0.0005) {
+            $itemName = $saleItem->inventoryItem?->generic_name ?? $saleItem->inventoryItem?->name ?? 'one of the items';
+
+            throw ValidationException::withMessages([
+                'cart' => sprintf('Not enough stock to complete the sale for %s.', $itemName),
+            ]);
+        }
     }
 }
