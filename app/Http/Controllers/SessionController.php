@@ -43,7 +43,7 @@ final readonly class SessionController
         if ($user->isSupportUser()) {
             BranchContext::clear();
 
-            return to_route('facility-switcher.index');
+            return to_route('facility-manager.dashboard');
         }
 
         if ($user->tenant !== null && ! $user->tenant->isOnboardingComplete()) {

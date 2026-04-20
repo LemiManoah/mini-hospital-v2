@@ -3,10 +3,17 @@ import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
@@ -14,6 +21,7 @@ import { ArrowLeft } from 'lucide-react';
 
 import { FacilityManagerMetrics } from './components/facility-manager-metrics';
 import { FacilityManagerNav } from './components/facility-manager-nav';
+import { FacilityManagerSupportActions } from './components/facility-manager-support-actions';
 import { FacilityManagerTenantHeader } from './components/facility-manager-tenant-header';
 import {
     type FacilityManagerMetric,
@@ -145,150 +153,165 @@ export default function FacilityManagerShow({
 
                 <FacilityManagerTenantHeader
                     tenant={tenant}
-                    title="Facility Overview"
-                    description="Use the focused sections below to inspect branches, users, subscriptions, activity, and internal support notes."
                 />
 
                 <FacilityManagerNav tenantId={tenant.id} current="overview" />
 
                 <FacilityManagerMetrics metrics={metrics} />
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                    <OverviewLinkCard
-                        title="Branches"
-                        description="Inspect branch status, staffing coverage, and store-enabled locations."
-                        href={`/facility-manager/facilities/${tenant.id}/branches`}
-                    />
-                    <OverviewLinkCard
-                        title="Users"
-                        description="Review tenant-linked users, positions, and branch assignments."
-                        href={`/facility-manager/facilities/${tenant.id}/users`}
-                    />
-                    <OverviewLinkCard
-                        title="Subscriptions"
-                        description="Track package status, billing windows, and support actions."
-                        href={`/facility-manager/facilities/${tenant.id}/subscriptions`}
-                    />
-                    <OverviewLinkCard
-                        title="Activity"
-                        description="See operational volume and the latest facility events."
-                        href={`/facility-manager/facilities/${tenant.id}/activity`}
-                    />
-                    <OverviewLinkCard
-                        title="Support Notes"
-                        description="Capture onboarding notes, billing context, and internal reminders."
-                        href={`/facility-manager/facilities/${tenant.id}/support-notes`}
-                    />
-                </div>
-
                 <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
                     <div className="space-y-6">
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader>
-                                <CardTitle>Facility Structure</CardTitle>
-                                <CardDescription>
-                                    Quick look at branch and department
-                                    coverage.
-                                </CardDescription>
+                            <CardHeader className="flex flex-row items-center justify-between gap-3">
+                                <CardTitle>Facility Snapshot</CardTitle>
+                                <div className="flex flex-wrap gap-2">
+                                    <Button variant="outline" size="sm" asChild>
+                                        <Link
+                                            href={`/facility-manager/facilities/${tenant.id}/branches`}
+                                        >
+                                            Branches
+                                        </Link>
+                                    </Button>
+                                    <Button variant="outline" size="sm" asChild>
+                                        <Link
+                                            href={`/facility-manager/facilities/${tenant.id}/users`}
+                                        >
+                                            Users
+                                        </Link>
+                                    </Button>
+                                    <Button variant="outline" size="sm" asChild>
+                                        <Link
+                                            href={`/facility-manager/facilities/${tenant.id}/subscriptions`}
+                                        >
+                                            Subscriptions
+                                        </Link>
+                                    </Button>
+                                </div>
                             </CardHeader>
-                            <CardContent className="grid gap-4 md:grid-cols-2">
-                                <div className="rounded-2xl border p-4">
-                                    <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-                                        Branches
-                                    </p>
-                                    <p className="mt-2 text-2xl font-semibold">
-                                        {tenant.counts.branches}
-                                    </p>
-                                    <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                                        {tenant.branches.length > 0 ? (
-                                            tenant.branches
-                                                .slice(0, 5)
-                                                .map((branch) => (
-                                                    <div key={branch.id}>
-                                                        {branch.branch_code
-                                                            ? `${branch.name} (${branch.branch_code})`
-                                                            : branch.name}
-                                                    </div>
-                                                ))
-                                        ) : (
-                                            <div>No branches configured.</div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="rounded-2xl border p-4">
-                                    <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-                                        Departments
-                                    </p>
-                                    <p className="mt-2 text-2xl font-semibold">
-                                        {tenant.counts.departments}
-                                    </p>
-                                    <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                                        {tenant.departments.length > 0 ? (
-                                            tenant.departments
-                                                .slice(0, 5)
-                                                .map((department) => (
-                                                    <div key={department.id}>
-                                                        {department.name}
-                                                    </div>
-                                                ))
-                                        ) : (
-                                            <div>
-                                                No departments configured.
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                            <CardContent>
+                                <Table>
+                                    <TableBody>
+                                        <TableRow>
+                                            <TableHead className="w-44">
+                                                Branches
+                                            </TableHead>
+                                            <TableCell>
+                                                {tenant.counts.branches}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {tenant.branches.length > 0
+                                                    ? tenant.branches
+                                                          .slice(0, 4)
+                                                          .map((branch) =>
+                                                              branch.branch_code
+                                                                  ? `${branch.name} (${branch.branch_code})`
+                                                                  : branch.name,
+                                                          )
+                                                          .join(', ')
+                                                    : 'No branches configured'}
+                                            </TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableHead>Departments</TableHead>
+                                            <TableCell>
+                                                {tenant.counts.departments}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {tenant.departments.length > 0
+                                                    ? tenant.departments
+                                                          .slice(0, 4)
+                                                          .map(
+                                                              (department) =>
+                                                                  department.name,
+                                                          )
+                                                          .join(', ')
+                                                    : 'No departments configured'}
+                                            </TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableHead>Users</TableHead>
+                                            <TableCell>
+                                                {tenant.counts.users}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {usage.verified_users} verified
+                                                accounts / last note{' '}
+                                                {formatDate(
+                                                    usage.last_support_note_at,
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
                             </CardContent>
                         </Card>
 
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
                             <CardHeader>
                                 <CardTitle>Recent Users</CardTitle>
-                                <CardDescription>
-                                    Latest tenant-linked users for support
-                                    follow-up.
-                                </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-3">
+                            <CardContent>
                                 {recent_users.length > 0 ? (
-                                    recent_users.map((user) => (
-                                        <div
-                                            key={user.id}
-                                            className="flex flex-col gap-2 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
-                                        >
-                                            <div>
-                                                <p className="font-medium">
-                                                    {user.name}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {user.email}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Added{' '}
-                                                    {formatDate(
-                                                        user.created_at,
-                                                    )}
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {user.position ? (
-                                                    <Badge variant="outline">
-                                                        {user.position}
-                                                    </Badge>
-                                                ) : null}
-                                                {user.roles
-                                                    .slice(0, 2)
-                                                    .map((role) => (
-                                                        <Badge
-                                                            key={role}
-                                                            variant="secondary"
-                                                        >
-                                                            {role}
-                                                        </Badge>
-                                                    ))}
-                                            </div>
-                                        </div>
-                                    ))
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Name</TableHead>
+                                                <TableHead>Email</TableHead>
+                                                <TableHead>Position</TableHead>
+                                                <TableHead>Roles</TableHead>
+                                                <TableHead>Added</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {recent_users.map((user) => (
+                                                <TableRow key={user.id}>
+                                                    <TableCell className="font-medium">
+                                                        {user.name}
+                                                    </TableCell>
+                                                    <TableCell className="text-muted-foreground">
+                                                        {user.email}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {user.position ?? '-'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {user.roles.length >
+                                                            0 ? (
+                                                                user.roles
+                                                                    .slice(0, 2)
+                                                                    .map(
+                                                                        (
+                                                                            role,
+                                                                        ) => (
+                                                                            <Badge
+                                                                                key={
+                                                                                    role
+                                                                                }
+                                                                                variant="secondary"
+                                                                            >
+                                                                                {
+                                                                                    role
+                                                                                }
+                                                                            </Badge>
+                                                                        ),
+                                                                    )
+                                                            ) : (
+                                                                <span className="text-muted-foreground">
+                                                                    -
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-muted-foreground">
+                                                        {formatDate(
+                                                            user.created_at,
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
                                         No users have been created for this
@@ -300,55 +323,68 @@ export default function FacilityManagerShow({
                     </div>
 
                     <div className="space-y-6">
+                        <FacilityManagerSupportActions tenant={tenant} />
+
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
                             <CardHeader>
                                 <CardTitle>Current Subscription</CardTitle>
-                                <CardDescription>
-                                    Present package state and renewal window.
-                                </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="rounded-2xl border p-4">
-                                    <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-                                        Package
-                                    </p>
-                                    <p className="mt-2 font-medium">
-                                        {tenant.current_subscription?.package
-                                            ?.name ?? 'No package'}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {tenant.current_subscription
-                                            ?.status_label ??
-                                            'No active subscription'}
-                                    </p>
-                                </div>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <StatBox
-                                        title="Trial Ends"
-                                        value={formatDate(
-                                            tenant.current_subscription
-                                                ?.trial_ends_at ?? null,
-                                        )}
-                                    />
-                                    <StatBox
-                                        title="Period Ends"
-                                        value={formatDate(
-                                            tenant.current_subscription
-                                                ?.current_period_ends_at ??
-                                                null,
-                                        )}
-                                    />
-                                    <StatBox
-                                        title="Support Notes"
-                                        value={`${usage.support_notes}`}
-                                    />
-                                    <StatBox
-                                        title="Last Note"
-                                        value={formatDate(
-                                            usage.last_support_note_at,
-                                        )}
-                                    />
-                                </div>
+                            <CardContent>
+                                <Table>
+                                    <TableBody>
+                                        <TableRow>
+                                            <TableHead className="w-40">
+                                                Package
+                                            </TableHead>
+                                            <TableCell>
+                                                {tenant.current_subscription
+                                                    ?.package?.name ??
+                                                    'No package'}
+                                            </TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableHead>Status</TableHead>
+                                            <TableCell>
+                                                {tenant.current_subscription
+                                                    ?.status_label ??
+                                                    'No active subscription'}
+                                            </TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableHead>Trial Ends</TableHead>
+                                            <TableCell>
+                                                {formatDate(
+                                                    tenant.current_subscription
+                                                        ?.trial_ends_at ?? null,
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableHead>Period Ends</TableHead>
+                                            <TableCell>
+                                                {formatDate(
+                                                    tenant.current_subscription
+                                                        ?.current_period_ends_at ??
+                                                        null,
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableHead>Support Notes</TableHead>
+                                            <TableCell>
+                                                {usage.support_notes}
+                                            </TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableHead>Last Note</TableHead>
+                                            <TableCell>
+                                                {formatDate(
+                                                    usage.last_support_note_at,
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
                             </CardContent>
                         </Card>
 
@@ -357,40 +393,51 @@ export default function FacilityManagerShow({
                                 <CardTitle>
                                     Recent Subscription History
                                 </CardTitle>
-                                <CardDescription>
-                                    Latest subscription transitions for quick
-                                    context.
-                                </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-3">
+                            <CardContent>
                                 {subscription_history.length > 0 ? (
-                                    subscription_history.map((subscription) => (
-                                        <div
-                                            key={subscription.id}
-                                            className="rounded-2xl border p-4"
-                                        >
-                                            <div className="flex items-center justify-between gap-3">
-                                                <Badge variant="outline">
-                                                    {subscription.status_label}
-                                                </Badge>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {formatDate(
-                                                        subscription.created_at,
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <p className="mt-2 font-medium">
-                                                {subscription.package?.name ??
-                                                    'No package'}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Trial ends{' '}
-                                                {formatDate(
-                                                    subscription.trial_ends_at,
-                                                )}
-                                            </p>
-                                        </div>
-                                    ))
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead>Package</TableHead>
+                                                <TableHead>Trial Ends</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {subscription_history.map(
+                                                (subscription) => (
+                                                    <TableRow
+                                                        key={subscription.id}
+                                                    >
+                                                        <TableCell className="text-muted-foreground">
+                                                            {formatDate(
+                                                                subscription.created_at,
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline">
+                                                                {
+                                                                    subscription.status_label
+                                                                }
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {subscription.package
+                                                                ?.name ??
+                                                                'No package'}
+                                                        </TableCell>
+                                                        <TableCell className="text-muted-foreground">
+                                                            {formatDate(
+                                                                subscription.trial_ends_at,
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ),
+                                            )}
+                                        </TableBody>
+                                    </Table>
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
                                         No subscription history is available
@@ -403,42 +450,5 @@ export default function FacilityManagerShow({
                 </div>
             </div>
         </AppLayout>
-    );
-}
-
-function OverviewLinkCard({
-    title,
-    description,
-    href,
-}: {
-    title: string;
-    description: string;
-    href: string;
-}) {
-    return (
-        <Card className="border-none shadow-sm ring-1 ring-border/50">
-            <CardHeader className="space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                    {title}
-                </div>
-                <CardDescription>{description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Button asChild size="sm">
-                    <Link href={href}>Open</Link>
-                </Button>
-            </CardContent>
-        </Card>
-    );
-}
-
-function StatBox({ title, value }: { title: string; value: string }) {
-    return (
-        <div className="rounded-2xl border p-4">
-            <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-                {title}
-            </p>
-            <p className="mt-2 font-medium">{value}</p>
-        </div>
     );
 }

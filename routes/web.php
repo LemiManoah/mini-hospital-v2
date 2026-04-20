@@ -11,6 +11,7 @@ use App\Http\Controllers\AppointmentModeController;
 use App\Http\Controllers\BranchSwitcherController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\CurrencyExchangeRateController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DispensingController;
@@ -25,7 +26,6 @@ use App\Http\Controllers\DoctorScheduleExceptionController;
 use App\Http\Controllers\FacilityBranchController;
 use App\Http\Controllers\FacilityManagerController;
 use App\Http\Controllers\FacilityServiceController;
-use App\Http\Controllers\FacilitySwitcherController;
 use App\Http\Controllers\GoodsReceiptController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\InsurancePackageController;
@@ -129,19 +129,11 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
             Route::get('facilities/{tenant}/activity', [FacilityManagerController::class, 'activity'])->name('facilities.activity');
             Route::get('facilities/{tenant}/support-notes', [FacilityManagerController::class, 'notes'])->name('facilities.notes');
             Route::post('facilities/{tenant}/support-notes', [FacilityManagerController::class, 'storeNote'])->name('facilities.notes.store');
-        });
-
-    Route::middleware('support.only')
-        ->prefix('facility-switcher')
-        ->name('facility-switcher.')
-        ->group(function (): void {
-            Route::get('/', [FacilitySwitcherController::class, 'index'])->name('index');
-            Route::get('/{tenant}', [FacilitySwitcherController::class, 'show'])->name('show');
-            Route::post('/{tenantId}', [FacilitySwitcherController::class, 'switch'])->name('switch');
-            Route::post('/{tenant}/activate-subscription', [FacilitySwitcherController::class, 'activateSubscription'])->name('activate-subscription');
-            Route::post('/{tenant}/mark-subscription-past-due', [FacilitySwitcherController::class, 'markSubscriptionPastDue'])->name('mark-subscription-past-due');
-            Route::post('/{tenant}/complete-onboarding', [FacilitySwitcherController::class, 'completeOnboarding'])->name('complete-onboarding');
-            Route::post('/{tenant}/reopen-onboarding', [FacilitySwitcherController::class, 'reopenOnboarding'])->name('reopen-onboarding');
+            Route::post('facilities/{tenant}/switch', [FacilityManagerController::class, 'switch'])->name('facilities.switch');
+            Route::post('facilities/{tenant}/activate-subscription', [FacilityManagerController::class, 'activateSubscription'])->name('facilities.activate-subscription');
+            Route::post('facilities/{tenant}/mark-subscription-past-due', [FacilityManagerController::class, 'markSubscriptionPastDue'])->name('facilities.mark-subscription-past-due');
+            Route::post('facilities/{tenant}/complete-onboarding', [FacilityManagerController::class, 'completeOnboarding'])->name('facilities.complete-onboarding');
+            Route::post('facilities/{tenant}/reopen-onboarding', [FacilityManagerController::class, 'reopenOnboarding'])->name('facilities.reopen-onboarding');
         });
 
     Route::get('branch-switcher', [BranchSwitcherController::class, 'index'])->name('branch-switcher.index');
@@ -177,6 +169,9 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('administration/master-data', [AdministrationController::class, 'masterData'])->name('administration.master-data');
     Route::get('administration/platform', [AdministrationController::class, 'platform'])->name('administration.platform');
     Route::resource('currencies', CurrencyController::class)->except(['show']);
+    Route::get('currency-exchange-rates', [CurrencyExchangeRateController::class, 'index'])->name('currency-exchange-rates.index');
+    Route::post('currency-exchange-rates', [CurrencyExchangeRateController::class, 'store'])->name('currency-exchange-rates.store');
+    Route::delete('currency-exchange-rates/{currencyExchangeRate}', [CurrencyExchangeRateController::class, 'destroy'])->name('currency-exchange-rates.destroy');
     Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
     Route::resource('staff-positions', StaffPositionController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);

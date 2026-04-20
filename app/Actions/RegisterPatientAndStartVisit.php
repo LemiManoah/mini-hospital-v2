@@ -52,7 +52,10 @@ final readonly class RegisterPatientAndStartVisit
                 'religion' => $data['religion'] ?? null,
                 'country_id' => $data['country_id'] ?? null,
                 'blood_group' => $data['blood_group'] ?? null,
-                'patient_number' => $this->numberGenerator->nextPatientNumber($activeBranch?->name),
+                'patient_number' => $this->numberGenerator->nextPatientNumber(
+                    $activeBranch?->name,
+                    (string) (Auth::user()?->tenant_id ?? ''),
+                ),
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ]);

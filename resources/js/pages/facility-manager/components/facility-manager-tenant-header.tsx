@@ -11,8 +11,8 @@ import { type FacilityManagerTenantSummary } from '../types';
 
 interface FacilityManagerTenantHeaderProps {
     tenant: FacilityManagerTenantSummary;
-    title: string;
-    description: string;
+    title?: string;
+    description?: string;
     actions?: ReactNode;
 }
 
@@ -58,12 +58,18 @@ export function FacilityManagerTenantHeader({
                         ) : null}
                     </div>
 
-                    <div>
-                        <p className="text-sm font-medium">{title}</p>
-                        <p className="text-sm text-muted-foreground">
-                            {description}
-                        </p>
-                    </div>
+                    {title || description ? (
+                        <div>
+                            {title ? (
+                                <p className="text-sm font-medium">{title}</p>
+                            ) : null}
+                            {description ? (
+                                <p className="text-sm text-muted-foreground">
+                                    {description}
+                                </p>
+                            ) : null}
+                        </div>
+                    ) : null}
                 </div>
 
                 <div className="flex flex-col items-start gap-3 lg:items-end">

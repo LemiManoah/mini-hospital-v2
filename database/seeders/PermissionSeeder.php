@@ -46,6 +46,8 @@ final class PermissionSeeder extends Seeder
             'countries' => ['view', 'create', 'update', 'delete'],
             'addresses' => ['view', 'create', 'update', 'delete'],
             'currencies' => ['view', 'create', 'update', 'delete'],
+            'currency_exchange_rates' => ['view', 'create', 'update', 'delete'],
+            'general_settings' => ['view', 'update'],
             'subscription_packages' => ['view', 'create', 'update', 'delete'],
             'allergens' => ['view', 'create', 'update', 'delete'],
             'roles' => ['view', 'create', 'update', 'delete'],

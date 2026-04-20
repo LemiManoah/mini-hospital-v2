@@ -16,6 +16,8 @@ return new class extends Migration
                 $table->string('code', 10)->unique();
                 $table->string('name', 100);
                 $table->string('symbol', 10);
+                $table->tinyInteger('decimal_places')->unsigned()->default(2);
+                $table->string('symbol_position', 10)->default('before');
                 $table->boolean('modifiable')->default(true);
                 $table->timestamps();
             });

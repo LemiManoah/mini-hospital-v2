@@ -24,8 +24,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function FacilityBranchCreate({
     currencies,
+    defaultCurrencyId,
 }: FacilityBranchFormPageProps) {
-    const [currencyId, setCurrencyId] = useState('');
+    const [currencyId, setCurrencyId] = useState(defaultCurrencyId ?? '');
     const [status, setStatus] = useState('active');
     const [hasStore, setHasStore] = useState(false);
     const [name, setName] = useState('');

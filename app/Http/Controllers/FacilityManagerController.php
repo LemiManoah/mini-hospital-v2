@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\StartTenantSubscription;
 use App\Enums\SubscriptionStatus;
 use App\Http\Requests\StoreTenantSupportNoteRequest;
 use App\Models\Consultation;
@@ -17,6 +18,7 @@ use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Models\TenantSupportNote;
 use App\Models\User;
+use App\Services\SwitchTenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -30,6 +32,11 @@ use Inertia\Response;
 
 final class FacilityManagerController implements HasMiddleware
 {
+    public function __construct(
+        private readonly SwitchTenantContext $switchTenantContext,
+        private readonly StartTenantSubscription $startTenantSubscription,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -43,7 +50,14 @@ final class FacilityManagerController implements HasMiddleware
                 'activity',
                 'notes',
             ]),
-            new Middleware('permission:tenants.update', only: ['storeNote']),
+            new Middleware('permission:tenants.update', only: [
+                'storeNote',
+                'switch',
+                'activateSubscription',
+                'markSubscriptionPastDue',
+                'completeOnboarding',
+                'reopenOnboarding',
+            ]),
         ];
     }
 
@@ -520,6 +534,72 @@ final class FacilityManagerController implements HasMiddleware
 
         return to_route('facility-manager.facilities.notes', $tenant)
             ->with('success', 'Support note added for '.$tenant->name.'.');
+    }
+
+    public function switch(Request $request, Tenant $tenant): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        Gate::authorize('update', $tenant);
+
+        $this->switchTenantContext->handle($request, $user, $tenant->id);
+
+        return to_route('branch-switcher.index');
+    }
+
+    public function activateSubscription(Request $request, Tenant $tenant): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        Gate::authorize('update', $tenant);
+
+        $subscription = $tenant->currentSubscription()->first();
+
+        abort_unless($subscription instanceof TenantSubscription, 404, 'No current subscription record was found.');
+
+        $this->startTenantSubscription->markActive($subscription, $user);
+
+        return back()->with('success', 'Subscription activated for '.$tenant->name.'.');
+    }
+
+    public function markSubscriptionPastDue(Request $request, Tenant $tenant): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        Gate::authorize('update', $tenant);
+
+        $subscription = $tenant->currentSubscription()->first();
+
+        abort_unless($subscription instanceof TenantSubscription, 404, 'No current subscription record was found.');
+
+        $this->startTenantSubscription->markFailed($subscription, $user);
+
+        return back()->with('success', 'Subscription marked as past due for '.$tenant->name.'.');
+    }
+
+    public function completeOnboarding(Tenant $tenant): RedirectResponse
+    {
+        Gate::authorize('update', $tenant);
+
+        $tenant->update([
+            'onboarding_completed_at' => now(),
+        ]);
+
+        return back()->with('success', 'Onboarding marked complete for '.$tenant->name.'.');
+    }
+
+    public function reopenOnboarding(Tenant $tenant): RedirectResponse
+    {
+        Gate::authorize('update', $tenant);
+
+        $tenant->update([
+            'onboarding_completed_at' => null,
+        ]);
+
+        return back()->with('success', 'Onboarding reopened for '.$tenant->name.'.');
     }
 
     private function filteredTenantQuery(Request $request): Builder

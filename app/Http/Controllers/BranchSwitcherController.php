@@ -31,7 +31,7 @@ final readonly class BranchSwitcherController implements HasMiddleware
         $user = $request->user();
 
         if ($user->tenant_id === null) {
-            return to_route('facility-switcher.index');
+            return to_route('facility-manager.dashboard');
         }
 
         Gate::authorize('viewAny', FacilityBranch::class);

@@ -24,7 +24,7 @@ final class EnsureActiveBranch
         }
 
         if (
-            $request->routeIs('facility-switcher.*')
+            $request->routeIs('facility-manager.*')
             || $request->routeIs('branch-switcher.*')
             || $request->routeIs('facility-branches.*')
         ) {

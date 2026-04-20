@@ -398,13 +398,13 @@ describe('Tenant support and onboarding permissions', function (): void {
         $supportUser = createPermissionUser($supportTenant, isSupport: true);
 
         $this->actingAs($supportUser)
-            ->get(route('facility-switcher.index'))
+            ->get(route('facility-manager.dashboard'))
             ->assertForbidden();
 
         $supportUser->givePermissionTo('tenants.view');
 
         $this->actingAs($supportUser)
-            ->get(route('facility-switcher.index'))
+            ->get(route('facility-manager.dashboard'))
             ->assertOk();
     });
 
@@ -415,13 +415,13 @@ describe('Tenant support and onboarding permissions', function (): void {
         $supportUser = createPermissionUser($sourceTenant, isSupport: true);
 
         $this->actingAs($supportUser)
-            ->post(route('facility-switcher.switch', $targetTenant->id))
+            ->post(route('facility-manager.facilities.switch', $targetTenant->id))
             ->assertForbidden();
 
         $supportUser->givePermissionTo('tenants.update');
 
         $response = $this->actingAs($supportUser)
-            ->post(route('facility-switcher.switch', $targetTenant->id));
+            ->post(route('facility-manager.facilities.switch', $targetTenant->id));
 
         $response->assertRedirectToRoute('branch-switcher.index');
         $response->assertSessionHas('success', 'Switched to '.$targetTenant->name);

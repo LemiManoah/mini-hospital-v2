@@ -24,7 +24,7 @@ import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type Currency, type CurrencyIndexPageProps } from '@/types/currency';
 import { Head, Link, router } from '@inertiajs/react';
-import { Lock, Unlock } from 'lucide-react';
+import { Lock, TrendingUp, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -79,19 +79,33 @@ export default function CurrencyIndex({
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                {hasPermission('currencies.create') ? (
-                    <Button
-                        asChild
-                        className="shrink-0 border border-zinc-200 shadow-sm dark:border-zinc-800"
-                    >
-                        <Link
-                            href={CurrencyController.create.url()}
-                            className="gap-2"
+                <div className="flex shrink-0 gap-2">
+                    {hasPermission('currency_exchange_rates.view') ? (
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="border border-zinc-200 shadow-sm dark:border-zinc-800"
                         >
-                            <span>+ Add Currency</span>
-                        </Link>
-                    </Button>
-                ) : null}
+                            <Link href="/currency-exchange-rates" className="gap-2">
+                                <TrendingUp className="h-4 w-4" />
+                                <span>Exchange Rates</span>
+                            </Link>
+                        </Button>
+                    ) : null}
+                    {hasPermission('currencies.create') ? (
+                        <Button
+                            asChild
+                            className="border border-zinc-200 shadow-sm dark:border-zinc-800"
+                        >
+                            <Link
+                                href={CurrencyController.create.url()}
+                                className="gap-2"
+                            >
+                                <span>+ Add Currency</span>
+                            </Link>
+                        </Button>
+                    ) : null}
+                </div>
             </div>
 
             <div className="m-2 overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">

@@ -44,12 +44,8 @@ const textFieldPlaceholder = (field: string): string => {
     switch (field) {
         case 'patient_number_prefix':
             return 'PAT';
-        case 'visit_number_prefix':
-            return 'VIS';
         case 'receipt_number_prefix':
-            return 'RCPT';
-        case 'lab_request_prefix':
-            return 'LAB';
+            return 'RCT';
         default:
             return 'Enter a value';
     }
@@ -84,17 +80,9 @@ export default function GeneralSettings({
             typeof values.patient_number_prefix === 'string'
                 ? values.patient_number_prefix
                 : '',
-        visit_number_prefix:
-            typeof values.visit_number_prefix === 'string'
-                ? values.visit_number_prefix
-                : '',
         receipt_number_prefix:
             typeof values.receipt_number_prefix === 'string'
                 ? values.receipt_number_prefix
-                : '',
-        lab_request_prefix:
-            typeof values.lab_request_prefix === 'string'
-                ? values.lab_request_prefix
                 : '',
         enable_batch_tracking_when_dispensing: Boolean(
             values.enable_batch_tracking_when_dispensing,

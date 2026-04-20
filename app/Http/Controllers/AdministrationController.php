@@ -240,19 +240,6 @@ final class AdministrationController
      */
     private function generalSettingsPermissions(): array
     {
-        return [
-            'facility_branches.view',
-            'clinics.view',
-            'departments.view',
-            'facility_services.view',
-            'insurance_companies.view',
-            'insurance_packages.view',
-            'addresses.view',
-            'allergens.view',
-            'currencies.view',
-            'units.view',
-            'subscription_packages.view',
-            'tenants.view',
-        ];
+        return ['general_settings.view', 'general_settings.update'];
     }
 }

@@ -49,6 +49,7 @@ export interface FacilityBranchFormPageProps {
         name: string;
         symbol: string;
     }[];
+    defaultCurrencyId?: string | null;
 }
 
 export interface FacilityBranchEditPageProps extends FacilityBranchFormPageProps {

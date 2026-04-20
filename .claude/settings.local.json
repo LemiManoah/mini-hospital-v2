@@ -15,7 +15,10 @@
       "Bash(php.bat -r ' *)",
       "Bash(php.bat drop_pos.php)",
       "Bash(vendor/bin/pint --dirty)",
-      "Bash(php.bat vendor/bin/pint --dirty)"
+      "Bash(php.bat vendor/bin/pint --dirty)",
+      "Bash(xargs grep *)",
+      "Read(//mnt/c/Users/Manoah/Desktop/projects/personal-practice/**)",
+      "Bash(php vendor/bin/pint --dirty)"
     ]
   },
   "enableAllProjectMcpServers": true,

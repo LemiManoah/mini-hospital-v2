@@ -1,32 +1,71 @@
-# Facility Manager Panel Plan
+# Facility Manager Panel Review and Updated Implementation Guide
 
-**Date:** April 11, 2026  
-**Goal:** Manage SaaS tenants and facilities in a rich way without creating a separate application.
+**Date:** April 20, 2026  
+**Goal:** Reassess the Facility Manager work against the current codebase, clarify what is actually complete, what is partial, what is still missing, and define the right next implementation order.
 
 ---
 
 ## 1) Short Answer
 
-Yes, this should stay in the same app.
+No, the Facility Manager app is **not fully complete yet**.
 
-The better approach is a **support-only Facility Manager panel** inside the existing Laravel + Inertia codebase, with its own route prefix, navigation identity, permissions, and pages.
+But it is also no longer just a plan.
 
-Why this is better than a second app:
+The current codebase already has a solid support-facing Facility Manager slice with:
 
-- one codebase
-- one auth/session system
-- shared models and business rules
-- less duplication
-- faster support workflows
-- lower maintenance cost
+- support-only access control
+- dashboard
+- facilities list
+- facility overview
+- branches page
+- users page
+- subscriptions page
+- activity page
+- support notes
+
+It also has related support operations implemented in the separate `facility-switcher` flow, such as:
+
+- switching into a tenant
+- activating a subscription
+- marking subscription past due
+- completing onboarding
+- reopening onboarding
+
+So the correct current read is:
+
+- **core Facility Manager foundation: implemented**
+- **operational support tooling: partially implemented**
+- **health, audit, analytics depth, and advanced support controls: not yet complete**
 
 ---
 
-## 2) Current Implementation Status
+## 2) What Is Actually Implemented Now
 
-Implemented now:
+### 2.1 Access Model and Navigation
 
-- support-only `Facility Manager` sidebar entry
+Implemented:
+
+- support-only route group under `/facility-manager`
+- support-only route group under `/facility-switcher`
+- `Facility Manager` sidebar entry for support / platform-level users
+- permission checks based on `tenants.view` and `tenants.update`
+- policy-based tenant authorization on detail pages
+
+Relevant files:
+
+- [routes/web.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/routes/web.php)
+- [resources/js/components/app-sidebar.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/components/app-sidebar.tsx)
+- [app/Http/Controllers/FacilityManagerController.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Controllers/FacilityManagerController.php)
+- [app/Http/Controllers/FacilitySwitcherController.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Controllers/FacilitySwitcherController.php)
+
+Assessment:
+
+- this part is **complete for the current slice**
+
+### 2.2 Main Facility Manager Pages
+
+Implemented routes and pages:
+
 - `/facility-manager/dashboard`
 - `/facility-manager/facilities`
 - `/facility-manager/facilities/{tenant}`
@@ -36,223 +75,325 @@ Implemented now:
 - `/facility-manager/facilities/{tenant}/activity`
 - `/facility-manager/facilities/{tenant}/support-notes`
 
-Also implemented:
+Frontend pages exist in:
 
-- support note storage through `tenant_support_notes`
-- tenant switch action
+- [resources/js/pages/facility-manager/dashboard.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/dashboard.tsx)
+- [resources/js/pages/facility-manager/index.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/index.tsx)
+- [resources/js/pages/facility-manager/show.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/show.tsx)
+- [resources/js/pages/facility-manager/branches.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/branches.tsx)
+- [resources/js/pages/facility-manager/users.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/users.tsx)
+- [resources/js/pages/facility-manager/subscriptions.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/subscriptions.tsx)
+- [resources/js/pages/facility-manager/activity.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/activity.tsx)
+- [resources/js/pages/facility-manager/support-notes.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/support-notes.tsx)
+
+Assessment:
+
+- this page structure is **implemented**
+
+### 2.3 Facilities List
+
+Implemented on the list page:
+
+- tenant name
+- domain
+- onboarding status filtering
+- subscription status filtering
+- counts for branches, departments, users, patients, visits, lab requests, and prescriptions
+- pagination
+- searchable facility list
+
+Assessment:
+
+- this is **more than partial**
+- the list page is **functionally complete for the current generation**
+
+Still missing later:
+
+- package filter
+- last activity column
+- health warning column
+- export
+- bulk support actions
+
+### 2.4 Facility Overview Page
+
+Implemented:
+
+- tenant identity
+- country / address context
+- onboarding state
+- current subscription summary
+- recent users
+- recent subscription history
+- usage counters
+- last activity timestamps for visits, lab requests, prescriptions, and support notes
+- quick overview of branches and departments
+
+Assessment:
+
+- this is **implemented**
+- but still not the final “deep support control center”
+
+### 2.5 Branches Page
+
+Implemented:
+
+- total branches
+- active branches
+- main branches
+- store-enabled count
+- branch list with:
+  - name
+  - code
+  - status
+  - main branch flag
+  - store-enabled flag
+  - staff count
+  - currency
+  - address summary
+
+Assessment:
+
+- **implemented**
+
+### 2.6 Users Page
+
+Implemented:
+
+- tenant-scoped users listing
+- search
+- active/inactive filtering
+- verified count
+- active staff count
+- user role display
+- staff position display
+- branch assignments
+- employee number
+- email verification state
+- last login timestamp
+
+Assessment:
+
+- **implemented**
+
+### 2.7 Subscriptions Page
+
+Implemented:
+
+- current subscription display
+- subscription history
+- counts of active, trial, and past-due records
+
+Assessment:
+
+- **implemented as a read-and-review page**
+
+Important nuance:
+
+- operational subscription actions are not handled directly here yet
+- they are still handled through the separate `facility-switcher` support flow
+
+So this page is:
+
+- **implemented for visibility**
+- **partial for direct operational control**
+
+### 2.8 Activity Page
+
+Implemented:
+
+- visits in the last 7 days
+- consultations in the last 30 days
+- lab requests in the last 30 days
+- prescriptions in the last 30 days
+- service orders in the last 30 days
+- recent activity feed
+
+Assessment:
+
+- **implemented as summary analytics**
+- **partial as a full analytics module**
+
+Missing:
+
+- trend charts
+- day-by-day trend lines
+- inactive facility detection
+- module usage trend analysis
+
+### 2.9 Support Notes
+
+Implemented:
+
+- `tenant_support_notes` table
+- support note model and persistence
+- pinned notes
+- support note history
+- note creation
+
+Relevant files:
+
+- [database/migrations/2026_04_11_130000_create_tenant_support_notes_table.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/database/migrations/2026_04_11_130000_create_tenant_support_notes_table.php)
+- [app/Models/TenantSupportNote.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Models/TenantSupportNote.php)
+- [app/Http/Requests/StoreTenantSupportNoteRequest.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Requests/StoreTenantSupportNoteRequest.php)
+
+Assessment:
+
+- **implemented**
+
+### 2.10 Separate Facility Switcher Support Operations
+
+Implemented outside the Facility Manager pages:
+
+- `/facility-switcher`
+- `/facility-switcher/{tenant}`
+- switch into tenant
 - activate subscription
 - mark subscription past due
 - complete onboarding
 - reopen onboarding
 
-Still pending:
+Relevant files:
 
-- health checks
-- configuration audits
-- snapshot-based analytics
-- inactive-facility detection
-- exports
-- richer support tooling
+- [resources/js/pages/facility-switcher/index.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-switcher/index.tsx)
+- [resources/js/pages/facility-switcher/show.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-switcher/show.tsx)
+- [app/Services/SwitchTenantContext.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Services/SwitchTenantContext.php)
 
----
+Assessment:
 
-## 3) Recommended Access Model
-
-This module should be visible only to:
-
-- support users
-- super admins
-- selected platform admins
-
-Recommended permission family:
-
-- `tenants.view`
-- `tenants.update`
-- `tenants.manage_subscription`
-- `tenants.onboard`
-
-Notes:
-
-- right now the implemented Facility Manager pages use `tenants.view`
-- support actions and support-note creation use `tenants.update`
-- this is enough for the current slice, and more granular permissions can be introduced later if needed
+- these operations are **implemented**
+- but the Facility Manager experience is still **partially fragmented**, because the core support operator has to move between:
+  - `facility-manager`
+  - `facility-switcher`
 
 ---
 
-## 4) Implemented IA
+## 3) What Is Partial
 
-### Main Pages
+These areas exist, but are not yet at the level originally envisioned.
 
-- `facility-manager/dashboard`
-- `facility-manager/facilities`
-- `facility-manager/facilities/{tenant}`
-- `facility-manager/facilities/{tenant}/branches`
-- `facility-manager/facilities/{tenant}/users`
-- `facility-manager/facilities/{tenant}/subscriptions`
-- `facility-manager/facilities/{tenant}/activity`
-- `facility-manager/facilities/{tenant}/support-notes`
+### 3.1 Operational Controls Are Split Across Two Support Areas
 
-### Why This Structure Works
+Current state:
 
-It gives us:
+- visibility and analytics live in `Facility Manager`
+- some support actions live in `Facility Switcher`
 
-- one platform overview
-- one searchable facilities list
-- one tenant overview page
-- focused detail pages for the most important management areas
+Why this is partial:
 
----
+- the support operator does not yet get one unified tenant control center
+- action placement is split
+- the mental model is still more “switcher + manager” than one rich support console
 
-## 5) What The Facilities List Should Do
+### 3.2 Activity Analytics Exist, But Not Full Analytics
 
-The facilities page should behave like a real management table, not just a switcher.
+Current state:
 
-Implemented already:
+- summary counts and recent activity feed exist
 
-- facility name
-- domain
-- onboarding state
-- subscription state
-- branch count
-- user count
-- patient count
-- visit count
-- lab count
-- prescription count
-- search and status filters
+Missing:
 
-Still worth adding later:
+- trend charts
+- module usage trends
+- growth / decline indicators
+- inactivity heuristics
+- tenant comparison snapshots
 
-- package filter
-- trial ending soon filter
-- last activity column
-- health flags column
-- suspend/reactivate controls
+### 3.3 Subscription Management Exists, But Not Full Subscription Operations In One Place
 
----
+Current state:
 
-## 6) What The Facility Detail Experience Should Do
+- subscription visibility exists
+- activation and past-due marking exist
 
-The overview page should act as the control center for the tenant, then hand off to focused child pages.
+Missing:
 
-Implemented now:
+- direct package change flow inside Facility Manager
+- full subscription edit/reassignment flow
+- cleaner support action controls on the subscriptions page itself
 
-### Overview
+### 3.4 Overview Page Is Strong, But Not Yet a Full Health Console
 
-- facility identity
-- onboarding state
-- subscription state
-- branch summary
-- department summary
-- recent users
-- recent subscription history
-- high-level usage cards
+Current state:
 
-### Branches
+- overview metrics and last-activity timestamps exist
 
-- full branch list
-- branch status
-- staff count
-- store-enabled flag
-- main-branch indicator
+Missing:
 
-### Users
-
-- tenant-linked users
-- search/filter
-- position
-- role list
-- branch assignments
-- verification state
-- active/inactive state
-- last login
-
-### Subscriptions
-
-- current subscription summary
-- full subscription history
-- support actions
-
-### Activity
-
-- visits in last 7 days
-- consultations in last 30 days
-- lab requests in last 30 days
-- prescriptions in last 30 days
-- service orders in last 30 days
-- recent activity feed
-
-### Support Notes
-
-- internal note history
-- pinned notes
-- create support note
+- health flags
+- setup warnings
+- operational risk signals
+- missing configuration audits
 
 ---
 
-## 7) Support Features To Keep Building
+## 4) What Is Not Yet Implemented
 
-### Onboarding Control
+These items are still genuinely pending.
 
-- view onboarding state
-- mark onboarding complete
-- reopen onboarding
+### 4.1 Health Checks
 
-### Subscription Operations
-
-- activate subscription
-- mark past due
-- view subscription history
-- later: assign/change package directly from this panel
-
-### Support Notes
-
-- implementation notes
-- billing notes
-- support reminders
-- special configuration instructions
-
-### Health Checks
-
-Still to add:
+Not yet implemented:
 
 - no active branch
 - no active users
 - no clinicians configured
-- no lab catalog
-- no inventory locations
 - no facility services
-- onboarding incomplete
+- no inventory locations where expected
+- no lab catalog where expected
+- onboarding incomplete risk flags
 
----
+### 4.2 Configuration Audit Page
 
-## 8) Suggested Data Sources
+Not yet implemented:
 
-Current pages are already drawing from:
+- tenant setup audit
+- branch readiness audit
+- service catalog readiness audit
+- insurance configuration audit
+- role coverage audit
+- inventory readiness audit
 
-- `tenants`
-- `facility_branches`
-- `users`
-- `staff`
-- `patients`
-- `patient_visits`
-- `consultations`
-- `lab_requests`
-- `prescriptions`
-- `tenant_subscriptions`
-- `tenant_support_notes`
+### 4.3 Snapshot-Based Analytics
 
-Useful future support tables:
+Not yet implemented:
 
 - `tenant_health_snapshots`
 - `tenant_usage_snapshots`
-- `tenant_support_flags`
+- daily or weekly historical rollups
+- cached trend reporting
 
-Snapshots will matter when this grows and needs to stay fast.
+### 4.4 Inactive / Low-Usage Facility Detection
+
+Not yet implemented:
+
+- facilities with no recent users
+- facilities with no recent visits
+- facilities with expiring activity
+- early churn-risk detection
+
+### 4.5 Exports
+
+Not yet implemented:
+
+- facility list export
+- subscription report export
+- support notes export
+- activity export
+
+### 4.6 Richer Support Tooling
+
+Not yet implemented:
+
+- support flags / escalations
+- support task reminders
+- bulk platform actions
+- richer impersonation safeguards
+- more guided intervention workflows
 
 ---
 
-## 9) Updated Implementation Plan
+## 5) Updated Status By Phase
 
 ### Phase 1: Better Facility List
 
@@ -261,14 +402,14 @@ Deliverables:
 - facility manager index page
 - searchable/filterable tenant list
 - onboarding and subscription columns
-- user count and branch count
-- switch-into-tenant action
+- counts
+- path into facility detail
 
 Status:
 
-- completed
+- **completed**
 
-### Phase 2: Facility Detail Page
+### Phase 2: Facility Detail Experience
 
 Deliverables:
 
@@ -276,98 +417,211 @@ Deliverables:
 - branch summary
 - user summary
 - subscription summary
-- last activity indicators
+- activity summary
+- support notes
 
 Status:
 
-- completed
+- **completed**
 
-### Phase 3: Operational And Support Controls
+### Phase 3: Operational Support Controls
 
 Deliverables:
 
 - onboarding controls
-- subscription actions
+- subscription operations
 - support notes
-- health checks
+- switch-into-tenant action
 
 Status:
 
-- partially completed
+- **partially completed**
 
 Done:
 
-- onboarding controls
-- subscription actions
 - support notes
+- switch-into-tenant action
+- subscription activate / past-due actions
+- onboarding complete / reopen actions
 
-Pending:
+Still partial because:
 
-- health checks
+- these actions are not yet unified inside the Facility Manager page set itself
 
-### Phase 4: Usage Analytics
+### Phase 4: Health And Audit Layer
 
 Deliverables:
 
-- activity charts
-- 7-day / 30-day usage summaries
-- module usage trends
+- facility health checks
+- missing setup warnings
+- configuration audit page
+
+Status:
+
+- **not yet implemented**
+
+### Phase 5: Analytics Depth
+
+Deliverables:
+
+- charts
+- trends
 - inactive facility detection
+- snapshot reporting
 
 Status:
 
-- partially completed
+- **partially completed**
 
 Done:
 
-- 7-day / 30-day usage summaries
+- summary metrics
 - recent activity feed
 
 Pending:
 
 - charts
-- module usage trends
-- inactive detection
+- trends
+- detection logic
+- snapshots
 
-### Phase 5: Advanced Support Tooling
+### Phase 6: Advanced Support Tooling
 
 Deliverables:
 
-- safer impersonation / switch workflow
-- configuration audits
-- missing setup warnings
 - exports
+- support flags
+- escalations
+- richer intervention tooling
 
 Status:
 
-- not started
+- **not yet implemented**
 
 ---
 
-## 10) Recommended Next Slice
+## 6) Recommended Next Order
 
-The next most valuable additions are:
+This is the recommended order from here.
 
-1. facility health checks on dashboard and tenant overview
-2. tenant configuration audit page
-3. activity trend charts
-4. inactive / low-usage facility detection
-5. support flags and escalations
+### 1. Unify Operational Controls Into Facility Manager
+
+Why first:
+
+- the underlying actions already exist
+- this gives the biggest UX improvement fastest
+- it turns Facility Manager into the real support console instead of a mostly read-only console plus a separate switcher
+
+What to do:
+
+- surface:
+  - switch into tenant
+  - activate subscription
+  - mark subscription past due
+  - complete onboarding
+  - reopen onboarding
+- directly from facility overview and subscriptions page
+
+### 2. Add Facility Health Checks
+
+Why next:
+
+- highest support value
+- immediately helps support identify broken or incomplete tenants
+
+Suggested checks:
+
+- no active branch
+- no verified users
+- no active clinicians
+- no facility services
+- no pharmacy or lab setup where expected
+- no inventory locations where expected
+
+### 3. Build Configuration Audit Page
+
+Why next:
+
+- health flags tell support *that* something is wrong
+- audit page tells support *what specifically is missing*
+
+Suggested page:
+
+- `/facility-manager/facilities/{tenant}/audit`
+
+### 4. Add Trend Analytics and Low-Usage Detection
+
+Why then:
+
+- once support has a better operational console, trends become more valuable
+
+Suggested outputs:
+
+- 7-day vs previous 7-day
+- 30-day activity trend
+- inactive facility flags
+- low-adoption facility flags
+
+### 5. Add Exports and Support Flags
+
+Why later:
+
+- useful, but lower priority than health and audit
+
+Suggested outputs:
+
+- export tenants list
+- export subscription state
+- export support notes
+- support escalation flags
 
 ---
 
-## 11) Bottom Line
+## 7) Recommended Definition of Complete
 
-We do not need a second app.
+The Facility Manager app should be considered complete when:
 
-The right direction is to keep growing **Facility Manager** inside this same app until it becomes the real support/admin console for:
+- support users have one unified management console
+- facility list is searchable and operationally useful
+- facility detail page acts as a real support control center
+- support notes are auditable
+- onboarding and subscription actions are available in-context
+- health checks and configuration audits exist
+- activity trends and low-usage detection exist
+- exports and support flags exist where needed
 
-- facilities
-- subscriptions
-- onboarding
-- branches
-- users
-- activity
-- internal support operations
+Right now, the system is not there yet.
 
-That gives the depth you want without doubling infrastructure and maintenance.
+But it is well past the “plan only” stage.
+
+---
+
+## 8) Bottom Line
+
+The Facility Manager app is **partially complete**.
+
+What is already solid:
+
+- support-only access
+- core Facility Manager route structure
+- dashboard
+- facilities list
+- detail pages
+- support notes
+- tenant switching and basic support actions through the switcher flow
+
+What is still incomplete:
+
+- unified in-context operational controls
+- health checks
+- configuration audits
+- trend analytics
+- inactive-facility detection
+- exports
+- richer support tooling
+
+So the right current verdict is:
+
+- **foundation complete**
+- **operational slice partially complete**
+- **advanced support/admin console not yet complete**

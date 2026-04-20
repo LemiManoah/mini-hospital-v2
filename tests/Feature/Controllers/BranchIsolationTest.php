@@ -483,7 +483,7 @@ it('forbids non-support users from opening the facility switcher', function (): 
     ]);
     $user->forceFill(['email_verified_at' => now()])->save();
 
-    $response = $this->actingAs($user)->get(route('facility-switcher.index'));
+    $response = $this->actingAs($user)->get(route('facility-manager.dashboard'));
 
     $response->assertForbidden();
 });
@@ -499,7 +499,7 @@ it('forbids non-support users from switching facility context', function (): voi
     ]);
     $user->forceFill(['email_verified_at' => now()])->save();
 
-    $response = $this->actingAs($user)->post(route('facility-switcher.switch', $tenant->id));
+    $response = $this->actingAs($user)->post(route('facility-manager.facilities.switch', $tenant->id));
 
     $response->assertForbidden();
 });
@@ -522,7 +522,7 @@ it('allows support users to switch tenant context and clears active branch selec
     $response = $this
         ->withSession(['active_branch_id' => $branches[0]->id])
         ->actingAs($supportUser)
-        ->post(route('facility-switcher.switch', $targetTenant->id));
+        ->post(route('facility-manager.facilities.switch', $targetTenant->id));
 
     $response->assertRedirectToRoute('branch-switcher.index');
     $response->assertSessionMissing('active_branch_id');

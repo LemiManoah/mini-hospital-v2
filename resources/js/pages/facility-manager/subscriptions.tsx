@@ -15,17 +15,15 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
-import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 
-import { FacilityManagerMetrics } from './components/facility-manager-metrics';
 import { FacilityManagerNav } from './components/facility-manager-nav';
 import { FacilityManagerPagination } from './components/facility-manager-pagination';
+import { FacilityManagerSupportActions } from './components/facility-manager-support-actions';
 import { FacilityManagerTenantHeader } from './components/facility-manager-tenant-header';
 import {
-    type FacilityManagerMetric,
     type FacilityManagerTenantSummary,
     type PaginatedFacilityManagerList,
 } from './types';
@@ -46,7 +44,6 @@ interface SubscriptionRow {
 
 interface FacilityManagerSubscriptionsProps {
     tenant: FacilityManagerTenantSummary;
-    metrics: FacilityManagerMetric[];
     current_subscription: SubscriptionRow | null;
     subscription_history: PaginatedFacilityManagerList<SubscriptionRow>;
 }
@@ -62,12 +59,9 @@ const formatDate = (value: string | null): string =>
 
 export default function FacilityManagerSubscriptions({
     tenant,
-    metrics,
     current_subscription,
     subscription_history,
 }: FacilityManagerSubscriptionsProps) {
-    const { hasPermission } = usePermissions();
-
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
         { title: 'Facilities', href: '/facility-manager/facilities' },
@@ -99,16 +93,12 @@ export default function FacilityManagerSubscriptions({
 
                 <FacilityManagerTenantHeader
                     tenant={tenant}
-                    title="Subscriptions"
-                    description="Handle package status, billing follow-up, and onboarding lifecycle actions from one place."
                 />
 
                 <FacilityManagerNav
                     tenantId={tenant.id}
                     current="subscriptions"
                 />
-
-                <FacilityManagerMetrics metrics={metrics} />
 
                 <div className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
                     <Card className="border-none shadow-sm ring-1 ring-border/50">
@@ -118,131 +108,51 @@ export default function FacilityManagerSubscriptions({
                                 The latest subscription state for this facility.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="grid gap-4 sm:grid-cols-2">
-                            <StatBox
-                                title="Package"
-                                value={
-                                    current_subscription?.package?.name ??
-                                    'Not set'
-                                }
-                            />
-                            <StatBox
-                                title="Status"
-                                value={
-                                    current_subscription?.status_label ??
-                                    'No subscription'
-                                }
-                            />
-                            <StatBox
-                                title="Trial Ends"
-                                value={formatDate(
-                                    current_subscription?.trial_ends_at ?? null,
-                                )}
-                            />
-                            <StatBox
-                                title="Current Period Ends"
-                                value={formatDate(
-                                    current_subscription?.current_period_ends_at ??
-                                        null,
-                                )}
-                            />
+                        <CardContent>
+                            <Table>
+                                <TableBody>
+                                    <TableRow>
+                                        <TableHead className="w-44">
+                                            Package
+                                        </TableHead>
+                                        <TableCell>
+                                            {current_subscription?.package
+                                                ?.name ?? 'Not set'}
+                                        </TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                        <TableHead>Status</TableHead>
+                                        <TableCell>
+                                            {current_subscription?.status_label ??
+                                                'No subscription'}
+                                        </TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                        <TableHead>Trial Ends</TableHead>
+                                        <TableCell>
+                                            {formatDate(
+                                                current_subscription?.trial_ends_at ??
+                                                    null,
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                        <TableHead>
+                                            Current Period Ends
+                                        </TableHead>
+                                        <TableCell>
+                                            {formatDate(
+                                                current_subscription?.current_period_ends_at ??
+                                                    null,
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
                         </CardContent>
                     </Card>
 
-                    {hasPermission('tenants.update') ? (
-                        <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader>
-                                <CardTitle>Support Actions</CardTitle>
-                                <CardDescription>
-                                    Tenant switch, billing intervention, and
-                                    onboarding controls.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <Form
-                                    method="post"
-                                    action={`/facility-switcher/${tenant.id}`}
-                                    className="w-full"
-                                >
-                                    {() => (
-                                        <Button className="w-full">
-                                            <ShieldCheck className="h-4 w-4" />
-                                            Switch Into Tenant
-                                        </Button>
-                                    )}
-                                </Form>
-
-                                <Form
-                                    method="post"
-                                    action={`/facility-switcher/${tenant.id}/activate-subscription`}
-                                    className="w-full"
-                                >
-                                    {({ processing }) => (
-                                        <Button
-                                            type="submit"
-                                            disabled={processing}
-                                            className="w-full"
-                                        >
-                                            Activate Subscription
-                                        </Button>
-                                    )}
-                                </Form>
-
-                                <Form
-                                    method="post"
-                                    action={`/facility-switcher/${tenant.id}/mark-subscription-past-due`}
-                                    className="w-full"
-                                >
-                                    {({ processing }) => (
-                                        <Button
-                                            type="submit"
-                                            disabled={processing}
-                                            variant="outline"
-                                            className="w-full"
-                                        >
-                                            Mark Subscription Past Due
-                                        </Button>
-                                    )}
-                                </Form>
-
-                                {tenant.onboarding_completed_at ? (
-                                    <Form
-                                        method="post"
-                                        action={`/facility-switcher/${tenant.id}/reopen-onboarding`}
-                                        className="w-full"
-                                    >
-                                        {({ processing }) => (
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                                variant="outline"
-                                                className="w-full"
-                                            >
-                                                Reopen Onboarding
-                                            </Button>
-                                        )}
-                                    </Form>
-                                ) : (
-                                    <Form
-                                        method="post"
-                                        action={`/facility-switcher/${tenant.id}/complete-onboarding`}
-                                        className="w-full"
-                                    >
-                                        {({ processing }) => (
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                                variant="secondary"
-                                                className="w-full"
-                                            >
-                                                Mark Onboarding Complete
-                                            </Button>
-                                        )}
-                                    </Form>
-                                )}
-                            </CardContent>
-                        </Card>
-                    ) : null}
+                    <FacilityManagerSupportActions tenant={tenant} />
                 </div>
 
                 <Card className="border-none shadow-sm ring-1 ring-border/50">
@@ -316,16 +226,5 @@ export default function FacilityManagerSubscriptions({
                 />
             </div>
         </AppLayout>
-    );
-}
-
-function StatBox({ title, value }: { title: string; value: string }) {
-    return (
-        <div className="rounded-2xl border p-4">
-            <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-                {title}
-            </p>
-            <p className="mt-2 font-medium">{value}</p>
-        </div>
     );
 }

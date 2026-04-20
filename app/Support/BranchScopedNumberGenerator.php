@@ -6,12 +6,17 @@ namespace App\Support;
 
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Support\GeneralSettings\TenantGeneralSettings;
 
 final class BranchScopedNumberGenerator
 {
-    public function nextPatientNumber(?string $branchName): string
+    public function __construct(private TenantGeneralSettings $settings) {}
+
+    public function nextPatientNumber(?string $branchName, string $tenantId): string
     {
-        $prefix = sprintf('%s-PAT', $this->branchInitials($branchName, 'HSP'));
+        $rawPrefix = (string) ($this->settings->value($tenantId, 'patient_number_prefix') ?: 'PAT');
+        $typePrefix = mb_strtoupper(mb_trim($rawPrefix)) ?: 'PAT';
+        $prefix = sprintf('%s-%s', $this->branchInitials($branchName, 'HSP'), $typePrefix);
 
         $latestSequence = Patient::query()
             ->where('patient_number', 'like', sprintf('%s-%%', $prefix))
