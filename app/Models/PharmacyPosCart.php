@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\PharmacyPosCartStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
+use Database\Factories\PharmacyPosCartFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +19,7 @@ final class PharmacyPosCart extends Model
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\PharmacyPosCartFactory> */
+    /** @use HasFactory<PharmacyPosCartFactory> */
     use HasFactory;
 
     use HasUuids;

@@ -19,6 +19,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,7 +41,7 @@ final readonly class PharmacyPosController implements HasMiddleware
     public function index(Request $request): Response
     {
         $branchId = BranchContext::getActiveBranchId();
-        $user = Auth::user();
+        Auth::user();
 
         $locations = $this->dispensingLocations($branchId);
 
@@ -108,9 +109,9 @@ final readonly class PharmacyPosController implements HasMiddleware
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, InventoryLocation>  $locations
+     * @param  Collection<int, InventoryLocation>  $locations
      */
-    private function dispensingLocations(?string $branchId): \Illuminate\Support\Collection
+    private function dispensingLocations(?string $branchId): Collection
     {
         if (! is_string($branchId) || $branchId === '') {
             return collect();
@@ -130,15 +131,15 @@ final readonly class PharmacyPosController implements HasMiddleware
     }
 
     /**
-     * @return \Illuminate\Support\Collection<string, float>
+     * @return Collection<string, float>
      */
-    private function itemBalancesForLocation(string $branchId, string $locationId): \Illuminate\Support\Collection
+    private function itemBalancesForLocation(string $branchId, string $locationId): Collection
     {
         return $this->inventoryStockLedger
             ->summarizeByLocation($branchId)
             ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId)
             ->groupBy('inventory_item_id')
-            ->map(static fn (\Illuminate\Support\Collection $rows): float => (float) $rows->sum('quantity'));
+            ->map(static fn (Collection $rows): float => (float) $rows->sum('quantity'));
     }
 
     /**
@@ -153,9 +154,9 @@ final readonly class PharmacyPosController implements HasMiddleware
         $balances = $this->inventoryStockLedger
             ->summarizeByLocation($branchId)
             ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId
-                && (float) $balance['quantity'] > 0)
+                && $balance['quantity'] > 0)
             ->groupBy('inventory_item_id')
-            ->map(static fn (\Illuminate\Support\Collection $rows): float => (float) $rows->sum('quantity'));
+            ->map(static fn (Collection $rows): float => (float) $rows->sum('quantity'));
 
         if ($balances->isEmpty()) {
             return [];

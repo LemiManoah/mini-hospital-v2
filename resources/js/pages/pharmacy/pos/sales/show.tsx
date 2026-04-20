@@ -61,7 +61,11 @@ interface Sale {
     change_amount: number;
     sold_at: string | null;
     notes: string | null;
-    inventory_location: { id: string; name: string; location_code: string } | null;
+    inventory_location: {
+        id: string;
+        name: string;
+        location_code: string;
+    } | null;
     sold_by: string | null;
     items: SaleItem[];
     payments: SalePayment[];
@@ -98,7 +102,10 @@ const methodLabel = (method: string): string => {
     return labels[method] ?? method;
 };
 
-const breadcrumbs = (navigation: InventoryNavigationContext, sale: Sale): BreadcrumbItem[] => [
+const breadcrumbs = (
+    navigation: InventoryNavigationContext,
+    sale: Sale,
+): BreadcrumbItem[] => [
     { title: navigation.section_title, href: navigation.section_href },
     { title: 'Pharmacy POS', href: '/pharmacy/pos' },
     { title: sale.sale_number, href: `/pharmacy/pos/sales/${sale.id}` },
@@ -113,7 +120,11 @@ const paymentMethods = [
     { value: 'other', label: 'Other' },
 ];
 
-export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyPosSaleShowProps) {
+export default function PharmacyPosSaleShow({
+    navigation,
+    sale,
+    can,
+}: PharmacyPosSaleShowProps) {
     const [showVoidConfirm, setShowVoidConfirm] = useState(false);
     const [showRefundModal, setShowRefundModal] = useState(false);
 
@@ -147,18 +158,32 @@ export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyP
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                            <h1 className="text-2xl font-semibold tracking-tight">{sale.sale_number}</h1>
-                            <Badge variant="outline" className={statusTone(sale.status)}>
+                            <h1 className="text-2xl font-semibold tracking-tight">
+                                {sale.sale_number}
+                            </h1>
+                            <Badge
+                                variant="outline"
+                                className={statusTone(sale.status)}
+                            >
                                 {sale.status_label ?? 'Unknown'}
                             </Badge>
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                            {sale.customer_name && <span>Customer: {sale.customer_name}</span>}
-                            {sale.customer_phone && <span>Phone: {sale.customer_phone}</span>}
-                            {sale.sold_at && (
-                                <span>Date: {new Date(sale.sold_at).toLocaleString()}</span>
+                            {sale.customer_name && (
+                                <span>Customer: {sale.customer_name}</span>
                             )}
-                            {sale.sold_by && <span>Sold by: {sale.sold_by}</span>}
+                            {sale.customer_phone && (
+                                <span>Phone: {sale.customer_phone}</span>
+                            )}
+                            {sale.sold_at && (
+                                <span>
+                                    Date:{' '}
+                                    {new Date(sale.sold_at).toLocaleString()}
+                                </span>
+                            )}
+                            {sale.sold_by && (
+                                <span>Sold by: {sale.sold_by}</span>
+                            )}
                         </div>
                     </div>
 
@@ -205,15 +230,26 @@ export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyP
                         <CardContent className="flex flex-col gap-2">
                             <div className="divide-y text-sm">
                                 {sale.items.map((item) => (
-                                    <div key={item.id} className="flex justify-between py-2">
+                                    <div
+                                        key={item.id}
+                                        className="flex justify-between py-2"
+                                    >
                                         <div>
-                                            <p className="font-medium">{item.item_name ?? item.generic_name ?? '—'}</p>
+                                            <p className="font-medium">
+                                                {item.item_name ??
+                                                    item.generic_name ??
+                                                    '—'}
+                                            </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {item.quantity.toFixed(3)} × {item.unit_price.toFixed(2)}
-                                                {item.discount_amount > 0 && ` − ${item.discount_amount.toFixed(2)}`}
+                                                {item.quantity.toFixed(3)} ×{' '}
+                                                {item.unit_price.toFixed(2)}
+                                                {item.discount_amount > 0 &&
+                                                    ` − ${item.discount_amount.toFixed(2)}`}
                                             </p>
                                         </div>
-                                        <span className="font-medium">{item.line_total.toFixed(2)}</span>
+                                        <span className="font-medium">
+                                            {item.line_total.toFixed(2)}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -221,13 +257,19 @@ export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyP
                             <Separator />
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Gross</span>
+                                <span className="text-muted-foreground">
+                                    Gross
+                                </span>
                                 <span>{sale.gross_amount.toFixed(2)}</span>
                             </div>
                             {sale.discount_amount > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Discount</span>
-                                    <span className="text-rose-600">− {sale.discount_amount.toFixed(2)}</span>
+                                    <span className="text-muted-foreground">
+                                        Discount
+                                    </span>
+                                    <span className="text-rose-600">
+                                        − {sale.discount_amount.toFixed(2)}
+                                    </span>
                                 </div>
                             )}
 
@@ -235,22 +277,36 @@ export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyP
 
                             <div className="flex justify-between text-lg font-semibold">
                                 <span>Total</span>
-                                <span>{(sale.gross_amount - sale.discount_amount).toFixed(2)}</span>
+                                <span>
+                                    {(
+                                        sale.gross_amount - sale.discount_amount
+                                    ).toFixed(2)}
+                                </span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Paid</span>
+                                <span className="text-muted-foreground">
+                                    Paid
+                                </span>
                                 <span>{sale.paid_amount.toFixed(2)}</span>
                             </div>
                             {sale.change_amount > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Change</span>
-                                    <span className="text-emerald-600">{sale.change_amount.toFixed(2)}</span>
+                                    <span className="text-muted-foreground">
+                                        Change
+                                    </span>
+                                    <span className="text-emerald-600">
+                                        {sale.change_amount.toFixed(2)}
+                                    </span>
                                 </div>
                             )}
                             {sale.balance_amount > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Balance Due</span>
-                                    <span className="text-amber-600">{sale.balance_amount.toFixed(2)}</span>
+                                    <span className="text-muted-foreground">
+                                        Balance Due
+                                    </span>
+                                    <span className="text-amber-600">
+                                        {sale.balance_amount.toFixed(2)}
+                                    </span>
                                 </div>
                             )}
                         </CardContent>
@@ -259,52 +315,86 @@ export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyP
                     <div className="flex flex-col gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-base">Details</CardTitle>
+                                <CardTitle className="text-base">
+                                    Details
+                                </CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-3 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Location</span>
-                                    <span>{sale.inventory_location?.name ?? '—'}</span>
+                                    <span className="text-muted-foreground">
+                                        Location
+                                    </span>
+                                    <span>
+                                        {sale.inventory_location?.name ?? '—'}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Sale Type</span>
-                                    <span className="capitalize">{sale.sale_type}</span>
+                                    <span className="text-muted-foreground">
+                                        Sale Type
+                                    </span>
+                                    <span className="capitalize">
+                                        {sale.sale_type}
+                                    </span>
                                 </div>
                                 {sale.notes && (
-                                    <div className="pt-1 text-muted-foreground">{sale.notes}</div>
+                                    <div className="pt-1 text-muted-foreground">
+                                        {sale.notes}
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>
 
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-base">Payments</CardTitle>
+                                <CardTitle className="text-base">
+                                    Payments
+                                </CardTitle>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-2 text-sm">
                                 {sale.payments.length === 0 ? (
-                                    <p className="text-muted-foreground">No payments recorded.</p>
+                                    <p className="text-muted-foreground">
+                                        No payments recorded.
+                                    </p>
                                 ) : (
                                     sale.payments.map((payment) => (
-                                        <div key={payment.id} className="flex justify-between py-1">
+                                        <div
+                                            key={payment.id}
+                                            className="flex justify-between py-1"
+                                        >
                                             <div>
                                                 <p className="font-medium">
-                                                    {methodLabel(payment.payment_method)}
+                                                    {methodLabel(
+                                                        payment.payment_method,
+                                                    )}
                                                     {payment.is_refund && (
-                                                        <span className="ml-1 text-xs text-rose-600">(Refund)</span>
+                                                        <span className="ml-1 text-xs text-rose-600">
+                                                            (Refund)
+                                                        </span>
                                                     )}
                                                 </p>
                                                 {payment.reference_number && (
                                                     <p className="text-xs text-muted-foreground">
-                                                        Ref: {payment.reference_number}
+                                                        Ref:{' '}
+                                                        {
+                                                            payment.reference_number
+                                                        }
                                                     </p>
                                                 )}
                                                 {payment.payment_date && (
                                                     <p className="text-xs text-muted-foreground">
-                                                        {new Date(payment.payment_date).toLocaleString()}
+                                                        {new Date(
+                                                            payment.payment_date,
+                                                        ).toLocaleString()}
                                                     </p>
                                                 )}
                                             </div>
-                                            <span className={payment.is_refund ? 'text-rose-600' : ''}>
+                                            <span
+                                                className={
+                                                    payment.is_refund
+                                                        ? 'text-rose-600'
+                                                        : ''
+                                                }
+                                            >
                                                 {payment.is_refund ? '−' : ''}
                                                 {payment.amount.toFixed(2)}
                                             </span>
@@ -324,11 +414,15 @@ export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyP
                         <DialogTitle>Void Sale</DialogTitle>
                     </DialogHeader>
                     <p className="text-sm text-muted-foreground">
-                        This will cancel <strong>{sale.sale_number}</strong> and reverse all stock
-                        movements. This action cannot be undone. Continue?
+                        This will cancel <strong>{sale.sale_number}</strong> and
+                        reverse all stock movements. This action cannot be
+                        undone. Continue?
                     </p>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowVoidConfirm(false)}>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowVoidConfirm(false)}
+                        >
                             Cancel
                         </Button>
                         <Button
@@ -356,24 +450,36 @@ export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyP
                                 step="0.01"
                                 min="0.01"
                                 value={refundForm.data.refund_amount}
-                                onChange={(e) => refundForm.setData('refund_amount', e.target.value)}
+                                onChange={(e) =>
+                                    refundForm.setData(
+                                        'refund_amount',
+                                        e.target.value,
+                                    )
+                                }
                             />
                             {refundForm.errors.refund_amount && (
-                                <p className="text-xs text-destructive">{refundForm.errors.refund_amount}</p>
+                                <p className="text-xs text-destructive">
+                                    {refundForm.errors.refund_amount}
+                                </p>
                             )}
                         </div>
                         <div className="flex flex-col gap-1.5">
                             <Label>Payment Method</Label>
                             <Select
                                 value={refundForm.data.payment_method}
-                                onValueChange={(v) => refundForm.setData('payment_method', v)}
+                                onValueChange={(v) =>
+                                    refundForm.setData('payment_method', v)
+                                }
                             >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {paymentMethods.map((m) => (
-                                        <SelectItem key={m.value} value={m.value}>
+                                        <SelectItem
+                                            key={m.value}
+                                            value={m.value}
+                                        >
                                             {m.label}
                                         </SelectItem>
                                     ))}
@@ -384,7 +490,12 @@ export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyP
                             <Label>Reference Number (optional)</Label>
                             <Input
                                 value={refundForm.data.reference_number}
-                                onChange={(e) => refundForm.setData('reference_number', e.target.value)}
+                                onChange={(e) =>
+                                    refundForm.setData(
+                                        'reference_number',
+                                        e.target.value,
+                                    )
+                                }
                                 placeholder="e.g. transaction ID"
                             />
                         </div>
@@ -392,22 +503,31 @@ export default function PharmacyPosSaleShow({ navigation, sale, can }: PharmacyP
                             <Label>Notes (optional)</Label>
                             <Input
                                 value={refundForm.data.notes}
-                                onChange={(e) => refundForm.setData('notes', e.target.value)}
+                                onChange={(e) =>
+                                    refundForm.setData('notes', e.target.value)
+                                }
                             />
                         </div>
                         {refundForm.errors.sale && (
-                            <p className="text-sm text-destructive">{refundForm.errors.sale}</p>
+                            <p className="text-sm text-destructive">
+                                {refundForm.errors.sale}
+                            </p>
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowRefundModal(false)}>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowRefundModal(false)}
+                        >
                             Cancel
                         </Button>
                         <Button
                             disabled={refundForm.processing}
                             onClick={submitRefund}
                         >
-                            {refundForm.processing ? 'Processing…' : 'Confirm Refund'}
+                            {refundForm.processing
+                                ? 'Processing…'
+                                : 'Confirm Refund'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

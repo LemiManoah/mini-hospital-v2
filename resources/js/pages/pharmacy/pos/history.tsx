@@ -65,7 +65,9 @@ const statusTone = (status: string | null): string => {
     }
 };
 
-const breadcrumbs = (navigation: InventoryNavigationContext): BreadcrumbItem[] => [
+const breadcrumbs = (
+    navigation: InventoryNavigationContext,
+): BreadcrumbItem[] => [
     { title: navigation.section_title, href: navigation.section_href },
     { title: 'Pharmacy POS', href: '/pharmacy/pos' },
     { title: 'Sales History', href: '/pharmacy/pos/history' },
@@ -95,7 +97,11 @@ export default function PharmacyPosHistory({
         setStatus('');
         setFrom('');
         setTo('');
-        router.get('/pharmacy/pos/history', {}, { preserveScroll: true, replace: true });
+        router.get(
+            '/pharmacy/pos/history',
+            {},
+            { preserveScroll: true, replace: true },
+        );
     };
 
     return (
@@ -104,7 +110,9 @@ export default function PharmacyPosHistory({
 
             <div className="flex h-full flex-col gap-6 p-6">
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-2xl font-semibold tracking-tight">Sales History</h1>
+                    <h1 className="text-2xl font-semibold tracking-tight">
+                        Sales History
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         {sales.total} sale{sales.total !== 1 ? 's' : ''} found
                     </p>
@@ -119,10 +127,15 @@ export default function PharmacyPosHistory({
                             placeholder="Search sale # or customer..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+                            onKeyDown={(e) =>
+                                e.key === 'Enter' && applyFilters()
+                            }
                             className="w-56"
                         />
-                        <Select value={status || undefined} onValueChange={setStatus}>
+                        <Select
+                            value={status || undefined}
+                            onValueChange={setStatus}
+                        >
                             <SelectTrigger className="w-40">
                                 <SelectValue placeholder="All statuses" />
                             </SelectTrigger>
@@ -147,7 +160,10 @@ export default function PharmacyPosHistory({
                             className="w-40"
                         />
                         <Button onClick={applyFilters}>Apply</Button>
-                        {(filters.search || filters.status || filters.from || filters.to) && (
+                        {(filters.search ||
+                            filters.status ||
+                            filters.from ||
+                            filters.to) && (
                             <Button variant="outline" onClick={clearFilters}>
                                 Clear
                             </Button>
@@ -175,22 +191,33 @@ export default function PharmacyPosHistory({
                                                 </span>
                                                 <Badge
                                                     variant="outline"
-                                                    className={statusTone(sale.status)}
+                                                    className={statusTone(
+                                                        sale.status,
+                                                    )}
                                                 >
-                                                    {sale.status_label ?? 'Unknown'}
+                                                    {sale.status_label ??
+                                                        'Unknown'}
                                                 </Badge>
                                             </div>
                                             <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                                                 {sale.customer_name && (
-                                                    <span>{sale.customer_name}</span>
+                                                    <span>
+                                                        {sale.customer_name}
+                                                    </span>
                                                 )}
                                                 {sale.location_name && (
-                                                    <span>{sale.location_name}</span>
+                                                    <span>
+                                                        {sale.location_name}
+                                                    </span>
                                                 )}
-                                                {sale.sold_by && <span>{sale.sold_by}</span>}
+                                                {sale.sold_by && (
+                                                    <span>{sale.sold_by}</span>
+                                                )}
                                                 {sale.sold_at && (
                                                     <span>
-                                                        {new Date(sale.sold_at).toLocaleString()}
+                                                        {new Date(
+                                                            sale.sold_at,
+                                                        ).toLocaleString()}
                                                     </span>
                                                 )}
                                             </div>
@@ -199,17 +226,27 @@ export default function PharmacyPosHistory({
                                             <div className="text-right">
                                                 <p className="text-sm font-semibold">
                                                     {(
-                                                        sale.gross_amount - sale.discount_amount
+                                                        sale.gross_amount -
+                                                        sale.discount_amount
                                                     ).toFixed(2)}
                                                 </p>
                                                 {sale.balance_amount > 0 && (
                                                     <p className="text-xs text-amber-600">
-                                                        Bal: {sale.balance_amount.toFixed(2)}
+                                                        Bal:{' '}
+                                                        {sale.balance_amount.toFixed(
+                                                            2,
+                                                        )}
                                                     </p>
                                                 )}
                                             </div>
-                                            <Button size="sm" variant="outline" asChild>
-                                                <Link href={`/pharmacy/pos/sales/${sale.id}`}>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={`/pharmacy/pos/sales/${sale.id}`}
+                                                >
                                                     <Eye className="mr-1 h-3 w-3" />
                                                     View
                                                 </Link>

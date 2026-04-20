@@ -58,14 +58,20 @@ const PAYMENT_METHODS = [
     { value: 'other', label: 'Other' },
 ];
 
-const breadcrumbs = (navigation: InventoryNavigationContext, cart: CheckoutCart): BreadcrumbItem[] => [
+const breadcrumbs = (
+    navigation: InventoryNavigationContext,
+    cart: CheckoutCart,
+): BreadcrumbItem[] => [
     { title: navigation.section_title, href: navigation.section_href },
     { title: 'Pharmacy POS', href: '/pharmacy/pos' },
     { title: cart.cart_number, href: `/pharmacy/pos` },
     { title: 'Checkout', href: `/pharmacy/pos/carts/${cart.id}/checkout` },
 ];
 
-export default function PharmacyPosCheckout({ navigation, cart }: PharmacyPosCheckoutProps) {
+export default function PharmacyPosCheckout({
+    navigation,
+    cart,
+}: PharmacyPosCheckoutProps) {
     const form = useForm({
         paid_amount: cart.total_amount.toFixed(2),
         payment_method: 'cash',
@@ -88,7 +94,9 @@ export default function PharmacyPosCheckout({ navigation, cart }: PharmacyPosChe
 
             <div className="flex h-full flex-col gap-6 p-6">
                 <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">Checkout</h1>
+                    <h1 className="text-2xl font-semibold tracking-tight">
+                        Checkout
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         Cart: {cart.cart_number}
                         {cart.customer_name && ` · ${cart.customer_name}`}
@@ -98,36 +106,53 @@ export default function PharmacyPosCheckout({ navigation, cart }: PharmacyPosChe
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">Order Summary</CardTitle>
+                            <CardTitle className="text-base">
+                                Order Summary
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="flex flex-col gap-2">
                             <div className="divide-y text-sm">
                                 {cart.items.map((item) => (
-                                    <div key={item.id} className="flex justify-between py-2">
+                                    <div
+                                        key={item.id}
+                                        className="flex justify-between py-2"
+                                    >
                                         <div>
-                                            <p className="font-medium">{item.item_name}</p>
+                                            <p className="font-medium">
+                                                {item.item_name}
+                                            </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {item.quantity} × {item.unit_price.toFixed(2)}
-                                                {item.discount_amount > 0 && ` − ${item.discount_amount.toFixed(2)}`}
+                                                {item.quantity} ×{' '}
+                                                {item.unit_price.toFixed(2)}
+                                                {item.discount_amount > 0 &&
+                                                    ` − ${item.discount_amount.toFixed(2)}`}
                                             </p>
                                         </div>
-                                        <span className="font-medium">{item.line_total.toFixed(2)}</span>
+                                        <span className="font-medium">
+                                            {item.line_total.toFixed(2)}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
                             <Separator />
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Gross</span>
+                                <span className="text-muted-foreground">
+                                    Gross
+                                </span>
                                 <span>{cart.gross_amount.toFixed(2)}</span>
                             </div>
                             {cart.discount_amount > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Discount</span>
-                                    <span className="text-rose-600">− {cart.discount_amount.toFixed(2)}</span>
+                                    <span className="text-muted-foreground">
+                                        Discount
+                                    </span>
+                                    <span className="text-rose-600">
+                                        − {cart.discount_amount.toFixed(2)}
+                                    </span>
                                 </div>
                             )}
                             <Separator />
-                            <div className="flex justify-between font-semibold text-lg">
+                            <div className="flex justify-between text-lg font-semibold">
                                 <span>Total Due</span>
                                 <span>{cart.total_amount.toFixed(2)}</span>
                             </div>
@@ -137,40 +162,60 @@ export default function PharmacyPosCheckout({ navigation, cart }: PharmacyPosChe
                     <form onSubmit={handleSubmit}>
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-base">Payment</CardTitle>
+                                <CardTitle className="text-base">
+                                    Payment
+                                </CardTitle>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-4">
                                 <div className="flex flex-col gap-2">
-                                    <Label htmlFor="payment_method">Payment Method</Label>
+                                    <Label htmlFor="payment_method">
+                                        Payment Method
+                                    </Label>
                                     <Select
                                         value={form.data.payment_method}
-                                        onValueChange={(v) => form.setData('payment_method', v)}
+                                        onValueChange={(v) =>
+                                            form.setData('payment_method', v)
+                                        }
                                     >
                                         <SelectTrigger id="payment_method">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {PAYMENT_METHODS.map((m) => (
-                                                <SelectItem key={m.value} value={m.value}>
+                                                <SelectItem
+                                                    key={m.value}
+                                                    value={m.value}
+                                                >
                                                     {m.label}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <InputError message={form.errors.payment_method} />
+                                    <InputError
+                                        message={form.errors.payment_method}
+                                    />
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                    <Label htmlFor="paid_amount">Amount Paid</Label>
+                                    <Label htmlFor="paid_amount">
+                                        Amount Paid
+                                    </Label>
                                     <Input
                                         id="paid_amount"
                                         type="number"
                                         step="0.01"
                                         min="0"
                                         value={form.data.paid_amount}
-                                        onChange={(e) => form.setData('paid_amount', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'paid_amount',
+                                                e.target.value,
+                                            )
+                                        }
                                     />
-                                    <InputError message={form.errors.paid_amount} />
+                                    <InputError
+                                        message={form.errors.paid_amount}
+                                    />
                                 </div>
 
                                 {change > 0 && (
@@ -191,13 +236,20 @@ export default function PharmacyPosCheckout({ navigation, cart }: PharmacyPosChe
                                     </div>
                                 )}
 
-                                {(form.data.payment_method !== 'cash') && (
+                                {form.data.payment_method !== 'cash' && (
                                     <div className="flex flex-col gap-2">
-                                        <Label htmlFor="reference_number">Reference Number</Label>
+                                        <Label htmlFor="reference_number">
+                                            Reference Number
+                                        </Label>
                                         <Input
                                             id="reference_number"
                                             value={form.data.reference_number}
-                                            onChange={(e) => form.setData('reference_number', e.target.value)}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'reference_number',
+                                                    e.target.value,
+                                                )
+                                            }
                                             placeholder="Transaction reference..."
                                         />
                                     </div>
@@ -207,10 +259,14 @@ export default function PharmacyPosCheckout({ navigation, cart }: PharmacyPosChe
                                 <Button
                                     type="submit"
                                     className="w-full"
-                                    disabled={form.processing || paidAmount <= 0}
+                                    disabled={
+                                        form.processing || paidAmount <= 0
+                                    }
                                     size="lg"
                                 >
-                                    {form.processing ? 'Processing...' : 'Complete Sale'}
+                                    {form.processing
+                                        ? 'Processing...'
+                                        : 'Complete Sale'}
                                 </Button>
                             </CardFooter>
                         </Card>

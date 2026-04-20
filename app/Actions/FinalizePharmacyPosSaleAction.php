@@ -221,8 +221,10 @@ final readonly class FinalizePharmacyPosSaleAction
         foreach ($candidates as $batchData) {
             $batchId = $batchData['inventory_batch_id'];
             $available = (float) $availableQuantities->get($batchId, 0.0);
-
-            if ($available <= 0 || $needed <= 0.0005) {
+            if ($available <= 0) {
+                continue;
+            }
+            if ($needed <= 0.0005) {
                 continue;
             }
 

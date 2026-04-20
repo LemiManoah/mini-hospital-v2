@@ -108,7 +108,7 @@ final class LabTestCatalog extends Model
                     return null;
                 }
 
-                return (string) implode(', ', $specimenNames);
+                return implode(', ', $specimenNames);
             }
         );
     }

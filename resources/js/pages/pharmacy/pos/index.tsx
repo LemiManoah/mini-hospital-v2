@@ -22,7 +22,16 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryNavigationContext } from '@/types/inventory-navigation';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Check, History, PauseCircle, PlayCircle, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
+import {
+    Check,
+    History,
+    PauseCircle,
+    PlayCircle,
+    Plus,
+    ShoppingCart,
+    Trash2,
+    X,
+} from 'lucide-react';
 import { useState } from 'react';
 
 interface DispensingLocation {
@@ -96,7 +105,9 @@ interface PharmacyPosIndexProps {
     };
 }
 
-const breadcrumbs = (navigation: InventoryNavigationContext): BreadcrumbItem[] => [
+const breadcrumbs = (
+    navigation: InventoryNavigationContext,
+): BreadcrumbItem[] => [
     { title: navigation.section_title, href: navigation.section_href },
     { title: 'Pharmacy POS', href: '/pharmacy/pos' },
 ];
@@ -136,7 +147,9 @@ function CartItemRow({ cartId, item }: { cartId: string; item: CartItem }) {
                             min="0.001"
                             max={item.available_quantity}
                             value={form.data.quantity}
-                            onChange={(e) => form.setData('quantity', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('quantity', e.target.value)
+                            }
                             className="h-8 text-sm"
                         />
                         <InputError message={form.errors.quantity} />
@@ -148,7 +161,9 @@ function CartItemRow({ cartId, item }: { cartId: string; item: CartItem }) {
                             step="0.01"
                             min="0"
                             value={form.data.unit_price}
-                            onChange={(e) => form.setData('unit_price', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('unit_price', e.target.value)
+                            }
                             className="h-8 text-sm"
                         />
                         <InputError message={form.errors.unit_price} />
@@ -160,14 +175,20 @@ function CartItemRow({ cartId, item }: { cartId: string; item: CartItem }) {
                             step="0.01"
                             min="0"
                             value={form.data.discount_amount}
-                            onChange={(e) => form.setData('discount_amount', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('discount_amount', e.target.value)
+                            }
                             className="h-8 text-sm"
                         />
                         <InputError message={form.errors.discount_amount} />
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSave} disabled={form.processing}>
+                    <Button
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={form.processing}
+                    >
                         <Check className="mr-1 h-3 w-3" />
                         Save
                     </Button>
@@ -182,7 +203,7 @@ function CartItemRow({ cartId, item }: { cartId: string; item: CartItem }) {
 
     return (
         <div
-            className="flex items-center justify-between gap-4 py-3 cursor-pointer group"
+            className="group flex cursor-pointer items-center justify-between gap-4 py-3"
             onClick={() => setEditing(true)}
             role="button"
             tabIndex={0}
@@ -193,16 +214,23 @@ function CartItemRow({ cartId, item }: { cartId: string; item: CartItem }) {
                     {item.item_name}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                    {[item.generic_name, item.strength].filter(Boolean).join(' · ')}
+                    {[item.generic_name, item.strength]
+                        .filter(Boolean)
+                        .join(' · ')}
                 </p>
                 <p className="text-xs text-muted-foreground">
                     {item.quantity} × {item.unit_price.toFixed(2)}
-                    {item.discount_amount > 0 && ` − ${item.discount_amount.toFixed(2)}`}
-                    <span className="ml-2 text-muted-foreground/60">tap to edit</span>
+                    {item.discount_amount > 0 &&
+                        ` − ${item.discount_amount.toFixed(2)}`}
+                    <span className="ml-2 text-muted-foreground/60">
+                        tap to edit
+                    </span>
                 </p>
             </div>
             <div className="text-right">
-                <p className="text-sm font-semibold">{item.line_total.toFixed(2)}</p>
+                <p className="text-sm font-semibold">
+                    {item.line_total.toFixed(2)}
+                </p>
                 <p className="text-xs text-muted-foreground">
                     Avail: {item.available_quantity.toFixed(3)}
                 </p>
@@ -213,9 +241,12 @@ function CartItemRow({ cartId, item }: { cartId: string; item: CartItem }) {
                 className="text-destructive hover:text-destructive"
                 onClick={(e) => {
                     e.stopPropagation();
-                    router.delete(`/pharmacy/pos/carts/${cartId}/items/${item.id}`, {
-                        preserveScroll: true,
-                    });
+                    router.delete(
+                        `/pharmacy/pos/carts/${cartId}/items/${item.id}`,
+                        {
+                            preserveScroll: true,
+                        },
+                    );
                 }}
             >
                 <Trash2 className="h-4 w-4" />
@@ -259,8 +290,12 @@ export default function PharmacyPosIndex({
         (item) =>
             itemSearch === '' ||
             item.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-            (item.generic_name ?? '').toLowerCase().includes(itemSearch.toLowerCase()) ||
-            (item.brand_name ?? '').toLowerCase().includes(itemSearch.toLowerCase()),
+            (item.generic_name ?? '')
+                .toLowerCase()
+                .includes(itemSearch.toLowerCase()) ||
+            (item.brand_name ?? '')
+                .toLowerCase()
+                .includes(itemSearch.toLowerCase()),
     );
 
     const handleOpenCart = (e: React.FormEvent) => {
@@ -295,8 +330,12 @@ export default function PharmacyPosIndex({
             <div className="flex h-full flex-col gap-6 p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold tracking-tight">Pharmacy POS</h1>
-                        <p className="text-sm text-muted-foreground">Walk-in counter sales</p>
+                        <h1 className="text-2xl font-semibold tracking-tight">
+                            Pharmacy POS
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Walk-in counter sales
+                        </p>
                     </div>
                     <div className="flex items-center gap-2">
                         {activeCart && (
@@ -344,7 +383,9 @@ export default function PharmacyPosIndex({
                                     className="flex items-center justify-between rounded-md border px-3 py-2"
                                 >
                                     <div>
-                                        <p className="text-sm font-medium">{held.cart_number}</p>
+                                        <p className="text-sm font-medium">
+                                            {held.cart_number}
+                                        </p>
                                         <p className="text-xs text-muted-foreground">
                                             {held.customer_name ?? 'Walk-in'}
                                             {held.held_at &&
@@ -381,11 +422,20 @@ export default function PharmacyPosIndex({
                         <form onSubmit={handleOpenCart}>
                             <CardContent className="flex flex-col gap-4">
                                 <div className="flex flex-col gap-2">
-                                    <Label htmlFor="inventory_location_id">Dispensing Location</Label>
+                                    <Label htmlFor="inventory_location_id">
+                                        Dispensing Location
+                                    </Label>
                                     <Select
-                                        value={openCartForm.data.inventory_location_id || undefined}
+                                        value={
+                                            openCartForm.data
+                                                .inventory_location_id ||
+                                            undefined
+                                        }
                                         onValueChange={(value) =>
-                                            openCartForm.setData('inventory_location_id', value)
+                                            openCartForm.setData(
+                                                'inventory_location_id',
+                                                value,
+                                            )
                                         }
                                     >
                                         <SelectTrigger id="inventory_location_id">
@@ -393,35 +443,55 @@ export default function PharmacyPosIndex({
                                         </SelectTrigger>
                                         <SelectContent>
                                             {dispensingLocations.map((loc) => (
-                                                <SelectItem key={loc.id} value={loc.id}>
+                                                <SelectItem
+                                                    key={loc.id}
+                                                    value={loc.id}
+                                                >
                                                     {loc.name}
-                                                    {loc.is_dispensing_point ? ' (Dispensing Point)' : ''}
+                                                    {loc.is_dispensing_point
+                                                        ? ' (Dispensing Point)'
+                                                        : ''}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <InputError message={openCartForm.errors.inventory_location_id} />
+                                    <InputError
+                                        message={
+                                            openCartForm.errors
+                                                .inventory_location_id
+                                        }
+                                    />
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                    <Label htmlFor="customer_name">Customer Name (optional)</Label>
+                                    <Label htmlFor="customer_name">
+                                        Customer Name (optional)
+                                    </Label>
                                     <Input
                                         id="customer_name"
                                         value={openCartForm.data.customer_name}
                                         onChange={(e) =>
-                                            openCartForm.setData('customer_name', e.target.value)
+                                            openCartForm.setData(
+                                                'customer_name',
+                                                e.target.value,
+                                            )
                                         }
                                         placeholder="Walk-in customer"
                                     />
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                    <Label htmlFor="customer_phone">Customer Phone (optional)</Label>
+                                    <Label htmlFor="customer_phone">
+                                        Customer Phone (optional)
+                                    </Label>
                                     <Input
                                         id="customer_phone"
                                         value={openCartForm.data.customer_phone}
                                         onChange={(e) =>
-                                            openCartForm.setData('customer_phone', e.target.value)
+                                            openCartForm.setData(
+                                                'customer_phone',
+                                                e.target.value,
+                                            )
                                         }
                                         placeholder="+256..."
                                     />
@@ -433,7 +503,9 @@ export default function PharmacyPosIndex({
                                     disabled={openCartForm.processing}
                                     className="w-full"
                                 >
-                                    {openCartForm.processing ? 'Opening...' : 'Open Cart'}
+                                    {openCartForm.processing
+                                        ? 'Opening...'
+                                        : 'Open Cart'}
                                 </Button>
                             </CardFooter>
                         </form>
@@ -443,13 +515,17 @@ export default function PharmacyPosIndex({
                         <div className="flex flex-col gap-4 lg:col-span-2">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">Search &amp; Add Items</CardTitle>
+                                    <CardTitle className="text-base">
+                                        Search &amp; Add Items
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-3">
                                     <Input
                                         placeholder="Search by name, generic name, or brand..."
                                         value={itemSearch}
-                                        onChange={(e) => setItemSearch(e.target.value)}
+                                        onChange={(e) =>
+                                            setItemSearch(e.target.value)
+                                        }
                                     />
                                     {itemSearch !== '' && (
                                         <div className="max-h-72 overflow-y-auto rounded-md border">
@@ -459,41 +535,60 @@ export default function PharmacyPosIndex({
                                                 </p>
                                             ) : (
                                                 <div className="divide-y">
-                                                    {filteredItems.map((item) => (
-                                                        <div
-                                                            key={item.id}
-                                                            className="flex items-center justify-between p-3"
-                                                        >
-                                                            <div>
-                                                                <p className="text-sm font-medium">
-                                                                    {item.name}
-                                                                </p>
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    {[
-                                                                        item.generic_name,
-                                                                        item.strength,
-                                                                        item.dosage_form,
-                                                                    ]
-                                                                        .filter(Boolean)
-                                                                        .join(' · ')}
-                                                                </p>
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    Available:{' '}
-                                                                    {item.available_quantity.toFixed(3)} ·
-                                                                    Price: {item.unit_price.toFixed(2)}
-                                                                </p>
-                                                            </div>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => handleAddItem(item)}
-                                                                disabled={addItemForm.processing}
+                                                    {filteredItems.map(
+                                                        (item) => (
+                                                            <div
+                                                                key={item.id}
+                                                                className="flex items-center justify-between p-3"
                                                             >
-                                                                <Plus className="h-4 w-4" />
-                                                                Add
-                                                            </Button>
-                                                        </div>
-                                                    ))}
+                                                                <div>
+                                                                    <p className="text-sm font-medium">
+                                                                        {
+                                                                            item.name
+                                                                        }
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        {[
+                                                                            item.generic_name,
+                                                                            item.strength,
+                                                                            item.dosage_form,
+                                                                        ]
+                                                                            .filter(
+                                                                                Boolean,
+                                                                            )
+                                                                            .join(
+                                                                                ' · ',
+                                                                            )}
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        Available:{' '}
+                                                                        {item.available_quantity.toFixed(
+                                                                            3,
+                                                                        )}{' '}
+                                                                        · Price:{' '}
+                                                                        {item.unit_price.toFixed(
+                                                                            2,
+                                                                        )}
+                                                                    </p>
+                                                                </div>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() =>
+                                                                        handleAddItem(
+                                                                            item,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        addItemForm.processing
+                                                                    }
+                                                                >
+                                                                    <Plus className="h-4 w-4" />
+                                                                    Add
+                                                                </Button>
+                                                            </div>
+                                                        ),
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -503,12 +598,15 @@ export default function PharmacyPosIndex({
 
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">Cart Items</CardTitle>
+                                    <CardTitle className="text-base">
+                                        Cart Items
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     {activeCart.items.length === 0 ? (
                                         <p className="py-4 text-center text-sm text-muted-foreground">
-                                            No items in cart. Search above to add items.
+                                            No items in cart. Search above to
+                                            add items.
                                         </p>
                                     ) : (
                                         <div className="divide-y">
@@ -528,18 +626,25 @@ export default function PharmacyPosIndex({
                         <div className="flex flex-col gap-4">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">Order Summary</CardTitle>
+                                    <CardTitle className="text-base">
+                                        Order Summary
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-3">
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">Location</span>
+                                        <span className="text-muted-foreground">
+                                            Location
+                                        </span>
                                         <span className="font-medium">
-                                            {activeCart.inventory_location?.name ?? '—'}
+                                            {activeCart.inventory_location
+                                                ?.name ?? '—'}
                                         </span>
                                     </div>
                                     {activeCart.customer_name && (
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Customer</span>
+                                            <span className="text-muted-foreground">
+                                                Customer
+                                            </span>
                                             <span className="font-medium">
                                                 {activeCart.customer_name}
                                             </span>
@@ -547,21 +652,32 @@ export default function PharmacyPosIndex({
                                     )}
                                     <Separator />
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">Gross</span>
-                                        <span>{activeCart.gross_amount.toFixed(2)}</span>
+                                        <span className="text-muted-foreground">
+                                            Gross
+                                        </span>
+                                        <span>
+                                            {activeCart.gross_amount.toFixed(2)}
+                                        </span>
                                     </div>
                                     {activeCart.discount_amount > 0 && (
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Discount</span>
+                                            <span className="text-muted-foreground">
+                                                Discount
+                                            </span>
                                             <span className="text-rose-600">
-                                                − {activeCart.discount_amount.toFixed(2)}
+                                                −{' '}
+                                                {activeCart.discount_amount.toFixed(
+                                                    2,
+                                                )}
                                             </span>
                                         </div>
                                     )}
                                     <Separator />
                                     <div className="flex justify-between font-semibold">
                                         <span>Total</span>
-                                        <span>{activeCart.total_amount.toFixed(2)}</span>
+                                        <span>
+                                            {activeCart.total_amount.toFixed(2)}
+                                        </span>
                                     </div>
                                     <Button
                                         className="mt-2 w-full"

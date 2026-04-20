@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Enums\InventoryRequisitionStatus;
 use App\Models\InventoryRequisition;
 use App\Models\InventoryRequisitionItem;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -43,7 +44,7 @@ final class ApproveInventoryRequisition
                 'Approve at least one line quantity before continuing.',
             );
 
-            /** @var \Illuminate\Database\Eloquent\Collection<int, InventoryRequisitionItem> $requisitionItems */
+            /** @var Collection<int, InventoryRequisitionItem> $requisitionItems */
             $requisitionItems = $requisition->items;
 
             foreach ($requisitionItems as $item) {
