@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use App\Models\FacilityBranch;
 use App\Models\User;
 use App\Support\BranchContext;
+use App\Support\ImpersonationContext;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
@@ -61,6 +62,7 @@ final class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $this->sharedUser($user, $activeBranch),
             ],
+            'impersonation' => $this->sharedImpersonation($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
@@ -147,6 +149,42 @@ final class HandleInertiaRequests extends Middleware
                     'price' => $currentSubscription->subscriptionPackage->price,
                 ] : null,
             ] : null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function sharedImpersonation(Request $request): ?array
+    {
+        if (! ImpersonationContext::isActive($request)) {
+            return null;
+        }
+
+        $realUser = ImpersonationContext::realUser($request);
+        $targetUser = ImpersonationContext::targetUser($request);
+
+        if (! $realUser instanceof User || ! $targetUser instanceof User) {
+            return null;
+        }
+
+        $realUser->loadMissing('tenant');
+        $targetUser->loadMissing('tenant');
+
+        return [
+            'active' => true,
+            'started_at' => ImpersonationContext::startedAt($request),
+            'real_user' => [
+                'id' => $realUser->id,
+                'name' => $realUser->name,
+                'email' => $realUser->email,
+            ],
+            'target_user' => [
+                'id' => $targetUser->id,
+                'name' => $targetUser->name,
+                'email' => $targetUser->email,
+                'tenant_name' => $targetUser->tenant?->name,
+            ],
         ];
     }
 }

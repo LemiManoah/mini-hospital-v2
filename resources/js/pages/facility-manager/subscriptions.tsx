@@ -91,9 +91,7 @@ export default function FacilityManagerSubscriptions({
                     </Button>
                 </div>
 
-                <FacilityManagerTenantHeader
-                    tenant={tenant}
-                />
+                <FacilityManagerTenantHeader tenant={tenant} />
 
                 <FacilityManagerNav
                     tenantId={tenant.id}

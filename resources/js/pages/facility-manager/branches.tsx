@@ -79,11 +79,7 @@ export default function FacilityManagerBranches({
                     </Button>
                 </div>
 
-                <FacilityManagerTenantHeader
-                    tenant={tenant}
-                    title="Branches"
-                    description="Review branch structure, staffing footprint, and store availability."
-                />
+                <FacilityManagerTenantHeader tenant={tenant} />
 
                 <FacilityManagerNav tenantId={tenant.id} current="branches" />
 
@@ -121,7 +117,7 @@ export default function FacilityManagerBranches({
                                                         {branch.branch_code ??
                                                             'No code'}
                                                         {branch.is_main_branch
-                                                            ? ' • Main branch'
+                                                            ? ' | Main branch'
                                                             : ''}
                                                     </span>
                                                 </div>

@@ -82,7 +82,10 @@ function createAdministrationContext(): array
 it('shows the first release general settings page', function (): void {
     [, $branch, $user, $currency] = createAdministrationContext();
 
-    $user->givePermissionTo('currencies.view');
+    $user->givePermissionTo([
+        'currencies.view',
+        'general_settings.view',
+    ]);
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -95,6 +98,8 @@ it('shows the first release general settings page', function (): void {
             ->where('values.require_payment_before_consultation', false)
             ->where('values.allow_insured_bypass_upfront_payment', true)
             ->where('values.enable_batch_tracking_when_dispensing', true)
+            ->where('values.enforce_fefo', true)
+            ->where('values.allow_partial_dispense', true)
             ->where('values.default_currency_id', null)
             ->where('currencies.0.value', $currency->id));
 });
@@ -102,7 +107,11 @@ it('shows the first release general settings page', function (): void {
 it('stores general settings for the current tenant', function (): void {
     [$tenant, $branch, $user, $currency] = createAdministrationContext();
 
-    $user->givePermissionTo('currencies.view');
+    $user->givePermissionTo([
+        'currencies.view',
+        'general_settings.view',
+        'general_settings.update',
+    ]);
 
     $payload = [
         'require_payment_before_consultation' => true,
@@ -112,10 +121,9 @@ it('stores general settings for the current tenant', function (): void {
         'allow_insured_bypass_upfront_payment' => false,
         'default_currency_id' => $currency->id,
         'patient_number_prefix' => 'PT',
-        'visit_number_prefix' => 'VT',
         'receipt_number_prefix' => 'RCT',
-        'lab_request_prefix' => 'LBR',
         'enable_batch_tracking_when_dispensing' => true,
+        'enforce_fefo' => false,
         'allow_partial_dispense' => false,
         'require_review_before_lab_release' => true,
         'require_approval_before_lab_release' => true,
@@ -142,8 +150,8 @@ it('stores general settings for the current tenant', function (): void {
             ->value('value'))->toBe($currency->id)
         ->and(TenantGeneralSetting::query()
             ->where('tenant_id', $tenant->id)
-            ->where('key', 'numbering.lab_request_prefix')
-            ->value('value'))->toBe('LBR')
+            ->where('key', 'pharmacy.enforce_fefo')
+            ->value('value'))->toBe('0')
         ->and(TenantGeneralSetting::query()
             ->where('tenant_id', $tenant->id)
             ->where('key', 'pharmacy.allow_partial_dispense')

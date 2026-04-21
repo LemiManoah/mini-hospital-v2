@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateSessionRequest;
 use App\Support\BranchContext;
+use App\Support\ImpersonationContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,7 +44,9 @@ final readonly class SessionController
         if ($user->isSupportUser()) {
             BranchContext::clear();
 
-            return to_route('facility-manager.dashboard');
+            return $user->can('tenants.impersonate')
+                ? to_route('facility-manager.impersonation.index')
+                : to_route('facility-manager.dashboard');
         }
 
         if ($user->tenant !== null && ! $user->tenant->isOnboardingComplete()) {
@@ -66,6 +69,7 @@ final readonly class SessionController
     public function destroy(Request $request): RedirectResponse
     {
         BranchContext::clear();
+        ImpersonationContext::stop($request);
 
         Auth::guard('web')->logout();
 

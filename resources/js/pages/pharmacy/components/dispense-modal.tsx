@@ -121,14 +121,42 @@ export function DispenseModal({
         });
     };
 
-    const addAllocation = (lineIndex: number) => {
+    const addAllocation = (lineIndex: number, inventoryItemId: string) => {
         const items = [...form.data.items];
+        const currentAllocations = items[lineIndex].allocations;
+        const allocatedSoFar = currentAllocations.reduce(
+            (sum, a) => sum + Number(a.quantity || 0),
+            0,
+        );
+        const dispensedQty = Number(items[lineIndex].dispensed_quantity || 0);
+        const remaining = Math.max(dispensedQty - allocatedSoFar, 0);
+
+        let newAllocation: { inventory_batch_id: string; quantity: string } = {
+            inventory_batch_id: '',
+            quantity: '',
+        };
+
+        if (
+            pharmacyPolicy.enforce_fefo &&
+            pharmacyPolicy.batch_tracking_enabled
+        ) {
+            const fefo = availableBatchBalances.find(
+                (b) =>
+                    b.inventory_location_id ===
+                        form.data.inventory_location_id &&
+                    b.inventory_item_id === inventoryItemId,
+            );
+            if (fefo) {
+                newAllocation = {
+                    inventory_batch_id: fefo.inventory_batch_id,
+                    quantity: Math.min(remaining, fefo.quantity).toFixed(3),
+                };
+            }
+        }
+
         items[lineIndex] = {
             ...items[lineIndex],
-            allocations: [
-                ...items[lineIndex].allocations,
-                { inventory_batch_id: '', quantity: '' },
-            ],
+            allocations: [...currentAllocations, newAllocation],
         };
         form.setData('items', items);
     };
@@ -594,6 +622,7 @@ export function DispenseModal({
                                                             onClick={() =>
                                                                 addAllocation(
                                                                     index,
+                                                                    item.inventory_item_id,
                                                                 )
                                                             }
                                                             disabled={
@@ -618,7 +647,10 @@ export function DispenseModal({
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() =>
-                                                            addAllocation(index)
+                                                            addAllocation(
+                                                                index,
+                                                                item.inventory_item_id,
+                                                            )
                                                         }
                                                         disabled={
                                                             batchOptions.length ===

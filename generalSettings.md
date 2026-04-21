@@ -187,14 +187,13 @@ Examples:
 
 Examples:
 
-- patient number format ✅ DONE (stored as `patient_number_prefix`)
-- visit number format ✅ DONE (stored as `visit_number_prefix`)
+- patient number format ✅ DONE — `patient_number_prefix` stored and now enforced in `BranchScopedNumberGenerator::nextPatientNumber()`
+- visit number format ❌ REMOVED — `visit_number_prefix` setting removed; visit numbers use fixed `VIS` segment
 - billing invoice number format ❌ NOT DONE
-- receipt number format ✅ DONE (stored as `receipt_number_prefix`)
+- receipt number format ✅ DONE — `receipt_number_prefix` stored and now enforced in `RecordVisitPayment::generateReceiptNumber()`
 - prescription number format ❌ NOT DONE
-- lab accession numbering format ✅ DONE (stored as `lab_request_prefix`)
+- lab accession numbering format ❌ REMOVED — `lab_request_prefix` setting removed per user decision
 - reset numbering daily / monthly / yearly / never ❌ NOT DONE
-- **Note:** Prefixes are stored but not yet enforced — number generation logic has not been wired to read from these settings
 
 ### 5.4 Clinical Workflow Rules ❌ NOT DONE
 
@@ -224,7 +223,7 @@ Examples:
 Examples:
 
 - enable batch tracking when dispensing ✅ DONE
-- enforce FEFO batch suggestion ❌ NOT DONE — setting not in registry; not enforced
+- enforce FEFO batch suggestion 🟡 IN PROGRESS — next to implement
 - allow partial dispensing ✅ DONE
 - allow external pharmacy marking ❌ NOT DONE
 - require pharmacist verification before dispense completion ❌ NOT DONE
@@ -390,7 +389,7 @@ Use grouped cards or tabbed sections:
 
 - Billing & Payment ✅ DONE
 - Currency & Pricing 🟡 PARTIAL (currency select done; decimal precision, rounding, display rules not done)
-- Registration & Numbering 🟡 PARTIAL (prefix fields done; enforcement not wired)
+- Registration & Numbering 🟡 PARTIAL (patient_number_prefix and receipt_number_prefix enforced; visit/lab prefixes removed)
 - Clinical Rules ❌ NOT DONE
 - Laboratory Rules 🟡 PARTIAL (review/approval done; others not done)
 - Pharmacy Rules 🟡 PARTIAL (batch tracking and partial dispense done; FEFO and others not done)
@@ -407,12 +406,12 @@ Each setting should include:
 
 ---
 
-## 11) Permissions ❌ NOT DONE
+## 11) Permissions 🟡 PARTIAL
 
 Recommended new permissions:
 
-- `general_settings.view` ❌ NOT DONE — currently uses a broad list of unrelated permissions
-- `general_settings.update` ❌ NOT DONE
+- `general_settings.view` ✅ DONE — added to `PermissionSeeder`; `AdministrationController` now uses it
+- `general_settings.update` ✅ DONE — added to `PermissionSeeder`; `AdministrationController` now uses it
 - `general_settings.override_branch` ❌ NOT DONE
 
 Suggested access:
@@ -436,14 +435,15 @@ Branch override permission may be restricted more tightly if needed.
 
 ### Currency 🟡 PARTIAL
 
-- `finance.default_currency_code` → stored as `default_currency_id` ✅
-- `finance.currency_symbol_position` ❌ NOT DONE
-- `finance.decimal_places` ❌ NOT DONE
+- `finance.default_currency_code` → stored as `default_currency_id` ✅; now pre-selects default when creating a new branch
+- `finance.currency_symbol_position` ✅ DONE — `symbol_position` column added to `currencies` table and seeded per currency
+- `finance.decimal_places` ✅ DONE — `decimal_places` column added to `currencies` table and seeded per currency
+- Currency exchange rates ✅ DONE — new `currency_exchange_rates` table, model, controller, frontend page at `/currency-exchange-rates`, accessible from the Currencies index
 
 ### Pharmacy 🟡 PARTIAL
 
 - `pharmacy.enable_batch_tracking` → `enable_batch_tracking_when_dispensing` ✅
-- `pharmacy.enforce_fefo` ❌ NOT DONE
+- `pharmacy.enforce_fefo` 🟡 IN PROGRESS — next to implement
 - `pharmacy.allow_partial_dispense` ✅
 - `pharmacy.allow_external_pharmacy` ❌ NOT DONE
 - `pharmacy.require_substitution_reason` ❌ NOT DONE
@@ -496,11 +496,13 @@ Deliverables:
 Start with the highest-value rules:
 
 - payment-before-service ✅ DONE — enforced in consultation, lab, pharmacy, and procedures controllers
-- currency ❌ NOT DONE — stored but not yet read by billing/display logic
+- currency ✅ DONE — `decimal_places` and `symbol_position` added to currencies; exchange rates module built; default currency pre-selects on new branch creation
 - dispensing batch tracking ✅ DONE — enforced in `PostDispense` action
-- FEFO ❌ NOT DONE — setting not in registry; batch suggestion not wired
+- FEFO 🟡 IN PROGRESS — next to implement
 - lab release rules ✅ DONE — enforced in `ReviewLabResultEntry` and `LaboratoryQueueController`
-- numbering prefix settings ❌ NOT DONE — prefixes stored but number generation not wired to read them
+- patient number prefix ✅ DONE — wired into `BranchScopedNumberGenerator::nextPatientNumber()`
+- receipt number prefix ✅ DONE — wired into `RecordVisitPayment::generateReceiptNumber()`
+- visit_number_prefix and lab_request_prefix ❌ REMOVED per user decision
 
 ### Phase 5: Audit And Safeguards ❌ NOT DONE
 
@@ -555,47 +557,33 @@ That new module should become the place where hospital admins control facility-s
 
 These are ordered by value and logical dependency.
 
-### Recommendation 1: Wire Numbering Prefixes Into Number Generation (Phase 4 Gap)
+### ~~Recommendation 1: Wire Numbering Prefixes Into Number Generation~~ ✅ DONE
 
-**Priority: High**
-
-The prefixes (`patient_number_prefix`, `visit_number_prefix`, `receipt_number_prefix`, `lab_request_prefix`) are stored but the code that generates patient numbers, visit numbers, receipts, and lab request IDs does not read from these settings. Until this is done, changing a prefix in General Settings has no effect.
-
-Steps:
-- Find the number generation logic for each entity
-- Replace hardcoded prefixes with a call to `TenantGeneralSettings::value($tenantId, 'patient_number_prefix')` (or equivalent)
-- Add a test that confirms the generated number uses the configured prefix
+- `visit_number_prefix` and `lab_request_prefix` removed per user decision
+- `patient_number_prefix` now read in `BranchScopedNumberGenerator::nextPatientNumber()` — `TenantGeneralSettings` injected, `tenantId` param added
+- `receipt_number_prefix` now read in `RecordVisitPayment::generateReceiptNumber()` — `TenantGeneralSettings` injected, prefix applied before timestamp
 
 ---
 
-### Recommendation 2: Wire Default Currency Into Billing And Display (Phase 4 Gap)
+### ~~Recommendation 2: Wire Default Currency Into Billing And Display~~ ✅ DONE
 
-**Priority: High**
-
-`default_currency_id` is stored but no billing, invoice, or display code reads it. Bills are presumably using a hardcoded or seeded currency. Until this is wired, the setting is cosmetic.
-
-Steps:
-- Identify where currency is resolved when creating bills, receipts, and invoices
-- Replace static currency resolution with `TenantGeneralSettings::value($tenantId, 'default_currency_id')`
-- Ensure the currency model is eagerly loaded where needed to avoid N+1 queries
+- `decimal_places` and `symbol_position` columns added to `currencies` migration and seeded for all currencies
+- `currency_exchange_rates` table, `CurrencyExchangeRate` model, `CurrencyExchangeRateController`, and frontend page at `currency/exchange-rates.tsx` all created
+- `FacilityBranchController::create()` now reads `default_currency_id` from tenant settings and pre-selects it in the branch creation form
+- `CurrencySeeder` expanded with 40+ currencies including major African and international currencies with correct symbols
 
 ---
 
-### Recommendation 3: Add Dedicated Permissions For General Settings (Phase 5 Gap)
+### ~~Recommendation 3: Add Dedicated Permissions For General Settings~~ ✅ DONE
 
-**Priority: High**
-
-The current permission check in `AdministrationController` uses a broad list of unrelated permissions (`facility_branches.view`, `allergens.view`, etc.) to gate the General Settings page. This is incorrect — a user might have none of those permissions but still need to manage general settings, or vice versa.
-
-Steps:
-- Add `general_settings.view` and `general_settings.update` permissions to the permissions seeder
-- Assign them to `admin` and `super_admin` roles
-- Update `AdministrationController` to use these specific permissions for the general settings methods
-- Add a test confirming unauthorized users cannot access or update settings
+- `general_settings.view` and `general_settings.update` added to `PermissionSeeder` catalog
+- `currency_exchange_rates.view/create/update/delete` also added
+- `AdministrationController::generalSettingsPermissions()` now returns only `['general_settings.view', 'general_settings.update']`
+- `super_admin` and `admin` inherit all permissions automatically
 
 ---
 
-### Recommendation 4: Add FEFO Setting And Enforce It In Batch Suggestion (Phase 4 Gap)
+### Recommendation 4: Add FEFO Setting And Enforce It In Batch Suggestion ← **CURRENT**
 
 **Priority: Medium**
 

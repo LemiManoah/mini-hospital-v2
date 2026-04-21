@@ -75,14 +75,36 @@ export default function DispenseShowPage({
         },
     ];
 
-    const addAllocation = (lineIndex: number) => {
+    const addAllocation = (lineIndex: number, inventoryItemId: string) => {
         const updated = [...postForm.data.items];
+        const currentAllocations = updated[lineIndex].allocations;
+        const allocatedSoFar = currentAllocations.reduce(
+            (sum, a) => sum + Number(a.quantity || 0),
+            0,
+        );
+        const dispensedQty = postableItems[lineIndex]?.dispensed_quantity ?? 0;
+        const remaining = Math.max(dispensedQty - allocatedSoFar, 0);
+
+        let newAllocation: { inventory_batch_id: string; quantity: string } = {
+            inventory_batch_id: '',
+            quantity: '',
+        };
+
+        if (pharmacyPolicy.enforce_fefo) {
+            const fefo = availableBatchBalances.find(
+                (b) => b.inventory_item_id === inventoryItemId,
+            );
+            if (fefo) {
+                newAllocation = {
+                    inventory_batch_id: fefo.inventory_batch_id,
+                    quantity: Math.min(remaining, fefo.quantity).toFixed(3),
+                };
+            }
+        }
+
         updated[lineIndex] = {
             ...updated[lineIndex],
-            allocations: [
-                ...updated[lineIndex].allocations,
-                { inventory_batch_id: '', quantity: '' },
-            ],
+            allocations: [...currentAllocations, newAllocation],
         };
         postForm.setData('items', updated);
     };
@@ -483,6 +505,7 @@ export default function DispenseShowPage({
                                                                   onClick={() =>
                                                                       addAllocation(
                                                                           lineIndex,
+                                                                          item.inventory_item_id,
                                                                       )
                                                                   }
                                                                   disabled={
@@ -511,6 +534,7 @@ export default function DispenseShowPage({
                                                               onClick={() =>
                                                                   addAllocation(
                                                                       lineIndex,
+                                                                      item.inventory_item_id,
                                                                   )
                                                               }
                                                               disabled={

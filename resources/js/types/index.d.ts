@@ -25,6 +25,7 @@ export interface NavItem {
 export interface SharedData {
     name: string;
     auth: Auth;
+    impersonation?: SharedImpersonation | null;
     flash?: {
         success?: string | null;
         error?: string | null;
@@ -59,6 +60,20 @@ export interface SharedActiveBranch {
     id: string;
     name: string;
     branch_code: string;
+}
+
+export interface SharedImpersonationUser {
+    id: string;
+    name: string;
+    email: string;
+    tenant_name?: string | null;
+}
+
+export interface SharedImpersonation {
+    active: boolean;
+    started_at: string | null;
+    real_user: SharedImpersonationUser;
+    target_user: SharedImpersonationUser;
 }
 
 export interface User {

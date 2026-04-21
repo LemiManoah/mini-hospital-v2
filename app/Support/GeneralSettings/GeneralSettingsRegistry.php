@@ -112,6 +112,14 @@ final class GeneralSettingsRegistry
                         'default' => true,
                     ],
                     [
+                        'field' => 'enforce_fefo',
+                        'key' => 'pharmacy.enforce_fefo',
+                        'label' => 'Enforce FEFO batch suggestion',
+                        'description' => 'When batch tracking is on, automatically pre-suggest the batch expiring soonest. Pharmacist can still override the suggestion.',
+                        'type' => 'boolean',
+                        'default' => true,
+                    ],
+                    [
                         'field' => 'allow_partial_dispense',
                         'key' => 'pharmacy.allow_partial_dispense',
                         'label' => 'Allow partial dispensing',

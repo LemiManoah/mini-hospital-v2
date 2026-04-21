@@ -8,7 +8,7 @@ use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Support\GeneralSettings\TenantGeneralSettings;
 
-final class BranchScopedNumberGenerator
+final readonly class BranchScopedNumberGenerator
 {
     public function __construct(private TenantGeneralSettings $settings) {}
 

@@ -151,6 +151,7 @@ export interface DispenseCreatePageProps {
 
 export interface PharmacyPolicy {
     batch_tracking_enabled: boolean;
+    enforce_fefo: boolean;
     allow_partial_dispense: boolean;
 }
 

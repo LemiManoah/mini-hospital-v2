@@ -1,11 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
     Table,
     TableBody,
@@ -151,167 +146,209 @@ export default function FacilityManagerShow({
                     </Button>
                 </div>
 
-                <FacilityManagerTenantHeader
-                    tenant={tenant}
-                />
+                <FacilityManagerTenantHeader tenant={tenant} />
 
                 <FacilityManagerNav tenantId={tenant.id} current="overview" />
 
                 <FacilityManagerMetrics metrics={metrics} />
 
-                <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-                    <div className="space-y-6">
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+                    <div className="min-w-0 space-y-6">
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader className="flex flex-row items-center justify-between gap-3">
-                                <CardTitle>Facility Snapshot</CardTitle>
-                                <div className="flex flex-wrap gap-2">
-                                    <Button variant="outline" size="sm" asChild>
-                                        <Link
-                                            href={`/facility-manager/facilities/${tenant.id}/branches`}
+                            <CardContent className="space-y-6 p-6">
+                                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                    <div className="space-y-1">
+                                        <h2 className="text-base font-semibold">
+                                            Facility Snapshot
+                                        </h2>
+                                        <p className="text-sm text-muted-foreground">
+                                            Key setup details for branches,
+                                            departments, users, and support
+                                            follow-up.
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
                                         >
-                                            Branches
-                                        </Link>
-                                    </Button>
-                                    <Button variant="outline" size="sm" asChild>
-                                        <Link
-                                            href={`/facility-manager/facilities/${tenant.id}/users`}
-                                        >
-                                            Users
-                                        </Link>
-                                    </Button>
-                                    <Button variant="outline" size="sm" asChild>
-                                        <Link
-                                            href={`/facility-manager/facilities/${tenant.id}/subscriptions`}
-                                        >
-                                            Subscriptions
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableBody>
-                                        <TableRow>
-                                            <TableHead className="w-44">
+                                            <Link
+                                                href={`/facility-manager/facilities/${tenant.id}/branches`}
+                                            >
                                                 Branches
-                                            </TableHead>
-                                            <TableCell>
-                                                {tenant.counts.branches}
-                                            </TableCell>
-                                            <TableCell className="text-muted-foreground">
-                                                {tenant.branches.length > 0
-                                                    ? tenant.branches
-                                                          .slice(0, 4)
-                                                          .map((branch) =>
-                                                              branch.branch_code
-                                                                  ? `${branch.name} (${branch.branch_code})`
-                                                                  : branch.name,
-                                                          )
-                                                          .join(', ')
-                                                    : 'No branches configured'}
-                                            </TableCell>
-                                        </TableRow>
-                                        <TableRow>
-                                            <TableHead>Departments</TableHead>
-                                            <TableCell>
-                                                {tenant.counts.departments}
-                                            </TableCell>
-                                            <TableCell className="text-muted-foreground">
-                                                {tenant.departments.length > 0
-                                                    ? tenant.departments
-                                                          .slice(0, 4)
-                                                          .map(
-                                                              (department) =>
-                                                                  department.name,
-                                                          )
-                                                          .join(', ')
-                                                    : 'No departments configured'}
-                                            </TableCell>
-                                        </TableRow>
-                                        <TableRow>
-                                            <TableHead>Users</TableHead>
-                                            <TableCell>
-                                                {tenant.counts.users}
-                                            </TableCell>
-                                            <TableCell className="text-muted-foreground">
-                                                {usage.verified_users} verified
-                                                accounts / last note{' '}
-                                                {formatDate(
-                                                    usage.last_support_note_at,
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <Link
+                                                href={`/facility-manager/facilities/${tenant.id}/users`}
+                                            >
+                                                Users
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <Link
+                                                href={`/facility-manager/facilities/${tenant.id}/subscriptions`}
+                                            >
+                                                Subscriptions
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 lg:grid-cols-3">
+                                    <div className="rounded-lg bg-muted/35 p-4">
+                                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                            Branches
+                                        </p>
+                                        <p className="mt-2 text-2xl font-semibold">
+                                            {tenant.counts.branches}
+                                        </p>
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                            {tenant.branches.length > 0
+                                                ? tenant.branches
+                                                      .slice(0, 4)
+                                                      .map((branch) =>
+                                                          branch.branch_code
+                                                              ? `${branch.name} (${branch.branch_code})`
+                                                              : branch.name,
+                                                      )
+                                                      .join(', ')
+                                                : 'No branches configured'}
+                                        </p>
+                                    </div>
+
+                                    <div className="rounded-lg bg-muted/35 p-4">
+                                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                            Departments
+                                        </p>
+                                        <p className="mt-2 text-2xl font-semibold">
+                                            {tenant.counts.departments}
+                                        </p>
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                            {tenant.departments.length > 0
+                                                ? tenant.departments
+                                                      .slice(0, 4)
+                                                      .map(
+                                                          (department) =>
+                                                              department.name,
+                                                      )
+                                                      .join(', ')
+                                                : 'No departments configured'}
+                                        </p>
+                                    </div>
+
+                                    <div className="rounded-lg bg-muted/35 p-4">
+                                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                            Users
+                                        </p>
+                                        <p className="mt-2 text-2xl font-semibold">
+                                            {tenant.counts.users}
+                                        </p>
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                            {usage.verified_users} verified
+                                            accounts
+                                        </p>
+                                        <p className="mt-1 text-sm text-muted-foreground">
+                                            Last note{' '}
+                                            {formatDate(
+                                                usage.last_support_note_at,
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
 
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader>
-                                <CardTitle>Recent Users</CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                            <CardContent className="space-y-4 p-6">
+                                <div className="space-y-1">
+                                    <h2 className="text-base font-semibold">
+                                        Recent Users
+                                    </h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Latest accounts created for this
+                                        facility.
+                                    </p>
+                                </div>
                                 {recent_users.length > 0 ? (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Name</TableHead>
-                                                <TableHead>Email</TableHead>
-                                                <TableHead>Position</TableHead>
-                                                <TableHead>Roles</TableHead>
-                                                <TableHead>Added</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {recent_users.map((user) => (
-                                                <TableRow key={user.id}>
-                                                    <TableCell className="font-medium">
-                                                        {user.name}
-                                                    </TableCell>
-                                                    <TableCell className="text-muted-foreground">
-                                                        {user.email}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {user.position ?? '-'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {user.roles.length >
-                                                            0 ? (
-                                                                user.roles
-                                                                    .slice(0, 2)
-                                                                    .map(
-                                                                        (
-                                                                            role,
-                                                                        ) => (
-                                                                            <Badge
-                                                                                key={
-                                                                                    role
-                                                                                }
-                                                                                variant="secondary"
-                                                                            >
-                                                                                {
-                                                                                    role
-                                                                                }
-                                                                            </Badge>
-                                                                        ),
-                                                                    )
-                                                            ) : (
-                                                                <span className="text-muted-foreground">
-                                                                    -
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-muted-foreground">
-                                                        {formatDate(
-                                                            user.created_at,
-                                                        )}
-                                                    </TableCell>
+                                    <div className="overflow-x-auto">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Name</TableHead>
+                                                    <TableHead>Email</TableHead>
+                                                    <TableHead>
+                                                        Position
+                                                    </TableHead>
+                                                    <TableHead>Roles</TableHead>
+                                                    <TableHead>Added</TableHead>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {recent_users.map((user) => (
+                                                    <TableRow key={user.id}>
+                                                        <TableCell className="min-w-40 font-medium">
+                                                            {user.name}
+                                                        </TableCell>
+                                                        <TableCell className="max-w-56 text-sm break-words text-muted-foreground">
+                                                            {user.email}
+                                                        </TableCell>
+                                                        <TableCell className="min-w-32">
+                                                            {user.position ??
+                                                                '-'}
+                                                        </TableCell>
+                                                        <TableCell className="min-w-32">
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {user.roles
+                                                                    .length >
+                                                                0 ? (
+                                                                    user.roles
+                                                                        .slice(
+                                                                            0,
+                                                                            2,
+                                                                        )
+                                                                        .map(
+                                                                            (
+                                                                                role,
+                                                                            ) => (
+                                                                                <Badge
+                                                                                    key={
+                                                                                        role
+                                                                                    }
+                                                                                    variant="secondary"
+                                                                                >
+                                                                                    {
+                                                                                        role
+                                                                                    }
+                                                                                </Badge>
+                                                                            ),
+                                                                        )
+                                                                ) : (
+                                                                    <span className="text-muted-foreground">
+                                                                        -
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="whitespace-nowrap text-muted-foreground">
+                                                            {formatDate(
+                                                                user.created_at,
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
                                         No users have been created for this
@@ -322,14 +359,16 @@ export default function FacilityManagerShow({
                         </Card>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="min-w-0 space-y-6">
                         <FacilityManagerSupportActions tenant={tenant} />
 
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader>
-                                <CardTitle>Current Subscription</CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                            <CardContent className="space-y-4 p-6">
+                                <div className="space-y-1">
+                                    <h2 className="text-base font-semibold">
+                                        Current Subscription
+                                    </h2>
+                                </div>
                                 <Table>
                                     <TableBody>
                                         <TableRow>
@@ -389,55 +428,66 @@ export default function FacilityManagerShow({
                         </Card>
 
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader>
-                                <CardTitle>
-                                    Recent Subscription History
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                            <CardContent className="space-y-4 p-6">
+                                <div className="space-y-1">
+                                    <h2 className="text-base font-semibold">
+                                        Recent Subscription History
+                                    </h2>
+                                </div>
                                 {subscription_history.length > 0 ? (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Date</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>Package</TableHead>
-                                                <TableHead>Trial Ends</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {subscription_history.map(
-                                                (subscription) => (
-                                                    <TableRow
-                                                        key={subscription.id}
-                                                    >
-                                                        <TableCell className="text-muted-foreground">
-                                                            {formatDate(
-                                                                subscription.created_at,
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="outline">
-                                                                {
-                                                                    subscription.status_label
-                                                                }
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {subscription.package
-                                                                ?.name ??
-                                                                'No package'}
-                                                        </TableCell>
-                                                        <TableCell className="text-muted-foreground">
-                                                            {formatDate(
-                                                                subscription.trial_ends_at,
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ),
-                                            )}
-                                        </TableBody>
-                                    </Table>
+                                    <div className="overflow-x-auto">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Date</TableHead>
+                                                    <TableHead>
+                                                        Status
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Package
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Trial Ends
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {subscription_history.map(
+                                                    (subscription) => (
+                                                        <TableRow
+                                                            key={
+                                                                subscription.id
+                                                            }
+                                                        >
+                                                            <TableCell className="whitespace-nowrap text-muted-foreground">
+                                                                {formatDate(
+                                                                    subscription.created_at,
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Badge variant="outline">
+                                                                    {
+                                                                        subscription.status_label
+                                                                    }
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                {subscription
+                                                                    .package
+                                                                    ?.name ??
+                                                                    'No package'}
+                                                            </TableCell>
+                                                            <TableCell className="whitespace-nowrap text-muted-foreground">
+                                                                {formatDate(
+                                                                    subscription.trial_ends_at,
+                                                                )}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ),
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
                                         No subscription history is available

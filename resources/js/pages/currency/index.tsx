@@ -86,7 +86,10 @@ export default function CurrencyIndex({
                             variant="outline"
                             className="border border-zinc-200 shadow-sm dark:border-zinc-800"
                         >
-                            <Link href="/currency-exchange-rates" className="gap-2">
+                            <Link
+                                href="/currency-exchange-rates"
+                                className="gap-2"
+                            >
                                 <TrendingUp className="h-4 w-4" />
                                 <span>Exchange Rates</span>
                             </Link>

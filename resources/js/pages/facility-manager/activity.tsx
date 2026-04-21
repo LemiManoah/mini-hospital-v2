@@ -85,11 +85,7 @@ export default function FacilityManagerActivity({
                     </Button>
                 </div>
 
-                <FacilityManagerTenantHeader
-                    tenant={tenant}
-                    title="Activity"
-                    description="Watch operational usage and the most recent actions recorded for this facility."
-                />
+                <FacilityManagerTenantHeader tenant={tenant} />
 
                 <FacilityManagerNav tenantId={tenant.id} current="activity" />
 

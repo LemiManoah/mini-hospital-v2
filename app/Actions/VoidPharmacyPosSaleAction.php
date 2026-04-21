@@ -53,7 +53,7 @@ final readonly class VoidPharmacyPosSaleAction
                         'source_document_id' => $sale->id,
                         'source_line_type' => PharmacyPosSaleItem::class,
                         'source_line_id' => $saleItem->id,
-                        'notes' => 'Voided — stock reversed',
+                        'notes' => 'Voided - stock reversed',
                         'occurred_at' => now(),
                         'created_by' => Auth::id(),
                     ]);

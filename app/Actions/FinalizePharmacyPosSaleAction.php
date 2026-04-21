@@ -224,6 +224,7 @@ final readonly class FinalizePharmacyPosSaleAction
             if ($available <= 0) {
                 continue;
             }
+
             if ($needed <= 0.0005) {
                 continue;
             }

@@ -133,11 +133,7 @@ export default function FacilityManagerUsers({
                     </Button>
                 </div>
 
-                <FacilityManagerTenantHeader
-                    tenant={tenant}
-                    title="Users"
-                    description="Monitor account verification, staff activity, and branch assignment coverage."
-                />
+                <FacilityManagerTenantHeader tenant={tenant} />
 
                 <FacilityManagerNav tenantId={tenant.id} current="users" />
 
@@ -164,7 +160,7 @@ export default function FacilityManagerUsers({
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-border bg-background p-4">
-                    <Table className="min-w-[1100px]">
+                    <Table className="min-w-[920px]">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>User</TableHead>
@@ -180,12 +176,12 @@ export default function FacilityManagerUsers({
                             {users.data.length > 0 ? (
                                 users.data.map((user) => (
                                     <TableRow key={user.id}>
-                                        <TableCell>
+                                        <TableCell className="min-w-56">
                                             <div className="flex flex-col gap-1">
                                                 <span className="font-medium">
                                                     {user.name}
                                                 </span>
-                                                <span className="text-xs text-muted-foreground">
+                                                <span className="text-xs break-words text-muted-foreground">
                                                     {user.email}
                                                 </span>
                                                 <span className="text-xs text-muted-foreground">
@@ -194,7 +190,7 @@ export default function FacilityManagerUsers({
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="min-w-36">
                                             {user.position ?? 'Not set'}
                                         </TableCell>
                                         <TableCell>
@@ -202,7 +198,7 @@ export default function FacilityManagerUsers({
                                                 ? 'Active'
                                                 : 'Inactive'}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="min-w-44">
                                             <div className="flex flex-col gap-1 text-sm">
                                                 {user.branches.length > 0 ? (
                                                     user.branches.map(
@@ -224,7 +220,7 @@ export default function FacilityManagerUsers({
                                                 )}
                                             </div>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="min-w-40">
                                             <div className="flex flex-wrap gap-1">
                                                 {user.roles.length > 0
                                                     ? user.roles.map((role) => (
@@ -238,14 +234,14 @@ export default function FacilityManagerUsers({
                                                     : 'No roles'}
                                             </div>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="whitespace-nowrap">
                                             {user.email_verified_at
                                                 ? formatDate(
                                                       user.email_verified_at,
                                                   )
                                                 : 'Not verified'}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="whitespace-nowrap">
                                             {formatDate(user.last_login_at)}
                                         </TableCell>
                                     </TableRow>

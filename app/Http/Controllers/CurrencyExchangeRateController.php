@@ -38,7 +38,7 @@ final readonly class CurrencyExchangeRateController implements HasMiddleware
                 'fromCurrency:id,code,name,symbol',
                 'toCurrency:id,code,name,symbol',
             ])
-            ->orderByDesc('effective_date')
+            ->latest('effective_date')
             ->orderBy('from_currency_id')
             ->get();
 

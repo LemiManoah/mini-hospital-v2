@@ -7,7 +7,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { usePermissions } from '@/lib/permissions';
-import { Form } from '@inertiajs/react';
+import { Form, Link } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 
 import { type FacilityManagerTenantSummary } from '../types';
@@ -37,18 +37,14 @@ export function FacilityManagerSupportActions({
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-                <Form
-                    method="post"
-                    action={`/facility-manager/facilities/${tenant.id}/switch`}
-                    className="w-full"
-                >
-                    {() => (
-                        <Button className="w-full">
-                            <ShieldCheck className="h-4 w-4" />
-                            Switch Into Tenant
-                        </Button>
-                    )}
-                </Form>
+                <Button className="w-full" asChild>
+                    <Link
+                        href={`/facility-manager/impersonation?facility_id=${tenant.id}`}
+                    >
+                        <ShieldCheck className="h-4 w-4" />
+                        Impersonate Facility User
+                    </Link>
+                </Button>
 
                 <Form
                     method="post"

@@ -3,10 +3,23 @@ import DeleteConfirmationModal from '@/components/delete-confirmation-modal';
 import InputError from '@/components/input-error';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
@@ -25,7 +38,10 @@ interface ExchangeRatesPageProps {
     currencies: Currency[];
 }
 
-export default function ExchangeRates({ rates, currencies }: ExchangeRatesPageProps) {
+export default function ExchangeRates({
+    rates,
+    currencies,
+}: ExchangeRatesPageProps) {
     const { hasPermission } = usePermissions();
 
     const currencyOptions = currencies.map((c) => ({
@@ -58,14 +74,19 @@ export default function ExchangeRates({ rates, currencies }: ExchangeRatesPagePr
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                         <TrendingUp className="h-6 w-6 text-indigo-500" />
-                        <h1 className="text-2xl font-bold tracking-tight">Currency Exchange Rates</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Currency Exchange Rates
+                        </h1>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        Define conversion rates between currencies for your facility. Rates are effective from the date specified.
+                        Define conversion rates between currencies for your
+                        facility. Rates are effective from the date specified.
                     </p>
                     <div className="mt-1">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={CurrencyController.index.url()}>← Back to Currencies</Link>
+                            <Link href={CurrencyController.index.url()}>
+                                ← Back to Currencies
+                            </Link>
                         </Button>
                     </div>
                 </div>
@@ -73,47 +94,73 @@ export default function ExchangeRates({ rates, currencies }: ExchangeRatesPagePr
                 {hasPermission('currency_exchange_rates.create') ? (
                     <Card className="border-none shadow-sm ring-1 ring-border/50">
                         <CardHeader>
-                            <CardTitle className="text-base">Add Exchange Rate</CardTitle>
+                            <CardTitle className="text-base">
+                                Add Exchange Rate
+                            </CardTitle>
                             <CardDescription>
-                                Set how many units of the target currency equal one unit of the source currency.
+                                Set how many units of the target currency equal
+                                one unit of the source currency.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="from_currency_id" className="text-sm font-semibold">
+                                    <Label
+                                        htmlFor="from_currency_id"
+                                        className="text-sm font-semibold"
+                                    >
                                         From Currency
                                     </Label>
                                     <SearchableSelect
                                         options={currencyOptions}
                                         value={form.data.from_currency_id}
-                                        onValueChange={(value) => form.setData('from_currency_id', value)}
+                                        onValueChange={(value) =>
+                                            form.setData(
+                                                'from_currency_id',
+                                                value,
+                                            )
+                                        }
                                         inputId="from_currency_id"
                                         placeholder="Source currency"
                                         emptyMessage="No currencies found."
                                         allowClear
                                     />
-                                    <InputError message={form.errors.from_currency_id} />
+                                    <InputError
+                                        message={form.errors.from_currency_id}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="to_currency_id" className="text-sm font-semibold">
+                                    <Label
+                                        htmlFor="to_currency_id"
+                                        className="text-sm font-semibold"
+                                    >
                                         To Currency
                                     </Label>
                                     <SearchableSelect
                                         options={currencyOptions}
                                         value={form.data.to_currency_id}
-                                        onValueChange={(value) => form.setData('to_currency_id', value)}
+                                        onValueChange={(value) =>
+                                            form.setData(
+                                                'to_currency_id',
+                                                value,
+                                            )
+                                        }
                                         inputId="to_currency_id"
                                         placeholder="Target currency"
                                         emptyMessage="No currencies found."
                                         allowClear
                                     />
-                                    <InputError message={form.errors.to_currency_id} />
+                                    <InputError
+                                        message={form.errors.to_currency_id}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="rate" className="text-sm font-semibold">
+                                    <Label
+                                        htmlFor="rate"
+                                        className="text-sm font-semibold"
+                                    >
                                         Rate
                                     </Label>
                                     <Input
@@ -122,33 +169,56 @@ export default function ExchangeRates({ rates, currencies }: ExchangeRatesPagePr
                                         step="0.000001"
                                         min="0.000001"
                                         value={form.data.rate}
-                                        onChange={(e) => form.setData('rate', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData('rate', e.target.value)
+                                        }
                                         placeholder="e.g. 3800.5"
                                     />
                                     <InputError message={form.errors.rate} />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="effective_date" className="text-sm font-semibold">
+                                    <Label
+                                        htmlFor="effective_date"
+                                        className="text-sm font-semibold"
+                                    >
                                         Effective Date
                                     </Label>
                                     <Input
                                         id="effective_date"
                                         type="date"
                                         value={form.data.effective_date}
-                                        onChange={(e) => form.setData('effective_date', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'effective_date',
+                                                e.target.value,
+                                            )
+                                        }
                                     />
-                                    <InputError message={form.errors.effective_date} />
+                                    <InputError
+                                        message={form.errors.effective_date}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2 sm:col-span-2 lg:col-span-2">
-                                    <Label htmlFor="notes" className="text-sm font-semibold">
-                                        Notes <span className="font-normal text-muted-foreground">(optional)</span>
+                                    <Label
+                                        htmlFor="notes"
+                                        className="text-sm font-semibold"
+                                    >
+                                        Notes{' '}
+                                        <span className="font-normal text-muted-foreground">
+                                            (optional)
+                                        </span>
                                     </Label>
                                     <Input
                                         id="notes"
                                         value={form.data.notes}
-                                        onChange={(e) => form.setData('notes', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'notes',
+                                                e.target.value,
+                                            )
+                                        }
                                         placeholder="e.g. Bank of Uganda mid-rate"
                                     />
                                     <InputError message={form.errors.notes} />
@@ -156,7 +226,10 @@ export default function ExchangeRates({ rates, currencies }: ExchangeRatesPagePr
                             </div>
 
                             <div className="mt-4">
-                                <Button onClick={handleSubmit} disabled={form.processing}>
+                                <Button
+                                    onClick={handleSubmit}
+                                    disabled={form.processing}
+                                >
                                     {form.processing ? (
                                         <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
@@ -171,7 +244,9 @@ export default function ExchangeRates({ rates, currencies }: ExchangeRatesPagePr
 
                 <Card className="border-none shadow-sm ring-1 ring-border/50">
                     <CardHeader>
-                        <CardTitle className="text-base">Configured Rates</CardTitle>
+                        <CardTitle className="text-base">
+                            Configured Rates
+                        </CardTitle>
                         <CardDescription>
                             {rates.length === 0
                                 ? 'No exchange rates configured yet.'
@@ -183,24 +258,26 @@ export default function ExchangeRates({ rates, currencies }: ExchangeRatesPagePr
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="text-xs font-semibold uppercase tracking-wider">
+                                        <TableHead className="text-xs font-semibold tracking-wider uppercase">
                                             From
                                         </TableHead>
                                         <TableHead className="w-8" />
-                                        <TableHead className="text-xs font-semibold uppercase tracking-wider">
+                                        <TableHead className="text-xs font-semibold tracking-wider uppercase">
                                             To
                                         </TableHead>
-                                        <TableHead className="text-xs font-semibold uppercase tracking-wider">
+                                        <TableHead className="text-xs font-semibold tracking-wider uppercase">
                                             Rate
                                         </TableHead>
-                                        <TableHead className="text-xs font-semibold uppercase tracking-wider">
+                                        <TableHead className="text-xs font-semibold tracking-wider uppercase">
                                             Effective Date
                                         </TableHead>
-                                        <TableHead className="text-xs font-semibold uppercase tracking-wider">
+                                        <TableHead className="text-xs font-semibold tracking-wider uppercase">
                                             Notes
                                         </TableHead>
-                                        {hasPermission('currency_exchange_rates.delete') ? (
-                                            <TableHead className="w-[80px] text-right text-xs font-semibold uppercase tracking-wider">
+                                        {hasPermission(
+                                            'currency_exchange_rates.delete',
+                                        ) ? (
+                                            <TableHead className="w-[80px] text-right text-xs font-semibold tracking-wider uppercase">
                                                 Actions
                                             </TableHead>
                                         ) : null}
@@ -208,7 +285,10 @@ export default function ExchangeRates({ rates, currencies }: ExchangeRatesPagePr
                                 </TableHeader>
                                 <TableBody>
                                     {rates.map((rate) => (
-                                        <TableRow key={rate.id} className="group">
+                                        <TableRow
+                                            key={rate.id}
+                                            className="group"
+                                        >
                                             <TableCell>
                                                 <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                                                     {rate.from_currency.code}
@@ -229,18 +309,25 @@ export default function ExchangeRates({ rates, currencies }: ExchangeRatesPagePr
                                                 </span>
                                             </TableCell>
                                             <TableCell className="font-mono text-sm text-indigo-600 dark:text-indigo-400">
-                                                {rate.rate.toLocaleString(undefined, {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 6,
-                                                })}
+                                                {rate.rate.toLocaleString(
+                                                    undefined,
+                                                    {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 6,
+                                                    },
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-sm">
-                                                {new Date(rate.effective_date).toLocaleDateString()}
+                                                {new Date(
+                                                    rate.effective_date,
+                                                ).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                                                 {rate.notes ?? '—'}
                                             </TableCell>
-                                            {hasPermission('currency_exchange_rates.delete') ? (
+                                            {hasPermission(
+                                                'currency_exchange_rates.delete',
+                                            ) ? (
                                                 <TableCell className="text-right">
                                                     <DeleteConfirmationModal
                                                         title="Remove Exchange Rate"
@@ -249,7 +336,11 @@ export default function ExchangeRates({ rates, currencies }: ExchangeRatesPagePr
                                                             url: `/currency-exchange-rates/${rate.id}`,
                                                             method: 'delete',
                                                         }}
-                                                        onSuccess={() => toast.success('Exchange rate removed.')}
+                                                        onSuccess={() =>
+                                                            toast.success(
+                                                                'Exchange rate removed.',
+                                                            )
+                                                        }
                                                         trigger={
                                                             <Button
                                                                 variant="destructive"

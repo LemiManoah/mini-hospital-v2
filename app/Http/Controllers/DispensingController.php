@@ -388,13 +388,14 @@ final readonly class DispensingController implements HasMiddleware
     }
 
     /**
-     * @return array{batch_tracking_enabled: bool, allow_partial_dispense: bool}
+     * @return array{batch_tracking_enabled: bool, enforce_fefo: bool, allow_partial_dispense: bool}
      */
     private function pharmacyPolicy(?string $tenantId): array
     {
         if (! is_string($tenantId) || $tenantId === '') {
             return [
                 'batch_tracking_enabled' => true,
+                'enforce_fefo' => true,
                 'allow_partial_dispense' => true,
             ];
         }
@@ -403,6 +404,10 @@ final readonly class DispensingController implements HasMiddleware
             'batch_tracking_enabled' => $this->tenantGeneralSettings->boolean(
                 $tenantId,
                 'enable_batch_tracking_when_dispensing',
+            ),
+            'enforce_fefo' => $this->tenantGeneralSettings->boolean(
+                $tenantId,
+                'enforce_fefo',
             ),
             'allow_partial_dispense' => $this->tenantGeneralSettings->boolean(
                 $tenantId,

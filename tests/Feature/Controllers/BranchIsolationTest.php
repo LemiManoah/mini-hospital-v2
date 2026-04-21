@@ -488,8 +488,15 @@ it('forbids non-support users from opening the facility switcher', function (): 
     $response->assertForbidden();
 });
 
-it('forbids non-support users from switching facility context', function (): void {
+it('forbids non-support users from starting impersonation', function (): void {
     [$tenant] = createTenantWithBranches();
+    $targetUser = User::query()->create([
+        'tenant_id' => $tenant->id,
+        'email' => 'impersonation.target@hospital.com',
+        'password' => Hash::make('password'),
+        'is_support' => false,
+    ]);
+    $targetUser->forceFill(['email_verified_at' => now()])->save();
 
     $user = User::query()->create([
         'tenant_id' => null,
@@ -499,16 +506,39 @@ it('forbids non-support users from switching facility context', function (): voi
     ]);
     $user->forceFill(['email_verified_at' => now()])->save();
 
-    $response = $this->actingAs($user)->post(route('facility-manager.facilities.switch', $tenant->id));
+    $response = $this->actingAs($user)->post(route('facility-manager.impersonation.start', $targetUser));
 
     $response->assertForbidden();
 });
 
-it('allows support users to switch tenant context and clears active branch selection', function (): void {
+it('allows support users to start impersonation and swaps branch context to the target user', function (): void {
     $this->seed(PermissionSeeder::class);
 
     [$sourceTenant, $branches] = createTenantWithBranches();
-    [$targetTenant] = createTenantWithBranches();
+    [$targetTenant, $targetBranches] = createTenantWithBranches(1);
+
+    $targetStaff = Staff::query()->create([
+        'tenant_id' => $targetTenant->id,
+        'employee_number' => 'TGT-001',
+        'first_name' => 'Target',
+        'last_name' => 'User',
+        'email' => 'target.user@hospital.com',
+        'type' => StaffType::MEDICAL,
+        'hire_date' => now()->toDateString(),
+        'is_active' => true,
+    ]);
+    $targetStaff->branches()->sync([
+        $targetBranches[0]->id => ['is_primary_location' => true],
+    ]);
+
+    $targetUser = User::query()->create([
+        'tenant_id' => $targetTenant->id,
+        'staff_id' => $targetStaff->id,
+        'email' => 'target.user.account@hospital.com',
+        'password' => Hash::make('password'),
+        'is_support' => false,
+    ]);
+    $targetUser->forceFill(['email_verified_at' => now()])->save();
 
     $supportUser = User::query()->create([
         'tenant_id' => $sourceTenant->id,
@@ -517,19 +547,21 @@ it('allows support users to switch tenant context and clears active branch selec
         'is_support' => true,
     ]);
     $supportUser->forceFill(['email_verified_at' => now()])->save();
-    $supportUser->givePermissionTo('tenants.update');
+    $supportUser->givePermissionTo('tenants.impersonate');
 
     $response = $this
         ->withSession(['active_branch_id' => $branches[0]->id])
         ->actingAs($supportUser)
-        ->post(route('facility-manager.facilities.switch', $targetTenant->id));
+        ->post(route('facility-manager.impersonation.start', $targetUser));
 
-    $response->assertRedirectToRoute('branch-switcher.index');
-    $response->assertSessionMissing('active_branch_id');
-    $response->assertSessionHas('success', 'Switched to '.$targetTenant->name);
+    $response->assertRedirectToRoute('dashboard');
+    $response->assertSessionHas('active_branch_id', $targetBranches[0]->id);
+    $response->assertSessionHas('success', 'Now acting as '.$targetUser->name.'.');
+    $response->assertSessionHas('impersonation.real_user_id', $supportUser->id);
+    $response->assertSessionHas('impersonation.target_user_id', $targetUser->id);
 
     $this->assertDatabaseHas('users', [
         'id' => $supportUser->id,
-        'tenant_id' => $targetTenant->id,
+        'tenant_id' => $sourceTenant->id,
     ]);
 });

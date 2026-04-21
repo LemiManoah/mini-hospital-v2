@@ -87,6 +87,7 @@ export default function GeneralSettings({
         enable_batch_tracking_when_dispensing: Boolean(
             values.enable_batch_tracking_when_dispensing,
         ),
+        enforce_fefo: Boolean(values.enforce_fefo),
         allow_partial_dispense: Boolean(values.allow_partial_dispense),
         require_review_before_lab_release: Boolean(
             values.require_review_before_lab_release,

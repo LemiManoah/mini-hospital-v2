@@ -63,7 +63,7 @@ final class PermissionSeeder extends Seeder
             'appointment_modes' => ['view', 'create', 'update', 'delete'],
             'triage' => ['view', 'create', 'update'],
             'consultations' => ['view', 'create', 'update'],
-            'tenants' => ['view', 'create', 'update', 'delete', 'onboard', 'manage_subscription'],
+            'tenants' => ['view', 'create', 'update', 'delete', 'onboard', 'manage_subscription', 'impersonate'],
             'facility_branches' => ['view', 'create', 'update', 'delete'],
             'staff_positions' => ['view', 'create', 'update', 'delete'],
             'staff' => ['view', 'create', 'update', 'delete'],

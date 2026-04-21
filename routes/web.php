@@ -24,6 +24,7 @@ use App\Http\Controllers\DoctorConsultationPrescriptionController;
 use App\Http\Controllers\DoctorScheduleController;
 use App\Http\Controllers\DoctorScheduleExceptionController;
 use App\Http\Controllers\FacilityBranchController;
+use App\Http\Controllers\FacilityImpersonationController;
 use App\Http\Controllers\FacilityManagerController;
 use App\Http\Controllers\FacilityServiceController;
 use App\Http\Controllers\GoodsReceiptController;
@@ -120,6 +121,8 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
         ->prefix('facility-manager')
         ->name('facility-manager.')
         ->group(function (): void {
+            Route::get('impersonation', [FacilityImpersonationController::class, 'index'])->name('impersonation.index');
+            Route::post('impersonation/users/{user}', [FacilityImpersonationController::class, 'start'])->name('impersonation.start');
             Route::get('dashboard', [FacilityManagerController::class, 'dashboard'])->name('dashboard');
             Route::get('facilities', [FacilityManagerController::class, 'index'])->name('facilities.index');
             Route::get('facilities/{tenant}', [FacilityManagerController::class, 'show'])->name('facilities.show');
@@ -129,7 +132,6 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
             Route::get('facilities/{tenant}/activity', [FacilityManagerController::class, 'activity'])->name('facilities.activity');
             Route::get('facilities/{tenant}/support-notes', [FacilityManagerController::class, 'notes'])->name('facilities.notes');
             Route::post('facilities/{tenant}/support-notes', [FacilityManagerController::class, 'storeNote'])->name('facilities.notes.store');
-            Route::post('facilities/{tenant}/switch', [FacilityManagerController::class, 'switch'])->name('facilities.switch');
             Route::post('facilities/{tenant}/activate-subscription', [FacilityManagerController::class, 'activateSubscription'])->name('facilities.activate-subscription');
             Route::post('facilities/{tenant}/mark-subscription-past-due', [FacilityManagerController::class, 'markSubscriptionPastDue'])->name('facilities.mark-subscription-past-due');
             Route::post('facilities/{tenant}/complete-onboarding', [FacilityManagerController::class, 'completeOnboarding'])->name('facilities.complete-onboarding');
@@ -324,6 +326,8 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::post('facility-manager/impersonation/stop', [FacilityImpersonationController::class, 'stop'])
+        ->name('facility-manager.impersonation.stop');
     Route::get('onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
     Route::patch('onboarding/profile', [OnboardingController::class, 'updateProfile'])->name('onboarding.profile.update');
     Route::post('onboarding/branch', [OnboardingController::class, 'storeBranch'])->name('onboarding.branch.store');

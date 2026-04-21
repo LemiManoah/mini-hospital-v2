@@ -391,7 +391,7 @@ describe('Core permission pages', function (): void {
 });
 
 describe('Tenant support and onboarding permissions', function (): void {
-    it('forbids and allows support users opening the facility switcher based on tenants.view permission', function (): void {
+    it('forbids and allows support users opening facility manager based on tenants.view permission', function (): void {
         createPermissionTenant();
         [$supportTenant] = createPermissionTenant();
 
@@ -408,25 +408,26 @@ describe('Tenant support and onboarding permissions', function (): void {
             ->assertOk();
     });
 
-    it('forbids and allows support users switching tenant context based on tenants.update permission', function (): void {
+    it('forbids and allows support users starting impersonation based on tenants.impersonate permission', function (): void {
         [$sourceTenant] = createPermissionTenant();
         [$targetTenant] = createPermissionTenant();
 
         $supportUser = createPermissionUser($sourceTenant, isSupport: true);
+        $targetUser = createPermissionUser($targetTenant, isSupport: false);
 
         $this->actingAs($supportUser)
-            ->post(route('facility-manager.facilities.switch', $targetTenant->id))
+            ->post(route('facility-manager.impersonation.start', $targetUser))
             ->assertForbidden();
 
-        $supportUser->givePermissionTo('tenants.update');
+        $supportUser->givePermissionTo('tenants.impersonate');
 
         $response = $this->actingAs($supportUser)
-            ->post(route('facility-manager.facilities.switch', $targetTenant->id));
+            ->post(route('facility-manager.impersonation.start', $targetUser));
 
-        $response->assertRedirectToRoute('branch-switcher.index');
-        $response->assertSessionHas('success', 'Switched to '.$targetTenant->name);
-
-        expect($supportUser->fresh()?->tenant_id)->toBe($targetTenant->id);
+        $response->assertRedirectToRoute('dashboard');
+        $response->assertSessionHas('success', 'Now acting as '.$targetUser->name.'.');
+        $response->assertSessionHas('impersonation.real_user_id', $supportUser->id);
+        $response->assertSessionHas('impersonation.target_user_id', $targetUser->id);
     });
 
     it('forbids and allows onboarding access based on tenants.onboard permission', function (): void {

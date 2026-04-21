@@ -41,6 +41,8 @@ This is different from:
 - logging in manually with another user account
 - editing the support user permanently to look like the tenant user
 
+The old tenant-switch backend should stay removed once impersonation exists, so support work does not split between two overlapping patterns.
+
 The point is to let support see:
 
 - what the tenant user sees
@@ -125,7 +127,13 @@ Relevant files:
 - [app/Http/Controllers/FacilityManagerController.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Controllers/FacilityManagerController.php)
 - [resources/js/pages/facility-manager/users.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/users.tsx)
 
-This is the correct place to start impersonation from.
+This is still the correct support area for impersonation, but the best entry point is no longer a single facility page.
+
+The cleaner support workflow is:
+
+- support lands on a cross-facility user directory
+- support filters by facility or role
+- support impersonates the exact user they need
 
 That means impersonation does **not** need a separate support app or a separate switcher surface.
 
@@ -133,13 +141,25 @@ That means impersonation does **not** need a separate support app or a separate 
 
 ## 4) What the Workflow Should Be
 
-### Step 1: Support Opens a Facility
+### Step 1: Support Lands on the User Directory
 
-The support user opens a tenant in Facility Manager and goes to the users page.
+After login, a support user should land on a Facility Manager impersonation page that lists users across facilities.
+
+That page should allow filtering by:
+
+- facility
+- role
+- search
+
+This is better than forcing support to open one facility first, because many support tasks begin with:
+
+- "find the dentist account in Clinic X"
+- "find the cashier role in Facility Y"
+- "find the pharmacy user reporting the issue"
 
 ### Step 2: Support Clicks Impersonate
 
-From a user row, support clicks:
+From a user card or row, support clicks:
 
 - `Impersonate`
 
@@ -155,7 +175,17 @@ Why:
 
 The backend stores impersonation state in session and begins resolving the current app user as the impersonated user.
 
-### Step 4: Banner Appears Everywhere
+### Step 4: Support Enters That User's Workspace
+
+After impersonation starts, the app should move support into the selected user's facility flow.
+
+That means:
+
+- if the user needs onboarding, open onboarding
+- if the user has one accessible branch, open the normal dashboard
+- if the user has multiple accessible branches, open the branch selector
+
+### Step 5: Banner Appears Everywhere
 
 The app should clearly show:
 
@@ -163,7 +193,7 @@ The app should clearly show:
 - which tenant/user is active
 - a `Stop Impersonation` action
 
-### Step 5: Support Troubleshoots Normally
+### Step 6: Support Troubleshoots Normally
 
 Support can then reproduce:
 
@@ -173,7 +203,7 @@ Support can then reproduce:
 - workflow problems
 - onboarding or module packaging problems
 
-### Step 6: Support Stops Impersonation
+### Step 7: Support Stops Impersonation
 
 The app ends impersonation and returns to the real support identity.
 
@@ -318,14 +348,16 @@ Put impersonation under Facility Manager.
 
 Recommended routes:
 
-- `POST /facility-manager/facilities/{tenant}/users/{user}/impersonate`
+- `GET /facility-manager/impersonation`
+- `POST /facility-manager/impersonation/users/{user}`
 - `POST /facility-manager/impersonation/stop`
 
-These names fit the current support architecture better than reviving a separate switcher section.
+These names fit the current support architecture better than reviving a separate switcher section or keeping the old tenant-switch backend alive.
 
 Suggested route names:
 
-- `facility-manager.facilities.users.impersonate`
+- `facility-manager.impersonation.index`
+- `facility-manager.impersonation.start`
 - `facility-manager.impersonation.stop`
 
 ---
@@ -340,31 +372,33 @@ Recommended controller:
 
 Actions:
 
+- `index`
 - `start`
 - `stop`
 
 ### Actions / Services
 
-Recommended services:
+Recommended core pieces:
 
-- `StartUserImpersonation`
-- `StopUserImpersonation`
+- `ImpersonationContext`
+- `ApplyImpersonationContext`
 
-`StartUserImpersonation` should:
+The start flow should:
 
 - verify the actor
-- verify permission
-- verify target belongs to tenant
+- verify `tenants.impersonate`
+- verify target belongs to a tenant
 - write impersonation session values
 - clear branch context
-- log start event
+- resolve the target user's initial branch state
+- log start event later when audit logging is added
 
-`StopUserImpersonation` should:
+The stop flow should:
 
 - remove impersonation session values
 - clear branch context
 - restore real support user context
-- log end event
+- log end event later when audit logging is added
 
 ### Middleware
 
@@ -414,19 +448,31 @@ That is the minimum operational safety line.
 
 ## 12) Recommended Frontend Behavior
 
-### 12.1 Facility Manager Users Page
+### 12.1 Cross-Facility User Directory
 
-The users table should gain an:
+The first-class entry point should be a dedicated support page such as:
 
-- `Impersonate`
+- `facility-manager/impersonation`
 
-action per row where allowed.
+That page should:
 
-Best place:
+- list users across facilities
+- filter by facility
+- filter by role
+- support search
+- provide an `Impersonate` action per user
 
-- [resources/js/pages/facility-manager/users.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/users.tsx)
+This is a better daily support workflow than forcing support to browse into one facility first.
 
-### 12.2 Global Banner
+### 12.2 Facility-Scoped Entry Links
+
+Facility pages can still provide shortcuts into impersonation, but they should deep-link into the same directory workflow instead of reviving the removed tenant-switch pattern.
+
+Example:
+
+- `/facility-manager/impersonation?facility_id={tenant}`
+
+### 12.3 Global Banner
 
 When impersonation is active, every page should show a clear banner.
 
@@ -438,7 +484,7 @@ The banner should say:
 
 This should be visible on all app pages until impersonation ends.
 
-### 12.3 Shared Inertia Payload
+### 12.4 Shared Inertia Payload
 
 Add impersonation data in:
 
@@ -499,6 +545,13 @@ Later, if policy demands it, a reason can be added as a phase-two enhancement.
 
 The old support tenant-switch flow changes context at a tenant level.
 
+That backend path should remain removed once impersonation exists, otherwise support ends up with:
+
+- one path that mutates tenant context
+- another path that impersonates a real user
+
+That creates confusion and weakens auditability.
+
 Impersonation should be cleaner and more explicit:
 
 - specific tenant user
@@ -547,19 +600,34 @@ Why next:
 
 - this makes impersonation affect the whole app consistently
 
-### Phase 3: Facility Manager UI
+### Phase 3: Support User Directory
 
 Deliverables:
 
-- `Impersonate` action on Facility Manager users page
-- stop impersonation action
+- support login redirect goes to impersonation directory
+- cross-facility user listing
+- facility filter
+- role filter
+- `Impersonate` action
+
+Why then:
+
+- gives support the real operational entry point
+- matches how support actually searches for accounts in production
+
+### Phase 4: Facility Manager UI Integration
+
+Deliverables:
+
+- links from facility pages into the impersonation directory
+- optional facility-prefiltered entry from a facility overview
 - initial success/error feedback
 
 Why then:
 
-- gives support a usable entry point after the backend is stable
+- keeps facility pages aligned with the new directory-first workflow
 
-### Phase 4: Global Banner
+### Phase 5: Global Banner
 
 Deliverables:
 
@@ -571,7 +639,7 @@ Why then:
 
 - makes the feature safe and obvious in daily use
 
-### Phase 5: Audit Logging
+### Phase 6: Audit Logging
 
 Deliverables:
 
@@ -584,7 +652,7 @@ Why then:
 - audit should exist before broad use
 - but can be added after the first technical slice if needed
 
-### Phase 6: Hardening and Policy Refinement
+### Phase 7: Hardening and Policy Refinement
 
 Deliverables:
 
@@ -608,9 +676,10 @@ If I were implementing this next in the current codebase, I would do it in this 
 3. add start/stop controller and routes under Facility Manager
 4. add middleware to apply impersonated identity
 5. add shared Inertia impersonation payload
-6. add global impersonation banner
-7. add impersonate action on Facility Manager users page
-8. add audit log table and persistence
+6. add support user directory with facility and role filters
+7. add global impersonation banner
+8. add facility-prefiltered links from Facility Manager pages
+9. add audit log table and persistence
 
 That gives you a clean and support-friendly MVP.
 
@@ -620,7 +689,8 @@ That gives you a clean and support-friendly MVP.
 
 Support impersonation should be considered complete when:
 
-- support users can impersonate a tenant user from Facility Manager
+- support users land on a cross-facility impersonation directory after login
+- support users can impersonate a tenant user from that directory
 - target user does not need to be online
 - the app clearly shows impersonation is active
 - support can stop impersonation easily
@@ -645,7 +715,8 @@ So the right rollout is:
 
 1. backend impersonation engine
 2. middleware and shared context
-3. Facility Manager entry point
+3. cross-facility user directory
 4. global banner
-5. audit logging
-6. later hardening if needed
+5. facility-page integration
+6. audit logging
+7. later hardening if needed

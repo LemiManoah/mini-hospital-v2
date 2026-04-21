@@ -18,7 +18,6 @@ use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Models\TenantSupportNote;
 use App\Models\User;
-use App\Services\SwitchTenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -30,11 +29,10 @@ use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class FacilityManagerController implements HasMiddleware
+final readonly class FacilityManagerController implements HasMiddleware
 {
     public function __construct(
-        private readonly SwitchTenantContext $switchTenantContext,
-        private readonly StartTenantSubscription $startTenantSubscription,
+        private StartTenantSubscription $startTenantSubscription,
     ) {}
 
     public static function middleware(): array
@@ -52,7 +50,6 @@ final class FacilityManagerController implements HasMiddleware
             ]),
             new Middleware('permission:tenants.update', only: [
                 'storeNote',
-                'switch',
                 'activateSubscription',
                 'markSubscriptionPastDue',
                 'completeOnboarding',
@@ -534,18 +531,6 @@ final class FacilityManagerController implements HasMiddleware
 
         return to_route('facility-manager.facilities.notes', $tenant)
             ->with('success', 'Support note added for '.$tenant->name.'.');
-    }
-
-    public function switch(Request $request, Tenant $tenant): RedirectResponse
-    {
-        /** @var User $user */
-        $user = $request->user();
-
-        Gate::authorize('update', $tenant);
-
-        $this->switchTenantContext->handle($request, $user, $tenant->id);
-
-        return to_route('branch-switcher.index');
     }
 
     public function activateSubscription(Request $request, Tenant $tenant): RedirectResponse

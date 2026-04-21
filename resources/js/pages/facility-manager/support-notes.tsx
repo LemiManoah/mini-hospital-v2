@@ -106,11 +106,7 @@ export default function FacilityManagerSupportNotes({
                     </Button>
                 </div>
 
-                <FacilityManagerTenantHeader
-                    tenant={tenant}
-                    title="Support Notes"
-                    description="Keep internal-only onboarding, billing, and implementation notes attached to the facility."
-                />
+                <FacilityManagerTenantHeader tenant={tenant} />
 
                 <FacilityManagerNav tenantId={tenant.id} current="notes" />
 

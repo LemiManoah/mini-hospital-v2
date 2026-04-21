@@ -489,6 +489,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                   permission: 'tenants.view',
                               },
                               {
+                                  title: 'Impersonation',
+                                  url: '/facility-manager/impersonation',
+                                  permission: 'tenants.impersonate',
+                              },
+                              {
                                   title: 'Facilities',
                                   url: '/facility-manager/facilities',
                                   permission: 'tenants.view',
