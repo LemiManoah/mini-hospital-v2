@@ -56,16 +56,21 @@ final readonly class DispensingRecordPrintController implements HasMiddleware
             'items.allocations:id,dispensing_record_item_id,quantity,batch_number_snapshot,expiry_date_snapshot',
         ]);
 
-        $dispenserName = $dispensingRecord->dispensedBy?->staff !== null
-            ? mb_trim(sprintf('%s %s', $dispensingRecord->dispensedBy->staff->first_name, $dispensingRecord->dispensedBy->staff->last_name))
-            : ($dispensingRecord->dispensedBy?->email ?? 'Unknown');
+        $dispensedBy = $dispensingRecord->dispensedBy;
+        $staff = $dispensedBy?->staff;
+        $visit = $dispensingRecord->visit;
+        $patient = $visit?->patient;
+
+        $dispenserName = $staff !== null
+            ? mb_trim(sprintf('%s %s', $staff->first_name, $staff->last_name))
+            : ($dispensedBy !== null ? $dispensedBy->email : 'Unknown');
 
         $filename = sprintf('dispense-slip-%s.pdf', Str::slug($dispensingRecord->dispense_number));
 
         $pdf = Pdf::loadView('print.dispensing-record', [
             'dispensingRecord' => $dispensingRecord,
-            'visit' => $dispensingRecord->visit,
-            'patient' => $dispensingRecord->visit?->patient,
+            'visit' => $visit,
+            'patient' => $patient,
             'dispenserName' => $dispenserName,
             'printedAt' => now(),
         ])->setPaper('a4');

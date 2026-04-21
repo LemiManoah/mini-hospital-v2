@@ -17,7 +17,7 @@ final class StockMovement extends Model
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\StockMovementFactory> */
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<self>> */
     use HasFactory;
 
     use HasUuids;
@@ -37,21 +37,25 @@ final class StockMovement extends Model
         'created_by' => 'string',
     ];
 
+    /** @return BelongsTo<InventoryBatch, $this> */
     public function inventoryBatch(): BelongsTo
     {
         return $this->belongsTo(InventoryBatch::class);
     }
 
+    /** @return BelongsTo<InventoryItem, $this> */
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class);
     }
 
+    /** @return BelongsTo<InventoryLocation, $this> */
     public function inventoryLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

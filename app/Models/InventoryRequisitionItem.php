@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class InventoryRequisitionItem extends Model
 {
-    /** @use HasFactory<\Database\Factories\InventoryRequisitionItemFactory> */
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<self>> */
     use HasFactory;
 
     use HasUuids;
@@ -24,11 +24,13 @@ final class InventoryRequisitionItem extends Model
         'issued_quantity' => 'decimal:3',
     ];
 
+    /** @return BelongsTo<InventoryRequisition, $this> */
     public function requisition(): BelongsTo
     {
         return $this->belongsTo(InventoryRequisition::class, 'inventory_requisition_id');
     }
 
+    /** @return BelongsTo<InventoryItem, $this> */
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class);

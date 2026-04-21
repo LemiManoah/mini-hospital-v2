@@ -60,48 +60,33 @@ final readonly class DispensingController implements HasMiddleware
         $stockBalances = is_string($branchId) && $branchId !== ''
             ? $this->itemBalancesForLocations($branchId, $locations)
             : collect();
+        $visit = $record->visit;
+        $patient = $visit?->patient;
 
         return Inertia::render('pharmacy/dispenses/create', [
             'navigation' => InventoryNavigationContext::fromRequest($request),
             'prescription' => [
                 'id' => $record->id,
                 'visit_id' => $record->visit_id,
-                'visit_number' => $record->visit?->visit_number,
+                'visit_number' => $visit?->visit_number,
                 'prescription_date' => $record->prescription_date?->toISOString(),
                 'status' => $record->status?->value,
                 'status_label' => $record->status?->label(),
                 'primary_diagnosis' => $record->primary_diagnosis,
                 'pharmacy_notes' => $record->pharmacy_notes,
-                'patient' => $record->visit?->patient === null ? null : [
-                    'id' => $record->visit->patient->id,
-                    'patient_number' => $record->visit->patient->patient_number,
+                'patient' => $patient === null ? null : [
+                    'id' => $patient->id,
+                    'patient_number' => $patient->patient_number,
                     'full_name' => mb_trim(sprintf(
                         '%s %s',
-                        $record->visit->patient->first_name,
-                        $record->visit->patient->last_name,
+                        $patient->first_name,
+                        $patient->last_name,
                     )),
-                    'gender' => $record->visit->patient->gender,
-                    'phone_number' => $record->visit->patient->phone_number,
+                    'gender' => $patient->gender,
+                    'phone_number' => $patient->phone_number,
                 ],
                 'items' => $record->items
-                    ->map(fn (PrescriptionItem $item): array => [
-                        'id' => $item->id,
-                        'inventory_item_id' => $item->inventory_item_id,
-                        'item_name' => $item->inventoryItem?->name,
-                        'generic_name' => $item->inventoryItem?->generic_name,
-                        'brand_name' => $item->inventoryItem?->brand_name,
-                        'strength' => $item->inventoryItem?->strength,
-                        'dosage_form' => $item->inventoryItem?->dosage_form?->value ?? $item->inventoryItem?->dosage_form,
-                        'dosage' => $item->dosage,
-                        'frequency' => $item->frequency,
-                        'route' => $item->route,
-                        'duration_days' => $item->duration_days,
-                        'quantity' => round((float) $item->quantity, 3),
-                        'instructions' => $item->instructions,
-                        'status' => $item->status?->value,
-                        'status_label' => $item->status?->label(),
-                        'available_quantity' => round((float) ($stockBalances->get((string) $item->inventory_item_id) ?? 0), 3),
-                    ])
+                    ->map(fn (PrescriptionItem $item): array => $this->serializeCreatePrescriptionItem($item, $stockBalances))
                     ->values()
                     ->all(),
             ],
@@ -132,7 +117,8 @@ final readonly class DispensingController implements HasMiddleware
         abort_unless($record instanceof Prescription, 404);
 
         $validated = $request->validated();
-        $items = $validated['items'];
+        /** @var array<int, array<string, mixed>> $items */
+        $items = is_array($validated['items'] ?? null) ? $validated['items'] : [];
         unset($validated['items']);
 
         $dispensingRecord = $action->handle($record, $validated, $items);
@@ -160,10 +146,10 @@ final readonly class DispensingController implements HasMiddleware
 
         $validated = $request->validated();
 
-        $postedRecord = $action->handle(
-            $dispensingRecord,
-            is_array($validated['items'] ?? null) ? $validated['items'] : [],
-        );
+        /** @var array<int, array<string, mixed>> $items */
+        $items = is_array($validated['items'] ?? null) ? $validated['items'] : [];
+
+        $postedRecord = $action->handle($dispensingRecord, $items);
 
         return to_route('pharmacy.dispenses.show', ['dispensingRecord' => $postedRecord])
             ->with('success', 'Dispense posted successfully and pharmacy stock has been updated.');
@@ -179,7 +165,8 @@ final readonly class DispensingController implements HasMiddleware
         abort_unless($record instanceof Prescription, 404);
 
         $validated = $request->validated();
-        $items = $validated['items'];
+        /** @var array<int, array<string, mixed>> $items */
+        $items = is_array($validated['items'] ?? null) ? $validated['items'] : [];
         unset($validated['items']);
 
         $action->handle($record, $validated, $items);
@@ -211,72 +198,49 @@ final readonly class DispensingController implements HasMiddleware
             'items.substitutionInventoryItem',
             'items.allocations.inventoryBatch',
         ]);
+        $visit = $dispensingRecord->visit;
+        $patient = $visit?->patient;
+        $prescription = $dispensingRecord->prescription;
+        $inventoryLocation = $dispensingRecord->inventoryLocation;
+        $dispensedBy = $dispensingRecord->dispensedBy;
+        $staff = $dispensedBy?->staff;
 
         return Inertia::render('pharmacy/dispenses/show', [
             'navigation' => InventoryNavigationContext::fromRequest($request),
             'dispensingRecord' => [
                 'id' => $dispensingRecord->id,
                 'dispense_number' => $dispensingRecord->dispense_number,
-                'status' => $dispensingRecord->status?->value,
-                'status_label' => $dispensingRecord->status?->label(),
-                'dispensed_at' => $dispensingRecord->dispensed_at?->toISOString(),
+                'status' => $dispensingRecord->status->value,
+                'status_label' => $dispensingRecord->status->label(),
+                'dispensed_at' => $dispensingRecord->dispensed_at->toISOString(),
                 'notes' => $dispensingRecord->notes,
-                'visit_number' => $dispensingRecord->visit?->visit_number,
-                'patient' => $dispensingRecord->visit?->patient === null ? null : [
-                    'id' => $dispensingRecord->visit->patient->id,
-                    'patient_number' => $dispensingRecord->visit->patient->patient_number,
+                'visit_number' => $visit?->visit_number,
+                'patient' => $patient === null ? null : [
+                    'id' => $patient->id,
+                    'patient_number' => $patient->patient_number,
                     'full_name' => mb_trim(sprintf(
                         '%s %s',
-                        $dispensingRecord->visit->patient->first_name,
-                        $dispensingRecord->visit->patient->last_name,
+                        $patient->first_name,
+                        $patient->last_name,
                     )),
                 ],
-                'prescription' => $dispensingRecord->prescription === null ? null : [
-                    'id' => $dispensingRecord->prescription->id,
-                    'status' => $dispensingRecord->prescription->status?->value,
-                    'status_label' => $dispensingRecord->prescription->status?->label(),
-                    'primary_diagnosis' => $dispensingRecord->prescription->primary_diagnosis,
-                    'pharmacy_notes' => $dispensingRecord->prescription->pharmacy_notes,
+                'prescription' => $prescription === null ? null : [
+                    'id' => $prescription->id,
+                    'status' => $prescription->status?->value,
+                    'status_label' => $prescription->status?->label(),
+                    'primary_diagnosis' => $prescription->primary_diagnosis,
+                    'pharmacy_notes' => $prescription->pharmacy_notes,
                 ],
-                'inventory_location' => $dispensingRecord->inventoryLocation === null ? null : [
-                    'id' => $dispensingRecord->inventoryLocation->id,
-                    'name' => $dispensingRecord->inventoryLocation->name,
-                    'location_code' => $dispensingRecord->inventoryLocation->location_code,
+                'inventory_location' => $inventoryLocation === null ? null : [
+                    'id' => $inventoryLocation->id,
+                    'name' => $inventoryLocation->name,
+                    'location_code' => $inventoryLocation->location_code,
                 ],
-                'dispensed_by' => $dispensingRecord->dispensedBy?->staff === null
-                    ? ($dispensingRecord->dispensedBy?->email)
-                    : mb_trim(sprintf(
-                        '%s %s',
-                        $dispensingRecord->dispensedBy->staff->first_name,
-                        $dispensingRecord->dispensedBy->staff->last_name,
-                    )),
+                'dispensed_by' => $staff === null
+                    ? ($dispensedBy?->email)
+                    : mb_trim(sprintf('%s %s', $staff->first_name, $staff->last_name)),
                 'items' => $dispensingRecord->items
-                    ->map(static fn (DispensingRecordItem $item): array => [
-                        'id' => $item->id,
-                        'prescription_item_id' => $item->prescription_item_id,
-                        'inventory_item_id' => $item->inventory_item_id,
-                        'prescribed_quantity' => round((float) $item->prescribed_quantity, 3),
-                        'dispensed_quantity' => round((float) $item->dispensed_quantity, 3),
-                        'balance_quantity' => round((float) $item->balance_quantity, 3),
-                        'dispense_status' => $item->dispense_status?->value,
-                        'dispense_status_label' => $item->dispense_status?->label(),
-                        'external_pharmacy' => $item->external_pharmacy,
-                        'external_reason' => $item->external_reason,
-                        'notes' => $item->notes,
-                        'item_name' => $item->inventoryItem?->name,
-                        'generic_name' => $item->inventoryItem?->generic_name,
-                        'substitution_item_name' => $item->substitutionInventoryItem?->name,
-                        'allocations' => $item->allocations
-                            ->map(static fn (DispensingRecordItemAllocation $allocation): array => [
-                                'id' => $allocation->id,
-                                'inventory_batch_id' => $allocation->inventory_batch_id,
-                                'quantity' => round((float) $allocation->quantity, 3),
-                                'batch_number_snapshot' => $allocation->batch_number_snapshot,
-                                'expiry_date_snapshot' => $allocation->expiry_date_snapshot?->toDateString(),
-                            ])
-                            ->values()
-                            ->all(),
-                    ])
+                    ->map(fn (DispensingRecordItem $item): array => $this->serializeDispensingRecordItem($item))
                     ->values()
                     ->all(),
                 'can_post' => $dispensingRecord->status === DispensingRecordStatus::DRAFT,
@@ -319,14 +283,25 @@ final readonly class DispensingController implements HasMiddleware
             ->all();
 
         if ($locationIds === []) {
-            return collect();
+            /** @var Collection<string, float> $empty */
+            $empty = collect();
+
+            return $empty;
         }
 
-        return $this->inventoryStockLedger
+        /** @var Collection<string, float> $balances */
+        $balances = $this->inventoryStockLedger
             ->summarizeByLocation($branchId)
             ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $locationIds, true))
             ->groupBy('inventory_item_id')
-            ->map(static fn (Collection $rows): float => (float) $rows->sum('quantity'));
+            ->map(static function (Collection $rows): float {
+                return $rows->reduce(
+                    static fn (float $carry, array $row): float => $carry + (float) $row['quantity'],
+                    0.0,
+                );
+            });
+
+        return $balances;
     }
 
     /**
@@ -366,6 +341,7 @@ final readonly class DispensingController implements HasMiddleware
             })
             ->map(static function (array $balance) use ($batches): array {
                 $batch = $batches[$balance['inventory_batch_id']] ?? null;
+                $inventoryItem = $batch?->inventoryItem;
 
                 return [
                     'inventory_batch_id' => $balance['inventory_batch_id'],
@@ -374,7 +350,9 @@ final readonly class DispensingController implements HasMiddleware
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],
                     'quantity' => $balance['quantity'],
-                    'item_name' => $batch?->inventoryItem?->generic_name ?? $batch?->inventoryItem?->name,
+                    'item_name' => $inventoryItem === null
+                        ? null
+                        : ($inventoryItem->generic_name ?? $inventoryItem->name),
                 ];
             })
             ->sortBy(static fn (array $batch): string => sprintf(
@@ -413,6 +391,71 @@ final readonly class DispensingController implements HasMiddleware
                 $tenantId,
                 'allow_partial_dispense',
             ),
+        ];
+    }
+
+    /**
+     * @param  Collection<string, float>  $stockBalances
+     * @return array<string, mixed>
+     */
+    private function serializeCreatePrescriptionItem(PrescriptionItem $item, Collection $stockBalances): array
+    {
+        $inventoryItem = $item->inventoryItem;
+        $dosageForm = $inventoryItem?->dosage_form;
+
+        return [
+            'id' => $item->id,
+            'inventory_item_id' => $item->inventory_item_id,
+            'item_name' => $inventoryItem?->name,
+            'generic_name' => $inventoryItem?->generic_name,
+            'brand_name' => $inventoryItem?->brand_name,
+            'strength' => $inventoryItem?->strength,
+            'dosage_form' => $dosageForm?->value,
+            'dosage' => $item->dosage,
+            'frequency' => $item->frequency,
+            'route' => $item->route,
+            'duration_days' => $item->duration_days,
+            'quantity' => round((float) $item->quantity, 3),
+            'instructions' => $item->instructions,
+            'status' => $item->status?->value,
+            'status_label' => $item->status?->label(),
+            'available_quantity' => round((float) ($stockBalances->get($item->inventory_item_id) ?? 0), 3),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeDispensingRecordItem(DispensingRecordItem $item): array
+    {
+        $inventoryItem = $item->inventoryItem;
+        $substitutionInventoryItem = $item->substitutionInventoryItem;
+
+        return [
+            'id' => $item->id,
+            'prescription_item_id' => $item->prescription_item_id,
+            'inventory_item_id' => $item->inventory_item_id,
+            'prescribed_quantity' => round((float) $item->prescribed_quantity, 3),
+            'dispensed_quantity' => round((float) $item->dispensed_quantity, 3),
+            'balance_quantity' => round((float) $item->balance_quantity, 3),
+            'dispense_status' => $item->dispense_status->value,
+            'dispense_status_label' => $item->dispense_status->label(),
+            'external_pharmacy' => $item->external_pharmacy,
+            'external_reason' => $item->external_reason,
+            'notes' => $item->notes,
+            'item_name' => $inventoryItem?->name,
+            'generic_name' => $inventoryItem?->generic_name,
+            'substitution_item_name' => $substitutionInventoryItem?->name,
+            'allocations' => $item->allocations
+                ->map(static fn (DispensingRecordItemAllocation $allocation): array => [
+                    'id' => $allocation->id,
+                    'inventory_batch_id' => $allocation->inventory_batch_id,
+                    'quantity' => round((float) $allocation->quantity, 3),
+                    'batch_number_snapshot' => $allocation->batch_number_snapshot,
+                    'expiry_date_snapshot' => $allocation->expiry_date_snapshot?->toDateString(),
+                ])
+                ->values()
+                ->all(),
         ];
     }
 }

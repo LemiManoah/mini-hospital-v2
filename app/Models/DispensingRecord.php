@@ -18,7 +18,7 @@ final class DispensingRecord extends Model
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\DispensingRecordFactory> */
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<self>> */
     use HasFactory;
 
     use HasUuids;
@@ -34,26 +34,31 @@ final class DispensingRecord extends Model
         'status' => DispensingRecordStatus::class,
     ];
 
+    /** @return BelongsTo<PatientVisit, $this> */
     public function visit(): BelongsTo
     {
         return $this->belongsTo(PatientVisit::class, 'visit_id');
     }
 
+    /** @return BelongsTo<Prescription, $this> */
     public function prescription(): BelongsTo
     {
         return $this->belongsTo(Prescription::class, 'prescription_id');
     }
 
+    /** @return BelongsTo<InventoryLocation, $this> */
     public function inventoryLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function dispensedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dispensed_by');
     }
 
+    /** @return HasMany<DispensingRecordItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(DispensingRecordItem::class);

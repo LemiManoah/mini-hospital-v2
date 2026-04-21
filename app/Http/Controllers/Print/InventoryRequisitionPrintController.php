@@ -53,6 +53,7 @@ final readonly class InventoryRequisitionPrintController implements HasMiddlewar
             'items.inventoryItem:id,name,generic_name',
         ]);
 
+        /** @var array<string, list<array{quantity: float, batch_number: string|null, expiry_date: string|null, occurred_at: string|null}>> $issueHistory */
         $issueHistory = StockMovement::query()
             ->with('inventoryBatch:id,batch_number,expiry_date')
             ->where('source_document_type', InventoryRequisition::class)
@@ -61,15 +62,25 @@ final readonly class InventoryRequisitionPrintController implements HasMiddlewar
             ->oldest('occurred_at')
             ->get()
             ->groupBy('source_line_id')
-            ->map(static fn (Collection $movements): array => $movements
-                ->map(static fn (StockMovement $movement): array => [
-                    'quantity' => abs((float) $movement->quantity),
-                    'batch_number' => $movement->inventoryBatch?->batch_number,
-                    'expiry_date' => $movement->inventoryBatch?->expiry_date?->toDateString(),
-                    'occurred_at' => $movement->occurred_at?->toIso8601String(),
-                ])
-                ->values()
-                ->all())
+            ->map(static function (Collection $movements): array {
+                /** @var list<array{quantity: float, batch_number: string|null, expiry_date: string|null, occurred_at: string|null}> $rows */
+                $rows = $movements
+                    ->map(static function (StockMovement $movement): array {
+                        $inventoryBatch = $movement->inventoryBatch;
+                        $expiryDate = $inventoryBatch?->expiry_date;
+
+                        return [
+                            'quantity' => abs((float) $movement->quantity),
+                            'batch_number' => $inventoryBatch?->batch_number,
+                            'expiry_date' => $expiryDate === null ? null : $expiryDate->toDateString(),
+                            'occurred_at' => $movement->occurred_at->toIso8601String(),
+                        ];
+                    })
+                    ->values()
+                    ->all();
+
+                return $rows;
+            })
             ->all();
 
         $pdf = Pdf::loadView('print.inventory-requisition', [

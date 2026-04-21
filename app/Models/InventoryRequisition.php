@@ -20,7 +20,7 @@ final class InventoryRequisition extends Model
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\InventoryRequisitionFactory> */
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<self>> */
     use HasFactory;
 
     use HasUuids;
@@ -48,26 +48,31 @@ final class InventoryRequisition extends Model
         'issued_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<InventoryLocation, $this> */
     public function fulfillingLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class, 'source_inventory_location_id');
     }
 
+    /** @return BelongsTo<InventoryLocation, $this> */
     public function sourceLocation(): BelongsTo
     {
         return $this->fulfillingLocation();
     }
 
+    /** @return BelongsTo<InventoryLocation, $this> */
     public function requestingLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class, 'destination_inventory_location_id');
     }
 
+    /** @return BelongsTo<InventoryLocation, $this> */
     public function destinationLocation(): BelongsTo
     {
         return $this->requestingLocation();
     }
 
+    /** @return HasMany<InventoryRequisitionItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(InventoryRequisitionItem::class);

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class WorkspaceRegistrationController
+final readonly class WorkspaceRegistrationController
 {
     public function create(): Response
     {

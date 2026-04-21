@@ -17,7 +17,7 @@ use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class FacilityImpersonationController implements HasMiddleware
+final readonly class FacilityImpersonationController implements HasMiddleware
 {
     public static function middleware(): array
     {

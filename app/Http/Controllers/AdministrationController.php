@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class AdministrationController
+final readonly class AdministrationController
 {
     public function generalSettings(Request $request): Response
     {

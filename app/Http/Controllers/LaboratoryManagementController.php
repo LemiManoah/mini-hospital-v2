@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class LaboratoryManagementController
+final readonly class LaboratoryManagementController
 {
     public function index(Request $request): Response
     {

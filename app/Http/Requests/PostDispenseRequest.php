@@ -17,6 +17,68 @@ use Illuminate\Validation\Validator;
 final class PostDispenseRequest extends FormRequest
 {
     /**
+     * @return list<array{
+     *   dispensing_record_item_id: string,
+     *   allocations: list<array{
+     *     inventory_batch_id: string,
+     *     quantity: int|float|string
+     *   }>
+     * }>
+     */
+    private function dispenseItems(): array
+    {
+        $items = $this->input('items', []);
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $normalizedItems = [];
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $dispensingRecordItemId = $item['dispensing_record_item_id'] ?? null;
+
+            if (! is_string($dispensingRecordItemId) || $dispensingRecordItemId === '') {
+                continue;
+            }
+
+            $allocations = [];
+            $rawAllocations = $item['allocations'] ?? [];
+
+            if (is_array($rawAllocations)) {
+                foreach ($rawAllocations as $allocation) {
+                    if (! is_array($allocation)) {
+                        continue;
+                    }
+
+                    $inventoryBatchId = $allocation['inventory_batch_id'] ?? null;
+                    $quantity = $allocation['quantity'] ?? null;
+
+                    if (! is_string($inventoryBatchId) || $inventoryBatchId === '' || ! is_numeric($quantity)) {
+                        continue;
+                    }
+
+                    $allocations[] = [
+                        'inventory_batch_id' => $inventoryBatchId,
+                        'quantity' => $quantity,
+                    ];
+                }
+            }
+
+            $normalizedItems[] = [
+                'dispensing_record_item_id' => $dispensingRecordItemId,
+                'allocations' => $allocations,
+            ];
+        }
+
+        return $normalizedItems;
+    }
+
+    /**
      * @return array<string, array<mixed>>
      */
     public function rules(): array
@@ -39,13 +101,12 @@ final class PostDispenseRequest extends FormRequest
             function (Validator $validator): void {
                 $activeBranchId = BranchContext::getActiveBranchId();
                 $dispensingRecord = $this->route('dispensingRecord');
-                $items = $this->input('items', []);
+                $items = $this->dispenseItems();
 
                 if (
                     ! $dispensingRecord instanceof DispensingRecord
                     || ! is_string($activeBranchId)
                     || $activeBranchId === ''
-                    || ! is_array($items)
                     || $validator->errors()->isNotEmpty()
                 ) {
                     return;
@@ -87,11 +148,11 @@ final class PostDispenseRequest extends FormRequest
                     ]);
 
                 $payloadByItem = collect($items)
-                    ->filter(static fn (mixed $item): bool => is_array($item))
-                    ->mapWithKeys(static fn (array $item): array => is_string($item['dispensing_record_item_id'] ?? null)
-                        ? [$item['dispensing_record_item_id'] => $item]
-                        : []);
+                    ->mapWithKeys(static fn (array $item): array => [
+                        $item['dispensing_record_item_id'] => $item,
+                    ]);
 
+                /** @var array<string, float> $batchUsage */
                 $batchUsage = [];
 
                 foreach ($dispensingRecord->items as $recordItem) {
@@ -120,24 +181,8 @@ final class PostDispenseRequest extends FormRequest
                     $allocationTotal = 0.0;
 
                     foreach ($allocations as $allocationIndex => $allocation) {
-                        if (! is_array($allocation)) {
-                            continue;
-                        }
-
-                        $batchId = $allocation['inventory_batch_id'] ?? null;
-                        $quantity = $allocation['quantity'] ?? null;
-
-                        if (! is_string($batchId)) {
-                            continue;
-                        }
-
-                        if ($batchId === '') {
-                            continue;
-                        }
-
-                        if (! is_numeric($quantity)) {
-                            continue;
-                        }
+                        $batchId = $allocation['inventory_batch_id'];
+                        $quantity = $allocation['quantity'];
 
                         $batch = InventoryBatch::query()->find($batchId);
                         if (! $batch instanceof InventoryBatch) {

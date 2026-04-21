@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class OnboardingController
+final readonly class OnboardingController
 {
     public function show(
         Request $request,

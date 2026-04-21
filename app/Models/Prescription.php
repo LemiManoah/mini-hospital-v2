@@ -10,10 +10,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property-read string $id
+ * @property-read string $visit_id
+ * @property-read string|null $consultation_id
+ * @property-read string|null $prescribed_by
+ * @property-read Carbon|null $prescription_date
+ * @property-read string|null $primary_diagnosis
+ * @property-read string|null $pharmacy_notes
+ * @property-read bool $is_discharge_medication
+ * @property-read bool $is_long_term
+ * @property-read PrescriptionStatus|null $status
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
+ * @property-read Consultation|null $consultation
+ * @property-read PatientVisit|null $visit
+ * @property-read Staff|null $prescribedBy
+ */
 final class Prescription extends Model
 {
-    /** @use HasFactory<\Database\Factories\PrescriptionFactory> */
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<self>> */
     use HasFactory;
 
     use HasUuids;

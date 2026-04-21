@@ -30,7 +30,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Validation\Rule;
 
-final class VisitOrderController implements HasMiddleware
+final readonly class VisitOrderController implements HasMiddleware
 {
     public static function middleware(): array
     {

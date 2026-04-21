@@ -17,7 +17,7 @@ final class InventoryBatch extends Model
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\InventoryBatchFactory> */
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<self>> */
     use HasFactory;
 
     use HasUuids;
@@ -36,31 +36,37 @@ final class InventoryBatch extends Model
         'updated_by' => 'string',
     ];
 
+    /** @return BelongsTo<InventoryItem, $this> */
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class);
     }
 
+    /** @return BelongsTo<InventoryLocation, $this> */
     public function inventoryLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class);
     }
 
+    /** @return BelongsTo<GoodsReceiptItem, $this> */
     public function goodsReceiptItem(): BelongsTo
     {
         return $this->belongsTo(GoodsReceiptItem::class);
     }
 
+    /** @return HasMany<StockMovement, $this> */
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
     }
 
+    /** @return HasMany<DispensingRecordItemAllocation, $this> */
     public function dispensingAllocations(): HasMany
     {
         return $this->hasMany(DispensingRecordItemAllocation::class);
     }
 
+    /** @return HasMany<ReconciliationItem, $this> */
     public function reconciliationItems(): HasMany
     {
         return $this->hasMany(ReconciliationItem::class);
