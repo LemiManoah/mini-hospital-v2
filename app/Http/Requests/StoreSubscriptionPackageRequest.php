@@ -16,8 +16,14 @@ final class StoreSubscriptionPackageRequest extends FormRequest
     }
 
     /**
+
+
      * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         return [
@@ -28,3 +34,5 @@ final class StoreSubscriptionPackageRequest extends FormRequest
         ];
     }
 }
+
+

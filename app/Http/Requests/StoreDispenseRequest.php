@@ -20,7 +20,7 @@ use Illuminate\Validation\Validator;
 final class StoreDispenseRequest extends FormRequest
 {
     /**
-     * @return array<string, array<mixed>>
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
@@ -49,7 +49,7 @@ final class StoreDispenseRequest extends FormRequest
     }
 
     /**
-     * @return array<int, Closure(Validator): void>
+     * @return array<int, callable(Validator): void>
      */
     public function after(): array
     {
@@ -103,11 +103,19 @@ final class StoreDispenseRequest extends FormRequest
                     );
                 }
 
+                $prescriptionVisit = $prescription->visit;
+
+                if ($prescriptionVisit === null) {
+                    $validator->errors()->add('items', 'The prescription visit context could not be resolved.');
+
+                    return;
+                }
+
                 $prescriptionItems = $prescription->items->keyBy('id');
                 $postedLineSummaries = resolve(PrescriptionDispenseProgress::class)
                     ->postedLineSummaries($prescription->id);
                 $allowPartialDispense = resolve(TenantGeneralSettings::class)->boolean(
-                    $prescription->visit->tenant_id,
+                    $prescriptionVisit->tenant_id,
                     'allow_partial_dispense',
                 );
                 $hasActionableLine = false;

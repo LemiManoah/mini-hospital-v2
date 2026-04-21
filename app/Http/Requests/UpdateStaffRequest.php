@@ -17,8 +17,14 @@ final class UpdateStaffRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, Enum|string>|string>
+
+
+     * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         $staffId = $this->route('staff')->id;
@@ -55,3 +61,5 @@ final class UpdateStaffRequest extends FormRequest
         });
     }
 }
+
+

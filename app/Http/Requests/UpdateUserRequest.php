@@ -12,8 +12,11 @@ use Illuminate\Validation\Rule;
 final class UpdateUserRequest extends FormRequest
 {
     /**
-     * @return array<string, ValidationRule|array<mixed>|string>
+
+     * @return array<string, mixed>
+
      */
+
     public function rules(): array
     {
         $user = $this->user();
@@ -34,3 +37,5 @@ final class UpdateUserRequest extends FormRequest
         ];
     }
 }
+
+

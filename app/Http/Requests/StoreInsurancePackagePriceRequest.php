@@ -7,7 +7,6 @@ namespace App\Http\Requests;
 use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
 use App\Rules\NoOverlappingInsurancePriceWindow;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -22,11 +21,17 @@ final class StoreInsurancePackagePriceRequest extends FormRequest
     }
 
     /**
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
         $tenantId = (string) $this->user()?->tenant_id;
+        $facilityBranchId = $this->string('facility_branch_id')->toString();
+        $insurancePackageId = $this->string('insurance_package_id')->toString();
+        $billableType = $this->string('billable_type')->toString();
+        $billableId = $this->string('billable_id')->toString();
+        $effectiveFrom = $this->string('effective_from')->toString();
+        $effectiveTo = $this->filled('effective_to') ? $this->string('effective_to')->toString() : null;
 
         return [
             'facility_branch_id' => [
@@ -51,12 +56,12 @@ final class StoreInsurancePackagePriceRequest extends FormRequest
                 'min:0',
                 new NoOverlappingInsurancePriceWindow(
                     tenantId: $tenantId,
-                    facilityBranchId: (string) $this->input('facility_branch_id'),
-                    insurancePackageId: (string) $this->input('insurance_package_id'),
-                    billableType: (string) $this->input('billable_type'),
-                    billableId: (string) $this->input('billable_id'),
-                    effectiveFrom: (string) $this->input('effective_from'),
-                    effectiveTo: $this->filled('effective_to') ? (string) $this->input('effective_to') : null,
+                    facilityBranchId: $facilityBranchId,
+                    insurancePackageId: $insurancePackageId,
+                    billableType: $billableType,
+                    billableId: $billableId,
+                    effectiveFrom: $effectiveFrom,
+                    effectiveTo: $effectiveTo,
                 ),
             ],
             'effective_from' => ['required', 'date'],
@@ -76,8 +81,8 @@ final class StoreInsurancePackagePriceRequest extends FormRequest
                 return;
             }
 
-            $from = strtotime((string) $this->input('effective_from'));
-            $to = strtotime((string) $this->input('effective_to'));
+            $from = strtotime($this->string('effective_from')->toString());
+            $to = strtotime($this->string('effective_to')->toString());
 
             if ($from !== false && $to !== false && $to < $from) {
                 $validator->errors()->add('effective_to', 'The effective to date must be after or equal to effective from date.');
@@ -85,3 +90,5 @@ final class StoreInsurancePackagePriceRequest extends FormRequest
         });
     }
 }
+
+

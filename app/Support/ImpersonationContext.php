@@ -17,6 +17,10 @@ final class ImpersonationContext
 
     public static function start(Request $request, User $realUser, User $targetUser): void
     {
+        if (! $request->hasSession()) {
+            return;
+        }
+
         $request->session()->put([
             self::SESSION_REAL_USER_ID => $realUser->id,
             self::SESSION_TARGET_USER_ID => $targetUser->id,
@@ -26,11 +30,13 @@ final class ImpersonationContext
 
     public static function stop(Request $request): void
     {
-        $request->session()->forget([
-            self::SESSION_REAL_USER_ID,
-            self::SESSION_TARGET_USER_ID,
-            self::SESSION_STARTED_AT,
-        ]);
+        if ($request->hasSession()) {
+            $request->session()->forget([
+                self::SESSION_REAL_USER_ID,
+                self::SESSION_TARGET_USER_ID,
+                self::SESSION_STARTED_AT,
+            ]);
+        }
 
         $request->attributes->remove('impersonation.real_user');
         $request->attributes->remove('impersonation.target_user');
@@ -44,6 +50,10 @@ final class ImpersonationContext
 
     public static function realUserId(Request $request): ?string
     {
+        if (! $request->hasSession()) {
+            return null;
+        }
+
         $userId = $request->session()->get(self::SESSION_REAL_USER_ID);
 
         return is_string($userId) && $userId !== '' ? $userId : null;
@@ -51,6 +61,10 @@ final class ImpersonationContext
 
     public static function targetUserId(Request $request): ?string
     {
+        if (! $request->hasSession()) {
+            return null;
+        }
+
         $userId = $request->session()->get(self::SESSION_TARGET_USER_ID);
 
         return is_string($userId) && $userId !== '' ? $userId : null;
@@ -58,6 +72,10 @@ final class ImpersonationContext
 
     public static function startedAt(Request $request): ?string
     {
+        if (! $request->hasSession()) {
+            return null;
+        }
+
         $startedAt = $request->session()->get(self::SESSION_STARTED_AT);
 
         return is_string($startedAt) && $startedAt !== '' ? $startedAt : null;

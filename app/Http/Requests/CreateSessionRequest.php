@@ -14,8 +14,11 @@ use Illuminate\Validation\ValidationException;
 final class CreateSessionRequest extends FormRequest
 {
     /**
-     * @return array<string, array<int, string>>
+
+     * @return array<string, mixed>
+
      */
+
     public function rules(): array
     {
         return [
@@ -80,3 +83,5 @@ final class CreateSessionRequest extends FormRequest
         ]);
     }
 }
+
+

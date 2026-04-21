@@ -14,10 +14,18 @@ final class DeleteAllergenRequest extends FormRequest
     }
 
     /**
+
+
      * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         return [];
     }
 }
+
+

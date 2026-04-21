@@ -10,10 +10,15 @@ use Illuminate\Foundation\Http\FormRequest;
 final class DeleteFacilityBranchRequest extends FormRequest
 {
     /**
-     * @return array<string, ValidationRule|array<mixed>|string>
+
+     * @return array<string, mixed>
+
      */
+
     public function rules(): array
     {
         return [];
     }
 }
+
+

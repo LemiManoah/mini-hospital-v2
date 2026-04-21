@@ -15,8 +15,14 @@ final class StoreCurrencyRequest extends FormRequest
     }
 
     /**
+
+
      * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         return [
@@ -27,3 +33,5 @@ final class StoreCurrencyRequest extends FormRequest
         ];
     }
 }
+
+

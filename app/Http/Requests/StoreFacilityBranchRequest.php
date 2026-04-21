@@ -15,8 +15,11 @@ use Illuminate\Validation\Rules\Enum;
 final class StoreFacilityBranchRequest extends FormRequest
 {
     /**
-     * @return array<string, ValidationRule|array<mixed>|string>
+
+     * @return array<string, mixed>
+
      */
+
     public function rules(): array
     {
         $tenantId = Auth::user()?->tenant_id;
@@ -46,3 +49,5 @@ final class StoreFacilityBranchRequest extends FormRequest
         ]);
     }
 }
+
+

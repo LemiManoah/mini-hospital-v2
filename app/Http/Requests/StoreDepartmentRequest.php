@@ -15,8 +15,14 @@ final class StoreDepartmentRequest extends FormRequest
     }
 
     /**
-     * @return array<string, ValidationRule|array<mixed>|string>
+
+
+     * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         return [
@@ -29,3 +35,5 @@ final class StoreDepartmentRequest extends FormRequest
         ];
     }
 }
+
+

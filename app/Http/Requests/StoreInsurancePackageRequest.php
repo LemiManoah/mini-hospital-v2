@@ -19,8 +19,14 @@ final class StoreInsurancePackageRequest extends FormRequest
     }
 
     /**
-     * @return array<string, ValidationRule|array<mixed>|string>
+
+
+     * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         $tenantId = (string) $this->user()?->tenant_id;
@@ -50,3 +56,5 @@ final class StoreInsurancePackageRequest extends FormRequest
         ];
     }
 }
+
+

@@ -14,6 +14,9 @@ final class StoreVitalSignRequest extends FormRequest
         return true;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -39,22 +42,26 @@ final class StoreVitalSignRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array<int, callable(Validator): void>
+     */
     public function after(): array
     {
         return [
             function (Validator $validator): void {
                 $temperature = $this->input('temperature');
 
-                if ($temperature === null || $temperature === '') {
+                if ($temperature === null || $temperature === '' || ! is_numeric($temperature)) {
                     return;
                 }
 
                 $unit = $this->input('temperature_unit', 'celsius');
                 [$min, $max] = $unit === 'fahrenheit'
-                    ? [77, 113]
-                    : [25, 45];
+                    ? [77.0, 113.0]
+                    : [25.0, 45.0];
+                $numericTemperature = (float) $temperature;
 
-                if ((float) $temperature < $min || (float) $temperature > $max) {
+                if ($numericTemperature < $min || $numericTemperature > $max) {
                     $validator->errors()->add(
                         'temperature',
                         $unit === 'fahrenheit'

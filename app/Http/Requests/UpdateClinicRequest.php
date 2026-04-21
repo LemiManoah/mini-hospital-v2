@@ -12,10 +12,11 @@ use Illuminate\Validation\Rules\Enum;
 final class UpdateClinicRequest extends FormRequest
 {
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
+
+     * @return array<string, mixed>
+
      */
+
     public function rules(): array
     {
         return [
@@ -29,3 +30,5 @@ final class UpdateClinicRequest extends FormRequest
         ];
     }
 }
+
+

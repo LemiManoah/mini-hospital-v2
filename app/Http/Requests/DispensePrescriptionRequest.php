@@ -23,40 +23,11 @@ use Illuminate\Validation\Validator;
 final class DispensePrescriptionRequest extends FormRequest
 {
     /**
-     * @return array<string, array<mixed>>
-     */
-    public function rules(): array
-    {
-        return [
-            'inventory_location_id' => [
-                'required',
-                'string',
-                Rule::exists('inventory_locations', 'id')
-                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
-            ],
-            'dispensed_at' => ['required', 'date'],
-            'notes' => ['nullable', 'string'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.prescription_item_id' => ['required', 'string', 'distinct', 'exists:prescription_items,id'],
-            'items.*.dispensed_quantity' => ['required', 'numeric', 'min:0'],
-            'items.*.external_pharmacy' => ['nullable', 'boolean'],
-            'items.*.external_reason' => ['nullable', 'string'],
-            'items.*.notes' => ['nullable', 'string'],
-            'items.*.substitution_inventory_item_id' => [
-                'nullable',
-                'string',
-                Rule::exists('inventory_items', 'id')
-                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
-            ],
-            'items.*.allocations' => ['nullable', 'array'],
-            'items.*.allocations.*.inventory_batch_id' => ['required', 'string'],
-            'items.*.allocations.*.quantity' => ['required', 'numeric', 'gt:0'],
-        ];
-    }
 
-    /**
-     * @return array<int, Closure(Validator):void>
+     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
+
      */
+
     public function after(): array
     {
         return [
@@ -354,3 +325,5 @@ final class DispensePrescriptionRequest extends FormRequest
         ];
     }
 }
+
+

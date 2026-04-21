@@ -15,6 +15,9 @@ final class CorrectLabResultEntryRequest extends FormRequest
         return true;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -42,14 +45,14 @@ final class CorrectLabResultEntryRequest extends FormRequest
                 'test.resultParameters:id,lab_test_catalog_id,label,value_type',
             ]);
 
-            if (mb_trim((string) $this->input('correction_reason', '')) === '') {
+            if (mb_trim($this->string('correction_reason')->toString()) === '') {
                 $validator->errors()->add('correction_reason', 'Enter the reason for correcting this released result.');
             }
 
             $resultType = $labRequestItem->test?->result_capture_type;
 
             if ($resultType === 'free_entry') {
-                if (mb_trim((string) $this->input('free_entry_value', '')) === '') {
+                if (mb_trim($this->string('free_entry_value')->toString()) === '') {
                     $validator->errors()->add('free_entry_value', 'Enter the lab result before saving.');
                 }
 
@@ -57,8 +60,11 @@ final class CorrectLabResultEntryRequest extends FormRequest
             }
 
             if ($resultType === 'defined_option') {
-                $selectedOption = mb_trim((string) $this->input('selected_option_label', ''));
-                $allowedOptions = $labRequestItem->test?->resultOptions?->pluck('label')->all() ?? [];
+                $selectedOption = mb_trim($this->string('selected_option_label')->toString());
+                $test = $labRequestItem->test;
+                $allowedOptions = $test !== null
+                    ? $test->resultOptions->pluck('label')->all()
+                    : [];
 
                 if ($selectedOption === '' || ! in_array($selectedOption, $allowedOptions, true)) {
                     $validator->errors()->add('selected_option_label', 'Choose a valid result option for this test.');
@@ -71,15 +77,26 @@ final class CorrectLabResultEntryRequest extends FormRequest
                 return;
             }
 
-            $submittedValues = collect($this->input('parameter_values', []))
+            $parameterValues = $this->input('parameter_values', []);
+
+            if (! is_array($parameterValues)) {
+                $parameterValues = [];
+            }
+
+            $submittedValues = collect($parameterValues)
                 ->filter(static fn (mixed $item): bool => is_array($item))
                 ->mapWithKeys(static fn (array $item): array => [
-                    (string) ($item['lab_test_result_parameter_id'] ?? '') => $item,
+                    is_string($item['lab_test_result_parameter_id'] ?? null) ? $item['lab_test_result_parameter_id'] : '' => $item,
                 ]);
 
-            foreach ($labRequestItem->test?->resultParameters ?? [] as $parameter) {
+            $test = $labRequestItem->test;
+
+            foreach ($test !== null ? $test->resultParameters : [] as $parameter) {
                 $submitted = $submittedValues->get($parameter->id);
-                $value = mb_trim((string) ($submitted['value'] ?? ''));
+                $submittedValue = is_array($submitted) ? ($submitted['value'] ?? '') : '';
+                $value = is_string($submittedValue) || is_numeric($submittedValue)
+                    ? mb_trim((string) $submittedValue)
+                    : '';
 
                 if ($value === '') {
                     $validator->errors()->add(
@@ -102,10 +119,12 @@ final class CorrectLabResultEntryRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $parameterValues = $this->input('parameter_values');
+
         $this->merge([
             'result_notes' => $this->filled('result_notes') ? $this->input('result_notes') : null,
             'correction_reason' => $this->filled('correction_reason') ? $this->input('correction_reason') : null,
-            'parameter_values' => is_array($this->input('parameter_values')) ? $this->input('parameter_values') : [],
+            'parameter_values' => is_array($parameterValues) ? $parameterValues : [],
         ]);
     }
 
@@ -114,3 +133,4 @@ final class CorrectLabResultEntryRequest extends FormRequest
         return $this->route('labRequestItem') ?? $this->route('lab_request_item');
     }
 }
+

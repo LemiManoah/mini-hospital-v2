@@ -14,8 +14,14 @@ final class StoreOnboardingDepartmentsRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<mixed>>
+
+
+     * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         return [
@@ -26,3 +32,5 @@ final class StoreOnboardingDepartmentsRequest extends FormRequest
         ];
     }
 }
+
+

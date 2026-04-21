@@ -19,42 +19,11 @@ use Illuminate\Validation\Validator;
 final class StoreInventoryRequisitionRequest extends FormRequest
 {
     /**
-     * @return array<string, array<mixed>>
-     */
-    public function rules(): array
-    {
-        return [
-            'source_inventory_location_id' => [
-                'required',
-                'string',
-                Rule::exists('inventory_locations', 'id')
-                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
-            ],
-            'destination_inventory_location_id' => [
-                'required',
-                'string',
-                Rule::exists('inventory_locations', 'id')
-                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
-            ],
-            'requisition_date' => ['required', 'date'],
-            'priority' => ['required', Rule::enum(Priority::class)],
-            'notes' => ['nullable', 'string'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.inventory_item_id' => [
-                'required',
-                'string',
-                'distinct',
-                Rule::exists('inventory_items', 'id')
-                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
-            ],
-            'items.*.requested_quantity' => ['required', 'numeric', 'gt:0'],
-            'items.*.notes' => ['nullable', 'string'],
-        ];
-    }
 
-    /**
-     * @return array<int, Closure(Validator):void>
+     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
+
      */
+
     public function after(): array
     {
         return [
@@ -155,3 +124,5 @@ final class StoreInventoryRequisitionRequest extends FormRequest
         ];
     }
 }
+
+

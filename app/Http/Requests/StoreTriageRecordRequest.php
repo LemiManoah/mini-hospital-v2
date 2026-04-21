@@ -18,6 +18,15 @@ final class StoreTriageRecordRequest extends FormRequest
         return true;
     }
 
+    /**
+
+
+     * @return array<string, mixed>
+
+
+     */
+
+
     public function rules(): array
     {
         return [
@@ -40,3 +49,4 @@ final class StoreTriageRecordRequest extends FormRequest
         ];
     }
 }
+

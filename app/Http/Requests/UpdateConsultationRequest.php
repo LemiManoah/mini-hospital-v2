@@ -11,6 +11,12 @@ use Illuminate\Validation\Validator;
 
 final class UpdateConsultationRequest extends FormRequest
 {
+    /**
+
+     * @return array<string, mixed>
+
+     */
+
     public function rules(): array
     {
         return [
@@ -100,3 +106,4 @@ final class UpdateConsultationRequest extends FormRequest
         ]);
     }
 }
+

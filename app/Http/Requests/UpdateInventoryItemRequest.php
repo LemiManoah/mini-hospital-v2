@@ -18,6 +18,15 @@ final class UpdateInventoryItemRequest extends FormRequest
         return true;
     }
 
+    /**
+
+
+     * @return array<string, mixed>
+
+
+     */
+
+
     public function rules(): array
     {
         $isDrug = $this->input('item_type') === InventoryItemType::DRUG->value;
@@ -128,3 +137,4 @@ final class UpdateInventoryItemRequest extends FormRequest
         return $classes === [] ? null : $classes;
     }
 }
+

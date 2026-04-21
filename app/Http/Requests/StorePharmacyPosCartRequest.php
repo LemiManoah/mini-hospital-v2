@@ -16,8 +16,14 @@ final class StorePharmacyPosCartRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<mixed>>
+
+
+     * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         return [
@@ -33,3 +39,5 @@ final class StorePharmacyPosCartRequest extends FormRequest
         ];
     }
 }
+
+

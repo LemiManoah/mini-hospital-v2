@@ -15,6 +15,9 @@ final class CollectLabSpecimenRequest extends FormRequest
         return true;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -35,7 +38,7 @@ final class CollectLabSpecimenRequest extends FormRequest
                 return;
             }
 
-            $specimenTypeId = (string) $this->input('specimen_type_id', '');
+            $specimenTypeId = $this->string('specimen_type_id')->toString();
             $labTest = $labRequestItem->test()->first();
             $isAllowedSpecimenType = $specimenTypeId !== ''
                 && $labTest?->specimenTypes()->whereKey($specimenTypeId)->exists();
@@ -44,7 +47,7 @@ final class CollectLabSpecimenRequest extends FormRequest
                 $validator->errors()->add('specimen_type_id', 'Choose a specimen type configured for this test.');
             }
 
-            if ($this->boolean('outside_sample') && mb_trim((string) $this->input('outside_sample_origin', '')) === '') {
+            if ($this->boolean('outside_sample') && mb_trim($this->string('outside_sample_origin')->toString()) === '') {
                 $validator->errors()->add('outside_sample_origin', 'Describe where the outside sample came from.');
             }
         });
@@ -65,3 +68,4 @@ final class CollectLabSpecimenRequest extends FormRequest
         return $this->route('labRequestItem') ?? $this->route('lab_request_item');
     }
 }
+

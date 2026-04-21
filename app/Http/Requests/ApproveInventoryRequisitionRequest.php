@@ -12,21 +12,11 @@ use Illuminate\Validation\Validator;
 final class ApproveInventoryRequisitionRequest extends FormRequest
 {
     /**
-     * @return array<string, array<mixed>>
-     */
-    public function rules(): array
-    {
-        return [
-            'approval_notes' => ['nullable', 'string'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.inventory_requisition_item_id' => ['required', 'string'],
-            'items.*.approved_quantity' => ['required', 'numeric', 'min:0'],
-        ];
-    }
 
-    /**
-     * @return array<int, Closure(Validator):void>
+     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
+
      */
+
     public function after(): array
     {
         return [
@@ -80,3 +70,5 @@ final class ApproveInventoryRequisitionRequest extends FormRequest
         ];
     }
 }
+
+

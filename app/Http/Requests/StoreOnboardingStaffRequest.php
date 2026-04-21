@@ -16,8 +16,14 @@ final class StoreOnboardingStaffRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, Enum|string>|string>
+
+
+     * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         return [
@@ -44,3 +50,5 @@ final class StoreOnboardingStaffRequest extends FormRequest
         ]);
     }
 }
+
+

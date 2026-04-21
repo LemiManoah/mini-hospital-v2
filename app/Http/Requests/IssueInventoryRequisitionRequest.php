@@ -14,37 +14,11 @@ use Illuminate\Validation\Validator;
 final class IssueInventoryRequisitionRequest extends FormRequest
 {
     /**
-     * @return array<string, array<mixed>>
-     */
-    public function rules(): array
-    {
-        return [
-            'issued_notes' => ['nullable', 'string'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.inventory_requisition_item_id' => ['required', 'string'],
-            'items.*.issue_quantity' => ['required', 'numeric', 'min:0'],
-            'items.*.notes' => ['nullable', 'string'],
-            'items.*.allocations' => ['nullable', 'array'],
-            'items.*.allocations.*.inventory_batch_id' => ['required', 'string'],
-            'items.*.allocations.*.quantity' => ['required', 'numeric', 'gt:0'],
-        ];
-    }
 
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'items.*.allocations.*.inventory_batch_id.required' => 'Select a source batch for each batch allocation line.',
-            'items.*.allocations.*.quantity.required' => 'Enter the quantity to issue from this selected source batch.',
-            'items.*.allocations.*.quantity.gt' => 'Batch allocation quantity must be greater than zero.',
-        ];
-    }
+     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
 
-    /**
-     * @return array<int, Closure(Validator):void>
      */
+
     public function after(): array
     {
         return [
@@ -181,3 +155,5 @@ final class IssueInventoryRequisitionRequest extends FormRequest
         ];
     }
 }
+
+

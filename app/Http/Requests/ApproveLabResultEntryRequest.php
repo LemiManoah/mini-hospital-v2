@@ -13,6 +13,15 @@ final class ApproveLabResultEntryRequest extends FormRequest
         return true;
     }
 
+    /**
+
+
+     * @return array<string, mixed>
+
+
+     */
+
+
     public function rules(): array
     {
         return [
@@ -21,3 +30,4 @@ final class ApproveLabResultEntryRequest extends FormRequest
         ];
     }
 }
+

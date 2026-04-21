@@ -15,10 +15,18 @@ final class DeleteInsuranceCompanyRequest extends FormRequest
     }
 
     /**
-     * @return array<string, ValidationRule|array<mixed>|string>
+
+
+     * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         return [];
     }
 }
+
+

@@ -17,84 +17,11 @@ use Illuminate\Validation\Validator;
 final class PostDispenseRequest extends FormRequest
 {
     /**
-     * @return list<array{
-     *   dispensing_record_item_id: string,
-     *   allocations: list<array{
-     *     inventory_batch_id: string,
-     *     quantity: int|float|string
-     *   }>
-     * }>
+
+     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
+
      */
-    private function dispenseItems(): array
-    {
-        $items = $this->input('items', []);
 
-        if (! is_array($items)) {
-            return [];
-        }
-
-        $normalizedItems = [];
-
-        foreach ($items as $item) {
-            if (! is_array($item)) {
-                continue;
-            }
-
-            $dispensingRecordItemId = $item['dispensing_record_item_id'] ?? null;
-
-            if (! is_string($dispensingRecordItemId) || $dispensingRecordItemId === '') {
-                continue;
-            }
-
-            $allocations = [];
-            $rawAllocations = $item['allocations'] ?? [];
-
-            if (is_array($rawAllocations)) {
-                foreach ($rawAllocations as $allocation) {
-                    if (! is_array($allocation)) {
-                        continue;
-                    }
-
-                    $inventoryBatchId = $allocation['inventory_batch_id'] ?? null;
-                    $quantity = $allocation['quantity'] ?? null;
-
-                    if (! is_string($inventoryBatchId) || $inventoryBatchId === '' || ! is_numeric($quantity)) {
-                        continue;
-                    }
-
-                    $allocations[] = [
-                        'inventory_batch_id' => $inventoryBatchId,
-                        'quantity' => $quantity,
-                    ];
-                }
-            }
-
-            $normalizedItems[] = [
-                'dispensing_record_item_id' => $dispensingRecordItemId,
-                'allocations' => $allocations,
-            ];
-        }
-
-        return $normalizedItems;
-    }
-
-    /**
-     * @return array<string, array<mixed>>
-     */
-    public function rules(): array
-    {
-        return [
-            'items' => ['nullable', 'array'],
-            'items.*.dispensing_record_item_id' => ['required', 'string', 'distinct'],
-            'items.*.allocations' => ['nullable', 'array'],
-            'items.*.allocations.*.inventory_batch_id' => ['required', 'string'],
-            'items.*.allocations.*.quantity' => ['required', 'numeric', 'gt:0'],
-        ];
-    }
-
-    /**
-     * @return array<int, Closure(Validator):void>
-     */
     public function after(): array
     {
         return [
@@ -236,3 +163,5 @@ final class PostDispenseRequest extends FormRequest
         ];
     }
 }
+
+

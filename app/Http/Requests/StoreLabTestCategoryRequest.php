@@ -15,6 +15,15 @@ final class StoreLabTestCategoryRequest extends FormRequest
         return true;
     }
 
+    /**
+
+
+     * @return array<string, mixed>
+
+
+     */
+
+
     public function rules(): array
     {
         $tenantId = $this->user()?->tenant_id;
@@ -42,3 +51,4 @@ final class StoreLabTestCategoryRequest extends FormRequest
         ]);
     }
 }
+

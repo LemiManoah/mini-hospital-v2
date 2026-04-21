@@ -14,8 +14,14 @@ final class StoreOnboardingBranchRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<mixed>>
+
+
+     * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         return [
@@ -38,3 +44,5 @@ final class StoreOnboardingBranchRequest extends FormRequest
         ]);
     }
 }
+
+

@@ -20,8 +20,14 @@ final class UpdateInsurancePackageRequest extends FormRequest
     }
 
     /**
-     * @return array<string, ValidationRule|array<mixed>|string>
+
+
+     * @return array<string, mixed>
+
+
      */
+
+
     public function rules(): array
     {
         /** @var InsurancePackage $insurancePackage */
@@ -53,3 +59,5 @@ final class UpdateInsurancePackageRequest extends FormRequest
         ];
     }
 }
+
+

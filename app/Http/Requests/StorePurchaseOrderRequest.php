@@ -11,8 +11,11 @@ use Illuminate\Validation\Rule;
 final class StorePurchaseOrderRequest extends FormRequest
 {
     /**
-     * @return array<string, array<mixed>>
+
+     * @return array<string, mixed>
+
      */
+
     public function rules(): array
     {
         return [
@@ -37,3 +40,5 @@ final class StorePurchaseOrderRequest extends FormRequest
         ];
     }
 }
+
+
