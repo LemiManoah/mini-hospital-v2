@@ -15,11 +15,16 @@ final readonly class UpdatePharmacyPosCartItemAction
     ) {}
 
     /**
-     * @param  array<string, mixed>  $attributes
+     * @param  array{
+     *   quantity?: int|float|string,
+     *   unit_price?: int|float|string|null,
+     *   discount_amount?: int|float|string|null,
+     *   notes?: string|null
+     * }  $attributes
      */
     public function handle(PharmacyPosCartItem $cartItem, array $attributes): PharmacyPosCartItem
     {
-        $quantity = max(0.0, round((float) ($attributes['quantity'] ?? $cartItem->quantity), 3));
+        $quantity = max(0.0, round($this->toFloat($attributes['quantity'] ?? $cartItem->quantity), 3));
 
         if ($quantity <= 0) {
             throw ValidationException::withMessages([
@@ -37,7 +42,10 @@ final readonly class UpdatePharmacyPosCartItemAction
                 ->summarizeByLocation($branchId)
                 ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId
                     && $balance['inventory_item_id'] === $inventoryItemId)
-                ->sum('quantity');
+                ->reduce(
+                    static fn (float $carry, array $balance): float => $carry + (float) $balance['quantity'],
+                    0.0,
+                );
 
             if ($availableQty < $quantity) {
                 throw ValidationException::withMessages([
@@ -51,12 +59,17 @@ final readonly class UpdatePharmacyPosCartItemAction
 
         $cartItem->update([
             'quantity' => $quantity,
-            'unit_price' => max(0.0, round((float) ($attributes['unit_price'] ?? $cartItem->unit_price), 2)),
-            'discount_amount' => max(0.0, round((float) ($attributes['discount_amount'] ?? $cartItem->discount_amount), 2)),
+            'unit_price' => max(0.0, round($this->toFloat($attributes['unit_price'] ?? $cartItem->unit_price), 2)),
+            'discount_amount' => max(0.0, round($this->toFloat($attributes['discount_amount'] ?? $cartItem->discount_amount), 2)),
             'notes' => $this->nullableText($attributes['notes'] ?? null),
         ]);
 
         return $cartItem->refresh();
+    }
+
+    private function toFloat(int|float|string|null $value): float
+    {
+        return (float) ($value ?? 0);
     }
 
     private function nullableText(mixed $value): ?string

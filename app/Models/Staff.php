@@ -17,7 +17,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property-read string $id
+ * @property-read string|null $tenant_id
+ * @property-read string|null $staff_position_id
+ * @property-read string|null $address_id
+ * @property-read string $first_name
+ * @property-read string $last_name
+ * @property-read string $employee_number
+ * @property-read StaffType|null $type
+ * @property-read bool $is_active
+ * @property-read Carbon|null $hire_date
+ * @property-read Carbon|null $termination_date
+ * @property-read Carbon|null $last_login_at
+ * @property-read Carbon|null $deleted_at
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
+ * @property-read Tenant|null $tenant
+ * @property-read StaffPosition|null $position
+ * @property-read Address|null $address
+ * @property-read User|null $user
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, FacilityBranch> $branches
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Department> $departments
+ */
 final class Staff extends Model
 {
     use BelongsToTenant;
@@ -29,10 +53,17 @@ final class Staff extends Model
     use SoftDeletes;
 
     protected $casts = [
+        'tenant_id' => 'string',
+        'staff_position_id' => 'string',
+        'address_id' => 'string',
+        'first_name' => 'string',
+        'last_name' => 'string',
+        'employee_number' => 'string',
         'type' => StaffType::class,
         'hire_date' => 'date',
         'termination_date' => 'date',
         'is_active' => 'boolean',
+        'last_login_at' => 'datetime',
     ];
 
     /**

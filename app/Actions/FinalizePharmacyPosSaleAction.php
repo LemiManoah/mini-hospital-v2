@@ -28,7 +28,12 @@ final readonly class FinalizePharmacyPosSaleAction
     ) {}
 
     /**
-     * @param  array<string, mixed>  $paymentData
+     * @param  array{
+     *   paid_amount?: int|float|string|null,
+     *   payment_method?: string|null,
+     *   reference_number?: string|null,
+     *   notes?: string|null
+     * }  $paymentData
      */
     public function handle(PharmacyPosCart $cart, array $paymentData): PharmacyPosSale
     {
@@ -50,17 +55,19 @@ final readonly class FinalizePharmacyPosSaleAction
                 ]);
             }
 
-            $grossAmount = round($cart->items->sum(
-                fn (PharmacyPosCartItem $item): float => round((float) $item->quantity * (float) $item->unit_price, 2)
+            $grossAmount = round($cart->items->reduce(
+                static fn (float $carry, PharmacyPosCartItem $item): float => $carry + round((float) $item->quantity * (float) $item->unit_price, 2),
+                0.0,
             ), 2);
 
-            $discountAmount = round($cart->items->sum(
-                fn (PharmacyPosCartItem $item): float => (float) $item->discount_amount
+            $discountAmount = round($cart->items->reduce(
+                static fn (float $carry, PharmacyPosCartItem $item): float => $carry + (float) $item->discount_amount,
+                0.0,
             ), 2);
 
             $totalAmount = max(0.0, round($grossAmount - $discountAmount, 2));
 
-            $paidAmount = max(0.0, round((float) ($paymentData['paid_amount'] ?? $totalAmount), 2));
+            $paidAmount = max(0.0, round($this->toFloat($paymentData['paid_amount'] ?? $totalAmount), 2));
             $changeAmount = max(0.0, round($paidAmount - $totalAmount, 2));
             $balanceAmount = max(0.0, round($totalAmount - $paidAmount, 2));
 
@@ -93,10 +100,6 @@ final readonly class FinalizePharmacyPosSaleAction
             ]);
 
             foreach ($cart->items as $cartItem) {
-                if (! $cartItem instanceof PharmacyPosCartItem) {
-                    continue;
-                }
-
                 $lineTotal = max(0.0, round(
                     round((float) $cartItem->quantity * (float) $cartItem->unit_price, 2) - (float) $cartItem->discount_amount,
                     2
@@ -122,11 +125,11 @@ final readonly class FinalizePharmacyPosSaleAction
             if ($paidAmount > 0) {
                 $sale->payments()->create([
                     'amount' => $paidAmount,
-                    'payment_method' => $paymentData['payment_method'] ?? 'cash',
-                    'reference_number' => $paymentData['reference_number'] ?? null,
-                    'payment_date' => now(),
-                    'is_refund' => false,
-                    'notes' => $paymentData['notes'] ?? null,
+                'payment_method' => $paymentData['payment_method'] ?? 'cash',
+                'reference_number' => $paymentData['reference_number'] ?? null,
+                'payment_date' => now(),
+                'is_refund' => false,
+                'notes' => $paymentData['notes'] ?? null,
                     'created_by' => Auth::id(),
                     'updated_by' => Auth::id(),
                 ]);
@@ -169,7 +172,8 @@ final readonly class FinalizePharmacyPosSaleAction
 
         return $balances
             ->map(function (array $balance) use ($batches): ?array {
-                $batch = $batches->get($balance['inventory_batch_id']);
+                $batchId = $balance['inventory_batch_id'];
+                $batch = $batches->get($batchId);
 
                 if (! $batch instanceof InventoryBatch) {
                     return null;
@@ -184,7 +188,7 @@ final readonly class FinalizePharmacyPosSaleAction
                     'inventory_item_id' => $balance['inventory_item_id'],
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],
-                    'quantity' => $balance['quantity'],
+                    'quantity' => (float) $balance['quantity'],
                     'batch' => $batch,
                 ];
             })
@@ -193,7 +197,14 @@ final readonly class FinalizePharmacyPosSaleAction
     }
 
     /**
-     * @param  Collection<string, array<string, mixed>>  $availableBatches
+     * @param  Collection<string, array{
+     *   inventory_batch_id: string,
+     *   inventory_item_id: string,
+     *   batch_number: string|null,
+     *   expiry_date: string|null,
+     *   quantity: float,
+     *   batch: InventoryBatch
+     * }>  $availableBatches
      * @param  Collection<string, float>  $availableQuantities
      */
     private function allocateAndPostStock(
@@ -207,13 +218,13 @@ final readonly class FinalizePharmacyPosSaleAction
         $candidates = $availableBatches
             ->filter(
                 static fn (array $batch): bool => $batch['inventory_item_id'] === $saleItem->inventory_item_id
-                    && (float) $availableQuantities->get($batch['inventory_batch_id'], 0.0) > 0
+                    && (float) $availableQuantities->get((string) $batch['inventory_batch_id'], 0.0) > 0
             )
             ->sortBy(
                 static fn (array $batch): string => sprintf(
                     '%s|%s',
-                    $batch['expiry_date'] ?? '9999-12-31',
-                    $batch['batch_number'] ?? 'ZZZ',
+                    (string) ($batch['expiry_date'] ?? '9999-12-31'),
+                    (string) ($batch['batch_number'] ?? 'ZZZ'),
                 )
             )
             ->values();
@@ -260,7 +271,7 @@ final readonly class FinalizePharmacyPosSaleAction
                 'created_by' => Auth::id(),
             ]);
 
-            $availableQuantities->put($batchId, max(0.0, $available - $allocated));
+            $availableQuantities->put((string) $batchId, max(0.0, $available - $allocated));
             $needed = round($needed - $allocated, 3);
 
             if ($needed <= 0.0005) {
@@ -269,11 +280,19 @@ final readonly class FinalizePharmacyPosSaleAction
         }
 
         if ($needed > 0.0005) {
-            $itemName = $saleItem->inventoryItem?->generic_name ?? $saleItem->inventoryItem?->name ?? 'one of the items';
+            $inventoryItem = $saleItem->inventoryItem;
+            $itemName = $inventoryItem === null
+                ? 'one of the items'
+                : ($inventoryItem->generic_name ?? $inventoryItem->name);
 
             throw ValidationException::withMessages([
                 'cart' => sprintf('Not enough stock to complete the sale for %s.', $itemName),
             ]);
         }
+    }
+
+    private function toFloat(int|float|string|null $value): float
+    {
+        return (float) ($value ?? 0);
     }
 }

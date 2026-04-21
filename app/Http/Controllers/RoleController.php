@@ -66,7 +66,7 @@ final readonly class RoleController implements HasMiddleware
     public function store(StoreRoleRequest $request, CreateRole $action): RedirectResponse
     {
         $validated = $request->validated();
-        $permissions = $validated['permissions'] ?? [];
+        $permissions = $this->normalizePermissions($validated['permissions'] ?? []);
         unset($validated['permissions']);
 
         $action->handle($validated, $permissions);
@@ -90,7 +90,7 @@ final readonly class RoleController implements HasMiddleware
     public function update(UpdateRoleRequest $request, Role $role, UpdateRole $action): RedirectResponse
     {
         $validated = $request->validated();
-        $permissions = $validated['permissions'] ?? [];
+        $permissions = $this->normalizePermissions($validated['permissions'] ?? []);
         unset($validated['permissions']);
 
         $action->handle($role, $validated, $permissions);
@@ -103,5 +103,21 @@ final readonly class RoleController implements HasMiddleware
         $action->handle($role);
 
         return to_route('roles.index')->with('success', 'Role deleted successfully.');
+    }
+
+    /**
+     * @param  mixed  $permissions
+     * @return array<int, string>
+     */
+    private function normalizePermissions(mixed $permissions): array
+    {
+        if (! is_array($permissions)) {
+            return [];
+        }
+
+        return collect($permissions)
+            ->filter(static fn (mixed $permission): bool => is_string($permission) && $permission !== '')
+            ->values()
+            ->all();
     }
 }

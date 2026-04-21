@@ -18,7 +18,13 @@ final readonly class AddItemToPharmacyPosCartAction
     ) {}
 
     /**
-     * @param  array<string, mixed>  $attributes
+     * @param  array{
+     *   inventory_item_id?: string,
+     *   quantity?: int|float|string,
+     *   unit_price?: int|float|string|null,
+     *   discount_amount?: int|float|string|null,
+     *   notes?: string|null
+     * }  $attributes
      */
     public function handle(PharmacyPosCart $cart, array $attributes): PharmacyPosCartItem
     {
@@ -37,7 +43,7 @@ final readonly class AddItemToPharmacyPosCartAction
                 ->where('is_active', true)
                 ->findOrFail($inventoryItemId);
 
-            $quantity = max(0.0, round((float) ($attributes['quantity'] ?? 1), 3));
+            $quantity = max(0.0, round($this->toFloat($attributes['quantity'] ?? 1), 3));
 
             if ($quantity <= 0) {
                 throw ValidationException::withMessages([
@@ -45,26 +51,24 @@ final readonly class AddItemToPharmacyPosCartAction
                 ]);
             }
 
-            $unitPrice = max(0.0, round((float) ($attributes['unit_price'] ?? $inventoryItem->default_selling_price ?? 0), 2));
-            $discountAmount = max(0.0, round((float) ($attributes['discount_amount'] ?? 0), 2));
-            $branchId = $cart->branch_id;
-            $locationId = $cart->inventory_location_id;
+            $unitPrice = max(0.0, round($this->toFloat($attributes['unit_price'] ?? $inventoryItem->default_selling_price ?? 0), 2));
+            $discountAmount = max(0.0, round($this->toFloat($attributes['discount_amount'] ?? 0), 2));
+            $availableQty = $this->inventoryStockLedger
+                ->summarizeByLocation($cart->branch_id)
+                ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $cart->inventory_location_id
+                    && $balance['inventory_item_id'] === $inventoryItemId)
+                ->reduce(
+                    static fn (float $carry, array $balance): float => $carry + (float) $balance['quantity'],
+                    0.0,
+                );
 
-            if (is_string($branchId) && is_string($locationId)) {
-                $availableQty = $this->inventoryStockLedger
-                    ->summarizeByLocation($branchId)
-                    ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId
-                        && $balance['inventory_item_id'] === $inventoryItemId)
-                    ->sum('quantity');
-
-                if ($availableQty < $quantity) {
-                    throw ValidationException::withMessages([
-                        'quantity' => sprintf(
-                            'Only %.3f units available in the selected location.',
-                            (float) $availableQty,
-                        ),
-                    ]);
-                }
+            if ($availableQty < $quantity) {
+                throw ValidationException::withMessages([
+                    'quantity' => sprintf(
+                        'Only %.3f units available in the selected location.',
+                        (float) $availableQty,
+                    ),
+                ]);
             }
 
             $existing = $cart->items()
@@ -82,14 +86,22 @@ final readonly class AddItemToPharmacyPosCartAction
                 return $existing->refresh();
             }
 
-            return $cart->items()->create([
+            /** @var PharmacyPosCartItem $createdItem */
+            $createdItem = $cart->items()->create([
                 'inventory_item_id' => $inventoryItemId,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
                 'discount_amount' => $discountAmount,
                 'notes' => $this->nullableText($attributes['notes'] ?? null),
             ]);
+
+            return $createdItem;
         });
+    }
+
+    private function toFloat(int|float|string|null $value): float
+    {
+        return (float) ($value ?? 0);
     }
 
     private function nullableText(mixed $value): ?string

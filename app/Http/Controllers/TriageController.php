@@ -122,13 +122,13 @@ final readonly class TriageController implements HasMiddleware
     }
 
     /**
-     * @param  array<int, object>  $cases
+     * @param  array<int, AttendanceType|ConsciousLevel|MobilityStatus|TriageGrade>  $cases
      * @return array<int, array{value: string, label: string}>
      */
     private function enumOptions(array $cases): array
     {
         return collect($cases)
-            ->map(static fn (object $case): array => [
+            ->map(static fn (AttendanceType|ConsciousLevel|MobilityStatus|TriageGrade $case): array => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ])

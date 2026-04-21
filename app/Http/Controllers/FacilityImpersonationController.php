@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\FacilityBranch;
 use App\Models\Role;
+use App\Models\Staff;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\BranchContext;
@@ -14,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,6 +34,8 @@ final readonly class FacilityImpersonationController implements HasMiddleware
 
     public function index(Request $request): Response
     {
+        Gate::authorize('viewAny', Tenant::class);
+
         $filters = [
             'search' => $request->string('search')->value() ?: null,
             'facility_id' => $request->string('facility_id')->value() ?: null,
@@ -80,30 +85,7 @@ final readonly class FacilityImpersonationController implements HasMiddleware
             ->latest()
             ->paginate(12)
             ->withQueryString()
-            ->through(static fn (User $user): array => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'position' => $user->staff?->position?->name,
-                'employee_number' => $user->staff?->employee_number,
-                'is_active' => $user->staff?->is_active ?? false,
-                'last_login_at' => $user->staff?->last_login_at?->toISOString(),
-                'tenant' => $user->tenant ? [
-                    'id' => $user->tenant->id,
-                    'name' => $user->tenant->name,
-                ] : null,
-                'roles' => $user->roles
-                    ->pluck('name')
-                    ->values()
-                    ->all(),
-                'branches' => $user->staff?->branches
-                    ?->map(static fn ($branch): array => [
-                        'id' => $branch->id,
-                        'name' => $branch->name,
-                    ])
-                    ->values()
-                    ->all() ?? [],
-            ]);
+            ->through(fn (User $user): array => $this->userPayload($user));
 
         return Inertia::render('facility-manager/impersonation/index', [
             'filters' => $filters,
@@ -178,5 +160,39 @@ final readonly class FacilityImpersonationController implements HasMiddleware
 
         return to_route('facility-manager.impersonation.index')
             ->with('success', 'Returned to your support account.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function userPayload(User $user): array
+    {
+        /** @var Staff|null $staff */
+        $staff = $user->staff;
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'position' => $staff?->position?->name,
+            'employee_number' => $staff?->employee_number,
+            'is_active' => $staff !== null && $staff->is_active,
+            'last_login_at' => $staff?->last_login_at?->toISOString(),
+            'tenant' => $user->tenant ? [
+                'id' => $user->tenant->id,
+                'name' => $user->tenant->name,
+            ] : null,
+            'roles' => $user->roles
+                ->pluck('name')
+                ->values()
+                ->all(),
+            'branches' => $staff?->branches
+                ?->map(static fn (FacilityBranch $branch): array => [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                ])
+                ->values()
+                ->all() ?? [],
+        ];
     }
 }

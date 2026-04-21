@@ -53,10 +53,12 @@ final readonly class LabResultPrintController implements HasMiddleware
         $visit = $labRequestItem->request?->visit;
         $patient = $visit?->patient;
         $test = $labRequestItem->test;
+        $visitNumber = $visit !== null ? $visit->visit_number : 'visit';
+        $testName = $test !== null ? $test->test_name : 'result';
         $filename = sprintf(
             'lab-result-%s-%s.pdf',
-            $visit?->visit_number ?? 'visit',
-            Str::slug($test?->test_name ?? 'result'),
+            $visitNumber,
+            Str::slug($testName),
         );
 
         $pdf = Pdf::loadView('print.lab-result', [

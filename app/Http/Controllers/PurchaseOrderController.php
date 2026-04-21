@@ -73,12 +73,7 @@ final readonly class PurchaseOrderController implements HasMiddleware
     public function create(): Response
     {
         $branchId = BranchContext::getActiveBranchId();
-        $itemQuantities = is_string($branchId) && $branchId !== ''
-            ? $this->inventoryStockLedger
-                ->summarizeByLocation($branchId)
-                ->groupBy('inventory_item_id')
-                ->map(static fn (Collection $balances): float => (float) collect($balances)->sum('quantity'))
-            : collect();
+        $itemQuantities = $this->itemQuantities($branchId);
 
         return Inertia::render('inventory/purchase-orders/create', [
             'suppliers' => Supplier::query()->active()->orderBy('name')->get(['id', 'name']),
@@ -90,8 +85,8 @@ final readonly class PurchaseOrderController implements HasMiddleware
                     'id' => $item->id,
                     'name' => $item->name,
                     'generic_name' => $item->generic_name,
-                    'item_type' => $item->item_type?->value ?? $item->item_type,
-                    'current_quantity' => (float) ($itemQuantities->get($item->id) ?? 0),
+                    'item_type' => $item->item_type->value,
+                    'current_quantity' => $itemQuantities->get($item->id, 0.0),
                 ]),
         ]);
     }
@@ -99,7 +94,7 @@ final readonly class PurchaseOrderController implements HasMiddleware
     public function store(StorePurchaseOrderRequest $request, CreatePurchaseOrder $action): RedirectResponse
     {
         $validated = $request->validated();
-        $items = $validated['items'];
+        $items = $this->normalizeItems($validated['items'] ?? []);
         unset($validated['items']);
 
         $purchaseOrder = $action->handle($validated, $items);
@@ -127,12 +122,7 @@ final readonly class PurchaseOrderController implements HasMiddleware
         $purchaseOrder->load('items.inventoryItem');
 
         $branchId = BranchContext::getActiveBranchId();
-        $itemQuantities = is_string($branchId) && $branchId !== ''
-            ? $this->inventoryStockLedger
-                ->summarizeByLocation($branchId)
-                ->groupBy('inventory_item_id')
-                ->map(static fn (Collection $balances): float => (float) collect($balances)->sum('quantity'))
-            : collect();
+        $itemQuantities = $this->itemQuantities($branchId);
 
         return Inertia::render('inventory/purchase-orders/edit', [
             'purchaseOrder' => $purchaseOrder,
@@ -145,8 +135,8 @@ final readonly class PurchaseOrderController implements HasMiddleware
                     'id' => $item->id,
                     'name' => $item->name,
                     'generic_name' => $item->generic_name,
-                    'item_type' => $item->item_type?->value ?? $item->item_type,
-                    'current_quantity' => (float) ($itemQuantities->get($item->id) ?? 0),
+                    'item_type' => $item->item_type->value,
+                    'current_quantity' => $itemQuantities->get($item->id, 0.0),
                 ]),
         ]);
     }
@@ -154,7 +144,7 @@ final readonly class PurchaseOrderController implements HasMiddleware
     public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder, UpdatePurchaseOrder $action): RedirectResponse
     {
         $validated = $request->validated();
-        $items = $validated['items'];
+        $items = $this->normalizeItems($validated['items'] ?? []);
         unset($validated['items']);
 
         $action->handle($purchaseOrder, $validated, $items);
@@ -193,6 +183,63 @@ final readonly class PurchaseOrderController implements HasMiddleware
                 'value' => $status->value,
                 'label' => $status->label(),
             ])
+            ->all();
+    }
+
+    /**
+     * @return Collection<string, float>
+     */
+    private function itemQuantities(?string $branchId): Collection
+    {
+        if (! is_string($branchId) || $branchId === '') {
+            /** @var Collection<string, float> $empty */
+            $empty = collect();
+
+            return $empty;
+        }
+
+        /** @var Collection<string, float> $quantities */
+        $quantities = $this->inventoryStockLedger
+            ->summarizeByLocation($branchId)
+            ->groupBy('inventory_item_id')
+            ->map(
+                static fn (Collection $balances): float => $balances->reduce(
+                    static fn (float $carry, array $balance): float => $carry + $balance['quantity'],
+                    0.0,
+                ),
+            );
+
+        return $quantities;
+    }
+
+    /**
+     * @param  mixed  $items
+     * @return array<int, array{inventory_item_id: string, quantity_ordered: float, unit_cost: float}>
+     */
+    private function normalizeItems(mixed $items): array
+    {
+        if (! is_array($items)) {
+            return [];
+        }
+
+        return collect($items)
+            ->filter(static fn (mixed $item): bool => is_array($item))
+            ->map(static function (array $item): array {
+                $inventoryItemId = $item['inventory_item_id'] ?? null;
+                $quantityOrdered = $item['quantity_ordered'] ?? null;
+                $unitCost = $item['unit_cost'] ?? null;
+
+                return [
+                    'inventory_item_id' => is_string($inventoryItemId) ? $inventoryItemId : '',
+                    'quantity_ordered' => is_int($quantityOrdered) || is_float($quantityOrdered) || is_string($quantityOrdered)
+                        ? (float) $quantityOrdered
+                        : 0.0,
+                    'unit_cost' => is_int($unitCost) || is_float($unitCost) || is_string($unitCost)
+                        ? (float) $unitCost
+                        : 0.0,
+                ];
+            })
+            ->values()
             ->all();
     }
 }

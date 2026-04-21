@@ -8,18 +8,55 @@ use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property-read string $id
+ * @property-read string|null $tenant_id
+ * @property-read string $patient_id
+ * @property-read string $facility_branch_id
+ * @property-read string|null $clinic_id
+ * @property-read string|null $doctor_id
+ * @property-read string|null $appointment_id
+ * @property-read string $visit_number
+ * @property-read bool $is_emergency
+ * @property-read VisitType|null $visit_type
+ * @property-read VisitStatus|null $status
+ * @property-read Carbon|null $registered_at
+ * @property-read Carbon|null $started_at
+ * @property-read Carbon|null $completed_at
+ * @property-read Carbon|null $deleted_at
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
+ * @property-read Tenant|null $tenant
+ * @property-read Patient|null $patient
+ * @property-read FacilityBranch|null $branch
+ * @property-read Clinic|null $clinic
+ * @property-read Staff|null $doctor
+ * @property-read Appointment|null $appointment
+ * @property-read VisitPayer|null $payer
+ * @property-read TriageRecord|null $triage
+ * @property-read Consultation|null $consultation
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, LabRequest> $labRequests
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ImagingRequest> $imagingRequests
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Prescription> $prescriptions
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, FacilityServiceOrder> $facilityServiceOrders
+ * @property-read VisitBilling|null $billing
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, VisitCharge> $charges
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Payment> $payments
+ */
 final class PatientVisit extends Model
 {
     use BelongsToTenant;
 
-    /** @use HasFactory<\Database\Factories\PatientVisitFactory> */
+    /** @use HasFactory<Factory> */
     use HasFactory;
 
     use HasUuids;

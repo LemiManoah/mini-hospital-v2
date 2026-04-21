@@ -72,9 +72,14 @@ final readonly class PharmacyPosController implements HasMiddleware
                 ->all()
             : [];
 
-        $stockBalances = is_string($branchId) && $activeCart !== null && is_string($activeCart->inventory_location_id)
+        $stockBalances = is_string($branchId) && $activeCart !== null
             ? $this->itemBalancesForLocation($branchId, $activeCart->inventory_location_id)
-            : collect();
+            : (function (): Collection {
+                /** @var Collection<string, float> $empty */
+                $empty = collect();
+
+                return $empty;
+            })();
 
         $searchableItems = $this->searchableItems($branchId, $activeCart?->inventory_location_id);
 
@@ -109,12 +114,15 @@ final readonly class PharmacyPosController implements HasMiddleware
     }
 
     /**
-     * @param  Collection<int, InventoryLocation>  $locations
+     * @return Collection<int, InventoryLocation>
      */
     private function dispensingLocations(?string $branchId): Collection
     {
         if (! is_string($branchId) || $branchId === '') {
-            return collect();
+            /** @var Collection<int, InventoryLocation> $empty */
+            $empty = collect();
+
+            return $empty;
         }
 
         $locations = $this->inventoryLocationAccess->accessibleLocations(
@@ -135,11 +143,19 @@ final readonly class PharmacyPosController implements HasMiddleware
      */
     private function itemBalancesForLocation(string $branchId, string $locationId): Collection
     {
-        return $this->inventoryStockLedger
+        /** @var Collection<string, float> $balances */
+        $balances = $this->inventoryStockLedger
             ->summarizeByLocation($branchId)
             ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId)
             ->groupBy('inventory_item_id')
-            ->map(static fn (Collection $rows): float => (float) $rows->sum('quantity'));
+            ->map(static function (Collection $rows): float {
+                return $rows->reduce(
+                    static fn (float $carry, array $row): float => $carry + (float) $row['quantity'],
+                    0.0,
+                );
+            });
+
+        return $balances;
     }
 
     /**
@@ -151,12 +167,18 @@ final readonly class PharmacyPosController implements HasMiddleware
             return [];
         }
 
+        /** @var Collection<string, float> $balances */
         $balances = $this->inventoryStockLedger
             ->summarizeByLocation($branchId)
             ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId
                 && $balance['quantity'] > 0)
             ->groupBy('inventory_item_id')
-            ->map(static fn (Collection $rows): float => (float) $rows->sum('quantity'));
+            ->map(static function (Collection $rows): float {
+                return $rows->reduce(
+                    static fn (float $carry, array $row): float => $carry + (float) $row['quantity'],
+                    0.0,
+                );
+            });
 
         if ($balances->isEmpty()) {
             return [];
@@ -172,7 +194,7 @@ final readonly class PharmacyPosController implements HasMiddleware
                 'generic_name' => $item->generic_name,
                 'brand_name' => $item->brand_name,
                 'strength' => $item->strength,
-                'dosage_form' => $item->dosage_form?->value ?? $item->dosage_form,
+                'dosage_form' => $item->dosage_form?->value,
                 'unit_price' => round((float) ($item->default_selling_price ?? 0), 2),
                 'available_quantity' => round($balances->get($item->id, 0.0), 3),
             ])
@@ -190,7 +212,7 @@ final readonly class PharmacyPosController implements HasMiddleware
         return [
             'id' => $cart->id,
             'cart_number' => $cart->cart_number,
-            'status' => $cart->status?->value,
+            'status' => $cart->status->value,
             'customer_name' => $cart->customer_name,
             'customer_phone' => $cart->customer_phone,
             'notes' => $cart->notes,
@@ -208,7 +230,7 @@ final readonly class PharmacyPosController implements HasMiddleware
                     'generic_name' => $item->inventoryItem?->generic_name,
                     'brand_name' => $item->inventoryItem?->brand_name,
                     'strength' => $item->inventoryItem?->strength,
-                    'dosage_form' => $item->inventoryItem?->dosage_form?->value ?? $item->inventoryItem?->dosage_form,
+                    'dosage_form' => $item->inventoryItem?->dosage_form?->value,
                     'quantity' => round((float) $item->quantity, 3),
                     'unit_price' => round((float) $item->unit_price, 2),
                     'discount_amount' => round((float) $item->discount_amount, 2),
@@ -218,9 +240,18 @@ final readonly class PharmacyPosController implements HasMiddleware
                 ])
                 ->values()
                 ->all(),
-            'gross_amount' => round($cart->items->sum(fn (PharmacyPosCartItem $i): float => (float) $i->quantity * (float) $i->unit_price), 2),
-            'discount_amount' => round($cart->items->sum(fn (PharmacyPosCartItem $i): float => (float) $i->discount_amount), 2),
-            'total_amount' => round($cart->items->sum(fn (PharmacyPosCartItem $i): float => $i->lineTotal()), 2),
+            'gross_amount' => round($cart->items->reduce(
+                static fn (float $carry, PharmacyPosCartItem $item): float => $carry + ((float) $item->quantity * (float) $item->unit_price),
+                0.0,
+            ), 2),
+            'discount_amount' => round($cart->items->reduce(
+                static fn (float $carry, PharmacyPosCartItem $item): float => $carry + (float) $item->discount_amount,
+                0.0,
+            ), 2),
+            'total_amount' => round($cart->items->reduce(
+                static fn (float $carry, PharmacyPosCartItem $item): float => $carry + $item->lineTotal(),
+                0.0,
+            ), 2),
         ];
     }
 }
