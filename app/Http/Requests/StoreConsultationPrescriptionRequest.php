@@ -13,11 +13,64 @@ use Illuminate\Validation\Validator;
 final class StoreConsultationPrescriptionRequest extends FormRequest
 {
     /**
-
-     * @return array<string, mixed>
-
+     * @return list<array{
+     *   inventory_item_id: string,
+     *   dosage: string,
+     *   frequency: string,
+     *   route: string,
+     *   duration_days: int,
+     *   quantity: int,
+     *   instructions: string|null,
+     *   is_prn: bool,
+     *   prn_reason: string|null,
+     *   is_external_pharmacy: bool
+     * }>
      */
+    private function prescriptionItems(): array
+    {
+        $items = $this->input('items', []);
 
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $normalizedItems = [];
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $inventoryItemId = $item['inventory_item_id'] ?? null;
+
+            if (! is_string($inventoryItemId) || $inventoryItemId === '') {
+                continue;
+            }
+
+            $normalizedItems[] = [
+                'inventory_item_id' => $inventoryItemId,
+                'dosage' => is_string($item['dosage'] ?? null) ? $item['dosage'] : '',
+                'frequency' => is_string($item['frequency'] ?? null) ? $item['frequency'] : '',
+                'route' => is_string($item['route'] ?? null) ? $item['route'] : '',
+                'duration_days' => is_numeric($item['duration_days'] ?? null) ? (int) $item['duration_days'] : 0,
+                'quantity' => is_numeric($item['quantity'] ?? null) ? (int) $item['quantity'] : 0,
+                'instructions' => is_string($item['instructions'] ?? null) && mb_trim($item['instructions']) !== ''
+                    ? $item['instructions']
+                    : null,
+                'is_prn' => filter_var($item['is_prn'] ?? false, FILTER_VALIDATE_BOOL),
+                'prn_reason' => is_string($item['prn_reason'] ?? null) && mb_trim($item['prn_reason']) !== ''
+                    ? $item['prn_reason']
+                    : null,
+                'is_external_pharmacy' => filter_var($item['is_external_pharmacy'] ?? false, FILTER_VALIDATE_BOOL),
+            ];
+        }
+
+        return $normalizedItems;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [

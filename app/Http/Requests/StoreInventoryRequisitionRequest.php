@@ -19,11 +19,41 @@ use Illuminate\Validation\Validator;
 final class StoreInventoryRequisitionRequest extends FormRequest
 {
     /**
-
-     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
-
+     * @return array<string, mixed>
      */
+    public function rules(): array
+    {
+        return [
+            'source_inventory_location_id' => [
+                'required',
+                'string',
+                Rule::exists('inventory_locations', 'id')
+                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
+            ],
+            'destination_inventory_location_id' => [
+                'required',
+                'string',
+                Rule::exists('inventory_locations', 'id')
+                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
+            ],
+            'priority' => ['required', Rule::enum(Priority::class)],
+            'requisition_date' => ['required', 'date'],
+            'notes' => ['nullable', 'string'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.inventory_item_id' => [
+                'required',
+                'string',
+                Rule::exists('inventory_items', 'id')
+                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
+            ],
+            'items.*.requested_quantity' => ['required', 'numeric', 'gt:0'],
+            'items.*.notes' => ['nullable', 'string'],
+        ];
+    }
 
+    /**
+     * @return array<int, callable(Validator): void>
+     */
     public function after(): array
     {
         return [
@@ -113,7 +143,7 @@ final class StoreInventoryRequisitionRequest extends FormRequest
 
                 if (
                     $requestingLocation instanceof InventoryLocation
-                    && ! in_array($requestingLocation->type?->value, $workspaceTypes, true)
+                    && ! in_array($requestingLocation->type->value, $workspaceTypes, true)
                 ) {
                     $validator->errors()->add(
                         'destination_inventory_location_id',

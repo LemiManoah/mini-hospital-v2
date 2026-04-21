@@ -435,3 +435,74 @@ Your `phpstan` output is not one single bug repeated 1000 times, but it is heavi
 - weak collection inference
 
 That is why the error list looks huge. Once those root causes are tightened, a lot of the downstream warnings collapse quickly.
+
+## Progress Since This Review
+
+The cleanup has moved in slices rather than one risky repo-wide refactor.
+
+### Cleaned and verified slices
+
+- `FacilityImpersonationController` now matches the surrounding controller style better:
+  - explicit `Gate::authorize('viewAny', Tenant::class)`
+  - typed `FacilityBranch` mapping
+  - user payload extraction into a typed helper
+- print and payment controller slice was cleaned and previously verified at `0` targeted `phpstan` errors:
+  - `DispensingRecordPrintController`
+  - `InventoryRequisitionPrintController`
+  - `LabResultPrintController`
+  - `VisitPaymentPrintController`
+  - related models received stronger relation typing and `Address`-style model PHPDoc
+- pharmacy / dispensing slice was cleaned and previously verified at `0` targeted `phpstan` errors:
+  - `DispensingController`
+  - `PharmacyPrescriptionController`
+  - pharmacy POS models, actions, and controllers
+- purchase order / role / triage controller slice was cleaned and verified at `0` targeted `phpstan` errors:
+  - `PurchaseOrderController`
+  - `RoleController`
+  - `TriageController`
+
+### Request sweep progress
+
+- a broad request-layer pass has started to reduce repeated `missingType.iterableValue` noise by adding explicit `rules()` return typing
+- targeted input-normalization fixes were also made in:
+  - `CollectLabSpecimenRequest`
+  - `CorrectLabResultEntryRequest`
+  - `StoreInsurancePackagePriceRequest`
+  - `UpdateInsurancePackagePriceRequest`
+  - `StoreVitalSignRequest`
+  - `StoreDispenseRequest`
+- session-safe impersonation checks were added in `ImpersonationContext`, and `HandleInertiaRequestsTest` is now passing again
+
+## Remaining Work
+
+The request layer still needs a careful second pass. Two things are true at the same time:
+
+- the repetitive request docblock cleanup reduced a lot of low-value `phpstan` noise
+- a few request files also lost helper methods or `rules()` structure during that broad sweep and had to be restored
+
+That means the request layer is **partially improved but not yet fully stabilized**.
+
+### Highest-priority remaining request work
+
+1. Re-run `phpstan` on the request layer once the environment memory issue is resolved.
+2. Audit the request files touched by the bulk sweep for helper preservation:
+   - `StoreConsultationPrescriptionRequest`
+   - `PostDispenseRequest`
+   - `StoreInventoryRequisitionRequest`
+   - `StoreGoodsReceiptRequest`
+3. Finish the “real” request fixes, especially:
+   - request helper methods that normalize nested `items` arrays
+   - casts from request `mixed` input
+   - `collect($mixed)` and `map()` pipelines in request validators
+4. Resume the remaining medium/high-noise request files after verification:
+   - lab result entry requests
+   - dispense / prescription workflow requests
+   - inventory requests
+   - consultation update requests
+
+## Verification Note
+
+Targeted `phpstan` verification was working earlier in the session, but later request verification became blocked by the machine's paging-file / memory limit before `phpstan` could bootstrap reliably. Because of that:
+
+- the controller/model slices above were verified when the environment still allowed it
+- the later request-layer work could only be syntax-checked and test-checked, not fully `phpstan`-verified yet
