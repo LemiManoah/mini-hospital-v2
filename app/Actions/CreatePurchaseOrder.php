@@ -13,8 +13,23 @@ use Illuminate\Support\Str;
 final readonly class CreatePurchaseOrder
 {
     /**
-     * @param  array<string, mixed>  $attributes
-     * @param  array<int, array<string, mixed>>  $items
+     * @param  array{
+     *      tenant_id?: string,
+     *      branch_id: string,
+     *      supplier_id: string,
+     *      order_date: string,
+     *      expected_delivery_date?: string|null,
+     *      notes?: string|null,
+     *      approved_by?: string|null,
+     *      approved_at?: string|null,
+     *      updated_by?: string|null,
+     *      total_amount?: float|int|string
+     *  }  $attributes
+     * @param  list<array{
+     *      inventory_item_id: string,
+     *      quantity_ordered: float|int|string,
+     *      unit_cost: float|int|string
+     *  }>  $items
      */
     public function handle(array $attributes, array $items): PurchaseOrder
     {
@@ -31,11 +46,14 @@ final readonly class CreatePurchaseOrder
             ]);
 
             foreach ($items as $item) {
+                $quantityOrdered = (float) $item['quantity_ordered'];
+                $unitCost = (float) $item['unit_cost'];
+
                 $purchaseOrder->items()->create([
                     'inventory_item_id' => $item['inventory_item_id'],
-                    'quantity_ordered' => $item['quantity_ordered'],
-                    'unit_cost' => $item['unit_cost'],
-                    'total_cost' => round((float) $item['quantity_ordered'] * (float) $item['unit_cost'], 2),
+                    'quantity_ordered' => $quantityOrdered,
+                    'unit_cost' => $unitCost,
+                    'total_cost' => round($quantityOrdered * $unitCost, 2),
                 ]);
             }
 

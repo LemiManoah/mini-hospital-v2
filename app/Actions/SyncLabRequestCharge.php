@@ -18,10 +18,14 @@ final readonly class SyncLabRequestCharge
     public function handle(LabRequest $request): void
     {
         $request->loadMissing(['visit.payer', 'items.test']);
+        $visit = $request->visit;
+        if (! $visit instanceof \App\Models\PatientVisit) {
+            return;
+        }
 
-        $total = $request->items->sum(function (LabRequestItem $item) use ($request): float {
+        $total = $request->items->sum(function (LabRequestItem $item) use ($visit): float {
             $resolved = $this->resolveVisitChargeAmount->handle(
-                $request->visit,
+                $visit,
                 BillableItemType::TEST,
                 $item->test_id,
                 (float) $item->price,
@@ -36,7 +40,7 @@ final readonly class SyncLabRequestCharge
             : sprintf('Lab request: %d tests', $testCount);
 
         $this->upsertVisitCharge->handle(
-            $request->visit,
+            $visit,
             $request,
             $description,
             $total,

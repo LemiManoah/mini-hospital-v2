@@ -13,7 +13,7 @@ final readonly class DeleteFacilityService
 {
     public function handle(FacilityService $service): void
     {
-        if ($service->orders()->exists()) {
+        if ($this->hasExistingOrders($service)) {
             throw ValidationException::withMessages([
                 'delete' => 'This facility service cannot be deleted because it has existing service orders.',
             ]);
@@ -22,7 +22,7 @@ final readonly class DeleteFacilityService
         try {
             DB::transaction(fn () => $service->delete());
         } catch (QueryException $queryException) {
-            if ($service->orders()->exists()) {
+            if ($this->hasExistingOrders($service)) {
                 throw ValidationException::withMessages([
                     'delete' => 'This facility service cannot be deleted because it has existing service orders.',
                 ]);
@@ -30,5 +30,11 @@ final readonly class DeleteFacilityService
 
             throw $queryException;
         }
+    }
+
+    /** @phpstan-impure */
+    private function hasExistingOrders(FacilityService $service): bool
+    {
+        return $service->orders()->exists();
     }
 }

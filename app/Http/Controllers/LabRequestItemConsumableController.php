@@ -69,7 +69,9 @@ final readonly class LabRequestItemConsumableController implements HasMiddleware
             ->summarizeByLocation($labRequest->facility_branch_id)
             ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $laboratoryLocationIds, true))
             ->groupBy('inventory_item_id')
-            ->map(static fn (Collection $balances): float => (float) collect($balances)->sum('quantity'));
+            ->map(static fn (Collection $balances): float => $balances->sum(
+                static fn (array $balance): float => $balance['quantity'],
+            ));
 
         $consumableOptions = InventoryItem::query()
             ->where('tenant_id', $labRequest->tenant_id)
@@ -80,7 +82,7 @@ final readonly class LabRequestItemConsumableController implements HasMiddleware
             ->map(static fn (InventoryItem $inventoryItem): array => [
                 'id' => $inventoryItem->id,
                 'name' => $inventoryItem->name,
-                'item_type' => $inventoryItem->item_type?->value,
+                'item_type' => $inventoryItem->item_type->value,
                 'label' => sprintf(
                     '%s | Qty %.3f%s',
                     $inventoryItem->name,
@@ -107,7 +109,8 @@ final readonly class LabRequestItemConsumableController implements HasMiddleware
         LabRequestItem $labRequestItem,
         RecordLabRequestItemConsumable $action,
     ): RedirectResponse {
-        $this->activeBranchWorkspace->authorizeModel($labRequestItem->request);
+        $labRequest = $labRequestItem->request()->firstOrFail();
+        $this->activeBranchWorkspace->authorizeModel($labRequest);
 
         $staffId = $request->user()?->staff_id;
 
@@ -116,7 +119,7 @@ final readonly class LabRequestItemConsumableController implements HasMiddleware
                 ->with('error', 'Consumable usage requires a linked staff profile for audit tracking.');
         }
 
-        $action->handle($labRequestItem->loadMissing('request'), $request->validated(), $staffId);
+        $action->handle($labRequestItem->loadMissing('request'), $request->dto(), $staffId);
 
         return to_route('laboratory.request-items.consumables.show', $labRequestItem)
             ->with('success', 'Consumable usage recorded successfully.');
@@ -127,7 +130,8 @@ final readonly class LabRequestItemConsumableController implements HasMiddleware
         LabRequestItemConsumable $labRequestItemConsumable,
         DeleteLabRequestItemConsumable $action,
     ): RedirectResponse {
-        $this->activeBranchWorkspace->authorizeModel($labRequestItem->request);
+        $labRequest = $labRequestItem->request()->firstOrFail();
+        $this->activeBranchWorkspace->authorizeModel($labRequest);
 
         abort_unless($labRequestItemConsumable->lab_request_item_id === $labRequestItem->id, 404);
 

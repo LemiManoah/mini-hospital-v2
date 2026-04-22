@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\BillingStatus;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,10 +15,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class InsuranceCompanyInvoice extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\InsuranceCompanyInvoiceFactory> */
-    use HasFactory;
-
     use HasUuids;
     use SoftDeletes;
 

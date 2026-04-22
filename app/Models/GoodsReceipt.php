@@ -39,16 +39,25 @@ final class GoodsReceipt extends Model
         'posted_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<PurchaseOrder, $this>
+     */
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
     }
 
+    /**
+     * @return BelongsTo<InventoryLocation, $this>
+     */
     public function inventoryLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class);
     }
 
+    /**
+     * @return HasMany<GoodsReceiptItem, $this>
+     */
     public function items(): HasMany
     {
         return $this->hasMany(GoodsReceiptItem::class);

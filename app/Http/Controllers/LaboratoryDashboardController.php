@@ -88,16 +88,22 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
             : collect();
 
         $stockLevels = is_string($activeBranchId) && $activeBranchId !== '' && $labLocationIds !== []
-            ? StockMovement::query()
-                ->where('branch_id', $activeBranchId)
-                ->whereIn('inventory_location_id', $labLocationIds)
-                ->select('inventory_item_id')
-                ->selectRaw('SUM(quantity) as total_qty')
-                ->groupBy('inventory_item_id')
-                ->get()
-                ->mapWithKeys(static fn (StockMovement $stockLevel): array => [
-                    $stockLevel->inventory_item_id => (float) $stockLevel->total_qty,
-                ])
+            ? (function () use ($activeBranchId, $labLocationIds): Collection {
+                /** @var Collection<int, object{inventory_item_id: string, total_qty: int|float|string}> $stockRows */
+                $stockRows = StockMovement::query()
+                    ->where('branch_id', $activeBranchId)
+                    ->whereIn('inventory_location_id', $labLocationIds)
+                    ->select('inventory_item_id')
+                    ->selectRaw('SUM(quantity) as total_qty')
+                    ->groupBy('inventory_item_id')
+                    ->get();
+
+                return $stockRows->mapWithKeys(static fn (object $stockRow): array => [
+                    $stockRow->inventory_item_id => is_int($stockRow->total_qty) || is_float($stockRow->total_qty)
+                        ? (float) $stockRow->total_qty
+                        : (is_string($stockRow->total_qty) ? (float) $stockRow->total_qty : 0.0),
+                ]);
+            })()
             : collect();
 
         $minimumLevels = $labLocationItems
@@ -211,13 +217,14 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
                 'requestedBy:id,first_name,last_name',
                 'visit:id,visit_number,patient_id',
                 'visit.patient:id,patient_number,first_name,last_name',
-                'items' => static fn (HasMany $query): HasMany => $query
-                    ->with([
+                'items' => function (HasMany $query): void {
+                    $query->with([
                         'test:id,test_code,test_name,lab_test_category_id,result_type_id',
                         'test.labCategory:id,name',
                         'test.specimenTypes:id,name',
                         'test.resultTypeDefinition:id,code,name',
-                    ])->oldest(),
+                    ])->oldest();
+                },
             ])
             ->orderByRaw("case when priority in ('critical', 'stat', 'urgent') then 0 else 1 end")
             ->latest('request_date')
@@ -233,6 +240,9 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
         ]);
     }
 
+    /**
+     * @return Builder<LabRequestItem>
+     */
     private function itemQuery(): Builder
     {
         return LabRequestItem::query()->whereHas(

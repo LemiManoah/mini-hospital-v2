@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\AppointmentStatus;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -16,10 +15,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class Appointment extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\AppointmentFactory> */
-    use HasFactory;
-
     use HasUuids;
     use SoftDeletes;
 
@@ -42,41 +37,65 @@ final class Appointment extends Model
         'updated_by' => 'string',
     ];
 
+    /**
+     * @return BelongsTo<Patient, $this>
+     */
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
+    /**
+     * @return BelongsTo<Staff, $this>
+     */
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'doctor_id');
     }
 
+    /**
+     * @return BelongsTo<Clinic, $this>
+     */
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
     }
 
+    /**
+     * @return BelongsTo<AppointmentCategory, $this>
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(AppointmentCategory::class, 'appointment_category_id');
     }
 
+    /**
+     * @return BelongsTo<AppointmentMode, $this>
+     */
     public function mode(): BelongsTo
     {
         return $this->belongsTo(AppointmentMode::class, 'appointment_mode_id');
     }
 
+    /**
+     * @return BelongsTo<FacilityBranch, $this>
+     */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(FacilityBranch::class, 'facility_branch_id');
     }
 
+    /**
+     * @return HasOne<PatientVisit, $this>
+     */
     public function visit(): HasOne
     {
         return $this->hasOne(PatientVisit::class, 'appointment_id');
     }
 
+    /**
+     * @return BelongsTo<self, $this>
+     */
     public function rescheduledFrom(): BelongsTo
     {
         return $this->belongsTo(self::class, 'rescheduled_from_appointment_id');

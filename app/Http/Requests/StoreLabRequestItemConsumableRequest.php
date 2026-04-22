@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Clinical\CreateLabRequestItemConsumableDTO;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class StoreLabRequestItemConsumableRequest extends FormRequest
@@ -27,6 +28,11 @@ final class StoreLabRequestItemConsumableRequest extends FormRequest
             'notes' => ['nullable', 'string'],
             'used_at' => ['nullable', 'date'],
         ];
+    }
+
+    public function dto(): CreateLabRequestItemConsumableDTO
+    {
+        return CreateLabRequestItemConsumableDTO::fromRequest($this);
     }
 
     protected function prepareForValidation(): void

@@ -76,7 +76,24 @@ final readonly class LabTestCatalogController implements HasMiddleware
 
     public function store(StoreLabTestCatalogRequest $request, CreateLabTestCatalog $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        /**
+         * @var array{
+         *     tenant_id?: string|null,
+         *     test_code: string,
+         *     test_name: string,
+         *     lab_test_category_id: string,
+         *     result_type_id: string,
+         *     description?: string|null,
+         *     base_price?: float|int|string,
+         *     is_active?: bool,
+         *     specimen_type_ids?: list<string>,
+         *     result_options?: list<array<string, mixed>>,
+         *     result_parameters?: list<array<string, mixed>>
+         * } $validated
+         */
+        $validated = $request->validated();
+
+        $action->handle($validated);
 
         return to_route('lab-test-catalogs.index')->with('success', 'Lab test created successfully.');
     }
@@ -100,7 +117,10 @@ final readonly class LabTestCatalogController implements HasMiddleware
         LabTestCatalog $labTestCatalog,
         UpdateLabTestCatalog $action,
     ): RedirectResponse {
-        $action->handle($labTestCatalog, $request->validated());
+        /** @var array<string, mixed> $validated */
+        $validated = $request->validated();
+
+        $action->handle($labTestCatalog, $validated);
 
         return to_route('lab-test-catalogs.index')->with('success', 'Lab test updated successfully.');
     }

@@ -127,8 +127,8 @@ final readonly class LabResultWorkflowController implements HasMiddleware
     }
 
     /**
-     * @param  Closure(string):mixed  $callback
-     * @param  string|Closure(mixed):string  $successMessage
+     * @param  Closure(string):LabRequestItem  $callback
+     * @param  string|Closure(LabRequestItem):string  $successMessage
      */
     private function handleAction(
         Request $request,

@@ -13,7 +13,7 @@ final readonly class DeleteLabTestCatalog
 {
     public function handle(LabTestCatalog $labTestCatalog): void
     {
-        if ($labTestCatalog->requestItems()->exists()) {
+        if ($this->hasExistingRequestItems($labTestCatalog)) {
             throw ValidationException::withMessages([
                 'delete' => 'This lab test cannot be deleted because it has existing lab requests.',
             ]);
@@ -22,7 +22,7 @@ final readonly class DeleteLabTestCatalog
         try {
             DB::transaction(fn () => $labTestCatalog->delete());
         } catch (QueryException $queryException) {
-            if ($labTestCatalog->requestItems()->exists()) {
+            if ($this->hasExistingRequestItems($labTestCatalog)) {
                 throw ValidationException::withMessages([
                     'delete' => 'This lab test cannot be deleted because it has existing lab requests.',
                 ]);
@@ -30,5 +30,11 @@ final readonly class DeleteLabTestCatalog
 
             throw $queryException;
         }
+    }
+
+    /** @phpstan-impure */
+    private function hasExistingRequestItems(LabTestCatalog $labTestCatalog): bool
+    {
+        return $labTestCatalog->requestItems()->exists();
     }
 }

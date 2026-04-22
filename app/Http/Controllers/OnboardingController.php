@@ -55,9 +55,7 @@ final readonly class OnboardingController
 
         $tenant = $tenant->loadMissing(['country', 'address']);
         $ensureTenantStaffPositions->handle($tenant);
-        $currentStep = is_string($tenant->onboarding_current_step)
-            ? $tenant->onboarding_current_step
-            : 'profile';
+        $currentStep = $tenant->onboarding_current_step;
         $branch = FacilityBranch::query()
             ->where('tenant_id', $tenant->id)
             ->where('is_main_branch', true)

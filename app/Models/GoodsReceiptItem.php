@@ -28,26 +28,41 @@ final class GoodsReceiptItem extends Model
         'expiry_date' => 'date',
     ];
 
+    /**
+     * @return BelongsTo<GoodsReceipt, $this>
+     */
     public function goodsReceipt(): BelongsTo
     {
         return $this->belongsTo(GoodsReceipt::class);
     }
 
+    /**
+     * @return BelongsTo<PurchaseOrderItem, $this>
+     */
     public function purchaseOrderItem(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrderItem::class);
     }
 
+    /**
+     * @return BelongsTo<InventoryItem, $this>
+     */
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class);
     }
 
+    /**
+     * @return HasOne<InventoryBatch, $this>
+     */
     public function inventoryBatch(): HasOne
     {
         return $this->hasOne(InventoryBatch::class, 'goods_receipt_item_id');
     }
 
+    /**
+     * @return HasMany<StockMovement, $this>
+     */
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class, 'source_line_id');

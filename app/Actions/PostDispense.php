@@ -18,11 +18,23 @@ use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryStockLedger;
 use App\Support\PrescriptionDispenseProgress;
 use App\Support\PrescriptionDispenseStatusResolver;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @phpstan-type AvailableBatchData array{
+ *     inventory_batch_id: string,
+ *     inventory_item_id: string,
+ *     batch_number: string|null,
+ *     expiry_date: string|null,
+ *     quantity: float,
+ *     batch: InventoryBatch
+ * }
+ * @phpstan-type ResolvedAllocation array{batch: InventoryBatch, quantity: float}
+ */
 final readonly class PostDispense
 {
     public function __construct(
@@ -78,10 +90,6 @@ final readonly class PostDispense
             $hasPostableOutcome = false;
 
             foreach ($dispensingRecord->items as $recordItem) {
-                if (! $recordItem instanceof DispensingRecordItem) {
-                    continue;
-                }
-
                 $prescriptionItem = $recordItem->prescriptionItem;
                 if (! $prescriptionItem instanceof PrescriptionItem) {
                     throw ValidationException::withMessages([
@@ -100,7 +108,7 @@ final readonly class PostDispense
                     throw ValidationException::withMessages([
                         'items' => sprintf(
                             'The drafted dispense quantity for %s exceeds the remaining quantity on the prescription.',
-                            $recordItem->inventoryItem?->generic_name ?? $recordItem->inventoryItem?->name ?? 'one medication line',
+                            $recordItem->inventoryItem->generic_name ?? $recordItem->inventoryItem->name ?? 'one medication line',
                         ),
                     ]);
                 }
@@ -190,14 +198,7 @@ final readonly class PostDispense
     }
 
     /**
-     * @return Collection<string, array{
-     *     inventory_batch_id: string,
-     *     inventory_item_id: string,
-     *     batch_number: string|null,
-     *     expiry_date: string|null,
-     *     quantity: float,
-     *     batch: InventoryBatch
-     * }>
+     * @return Collection<string, AvailableBatchData>
      */
     private function availableBatches(DispensingRecord $dispensingRecord): Collection
     {
@@ -215,7 +216,8 @@ final readonly class PostDispense
             ->get()
             ->keyBy('id');
 
-        return $balances
+        /** @var Collection<string, AvailableBatchData> $availableBatches */
+        $availableBatches = $balances
             ->map(function (array $balance) use ($batches): ?array {
                 $batch = $batches->get($balance['inventory_batch_id']);
 
@@ -238,12 +240,14 @@ final readonly class PostDispense
             })
             ->filter(static fn (?array $batch): bool => is_array($batch))
             ->mapWithKeys(static fn (array $batch): array => [$batch['inventory_batch_id'] => $batch]);
+
+        return $availableBatches;
     }
 
     /**
-     * @param  Collection<string, array<string, mixed>>  $availableBatches
+     * @param  Collection<string, AvailableBatchData>  $availableBatches
      * @param  Collection<string, float>  $availableQuantities
-     * @return array<int, array{batch: InventoryBatch, quantity: float}>
+     * @return list<ResolvedAllocation>
      */
     private function manualAllocations(
         DispensingRecordItem $recordItem,
@@ -251,7 +255,7 @@ final readonly class PostDispense
         Collection $availableBatches,
         Collection $availableQuantities,
     ): array {
-        $allocations = $payload?->allocations ?? [];
+        $allocations = $payload === null ? [] : $payload->allocations;
 
         if ($allocations === []) {
             throw ValidationException::withMessages([
@@ -260,6 +264,7 @@ final readonly class PostDispense
         }
 
         $remainingByBatch = $availableQuantities->all();
+        /** @var list<ResolvedAllocation> $resolvedAllocations */
         $resolvedAllocations = [];
         $allocationTotal = 0.0;
 
@@ -289,6 +294,7 @@ final readonly class PostDispense
             $remainingByBatch[$allocation->inventoryBatchId] = $availableQuantity - $allocationQuantity;
             $allocationTotal += $allocationQuantity;
             $resolvedAllocations[] = [
+                /** @var InventoryBatch $batch */
                 'batch' => $batchData['batch'],
                 'quantity' => $allocationQuantity,
             ];
@@ -304,9 +310,9 @@ final readonly class PostDispense
     }
 
     /**
-     * @param  Collection<string, array<string, mixed>>  $availableBatches
+     * @param  Collection<string, AvailableBatchData>  $availableBatches
      * @param  Collection<string, float>  $availableQuantities
-     * @return array<int, array{batch: InventoryBatch, quantity: float}>
+     * @return list<ResolvedAllocation>
      */
     private function autoAllocate(
         DispensingRecordItem $recordItem,
@@ -315,8 +321,10 @@ final readonly class PostDispense
         Collection $availableQuantities,
     ): array {
         $remaining = $dispensedQuantity;
+        /** @var list<ResolvedAllocation> $allocations */
         $allocations = [];
 
+        /** @var Collection<int, AvailableBatchData> $candidateBatches */
         $candidateBatches = $availableBatches
             ->filter(
                 static fn (array $batch): bool => $batch['inventory_item_id'] === $recordItem->inventory_item_id
@@ -359,7 +367,7 @@ final readonly class PostDispense
             throw ValidationException::withMessages([
                 'items' => sprintf(
                     'There is not enough available pharmacy stock to post %s.',
-                    $recordItem->inventoryItem?->generic_name ?? $recordItem->inventoryItem?->name ?? 'this medication line',
+                    $recordItem->inventoryItem->generic_name ?? $recordItem->inventoryItem->name ?? 'this medication line',
                 ),
             ]);
         }
@@ -378,10 +386,6 @@ final readonly class PostDispense
         $postedLineSummaries = $this->prescriptionDispenseProgress->postedLineSummaries($prescription->id);
 
         foreach ($prescription->items as $prescriptionItem) {
-            if (! $prescriptionItem instanceof PrescriptionItem) {
-                continue;
-            }
-
             $summary = $postedLineSummaries->get($prescriptionItem->id);
             $dispensedQuantity = (float) ($summary['dispensed_quantity'] ?? 0.0);
             $latestDispensedAt = $summary['latest_dispensed_at'] ?? null;

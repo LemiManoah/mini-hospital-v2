@@ -6,17 +6,12 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class AppointmentMode extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\AppointmentModeFactory> */
-    use HasFactory;
-
     use HasUuids;
     use SoftDeletes;
 

@@ -9,12 +9,13 @@ use App\Models\User;
 final readonly class UpdateUser
 {
     /**
-     * @param  array<string, mixed>  $attributes
+     * @param  array{email?: string, roles?: list<string>} & array<string, mixed>  $attributes
      */
     public function handle(User $user, array $attributes): void
     {
         $emailChanged = isset($attributes['email']) && $user->email !== $attributes['email'];
 
+        /** @var list<string>|null $roles */
         $roles = $attributes['roles'] ?? null;
         unset($attributes['roles']);
 

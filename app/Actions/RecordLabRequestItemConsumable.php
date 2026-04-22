@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreateLabRequestItemConsumableDTO;
 use App\Enums\InventoryLocationType;
 use App\Enums\LabRequestItemStatus;
 use App\Enums\StockMovementType;
@@ -25,38 +26,43 @@ final readonly class RecordLabRequestItemConsumable
         private InventoryStockLedger $inventoryStockLedger,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
     public function handle(
         LabRequestItem $labRequestItem,
-        array $attributes,
+        CreateLabRequestItemConsumableDTO $data,
         ?string $staffId,
     ): LabRequestItemConsumable {
-        return DB::transaction(function () use ($labRequestItem, $attributes, $staffId): LabRequestItemConsumable {
-            $quantity = (float) $attributes['quantity'];
-            $unitCost = (float) $attributes['unit_cost'];
+        return DB::transaction(function () use ($labRequestItem, $data, $staffId): LabRequestItemConsumable {
+            $labRequestItem->loadMissing('request');
+            $request = $labRequestItem->request;
+            if (! $request instanceof \App\Models\LabRequest) {
+                throw ValidationException::withMessages([
+                    'lab_request_item_id' => 'The selected lab request item is not linked to a valid lab request.',
+                ]);
+            }
+
+            $quantity = $data->quantity;
+            $unitCost = $data->unitCost;
 
             $consumable = $labRequestItem->consumables()->create([
-                'tenant_id' => $labRequestItem->request->tenant_id,
-                'facility_branch_id' => $labRequestItem->request->facility_branch_id,
-                'consumable_name' => $attributes['consumable_name'],
-                'unit_label' => $attributes['unit_label'] ?? null,
+                'tenant_id' => $request->tenant_id,
+                'facility_branch_id' => $request->facility_branch_id,
+                'consumable_name' => $data->consumableName,
+                'unit_label' => $data->unitLabel,
                 'quantity' => $quantity,
                 'unit_cost' => $unitCost,
                 'line_cost' => $quantity * $unitCost,
-                'notes' => $attributes['notes'] ?? null,
-                'used_at' => $attributes['used_at'] ?? now(),
+                'notes' => $data->notes,
+                'used_at' => $data->usedAt ?? now(),
                 'recorded_by' => $staffId,
             ]);
 
-            if (is_string($attributes['inventory_item_id'] ?? null) && $attributes['inventory_item_id'] !== '') {
+            if ($data->inventoryItemId !== null) {
                 $this->issueInventoryStock(
                     labRequestItem: $labRequestItem,
                     consumable: $consumable,
-                    inventoryItemId: $attributes['inventory_item_id'],
+                    inventoryItemId: $data->inventoryItemId,
                     quantity: $quantity,
-                    notes: is_string($attributes['notes'] ?? null) ? $attributes['notes'] : null,
+                    notes: $data->notes,
                 );
             }
 
@@ -79,9 +85,17 @@ final readonly class RecordLabRequestItemConsumable
         float $quantity,
         ?string $notes,
     ): void {
+        $labRequestItem->loadMissing('request');
+        $request = $labRequestItem->request;
+        if (! $request instanceof \App\Models\LabRequest) {
+            throw ValidationException::withMessages([
+                'lab_request_item_id' => 'The selected lab request item is not linked to a valid lab request.',
+            ]);
+        }
+
         $laboratoryLocationIds = InventoryLocation::query()
-            ->where('tenant_id', $labRequestItem->request->tenant_id)
-            ->where('branch_id', $labRequestItem->request->facility_branch_id)
+            ->where('tenant_id', $request->tenant_id)
+            ->where('branch_id', $request->facility_branch_id)
             ->where('type', InventoryLocationType::LABORATORY)
             ->where('is_active', true)
             ->pluck('id')
@@ -96,7 +110,7 @@ final readonly class RecordLabRequestItemConsumable
         }
 
         $batchBalances = $this->inventoryStockLedger
-            ->summarizeByBatch($labRequestItem->request->facility_branch_id)
+            ->summarizeByBatch($request->facility_branch_id)
             ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $laboratoryLocationIds, true))
             ->filter(static fn (array $balance): bool => $balance['inventory_item_id'] === $inventoryItemId)
             ->filter(static fn (array $balance): bool => $balance['quantity'] > 0)
@@ -112,7 +126,7 @@ final readonly class RecordLabRequestItemConsumable
             ->sortBy([
                 static fn (InventoryBatch $batch): int => $batch->expiry_date === null ? 1 : 0,
                 static fn (InventoryBatch $batch): string => $batch->expiry_date?->toDateString() ?? '9999-12-31',
-                static fn (InventoryBatch $batch): string => $batch->received_at?->toIso8601String() ?? '9999-12-31T23:59:59+00:00',
+                static fn (InventoryBatch $batch): string => $batch->received_at->toIso8601String(),
             ]);
 
         $availableQuantity = $candidateBatches->sum(
@@ -141,8 +155,8 @@ final readonly class RecordLabRequestItemConsumable
             $issuedQuantity = min($remainingQuantity, $availableBatchQuantity);
 
             StockMovement::query()->create([
-                'tenant_id' => $labRequestItem->request->tenant_id,
-                'branch_id' => $labRequestItem->request->facility_branch_id,
+                'tenant_id' => $request->tenant_id,
+                'branch_id' => $request->facility_branch_id,
                 'inventory_location_id' => $batch->inventory_location_id,
                 'inventory_item_id' => $inventoryItemId,
                 'inventory_batch_id' => $batch->id,
@@ -154,7 +168,7 @@ final readonly class RecordLabRequestItemConsumable
                 'source_line_type' => LabRequestItem::class,
                 'source_line_id' => $labRequestItem->id,
                 'notes' => $notes,
-                'occurred_at' => $consumable->used_at ?? now(),
+                'occurred_at' => $consumable->used_at,
                 'created_by' => Auth::id(),
             ]);
 

@@ -12,11 +12,12 @@ use SensitiveParameter;
 final readonly class CreateUser
 {
     /**
-     * @param  array<string, mixed>  $attributes
+     * @param  array{roles?: list<string>} & array<string, mixed>  $attributes
      */
     public function handle(array $attributes, #[SensitiveParameter] string $password): User
     {
         return DB::transaction(function () use ($attributes, $password): User {
+            /** @var list<string> $roles */
             $roles = $attributes['roles'] ?? [];
             unset($attributes['roles']);
 

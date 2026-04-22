@@ -63,10 +63,16 @@ final readonly class LaboratoryWorklistController implements HasMiddleware
         $paymentBlockMessage = $visit
             ? $this->visitWorkflowGuard->paymentBlockMessage($visit, 'laboratory')
             : null;
+        $tenantId = $labRequest->tenant_id;
 
         return Inertia::render('laboratory/request-item', [
             'labRequestItem' => $labRequestItem,
-            'labReleasePolicy' => $this->visitWorkflowGuard->labReleasePolicy($labRequest->tenant_id),
+            'labReleasePolicy' => is_string($tenantId) && $tenantId !== ''
+                ? $this->visitWorkflowGuard->labReleasePolicy($tenantId)
+                : [
+                    'require_review_before_release' => true,
+                    'require_approval_before_release' => true,
+                ],
             'paymentBlockMessage' => $paymentBlockMessage,
         ]);
     }

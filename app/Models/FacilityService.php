@@ -7,17 +7,12 @@ namespace App\Models;
 use App\Enums\FacilityServiceCategory;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class FacilityService extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\FacilityServiceFactory> */
-    use HasFactory;
-
     use HasUuids;
 
     protected $casts = [
@@ -32,6 +27,9 @@ final class FacilityService extends Model
         'updated_by' => 'string',
     ];
 
+    /**
+     * @return HasMany<FacilityServiceOrder, $this>
+     */
     public function orders(): HasMany
     {
         return $this->hasMany(FacilityServiceOrder::class, 'facility_service_id');

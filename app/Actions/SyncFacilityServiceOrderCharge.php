@@ -6,7 +6,6 @@ namespace App\Actions;
 
 use App\Enums\BillableItemType;
 use App\Models\FacilityServiceOrder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final readonly class SyncFacilityServiceOrderCharge
 {
@@ -17,26 +16,19 @@ final readonly class SyncFacilityServiceOrderCharge
 
     public function handle(FacilityServiceOrder $order): void
     {
-        $order->loadMissing(['visit.payer']);
-        $order->load([
-            'service' => static fn (BelongsTo $query): BelongsTo => $query->select([
-                'id',
-                'name',
-                'service_code',
-                'is_billable',
-                'selling_price',
-            ]),
-        ]);
+        $order->loadMissing(['visit.payer', 'service']);
 
-        if ($order->service === null || ! $order->service->is_billable) {
+        $service = $order->service;
+        $visit = $order->visit;
+        if (! $service instanceof \App\Models\FacilityService || ! $visit instanceof \App\Models\PatientVisit || ! $service->is_billable) {
             return;
         }
 
         $amount = $this->resolveVisitChargeAmount->handle(
-            $order->visit,
+            $visit,
             BillableItemType::SERVICE,
-            $order->facility_service_id,
-            $order->service->selling_price === null ? null : (float) $order->service->selling_price,
+            $service->id,
+            $service->selling_price === null ? null : (float) $service->selling_price,
         );
 
         if ($amount === null) {
@@ -44,12 +36,12 @@ final readonly class SyncFacilityServiceOrderCharge
         }
 
         $this->upsertVisitCharge->handle(
-            $order->visit,
+            $visit,
             $order,
-            sprintf('Facility service: %s', $order->service->name),
+            sprintf('Facility service: %s', $service->name),
             $amount,
             1,
-            $order->service->service_code,
+            $service->service_code,
         );
     }
 }

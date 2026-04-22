@@ -72,7 +72,9 @@ final readonly class LaboratoryQueueController implements HasMiddleware
                         });
                 });
             })
-            ->whereHas('items', fn (Builder $query): Builder => $this->applyStageFilter($query, $stage))
+            ->whereHas('items', function (Builder $query) use ($stage): void {
+                $this->applyStageFilter($query, $stage);
+            })
             ->with([
                 'requestedBy:id,first_name,last_name',
                 'visit:id,visit_number,patient_id',
@@ -118,6 +120,10 @@ final readonly class LaboratoryQueueController implements HasMiddleware
         ]);
     }
 
+    /**
+     * @param  Builder<\App\Models\LabRequestItem>|HasMany<\App\Models\LabRequestItem, LabRequest>  $query
+     * @return Builder<\App\Models\LabRequestItem>|HasMany<\App\Models\LabRequestItem, LabRequest>
+     */
     private function applyStageFilter(Builder|HasMany $query, string $stage): Builder|HasMany
     {
         return match ($stage) {
@@ -131,9 +137,11 @@ final readonly class LaboratoryQueueController implements HasMiddleware
                 ->where(static function (Builder $stageQuery): void {
                     $stageQuery
                         ->whereHas('specimen')
-                        ->orWhere(static fn (Builder $fallbackQuery): Builder => $fallbackQuery
-                            ->whereDoesntHave('specimen')
-                            ->whereNotNull('received_at'));
+                        ->orWhere(static function (Builder $fallbackQuery): void {
+                            $fallbackQuery
+                                ->whereDoesntHave('specimen')
+                                ->whereNotNull('received_at');
+                        });
                 }),
             'review_results' => $query
                 ->where('status', '!=', 'cancelled')
