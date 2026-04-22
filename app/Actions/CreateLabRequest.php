@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreateLabRequestDTO;
 use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\LabRequest;
@@ -22,24 +23,17 @@ final readonly class CreateLabRequest
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    public function handle(Consultation|PatientVisit $context, array $data, string $staffId): LabRequest
+    public function handle(Consultation|PatientVisit $context, CreateLabRequestDTO $data, string $staffId): LabRequest
     {
         [$visit, $consultation] = $this->resolveContext($context);
 
-        $rawTestIds = is_array($data['test_ids'] ?? null) ? $data['test_ids'] : [];
-        /** @var array<int, string> $testIds */
-        $testIds = array_values(array_unique(array_filter($rawTestIds, is_string(...))));
-
         /** @var Collection<int, LabTestCatalog> $tests */
         $tests = LabTestCatalog::query()
-            ->whereIn('id', $testIds)
+            ->whereIn('id', $data->testIds)
             ->where('is_active', true)
             ->get(['id', 'base_price']);
 
-        $this->ensureNoPendingDuplicates($visit, $testIds);
+        $this->ensureNoPendingDuplicates($visit, $data->testIds);
 
         return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $tests): LabRequest {
             $request = LabRequest::query()->create([
@@ -49,11 +43,11 @@ final readonly class CreateLabRequest
                 'consultation_id' => $consultation?->id,
                 'requested_by' => $staffId,
                 'request_date' => now(),
-                'clinical_notes' => $this->nullableText($data['clinical_notes'] ?? null),
-                'priority' => $data['priority'],
+                'clinical_notes' => $data->clinicalNotes,
+                'priority' => $data->priority,
                 'status' => 'requested',
-                'diagnosis_code' => $this->nullableText($data['diagnosis_code'] ?? $consultation?->primary_icd10_code),
-                'is_stat' => (bool) ($data['is_stat'] ?? false),
+                'diagnosis_code' => $data->diagnosisCode ?? $consultation?->primary_icd10_code,
+                'is_stat' => $data->isStat,
                 'billing_status' => 'pending',
             ]);
 
@@ -92,17 +86,6 @@ final readonly class CreateLabRequest
         }
 
         return [$context, $context->consultation];
-    }
-
-    private function nullableText(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $trimmed = mb_trim($value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 
     private function ensureVisitInProgress(PatientVisit $visit): void

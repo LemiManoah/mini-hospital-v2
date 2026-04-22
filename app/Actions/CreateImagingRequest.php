@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreateImagingRequestDTO;
 use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\ImagingRequest;
@@ -15,10 +16,7 @@ final readonly class CreateImagingRequest
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    public function handle(Consultation|PatientVisit $context, array $data, string $staffId): ImagingRequest
+    public function handle(Consultation|PatientVisit $context, CreateImagingRequestDTO $data, string $staffId): ImagingRequest
     {
         [$visit, $consultation] = $this->resolveContext($context);
 
@@ -26,16 +24,16 @@ final readonly class CreateImagingRequest
             'visit_id' => $visit->id,
             'consultation_id' => $consultation?->id,
             'requested_by' => $staffId,
-            'modality' => $data['modality'],
-            'body_part' => $this->stringValue($data['body_part']),
-            'laterality' => $data['laterality'] ?? 'na',
-            'clinical_history' => $this->stringValue($data['clinical_history']),
-            'indication' => $this->stringValue($data['indication']),
-            'priority' => $data['priority'],
+            'modality' => $data->modality,
+            'body_part' => $data->bodyPart,
+            'laterality' => $data->laterality,
+            'clinical_history' => $data->clinicalHistory,
+            'indication' => $data->indication,
+            'priority' => $data->priority,
             'status' => 'requested',
-            'requires_contrast' => (bool) ($data['requires_contrast'] ?? false),
-            'contrast_allergy_status' => $this->nullableText($data['contrast_allergy_status'] ?? null),
-            'pregnancy_status' => $data['pregnancy_status'] ?? 'unknown',
+            'requires_contrast' => $data->requiresContrast,
+            'contrast_allergy_status' => $data->contrastAllergyStatus,
+            'pregnancy_status' => $data->pregnancyStatus,
         ])->loadMissing('requestedBy:id,first_name,last_name');
 
         if ($visit->status === VisitStatus::REGISTERED) {
@@ -55,21 +53,5 @@ final readonly class CreateImagingRequest
         }
 
         return [$context, $context->consultation];
-    }
-
-    private function stringValue(mixed $value): string
-    {
-        return (string) $this->nullableText($value);
-    }
-
-    private function nullableText(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $trimmed = mb_trim($value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 }

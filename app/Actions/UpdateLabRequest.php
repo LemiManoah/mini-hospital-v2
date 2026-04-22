@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\UpdateLabRequestDTO;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabTestCatalog;
@@ -18,25 +19,22 @@ final readonly class UpdateLabRequest
         private SyncLabRequestCharge $syncLabRequestCharge,
     ) {}
 
-    public function handle(LabRequest $labRequest, array $data): LabRequest
+    public function handle(LabRequest $labRequest, UpdateLabRequestDTO $data): LabRequest
     {
-        /** @var array<int, string> $testIds */
-        $testIds = array_values(array_unique(array_filter($data['test_ids'] ?? [], is_string(...))));
-
         /** @var Collection<int, LabTestCatalog> $tests */
         $tests = LabTestCatalog::query()
-            ->whereIn('id', $testIds)
+            ->whereIn('id', $data->testIds)
             ->where('is_active', true)
             ->get(['id', 'base_price']);
 
-        $this->ensureNoPendingDuplicates($labRequest, $testIds);
+        $this->ensureNoPendingDuplicates($labRequest, $data->testIds);
 
         return DB::transaction(function () use ($labRequest, $data, $tests): LabRequest {
             $labRequest->forceFill([
-                'clinical_notes' => $this->nullableText($data['clinical_notes'] ?? null),
-                'priority' => $data['priority'],
-                'diagnosis_code' => $this->nullableText($data['diagnosis_code'] ?? null),
-                'is_stat' => (bool) ($data['is_stat'] ?? false),
+                'clinical_notes' => $data->clinicalNotes,
+                'priority' => $data->priority,
+                'diagnosis_code' => $data->diagnosisCode,
+                'is_stat' => $data->isStat,
             ])->save();
 
             $labRequest->items()->delete();
@@ -97,16 +95,5 @@ final readonly class UpdateLabRequest
         throw ValidationException::withMessages([
             'test_ids' => 'One or more selected lab tests already have pending orders for this visit.',
         ]);
-    }
-
-    private function nullableText(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $trimmed = mb_trim($value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 }

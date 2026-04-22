@@ -45,7 +45,7 @@ final class DoctorConsultationImagingRequestController implements HasMiddleware
             return to_route('doctors.consultations.show', $visit)->with('error', 'This consultation has already been finalized and can no longer accept imaging orders.');
         }
 
-        $createImagingRequest->handle($consultation, $request->validated(), $staffId);
+        $createImagingRequest->handle($consultation, $request->createDto(), $staffId);
 
         return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'imaging'])
             ->with('success', 'Imaging request created successfully.');

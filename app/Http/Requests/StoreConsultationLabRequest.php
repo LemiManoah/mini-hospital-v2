@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Clinical\CreateLabRequestDTO;
+use App\Data\Clinical\UpdateLabRequestDTO;
 use App\Enums\Priority;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -14,15 +16,6 @@ final class StoreConsultationLabRequest extends FormRequest
     {
         return true;
     }
-
-    /**
-
-
-     * @return array<string, mixed>
-
-
-     */
-
 
     public function rules(): array
     {
@@ -41,6 +34,36 @@ final class StoreConsultationLabRequest extends FormRequest
         ];
     }
 
+    public function createDto(): CreateLabRequestDTO
+    {
+        /** @var array{
+         *   test_ids: list<string>,
+         *   clinical_notes?: string|null,
+         *   priority?: string,
+         *   diagnosis_code?: string|null,
+         *   is_stat?: bool
+         * } $validated
+         */
+        $validated = $this->validated();
+
+        return CreateLabRequestDTO::fromRequest($validated);
+    }
+
+    public function updateDto(): UpdateLabRequestDTO
+    {
+        /** @var array{
+         *   test_ids: list<string>,
+         *   clinical_notes?: string|null,
+         *   priority?: string,
+         *   diagnosis_code?: string|null,
+         *   is_stat?: bool
+         * } $validated
+         */
+        $validated = $this->validated();
+
+        return UpdateLabRequestDTO::fromRequest($validated);
+    }
+
     protected function prepareForValidation(): void
     {
         $this->merge([
@@ -49,4 +72,3 @@ final class StoreConsultationLabRequest extends FormRequest
         ]);
     }
 }
-

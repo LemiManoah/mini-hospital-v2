@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\UpdateFacilityServiceOrderDTO;
 use App\Enums\FacilityServiceOrderStatus;
 use App\Models\FacilityServiceOrder;
 use App\Models\VisitCharge;
@@ -18,11 +19,11 @@ final readonly class UpdateFacilityServiceOrder
         private RecalculateVisitBilling $recalculateVisitBilling,
     ) {}
 
-    public function handle(FacilityServiceOrder $order, array $data): FacilityServiceOrder
+    public function handle(FacilityServiceOrder $order, UpdateFacilityServiceOrderDTO $data): FacilityServiceOrder
     {
         $hasPendingDuplicate = FacilityServiceOrder::query()
             ->where('visit_id', $order->visit_id)
-            ->where('facility_service_id', $data['facility_service_id'])
+            ->where('facility_service_id', $data->facilityServiceId)
             ->where('status', FacilityServiceOrderStatus::PENDING->value)
             ->where('id', '!=', $order->id)
             ->exists();
@@ -41,7 +42,7 @@ final readonly class UpdateFacilityServiceOrder
                 ->delete();
 
             $order->forceFill([
-                'facility_service_id' => $data['facility_service_id'],
+                'facility_service_id' => $data->facilityServiceId,
             ])->save();
 
             $order->unsetRelation('service');

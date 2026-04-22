@@ -47,7 +47,7 @@ final class DoctorConsultationLabRequestController implements HasMiddleware
                 ->with('error', 'This consultation has already been finalized and can no longer accept lab orders.');
         }
 
-        $createLabRequest->handle($consultation, $request->validated(), $staffId);
+        $createLabRequest->handle($consultation, $request->createDto(), $staffId);
 
         return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'lab'])
             ->with('success', 'Laboratory request created successfully.');

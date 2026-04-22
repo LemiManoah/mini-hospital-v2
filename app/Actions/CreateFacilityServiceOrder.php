@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreateFacilityServiceOrderDTO;
 use App\Enums\FacilityServiceOrderStatus;
 use App\Enums\VisitStatus;
 use App\Models\Consultation;
@@ -18,16 +19,13 @@ final readonly class CreateFacilityServiceOrder
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
-    /**
-     * @param  array{facility_service_id: mixed}  $data
-     */
-    public function handle(Consultation|PatientVisit $context, array $data, string $staffId): FacilityServiceOrder
+    public function handle(Consultation|PatientVisit $context, CreateFacilityServiceOrderDTO $data, string $staffId): FacilityServiceOrder
     {
         [$visit, $consultation] = $this->resolveContext($context);
 
         $hasPendingDuplicate = FacilityServiceOrder::query()
             ->where('visit_id', $visit->id)
-            ->where('facility_service_id', $data['facility_service_id'])
+            ->where('facility_service_id', $data->facilityServiceId)
             ->where('status', FacilityServiceOrderStatus::PENDING->value)
             ->exists();
 
@@ -42,7 +40,7 @@ final readonly class CreateFacilityServiceOrder
             'facility_branch_id' => $visit->facility_branch_id,
             'visit_id' => $visit->id,
             'consultation_id' => $consultation?->id,
-            'facility_service_id' => $data['facility_service_id'],
+            'facility_service_id' => $data->facilityServiceId,
             'ordered_by' => $staffId,
             'status' => FacilityServiceOrderStatus::PENDING,
             'ordered_at' => now(),

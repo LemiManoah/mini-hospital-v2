@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Clinical\CreateImagingRequestDTO;
 use App\Enums\ImagingLaterality;
 use App\Enums\ImagingModality;
 use App\Enums\ImagingPriority;
@@ -17,15 +18,6 @@ final class StoreConsultationImagingRequest extends FormRequest
     {
         return true;
     }
-
-    /**
-
-
-     * @return array<string, mixed>
-
-
-     */
-
 
     public function rules(): array
     {
@@ -42,6 +34,25 @@ final class StoreConsultationImagingRequest extends FormRequest
         ];
     }
 
+    public function createDto(): CreateImagingRequestDTO
+    {
+        /** @var array{
+         *   modality: string,
+         *   body_part: string,
+         *   laterality: string,
+         *   clinical_history: string,
+         *   indication: string,
+         *   priority: string,
+         *   requires_contrast?: bool,
+         *   contrast_allergy_status?: string|null,
+         *   pregnancy_status: string
+         * } $validated
+         */
+        $validated = $this->validated();
+
+        return CreateImagingRequestDTO::fromRequest($validated);
+    }
+
     protected function prepareForValidation(): void
     {
         $this->merge([
@@ -51,4 +62,3 @@ final class StoreConsultationImagingRequest extends FormRequest
         ]);
     }
 }
-

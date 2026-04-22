@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Inventory\CreateGoodsReceiptDTO;
+use App\Data\Inventory\CreateGoodsReceiptItemDTO;
 use App\Enums\GoodsReceiptStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Models\GoodsReceipt;
@@ -23,39 +25,25 @@ final readonly class CreateGoodsReceipt
         private InventoryLocationAccess $inventoryLocationAccess,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     * @param  array<int, array<string, mixed>>  $items
-     * @param  array<int, string>  $allowedLocationTypes
-     */
-    public function handle(array $attributes, array $items, array $allowedLocationTypes = []): GoodsReceipt
+    public function handle(CreateGoodsReceiptDTO $data): GoodsReceipt
     {
-        return DB::transaction(function () use ($attributes, $items, $allowedLocationTypes): GoodsReceipt {
-            $receiptItems = collect($items)
-                ->filter(static fn (array $item): bool => is_numeric($item['quantity_received'] ?? null) && (float) $item['quantity_received'] > 0)
-                ->values()
-                ->all();
-
+        return DB::transaction(function () use ($data): GoodsReceipt {
             $purchaseOrder = PurchaseOrder::query()
                 ->lockForUpdate()
                 ->with('items:id,purchase_order_id,inventory_item_id,quantity_ordered,quantity_received')
-                ->where('id', $attributes['purchase_order_id'])
+                ->where('id', $data->purchaseOrderId)
                 ->firstOrFail();
 
-            $inventoryLocationId = is_string($attributes['inventory_location_id'] ?? null)
-                ? $attributes['inventory_location_id']
-                : null;
-
-            $canAccess = $allowedLocationTypes === []
+            $canAccess = $data->allowedLocationTypes === []
                 ? $this->inventoryLocationAccess->canAccessLocation(
                     Auth::user(),
-                    $inventoryLocationId,
+                    $data->inventoryLocationId,
                     BranchContext::getActiveBranchId(),
                 )
                 : $this->inventoryLocationAccess->canAccessLocationForTypes(
                     Auth::user(),
-                    $inventoryLocationId,
-                    $allowedLocationTypes,
+                    $data->inventoryLocationId,
+                    $data->allowedLocationTypes,
                     BranchContext::getActiveBranchId(),
                 );
 
@@ -72,28 +60,30 @@ final readonly class CreateGoodsReceipt
             );
 
             $this->ensureNoDraftGoodsReceiptExists($purchaseOrder);
-            $this->validateReceiptItems($purchaseOrder, $receiptItems);
+            $this->validateReceiptItems($purchaseOrder, $data->receiptItems());
 
-            $tenantId = is_string($attributes['tenant_id'] ?? null)
-                ? $attributes['tenant_id']
-                : Auth::user()?->tenantId();
+            $tenantId = Auth::user()?->tenantId();
 
             $goodsReceipt = GoodsReceipt::query()->create([
-                ...$attributes,
+                'purchase_order_id' => $data->purchaseOrderId,
+                'inventory_location_id' => $data->inventoryLocationId,
+                'receipt_date' => $data->receiptDate,
+                'supplier_invoice_number' => $data->supplierInvoiceNumber,
+                'notes' => $data->notes,
                 'receipt_number' => $this->generateReceiptNumber($tenantId),
                 'status' => GoodsReceiptStatus::Draft,
                 'created_by' => Auth::id(),
             ]);
 
-            foreach ($receiptItems as $item) {
+            foreach ($data->receiptItems() as $item) {
                 $goodsReceipt->items()->create([
-                    'purchase_order_item_id' => $item['purchase_order_item_id'],
-                    'inventory_item_id' => $item['inventory_item_id'],
-                    'quantity_received' => $item['quantity_received'],
-                    'unit_cost' => $item['unit_cost'],
-                    'batch_number' => $item['batch_number'] ?? null,
-                    'expiry_date' => $item['expiry_date'] ?? null,
-                    'notes' => $item['notes'] ?? null,
+                    'purchase_order_item_id' => $item->purchaseOrderItemId,
+                    'inventory_item_id' => $item->inventoryItemId,
+                    'quantity_received' => $item->quantityReceived,
+                    'unit_cost' => $item->unitCost,
+                    'batch_number' => $item->batchNumber,
+                    'expiry_date' => $item->expiryDate,
+                    'notes' => $item->notes,
                 ]);
             }
 
@@ -111,7 +101,7 @@ final readonly class CreateGoodsReceipt
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $items
+     * @param  list<CreateGoodsReceiptItemDTO>  $items
      */
     private function validateReceiptItems(PurchaseOrder $purchaseOrder, array $items): void
     {
@@ -129,21 +119,16 @@ final readonly class CreateGoodsReceipt
         $inventoryItems = InventoryItem::query()
             ->whereIn(
                 'id',
-                collect($items)
-                    ->pluck('inventory_item_id')
-                    ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
-                    ->values()
-                    ->all(),
+                array_map(
+                    static fn (CreateGoodsReceiptItemDTO $item): string => $item->inventoryItemId,
+                    $items,
+                ),
             )
             ->get(['id', 'expires'])
             ->keyBy('id');
 
         foreach ($items as $index => $item) {
-            $purchaseOrderItemId = $item['purchase_order_item_id'] ?? null;
-            $inventoryItemId = $item['inventory_item_id'] ?? null;
-            $purchaseOrderItem = is_string($purchaseOrderItemId)
-                ? ($purchaseOrderItems[$purchaseOrderItemId] ?? null)
-                : null;
+            $purchaseOrderItem = $purchaseOrderItems[$item->purchaseOrderItemId] ?? null;
 
             abort_unless(
                 $purchaseOrderItem instanceof PurchaseOrderItem,
@@ -152,34 +137,33 @@ final readonly class CreateGoodsReceipt
             );
 
             abort_unless(
-                is_string($inventoryItemId) && $purchaseOrderItem->inventory_item_id === $inventoryItemId,
+                $purchaseOrderItem->inventory_item_id === $item->inventoryItemId,
                 422,
                 sprintf('Receipt item %d does not match the selected purchase order item inventory.', $index + 1),
             );
 
-            $quantityReceived = $item['quantity_received'] ?? null;
             $remainingQuantity = (float) $purchaseOrderItem->quantity_ordered - (float) $purchaseOrderItem->quantity_received;
 
-            if (! is_numeric($quantityReceived) || (float) $quantityReceived > $remainingQuantity) {
+            if ($item->quantityReceived > $remainingQuantity) {
                 throw ValidationException::withMessages([
                     sprintf('items.%d.quantity_received', $index) => 'The received quantity cannot be greater than the remaining purchase order quantity.',
                 ]);
             }
 
-            $inventoryItem = $inventoryItems->get($inventoryItemId);
+            $inventoryItem = $inventoryItems->get($item->inventoryItemId);
 
             if (
                 $inventoryItem instanceof InventoryItem
                 && $inventoryItem->expires
-                && (float) $quantityReceived > 0
+                && $item->quantityReceived > 0
             ) {
-                if (! is_string($item['batch_number'] ?? null) || mb_trim($item['batch_number']) === '') {
+                if ($item->batchNumber === null) {
                     throw ValidationException::withMessages([
                         sprintf('items.%d.batch_number', $index) => 'Batch number is required for expirable items.',
                     ]);
                 }
 
-                if (! is_string($item['expiry_date'] ?? null) || mb_trim($item['expiry_date']) === '') {
+                if ($item->expiryDate === null) {
                     throw ValidationException::withMessages([
                         sprintf('items.%d.expiry_date', $index) => 'Expiry date is required for expirable items.',
                     ]);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Clinical\CreateFacilityServiceOrderDTO;
+use App\Data\Clinical\UpdateFacilityServiceOrderDTO;
 use App\Models\FacilityService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -15,20 +17,27 @@ final class StoreConsultationFacilityServiceOrderRequest extends FormRequest
         return true;
     }
 
-    /**
-
-
-     * @return array<string, mixed>
-
-
-     */
-
-
     public function rules(): array
     {
         return [
             'facility_service_id' => ['required', 'string', 'exists:facility_services,id'],
         ];
+    }
+
+    public function createDto(): CreateFacilityServiceOrderDTO
+    {
+        /** @var array{facility_service_id: string} $validated */
+        $validated = $this->validated();
+
+        return CreateFacilityServiceOrderDTO::fromArray($validated);
+    }
+
+    public function updateDto(): UpdateFacilityServiceOrderDTO
+    {
+        /** @var array{facility_service_id: string} $validated */
+        $validated = $this->validated();
+
+        return UpdateFacilityServiceOrderDTO::fromArray($validated);
     }
 
     public function withValidator(Validator $validator): void
@@ -51,4 +60,3 @@ final class StoreConsultationFacilityServiceOrderRequest extends FormRequest
         });
     }
 }
-

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreatePrescriptionDTO;
+use App\Data\Clinical\CreatePrescriptionItemDTO;
 use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\InventoryItem;
@@ -18,55 +20,51 @@ final readonly class CreatePrescription
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    public function handle(Consultation|PatientVisit $context, array $data, string $staffId): Prescription
+    public function handle(Consultation|PatientVisit $context, CreatePrescriptionDTO $data, string $staffId): Prescription
     {
         [$visit, $consultation] = $this->resolveContext($context);
-
-        /** @var array<int, array<string, mixed>> $items */
-        $items = is_array($data['items'] ?? null) ? $data['items'] : [];
 
         /** @var Collection<int, InventoryItem> $inventoryItems */
         $inventoryItems = InventoryItem::query()
             ->drugs()
-            ->whereIn('id', collect($items)->pluck('inventory_item_id')->filter()->all())
+            ->whereIn('id', array_map(
+                static fn (CreatePrescriptionItemDTO $item): string => $item->inventoryItemId,
+                $data->items,
+            ))
             ->where('is_active', true)
             ->get()
             ->keyBy('id');
 
-        return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $items, $inventoryItems): Prescription {
+        return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $inventoryItems): Prescription {
             $prescription = Prescription::query()->create([
                 'visit_id' => $visit->id,
                 'consultation_id' => $consultation?->id,
                 'prescribed_by' => $staffId,
                 'prescription_date' => now(),
-                'is_discharge_medication' => (bool) ($data['is_discharge_medication'] ?? false),
-                'is_long_term' => (bool) ($data['is_long_term'] ?? false),
-                'primary_diagnosis' => $this->nullableText($data['primary_diagnosis'] ?? $consultation?->primary_diagnosis),
-                'pharmacy_notes' => $this->nullableText($data['pharmacy_notes'] ?? null),
+                'is_discharge_medication' => $data->isDischargeMedication,
+                'is_long_term' => $data->isLongTerm,
+                'primary_diagnosis' => $data->primaryDiagnosis ?? $consultation?->primary_diagnosis,
+                'pharmacy_notes' => $data->pharmacyNotes,
                 'status' => 'pending',
             ]);
 
-            foreach ($items as $item) {
-                $inventoryItemId = is_string($item['inventory_item_id'] ?? null) ? $item['inventory_item_id'] : null;
-                $inventoryItem = $inventoryItems->get($inventoryItemId);
+            foreach ($data->items as $item) {
+                $inventoryItem = $inventoryItems->get($item->inventoryItemId);
                 if ($inventoryItem === null) {
                     continue;
                 }
 
                 $prescription->items()->create([
                     'inventory_item_id' => $inventoryItem->id,
-                    'dosage' => $this->stringValue($item['dosage'] ?? null),
-                    'frequency' => $this->stringValue($item['frequency'] ?? null),
-                    'route' => $this->stringValue($item['route'] ?? null),
-                    'duration_days' => is_numeric($item['duration_days'] ?? null) ? (int) $item['duration_days'] : 0,
-                    'quantity' => is_numeric($item['quantity'] ?? null) ? (int) $item['quantity'] : 0,
-                    'instructions' => $this->nullableText($item['instructions'] ?? null),
-                    'is_prn' => (bool) ($item['is_prn'] ?? false),
-                    'prn_reason' => $this->nullableText($item['prn_reason'] ?? null),
-                    'is_external_pharmacy' => (bool) ($item['is_external_pharmacy'] ?? false),
+                    'dosage' => $item->dosage,
+                    'frequency' => $item->frequency,
+                    'route' => $item->route,
+                    'duration_days' => $item->durationDays,
+                    'quantity' => $item->quantity,
+                    'instructions' => $item->instructions,
+                    'is_prn' => $item->isPrn,
+                    'prn_reason' => $item->prnReason,
+                    'is_external_pharmacy' => $item->isExternalPharmacy,
                     'status' => 'pending',
                 ]);
             }
@@ -92,22 +90,6 @@ final readonly class CreatePrescription
         }
 
         return [$context, $context->consultation];
-    }
-
-    private function stringValue(mixed $value): string
-    {
-        return (string) $this->nullableText($value);
-    }
-
-    private function nullableText(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $trimmed = mb_trim($value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 
     private function ensureVisitInProgress(PatientVisit $visit): void

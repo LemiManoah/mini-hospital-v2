@@ -66,7 +66,7 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'This visit already has a finalized consultation and can no longer accept new orders.');
         }
 
-        $createLabRequest->handle($visit, $request->validated(), $staffId);
+        $createLabRequest->handle($visit, $request->createDto(), $staffId);
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
             ->with('success', 'Laboratory request created successfully.');
@@ -97,7 +97,7 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'Only pending lab requests can be updated.');
         }
 
-        $updateLabRequest->handle($labRequest, $request->validated());
+        $updateLabRequest->handle($labRequest, $request->updateDto());
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
             ->with('success', 'Laboratory request updated successfully.');
@@ -174,7 +174,7 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'This visit already has a finalized consultation and can no longer accept new orders.');
         }
 
-        $createImagingRequest->handle($visit, $request->validated(), $staffId);
+        $createImagingRequest->handle($visit, $request->createDto(), $staffId);
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'imaging')
             ->with('success', 'Imaging request created successfully.');
@@ -197,7 +197,7 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'This visit already has a finalized consultation and can no longer accept new orders.');
         }
 
-        $createPrescription->handle($visit, $request->validated(), $staffId);
+        $createPrescription->handle($visit, $request->createDto(), $staffId);
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'prescriptions')
             ->with('success', 'Prescription created successfully.');
@@ -220,7 +220,7 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'This visit already has a finalized consultation and can no longer accept new orders.');
         }
 
-        $createFacilityServiceOrder->handle($visit, $request->validated(), $staffId);
+        $createFacilityServiceOrder->handle($visit, $request->createDto(), $staffId);
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'services')
             ->with('success', 'Facility service order created successfully.');
@@ -251,7 +251,7 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'Only pending facility service orders can be updated.');
         }
 
-        $updateFacilityServiceOrder->handle($facilityServiceOrder, $request->validated());
+        $updateFacilityServiceOrder->handle($facilityServiceOrder, $request->updateDto());
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'services')
             ->with('success', 'Facility service order updated successfully.');

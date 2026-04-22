@@ -50,7 +50,7 @@ final class DoctorConsultationFacilityServiceOrderController implements HasMiddl
                 ->with('error', 'This consultation has already been finalized and can no longer accept facility service orders.');
         }
 
-        $createFacilityServiceOrder->handle($consultation, $request->validated(), $staffId);
+        $createFacilityServiceOrder->handle($consultation, $request->createDto(), $staffId);
 
         return to_route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services'])
             ->with('success', 'Facility service order created successfully.');

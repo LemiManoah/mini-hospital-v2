@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Inventory\CreateGoodsReceiptDTO;
 use App\Enums\GoodsReceiptStatus;
 use App\Models\GoodsReceipt;
 use App\Models\InventoryItem;
@@ -12,7 +13,6 @@ use App\Models\PurchaseOrderItem;
 use App\Support\BranchContext;
 use App\Support\InventoryLocationAccess;
 use App\Support\InventoryWorkspace;
-use Closure;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -20,6 +20,33 @@ use Illuminate\Validation\Validator;
 
 final class StoreGoodsReceiptRequest extends FormRequest
 {
+    /**
+     * @param  list<string>  $allowedLocationTypes
+     */
+    public function createDto(array $allowedLocationTypes = []): CreateGoodsReceiptDTO
+    {
+        /** @var array{
+         *   purchase_order_id: string,
+         *   inventory_location_id: string,
+         *   receipt_date: string,
+         *   supplier_invoice_number?: string|null,
+         *   notes?: string|null,
+         *   items: list<array{
+         *     purchase_order_item_id: string,
+         *     inventory_item_id: string,
+         *     quantity_received: int|float|string,
+         *     unit_cost: int|float|string,
+         *     batch_number?: string|null,
+         *     expiry_date?: string|null,
+         *     notes?: string|null
+         *   }>
+         * } $validated
+         */
+        $validated = $this->validated();
+
+        return CreateGoodsReceiptDTO::fromRequest($validated, $allowedLocationTypes);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -252,5 +279,3 @@ final class StoreGoodsReceiptRequest extends FormRequest
         ];
     }
 }
-
-

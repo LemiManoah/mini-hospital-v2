@@ -121,11 +121,7 @@ final readonly class GoodsReceiptController implements HasMiddleware
     public function store(StoreGoodsReceiptRequest $request, CreateGoodsReceipt $action): RedirectResponse
     {
         $workspace = InventoryWorkspace::fromRequest($request);
-        $validated = $request->validated();
-        $items = $validated['items'];
-        unset($validated['items']);
-
-        $goodsReceipt = $action->handle($validated, $items, $workspace->locationTypeValues());
+        $goodsReceipt = $action->handle($request->createDto($workspace->locationTypeValues()));
 
         return to_route($workspace->goodsReceiptShowRouteName(), $workspace->goodsReceiptShowRouteParameters($goodsReceipt))
             ->with('success', 'Goods receipt created successfully.');
