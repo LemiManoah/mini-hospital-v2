@@ -122,6 +122,15 @@ From this point forward:
   - `app/Http/Controllers/OnboardingController.php`
   - `app/Actions/CreateOnboardingPrimaryBranch.php`
   - `app/Data/Onboarding/CreateOnboardingPrimaryBranchDTO.php`
+- Onboarding departments and staff
+  - `app/Http/Requests/StoreOnboardingDepartmentsRequest.php`
+  - `app/Http/Requests/StoreOnboardingStaffRequest.php`
+  - `app/Http/Controllers/OnboardingController.php`
+  - `app/Actions/BootstrapOnboardingDepartments.php`
+  - `app/Actions/BootstrapOnboardingStaffMember.php`
+  - `app/Data/Onboarding/CreateOnboardingDepartmentsDTO.php`
+  - `app/Data/Onboarding/CreateOnboardingDepartmentDTO.php`
+  - `app/Data/Onboarding/CreateOnboardingStaffMemberDTO.php`
 
 ## Priority 1: Complex Nested Inventory Flows
 
@@ -289,16 +298,19 @@ These can use DTOs too, but they are lower-risk because many are flatter CRUD-st
 Started:
 
 - `app/Http/Requests/StoreOnboardingBranchRequest.php`
+- `app/Http/Requests/StoreOnboardingDepartmentsRequest.php`
+- `app/Http/Requests/StoreOnboardingStaffRequest.php`
 - `app/Http/Controllers/OnboardingController.php`
 - `app/Actions/CreateOnboardingPrimaryBranch.php`
+- `app/Actions/BootstrapOnboardingDepartments.php`
+- `app/Actions/BootstrapOnboardingStaffMember.php`
 - `app/Data/Onboarding/CreateOnboardingPrimaryBranchDTO.php`
+- `app/Data/Onboarding/CreateOnboardingDepartmentsDTO.php`
+- `app/Data/Onboarding/CreateOnboardingDepartmentDTO.php`
+- `app/Data/Onboarding/CreateOnboardingStaffMemberDTO.php`
 
 Still remaining:
 
-- `app/Http/Requests/StoreOnboardingDepartmentsRequest.php`
-- `app/Http/Requests/StoreOnboardingStaffRequest.php`
-- `app/Actions/BootstrapOnboardingDepartments.php`
-- `app/Actions/BootstrapOnboardingStaffMember.php`
 - `app/Http/Requests/StorePatientRequest.php`
 - `app/Http/Requests/UpdatePatientRequest.php`
 - `app/Actions/UpdatePatient.php`

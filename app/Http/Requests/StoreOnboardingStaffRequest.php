@@ -4,26 +4,26 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Onboarding\CreateOnboardingStaffMemberDTO;
 use App\Enums\StaffType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
 final class StoreOnboardingStaffRequest extends FormRequest
 {
+    public function createDto(): CreateOnboardingStaffMemberDTO
+    {
+        return CreateOnboardingStaffMemberDTO::fromRequest($this);
+    }
+
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -50,5 +50,3 @@ final class StoreOnboardingStaffRequest extends FormRequest
         ]);
     }
 }
-
-

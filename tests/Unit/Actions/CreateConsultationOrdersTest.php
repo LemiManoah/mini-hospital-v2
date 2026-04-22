@@ -21,6 +21,7 @@ use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\PatientVisit;
 use App\Models\VisitCharge;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -153,6 +154,22 @@ function seedConsultationContext(string $billingType = 'cash'): array
         'insurance_package_id' => $insurancePackageId,
         'consultation' => Consultation::query()->findOrFail($consultationId),
     ];
+}
+
+function createFacilityServiceOrderRequest(array $validated): FormRequest
+{
+    return new class($validated) extends FormRequest
+    {
+        public function __construct(private array $validatedInput)
+        {
+            parent::__construct();
+        }
+
+        public function validated($key = null, $default = null): array
+        {
+            return $this->validatedInput;
+        }
+    };
 }
 
 it('creates a lab request with priced items from the consultation context and syncs a visit charge', function (): void {
@@ -400,9 +417,9 @@ it('creates a facility service order with consultation context and syncs an insu
 
     $order = resolve(CreateFacilityServiceOrder::class)->handle(
         $context['consultation'],
-        CreateFacilityServiceOrderDTO::fromArray([
+        CreateFacilityServiceOrderDTO::fromRequest(createFacilityServiceOrderRequest([
             'facility_service_id' => $serviceId,
-        ]),
+        ])),
         $context['staff_id'],
     );
 
@@ -462,9 +479,9 @@ it('creates a facility service order with the service selling price for cash vis
 
     $order = resolve(CreateFacilityServiceOrder::class)->handle(
         $context['consultation'],
-        CreateFacilityServiceOrderDTO::fromArray([
+        CreateFacilityServiceOrderDTO::fromRequest(createFacilityServiceOrderRequest([
             'facility_service_id' => $serviceId,
-        ]),
+        ])),
         $context['staff_id'],
     );
 
@@ -499,9 +516,9 @@ it('creates a facility service order without syncing a charge for non-billable s
 
     $order = resolve(CreateFacilityServiceOrder::class)->handle(
         $context['consultation'],
-        CreateFacilityServiceOrderDTO::fromArray([
+        CreateFacilityServiceOrderDTO::fromRequest(createFacilityServiceOrderRequest([
             'facility_service_id' => $serviceId,
-        ]),
+        ])),
         $context['staff_id'],
     );
 
@@ -540,17 +557,17 @@ it('prevents duplicate pending facility service orders for the same visit', func
 
     resolve(CreateFacilityServiceOrder::class)->handle(
         $context['consultation'],
-        CreateFacilityServiceOrderDTO::fromArray([
+        CreateFacilityServiceOrderDTO::fromRequest(createFacilityServiceOrderRequest([
             'facility_service_id' => $serviceId,
-        ]),
+        ])),
         $context['staff_id'],
     );
 
     expect(fn () => resolve(CreateFacilityServiceOrder::class)->handle(
         $context['consultation'],
-        CreateFacilityServiceOrderDTO::fromArray([
+        CreateFacilityServiceOrderDTO::fromRequest(createFacilityServiceOrderRequest([
             'facility_service_id' => $serviceId,
-        ]),
+        ])),
         $context['staff_id'],
     ))->toThrow(ValidationException::class);
 
@@ -579,9 +596,9 @@ it('deletes a pending facility service order and its synced charge', function ()
 
     $order = resolve(CreateFacilityServiceOrder::class)->handle(
         $context['consultation'],
-        CreateFacilityServiceOrderDTO::fromArray([
+        CreateFacilityServiceOrderDTO::fromRequest(createFacilityServiceOrderRequest([
             'facility_service_id' => $serviceId,
-        ]),
+        ])),
         $context['staff_id'],
     );
 

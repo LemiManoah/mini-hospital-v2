@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Onboarding\CreateOnboardingDepartmentDTO;
+use App\Data\Onboarding\CreateOnboardingDepartmentsDTO;
 use App\Models\Department;
 use App\Models\Tenant;
 use App\Models\User;
@@ -11,23 +13,22 @@ use Illuminate\Support\Str;
 
 final class BootstrapOnboardingDepartments
 {
-    /**
-     * @param  array<int, array{name: string, location?: string|null, is_clinical?: bool}>  $departments
-     */
-    public function handle(Tenant $tenant, User $user, array $departments): void
+    public function handle(Tenant $tenant, User $user, CreateOnboardingDepartmentsDTO $data): void
     {
-        foreach ($departments as $index => $departmentData) {
-            $name = mb_trim($departmentData['name']);
+        foreach ($data->departments as $index => $department) {
+            if (! $department instanceof CreateOnboardingDepartmentDTO) {
+                continue;
+            }
 
             Department::query()->updateOrCreate(
                 [
                     'tenant_id' => $tenant->id,
-                    'department_name' => $name,
+                    'department_name' => $department->name,
                 ],
                 [
-                    'department_code' => $this->departmentCode($name, $index),
-                    'location' => $departmentData['location'] ?? null,
-                    'is_clinical' => (bool) ($departmentData['is_clinical'] ?? true),
+                    'department_code' => $this->departmentCode($department->name, $index),
+                    'location' => $department->location,
+                    'is_clinical' => $department->isClinical,
                     'is_active' => true,
                     'contact_info' => null,
                     'created_by' => $user->id,

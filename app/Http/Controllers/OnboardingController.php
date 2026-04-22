@@ -228,7 +228,7 @@ final readonly class OnboardingController
             $bootstrapOnboardingDepartments->handle(
                 $user->tenant,
                 $user,
-                $request->validated()['departments'],
+                $request->createDto(),
             );
         }
 
@@ -246,7 +246,7 @@ final readonly class OnboardingController
             $bootstrapOnboardingStaffMember->handle(
                 $user->tenant,
                 $user,
-                $request->validated(),
+                $request->createDto(),
             );
         }
 

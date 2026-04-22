@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Onboarding\CreateOnboardingStaffMemberDTO;
 use App\Models\FacilityBranch;
 use App\Models\Tenant;
 use App\Models\User;
@@ -16,10 +17,7 @@ final readonly class BootstrapOnboardingStaffMember
         private CreateStaff $createStaff,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    public function handle(Tenant $tenant, User $user, array $data): void
+    public function handle(Tenant $tenant, User $user, CreateOnboardingStaffMemberDTO $data): void
     {
         $mainBranch = FacilityBranch::query()
             ->where('tenant_id', $tenant->id)
@@ -29,15 +27,9 @@ final readonly class BootstrapOnboardingStaffMember
         throw_unless($mainBranch instanceof FacilityBranch, RuntimeException::class, 'A primary branch is required before onboarding staff.');
 
         DB::transaction(function () use ($tenant, $user, $data, $mainBranch): void {
-            $this->createStaff->handle([
-                ...$data,
-                'tenant_id' => $tenant->id,
-                'branch_ids' => [$mainBranch->id],
-                'primary_branch_id' => $mainBranch->id,
-                'is_active' => (bool) ($data['is_active'] ?? true),
-                'created_by' => $user->id,
-                'updated_by' => $user->id,
-            ]);
+            $this->createStaff->handle(
+                $data->toCreateStaffPayload($tenant->id, $mainBranch->id, $user->id),
+            );
 
             $tenant->update([
                 'updated_by' => $user->id,
