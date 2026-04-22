@@ -90,5 +90,3 @@ final class StoreInsurancePackagePriceRequest extends FormRequest
         });
     }
 }
-
-

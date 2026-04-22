@@ -21,14 +21,8 @@ final class StoreWorkspaceRegistrationRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -51,5 +45,3 @@ final class StoreWorkspaceRegistrationRequest extends FormRequest
         ];
     }
 }
-
-

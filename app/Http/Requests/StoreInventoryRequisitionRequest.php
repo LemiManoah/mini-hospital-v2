@@ -10,7 +10,6 @@ use App\Models\InventoryLocation;
 use App\Support\BranchContext;
 use App\Support\InventoryLocationAccess;
 use App\Support\InventoryWorkspace;
-use Closure;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -154,5 +153,3 @@ final class StoreInventoryRequisitionRequest extends FormRequest
         ];
     }
 }
-
-

@@ -18,14 +18,8 @@ final class StoreInventoryLocationRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         $branchId = BranchContext::getActiveBranchId();
@@ -71,4 +65,3 @@ final class StoreInventoryLocationRequest extends FormRequest
         return $trimmed === '' ? null : $trimmed;
     }
 }
-

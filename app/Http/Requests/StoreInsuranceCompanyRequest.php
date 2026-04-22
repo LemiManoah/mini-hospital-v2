@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\GeneralStatus;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,14 +18,8 @@ final class StoreInsuranceCompanyRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         $tenantId = (string) $this->user()?->tenant_id;
@@ -48,5 +41,3 @@ final class StoreInsuranceCompanyRequest extends FormRequest
         ];
     }
 }
-
-

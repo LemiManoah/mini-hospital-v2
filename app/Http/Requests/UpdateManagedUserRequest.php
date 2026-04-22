@@ -5,18 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\User;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 final class UpdateManagedUserRequest extends FormRequest
 {
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function rules(): array
     {
         $targetUser = $this->route('user');
@@ -36,5 +32,3 @@ final class UpdateManagedUserRequest extends FormRequest
         ];
     }
 }
-
-

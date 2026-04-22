@@ -16,14 +16,8 @@ final class UpdateAllergenRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -38,5 +32,3 @@ final class UpdateAllergenRequest extends FormRequest
         ];
     }
 }
-
-

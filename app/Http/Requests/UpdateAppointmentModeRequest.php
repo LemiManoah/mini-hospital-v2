@@ -16,14 +16,8 @@ final class UpdateAppointmentModeRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         /** @var AppointmentMode $mode */
@@ -45,4 +39,3 @@ final class UpdateAppointmentModeRequest extends FormRequest
         ]);
     }
 }
-

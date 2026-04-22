@@ -14,17 +14,10 @@ final class DeleteAppointmentModeRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [];
     }
 }
-

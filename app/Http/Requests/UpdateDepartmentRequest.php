@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class UpdateDepartmentRequest extends FormRequest
@@ -15,14 +14,8 @@ final class UpdateDepartmentRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -35,5 +28,3 @@ final class UpdateDepartmentRequest extends FormRequest
         ];
     }
 }
-
-

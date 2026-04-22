@@ -125,11 +125,11 @@ final readonly class FinalizePharmacyPosSaleAction
             if ($paidAmount > 0) {
                 $sale->payments()->create([
                     'amount' => $paidAmount,
-                'payment_method' => $paymentData['payment_method'] ?? 'cash',
-                'reference_number' => $paymentData['reference_number'] ?? null,
-                'payment_date' => now(),
-                'is_refund' => false,
-                'notes' => $paymentData['notes'] ?? null,
+                    'payment_method' => $paymentData['payment_method'] ?? 'cash',
+                    'reference_number' => $paymentData['reference_number'] ?? null,
+                    'payment_date' => now(),
+                    'is_refund' => false,
+                    'notes' => $paymentData['notes'] ?? null,
                     'created_by' => Auth::id(),
                     'updated_by' => Auth::id(),
                 ]);

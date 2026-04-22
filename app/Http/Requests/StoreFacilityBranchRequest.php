@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\GeneralStatus;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -15,11 +14,8 @@ use Illuminate\Validation\Rules\Enum;
 final class StoreFacilityBranchRequest extends FormRequest
 {
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function rules(): array
     {
         $tenantId = Auth::user()?->tenant_id;
@@ -49,5 +45,3 @@ final class StoreFacilityBranchRequest extends FormRequest
         ]);
     }
 }
-
-

@@ -16,14 +16,8 @@ final class StoreLabResultTypeRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         $tenantId = $this->user()?->tenant_id;
@@ -60,4 +54,3 @@ final class StoreLabResultTypeRequest extends FormRequest
         ]);
     }
 }
-

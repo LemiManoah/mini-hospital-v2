@@ -68,4 +68,3 @@ final class CollectLabSpecimenRequest extends FormRequest
         return $this->route('labRequestItem') ?? $this->route('lab_request_item');
     }
 }
-

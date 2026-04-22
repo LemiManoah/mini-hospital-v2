@@ -14,17 +14,10 @@ final class ConfirmAppointmentRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [];
     }
 }
-

@@ -14,14 +14,8 @@ final class UpdateGeneralSettingsRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -62,4 +56,3 @@ final class UpdateGeneralSettingsRequest extends FormRequest
         }
     }
 }
-

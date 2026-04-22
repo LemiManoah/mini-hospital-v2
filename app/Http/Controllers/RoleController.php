@@ -106,7 +106,6 @@ final readonly class RoleController implements HasMiddleware
     }
 
     /**
-     * @param  mixed  $permissions
      * @return array<int, string>
      */
     private function normalizePermissions(mixed $permissions): array

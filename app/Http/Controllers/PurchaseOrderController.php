@@ -213,7 +213,6 @@ final readonly class PurchaseOrderController implements HasMiddleware
     }
 
     /**
-     * @param  mixed  $items
      * @return array<int, array{inventory_item_id: string, quantity_ordered: float, unit_cost: float}>
      */
     private function normalizeItems(mixed $items): array

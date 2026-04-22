@@ -9,11 +9,8 @@ use Illuminate\Foundation\Http\FormRequest;
 final class DeleteUserRequest extends FormRequest
 {
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function rules(): array
     {
         return [
@@ -21,5 +18,3 @@ final class DeleteUserRequest extends FormRequest
         ];
     }
 }
-
-

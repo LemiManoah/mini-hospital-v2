@@ -17,14 +17,8 @@ final class StoreCurrencyExchangeRateRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         $tenantId = Auth::user()?->tenant_id;
@@ -60,5 +54,3 @@ final class StoreCurrencyExchangeRateRequest extends FormRequest
         ];
     }
 }
-
-

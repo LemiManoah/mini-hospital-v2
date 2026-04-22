@@ -17,14 +17,8 @@ final class UpdateOnboardingProfileRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         $tenantId = $this->user()?->tenant_id;
@@ -38,5 +32,3 @@ final class UpdateOnboardingProfileRequest extends FormRequest
         ];
     }
 }
-
-

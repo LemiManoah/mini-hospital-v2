@@ -6,7 +6,6 @@ namespace App\Http\Requests;
 
 use App\Enums\GeneralStatus;
 use App\Models\FacilityBranch;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -16,11 +15,8 @@ use Illuminate\Validation\Rules\Enum;
 final class UpdateFacilityBranchRequest extends FormRequest
 {
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function rules(): array
     {
         /** @var FacilityBranch $branch */
@@ -53,5 +49,3 @@ final class UpdateFacilityBranchRequest extends FormRequest
         ]);
     }
 }
-
-

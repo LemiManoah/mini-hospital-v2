@@ -14,14 +14,8 @@ final class StoreLabRequestItemConsumableRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -45,4 +39,3 @@ final class StoreLabRequestItemConsumableRequest extends FormRequest
         ]);
     }
 }
-

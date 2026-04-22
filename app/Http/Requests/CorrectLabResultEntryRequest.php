@@ -133,4 +133,3 @@ final class CorrectLabResultEntryRequest extends FormRequest
         return $this->route('labRequestItem') ?? $this->route('lab_request_item');
     }
 }
-

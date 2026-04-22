@@ -16,14 +16,8 @@ final class UpdateUnitRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         $unit = $this->route('unit');
@@ -46,5 +40,3 @@ final class UpdateUnitRequest extends FormRequest
         ];
     }
 }
-
-

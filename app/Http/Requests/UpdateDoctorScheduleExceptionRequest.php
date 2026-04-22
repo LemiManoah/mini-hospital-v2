@@ -11,11 +11,8 @@ use Illuminate\Validation\Rule;
 final class UpdateDoctorScheduleExceptionRequest extends FormRequest
 {
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function rules(): array
     {
         return [
@@ -30,4 +27,3 @@ final class UpdateDoctorScheduleExceptionRequest extends FormRequest
         ];
     }
 }
-

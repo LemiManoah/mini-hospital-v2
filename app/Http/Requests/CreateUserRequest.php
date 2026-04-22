@@ -13,11 +13,8 @@ use Illuminate\Validation\Rules\Password;
 final class CreateUserRequest extends FormRequest
 {
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function rules(): array
     {
         return [
@@ -42,5 +39,3 @@ final class CreateUserRequest extends FormRequest
         ];
     }
 }
-
-

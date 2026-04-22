@@ -17,14 +17,8 @@ final class RescheduleAppointmentRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -60,4 +54,3 @@ final class RescheduleAppointmentRequest extends FormRequest
         ]);
     }
 }
-

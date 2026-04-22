@@ -16,14 +16,8 @@ final class StoreLabResultEntryRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -117,4 +111,3 @@ final class StoreLabResultEntryRequest extends FormRequest
         return $this->route('labRequestItem') ?? $this->route('lab_request_item');
     }
 }
-

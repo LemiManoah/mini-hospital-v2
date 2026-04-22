@@ -6,7 +6,6 @@ namespace App\Http\Requests;
 
 use App\Enums\GeneralStatus;
 use App\Models\InsuranceCompany;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -20,14 +19,8 @@ final class UpdateInsuranceCompanyRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         /** @var InsuranceCompany $insuranceCompany */
@@ -53,5 +46,3 @@ final class UpdateInsuranceCompanyRequest extends FormRequest
         ];
     }
 }
-
-

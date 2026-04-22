@@ -14,14 +14,8 @@ final class StoreTenantSupportNoteRequest extends FormRequest
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -40,5 +34,3 @@ final class StoreTenantSupportNoteRequest extends FormRequest
         ]);
     }
 }
-
-
