@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Onboarding\CreateOnboardingPrimaryBranchDTO;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class StoreOnboardingBranchRequest extends FormRequest
 {
+    public function createDto(): CreateOnboardingPrimaryBranchDTO
+    {
+        return CreateOnboardingPrimaryBranchDTO::fromRequest($this);
+    }
+
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -44,5 +44,3 @@ final class StoreOnboardingBranchRequest extends FormRequest
         ]);
     }
 }
-
-

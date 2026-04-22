@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreateConsultationDTO;
 use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\PatientVisit;
@@ -15,23 +16,7 @@ final readonly class CreateConsultation
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
-    /**
-     * @param  array{
-     *     chief_complaint?: mixed,
-     *     history_of_present_illness?: mixed,
-     *     review_of_systems?: mixed,
-     *     past_medical_history_summary?: mixed,
-     *     family_history?: mixed,
-     *     social_history?: mixed,
-     *     subjective_notes?: mixed,
-     *     objective_findings?: mixed,
-     *     assessment?: mixed,
-     *     plan?: mixed,
-     *     primary_diagnosis?: mixed,
-     *     primary_icd10_code?: mixed
-     * }  $data
-     */
-    public function handle(PatientVisit $visit, array $data): Consultation
+    public function handle(PatientVisit $visit, CreateConsultationDTO $data): Consultation
     {
         $doctorId = $visit->doctor_id ?? Auth::user()?->staff_id;
 
@@ -42,17 +27,17 @@ final readonly class CreateConsultation
             'doctor_id' => $doctorId,
             'started_at' => now(),
             'chief_complaint' => $this->chiefComplaint($visit, $data),
-            'history_of_present_illness' => $this->nullableText($data['history_of_present_illness'] ?? null),
-            'review_of_systems' => $this->nullableText($data['review_of_systems'] ?? null),
-            'past_medical_history_summary' => $this->nullableText($data['past_medical_history_summary'] ?? null),
-            'family_history' => $this->nullableText($data['family_history'] ?? null),
-            'social_history' => $this->nullableText($data['social_history'] ?? null),
-            'subjective_notes' => $this->nullableText($data['subjective_notes'] ?? null),
-            'objective_findings' => $this->nullableText($data['objective_findings'] ?? null),
-            'assessment' => $this->nullableText($data['assessment'] ?? null),
-            'plan' => $this->nullableText($data['plan'] ?? null),
-            'primary_diagnosis' => $this->nullableText($data['primary_diagnosis'] ?? null),
-            'primary_icd10_code' => $this->nullableText($data['primary_icd10_code'] ?? null),
+            'history_of_present_illness' => $data->historyOfPresentIllness,
+            'review_of_systems' => $data->reviewOfSystems,
+            'past_medical_history_summary' => $data->pastMedicalHistorySummary,
+            'family_history' => $data->familyHistory,
+            'social_history' => $data->socialHistory,
+            'subjective_notes' => $data->subjectiveNotes,
+            'objective_findings' => $data->objectiveFindings,
+            'assessment' => $data->assessment,
+            'plan' => $data->plan,
+            'primary_diagnosis' => $data->primaryDiagnosis,
+            'primary_icd10_code' => $data->primaryIcd10Code,
             'is_referred' => false,
         ]);
 
@@ -67,12 +52,9 @@ final readonly class CreateConsultation
         return $consultation;
     }
 
-    /**
-     * @param  array{chief_complaint?: mixed}  $data
-     */
-    private function chiefComplaint(PatientVisit $visit, array $data): string
+    private function chiefComplaint(PatientVisit $visit, CreateConsultationDTO $data): string
     {
-        $complaint = $this->nullableText($data['chief_complaint'] ?? null);
+        $complaint = $data->chiefComplaint;
 
         if ($complaint !== null) {
             return $complaint;
@@ -82,16 +64,5 @@ final readonly class CreateConsultation
         $chiefComplaint = $visit->triage?->getAttribute('chief_complaint');
 
         return $chiefComplaint ?? '';
-    }
-
-    private function nullableText(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $trimmed = mb_trim($value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 }

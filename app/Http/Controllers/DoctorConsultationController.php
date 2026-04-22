@@ -213,7 +213,7 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 ->with('error', 'Assign a doctor or link this user to a staff profile before starting the consultation.');
         }
 
-        $createConsultation->handle($visit, $request->validated());
+        $createConsultation->handle($visit, $request->createDto());
 
         return to_route('doctors.consultations.show', $visit)->with('success', 'Consultation started successfully.');
     }
@@ -238,15 +238,13 @@ final readonly class DoctorConsultationController implements HasMiddleware
             return to_route('doctors.consultations.show', $visit)->with('error', 'This consultation has already been finalized.');
         }
 
-        $validated = $request->validated();
-
-        if (($validated['intent'] ?? 'save_draft') === 'complete') {
-            $completeConsultation->handle($consultation, $validated);
+        if ($request->string('intent')->toString() === 'complete') {
+            $completeConsultation->handle($consultation, $request->completeDto());
 
             return to_route('doctors.consultations.show', $visit)->with('success', 'Consultation finalized successfully.');
         }
 
-        $updateConsultation->handle($consultation, $validated);
+        $updateConsultation->handle($consultation, $request->updateDto());
 
         return to_route('doctors.consultations.show', $visit)->with('success', 'Consultation saved successfully.');
     }

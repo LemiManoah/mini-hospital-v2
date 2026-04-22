@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Onboarding\CreateOnboardingPrimaryBranchDTO;
 use App\Enums\GeneralStatus;
 use App\Models\Address;
 use App\Models\FacilityBranch;
@@ -13,12 +14,9 @@ use App\Support\BranchContext;
 
 final class CreateOnboardingPrimaryBranch
 {
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    public function handle(Tenant $tenant, User $user, array $data): FacilityBranch
+    public function handle(Tenant $tenant, User $user, CreateOnboardingPrimaryBranchDTO $data): FacilityBranch
     {
-        $address = Address::query()->findOrFail($data['address_id']);
+        $address = Address::query()->findOrFail($data->addressId);
 
         $branch = FacilityBranch::query()->updateOrCreate(
             [
@@ -26,15 +24,15 @@ final class CreateOnboardingPrimaryBranch
                 'is_main_branch' => true,
             ],
             [
-                'name' => $data['name'],
-                'branch_code' => $data['branch_code'],
+                'name' => $data->name,
+                'branch_code' => $data->branchCode,
                 'address_id' => $address->id,
-                'main_contact' => $data['main_contact'] ?: null,
-                'other_contact' => $data['other_contact'] ?: null,
-                'email' => $data['email'] ?: null,
-                'currency_id' => $data['currency_id'],
+                'main_contact' => $data->mainContact,
+                'other_contact' => $data->otherContact,
+                'email' => $data->email,
+                'currency_id' => $data->currencyId,
                 'status' => GeneralStatus::ACTIVE,
-                'has_store' => (bool) ($data['has_store'] ?? false),
+                'has_store' => $data->hasStore,
                 'created_by' => $user->id,
                 'updated_by' => $user->id,
             ],

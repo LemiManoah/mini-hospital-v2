@@ -210,7 +210,7 @@ final readonly class OnboardingController
             $createOnboardingPrimaryBranch->handle(
                 $user->tenant,
                 $user,
-                $request->validated(),
+                $request->createDto(),
             );
         }
 

@@ -107,6 +107,21 @@ From this point forward:
   - `app/Actions/CreateVitalSign.php`
   - `app/Data/Clinical/CreateTriageRecordDTO.php`
   - `app/Data/Clinical/CreateVitalSignDTO.php`
+- Consultations
+  - `app/Http/Requests/StoreConsultationRequest.php`
+  - `app/Http/Requests/UpdateConsultationRequest.php`
+  - `app/Http/Controllers/DoctorConsultationController.php`
+  - `app/Actions/CreateConsultation.php`
+  - `app/Actions/UpdateConsultation.php`
+  - `app/Actions/CompleteConsultation.php`
+  - `app/Data/Clinical/CreateConsultationDTO.php`
+  - `app/Data/Clinical/UpdateConsultationDTO.php`
+  - `app/Data/Clinical/CompleteConsultationDTO.php`
+- Onboarding primary branch
+  - `app/Http/Requests/StoreOnboardingBranchRequest.php`
+  - `app/Http/Controllers/OnboardingController.php`
+  - `app/Actions/CreateOnboardingPrimaryBranch.php`
+  - `app/Data/Onboarding/CreateOnboardingPrimaryBranchDTO.php`
 
 ## Priority 1: Complex Nested Inventory Flows
 
@@ -244,14 +259,14 @@ DTOs:
 
 ## Priority 4: Consultation and Visit Clinical Capture
 
-These are flatter than the inventory/order flows, but they still represent core domain data and should move next when touched.
+This phase is now implemented for:
 
-- `app/Http/Requests/StoreConsultationRequest.php`
-- `app/Http/Requests/UpdateConsultationRequest.php`
-- `app/Http/Controllers/DoctorConsultationController.php`
-- `app/Actions/CreateConsultation.php`
-- `app/Actions/UpdateConsultation.php`
-- `app/Actions/CompleteConsultation.php`
+- `app/Http/Requests/StoreTriageRecordRequest.php`
+- `app/Http/Requests/StoreVitalSignRequest.php`
+- `app/Http/Controllers/VisitTriageController.php`
+- `app/Http/Controllers/VisitVitalSignController.php`
+- `app/Actions/CreateTriageRecord.php`
+- `app/Actions/CreateVitalSign.php`
 - `app/Http/Requests/StoreConsultationRequest.php`
 - `app/Http/Requests/UpdateConsultationRequest.php`
 - `app/Http/Controllers/DoctorConsultationController.php`
@@ -261,6 +276,8 @@ These are flatter than the inventory/order flows, but they still represent core 
 
 DTOs:
 
+- `CreateTriageRecordDTO`
+- `CreateVitalSignDTO`
 - `CreateConsultationDTO`
 - `UpdateConsultationDTO`
 - `CompleteConsultationDTO`
@@ -269,10 +286,17 @@ DTOs:
 
 These can use DTOs too, but they are lower-risk because many are flatter CRUD-style forms.
 
+Started:
+
 - `app/Http/Requests/StoreOnboardingBranchRequest.php`
+- `app/Http/Controllers/OnboardingController.php`
+- `app/Actions/CreateOnboardingPrimaryBranch.php`
+- `app/Data/Onboarding/CreateOnboardingPrimaryBranchDTO.php`
+
+Still remaining:
+
 - `app/Http/Requests/StoreOnboardingDepartmentsRequest.php`
 - `app/Http/Requests/StoreOnboardingStaffRequest.php`
-- `app/Actions/CreateOnboardingPrimaryBranch.php`
 - `app/Actions/BootstrapOnboardingDepartments.php`
 - `app/Actions/BootstrapOnboardingStaffMember.php`
 - `app/Http/Requests/StorePatientRequest.php`

@@ -3,12 +3,30 @@
 declare(strict_types=1);
 
 use App\Actions\CreateConsultation;
+use App\Data\Clinical\CreateConsultationDTO;
 use App\Enums\VisitStatus;
 use App\Models\PatientVisit;
 use App\Models\User;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+
+function createConsultationActionRequest(array $validated): FormRequest
+{
+    return new class($validated) extends FormRequest
+    {
+        public function __construct(private array $validatedInput)
+        {
+            parent::__construct();
+        }
+
+        public function validated($key = null, $default = null): array
+        {
+            return $this->validatedInput;
+        }
+    };
+}
 
 it('creates a consultation using triage context and the authenticated clinician', function (): void {
     $tenantId = (string) Str::uuid();
@@ -83,10 +101,10 @@ it('creates a consultation using triage context and the authenticated clinician'
 
     $visit = PatientVisit::query()->with('triage')->findOrFail($visitId);
 
-    $consultation = resolve(CreateConsultation::class)->handle($visit, [
+    $consultation = resolve(CreateConsultation::class)->handle($visit, CreateConsultationDTO::fromRequest(createConsultationActionRequest([
         'assessment' => 'Likely migraine',
         'plan' => 'Analgesia and review if symptoms persist',
-    ]);
+    ])));
 
     expect($consultation->doctor_id)->toBe($staffId)
         ->and($consultation->chief_complaint)->toBe('Persistent headache')

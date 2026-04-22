@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Clinical\CompleteConsultationDTO;
+use App\Data\Clinical\UpdateConsultationDTO;
 use App\Enums\ConsultationOutcome;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -11,12 +13,19 @@ use Illuminate\Validation\Validator;
 
 final class UpdateConsultationRequest extends FormRequest
 {
+    public function updateDto(): UpdateConsultationDTO
+    {
+        return UpdateConsultationDTO::fromRequest($this);
+    }
+
+    public function completeDto(): CompleteConsultationDTO
+    {
+        return CompleteConsultationDTO::fromRequest($this);
+    }
+
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function rules(): array
     {
         return [
@@ -106,4 +115,3 @@ final class UpdateConsultationRequest extends FormRequest
         ]);
     }
 }
-
