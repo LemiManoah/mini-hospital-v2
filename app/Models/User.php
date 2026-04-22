@@ -9,6 +9,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -33,7 +34,7 @@ final class User extends Authenticatable implements MustVerifyEmail
 {
     use BelongsToTenant;
 
-    /** @use HasFactory<UserFactory> */
+    /** @use HasFactory<Factory<self>> */
     use HasFactory;
 
     use HasRoles;
@@ -113,6 +114,9 @@ final class User extends Authenticatable implements MustVerifyEmail
     /**
      * Get the user's full name.
      */
+    /**
+     * @return Attribute<string, never>
+     */
     protected function name(): Attribute
     {
         return Attribute::get(function (): string {
@@ -126,6 +130,9 @@ final class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Get the user's avatar URL.
+     */
+    /**
+     * @return Attribute<non-falsy-string, never>
      */
     protected function avatar(): Attribute
     {

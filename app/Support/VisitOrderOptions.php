@@ -43,9 +43,9 @@ final readonly class VisitOrderOptions
             ->orderBy('name')
             ->get(['id', 'service_code', 'name', 'category', 'selling_price', 'is_billable']);
 
-        $labPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::TEST, $labTests->pluck('id')->all());
-        $drugPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::DRUG, $drugs->pluck('id')->all());
-        $servicePriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::SERVICE, $facilityServices->pluck('id')->all());
+        $labPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::TEST, $this->normalizeStringIds($labTests->pluck('id')->all()));
+        $drugPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::DRUG, $this->normalizeStringIds($drugs->pluck('id')->all()));
+        $servicePriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::SERVICE, $this->normalizeStringIds($facilityServices->pluck('id')->all()));
 
         return [
             'labTestOptions' => $labTests
@@ -129,7 +129,7 @@ final readonly class VisitOrderOptions
         $insurancePackageId = $visit->payer?->insurance_package_id;
         $branchId = $visit->facility_branch_id;
 
-        if ($insurancePackageId === null || $branchId === null || $billableIds === []) {
+        if ($insurancePackageId === null || $billableIds === []) {
             return [];
         }
 
@@ -157,5 +157,17 @@ final readonly class VisitOrderOptions
                 $price->billable_id => (float) $price->price,
             ])
             ->all();
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $ids
+     * @return list<string>
+     */
+    private function normalizeStringIds(array $ids): array
+    {
+        return array_values(array_filter(
+            $ids,
+            static fn (mixed $id): bool => is_string($id) && $id !== '',
+        ));
     }
 }

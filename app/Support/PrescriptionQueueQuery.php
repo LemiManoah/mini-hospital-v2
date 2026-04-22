@@ -15,6 +15,9 @@ final readonly class PrescriptionQueueQuery
         private ActiveBranchWorkspace $activeBranchWorkspace,
     ) {}
 
+    /**
+     * @return LengthAwarePaginator<int, Prescription>
+     */
     public function paginate(string $search = '', string $status = ''): LengthAwarePaginator
     {
         $query = Prescription::query()

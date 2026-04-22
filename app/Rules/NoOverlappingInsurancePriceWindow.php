@@ -38,7 +38,7 @@ final readonly class NoOverlappingInsurancePriceWindow implements ValidationRule
             ->where('status', GeneralStatus::ACTIVE->value)
             ->when(
                 $this->ignoreId !== null && $this->ignoreId !== '',
-                static fn (Builder $builder) => $builder->where('id', '!=', $this->ignoreId)
+                fn (Builder $builder): Builder => $builder->where('id', '!=', $this->ignoreId)
             )
             ->where(function (Builder $builder): void {
                 $builder

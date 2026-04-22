@@ -8,21 +8,25 @@ use App\Enums\InventoryLocationType;
 use App\Models\InventoryLocation;
 use App\Models\InventoryRequisition;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 final class InventoryLocationAccess
 {
     /**
-     * @return Collection<int, InventoryLocation>
+     * @param  list<InventoryLocationType|string>  $requestedTypes
+     * @return EloquentCollection<int, InventoryLocation>
      */
     public function accessibleLocations(?User $user, ?string $branchId = null, array $requestedTypes = []): Collection
     {
         $branchId ??= BranchContext::getActiveBranchId();
 
         if (! is_string($branchId) || $branchId === '') {
-            return collect();
+            return new EloquentCollection();
         }
 
+        /** @var Builder<InventoryLocation> $query */
         $query = InventoryLocation::query()
             ->where('branch_id', $branchId)
             ->where('is_active', true)
@@ -48,28 +52,31 @@ final class InventoryLocationAccess
     }
 
     /**
+     * @param  list<InventoryLocationType|string>  $requestedTypes
      * @return list<string>
      */
     public function accessibleLocationIds(?User $user, ?string $branchId = null, array $requestedTypes = []): array
     {
-        return $this->accessibleLocations($user, $branchId, $requestedTypes)
+        return array_values($this->accessibleLocations($user, $branchId, $requestedTypes)
             ->pluck('id')
             ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
             ->values()
-            ->all();
+            ->all());
     }
 
     /**
-     * @return Collection<int, InventoryLocation>
+     * @param  list<InventoryLocationType|string>  $requestedTypes
+     * @return EloquentCollection<int, InventoryLocation>
      */
     public function requisitionFulfillingLocations(?User $user, ?string $branchId = null, array $requestedTypes = []): Collection
     {
         $branchId ??= BranchContext::getActiveBranchId();
 
         if (! is_string($branchId) || $branchId === '') {
-            return collect();
+            return new EloquentCollection();
         }
 
+        /** @var Builder<InventoryLocation> $query */
         $query = InventoryLocation::query()
             ->where('branch_id', $branchId)
             ->where('is_active', true)
@@ -87,15 +94,16 @@ final class InventoryLocationAccess
     }
 
     /**
+     * @param  list<InventoryLocationType|string>  $requestedTypes
      * @return list<string>
      */
     public function requisitionFulfillingLocationIds(?User $user, ?string $branchId = null, array $requestedTypes = []): array
     {
-        return $this->requisitionFulfillingLocations($user, $branchId, $requestedTypes)
+        return array_values($this->requisitionFulfillingLocations($user, $branchId, $requestedTypes)
             ->pluck('id')
             ->filter(static fn (mixed $id): bool => is_string($id) && $id !== '')
             ->values()
-            ->all();
+            ->all());
     }
 
     public function canAccessLocation(?User $user, ?string $locationId, ?string $branchId = null): bool
@@ -105,6 +113,9 @@ final class InventoryLocationAccess
             && in_array($locationId, $this->accessibleLocationIds($user, $branchId), true);
     }
 
+    /**
+     * @param  list<InventoryLocationType|string>  $allowedTypes
+     */
     public function canAccessLocationForTypes(?User $user, ?string $locationId, array $allowedTypes, ?string $branchId = null): bool
     {
         return is_string($locationId)
@@ -112,6 +123,9 @@ final class InventoryLocationAccess
             && in_array($locationId, $this->accessibleLocationIds($user, $branchId, $allowedTypes), true);
     }
 
+    /**
+     * @param  list<InventoryLocationType|string>  $requestingTypes
+     */
     public function canCreateRequestedRequisition(
         ?User $user,
         ?string $fulfillingLocationId,
@@ -128,10 +142,12 @@ final class InventoryLocationAccess
             return false;
         }
 
-        $allowedFulfillingLocationIds = $requestingTypes === []
+        $normalizedRequestingTypes = $this->normalizeTypes($requestingTypes);
+
+        $allowedFulfillingLocationIds = $normalizedRequestingTypes === []
             ? $this->requisitionFulfillingLocationIds($user, $branchId)
             : $this->requisitionFulfillingLocationIds($user, $branchId, [InventoryLocationType::MAIN_STORE]);
-        $allowedRequestingLocationIds = $this->accessibleLocationIds($user, $branchId, $requestingTypes);
+        $allowedRequestingLocationIds = $this->accessibleLocationIds($user, $branchId, $normalizedRequestingTypes);
 
         return in_array($fulfillingLocationId, $allowedFulfillingLocationIds, true)
             && in_array($requestingLocationId, $allowedRequestingLocationIds, true);
@@ -176,20 +192,17 @@ final class InventoryLocationAccess
             return [];
         }
 
-        $types = collect();
+        $types = [];
 
         if ($user->hasRole('pharmacist')) {
-            $types->push(InventoryLocationType::PHARMACY->value);
+            $types[] = InventoryLocationType::PHARMACY->value;
         }
 
         if ($user->hasRole('lab_technician')) {
-            $types->push(InventoryLocationType::LABORATORY->value);
+            $types[] = InventoryLocationType::LABORATORY->value;
         }
 
-        return $types
-            ->unique()
-            ->values()
-            ->all();
+        return array_values(array_unique($types));
     }
 
     /**
@@ -198,13 +211,20 @@ final class InventoryLocationAccess
      */
     private function normalizeTypes(array $types): array
     {
-        return collect($types)
-            ->map(static fn (InventoryLocationType|string $type): string => $type instanceof InventoryLocationType
+        $normalized = [];
+
+        foreach ($types as $type) {
+            $value = $type instanceof InventoryLocationType
                 ? $type->value
-                : $type)
-            ->filter(static fn (string $type): bool => $type !== '')
-            ->unique()
-            ->values()
-            ->all();
+                : $type;
+
+            if ($value === '') {
+                continue;
+            }
+
+            $normalized[] = $value;
+        }
+
+        return array_values(array_unique($normalized));
     }
 }

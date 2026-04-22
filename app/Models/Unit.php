@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\UnitType;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -27,10 +26,6 @@ use Illuminate\Support\Carbon;
 final class Unit extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\UnitFactory> */
-    use HasFactory;
-
     use HasUuids;
     use SoftDeletes;
 

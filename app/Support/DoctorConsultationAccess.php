@@ -35,7 +35,9 @@ final class DoctorConsultationAccess
             return false;
         }
 
-        if ($visit->status->value === 'completed' || $visit->status->value === 'cancelled') {
+        $status = $visit->status;
+
+        if ($status !== null && ($status->value === 'completed' || $status->value === 'cancelled')) {
             return false;
         }
 

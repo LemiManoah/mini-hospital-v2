@@ -7,6 +7,7 @@ namespace App\Traits;
 use App\Models\FacilityBranch;
 use App\Models\Scopes\BranchScope;
 use App\Support\BranchContext;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 trait BelongsToBranch
@@ -23,12 +24,12 @@ trait BelongsToBranch
     {
         static::addGlobalScope(new BranchScope());
 
-        static::creating(function ($model): void {
-            if (empty($model->branch_id)) {
+        static::creating(function (Model $model): void {
+            if (empty($model->getAttribute('branch_id'))) {
                 $branchId = BranchContext::getActiveBranchId();
 
                 if ($branchId !== null) {
-                    $model->branch_id = $branchId;
+                    $model->setAttribute('branch_id', $branchId);
                 }
             }
         });

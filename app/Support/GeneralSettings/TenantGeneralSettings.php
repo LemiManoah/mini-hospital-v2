@@ -13,6 +13,7 @@ final class TenantGeneralSettings
      */
     public function resolved(string $tenantId): array
     {
+        /** @var array<string, string|null> $stored */
         $stored = TenantGeneralSetting::query()
             ->where('tenant_id', $tenantId)
             ->pluck('value', 'key')

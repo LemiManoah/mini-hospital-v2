@@ -47,7 +47,9 @@ final readonly class VisitWorkflowGuard
             return null;
         }
 
-        if ($billing->status instanceof BillingStatus && $billing->status->isSettled()) {
+        $status = $billing->status;
+
+        if ($status !== null && $status->isSettled()) {
             return null;
         }
 

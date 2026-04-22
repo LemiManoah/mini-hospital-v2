@@ -6,15 +6,11 @@ namespace App\Models;
 
 use App\Enums\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class TenantSubscription extends Model
 {
-    /** @use HasFactory<\Database\Factories\TenantSubscriptionFactory> */
-    use HasFactory;
-
     use HasUuids;
 
     /**

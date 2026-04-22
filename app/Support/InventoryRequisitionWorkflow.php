@@ -41,6 +41,10 @@ final class InventoryRequisitionWorkflow
         ];
     }
 
+    /**
+     * @param  Builder<InventoryRequisition>  $query
+     * @param  list<string>  $fulfillingLocationIds
+     */
     public function applyIncomingQueueScope(Builder $query, array $fulfillingLocationIds): void
     {
         $query
@@ -54,7 +58,7 @@ final class InventoryRequisitionWorkflow
     public function isIncomingQueueItem(InventoryRequisition $requisition): bool
     {
         $destinationType = $requisition->requestingLocation?->type?->value;
-        $status = $requisition->status?->value;
+        $status = $requisition->status->value;
 
         return ! in_array($status, $this->hiddenIncomingStatuses(), true)
             && in_array($destinationType, $this->requesterLocationTypes(), true);

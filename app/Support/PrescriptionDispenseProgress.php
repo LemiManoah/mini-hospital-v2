@@ -8,7 +8,6 @@ use App\Enums\DispensingRecordStatus;
 use App\Models\DispensingRecordItem;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Date;
 
 final class PrescriptionDispenseProgress
 {
@@ -37,22 +36,32 @@ final class PrescriptionDispenseProgress
             $query->where('dispensing_records.id', '!=', $ignoreRecordId);
         }
 
-        return $query
+        /** @var Collection<int, object{
+         *     prescription_item_id: string,
+         *     dispensed_quantity: int|float|string,
+         *     external_quantity: int|float|string,
+         *     latest_dispensed_at: string|null,
+         *     external_pharmacy: bool|int|string
+         * }> $rows
+         */
+        $rows = $query
             ->groupBy('dispensing_record_items.prescription_item_id')
-            ->get()
-            ->mapWithKeys(static fn (object $row): array => [
-                (string) $row->prescription_item_id => [
-                    'dispensed_quantity' => (float) $row->dispensed_quantity,
-                    'external_quantity' => (float) $row->external_quantity,
-                    'covered_quantity' => round(
-                        (float) $row->dispensed_quantity + (float) $row->external_quantity,
-                        3,
-                    ),
-                    'latest_dispensed_at' => $row->latest_dispensed_at !== null
-                        ? Date::parse((string) $row->latest_dispensed_at)
-                        : null,
-                    'external_pharmacy' => (bool) $row->external_pharmacy,
-                ],
-            ]);
+            ->toBase()
+            ->get();
+
+        return $rows->mapWithKeys(static fn (object $row): array => [
+            (string) $row->prescription_item_id => [
+                'dispensed_quantity' => (float) $row->dispensed_quantity,
+                'external_quantity' => (float) $row->external_quantity,
+                'covered_quantity' => round(
+                    (float) $row->dispensed_quantity + (float) $row->external_quantity,
+                    3,
+                ),
+                'latest_dispensed_at' => $row->latest_dispensed_at !== null
+                    ? Carbon::parse($row->latest_dispensed_at)
+                    : null,
+                'external_pharmacy' => (bool) $row->external_pharmacy,
+            ],
+        ]);
     }
 }

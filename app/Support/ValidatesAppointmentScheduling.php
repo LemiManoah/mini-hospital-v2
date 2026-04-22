@@ -199,7 +199,7 @@ final readonly class ValidatesAppointmentScheduling
         });
 
         if ($blockedException instanceof DoctorScheduleException) {
-            $typeLabel = $blockedException->type?->label() ?? 'schedule exception';
+            $typeLabel = $blockedException->type->label();
             $reasonSuffix = $blockedException->reason !== null && $blockedException->reason !== ''
                 ? sprintf(' Reason: %s.', $blockedException->reason)
                 : '';
