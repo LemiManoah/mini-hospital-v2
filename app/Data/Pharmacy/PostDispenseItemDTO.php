@@ -28,7 +28,7 @@ final readonly class PostDispenseItemDTO
         return new self(
             dispensingRecordItemId: $payload['dispensing_record_item_id'],
             allocations: array_map(
-                static fn (array $allocation): PostDispenseAllocationDTO => PostDispenseAllocationDTO::fromPayload($allocation),
+                PostDispenseAllocationDTO::fromPayload(...),
                 $payload['allocations'] ?? [],
             ),
         );

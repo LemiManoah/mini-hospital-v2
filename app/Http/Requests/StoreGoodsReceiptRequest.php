@@ -179,7 +179,11 @@ final class StoreGoodsReceiptRequest extends FormRequest
 
                     $purchaseOrderItemId = $item['purchase_order_item_id'] ?? null;
                     $inventoryItemId = $item['inventory_item_id'] ?? null;
-                    if (! is_string($purchaseOrderItemId) || $purchaseOrderItemId === '') {
+                    if (! is_string($purchaseOrderItemId)) {
+                        continue;
+                    }
+
+                    if ($purchaseOrderItemId === '') {
                         continue;
                     }
 

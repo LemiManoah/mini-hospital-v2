@@ -104,8 +104,11 @@ final class StoreConsultationPrescriptionRequest extends FormRequest
             }
 
             $inventoryItemId = $item['inventory_item_id'] ?? null;
+            if (! is_string($inventoryItemId)) {
+                continue;
+            }
 
-            if (! is_string($inventoryItemId) || $inventoryItemId === '') {
+            if ($inventoryItemId === '') {
                 continue;
             }
 

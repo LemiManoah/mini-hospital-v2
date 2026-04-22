@@ -69,7 +69,7 @@ final readonly class CreateGoodsReceiptDTO
             supplierInvoiceNumber: self::nullableString($validated['supplier_invoice_number'] ?? null),
             notes: self::nullableString($validated['notes'] ?? null),
             items: array_map(
-                static fn (array $item): CreateGoodsReceiptItemDTO => CreateGoodsReceiptItemDTO::fromPayload($item),
+                CreateGoodsReceiptItemDTO::fromPayload(...),
                 $validated['items'],
             ),
             allowedLocationTypes: array_values($allowedLocationTypes),

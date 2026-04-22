@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Data\Pharmacy\DispensePrescriptionDTO;
+use App\Data\Pharmacy\DispensePrescriptionItemDTO;
 use App\Data\Pharmacy\PostDispenseDTO;
 use App\Data\Pharmacy\PostDispenseItemDTO;
 use App\Models\DispensingRecord;
@@ -24,9 +25,9 @@ final readonly class DispensePrescription
         return DB::transaction(function () use ($prescription, $data): DispensingRecord {
             $record = $this->createDispensingRecord->handle($prescription, $data->toCreateDispensingRecordDTO());
 
-            /** @var array<string, \App\Data\Pharmacy\DispensePrescriptionItemDTO> $sourceItemsByPrescriptionItem */
+            /** @var array<string, DispensePrescriptionItemDTO> $sourceItemsByPrescriptionItem */
             $sourceItemsByPrescriptionItem = collect($data->items)
-                ->mapWithKeys(static fn (\App\Data\Pharmacy\DispensePrescriptionItemDTO $item): array => [
+                ->mapWithKeys(static fn (DispensePrescriptionItemDTO $item): array => [
                     $item->prescriptionItemId => $item,
                 ]);
 

@@ -101,7 +101,7 @@ final readonly class DispensePrescriptionDTO
             dispensedAt: $validated['dispensed_at'],
             notes: self::nullableString($validated['notes'] ?? null),
             items: array_map(
-                static fn (array $item): DispensePrescriptionItemDTO => DispensePrescriptionItemDTO::fromPayload($item),
+                DispensePrescriptionItemDTO::fromPayload(...),
                 $validated['items'],
             ),
         );

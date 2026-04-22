@@ -43,7 +43,7 @@ final readonly class DispensePrescriptionItemDTO
             notes: self::nullableString($payload['notes'] ?? null),
             substitutionInventoryItemId: self::nullableString($payload['substitution_inventory_item_id'] ?? null),
             allocations: array_map(
-                static fn (array $allocation): PostDispenseAllocationDTO => PostDispenseAllocationDTO::fromPayload($allocation),
+                PostDispenseAllocationDTO::fromPayload(...),
                 $payload['allocations'] ?? [],
             ),
         );

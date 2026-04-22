@@ -279,12 +279,10 @@ final readonly class DispensingController implements HasMiddleware
             ->summarizeByLocation($branchId)
             ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $locationIds, true))
             ->groupBy('inventory_item_id')
-            ->map(static function (Collection $rows): float {
-                return $rows->reduce(
-                    static fn (float $carry, array $row): float => $carry + (float) $row['quantity'],
-                    0.0,
-                );
-            });
+            ->map(static fn (Collection $rows): float => $rows->reduce(
+                static fn (float $carry, array $row): float => $carry + $row['quantity'],
+                0.0,
+            ));
 
         return $balances;
     }

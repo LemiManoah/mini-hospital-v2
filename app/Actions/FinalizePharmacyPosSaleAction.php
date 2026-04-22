@@ -188,7 +188,7 @@ final readonly class FinalizePharmacyPosSaleAction
                     'inventory_item_id' => $balance['inventory_item_id'],
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],
-                    'quantity' => (float) $balance['quantity'],
+                    'quantity' => $balance['quantity'],
                     'batch' => $batch,
                 ];
             })
@@ -218,13 +218,13 @@ final readonly class FinalizePharmacyPosSaleAction
         $candidates = $availableBatches
             ->filter(
                 static fn (array $batch): bool => $batch['inventory_item_id'] === $saleItem->inventory_item_id
-                    && (float) $availableQuantities->get((string) $batch['inventory_batch_id'], 0.0) > 0
+                    && (float) $availableQuantities->get($batch['inventory_batch_id'], 0.0) > 0
             )
             ->sortBy(
                 static fn (array $batch): string => sprintf(
                     '%s|%s',
-                    (string) ($batch['expiry_date'] ?? '9999-12-31'),
-                    (string) ($batch['batch_number'] ?? 'ZZZ'),
+                    $batch['expiry_date'] ?? '9999-12-31',
+                    $batch['batch_number'] ?? 'ZZZ',
                 )
             )
             ->values();

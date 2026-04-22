@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 it('normalizes nullable receipt strings and keeps only positive receipt items', function (): void {
     $request = static fn (array $validated): FormRequest => new class($validated) extends FormRequest
     {
-        public function __construct(private array $validatedInput)
+        public function __construct(private readonly array $validatedInput)
         {
             parent::__construct();
         }

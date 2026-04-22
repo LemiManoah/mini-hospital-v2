@@ -17,6 +17,7 @@ use App\Support\PrescriptionQueueQuery;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -53,7 +54,7 @@ final readonly class PharmacyPrescriptionController implements HasMiddleware
         $visit = $record->visit;
         $patient = $visit?->patient;
 
-        /** @var Collection<string, array{dispensed_quantity: float, external_quantity: float, covered_quantity: float, latest_dispensed_at: \Illuminate\Support\Carbon|null, external_pharmacy: bool}> $progress */
+        /** @var Collection<string, array{dispensed_quantity: float, external_quantity: float, covered_quantity: float, latest_dispensed_at: Carbon|null, external_pharmacy: bool}> $progress */
         $serializedItems = $record->items
             ->map(fn (PrescriptionItem $item): array => $this->serializePrescriptionItem($item, $stockBalances, $progress))
             ->values()
@@ -151,19 +152,17 @@ final readonly class PharmacyPrescriptionController implements HasMiddleware
             ->summarizeByLocation($branchId)
             ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $locationIds, true))
             ->groupBy('inventory_item_id')
-            ->map(static function (Collection $rows): float {
-                return $rows->reduce(
-                    static fn (float $carry, array $row): float => $carry + (float) $row['quantity'],
-                    0.0,
-                );
-            });
+            ->map(static fn (Collection $rows): float => $rows->reduce(
+                static fn (float $carry, array $row): float => $carry + $row['quantity'],
+                0.0,
+            ));
 
         return $balances;
     }
 
     /**
      * @param  Collection<string, float>  $stockBalances
-     * @param  Collection<string, array{dispensed_quantity: float, external_quantity: float, covered_quantity: float, latest_dispensed_at: \Illuminate\Support\Carbon|null, external_pharmacy: bool}>  $progress
+     * @param  Collection<string, array{dispensed_quantity: float, external_quantity: float, covered_quantity: float, latest_dispensed_at: Carbon|null, external_pharmacy: bool}>  $progress
      * @return array<string, mixed>
      */
     private function serializePrescriptionItem(

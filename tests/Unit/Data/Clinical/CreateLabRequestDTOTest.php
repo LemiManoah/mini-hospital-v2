@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 it('normalizes create lab request input into a typed dto', function (): void {
     $request = static fn (array $validated): FormRequest => new class($validated) extends FormRequest
     {
-        public function __construct(private array $validatedInput)
+        public function __construct(private readonly array $validatedInput)
         {
             parent::__construct();
         }

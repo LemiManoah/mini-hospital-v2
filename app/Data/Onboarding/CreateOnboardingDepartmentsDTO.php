@@ -38,7 +38,7 @@ final readonly class CreateOnboardingDepartmentsDTO
 
         return new self(
             departments: array_map(
-                static fn (array $department): CreateOnboardingDepartmentDTO => CreateOnboardingDepartmentDTO::fromPayload($department),
+                CreateOnboardingDepartmentDTO::fromPayload(...),
                 $validated['departments'],
             ),
         );

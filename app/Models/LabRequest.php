@@ -8,6 +8,7 @@ use App\Enums\LabBillingStatus;
 use App\Enums\LabRequestStatus;
 use App\Enums\Priority;
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,7 +35,7 @@ use Illuminate\Support\Carbon;
  * @property-read Consultation|null $consultation
  * @property-read PatientVisit|null $visit
  * @property-read Staff|null $requestedBy
- * @property-read \Illuminate\Database\Eloquent\Collection<int, LabRequestItem> $items
+ * @property-read Collection<int, LabRequestItem> $items
  */
 final class LabRequest extends Model
 {

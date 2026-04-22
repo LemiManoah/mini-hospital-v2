@@ -204,8 +204,11 @@ final class PostDispenseRequest extends FormRequest
             }
 
             $dispensingRecordItemId = $item['dispensing_record_item_id'] ?? null;
+            if (! is_string($dispensingRecordItemId)) {
+                continue;
+            }
 
-            if (! is_string($dispensingRecordItemId) || $dispensingRecordItemId === '') {
+            if ($dispensingRecordItemId === '') {
                 continue;
             }
 
@@ -220,8 +223,15 @@ final class PostDispenseRequest extends FormRequest
 
                     $inventoryBatchId = $allocation['inventory_batch_id'] ?? null;
                     $quantity = $allocation['quantity'] ?? null;
+                    if (! is_string($inventoryBatchId)) {
+                        continue;
+                    }
 
-                    if (! is_string($inventoryBatchId) || $inventoryBatchId === '' || ! is_numeric($quantity)) {
+                    if ($inventoryBatchId === '') {
+                        continue;
+                    }
+
+                    if (! is_numeric($quantity)) {
                         continue;
                     }
 

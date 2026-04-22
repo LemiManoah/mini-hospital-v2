@@ -68,7 +68,7 @@ final readonly class CreatePrescriptionDTO
             isDischargeMedication: $validated['is_discharge_medication'] ?? false,
             isLongTerm: $validated['is_long_term'] ?? false,
             items: array_map(
-                static fn (array $item): CreatePrescriptionItemDTO => CreatePrescriptionItemDTO::fromPayload($item),
+                CreatePrescriptionItemDTO::fromPayload(...),
                 $validated['items'],
             ),
         );

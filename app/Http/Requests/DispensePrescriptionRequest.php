@@ -396,8 +396,11 @@ final class DispensePrescriptionRequest extends FormRequest
             }
 
             $prescriptionItemId = $item['prescription_item_id'] ?? null;
+            if (! is_string($prescriptionItemId)) {
+                continue;
+            }
 
-            if (! is_string($prescriptionItemId) || $prescriptionItemId === '') {
+            if ($prescriptionItemId === '') {
                 continue;
             }
 
@@ -412,8 +415,15 @@ final class DispensePrescriptionRequest extends FormRequest
 
                     $inventoryBatchId = $allocation['inventory_batch_id'] ?? null;
                     $quantity = $allocation['quantity'] ?? null;
+                    if (! is_string($inventoryBatchId)) {
+                        continue;
+                    }
 
-                    if (! is_string($inventoryBatchId) || $inventoryBatchId === '' || ! is_numeric($quantity)) {
+                    if ($inventoryBatchId === '') {
+                        continue;
+                    }
+
+                    if (! is_numeric($quantity)) {
                         continue;
                     }
 

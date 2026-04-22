@@ -43,7 +43,7 @@ final readonly class UpdatePharmacyPosCartItemAction
                 ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId
                     && $balance['inventory_item_id'] === $inventoryItemId)
                 ->reduce(
-                    static fn (float $carry, array $balance): float => $carry + (float) $balance['quantity'],
+                    static fn (float $carry, array $balance): float => $carry + $balance['quantity'],
                     0.0,
                 );
 

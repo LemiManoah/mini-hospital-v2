@@ -7,7 +7,9 @@ namespace App\Models;
 use App\Enums\PharmacyPosCartStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,7 +34,7 @@ use Illuminate\Support\Carbon;
  * @property-read Carbon $updated_at
  * @property-read InventoryLocation|null $inventoryLocation
  * @property-read User|null $user
- * @property-read \Illuminate\Database\Eloquent\Collection<int, PharmacyPosCartItem> $items
+ * @property-read Collection<int, PharmacyPosCartItem> $items
  * @property-read PharmacyPosSale|null $sale
  */
 final class PharmacyPosCart extends Model
@@ -40,7 +42,7 @@ final class PharmacyPosCart extends Model
     use BelongsToBranch;
     use BelongsToTenant;
 
-    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<self>> */
+    /** @use HasFactory<Factory<self>> */
     use HasFactory;
 
     use HasUuids;

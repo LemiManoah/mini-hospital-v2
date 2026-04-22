@@ -10,6 +10,7 @@ use App\Traits\BelongsToTenant;
 use Database\Factories\StaffFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -39,8 +40,8 @@ use Illuminate\Support\Carbon;
  * @property-read StaffPosition|null $position
  * @property-read Address|null $address
  * @property-read User|null $user
- * @property-read \Illuminate\Database\Eloquent\Collection<int, FacilityBranch> $branches
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Department> $departments
+ * @property-read Collection<int, FacilityBranch> $branches
+ * @property-read Collection<int, Department> $departments
  */
 final class Staff extends Model
 {

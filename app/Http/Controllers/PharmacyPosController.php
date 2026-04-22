@@ -148,12 +148,10 @@ final readonly class PharmacyPosController implements HasMiddleware
             ->summarizeByLocation($branchId)
             ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId)
             ->groupBy('inventory_item_id')
-            ->map(static function (Collection $rows): float {
-                return $rows->reduce(
-                    static fn (float $carry, array $row): float => $carry + (float) $row['quantity'],
-                    0.0,
-                );
-            });
+            ->map(static fn (Collection $rows): float => $rows->reduce(
+                static fn (float $carry, array $row): float => $carry + $row['quantity'],
+                0.0,
+            ));
 
         return $balances;
     }
@@ -173,12 +171,10 @@ final readonly class PharmacyPosController implements HasMiddleware
             ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId
                 && $balance['quantity'] > 0)
             ->groupBy('inventory_item_id')
-            ->map(static function (Collection $rows): float {
-                return $rows->reduce(
-                    static fn (float $carry, array $row): float => $carry + (float) $row['quantity'],
-                    0.0,
-                );
-            });
+            ->map(static fn (Collection $rows): float => $rows->reduce(
+                static fn (float $carry, array $row): float => $carry + $row['quantity'],
+                0.0,
+            ));
 
         if ($balances->isEmpty()) {
             return [];

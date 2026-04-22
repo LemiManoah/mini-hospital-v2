@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -44,13 +45,13 @@ use Illuminate\Support\Carbon;
  * @property-read VisitPayer|null $payer
  * @property-read TriageRecord|null $triage
  * @property-read Consultation|null $consultation
- * @property-read \Illuminate\Database\Eloquent\Collection<int, LabRequest> $labRequests
- * @property-read \Illuminate\Database\Eloquent\Collection<int, ImagingRequest> $imagingRequests
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Prescription> $prescriptions
- * @property-read \Illuminate\Database\Eloquent\Collection<int, FacilityServiceOrder> $facilityServiceOrders
+ * @property-read Collection<int, LabRequest> $labRequests
+ * @property-read Collection<int, ImagingRequest> $imagingRequests
+ * @property-read Collection<int, Prescription> $prescriptions
+ * @property-read Collection<int, FacilityServiceOrder> $facilityServiceOrders
  * @property-read VisitBilling|null $billing
- * @property-read \Illuminate\Database\Eloquent\Collection<int, VisitCharge> $charges
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Payment> $payments
+ * @property-read Collection<int, VisitCharge> $charges
+ * @property-read Collection<int, Payment> $payments
  */
 final class PatientVisit extends Model
 {

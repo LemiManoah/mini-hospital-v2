@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,11 +25,11 @@ use Illuminate\Support\Carbon;
  * @property-read Carbon $updated_at
  * @property-read PharmacyPosCart|null $cart
  * @property-read InventoryItem|null $inventoryItem
- * @property-read \Illuminate\Database\Eloquent\Collection<int, PharmacyPosCartItemAllocation> $allocations
+ * @property-read Collection<int, PharmacyPosCartItemAllocation> $allocations
  */
 final class PharmacyPosCartItem extends Model
 {
-    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<self>> */
+    /** @use HasFactory<Factory<self>> */
     use HasFactory;
 
     use HasUuids;

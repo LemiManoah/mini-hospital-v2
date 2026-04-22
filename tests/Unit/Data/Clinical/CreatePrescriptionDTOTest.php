@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 it('normalizes nullable prescription strings while preserving typed items', function (): void {
     $request = static fn (array $validated): FormRequest => new class($validated) extends FormRequest
     {
-        public function __construct(private array $validatedInput)
+        public function __construct(private readonly array $validatedInput)
         {
             parent::__construct();
         }

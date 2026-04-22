@@ -9,7 +9,7 @@ function createOnboardingDepartmentsRequest(array $validated): FormRequest
 {
     return new class($validated) extends FormRequest
     {
-        public function __construct(private array $validatedInput)
+        public function __construct(private readonly array $validatedInput)
         {
             parent::__construct();
         }

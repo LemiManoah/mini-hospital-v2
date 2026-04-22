@@ -58,7 +58,7 @@ final readonly class PostDispenseDTO
     {
         return new self(
             items: array_map(
-                static fn (array $item): PostDispenseItemDTO => PostDispenseItemDTO::fromPayload($item),
+                PostDispenseItemDTO::fromPayload(...),
                 $validated['items'] ?? [],
             ),
         );
