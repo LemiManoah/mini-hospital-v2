@@ -5,15 +5,11 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class LabTestResultParameter extends Model
 {
-    /** @use HasFactory<\Database\Factories\LabTestResultParameterFactory> */
-    use HasFactory;
-
     use HasUuids;
 
     protected $casts = [
@@ -24,6 +20,9 @@ final class LabTestResultParameter extends Model
         'age_max' => 'integer',
     ];
 
+    /**
+     * @return BelongsTo<LabTestCatalog, $this>
+     */
     public function labTest(): BelongsTo
     {
         return $this->belongsTo(LabTestCatalog::class, 'lab_test_catalog_id');

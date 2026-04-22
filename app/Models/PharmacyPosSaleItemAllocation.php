@@ -17,11 +17,17 @@ final class PharmacyPosSaleItemAllocation extends Model
 
     use HasUuids;
 
+    /**
+     * @return BelongsTo<PharmacyPosSaleItem, $this>
+     */
     public function saleItem(): BelongsTo
     {
         return $this->belongsTo(PharmacyPosSaleItem::class, 'pharmacy_pos_sale_item_id');
     }
 
+    /**
+     * @return BelongsTo<InventoryBatch, $this>
+     */
     public function inventoryBatch(): BelongsTo
     {
         return $this->belongsTo(InventoryBatch::class);

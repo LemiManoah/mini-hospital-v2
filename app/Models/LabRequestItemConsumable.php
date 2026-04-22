@@ -6,17 +6,12 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class LabRequestItemConsumable extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\LabRequestItemConsumableFactory> */
-    use HasFactory;
-
     use HasUuids;
 
     protected $casts = [
@@ -30,11 +25,17 @@ final class LabRequestItemConsumable extends Model
         'recorded_by' => 'string',
     ];
 
+    /**
+     * @return BelongsTo<LabRequestItem, $this>
+     */
     public function requestItem(): BelongsTo
     {
         return $this->belongsTo(LabRequestItem::class, 'lab_request_item_id');
     }
 
+    /**
+     * @return BelongsTo<Staff, $this>
+     */
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'recorded_by');

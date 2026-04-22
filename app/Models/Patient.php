@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,10 +15,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class Patient extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\PatientFactory> */
-    use HasFactory;
-
     use HasUuids;
     use SoftDeletes;
 
@@ -35,31 +30,49 @@ final class Patient extends Model
         'date_of_birth' => 'date',
     ];
 
+    /**
+     * @return BelongsTo<Tenant, $this>
+     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
+    /**
+     * @return BelongsTo<Country, $this>
+     */
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
     }
 
+    /**
+     * @return BelongsTo<Address, $this>
+     */
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class);
     }
 
+    /**
+     * @return HasMany<PatientAllergy, $this>
+     */
     public function allergies(): HasMany
     {
         return $this->hasMany(PatientAllergy::class);
     }
 
+    /**
+     * @return HasMany<PatientAllergy, $this>
+     */
     public function activeAllergies(): HasMany
     {
         return $this->hasMany(PatientAllergy::class)->where('is_active', true);
     }
 
+    /**
+     * @return HasMany<PatientVisit, $this>
+     */
     public function visits(): HasMany
     {
         return $this->hasMany(PatientVisit::class);
@@ -77,12 +90,11 @@ final class Patient extends Model
             return null;
         }
 
-        $units = match ($this->age_units) {
-            'year' => 'year(s)',
-            'month' => 'month(s)',
-            'day' => 'day(s)',
-            default => $this->age_units,
-        };
+        $units = $this->age_units === 'year'
+            ? 'year(s)'
+            : ($this->age_units === 'month'
+                ? 'month(s)'
+                : 'day(s)');
 
         return sprintf('%s %s', $this->age, $units);
     }
@@ -102,7 +114,9 @@ final class Patient extends Model
             array_key_exists('age', $this->attributes)
             && $this->attributes['age'] !== null
         ) {
-            return (int) $this->attributes['age'];
+            $age = $this->attributes['age'];
+
+            return is_numeric($age) ? (int) $age : null;
         }
 
         $dateOfBirth = $this->resolvedDateOfBirth();
@@ -141,7 +155,9 @@ final class Patient extends Model
             && array_key_exists('age_units', $this->attributes)
             && $this->attributes['age_units'] !== null
         ) {
-            return (string) $this->attributes['age_units'];
+            $ageUnits = $this->attributes['age_units'];
+
+            return is_string($ageUnits) ? $ageUnits : null;
         }
 
         $dateOfBirth = $this->resolvedDateOfBirth();
@@ -184,6 +200,10 @@ final class Patient extends Model
             return null;
         }
 
-        return $this->asDate($value);
+        if (is_string($value)) {
+            return $this->asDate($value);
+        }
+
+        return $value instanceof CarbonInterface ? $value : null;
     }
 }

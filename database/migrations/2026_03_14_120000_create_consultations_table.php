@@ -15,7 +15,7 @@ return new class extends Migration
                 $table->uuid('id')->primary();
                 $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
                 $table->foreignUuid('facility_branch_id')->nullable()->constrained('facility_branches')->nullOnDelete();
-                $table->foreignUuid('visit_id')->constrained('patient_visits')->onDelete('cascade')->unique();
+                $table->foreignUuid('visit_id')->unique()->constrained('patient_visits')->onDelete('cascade');
                 $table->foreignUuid('doctor_id')->constrained('staff')->onDelete('restrict');
                 $table->timestamp('started_at')->useCurrent();
                 $table->timestamp('completed_at')->nullable();

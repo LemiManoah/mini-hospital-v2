@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\Address;
 use App\Models\Country;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
 final class AddressSeeder extends Seeder
 {
@@ -15,20 +16,14 @@ final class AddressSeeder extends Seeder
      */
     public function run(): void
     {
-        $uganda = Country::query()->where('country_code', 'UG')->first();
-
-        if (! $uganda) {
-            $this->call(CountrySeeder::class);
-            $uganda = Country::query()->where('country_code', 'UG')->first();
-        }
-
-        $kenya = Country::query()->where('country_code', 'KE')->first();
-        $tanzania = Country::query()->where('country_code', 'TZ')->first();
-        $rwanda = Country::query()->where('country_code', 'RW')->first();
-        $south_africa = Country::query()->where('country_code', 'ZA')->first();
-        $usa = Country::query()->where('country_code', 'US')->first();
-        $uk = Country::query()->where('country_code', 'GB')->first();
-        $south_sudan = Country::query()->where('country_code', 'SS')->first();
+        $uganda = $this->requireCountry('UG');
+        $kenya = $this->requireCountry('KE');
+        $tanzania = $this->requireCountry('TZ');
+        $rwanda = $this->requireCountry('RW');
+        $southAfrica = $this->requireCountry('ZA');
+        $usa = $this->requireCountry('US');
+        $uk = $this->requireCountry('GB');
+        $southSudan = $this->requireCountry('SS');
 
         $addresses = [
             // Uganda
@@ -54,69 +49,37 @@ final class AddressSeeder extends Seeder
             ['city' => 'Moroto Town', 'district' => 'Moroto', 'country_id' => $uganda->id],
         ];
 
-        if ($kenya) {
-            $addresses = array_merge($addresses, [
-                ['city' => 'Nairobi', 'district' => 'Nairobi', 'country_id' => $kenya->id],
-                ['city' => 'Mombasa', 'district' => 'Mombasa', 'country_id' => $kenya->id],
-                ['city' => 'Kisumu', 'district' => 'Kisumu', 'country_id' => $kenya->id],
-                ['city' => 'Nakuru', 'district' => 'Nakuru', 'country_id' => $kenya->id],
-                ['city' => 'Eldoret', 'district' => 'Uasin Gishu', 'country_id' => $kenya->id],
-            ]);
-        }
-
-        if ($tanzania) {
-            $addresses = array_merge($addresses, [
-                ['city' => 'Dar es Salaam', 'district' => 'Dar es Salaam', 'country_id' => $tanzania->id],
-                ['city' => 'Dodoma', 'district' => 'Dodoma', 'country_id' => $tanzania->id],
-                ['city' => 'Arusha', 'district' => 'Arusha', 'country_id' => $tanzania->id],
-                ['city' => 'Mwanza', 'district' => 'Mwanza', 'country_id' => $tanzania->id],
-                ['city' => 'Zanzibar City', 'district' => 'Zanzibar Urban/West', 'country_id' => $tanzania->id],
-            ]);
-        }
-
-        if ($rwanda) {
-            $addresses = array_merge($addresses, [
-                ['city' => 'Kigali', 'district' => 'Kigali', 'country_id' => $rwanda->id],
-                ['city' => 'Rubavu', 'district' => 'Rubavu', 'country_id' => $rwanda->id],
-                ['city' => 'Huye', 'district' => 'Huye', 'country_id' => $rwanda->id],
-            ]);
-        }
-
-        if ($south_africa) {
-            $addresses = array_merge($addresses, [
-                ['city' => 'Johannesburg', 'district' => 'Gauteng', 'country_id' => $south_africa->id],
-                ['city' => 'Cape Town', 'district' => 'Western Cape', 'country_id' => $south_africa->id],
-                ['city' => 'Durban', 'district' => 'KwaZulu-Natal', 'country_id' => $south_africa->id],
-                ['city' => 'Pretoria', 'district' => 'Gauteng', 'country_id' => $south_africa->id],
-            ]);
-        }
-
-        if ($usa) {
-            $addresses = array_merge($addresses, [
-                ['city' => 'New York', 'district' => 'New York', 'country_id' => $usa->id],
-                ['city' => 'Los Angeles', 'district' => 'California', 'country_id' => $usa->id],
-                ['city' => 'Chicago', 'district' => 'Illinois', 'country_id' => $usa->id],
-                ['city' => 'Houston', 'district' => 'Texas', 'country_id' => $usa->id],
-            ]);
-        }
-
-        if ($uk) {
-            $addresses = array_merge($addresses, [
-                ['city' => 'London', 'district' => 'Greater London', 'country_id' => $uk->id],
-                ['city' => 'Manchester', 'district' => 'Greater Manchester', 'country_id' => $uk->id],
-                ['city' => 'Birmingham', 'district' => 'West Midlands', 'country_id' => $uk->id],
-                ['city' => 'Edinburgh', 'district' => 'City of Edinburgh', 'country_id' => $uk->id],
-            ]);
-        }
-
-        if ($south_sudan) {
-            $addresses = array_merge($addresses, [
-                ['city' => 'Malakia', 'district' => 'Juba', 'country_id' => $south_sudan->id],
-                ['city' => 'Konyo-Konyo', 'district' => 'Juba', 'country_id' => $south_sudan->id],
-                ['city' => 'Gudele', 'district' => 'Juba', 'country_id' => $south_sudan->id],
-                ['city' => 'Bor Town', 'district' => 'Bor', 'country_id' => $south_sudan->id],
-            ]);
-        }
+        $addresses = array_merge($addresses, [
+            ['city' => 'Nairobi', 'district' => 'Nairobi', 'country_id' => $kenya->id],
+            ['city' => 'Mombasa', 'district' => 'Mombasa', 'country_id' => $kenya->id],
+            ['city' => 'Kisumu', 'district' => 'Kisumu', 'country_id' => $kenya->id],
+            ['city' => 'Nakuru', 'district' => 'Nakuru', 'country_id' => $kenya->id],
+            ['city' => 'Eldoret', 'district' => 'Uasin Gishu', 'country_id' => $kenya->id],
+            ['city' => 'Dar es Salaam', 'district' => 'Dar es Salaam', 'country_id' => $tanzania->id],
+            ['city' => 'Dodoma', 'district' => 'Dodoma', 'country_id' => $tanzania->id],
+            ['city' => 'Arusha', 'district' => 'Arusha', 'country_id' => $tanzania->id],
+            ['city' => 'Mwanza', 'district' => 'Mwanza', 'country_id' => $tanzania->id],
+            ['city' => 'Zanzibar City', 'district' => 'Zanzibar Urban/West', 'country_id' => $tanzania->id],
+            ['city' => 'Kigali', 'district' => 'Kigali', 'country_id' => $rwanda->id],
+            ['city' => 'Rubavu', 'district' => 'Rubavu', 'country_id' => $rwanda->id],
+            ['city' => 'Huye', 'district' => 'Huye', 'country_id' => $rwanda->id],
+            ['city' => 'Johannesburg', 'district' => 'Gauteng', 'country_id' => $southAfrica->id],
+            ['city' => 'Cape Town', 'district' => 'Western Cape', 'country_id' => $southAfrica->id],
+            ['city' => 'Durban', 'district' => 'KwaZulu-Natal', 'country_id' => $southAfrica->id],
+            ['city' => 'Pretoria', 'district' => 'Gauteng', 'country_id' => $southAfrica->id],
+            ['city' => 'New York', 'district' => 'New York', 'country_id' => $usa->id],
+            ['city' => 'Los Angeles', 'district' => 'California', 'country_id' => $usa->id],
+            ['city' => 'Chicago', 'district' => 'Illinois', 'country_id' => $usa->id],
+            ['city' => 'Houston', 'district' => 'Texas', 'country_id' => $usa->id],
+            ['city' => 'London', 'district' => 'Greater London', 'country_id' => $uk->id],
+            ['city' => 'Manchester', 'district' => 'Greater Manchester', 'country_id' => $uk->id],
+            ['city' => 'Birmingham', 'district' => 'West Midlands', 'country_id' => $uk->id],
+            ['city' => 'Edinburgh', 'district' => 'City of Edinburgh', 'country_id' => $uk->id],
+            ['city' => 'Malakia', 'district' => 'Juba', 'country_id' => $southSudan->id],
+            ['city' => 'Konyo-Konyo', 'district' => 'Juba', 'country_id' => $southSudan->id],
+            ['city' => 'Gudele', 'district' => 'Juba', 'country_id' => $southSudan->id],
+            ['city' => 'Bor Town', 'district' => 'Bor', 'country_id' => $southSudan->id],
+        ]);
 
         foreach ($addresses as $address) {
             Address::query()->updateOrCreate(
@@ -124,5 +87,21 @@ final class AddressSeeder extends Seeder
                 $address
             );
         }
+    }
+
+    private function requireCountry(string $countryCode): Country
+    {
+        $country = Country::query()->where('country_code', $countryCode)->first();
+
+        if (! $country instanceof Country) {
+            $this->call(CountrySeeder::class);
+            $country = Country::query()->where('country_code', $countryCode)->first();
+        }
+
+        if (! $country instanceof Country) {
+            throw new RuntimeException(sprintf('Missing country [%s] for address seeding.', $countryCode));
+        }
+
+        return $country;
     }
 }

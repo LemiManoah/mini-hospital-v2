@@ -20,9 +20,21 @@ final class ClinicSeeder extends Seeder
         }
 
         $branch = FacilityBranch::query()->where('tenant_id', $tenant->id)->first();
-        $departments = Department::query()->where('tenant_id', $tenant->id)->take(3)->get();
+        $departments = Department::query()->where('tenant_id', $tenant->id)->take(3)->get()->values();
 
-        if (! $branch || $departments->isEmpty()) {
+        if (! $branch instanceof FacilityBranch || $departments->count() < 3) {
+            return;
+        }
+
+        $generalDepartment = $departments->get(0);
+        $dentalDepartment = $departments->get(1);
+        $eyeDepartment = $departments->get(2);
+
+        if (
+            ! $generalDepartment instanceof Department
+            || ! $dentalDepartment instanceof Department
+            || ! $eyeDepartment instanceof Department
+        ) {
             return;
         }
 
@@ -30,21 +42,21 @@ final class ClinicSeeder extends Seeder
             [
                 'clinic_name' => 'General OPD',
                 'clinic_code' => 'OPD-01',
-                'department_id' => $departments[0]->id,
+                'department_id' => $generalDepartment->id,
                 'location' => 'Main Wing, Ground Floor',
                 'phone' => '+1234567890',
             ],
             [
                 'clinic_name' => 'Dental Clinic',
                 'clinic_code' => 'DENT-01',
-                'department_id' => $departments[1]->id,
+                'department_id' => $dentalDepartment->id,
                 'location' => 'Block B, 1st Floor',
                 'phone' => '+1234567891',
             ],
             [
                 'clinic_name' => 'Eye Clinic',
                 'clinic_code' => 'EYE-01',
-                'department_id' => $departments[2]->id,
+                'department_id' => $eyeDepartment->id,
                 'location' => 'Block C, 2nd Floor',
                 'phone' => '+1234567892',
             ],

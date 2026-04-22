@@ -10,6 +10,6 @@ final class DeletePatient
 {
     public function handle(Patient $patient): bool
     {
-        return $patient->delete();
+        return $patient->delete() === true;
     }
 }

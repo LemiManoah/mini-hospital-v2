@@ -6,17 +6,12 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class LabResultType extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\LabResultTypeFactory> */
-    use HasFactory;
-
     use HasUuids;
 
     protected $table = 'result_types';
@@ -26,6 +21,9 @@ final class LabResultType extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * @return HasMany<LabTestCatalog, $this>
+     */
     public function labTests(): HasMany
     {
         return $this->hasMany(LabTestCatalog::class, 'result_type_id');

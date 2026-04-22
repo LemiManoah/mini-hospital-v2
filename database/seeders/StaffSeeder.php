@@ -12,7 +12,23 @@ use App\Models\Staff;
 use App\Models\StaffPosition;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
+/**
+ * @phpstan-type StaffSeedData array{
+ *   employee_number: string,
+ *   first_name: string,
+ *   last_name: string,
+ *   middle_name: string,
+ *   email: string,
+ *   phone: string,
+ *   department_name: string,
+ *   position_name: string,
+ *   type: StaffType,
+ *   license_number?: string,
+ *   specialty?: string
+ * }
+ */
 final class StaffSeeder extends Seeder
 {
     /**
@@ -35,12 +51,13 @@ final class StaffSeeder extends Seeder
         }
 
         // Get sample addresses
-        $addresses = Address::query()->inRandomOrder()->take(10)->get();
+        $addresses = Address::query()->inRandomOrder()->take(10)->get()->values();
 
         if ($addresses->isEmpty()) {
             return; // Addresses must be seeded first
         }
 
+        /** @var list<StaffSeedData> $staffData */
         $staffData = [
             [
                 'employee_number' => 'MED-001',
@@ -241,8 +258,12 @@ final class StaffSeeder extends Seeder
             }
 
             // Get address
-            $address = $addresses[$addressIndex % $addresses->count()];
+            $address = $addresses->get($addressIndex % $addresses->count());
             $addressIndex++;
+
+            if (! $address instanceof Address) {
+                throw new RuntimeException('StaffSeeder expected a valid address instance.');
+            }
 
             // Create staff
             $staff = Staff::query()->firstOrCreate(
@@ -251,8 +272,8 @@ final class StaffSeeder extends Seeder
                     'employee_number' => $data['employee_number'],
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
-                    'middle_name' => $data['middle_name'] ?? null,
-                    'phone' => $data['phone'] ?? null,
+                    'middle_name' => $data['middle_name'],
+                    'phone' => $data['phone'],
                     'address_id' => $address->id,
                     'staff_position_id' => $position->id,
                     'type' => $data['type'],

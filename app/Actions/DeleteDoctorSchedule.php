@@ -7,7 +7,6 @@ namespace App\Actions;
 use App\Models\Appointment;
 use App\Models\DoctorSchedule;
 use Carbon\CarbonImmutable;
-use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,36 +15,19 @@ final readonly class DeleteDoctorSchedule
 {
     public function handle(DoctorSchedule $schedule): void
     {
-        if (
-            ! $schedule->exists
-            || $schedule->doctor_id === null
-            || $schedule->clinic_id === null
-            || $schedule->day_of_week === null
-        ) {
+        if (! $schedule->exists) {
             throw ValidationException::withMessages([
                 'delete' => 'The selected schedule could not be loaded for deletion.',
             ]);
         }
 
-        $validFrom = $schedule->valid_from instanceof CarbonInterface
-            ? $schedule->valid_from->toDateString()
-            : ($schedule->valid_from !== null
-                ? CarbonImmutable::parse((string) $schedule->valid_from)->toDateString()
-                : null);
-
-        $validTo = $schedule->valid_to instanceof CarbonInterface
-            ? $schedule->valid_to->toDateString()
-            : ($schedule->valid_to !== null
-                ? CarbonImmutable::parse((string) $schedule->valid_to)->toDateString()
-                : null);
+        $validFrom = $schedule->valid_from->toDateString();
+        $validTo = $schedule->valid_to?->toDateString();
 
         $bookedAppointmentsExist = Appointment::query()
             ->where('doctor_id', $schedule->doctor_id)
             ->where('clinic_id', $schedule->clinic_id)
-            ->when(
-                $validFrom !== null,
-                fn (Builder $query): Builder => $query->whereDate('appointment_date', '>=', $validFrom),
-            )
+            ->whereDate('appointment_date', '>=', $validFrom)
             ->when(
                 $validTo !== null,
                 fn (Builder $query): Builder => $query->whereDate('appointment_date', '<=', $validTo),
@@ -56,9 +38,7 @@ final readonly class DeleteDoctorSchedule
                     CarbonImmutable::parse($appointment->appointment_date)->englishDayOfWeek,
                 );
 
-                $scheduleDay = is_string($schedule->day_of_week)
-                    ? $schedule->day_of_week
-                    : $schedule->day_of_week->value;
+                $scheduleDay = $schedule->day_of_week->value;
 
                 if ($appointmentDay !== $scheduleDay) {
                     return false;

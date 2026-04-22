@@ -16,7 +16,7 @@ final readonly class DeleteCurrency
                 return false;
             }
 
-            return $currency->delete();
+            return $currency->delete() === true;
         });
     }
 }

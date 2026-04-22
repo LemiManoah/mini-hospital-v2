@@ -11,6 +11,6 @@ final readonly class DeleteAllergen
 {
     public function handle(Allergen $allergen): bool
     {
-        return DB::transaction(fn (): bool => $allergen->delete());
+        return DB::transaction(fn (): bool => $allergen->delete() === true);
     }
 }

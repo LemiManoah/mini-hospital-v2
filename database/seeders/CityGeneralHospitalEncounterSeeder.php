@@ -27,6 +27,7 @@ use App\Models\LabRequestItem;
 use App\Models\LabResultEntry;
 use App\Models\LabResultValue;
 use App\Models\LabTestCatalog;
+use App\Models\LabTestResultParameter;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Payment;
@@ -34,11 +35,84 @@ use App\Models\Staff;
 use App\Models\Tenant;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
+use Carbon\CarbonInterface;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use RuntimeException;
 
+/**
+ * @phpstan-type ConsultationData array{
+ *   started_at: CarbonInterface,
+ *   completed_at: CarbonInterface|null,
+ *   chief_complaint: string,
+ *   history_of_present_illness: string,
+ *   objective_findings: string,
+ *   assessment: string,
+ *   plan: string,
+ *   primary_diagnosis: string,
+ *   primary_icd10_code: string,
+ *   outcome: ConsultationOutcome,
+ *   follow_up_instructions: string,
+ *   follow_up_days: int
+ * }
+ * @phpstan-type LabResultValueData array{
+ *   label: string,
+ *   value: float|int|string
+ * }
+ * @phpstan-type LabResultData array{
+ *   notes: string,
+ *   values: list<LabResultValueData>
+ * }
+ * @phpstan-type LabTestRequestData array{
+ *   test_code: string,
+ *   status: LabRequestItemStatus,
+ *   completed_at: CarbonInterface|null,
+ *   result: LabResultData|null
+ * }
+ * @phpstan-type LabRequestData array{
+ *   request_date: CarbonInterface,
+ *   clinical_notes: string,
+ *   priority: Priority,
+ *   status: LabRequestStatus,
+ *   billing_status: LabBillingStatus,
+ *   workflow_staff_email: string,
+ *   tests: list<LabTestRequestData>
+ * }
+ * @phpstan-type FacilityServiceOrderData array{
+ *   service_code: string,
+ *   status: FacilityServiceOrderStatus,
+ *   ordered_at: CarbonInterface,
+ *   completed_at: CarbonInterface|null,
+ *   performed_by_email: string
+ * }
+ * @phpstan-type PaymentData array{
+ *   receipt_number: string,
+ *   payment_date: CarbonInterface,
+ *   amount: int|float,
+ *   payment_method: string,
+ *   reference_number: string
+ * }
+ * @phpstan-type EncounterScenario array{
+ *   visit_number: string,
+ *   patient_number: string,
+ *   branch_code: string,
+ *   clinic_code: string,
+ *   doctor_email: string,
+ *   invoice_number: string,
+ *   visit_type: VisitType,
+ *   status: VisitStatus,
+ *   is_emergency: bool,
+ *   notes: string,
+ *   registered_at: CarbonInterface,
+ *   started_at: CarbonInterface|null,
+ *   completed_at: CarbonInterface|null,
+ *   consultation: ConsultationData|null,
+ *   lab_request: LabRequestData|null,
+ *   service_orders: list<FacilityServiceOrderData>,
+ *   payment: PaymentData|null
+ * }
+ */
 final class CityGeneralHospitalEncounterSeeder extends Seeder
 {
     use InteractsWithCityGeneralHospital;
@@ -52,11 +126,13 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             return;
         }
 
+        /** @var Collection<string, FacilityBranch> $branches */
         $branches = FacilityBranch::query()
             ->where('tenant_id', $tenant->id)
             ->get()
             ->keyBy('branch_code');
 
+        /** @var Collection<string, Patient> $patients */
         $patients = Patient::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('patient_number', [
@@ -69,6 +145,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             ->get()
             ->keyBy('patient_number');
 
+        /** @var Collection<string, Clinic> $clinics */
         $clinics = Clinic::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('clinic_code', [
@@ -80,6 +157,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             ->get()
             ->keyBy('clinic_code');
 
+        /** @var Collection<string, Staff> $staff */
         $staff = Staff::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('email', [
@@ -93,6 +171,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             ->get()
             ->keyBy('email');
 
+        /** @var Collection<string, LabTestCatalog> $tests */
         $tests = LabTestCatalog::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('test_code', [
@@ -104,6 +183,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             ->get()
             ->keyBy('test_code');
 
+        /** @var Collection<string, FacilityService> $services */
         $services = FacilityService::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('service_code', [
@@ -125,7 +205,10 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             return;
         }
 
-        foreach ($this->encounterBlueprints() as $scenario) {
+        /** @var list<EncounterScenario> $scenarios */
+        $scenarios = $this->encounterBlueprints();
+
+        foreach ($scenarios as $scenario) {
             $patient = $patients->get($scenario['patient_number']);
             $branch = $branches->get($scenario['branch_code']);
             $clinic = $clinics->get($scenario['clinic_code']);
@@ -269,6 +352,9 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         return $test;
     }
 
+    /**
+     * @param  ConsultationData|null  $consultationData
+     */
     private function syncConsultation(
         string $tenantId,
         PatientVisit $visit,
@@ -303,6 +389,10 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         );
     }
 
+    /**
+     * @param  Collection<string, LabTestCatalog>  $tests
+     * @param  LabRequestData  $requestData
+     */
     private function syncLabRequest(
         string $tenantId,
         PatientVisit $visit,
@@ -348,11 +438,11 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                     'price' => $test->base_price,
                     'is_external' => false,
                     'received_by' => $testData['status'] !== LabRequestItemStatus::PENDING ? $workflowStaff->id : null,
-                    'received_at' => $testData['status'] !== LabRequestItemStatus::PENDING ? $requestData['request_date']->copy()->addMinutes(20) : null,
+                    'received_at' => $testData['status'] !== LabRequestItemStatus::PENDING ? $requestData['request_date']->addMinutes(20) : null,
                     'result_entered_by' => $testData['result'] !== null ? $workflowStaff->id : null,
-                    'result_entered_at' => $testData['result'] !== null ? $testData['completed_at']?->copy()->subMinutes(20) : null,
+                    'result_entered_at' => $testData['result'] !== null ? $testData['completed_at']?->subMinutes(20) : null,
                     'reviewed_by' => $testData['result'] !== null ? $workflowStaff->id : null,
-                    'reviewed_at' => $testData['result'] !== null ? $testData['completed_at']?->copy()->subMinutes(10) : null,
+                    'reviewed_at' => $testData['result'] !== null ? $testData['completed_at']?->subMinutes(10) : null,
                     'approved_by' => $testData['result'] !== null ? $workflowStaff->id : null,
                     'approved_at' => $testData['result'] !== null ? $testData['completed_at'] : null,
                     'completed_at' => $testData['completed_at'],
@@ -367,6 +457,9 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         resolve(SyncLabRequestCharge::class)->handle($labRequest->fresh(['items.test', 'visit.payer']) ?? $labRequest);
     }
 
+    /**
+     * @param  LabResultData  $resultData
+     */
     private function syncLabResultEntry(LabRequestItem $item, Staff $workflowStaff, array $resultData): void
     {
         $item->loadMissing('test.resultParameters');
@@ -386,6 +479,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
             ],
         );
 
+        /** @var Collection<string, LabTestResultParameter> $parameters */
         $parameters = $item->test?->resultParameters
             ? $item->test->resultParameters->keyBy('label')
             : collect();
@@ -411,6 +505,9 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         }
     }
 
+    /**
+     * @param  FacilityServiceOrderData  $orderData
+     */
     private function syncFacilityServiceOrder(
         string $tenantId,
         PatientVisit $visit,
@@ -443,6 +540,9 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         resolve(SyncFacilityServiceOrderCharge::class)->handle($order->fresh(['service', 'visit.payer']) ?? $order);
     }
 
+    /**
+     * @param  PaymentData|null  $paymentData
+     */
     private function syncPayment(
         string $tenantId,
         string $branchId,
@@ -473,6 +573,9 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         );
     }
 
+    /**
+     * @return list<EncounterScenario>
+     */
     private function encounterBlueprints(): array
     {
         return [

@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -15,10 +14,6 @@ final class InventoryLocationItem extends Model
 {
     use BelongsToBranch;
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\InventoryLocationItemFactory> */
-    use HasFactory;
-
     use HasUuids;
 
     protected $casts = [
@@ -34,11 +29,17 @@ final class InventoryLocationItem extends Model
         'updated_by' => 'string',
     ];
 
+    /**
+     * @return BelongsTo<InventoryItem, $this>
+     */
     public function item(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
     }
 
+    /**
+     * @return BelongsTo<InventoryLocation, $this>
+     */
     public function location(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class, 'inventory_location_id');

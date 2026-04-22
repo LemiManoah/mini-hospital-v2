@@ -6,6 +6,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -25,7 +26,7 @@ return new class extends Migration
 
             DB::table('lab_test_categories')->insert([
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Hematology',
                     'description' => 'Blood cell counts and related investigations.',
@@ -34,7 +35,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Chemistry',
                     'description' => 'Clinical chemistry and biochemistry tests.',
@@ -43,7 +44,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Microbiology',
                     'description' => 'Culture and organism-focused investigations.',
@@ -52,7 +53,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Parasitology',
                     'description' => 'Parasite-focused tests and microscopy.',
@@ -61,7 +62,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Serology',
                     'description' => 'Antigen and antibody-based testing.',
@@ -86,7 +87,7 @@ return new class extends Migration
 
             DB::table('specimen_types')->insert([
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Blood',
                     'description' => 'Whole blood or blood-derived specimen.',
@@ -95,7 +96,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Urine',
                     'description' => 'Urine sample.',
@@ -104,7 +105,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Stool',
                     'description' => 'Stool sample.',
@@ -113,7 +114,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Swab',
                     'description' => 'Swab specimen.',
@@ -122,7 +123,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'name' => 'Serum',
                     'description' => 'Separated serum specimen.',
@@ -148,7 +149,7 @@ return new class extends Migration
 
             DB::table('result_types')->insert([
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'code' => 'free_entry',
                     'name' => 'Free Entry',
@@ -158,7 +159,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'code' => 'defined_option',
                     'name' => 'Defined Option',
@@ -168,7 +169,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'code' => 'parameter_panel',
                     'name' => 'Parameter Panel',
@@ -178,7 +179,7 @@ return new class extends Migration
                     'updated_at' => now(),
                 ],
                 [
-                    'id' => (string) str()->uuid(),
+                    'id' => Str::uuid()->toString(),
                     'tenant_id' => null,
                     'code' => 'culture',
                     'name' => 'Culture',

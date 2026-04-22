@@ -22,16 +22,17 @@ final class EnsureVisitBilling
 
         /** @var VisitPayer $payer */
         $payer = $visit->payer ?? throw new RuntimeException('Visit payer is required before billing can be created.');
+        $billingType = $payer->billing_type ?? throw new RuntimeException('Visit payer billing type is required before billing can be created.');
 
         return VisitBilling::query()->create([
             'tenant_id' => $visit->tenant_id,
             'facility_branch_id' => $visit->facility_branch_id,
             'patient_visit_id' => $visit->id,
             'visit_payer_id' => $payer->id,
-            'payer_type' => $payer->billing_type,
+            'payer_type' => $billingType,
             'insurance_company_id' => $payer->insurance_company_id,
             'insurance_package_id' => $payer->insurance_package_id,
-            'status' => $payer->billing_type->value === 'insurance'
+            'status' => $billingType->value === 'insurance'
                 ? BillingStatus::INSURANCE_PENDING
                 : BillingStatus::PENDING,
         ]);

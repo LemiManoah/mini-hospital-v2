@@ -19,8 +19,23 @@ final readonly class CreateInventoryReconciliation
     ) {}
 
     /**
-     * @param  array<string, mixed>  $attributes
-     * @param  array<int, array<string, mixed>>  $items
+     * @param  array{
+     *      tenant_id?: string,
+     *      branch_id?: string,
+     *      inventory_location_id: string,
+     *      reconciliation_date: string,
+     *      reason: string,
+     *      notes?: string|null
+     *  }  $attributes
+     * @param  list<array{
+     *      inventory_item_id: string,
+     *      actual_quantity: float|int|string,
+     *      unit_cost: float|int|string,
+     *      inventory_batch_id?: string|null,
+     *      batch_number?: string|null,
+     *      expiry_date?: string|null,
+     *      notes?: string|null
+     *  }>  $items
      */
     public function handle(array $attributes, array $items): Reconciliation
     {
@@ -38,7 +53,7 @@ final readonly class CreateInventoryReconciliation
                     ->summarizeByLocation($branchId)
                     ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId)
                     ->mapWithKeys(static fn (array $balance): array => [
-                        $balance['inventory_item_id'] => $balance['quantity'],
+                        $balance['inventory_item_id'] => (float) $balance['quantity'],
                     ])
                 : collect();
 
@@ -56,7 +71,7 @@ final readonly class CreateInventoryReconciliation
             ]);
 
             foreach ($items as $item) {
-                $inventoryItemId = (string) $item['inventory_item_id'];
+                $inventoryItemId = $item['inventory_item_id'];
                 $expectedQuantity = (float) ($currentQuantities[$inventoryItemId] ?? 0.0);
                 $actualQuantity = (float) $item['actual_quantity'];
                 $varianceQuantity = $actualQuantity - $expectedQuantity;

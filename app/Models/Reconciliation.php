@@ -8,7 +8,6 @@ use App\Enums\ReconciliationStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -18,10 +17,6 @@ final class Reconciliation extends Model
 {
     use BelongsToBranch;
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\ReconciliationFactory> */
-    use HasFactory;
-
     use HasUuids;
     use SoftDeletes;
 
@@ -47,11 +42,17 @@ final class Reconciliation extends Model
         'posted_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<InventoryLocation, $this>
+     */
     public function inventoryLocation(): BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class);
     }
 
+    /**
+     * @return HasMany<ReconciliationItem, $this>
+     */
     public function items(): HasMany
     {
         return $this->hasMany(ReconciliationItem::class, 'stock_reconciliation_id');

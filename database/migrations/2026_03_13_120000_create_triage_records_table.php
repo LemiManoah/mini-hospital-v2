@@ -19,7 +19,7 @@ return new class extends Migration
                 $table->uuid('id')->primary();
                 $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
                 $table->foreignUuid('facility_branch_id')->nullable()->constrained('facility_branches')->nullOnDelete();
-                $table->foreignUuid('visit_id')->constrained('patient_visits')->onDelete('cascade')->unique();
+                $table->foreignUuid('visit_id')->unique()->constrained('patient_visits')->onDelete('cascade');
                 $table->foreignUuid('nurse_id')->constrained('staff')->onDelete('restrict');
                 $table->timestamp('triage_datetime')->useCurrent();
                 $table->enum('triage_grade', array_column(TriageGrade::cases(), 'value'));

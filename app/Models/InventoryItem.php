@@ -46,47 +46,76 @@ final class InventoryItem extends Model
         'updated_by' => 'string',
     ];
 
+    /**
+     * @return BelongsTo<Unit, $this>
+     */
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
 
+    /**
+     * @return HasMany<InventoryLocationItem, $this>
+     */
     public function locationItems(): HasMany
     {
         return $this->hasMany(InventoryLocationItem::class);
     }
 
+    /**
+     * @return HasMany<InventoryBatch, $this>
+     */
     public function batches(): HasMany
     {
         return $this->hasMany(InventoryBatch::class);
     }
 
+    /**
+     * @return HasMany<StockMovement, $this>
+     */
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
     }
 
+    /**
+     * @return HasMany<ReconciliationItem, $this>
+     */
     public function reconciliationItems(): HasMany
     {
         return $this->hasMany(ReconciliationItem::class);
     }
 
+    /**
+     * @return HasMany<InventoryRequisitionItem, $this>
+     */
     public function requisitionItems(): HasMany
     {
         return $this->hasMany(InventoryRequisitionItem::class);
     }
 
+    /**
+     * @return HasMany<PrescriptionItem, $this>
+     */
     public function prescriptionItems(): HasMany
     {
         return $this->hasMany(PrescriptionItem::class, 'inventory_item_id');
     }
 
+    /**
+     * @param  Builder<$this>  $query
+     * @return Builder<$this>
+     */
     #[Scope]
     protected function active(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
+    /**
+     * @param  Builder<$this>  $query
+     * @return Builder<$this>
+     */
     #[Scope]
     protected function ofType(Builder $query, InventoryItemType|string $type): Builder
     {
@@ -96,33 +125,48 @@ final class InventoryItem extends Model
         );
     }
 
+    /**
+     * @param  Builder<$this>  $query
+     */
     #[Scope]
-    protected function drugs(Builder $query): Builder
+    protected function drugs(Builder $query): void
     {
-        return $query->ofType(InventoryItemType::DRUG);
+        $query->where('item_type', InventoryItemType::DRUG->value);
     }
 
+    /**
+     * @param  Builder<$this>  $query
+     */
     #[Scope]
-    protected function consumables(Builder $query): Builder
+    protected function consumables(Builder $query): void
     {
-        return $query->ofType(InventoryItemType::CONSUMABLE);
+        $query->where('item_type', InventoryItemType::CONSUMABLE->value);
     }
 
+    /**
+     * @param  Builder<$this>  $query
+     */
     #[Scope]
-    protected function supplies(Builder $query): Builder
+    protected function supplies(Builder $query): void
     {
-        return $query->ofType(InventoryItemType::SUPPLY);
+        $query->where('item_type', InventoryItemType::SUPPLY->value);
     }
 
+    /**
+     * @param  Builder<$this>  $query
+     */
     #[Scope]
-    protected function reagents(Builder $query): Builder
+    protected function reagents(Builder $query): void
     {
-        return $query->ofType(InventoryItemType::REAGENT);
+        $query->where('item_type', InventoryItemType::REAGENT->value);
     }
 
+    /**
+     * @param  Builder<$this>  $query
+     */
     #[Scope]
-    protected function others(Builder $query): Builder
+    protected function others(Builder $query): void
     {
-        return $query->ofType(InventoryItemType::OTHER);
+        $query->where('item_type', InventoryItemType::OTHER->value);
     }
 }

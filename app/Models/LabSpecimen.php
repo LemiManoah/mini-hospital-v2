@@ -6,15 +6,11 @@ namespace App\Models;
 
 use App\Enums\LabSpecimenStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class LabSpecimen extends Model
 {
-    /** @use HasFactory<\Database\Factories\LabSpecimenFactory> */
-    use HasFactory;
-
     use HasUuids;
 
     protected $casts = [
@@ -28,21 +24,33 @@ final class LabSpecimen extends Model
         'outside_sample' => 'boolean',
     ];
 
+    /**
+     * @return BelongsTo<LabRequestItem, $this>
+     */
     public function requestItem(): BelongsTo
     {
         return $this->belongsTo(LabRequestItem::class, 'lab_request_item_id');
     }
 
+    /**
+     * @return BelongsTo<SpecimenType, $this>
+     */
     public function specimenType(): BelongsTo
     {
         return $this->belongsTo(SpecimenType::class, 'specimen_type_id');
     }
 
+    /**
+     * @return BelongsTo<Staff, $this>
+     */
     public function collectedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'collected_by');
     }
 
+    /**
+     * @return BelongsTo<Staff, $this>
+     */
     public function rejectedBy(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'rejected_by');

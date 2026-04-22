@@ -14,10 +14,51 @@ use App\Models\FacilityBranch;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
 use RuntimeException;
 
+/**
+ * @phpstan-type FacilityAddressData array{
+ *   city: string,
+ *   district: string,
+ *   state: string
+ * }
+ * @phpstan-type SubscriptionData array{
+ *   status: SubscriptionStatus,
+ *   starts_at: CarbonInterface|null,
+ *   trial_ends_at: CarbonInterface|null,
+ *   activated_at: CarbonInterface|null,
+ *   current_period_starts_at: CarbonInterface|null,
+ *   current_period_ends_at: CarbonInterface|null,
+ *   meta: array<string, mixed>
+ * }
+ * @phpstan-type FacilityBranchBlueprint array{
+ *   branch_code: string,
+ *   name: string,
+ *   is_main_branch: bool,
+ *   has_store: bool,
+ *   main_contact: string,
+ *   other_contact: string,
+ *   email: string,
+ *   address: FacilityAddressData
+ * }
+ * @phpstan-type FacilityBlueprint array{
+ *   name: string,
+ *   domain: string,
+ *   country_code: string,
+ *   currency_code: string,
+ *   has_branches: bool,
+ *   facility_level: FacilityLevel,
+ *   longitude: float,
+ *   latitude: float,
+ *   onboarding_completed_at: CarbonInterface|null,
+ *   onboarding_current_step: string,
+ *   subscription: SubscriptionData,
+ *   address: FacilityAddressData,
+ *   branches: list<FacilityBranchBlueprint>
+ * }
+ */
 final class FacilitySeeder extends Seeder
 {
     public function run(): void
@@ -26,11 +67,13 @@ final class FacilitySeeder extends Seeder
 
         throw_unless($package instanceof SubscriptionPackage, RuntimeException::class, 'FacilitySeeder requires at least one subscription package.');
 
+        /** @var \Illuminate\Support\Collection<string, Country> $countries */
         $countries = Country::query()
             ->whereIn('country_code', ['RW', 'UG', 'KE'])
             ->get()
             ->keyBy('country_code');
 
+        /** @var \Illuminate\Support\Collection<string, Currency> $currencies */
         $currencies = Currency::query()
             ->whereIn('code', ['RWF', 'UGX', 'KES'])
             ->get()
@@ -44,12 +87,15 @@ final class FacilitySeeder extends Seeder
             throw_unless($currencies->has($currencyCode), RuntimeException::class, sprintf('FacilitySeeder requires currency [%s] to be seeded first.', $currencyCode));
         }
 
-        foreach ($this->facilityBlueprints() as $facility) {
-            /** @var Country $country */
-            $country = $countries->get($facility['country_code']);
+        /** @var list<FacilityBlueprint> $facilityBlueprints */
+        $facilityBlueprints = $this->facilityBlueprints();
 
-            /** @var Currency $currency */
+        foreach ($facilityBlueprints as $facility) {
+            $country = $countries->get($facility['country_code']);
             $currency = $currencies->get($facility['currency_code']);
+            if (! $country instanceof Country || ! $currency instanceof Currency) {
+                continue;
+            }
 
             $tenantAddress = $this->upsertAddress($facility['address'], $country);
 
@@ -72,7 +118,10 @@ final class FacilitySeeder extends Seeder
 
             $this->upsertSubscription($tenant, $package, $facility['subscription']);
 
-            foreach ($facility['branches'] as $branch) {
+            /** @var list<FacilityBranchBlueprint> $branches */
+            $branches = $facility['branches'];
+
+            foreach ($branches as $branch) {
                 $branchAddress = $this->upsertAddress($branch['address'], $country);
 
                 FacilityBranch::query()->updateOrCreate(
@@ -97,7 +146,7 @@ final class FacilitySeeder extends Seeder
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return list<FacilityBlueprint>
      */
     private function facilityBlueprints(): array
     {
@@ -314,7 +363,7 @@ final class FacilitySeeder extends Seeder
     }
 
     /**
-     * @param  array{status: SubscriptionStatus, starts_at: Carbon, trial_ends_at: Carbon|null, activated_at: Carbon|null, current_period_starts_at: Carbon|null, current_period_ends_at: Carbon|null, meta: array<string, mixed>}  $subscription
+     * @param  SubscriptionData  $subscription
      */
     private function upsertSubscription(Tenant $tenant, SubscriptionPackage $package, array $subscription): void
     {

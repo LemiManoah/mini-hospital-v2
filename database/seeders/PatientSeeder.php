@@ -14,7 +14,27 @@ use App\Models\Country;
 use App\Models\Patient;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
+/**
+ * @phpstan-type PatientSeedData array{
+ *   patient_number: string,
+ *   first_name: string,
+ *   last_name: string,
+ *   middle_name: string|null,
+ *   date_of_birth: string,
+ *   gender: Gender,
+ *   phone_number: string,
+ *   email: string|null,
+ *   marital_status: MaritalStatus|null,
+ *   occupation: string|null,
+ *   religion: Religion,
+ *   blood_group: BloodGroup,
+ *   next_of_kin_name: string,
+ *   next_of_kin_phone: string,
+ *   next_of_kin_relationship: KinRelationship
+ * }
+ */
 final class PatientSeeder extends Seeder
 {
     public function run(): void
@@ -25,14 +45,15 @@ final class PatientSeeder extends Seeder
             return;
         }
 
-        $addresses = Address::query()->inRandomOrder()->take(10)->get();
+        $addresses = Address::query()->inRandomOrder()->take(10)->get()->values();
         $country = Country::query()->where('country_name', 'Uganda')->first()
             ?? Country::query()->first();
 
-        if ($addresses->isEmpty()) {
+        if ($addresses->isEmpty() || ! $country instanceof Country) {
             return;
         }
 
+        /** @var list<PatientSeedData> $patients */
         $patients = [
             ['patient_number' => 'PAT-0001', 'first_name' => 'Amara', 'last_name' => 'Nakigozi', 'middle_name' => 'Grace', 'date_of_birth' => '1990-05-14', 'gender' => Gender::FEMALE, 'phone_number' => '+256-700-100-001', 'email' => 'amara.nakigozi@example.com', 'marital_status' => MaritalStatus::MARRIED, 'occupation' => 'Teacher', 'religion' => Religion::CHRISTIAN, 'blood_group' => BloodGroup::A_POSITIVE, 'next_of_kin_name' => 'Samuel Nakigozi', 'next_of_kin_phone' => '+256-700-200-001', 'next_of_kin_relationship' => KinRelationship::SPOUSE],
             ['patient_number' => 'PAT-0002', 'first_name' => 'Brian', 'last_name' => 'Ochieng', 'middle_name' => null, 'date_of_birth' => '1985-08-22', 'gender' => Gender::MALE, 'phone_number' => '+256-700-100-002', 'email' => null, 'marital_status' => MaritalStatus::SINGLE, 'occupation' => 'Engineer', 'religion' => Religion::CHRISTIAN, 'blood_group' => BloodGroup::O_POSITIVE, 'next_of_kin_name' => 'Rose Ochieng', 'next_of_kin_phone' => '+256-700-200-002', 'next_of_kin_relationship' => KinRelationship::SIBLING],
@@ -49,28 +70,32 @@ final class PatientSeeder extends Seeder
         $addressIndex = 0;
 
         foreach ($patients as $data) {
-            $address = $addresses[$addressIndex % $addresses->count()];
+            $address = $addresses->get($addressIndex % $addresses->count());
             $addressIndex++;
+
+            if (! $address instanceof Address) {
+                throw new RuntimeException('PatientSeeder expected a valid address instance.');
+            }
 
             Patient::query()->firstOrCreate(
                 ['tenant_id' => $tenant->id, 'patient_number' => $data['patient_number']],
                 [
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
-                    'middle_name' => $data['middle_name'] ?? null,
+                    'middle_name' => $data['middle_name'],
                     'date_of_birth' => $data['date_of_birth'],
                     'gender' => $data['gender']->value,
                     'phone_number' => $data['phone_number'],
-                    'email' => $data['email'] ?? null,
+                    'email' => $data['email'],
                     'marital_status' => $data['marital_status']?->value,
-                    'occupation' => $data['occupation'] ?? null,
-                    'religion' => $data['religion']?->value,
-                    'blood_group' => $data['blood_group']?->value,
-                    'next_of_kin_name' => $data['next_of_kin_name'] ?? null,
-                    'next_of_kin_phone' => $data['next_of_kin_phone'] ?? null,
-                    'next_of_kin_relationship' => $data['next_of_kin_relationship']?->value,
+                    'occupation' => $data['occupation'],
+                    'religion' => $data['religion']->value,
+                    'blood_group' => $data['blood_group']->value,
+                    'next_of_kin_name' => $data['next_of_kin_name'],
+                    'next_of_kin_phone' => $data['next_of_kin_phone'],
+                    'next_of_kin_relationship' => $data['next_of_kin_relationship']->value,
                     'address_id' => $address->id,
-                    'country_id' => $country?->id,
+                    'country_id' => $country->id,
                     'tenant_id' => $tenant->id,
                 ],
             );

@@ -10,7 +10,6 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -18,10 +17,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class PatientAllergy extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\PatientAllergyFactory> */
-    use HasFactory;
-
     use HasUuids;
     use SoftDeletes;
 
@@ -78,6 +73,9 @@ final class PatientAllergy extends Model
 
     /**
      * Scope to get only active allergies
+     *
+     * @param  Builder<$this>  $query
+     * @return Builder<$this>
      */
     #[Scope]
     protected function active(Builder $query): Builder
@@ -87,6 +85,9 @@ final class PatientAllergy extends Model
 
     /**
      * Scope to get allergies by severity
+     *
+     * @param  Builder<$this>  $query
+     * @return Builder<$this>
      */
     #[Scope]
     protected function bySeverity(Builder $query, AllergySeverity $severity): Builder

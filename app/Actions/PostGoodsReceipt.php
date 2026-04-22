@@ -21,9 +21,9 @@ final readonly class PostGoodsReceipt
     public function handle(GoodsReceipt $goodsReceipt): GoodsReceipt
     {
         return DB::transaction(function () use ($goodsReceipt): GoodsReceipt {
-            $purchaseOrder = $goodsReceipt->purchaseOrder()
+            $purchaseOrder = PurchaseOrder::query()
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->findOrFail($goodsReceipt->purchase_order_id);
 
             $updatedRows = GoodsReceipt::query()
                 ->whereKey($goodsReceipt->id)
@@ -42,10 +42,12 @@ final readonly class PostGoodsReceipt
             );
 
             $goodsReceipt = GoodsReceipt::query()
-                ->with('items')
                 ->findOrFail($goodsReceipt->id);
 
-            foreach ($goodsReceipt->items as $receiptItem) {
+            /** @var \Illuminate\Database\Eloquent\Collection<int, GoodsReceiptItem> $receiptItems */
+            $receiptItems = $goodsReceipt->items()->get();
+
+            foreach ($receiptItems as $receiptItem) {
                 PurchaseOrderItem::query()
                     ->whereKey($receiptItem->purchase_order_item_id)
                     ->increment('quantity_received', (float) $receiptItem->quantity_received);

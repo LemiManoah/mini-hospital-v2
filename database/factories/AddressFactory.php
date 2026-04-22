@@ -16,7 +16,7 @@ final class AddressFactory extends Factory
     /**
      * The name of the factory's corresponding model.
      *
-     * @var string
+     * @var class-string<Address>
      */
     protected $model = Address::class;
 
@@ -30,8 +30,8 @@ final class AddressFactory extends Factory
         return [
             'city' => $this->faker->city(),
             'district' => $this->faker->word(),
-            'state' => $this->faker->state(),
-            'country_id' => Country::query()->inRandomOrder()->first()?->id ?? Country::factory(),
+            'state' => $this->faker->word(),
+            'country_id' => Country::query()->inRandomOrder()->first()->id ?? Country::factory(),
         ];
     }
 }

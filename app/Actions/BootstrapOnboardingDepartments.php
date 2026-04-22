@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Data\Onboarding\CreateOnboardingDepartmentDTO;
 use App\Data\Onboarding\CreateOnboardingDepartmentsDTO;
 use App\Models\Department;
 use App\Models\Tenant;
@@ -16,10 +15,6 @@ final class BootstrapOnboardingDepartments
     public function handle(Tenant $tenant, User $user, CreateOnboardingDepartmentsDTO $data): void
     {
         foreach ($data->departments as $index => $department) {
-            if (! $department instanceof CreateOnboardingDepartmentDTO) {
-                continue;
-            }
-
             Department::query()->updateOrCreate(
                 [
                     'tenant_id' => $tenant->id,

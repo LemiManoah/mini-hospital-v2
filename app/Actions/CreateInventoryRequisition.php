@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\InventoryLocationType;
 use App\Enums\InventoryRequisitionStatus;
 use App\Models\InventoryRequisition;
 use App\Support\BranchContext;
@@ -19,32 +20,39 @@ final readonly class CreateInventoryRequisition
     ) {}
 
     /**
-     * @param  array<string, mixed>  $attributes
-     * @param  array<int, array<string, mixed>>  $items
+     * @param  array{
+     *      tenant_id?: string,
+     *      branch_id?: string,
+     *      source_inventory_location_id: string,
+     *      destination_inventory_location_id: string,
+     *      priority: string,
+     *      requisition_date: string,
+     *      notes?: string|null
+     *  }  $attributes
+     * @param  list<array{
+     *      inventory_item_id: string,
+     *      requested_quantity: float|int|string,
+     *      notes?: string|null
+     *  }>  $items
+     * @param  list<InventoryLocationType|string>  $destinationTypes
      */
     public function handle(array $attributes, array $items, array $destinationTypes = []): InventoryRequisition
     {
         return DB::transaction(function () use ($attributes, $items, $destinationTypes): InventoryRequisition {
-            $tenantId = is_string($attributes['tenant_id'] ?? null)
-                ? $attributes['tenant_id']
-                : Auth::user()?->tenantId();
-            $branchId = is_string($attributes['branch_id'] ?? null)
-                ? $attributes['branch_id']
-                : BranchContext::getActiveBranchId();
+            $tenantId = $attributes['tenant_id'] ?? Auth::user()?->tenantId();
+            $branchId = $attributes['branch_id'] ?? BranchContext::getActiveBranchId();
 
-            $fulfillingLocationId = is_string($attributes['source_inventory_location_id'] ?? null)
-                ? $attributes['source_inventory_location_id']
-                : null;
-            $requestingLocationId = is_string($attributes['destination_inventory_location_id'] ?? null)
-                ? $attributes['destination_inventory_location_id']
-                : null;
+            $fulfillingLocationId = $attributes['source_inventory_location_id'];
+            $requestingLocationId = $attributes['destination_inventory_location_id'];
+
+            $normalizedDestinationTypes = $destinationTypes;
 
             $canCreate = $this->inventoryLocationAccess->canCreateRequestedRequisition(
                 Auth::user(),
                 $fulfillingLocationId,
                 $requestingLocationId,
-                $destinationTypes,
-                is_string($branchId) ? $branchId : null,
+                $normalizedDestinationTypes,
+                $branchId,
             );
 
             abort_unless(

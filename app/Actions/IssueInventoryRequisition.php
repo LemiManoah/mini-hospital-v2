@@ -22,11 +22,11 @@ final readonly class IssueInventoryRequisition
     ) {}
 
     /**
-     * @param  array<int, array{
+     * @param  list<array{
      *     inventory_requisition_item_id: string,
-     *     issue_quantity: mixed,
-     *     notes?: mixed,
-     *     allocations?: array<int, array{inventory_batch_id: string, quantity: mixed}>
+     *     issue_quantity: float|int|string,
+     *     notes?: string|null,
+     *     allocations?: list<array{inventory_batch_id: string, quantity: float|int|string}>
      * }>  $items
      */
     public function handle(InventoryRequisition $requisition, array $items, ?string $issuedNotes = null): InventoryRequisition
@@ -48,6 +48,7 @@ final readonly class IssueInventoryRequisition
 
             abort_if($allocations->isEmpty(), 422, 'Issue at least one approved quantity.');
 
+            /** @var list<string> $batchIds */
             $batchIds = $allocations
                 ->flatMap(static fn (array $item): array => collect($item['allocations'] ?? [])
                     ->pluck('inventory_batch_id')
@@ -77,7 +78,7 @@ final readonly class IssueInventoryRequisition
 
                 $issueQuantity = (float) $payload['issue_quantity'];
                 $allocationTotal = collect($payload['allocations'] ?? [])
-                    ->sum(static fn (array $allocation): float => (float) ($allocation['quantity'] ?? 0));
+                    ->sum(static fn (array $allocation): float => (float) $allocation['quantity']);
 
                 abort_unless(
                     abs($allocationTotal - $issueQuantity) < 0.0005,
@@ -192,7 +193,7 @@ final readonly class IssueInventoryRequisition
             ->where('branch_id', $requisition->branch_id)
             ->where('inventory_location_id', $requisition->destination_inventory_location_id)
             ->where('inventory_item_id', $sourceBatch->inventory_item_id)
-            ->where('goods_receipt_item_id')
+            ->whereNull('goods_receipt_item_id')
             ->where('batch_number', $sourceBatch->batch_number)
             ->where('expiry_date', $sourceBatch->expiry_date)
             ->where('unit_cost', $sourceBatch->unit_cost)

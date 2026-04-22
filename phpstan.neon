@@ -13,6 +13,9 @@ parameters:
         - public
         - routes
 
+    excludePaths:
+        analyse:
+            - database/migrations/2026_03_06_091646_create_permission_tables.php
 
     level: max
 

@@ -26,6 +26,7 @@ use App\Models\User;
 use App\Support\InventoryStockLedger;
 use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 
 final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
 {
@@ -42,11 +43,13 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         }
 
         $suppliers = $this->seedSuppliers($tenant->id);
+        /** @var Collection<string, InventoryLocation> $locations */
         $locations = InventoryLocation::query()
             ->where('tenant_id', $tenant->id)
             ->where('branch_id', $mainBranch->id)
             ->get()
             ->keyBy('location_code');
+        /** @var Collection<string, InventoryItem> $items */
         $items = InventoryItem::query()
             ->where('tenant_id', $tenant->id)
             ->get()
@@ -56,29 +59,34 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             return;
         }
 
+        /** @var array<string, InventoryLocation> $locationsByCode */
+        $locationsByCode = $locations->all();
+        /** @var array<string, InventoryItem> $itemsByName */
+        $itemsByName = $items->all();
+
         $this->seedReceiptWorkflow(
             tenantId: $tenant->id,
             branchId: $mainBranch->id,
             userId: $creator->id,
             suppliers: $suppliers,
-            locations: $locations->all(),
-            items: $items->all(),
+            locations: $locationsByCode,
+            items: $itemsByName,
         );
 
         $this->seedReconciliations(
             tenantId: $tenant->id,
             branchId: $mainBranch->id,
             userId: $creator->id,
-            locations: $locations->all(),
-            items: $items->all(),
+            locations: $locationsByCode,
+            items: $itemsByName,
         );
 
         $this->seedRequisitions(
             tenantId: $tenant->id,
             branchId: $mainBranch->id,
             userId: $creator->id,
-            locations: $locations->all(),
-            items: $items->all(),
+            locations: $locationsByCode,
+            items: $itemsByName,
         );
     }
 

@@ -36,51 +36,81 @@ final class InventoryLocation extends Model
         'updated_by' => 'string',
     ];
 
+    /**
+     * @return HasMany<InventoryLocationItem, $this>
+     */
     public function locationItems(): HasMany
     {
         return $this->hasMany(InventoryLocationItem::class);
     }
 
+    /**
+     * @return HasMany<InventoryBatch, $this>
+     */
     public function batches(): HasMany
     {
         return $this->hasMany(InventoryBatch::class);
     }
 
+    /**
+     * @return HasMany<StockMovement, $this>
+     */
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
     }
 
+    /**
+     * @return HasMany<Reconciliation, $this>
+     */
     public function reconciliations(): HasMany
     {
         return $this->hasMany(Reconciliation::class);
     }
 
+    /**
+     * @return HasMany<InventoryRequisition, $this>
+     */
     public function fulfillingRequisitions(): HasMany
     {
         return $this->hasMany(InventoryRequisition::class, 'source_inventory_location_id');
     }
 
+    /**
+     * @return HasMany<InventoryRequisition, $this>
+     */
     public function sourceRequisitions(): HasMany
     {
         return $this->fulfillingRequisitions();
     }
 
+    /**
+     * @return HasMany<DispensingRecord, $this>
+     */
     public function dispensingRecords(): HasMany
     {
         return $this->hasMany(DispensingRecord::class);
     }
 
+    /**
+     * @return HasMany<InventoryRequisition, $this>
+     */
     public function requestingRequisitions(): HasMany
     {
         return $this->hasMany(InventoryRequisition::class, 'destination_inventory_location_id');
     }
 
+    /**
+     * @return HasMany<InventoryRequisition, $this>
+     */
     public function destinationRequisitions(): HasMany
     {
         return $this->requestingRequisitions();
     }
 
+    /**
+     * @return BelongsToMany<InventoryItem, $this>
+     */
     public function items(): BelongsToMany
     {
         return $this->belongsToMany(InventoryItem::class, 'inventory_location_items')

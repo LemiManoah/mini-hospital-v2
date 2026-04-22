@@ -10,6 +10,6 @@ final class DeleteInsurancePackage
 {
     public function handle(InsurancePackage $insurancePackage): bool
     {
-        return $insurancePackage->delete();
+        return $insurancePackage->delete() === true;
     }
 }

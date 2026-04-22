@@ -10,6 +10,6 @@ final class DeleteInsuranceCompany
 {
     public function handle(InsuranceCompany $insuranceCompany): bool
     {
-        return $insuranceCompany->delete();
+        return $insuranceCompany->delete() === true;
     }
 }

@@ -196,13 +196,16 @@ final class PermissionSeeder extends Seeder
      */
     private function expandPermissions(array $catalog): array
     {
-        return collect($catalog)
+        /** @var list<string> $permissions */
+        $permissions = collect($catalog)
             ->flatMap(
                 static fn (array $abilities, string $resource) => collect($abilities)
                     ->map(static fn (string $ability): string => sprintf('%s.%s', $resource, $ability))
             )
             ->values()
             ->all();
+
+        return $permissions;
     }
 
     /**

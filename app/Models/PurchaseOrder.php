@@ -40,16 +40,25 @@ final class PurchaseOrder extends Model
         'approved_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<Supplier, $this>
+     */
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
     }
 
+    /**
+     * @return HasMany<PurchaseOrderItem, $this>
+     */
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseOrderItem::class);
     }
 
+    /**
+     * @return HasMany<GoodsReceipt, $this>
+     */
     public function goodsReceipts(): HasMany
     {
         return $this->hasMany(GoodsReceipt::class);

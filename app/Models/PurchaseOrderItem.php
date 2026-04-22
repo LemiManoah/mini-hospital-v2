@@ -26,11 +26,17 @@ final class PurchaseOrderItem extends Model
         'quantity_received' => 'decimal:3',
     ];
 
+    /**
+     * @return BelongsTo<PurchaseOrder, $this>
+     */
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
     }
 
+    /**
+     * @return BelongsTo<InventoryItem, $this>
+     */
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class);

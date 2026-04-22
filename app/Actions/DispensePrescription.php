@@ -12,6 +12,7 @@ use App\Models\DispensingRecord;
 use App\Models\DispensingRecordItem;
 use App\Models\Prescription;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 final readonly class DispensePrescription
 {
@@ -31,18 +32,24 @@ final readonly class DispensePrescription
                     $item->prescriptionItemId => $item,
                 ]);
 
-            $postDto = new PostDispenseDTO(
-                items: $record->items
-                    ->map(function (DispensingRecordItem $recordItem) use ($sourceItemsByPrescriptionItem): PostDispenseItemDTO {
-                        $matchingItem = $sourceItemsByPrescriptionItem[$recordItem->prescription_item_id] ?? null;
+            /** @var list<PostDispenseItemDTO> $postItems */
+            $postItems = $record->items
+                ->map(function (DispensingRecordItem $recordItem) use ($sourceItemsByPrescriptionItem): PostDispenseItemDTO {
+                    $matchingItem = $sourceItemsByPrescriptionItem[$recordItem->prescription_item_id] ?? null;
+                    if (! $matchingItem instanceof DispensePrescriptionItemDTO) {
+                        throw new RuntimeException('Dispensing record item could not be matched back to the prescription dispense payload.');
+                    }
 
-                        return new PostDispenseItemDTO(
-                            dispensingRecordItemId: $recordItem->id,
-                            allocations: $matchingItem?->allocations ?? [],
-                        );
-                    })
-                    ->values()
-                    ->all(),
+                    return new PostDispenseItemDTO(
+                        dispensingRecordItemId: $recordItem->id,
+                        allocations: $matchingItem->allocations,
+                    );
+                })
+                ->values()
+                ->all();
+
+            $postDto = new PostDispenseDTO(
+                items: $postItems,
             );
 
             return $this->postDispense->handle($record, $postDto);
