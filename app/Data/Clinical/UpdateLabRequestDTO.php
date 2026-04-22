@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Data\Clinical;
 
 use App\Enums\Priority;
+use Illuminate\Foundation\Http\FormRequest;
 
 final readonly class UpdateLabRequestDTO
 {
@@ -26,16 +27,26 @@ final readonly class UpdateLabRequestDTO
      *   priority?: Priority|string,
      *   diagnosis_code?: string|null,
      *   is_stat?: bool
-     * }  $attributes
+     * }  $validated
      */
-    public static function fromRequest(array $attributes): self
+    public static function fromRequest(FormRequest $request): self
     {
+        /** @var array{
+         *   test_ids: list<string>,
+         *   clinical_notes?: string|null,
+         *   priority?: Priority|string,
+         *   diagnosis_code?: string|null,
+         *   is_stat?: bool
+         * } $validated
+         */
+        $validated = $request->validated();
+
         return new self(
-            testIds: array_values(array_unique($attributes['test_ids'])),
-            clinicalNotes: self::nullableString($attributes['clinical_notes'] ?? null),
-            priority: self::priority($attributes['priority'] ?? Priority::ROUTINE),
-            diagnosisCode: self::nullableString($attributes['diagnosis_code'] ?? null),
-            isStat: $attributes['is_stat'] ?? false,
+            testIds: array_values(array_unique($validated['test_ids'])),
+            clinicalNotes: self::nullableString($validated['clinical_notes'] ?? null),
+            priority: self::priority($validated['priority'] ?? Priority::ROUTINE),
+            diagnosisCode: self::nullableString($validated['diagnosis_code'] ?? null),
+            isStat: $validated['is_stat'] ?? false,
         );
     }
 

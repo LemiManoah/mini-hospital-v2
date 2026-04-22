@@ -36,32 +36,12 @@ final class StoreConsultationLabRequest extends FormRequest
 
     public function createDto(): CreateLabRequestDTO
     {
-        /** @var array{
-         *   test_ids: list<string>,
-         *   clinical_notes?: string|null,
-         *   priority?: string,
-         *   diagnosis_code?: string|null,
-         *   is_stat?: bool
-         * } $validated
-         */
-        $validated = $this->validated();
-
-        return CreateLabRequestDTO::fromRequest($validated);
+        return CreateLabRequestDTO::fromRequest($this);
     }
 
     public function updateDto(): UpdateLabRequestDTO
     {
-        /** @var array{
-         *   test_ids: list<string>,
-         *   clinical_notes?: string|null,
-         *   priority?: string,
-         *   diagnosis_code?: string|null,
-         *   is_stat?: bool
-         * } $validated
-         */
-        $validated = $this->validated();
-
-        return UpdateLabRequestDTO::fromRequest($validated);
+        return UpdateLabRequestDTO::fromRequest($this);
     }
 
     protected function prepareForValidation(): void

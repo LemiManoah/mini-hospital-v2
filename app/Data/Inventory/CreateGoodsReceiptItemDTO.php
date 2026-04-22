@@ -27,7 +27,7 @@ final readonly class CreateGoodsReceiptItemDTO
      *   notes?: string|null
      * }  $attributes
      */
-    public static function fromRequest(array $attributes): self
+    public static function fromPayload(array $attributes): self
     {
         return new self(
             purchaseOrderItemId: $attributes['purchase_order_item_id'],

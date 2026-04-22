@@ -33,7 +33,7 @@ final readonly class CreatePrescriptionItemDTO
      *   is_external_pharmacy?: bool
      * }  $attributes
      */
-    public static function fromRequest(array $attributes): self
+    public static function fromPayload(array $attributes): self
     {
         return new self(
             inventoryItemId: $attributes['inventory_item_id'],

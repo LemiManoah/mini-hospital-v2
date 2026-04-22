@@ -3,9 +3,23 @@
 declare(strict_types=1);
 
 use App\Data\Inventory\CreateGoodsReceiptDTO;
+use Illuminate\Foundation\Http\FormRequest;
 
 it('normalizes nullable receipt strings and keeps only positive receipt items', function (): void {
-    $data = CreateGoodsReceiptDTO::fromRequest([
+    $request = static fn (array $validated): FormRequest => new class($validated) extends FormRequest
+    {
+        public function __construct(private array $validatedInput)
+        {
+            parent::__construct();
+        }
+
+        public function validated($key = null, $default = null): array
+        {
+            return $this->validatedInput;
+        }
+    };
+
+    $data = CreateGoodsReceiptDTO::fromRequest($request([
         'purchase_order_id' => 'po-1',
         'inventory_location_id' => 'location-1',
         'receipt_date' => '2026-04-22',
@@ -31,7 +45,7 @@ it('normalizes nullable receipt strings and keeps only positive receipt items', 
                 'notes' => '  second line  ',
             ],
         ],
-    ], ['pharmacy']);
+    ]), ['pharmacy']);
 
     expect($data->supplierInvoiceNumber)->toBeNull()
         ->and($data->notes)->toBe('Receive against supplier invoice')

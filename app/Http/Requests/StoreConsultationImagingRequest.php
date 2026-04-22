@@ -36,21 +36,7 @@ final class StoreConsultationImagingRequest extends FormRequest
 
     public function createDto(): CreateImagingRequestDTO
     {
-        /** @var array{
-         *   modality: string,
-         *   body_part: string,
-         *   laterality: string,
-         *   clinical_history: string,
-         *   indication: string,
-         *   priority: string,
-         *   requires_contrast?: bool,
-         *   contrast_allergy_status?: string|null,
-         *   pregnancy_status: string
-         * } $validated
-         */
-        $validated = $this->validated();
-
-        return CreateImagingRequestDTO::fromRequest($validated);
+        return CreateImagingRequestDTO::fromRequest($this);
     }
 
     protected function prepareForValidation(): void

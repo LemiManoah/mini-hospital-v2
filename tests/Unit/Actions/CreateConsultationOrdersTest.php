@@ -174,6 +174,60 @@ if (! function_exists('createFacilityServiceOrderRequest')) {
     }
 }
 
+if (! function_exists('createLabRequestDtoRequest')) {
+    function createLabRequestDtoRequest(array $validated): FormRequest
+    {
+        return new class($validated) extends FormRequest
+        {
+            public function __construct(private array $validatedInput)
+            {
+                parent::__construct();
+            }
+
+            public function validated($key = null, $default = null): array
+            {
+                return $this->validatedInput;
+            }
+        };
+    }
+}
+
+if (! function_exists('createPrescriptionDtoRequest')) {
+    function createPrescriptionDtoRequest(array $validated): FormRequest
+    {
+        return new class($validated) extends FormRequest
+        {
+            public function __construct(private array $validatedInput)
+            {
+                parent::__construct();
+            }
+
+            public function validated($key = null, $default = null): array
+            {
+                return $this->validatedInput;
+            }
+        };
+    }
+}
+
+if (! function_exists('createImagingRequestDtoRequest')) {
+    function createImagingRequestDtoRequest(array $validated): FormRequest
+    {
+        return new class($validated) extends FormRequest
+        {
+            public function __construct(private array $validatedInput)
+            {
+                parent::__construct();
+            }
+
+            public function validated($key = null, $default = null): array
+            {
+                return $this->validatedInput;
+            }
+        };
+    }
+}
+
 it('creates a lab request with priced items from the consultation context and syncs a visit charge', function (): void {
     $context = seedConsultationContext();
     $testId = (string) Str::uuid();
@@ -198,13 +252,13 @@ it('creates a lab request with priced items from the consultation context and sy
         'updated_at' => now(),
     ]);
 
-    $request = resolve(CreateLabRequest::class)->handle($context['consultation'], CreateLabRequestDTO::fromRequest([
+    $request = resolve(CreateLabRequest::class)->handle($context['consultation'], CreateLabRequestDTO::fromRequest(createLabRequestDtoRequest([
         'test_ids' => [$testId],
         'clinical_notes' => 'Rule out infection',
         'priority' => 'urgent',
         'diagnosis_code' => 'B50',
         'is_stat' => false,
-    ]), $context['staff_id']);
+    ])), $context['staff_id']);
 
     expect($request->consultation_id)->toBe($context['consultation']->id)
         ->and($request->priority)->toBe(Priority::URGENT)
@@ -255,13 +309,13 @@ it('moves a registered visit into progress when a visit-level lab request is cre
 
     $visit = PatientVisit::query()->findOrFail($context['visit_id']);
 
-    resolve(CreateLabRequest::class)->handle($visit, CreateLabRequestDTO::fromRequest([
+    resolve(CreateLabRequest::class)->handle($visit, CreateLabRequestDTO::fromRequest(createLabRequestDtoRequest([
         'test_ids' => [$testId],
         'clinical_notes' => 'Inflammatory marker',
         'priority' => 'routine',
         'diagnosis_code' => 'R50',
         'is_stat' => false,
-    ]), $context['staff_id']);
+    ])), $context['staff_id']);
 
     expect($visit->fresh()->status)->toBe(VisitStatus::IN_PROGRESS)
         ->and($visit->fresh()->started_at)->not->toBeNull();
@@ -304,13 +358,13 @@ it('uses insurance package prices when syncing lab request charges', function ()
         'updated_at' => now(),
     ]);
 
-    $request = resolve(CreateLabRequest::class)->handle($context['consultation'], CreateLabRequestDTO::fromRequest([
+    $request = resolve(CreateLabRequest::class)->handle($context['consultation'], CreateLabRequestDTO::fromRequest(createLabRequestDtoRequest([
         'test_ids' => [$testId],
         'clinical_notes' => 'Confirm malaria',
         'priority' => 'routine',
         'diagnosis_code' => 'B50',
         'is_stat' => false,
-    ]), $context['staff_id']);
+    ])), $context['staff_id']);
 
     $charge = VisitCharge::query()
         ->where('patient_visit_id', $context['visit_id'])
@@ -344,7 +398,7 @@ it('creates a prescription with multiple drug items', function (): void {
         'updated_at' => now(),
     ]);
 
-    $prescription = resolve(CreatePrescription::class)->handle($context['consultation'], CreatePrescriptionDTO::fromRequest([
+    $prescription = resolve(CreatePrescription::class)->handle($context['consultation'], CreatePrescriptionDTO::fromRequest(createPrescriptionDtoRequest([
         'primary_diagnosis' => 'Malaria',
         'pharmacy_notes' => 'Dispense today',
         'is_discharge_medication' => false,
@@ -360,7 +414,7 @@ it('creates a prescription with multiple drug items', function (): void {
             'is_prn' => false,
             'is_external_pharmacy' => false,
         ]],
-    ]), $context['staff_id']);
+    ])), $context['staff_id']);
 
     expect($prescription->consultation_id)->toBe($context['consultation']->id)
         ->and($prescription->items)->toHaveCount(1)
@@ -370,7 +424,7 @@ it('creates a prescription with multiple drug items', function (): void {
 it('creates an imaging request linked to the consultation', function (): void {
     $context = seedConsultationContext();
 
-    $request = resolve(CreateImagingRequest::class)->handle($context['consultation'], CreateImagingRequestDTO::fromRequest([
+    $request = resolve(CreateImagingRequest::class)->handle($context['consultation'], CreateImagingRequestDTO::fromRequest(createImagingRequestDtoRequest([
         'modality' => 'xray',
         'body_part' => 'Chest',
         'laterality' => 'na',
@@ -380,7 +434,7 @@ it('creates an imaging request linked to the consultation', function (): void {
         'requires_contrast' => false,
         'contrast_allergy_status' => null,
         'pregnancy_status' => 'unknown',
-    ]), $context['staff_id']);
+    ])), $context['staff_id']);
 
     expect($request->consultation_id)->toBe($context['consultation']->id)
         ->and($request->body_part)->toBe('Chest')

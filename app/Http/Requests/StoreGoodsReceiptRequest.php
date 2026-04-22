@@ -25,26 +25,7 @@ final class StoreGoodsReceiptRequest extends FormRequest
      */
     public function createDto(array $allowedLocationTypes = []): CreateGoodsReceiptDTO
     {
-        /** @var array{
-         *   purchase_order_id: string,
-         *   inventory_location_id: string,
-         *   receipt_date: string,
-         *   supplier_invoice_number?: string|null,
-         *   notes?: string|null,
-         *   items: list<array{
-         *     purchase_order_item_id: string,
-         *     inventory_item_id: string,
-         *     quantity_received: int|float|string,
-         *     unit_cost: int|float|string,
-         *     batch_number?: string|null,
-         *     expiry_date?: string|null,
-         *     notes?: string|null
-         *   }>
-         * } $validated
-         */
-        $validated = $this->validated();
-
-        return CreateGoodsReceiptDTO::fromRequest($validated, $allowedLocationTypes);
+        return CreateGoodsReceiptDTO::fromRequest($this, $allowedLocationTypes);
     }
 
     /**

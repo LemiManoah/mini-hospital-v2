@@ -15,28 +15,7 @@ final class StoreConsultationPrescriptionRequest extends FormRequest
 {
     public function createDto(): CreatePrescriptionDTO
     {
-        /** @var array{
-         *   primary_diagnosis?: string|null,
-         *   pharmacy_notes?: string|null,
-         *   is_discharge_medication?: bool,
-         *   is_long_term?: bool,
-         *   items: list<array{
-         *     inventory_item_id: string,
-         *     dosage: string,
-         *     frequency: string,
-         *     route: string,
-         *     duration_days: int,
-         *     quantity: int,
-         *     instructions?: string|null,
-         *     is_prn?: bool,
-         *     prn_reason?: string|null,
-         *     is_external_pharmacy?: bool
-         *   }>
-         * } $validated
-         */
-        $validated = $this->validated();
-
-        return CreatePrescriptionDTO::fromRequest($validated);
+        return CreatePrescriptionDTO::fromRequest($this);
     }
 
     /**

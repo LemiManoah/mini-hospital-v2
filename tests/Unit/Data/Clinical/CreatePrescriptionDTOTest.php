@@ -3,9 +3,23 @@
 declare(strict_types=1);
 
 use App\Data\Clinical\CreatePrescriptionDTO;
+use Illuminate\Foundation\Http\FormRequest;
 
 it('normalizes nullable prescription strings while preserving typed items', function (): void {
-    $data = CreatePrescriptionDTO::fromRequest([
+    $request = static fn (array $validated): FormRequest => new class($validated) extends FormRequest
+    {
+        public function __construct(private array $validatedInput)
+        {
+            parent::__construct();
+        }
+
+        public function validated($key = null, $default = null): array
+        {
+            return $this->validatedInput;
+        }
+    };
+
+    $data = CreatePrescriptionDTO::fromRequest($request([
         'primary_diagnosis' => '  Malaria  ',
         'pharmacy_notes' => '   ',
         'is_discharge_medication' => true,
@@ -22,7 +36,7 @@ it('normalizes nullable prescription strings while preserving typed items', func
             'prn_reason' => '  Fever  ',
             'is_external_pharmacy' => false,
         ]],
-    ]);
+    ]));
 
     expect($data->primaryDiagnosis)->toBe('Malaria')
         ->and($data->pharmacyNotes)->toBeNull()

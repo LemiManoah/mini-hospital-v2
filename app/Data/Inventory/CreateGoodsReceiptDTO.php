@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Data\Inventory;
 
+use Illuminate\Foundation\Http\FormRequest;
+
 final readonly class CreateGoodsReceiptDTO
 {
     /**
@@ -36,20 +38,39 @@ final readonly class CreateGoodsReceiptDTO
      *     expiry_date?: string|null,
      *     notes?: string|null
      *   }>
-     * }  $attributes
+     * }  $validated
      * @param  list<string>  $allowedLocationTypes
      */
-    public static function fromRequest(array $attributes, array $allowedLocationTypes = []): self
+    public static function fromRequest(FormRequest $request, array $allowedLocationTypes = []): self
     {
+        /** @var array{
+         *   purchase_order_id: string,
+         *   inventory_location_id: string,
+         *   receipt_date: string,
+         *   supplier_invoice_number?: string|null,
+         *   notes?: string|null,
+         *   items: list<array{
+         *     purchase_order_item_id: string,
+         *     inventory_item_id: string,
+         *     quantity_received: int|float|string,
+         *     unit_cost: int|float|string,
+         *     batch_number?: string|null,
+         *     expiry_date?: string|null,
+         *     notes?: string|null
+         *   }>
+         * } $validated
+         */
+        $validated = $request->validated();
+
         return new self(
-            purchaseOrderId: $attributes['purchase_order_id'],
-            inventoryLocationId: $attributes['inventory_location_id'],
-            receiptDate: $attributes['receipt_date'],
-            supplierInvoiceNumber: self::nullableString($attributes['supplier_invoice_number'] ?? null),
-            notes: self::nullableString($attributes['notes'] ?? null),
+            purchaseOrderId: $validated['purchase_order_id'],
+            inventoryLocationId: $validated['inventory_location_id'],
+            receiptDate: $validated['receipt_date'],
+            supplierInvoiceNumber: self::nullableString($validated['supplier_invoice_number'] ?? null),
+            notes: self::nullableString($validated['notes'] ?? null),
             items: array_map(
-                static fn (array $item): CreateGoodsReceiptItemDTO => CreateGoodsReceiptItemDTO::fromRequest($item),
-                $attributes['items'],
+                static fn (array $item): CreateGoodsReceiptItemDTO => CreateGoodsReceiptItemDTO::fromPayload($item),
+                $validated['items'],
             ),
             allowedLocationTypes: array_values($allowedLocationTypes),
         );

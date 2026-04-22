@@ -7,9 +7,23 @@ use App\Enums\ImagingLaterality;
 use App\Enums\ImagingModality;
 use App\Enums\ImagingPriority;
 use App\Enums\PregnancyStatus;
+use Illuminate\Foundation\Http\FormRequest;
 
 it('normalizes create imaging request input into a typed dto', function (): void {
-    $dto = CreateImagingRequestDTO::fromRequest([
+    $request = static fn (array $validated): FormRequest => new class($validated) extends FormRequest
+    {
+        public function __construct(private array $validatedInput)
+        {
+            parent::__construct();
+        }
+
+        public function validated($key = null, $default = null): array
+        {
+            return $this->validatedInput;
+        }
+    };
+
+    $dto = CreateImagingRequestDTO::fromRequest($request([
         'modality' => 'xray',
         'body_part' => '  Chest  ',
         'laterality' => 'left',
@@ -19,7 +33,7 @@ it('normalizes create imaging request input into a typed dto', function (): void
         'requires_contrast' => false,
         'contrast_allergy_status' => '   ',
         'pregnancy_status' => 'unknown',
-    ]);
+    ]));
 
     expect($dto->modality)->toBe(ImagingModality::XRAY)
         ->and($dto->bodyPart)->toBe('Chest')

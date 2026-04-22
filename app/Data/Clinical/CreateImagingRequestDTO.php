@@ -8,6 +8,7 @@ use App\Enums\ImagingLaterality;
 use App\Enums\ImagingModality;
 use App\Enums\ImagingPriority;
 use App\Enums\PregnancyStatus;
+use Illuminate\Foundation\Http\FormRequest;
 
 final readonly class CreateImagingRequestDTO
 {
@@ -34,20 +35,34 @@ final readonly class CreateImagingRequestDTO
      *   requires_contrast?: bool,
      *   contrast_allergy_status?: string|null,
      *   pregnancy_status: PregnancyStatus|string
-     * }  $attributes
+     * }  $validated
      */
-    public static function fromRequest(array $attributes): self
+    public static function fromRequest(FormRequest $request): self
     {
+        /** @var array{
+         *   modality: ImagingModality|string,
+         *   body_part: string,
+         *   laterality: ImagingLaterality|string,
+         *   clinical_history: string,
+         *   indication: string,
+         *   priority: ImagingPriority|string,
+         *   requires_contrast?: bool,
+         *   contrast_allergy_status?: string|null,
+         *   pregnancy_status: PregnancyStatus|string
+         * } $validated
+         */
+        $validated = $request->validated();
+
         return new self(
-            modality: self::modality($attributes['modality']),
-            bodyPart: self::requiredString($attributes['body_part']),
-            laterality: self::laterality($attributes['laterality']),
-            clinicalHistory: self::requiredString($attributes['clinical_history']),
-            indication: self::requiredString($attributes['indication']),
-            priority: self::priority($attributes['priority']),
-            requiresContrast: $attributes['requires_contrast'] ?? false,
-            contrastAllergyStatus: self::nullableString($attributes['contrast_allergy_status'] ?? null),
-            pregnancyStatus: self::pregnancyStatus($attributes['pregnancy_status']),
+            modality: self::modality($validated['modality']),
+            bodyPart: self::requiredString($validated['body_part']),
+            laterality: self::laterality($validated['laterality']),
+            clinicalHistory: self::requiredString($validated['clinical_history']),
+            indication: self::requiredString($validated['indication']),
+            priority: self::priority($validated['priority']),
+            requiresContrast: $validated['requires_contrast'] ?? false,
+            contrastAllergyStatus: self::nullableString($validated['contrast_allergy_status'] ?? null),
+            pregnancyStatus: self::pregnancyStatus($validated['pregnancy_status']),
         );
     }
 
