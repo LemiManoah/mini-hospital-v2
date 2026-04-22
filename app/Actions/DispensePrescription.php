@@ -19,17 +19,14 @@ final readonly class DispensePrescription
         private PostDispense $postDispense,
     ) {}
 
-    /**
-     * @param  list<DispensePrescriptionItemDTO>  $items
-     */
     public function handle(Prescription $prescription, DispensePrescriptionDTO $data): DispensingRecord
     {
         return DB::transaction(function () use ($prescription, $data): DispensingRecord {
             $record = $this->createDispensingRecord->handle($prescription, $data->toCreateDispensingRecordDTO());
 
-            /** @var array<string, DispensePrescriptionItemDTO> $sourceItemsByPrescriptionItem */
+            /** @var array<string, \App\Data\Pharmacy\DispensePrescriptionItemDTO> $sourceItemsByPrescriptionItem */
             $sourceItemsByPrescriptionItem = collect($data->items)
-                ->mapWithKeys(static fn (DispensePrescriptionItemDTO $item): array => [
+                ->mapWithKeys(static fn (\App\Data\Pharmacy\DispensePrescriptionItemDTO $item): array => [
                     $item->prescriptionItemId => $item,
                 ]);
 
