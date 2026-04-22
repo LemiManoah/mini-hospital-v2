@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Patient\CreatePatientRegistrationDTO;
 use App\Enums\PayerType;
 use App\Enums\VisitStatus;
 use App\Models\Patient;
@@ -22,36 +23,34 @@ final readonly class RegisterPatientAndStartVisit
     ) {}
 
     /**
-     * @param  array<string, mixed>  $data
      * @return array{patient: Patient, visit: PatientVisit}
      */
-    public function handle(array $data): array
+    public function handle(CreatePatientRegistrationDTO $data): array
     {
         return DB::transaction(function () use ($data): array {
-            $ageInputMode = (string) ($data['age_input_mode'] ?? 'dob');
             $activeBranch = BranchContext::getActiveBranch();
             $userId = Auth::id();
 
             $patient = Patient::query()->create([
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'middle_name' => $data['middle_name'] ?? null,
-                'date_of_birth' => $ageInputMode === 'dob' ? ($data['date_of_birth'] ?? null) : null,
-                'age' => $ageInputMode === 'age' ? ($data['age'] ?? null) : null,
-                'age_units' => $ageInputMode === 'age' ? ($data['age_units'] ?? null) : null,
-                'gender' => $data['gender'],
-                'email' => $data['email'] ?? null,
-                'phone_number' => $data['phone_number'],
-                'alternative_phone' => $data['alternative_phone'] ?? null,
-                'next_of_kin_name' => $data['next_of_kin_name'] ?? null,
-                'next_of_kin_phone' => $data['next_of_kin_phone'] ?? null,
-                'next_of_kin_relationship' => $data['next_of_kin_relationship'] ?? null,
-                'address_id' => $data['address_id'] ?? null,
-                'marital_status' => $data['marital_status'] ?? null,
-                'occupation' => $data['occupation'] ?? null,
-                'religion' => $data['religion'] ?? null,
-                'country_id' => $data['country_id'] ?? null,
-                'blood_group' => $data['blood_group'] ?? null,
+                'first_name' => $data->firstName,
+                'last_name' => $data->lastName,
+                'middle_name' => $data->middleName,
+                'date_of_birth' => $data->ageInputMode === 'dob' ? $data->dateOfBirth : null,
+                'age' => $data->ageInputMode === 'age' ? $data->age : null,
+                'age_units' => $data->ageInputMode === 'age' ? $data->ageUnits : null,
+                'gender' => $data->gender,
+                'email' => $data->email,
+                'phone_number' => $data->phoneNumber,
+                'alternative_phone' => $data->alternativePhone,
+                'next_of_kin_name' => $data->nextOfKinName,
+                'next_of_kin_phone' => $data->nextOfKinPhone,
+                'next_of_kin_relationship' => $data->nextOfKinRelationship,
+                'address_id' => $data->addressId,
+                'marital_status' => $data->maritalStatus,
+                'occupation' => $data->occupation,
+                'religion' => $data->religion,
+                'country_id' => $data->countryId,
+                'blood_group' => $data->bloodGroup,
                 'patient_number' => $this->numberGenerator->nextPatientNumber(
                     $activeBranch?->name,
                     (string) (Auth::user()?->tenant_id ?? ''),
@@ -65,11 +64,11 @@ final readonly class RegisterPatientAndStartVisit
                 'patient_id' => $patient->id,
                 'facility_branch_id' => $activeBranch?->id,
                 'visit_number' => $this->numberGenerator->nextVisitNumber($activeBranch?->name),
-                'visit_type' => $data['visit_type'],
+                'visit_type' => $data->visitType,
                 'status' => VisitStatus::REGISTERED,
-                'clinic_id' => $data['clinic_id'] ?? null,
-                'doctor_id' => $data['doctor_id'] ?? null,
-                'is_emergency' => ! empty($data['is_emergency']),
+                'clinic_id' => $data->clinicId,
+                'doctor_id' => $data->doctorId,
+                'is_emergency' => $data->isEmergency,
                 'registered_at' => now(),
                 'registered_by' => $userId,
                 'created_by' => $userId,
@@ -79,12 +78,12 @@ final readonly class RegisterPatientAndStartVisit
             $payer = VisitPayer::query()->create([
                 'tenant_id' => $patient->tenant_id,
                 'patient_visit_id' => $visit->id,
-                'billing_type' => $data['billing_type'] ?? PayerType::CASH->value,
-                'insurance_company_id' => ($data['billing_type'] ?? PayerType::CASH->value) === PayerType::INSURANCE->value
-                    ? $data['insurance_company_id']
+                'billing_type' => $data->billingType,
+                'insurance_company_id' => $data->billingType === PayerType::INSURANCE->value
+                    ? $data->insuranceCompanyId
                     : null,
-                'insurance_package_id' => ($data['billing_type'] ?? PayerType::CASH->value) === PayerType::INSURANCE->value
-                    ? $data['insurance_package_id']
+                'insurance_package_id' => $data->billingType === PayerType::INSURANCE->value
+                    ? $data->insurancePackageId
                     : null,
                 'created_by' => $userId,
                 'updated_by' => $userId,

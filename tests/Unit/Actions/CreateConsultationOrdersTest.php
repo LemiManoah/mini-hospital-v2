@@ -156,20 +156,22 @@ function seedConsultationContext(string $billingType = 'cash'): array
     ];
 }
 
-function createFacilityServiceOrderRequest(array $validated): FormRequest
-{
-    return new class($validated) extends FormRequest
+if (! function_exists('createFacilityServiceOrderRequest')) {
+    function createFacilityServiceOrderRequest(array $validated): FormRequest
     {
-        public function __construct(private array $validatedInput)
+        return new class($validated) extends FormRequest
         {
-            parent::__construct();
-        }
+            public function __construct(private array $validatedInput)
+            {
+                parent::__construct();
+            }
 
-        public function validated($key = null, $default = null): array
-        {
-            return $this->validatedInput;
-        }
-    };
+            public function validated($key = null, $default = null): array
+            {
+                return $this->validatedInput;
+            }
+        };
+    }
 }
 
 it('creates a lab request with priced items from the consultation context and syncs a visit charge', function (): void {

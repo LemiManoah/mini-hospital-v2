@@ -308,12 +308,16 @@ Started:
 - `app/Data/Onboarding/CreateOnboardingDepartmentsDTO.php`
 - `app/Data/Onboarding/CreateOnboardingDepartmentDTO.php`
 - `app/Data/Onboarding/CreateOnboardingStaffMemberDTO.php`
+- `app/Http/Requests/StorePatientRequest.php`
+- `app/Http/Requests/UpdatePatientRequest.php`
+- `app/Http/Controllers/PatientController.php`
+- `app/Actions/RegisterPatientAndStartVisit.php`
+- `app/Actions/UpdatePatient.php`
+- `app/Data/Patient/CreatePatientRegistrationDTO.php`
+- `app/Data/Patient/UpdatePatientDTO.php`
 
 Still remaining:
 
-- `app/Http/Requests/StorePatientRequest.php`
-- `app/Http/Requests/UpdatePatientRequest.php`
-- `app/Actions/UpdatePatient.php`
 - `app/Http/Requests/CreateUserRequest.php`
 - `app/Http/Requests/UpdateUserRequest.php`
 - `app/Http/Requests/CreateUserPasswordRequest.php`

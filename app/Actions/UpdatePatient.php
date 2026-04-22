@@ -4,39 +4,35 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Patient\UpdatePatientDTO;
 use App\Models\Patient;
 use Illuminate\Support\Facades\DB;
 
 final class UpdatePatient
 {
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    public function handle(Patient $patient, array $data): Patient
+    public function handle(Patient $patient, UpdatePatientDTO $data): Patient
     {
         return DB::transaction(static function () use ($patient, $data): Patient {
-            $ageInputMode = (string) ($data['age_input_mode'] ?? 'dob');
-
             $patient->update([
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'middle_name' => $data['middle_name'] ?? null,
-                'date_of_birth' => $ageInputMode === 'dob' ? ($data['date_of_birth'] ?? null) : null,
-                'age' => $ageInputMode === 'age' ? ($data['age'] ?? null) : null,
-                'age_units' => $ageInputMode === 'age' ? ($data['age_units'] ?? null) : null,
-                'gender' => $data['gender'],
-                'email' => $data['email'] ?? null,
-                'phone_number' => $data['phone_number'],
-                'alternative_phone' => $data['alternative_phone'] ?? null,
-                'next_of_kin_name' => $data['next_of_kin_name'] ?? null,
-                'next_of_kin_phone' => $data['next_of_kin_phone'] ?? null,
-                'next_of_kin_relationship' => $data['next_of_kin_relationship'] ?? null,
-                'address_id' => $data['address_id'] ?? null,
-                'marital_status' => $data['marital_status'] ?? null,
-                'occupation' => $data['occupation'] ?? null,
-                'religion' => $data['religion'] ?? null,
-                'country_id' => $data['country_id'] ?? null,
-                'blood_group' => $data['blood_group'] ?? null,
+                'first_name' => $data->firstName,
+                'last_name' => $data->lastName,
+                'middle_name' => $data->middleName,
+                'date_of_birth' => $data->ageInputMode === 'dob' ? $data->dateOfBirth : null,
+                'age' => $data->ageInputMode === 'age' ? $data->age : null,
+                'age_units' => $data->ageInputMode === 'age' ? $data->ageUnits : null,
+                'gender' => $data->gender,
+                'email' => $data->email,
+                'phone_number' => $data->phoneNumber,
+                'alternative_phone' => $data->alternativePhone,
+                'next_of_kin_name' => $data->nextOfKinName,
+                'next_of_kin_phone' => $data->nextOfKinPhone,
+                'next_of_kin_relationship' => $data->nextOfKinRelationship,
+                'address_id' => $data->addressId,
+                'marital_status' => $data->maritalStatus,
+                'occupation' => $data->occupation,
+                'religion' => $data->religion,
+                'country_id' => $data->countryId,
+                'blood_group' => $data->bloodGroup,
             ]);
 
             return $patient;

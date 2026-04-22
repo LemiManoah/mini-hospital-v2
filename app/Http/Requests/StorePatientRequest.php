@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Patient\CreatePatientRegistrationDTO;
 use App\Enums\BloodGroup;
 use App\Enums\Gender;
 use App\Enums\KinRelationship;
 use App\Enums\MaritalStatus;
 use App\Enums\Religion;
 use App\Enums\VisitType;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -18,20 +18,19 @@ use Illuminate\Validation\Rules\Enum;
 
 final class StorePatientRequest extends FormRequest
 {
+    public function createDto(): CreatePatientRegistrationDTO
+    {
+        return CreatePatientRegistrationDTO::fromRequest($this);
+    }
+
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         $tenantId = (string) $this->user()?->tenant_id;
@@ -86,6 +85,11 @@ final class StorePatientRequest extends FormRequest
             ],
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'is_emergency' => $this->boolean('is_emergency'),
+        ]);
+    }
 }
-
-

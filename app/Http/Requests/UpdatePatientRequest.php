@@ -4,33 +4,32 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Patient\UpdatePatientDTO;
 use App\Enums\BloodGroup;
 use App\Enums\Gender;
 use App\Enums\KinRelationship;
 use App\Enums\MaritalStatus;
 use App\Enums\Religion;
 use App\Models\Patient;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 final class UpdatePatientRequest extends FormRequest
 {
+    public function updateDto(): UpdatePatientDTO
+    {
+        return UpdatePatientDTO::fromRequest($this);
+    }
+
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         /** @var Patient $patient */
@@ -60,5 +59,3 @@ final class UpdatePatientRequest extends FormRequest
         ];
     }
 }
-
-

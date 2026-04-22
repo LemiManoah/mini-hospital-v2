@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\DeletePatient;
 use App\Actions\RegisterPatientAndStartVisit;
 use App\Actions\UpdatePatient;
+use App\Data\Patient\CreatePatientRegistrationDTO;
 use App\Enums\AllergyReaction;
 use App\Enums\AllergySeverity;
 use App\Enums\BloodGroup;
@@ -129,13 +130,13 @@ final readonly class PatientController implements HasMiddleware
 
     public function store(StorePatientRequest $request, RegisterPatientAndStartVisit $action): RedirectResponse
     {
-        $validated = $request->validated();
+        $dto = $request->createDto();
 
-        if (! $this->usesActiveBranchAssignments($validated)) {
+        if (! $this->usesActiveBranchAssignments($dto)) {
             return back()->with('error', 'Select a doctor and clinic from the active branch.');
         }
 
-        $registration = $action->handle($validated);
+        $registration = $action->handle($dto);
         $patient = $registration['patient'];
         $visit = $registration['visit'];
         $redirectTo = $request->input('redirect_to', 'visit');
@@ -167,7 +168,7 @@ final readonly class PatientController implements HasMiddleware
 
     public function update(UpdatePatientRequest $request, Patient $patient, UpdatePatient $action): RedirectResponse
     {
-        $action->handle($patient, $request->validated());
+        $action->handle($patient, $request->updateDto());
 
         return to_route('patients.index')->with('success', 'Patient updated successfully.');
     }
@@ -272,10 +273,7 @@ final readonly class PatientController implements HasMiddleware
         ];
     }
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    private function usesActiveBranchAssignments(array $attributes): bool
+    private function usesActiveBranchAssignments(CreatePatientRegistrationDTO $dto): bool
     {
         $activeBranchId = BranchContext::getActiveBranchId();
 
@@ -283,7 +281,7 @@ final readonly class PatientController implements HasMiddleware
             return false;
         }
 
-        $clinicId = $attributes['clinic_id'] ?? null;
+        $clinicId = $dto->clinicId;
         if (
             is_string($clinicId)
             && $clinicId !== ''
@@ -295,7 +293,7 @@ final readonly class PatientController implements HasMiddleware
             return false;
         }
 
-        $doctorId = $attributes['doctor_id'] ?? null;
+        $doctorId = $dto->doctorId;
 
         return ! is_string($doctorId)
             || $doctorId === ''
