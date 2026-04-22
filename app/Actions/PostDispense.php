@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Pharmacy\PostDispenseDTO;
+use App\Data\Pharmacy\PostDispenseItemDTO;
 use App\Enums\DispensingRecordStatus;
 use App\Enums\StockMovementType;
 use App\Models\DispensingRecord;
@@ -30,12 +32,9 @@ final readonly class PostDispense
         private PrescriptionDispenseStatusResolver $statusResolver,
     ) {}
 
-    /**
-     * @param  array<int, array<string, mixed>>  $items
-     */
-    public function handle(DispensingRecord $dispensingRecord, array $items = []): DispensingRecord
+    public function handle(DispensingRecord $dispensingRecord, PostDispenseDTO $data): DispensingRecord
     {
-        return DB::transaction(function () use ($dispensingRecord, $items): DispensingRecord {
+        return DB::transaction(function () use ($dispensingRecord, $data): DispensingRecord {
             $dispensingRecord = DispensingRecord::query()
                 ->with([
                     'items.prescriptionItem',
@@ -56,12 +55,11 @@ final readonly class PostDispense
                 'enable_batch_tracking_when_dispensing',
             );
 
-            /** @var Collection<string, array<string, mixed>> $payloadByItem */
-            $payloadByItem = collect($items)
-                ->filter(static fn (mixed $item): bool => is_array($item))
-                ->mapWithKeys(static fn (array $item): array => is_string($item['dispensing_record_item_id'] ?? null)
-                    ? [$item['dispensing_record_item_id'] => $item]
-                    : []);
+            /** @var Collection<string, PostDispenseItemDTO> $payloadByItem */
+            $payloadByItem = collect($data->items)
+                ->mapWithKeys(static fn (PostDispenseItemDTO $item): array => [
+                    $item->dispensingRecordItemId => $item,
+                ]);
 
             $availableBatches = $this->availableBatches($dispensingRecord);
 
@@ -243,20 +241,19 @@ final readonly class PostDispense
     }
 
     /**
-     * @param  array<string, mixed>|null  $payload
      * @param  Collection<string, array<string, mixed>>  $availableBatches
      * @param  Collection<string, float>  $availableQuantities
      * @return array<int, array{batch: InventoryBatch, quantity: float}>
      */
     private function manualAllocations(
         DispensingRecordItem $recordItem,
-        ?array $payload,
+        ?PostDispenseItemDTO $payload,
         Collection $availableBatches,
         Collection $availableQuantities,
     ): array {
-        $allocations = $payload['allocations'] ?? null;
+        $allocations = $payload?->allocations ?? [];
 
-        if (! is_array($allocations) || $allocations === []) {
+        if ($allocations === []) {
             throw ValidationException::withMessages([
                 sprintf('items.%s.allocations', $recordItem->id) => 'Select one or more pharmacy batches before posting this dispense.',
             ]);
@@ -267,26 +264,7 @@ final readonly class PostDispense
         $allocationTotal = 0.0;
 
         foreach ($allocations as $allocation) {
-            if (! is_array($allocation)) {
-                continue;
-            }
-
-            $batchId = $allocation['inventory_batch_id'] ?? null;
-            $quantity = $allocation['quantity'] ?? null;
-
-            if (! is_string($batchId)) {
-                continue;
-            }
-
-            if ($batchId === '') {
-                continue;
-            }
-
-            if (! is_numeric($quantity)) {
-                continue;
-            }
-
-            $batchData = $availableBatches->get($batchId);
+            $batchData = $availableBatches->get($allocation->inventoryBatchId);
             if (! is_array($batchData)) {
                 throw ValidationException::withMessages([
                     sprintf('items.%s.allocations', $recordItem->id) => 'One of the selected pharmacy batches is no longer available.',
@@ -299,8 +277,8 @@ final readonly class PostDispense
                 ]);
             }
 
-            $allocationQuantity = round((float) $quantity, 3);
-            $availableQuantity = (float) ($remainingByBatch[$batchId] ?? 0.0);
+            $allocationQuantity = round($allocation->quantity, 3);
+            $availableQuantity = (float) ($remainingByBatch[$allocation->inventoryBatchId] ?? 0.0);
 
             if ($allocationQuantity <= 0 || $allocationQuantity > $availableQuantity + 0.0005) {
                 throw ValidationException::withMessages([
@@ -308,7 +286,7 @@ final readonly class PostDispense
                 ]);
             }
 
-            $remainingByBatch[$batchId] = $availableQuantity - $allocationQuantity;
+            $remainingByBatch[$allocation->inventoryBatchId] = $availableQuantity - $allocationQuantity;
             $allocationTotal += $allocationQuantity;
             $resolvedAllocations[] = [
                 'batch' => $batchData['batch'],

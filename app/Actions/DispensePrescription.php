@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Pharmacy\DispensePrescriptionDTO;
+use App\Data\Pharmacy\PostDispenseDTO;
+use App\Data\Pharmacy\PostDispenseItemDTO;
 use App\Models\DispensingRecord;
 use App\Models\DispensingRecordItem;
 use App\Models\Prescription;
@@ -16,32 +19,31 @@ final readonly class DispensePrescription
         private PostDispense $postDispense,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     * @param  array<int, array<string, mixed>>  $items
-     */
-    public function handle(Prescription $prescription, array $attributes, array $items): DispensingRecord
+    public function handle(Prescription $prescription, DispensePrescriptionDTO $data): DispensingRecord
     {
-        return DB::transaction(function () use ($prescription, $attributes, $items): DispensingRecord {
-            $record = $this->createDispensingRecord->handle($prescription, $attributes, $items);
+        return DB::transaction(function () use ($prescription, $data): DispensingRecord {
+            $record = $this->createDispensingRecord->handle($prescription, $data->toCreateDispensingRecordDTO());
 
-            $postItems = $record->items
-                ->map(function (DispensingRecordItem $recordItem) use ($items): array {
-                    $matchingItem = collect($items)->first(
-                        static fn (array $item): bool => ($item['prescription_item_id'] ?? null) === $recordItem->prescription_item_id,
-                    );
+            $sourceItemsByPrescriptionItem = collect($data->items)
+                ->mapWithKeys(static fn ($item): array => [
+                    $item->prescriptionItemId => $item,
+                ]);
 
-                    return [
-                        'dispensing_record_item_id' => $recordItem->id,
-                        'allocations' => is_array($matchingItem['allocations'] ?? null)
-                            ? $matchingItem['allocations']
-                            : [],
-                    ];
-                })
-                ->values()
-                ->all();
+            $postDto = new PostDispenseDTO(
+                items: $record->items
+                    ->map(function (DispensingRecordItem $recordItem) use ($sourceItemsByPrescriptionItem): PostDispenseItemDTO {
+                        $matchingItem = $sourceItemsByPrescriptionItem->get($recordItem->prescription_item_id);
 
-            return $this->postDispense->handle($record, $postItems);
+                        return new PostDispenseItemDTO(
+                            dispensingRecordItemId: $recordItem->id,
+                            allocations: $matchingItem?->allocations ?? [],
+                        );
+                    })
+                    ->values()
+                    ->all(),
+            );
+
+            return $this->postDispense->handle($record, $postDto);
         });
     }
 }

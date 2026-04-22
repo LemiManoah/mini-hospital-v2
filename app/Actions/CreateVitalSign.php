@@ -4,87 +4,43 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreateVitalSignDTO;
 use App\Models\PatientVisit;
 use App\Models\VitalSign;
 use Illuminate\Support\Facades\Auth;
 
 final readonly class CreateVitalSign
 {
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    public function handle(PatientVisit $visit, array $data): VitalSign
+    public function handle(PatientVisit $visit, CreateVitalSignDTO $data): VitalSign
     {
         $triage = $visit->triage;
         $staffId = Auth::user()?->staff_id;
 
-        $systolicBp = $this->nullableInt($data['systolic_bp'] ?? null);
-        $diastolicBp = $this->nullableInt($data['diastolic_bp'] ?? null);
-        $heightCm = $this->nullableFloat($data['height_cm'] ?? null);
-        $weightKg = $this->nullableFloat($data['weight_kg'] ?? null);
-
-        $data['temperature_unit'] ??= 'celsius';
-        $data['blood_glucose_unit'] ??= 'mg_dl';
-        $data['systolic_bp'] = $systolicBp;
-        $data['diastolic_bp'] = $diastolicBp;
-        $data['height_cm'] = $heightCm;
-        $data['weight_kg'] = $weightKg;
-        $data['map'] = $this->meanArterialPressure(
-            $systolicBp,
-            $diastolicBp,
-        );
-        $data['bmi'] = $this->bodyMassIndex(
-            $heightCm,
-            $weightKg,
-        );
-
         return VitalSign::query()->create([
-            ...$data,
+            'temperature' => $data->temperature,
+            'temperature_unit' => $data->temperatureUnit,
+            'pulse_rate' => $data->pulseRate,
+            'respiratory_rate' => $data->respiratoryRate,
+            'systolic_bp' => $data->systolicBp,
+            'diastolic_bp' => $data->diastolicBp,
+            'oxygen_saturation' => $data->oxygenSaturation,
+            'on_supplemental_oxygen' => $data->onSupplementalOxygen,
+            'oxygen_delivery_method' => $data->oxygenDeliveryMethod,
+            'oxygen_flow_rate' => $data->oxygenFlowRate,
+            'blood_glucose' => $data->bloodGlucose,
+            'blood_glucose_unit' => $data->bloodGlucoseUnit,
+            'pain_score' => $data->painScore,
+            'height_cm' => $data->heightCm,
+            'weight_kg' => $data->weightKg,
+            'head_circumference_cm' => $data->headCircumferenceCm,
+            'chest_circumference_cm' => $data->chestCircumferenceCm,
+            'muac_cm' => $data->muacCm,
+            'capillary_refill' => $data->capillaryRefill,
+            'map' => $data->meanArterialPressure(),
+            'bmi' => $data->bodyMassIndex(),
             'triage_id' => $triage?->id,
             'recorded_at' => now(),
-            'on_supplemental_oxygen' => ! empty($data['on_supplemental_oxygen']),
             'recorded_by' => $staffId,
         ]);
-    }
-
-    private function meanArterialPressure(?int $systolic, ?int $diastolic): ?int
-    {
-        if ($systolic === null || $diastolic === null) {
-            return null;
-        }
-
-        return (int) round(($systolic + (2 * $diastolic)) / 3);
-    }
-
-    private function bodyMassIndex(mixed $heightCm, mixed $weightKg): ?float
-    {
-        if (! is_numeric($heightCm) || ! is_numeric($weightKg)) {
-            return null;
-        }
-
-        $heightMeters = ((float) $heightCm) / 100;
-        if ($heightMeters <= 0.0) {
-            return null;
-        }
-
-        return round(((float) $weightKg) / ($heightMeters * $heightMeters), 2);
-    }
-
-    private function nullableInt(mixed $value): ?int
-    {
-        if (! is_numeric($value)) {
-            return null;
-        }
-
-        return (int) $value;
-    }
-
-    private function nullableFloat(mixed $value): ?float
-    {
-        if (! is_numeric($value)) {
-            return null;
-        }
-
-        return (float) $value;
     }
 }

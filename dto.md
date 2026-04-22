@@ -24,7 +24,8 @@ From this point forward:
 ### Construction rules
 
 - use `final readonly class`
-- provide a named constructor such as `fromRequest()` or `fromRequest()`
+- top-level request DTOs should expose a named constructor such as `fromRequest()`
+- nested child DTOs should expose payload-oriented constructors such as `fromPayload()`
 - normalize blank strings to `null` where the domain expects nullable text
 - use nested DTO collections for nested payloads instead of nested arrays
 - create and edit payloads must use separate classes
@@ -82,6 +83,30 @@ From this point forward:
   - `app/Actions/UpdateFacilityServiceOrder.php`
   - `app/Data/Clinical/CreateFacilityServiceOrderDTO.php`
   - `app/Data/Clinical/UpdateFacilityServiceOrderDTO.php`
+- Pharmacy / dispensing
+  - `app/Http/Requests/StoreDispenseRequest.php`
+  - `app/Http/Requests/PostDispenseRequest.php`
+  - `app/Http/Requests/DispensePrescriptionRequest.php`
+  - `app/Http/Controllers/DispensingController.php`
+  - `app/Actions/CreateDispensingRecord.php`
+  - `app/Actions/PostDispense.php`
+  - `app/Actions/DispensePrescription.php`
+  - `app/Data/Pharmacy/CreateDispensingRecordDTO.php`
+  - `app/Data/Pharmacy/CreateDispensingRecordItemDTO.php`
+  - `app/Data/Pharmacy/PostDispenseDTO.php`
+  - `app/Data/Pharmacy/PostDispenseItemDTO.php`
+  - `app/Data/Pharmacy/PostDispenseAllocationDTO.php`
+  - `app/Data/Pharmacy/DispensePrescriptionDTO.php`
+  - `app/Data/Pharmacy/DispensePrescriptionItemDTO.php`
+- Triage and vital signs
+  - `app/Http/Requests/StoreTriageRecordRequest.php`
+  - `app/Http/Requests/StoreVitalSignRequest.php`
+  - `app/Http/Controllers/VisitTriageController.php`
+  - `app/Http/Controllers/VisitVitalSignController.php`
+  - `app/Actions/CreateTriageRecord.php`
+  - `app/Actions/CreateVitalSign.php`
+  - `app/Data/Clinical/CreateTriageRecordDTO.php`
+  - `app/Data/Clinical/CreateVitalSignDTO.php`
 
 ## Priority 1: Complex Nested Inventory Flows
 
@@ -227,20 +252,18 @@ These are flatter than the inventory/order flows, but they still represent core 
 - `app/Actions/CreateConsultation.php`
 - `app/Actions/UpdateConsultation.php`
 - `app/Actions/CompleteConsultation.php`
-- `app/Http/Requests/StoreTriageRecordRequest.php`
-- `app/Http/Requests/StoreVitalSignRequest.php`
-- `app/Http/Controllers/VisitTriageController.php`
-- `app/Http/Controllers/VisitVitalSignController.php`
-- `app/Actions/CreateTriageRecord.php`
-- `app/Actions/CreateVitalSign.php`
+- `app/Http/Requests/StoreConsultationRequest.php`
+- `app/Http/Requests/UpdateConsultationRequest.php`
+- `app/Http/Controllers/DoctorConsultationController.php`
+- `app/Actions/CreateConsultation.php`
+- `app/Actions/UpdateConsultation.php`
+- `app/Actions/CompleteConsultation.php`
 
 DTOs:
 
 - `CreateConsultationDTO`
 - `UpdateConsultationDTO`
 - `CompleteConsultationDTO`
-- `CreateTriageRecordDTO`
-- `CreateVitalSignDTO`
 
 ## Priority 5: Onboarding, Staff, Patient, and Auth Inputs
 

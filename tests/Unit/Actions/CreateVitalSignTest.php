@@ -3,11 +3,29 @@
 declare(strict_types=1);
 
 use App\Actions\CreateVitalSign;
+use App\Data\Clinical\CreateVitalSignDTO;
 use App\Models\PatientVisit;
 use App\Models\User;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+
+function createVitalSignActionRequest(array $validated): FormRequest
+{
+    return new class($validated) extends FormRequest
+    {
+        public function __construct(private array $validatedInput)
+        {
+            parent::__construct();
+        }
+
+        public function validated($key = null, $default = null): array
+        {
+            return $this->validatedInput;
+        }
+    };
+}
 
 it('normalizes numeric strings before calculating derived vital sign values', function (): void {
     $tenantId = (string) Str::uuid();
@@ -82,12 +100,14 @@ it('normalizes numeric strings before calculating derived vital sign values', fu
 
     $visit = PatientVisit::query()->with('triage')->findOrFail($visitId);
 
-    $vitalSign = resolve(CreateVitalSign::class)->handle($visit, [
+    $vitalSign = resolve(CreateVitalSign::class)->handle($visit, CreateVitalSignDTO::fromRequest(createVitalSignActionRequest([
         'systolic_bp' => '120',
         'diastolic_bp' => '80',
         'height_cm' => '180',
         'weight_kg' => '75',
-    ]);
+        'temperature_unit' => 'celsius',
+        'blood_glucose_unit' => 'mg_dl',
+    ])));
 
     expect($vitalSign->systolic_bp)->toBe(120)
         ->and($vitalSign->diastolic_bp)->toBe(80)

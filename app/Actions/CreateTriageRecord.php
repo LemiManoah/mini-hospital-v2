@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreateTriageRecordDTO;
 use App\Enums\VisitStatus;
 use App\Models\PatientVisit;
 use App\Models\TriageRecord;
@@ -15,10 +16,7 @@ final readonly class CreateTriageRecord
         private TransitionPatientVisitStatus $transitionStatus,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    public function handle(PatientVisit $visit, array $data): TriageRecord
+    public function handle(PatientVisit $visit, CreateTriageRecordDTO $data): TriageRecord
     {
         $staffId = Auth::user()?->staff_id;
 
@@ -28,27 +26,27 @@ final readonly class CreateTriageRecord
             'visit_id' => $visit->id,
             'nurse_id' => $staffId,
             'triage_datetime' => now(),
-            'triage_grade' => $data['triage_grade'],
-            'attendance_type' => $data['attendance_type'],
-            'news_score' => $data['news_score'] ?? null,
-            'pews_score' => $data['pews_score'] ?? null,
-            'conscious_level' => $data['conscious_level'],
-            'mobility_status' => $data['mobility_status'],
-            'chief_complaint' => $data['chief_complaint'],
-            'history_of_presenting_illness' => $data['history_of_presenting_illness'] ?? null,
-            'assigned_clinic_id' => $data['assigned_clinic_id'] ?? null,
-            'requires_priority' => ! empty($data['requires_priority'])
-                || in_array($data['triage_grade'], ['red', 'yellow'], true),
-            'is_pediatric' => ! empty($data['is_pediatric']),
-            'poisoning_case' => ! empty($data['poisoning_case']),
-            'poisoning_agent' => $data['poisoning_agent'] ?? null,
-            'snake_bite_case' => ! empty($data['snake_bite_case']),
-            'referred_by' => $data['referred_by'] ?? null,
-            'nurse_notes' => $data['nurse_notes'] ?? null,
+            'triage_grade' => $data->triageGrade,
+            'attendance_type' => $data->attendanceType,
+            'news_score' => $data->newsScore,
+            'pews_score' => $data->pewsScore,
+            'conscious_level' => $data->consciousLevel,
+            'mobility_status' => $data->mobilityStatus,
+            'chief_complaint' => $data->chiefComplaint,
+            'history_of_presenting_illness' => $data->historyOfPresentingIllness,
+            'assigned_clinic_id' => $data->assignedClinicId,
+            'requires_priority' => $data->requiresPriority
+                || in_array($data->triageGrade, ['red', 'yellow'], true),
+            'is_pediatric' => $data->isPediatric,
+            'poisoning_case' => $data->poisoningCase,
+            'poisoning_agent' => $data->poisoningAgent,
+            'snake_bite_case' => $data->snakeBiteCase,
+            'referred_by' => $data->referredBy,
+            'nurse_notes' => $data->nurseNotes,
         ]);
 
-        if (! empty($data['assigned_clinic_id']) && $visit->clinic_id !== $data['assigned_clinic_id']) {
-            $visit->update(['clinic_id' => $data['assigned_clinic_id']]);
+        if ($data->assignedClinicId !== null && $visit->clinic_id !== $data->assignedClinicId) {
+            $visit->update(['clinic_id' => $data->assignedClinicId]);
         }
 
         if ($visit->status === VisitStatus::REGISTERED) {

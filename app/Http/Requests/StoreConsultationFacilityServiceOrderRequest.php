@@ -26,18 +26,12 @@ final class StoreConsultationFacilityServiceOrderRequest extends FormRequest
 
     public function createDto(): CreateFacilityServiceOrderDTO
     {
-        /** @var array{facility_service_id: string} $validated */
-        $validated = $this->validated();
-
-        return CreateFacilityServiceOrderDTO::fromArray($validated);
+        return CreateFacilityServiceOrderDTO::fromRequest($this);
     }
 
     public function updateDto(): UpdateFacilityServiceOrderDTO
     {
-        /** @var array{facility_service_id: string} $validated */
-        $validated = $this->validated();
-
-        return UpdateFacilityServiceOrderDTO::fromArray($validated);
+        return UpdateFacilityServiceOrderDTO::fromRequest($this);
     }
 
     public function withValidator(Validator $validator): void

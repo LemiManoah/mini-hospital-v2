@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Data\Clinical;
 
+use Illuminate\Foundation\Http\FormRequest;
+
 final readonly class UpdateFacilityServiceOrderDTO
 {
     public function __construct(
@@ -11,12 +13,15 @@ final readonly class UpdateFacilityServiceOrderDTO
     ) {}
 
     /**
-     * @param  array{facility_service_id: string}  $attributes
+     * @param  array{facility_service_id: string}  $validated
      */
-    public static function fromArray(array $attributes): self
+    public static function fromRequest(FormRequest $request): self
     {
+        /** @var array{facility_service_id: string} $validated */
+        $validated = $request->validated();
+
         return new self(
-            facilityServiceId: $attributes['facility_service_id'],
+            facilityServiceId: $validated['facility_service_id'],
         );
     }
 }

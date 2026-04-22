@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Pharmacy\CreateDispensingRecordDTO;
 use App\Models\InventoryLocation;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
@@ -19,6 +20,11 @@ use Illuminate\Validation\Validator;
 
 final class StoreDispenseRequest extends FormRequest
 {
+    public function createDto(): CreateDispensingRecordDTO
+    {
+        return CreateDispensingRecordDTO::fromRequest($this);
+    }
+
     /**
      * @return array<string, mixed>
      */

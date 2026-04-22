@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Clinical\CreateVitalSignDTO;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 final class StoreVitalSignRequest extends FormRequest
 {
+    public function createDto(): CreateVitalSignDTO
+    {
+        return CreateVitalSignDTO::fromRequest($this);
+    }
+
     public function authorize(): bool
     {
         return true;

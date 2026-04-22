@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Clinical\CreateTriageRecordDTO;
 use App\Enums\AttendanceType;
 use App\Enums\ConsciousLevel;
 use App\Enums\MobilityStatus;
@@ -13,20 +14,19 @@ use Illuminate\Validation\Rule;
 
 final class StoreTriageRecordRequest extends FormRequest
 {
+    public function createDto(): CreateTriageRecordDTO
+    {
+        return CreateTriageRecordDTO::fromRequest($this);
+    }
+
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-
-
      * @return array<string, mixed>
-
-
      */
-
-
     public function rules(): array
     {
         return [
@@ -48,5 +48,14 @@ final class StoreTriageRecordRequest extends FormRequest
             'nurse_notes' => ['nullable', 'string'],
         ];
     }
-}
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'requires_priority' => $this->boolean('requires_priority'),
+            'is_pediatric' => $this->boolean('is_pediatric'),
+            'poisoning_case' => $this->boolean('poisoning_case'),
+            'snake_bite_case' => $this->boolean('snake_bite_case'),
+        ]);
+    }
+}

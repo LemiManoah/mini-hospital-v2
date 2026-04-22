@@ -116,12 +116,7 @@ final readonly class DispensingController implements HasMiddleware
 
         abort_unless($record instanceof Prescription, 404);
 
-        $validated = $request->validated();
-        /** @var array<int, array<string, mixed>> $items */
-        $items = is_array($validated['items'] ?? null) ? $validated['items'] : [];
-        unset($validated['items']);
-
-        $dispensingRecord = $action->handle($record, $validated, $items);
+        $dispensingRecord = $action->handle($record, $request->createDto());
 
         return to_route('pharmacy.dispenses.show', ['dispensingRecord' => $dispensingRecord])
             ->with('success', 'Dispensing record created. Post it when you are ready to update stock.');
@@ -144,12 +139,7 @@ final readonly class DispensingController implements HasMiddleware
             'You do not have access to this dispensing record.',
         );
 
-        $validated = $request->validated();
-
-        /** @var array<int, array<string, mixed>> $items */
-        $items = is_array($validated['items'] ?? null) ? $validated['items'] : [];
-
-        $postedRecord = $action->handle($dispensingRecord, $items);
+        $postedRecord = $action->handle($dispensingRecord, $request->postDto());
 
         return to_route('pharmacy.dispenses.show', ['dispensingRecord' => $postedRecord])
             ->with('success', 'Dispense posted successfully and pharmacy stock has been updated.');
@@ -164,12 +154,7 @@ final readonly class DispensingController implements HasMiddleware
 
         abort_unless($record instanceof Prescription, 404);
 
-        $validated = $request->validated();
-        /** @var array<int, array<string, mixed>> $items */
-        $items = is_array($validated['items'] ?? null) ? $validated['items'] : [];
-        unset($validated['items']);
-
-        $action->handle($record, $validated, $items);
+        $action->handle($record, $request->dispenseDto());
 
         return back()->with('success', 'Medication dispensed and pharmacy stock updated.');
     }

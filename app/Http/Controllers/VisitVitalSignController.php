@@ -44,7 +44,7 @@ final readonly class VisitVitalSignController implements HasMiddleware
             return $this->redirect($visit, $redirectTo)->with('error', 'Your user account is not linked to a staff profile.');
         }
 
-        $createVitalSign->handle($visit, $request->validated());
+        $createVitalSign->handle($visit, $request->createDto());
 
         return $this->redirect($visit, $redirectTo)->with('success', 'Vital signs recorded successfully.');
     }

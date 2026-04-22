@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Pharmacy\DispensePrescriptionDTO;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLocation;
 use App\Models\Prescription;
@@ -13,7 +14,6 @@ use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryLocationAccess;
 use App\Support\InventoryStockLedger;
 use App\Support\PrescriptionDispenseProgress;
-use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,12 +22,46 @@ use Illuminate\Validation\Validator;
 
 final class DispensePrescriptionRequest extends FormRequest
 {
+    public function dispenseDto(): DispensePrescriptionDTO
+    {
+        return DispensePrescriptionDTO::fromRequest($this);
+    }
+
     /**
-
-     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
-
+     * @return array<string, mixed>
      */
+    public function rules(): array
+    {
+        return [
+            'inventory_location_id' => [
+                'required',
+                'string',
+                Rule::exists('inventory_locations', 'id')
+                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
+            ],
+            'dispensed_at' => ['required', 'date'],
+            'notes' => ['nullable', 'string'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.prescription_item_id' => ['required', 'string', 'distinct', 'exists:prescription_items,id'],
+            'items.*.dispensed_quantity' => ['required', 'numeric', 'min:0'],
+            'items.*.external_pharmacy' => ['nullable', 'boolean'],
+            'items.*.external_reason' => ['nullable', 'string'],
+            'items.*.notes' => ['nullable', 'string'],
+            'items.*.substitution_inventory_item_id' => [
+                'nullable',
+                'string',
+                Rule::exists('inventory_items', 'id')
+                    ->where(fn (QueryBuilder $query): QueryBuilder => $query->whereNull('deleted_at')),
+            ],
+            'items.*.allocations' => ['nullable', 'array'],
+            'items.*.allocations.*.inventory_batch_id' => ['required', 'string'],
+            'items.*.allocations.*.quantity' => ['required', 'numeric', 'gt:0'],
+        ];
+    }
 
+    /**
+     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
+     */
     public function after(): array
     {
         return [
@@ -35,7 +69,7 @@ final class DispensePrescriptionRequest extends FormRequest
                 $branchId = BranchContext::getActiveBranchId();
                 $prescriptionId = $this->route('prescription')?->getKey();
                 $locationId = $this->input('inventory_location_id');
-                $items = $this->input('items');
+                $items = $this->normalizedItems();
 
                 if (
                     ! is_string($branchId)
@@ -179,7 +213,7 @@ final class DispensePrescriptionRequest extends FormRequest
                 $activeBranchId = BranchContext::getActiveBranchId();
                 $prescription = $this->route('prescription');
                 $locationId = $this->input('inventory_location_id');
-                $items = $this->input('items', []);
+                $items = $this->normalizedItems();
 
                 if (
                     ! $prescription instanceof Prescription
@@ -324,6 +358,85 @@ final class DispensePrescriptionRequest extends FormRequest
             },
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'items' => $this->normalizedItems(),
+        ]);
+    }
+
+    /**
+     * @return list<array{
+     *   prescription_item_id: string,
+     *   dispensed_quantity: int|float|string,
+     *   external_pharmacy: bool,
+     *   external_reason: string|null,
+     *   notes: string|null,
+     *   substitution_inventory_item_id: string|null,
+     *   allocations: list<array{
+     *     inventory_batch_id: string,
+     *     quantity: int|float|string
+     *   }>
+     * }>
+     */
+    private function normalizedItems(): array
+    {
+        $items = $this->input('items', []);
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $normalizedItems = [];
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $prescriptionItemId = $item['prescription_item_id'] ?? null;
+
+            if (! is_string($prescriptionItemId) || $prescriptionItemId === '') {
+                continue;
+            }
+
+            $allocations = [];
+            $rawAllocations = $item['allocations'] ?? [];
+
+            if (is_array($rawAllocations)) {
+                foreach ($rawAllocations as $allocation) {
+                    if (! is_array($allocation)) {
+                        continue;
+                    }
+
+                    $inventoryBatchId = $allocation['inventory_batch_id'] ?? null;
+                    $quantity = $allocation['quantity'] ?? null;
+
+                    if (! is_string($inventoryBatchId) || $inventoryBatchId === '' || ! is_numeric($quantity)) {
+                        continue;
+                    }
+
+                    $allocations[] = [
+                        'inventory_batch_id' => $inventoryBatchId,
+                        'quantity' => $quantity,
+                    ];
+                }
+            }
+
+            $normalizedItems[] = [
+                'prescription_item_id' => $prescriptionItemId,
+                'dispensed_quantity' => $item['dispensed_quantity'] ?? 0,
+                'external_pharmacy' => filter_var($item['external_pharmacy'] ?? false, FILTER_VALIDATE_BOOL),
+                'external_reason' => is_string($item['external_reason'] ?? null) ? $item['external_reason'] : null,
+                'notes' => is_string($item['notes'] ?? null) ? $item['notes'] : null,
+                'substitution_inventory_item_id' => is_string($item['substitution_inventory_item_id'] ?? null)
+                    ? $item['substitution_inventory_item_id']
+                    : null,
+                'allocations' => $allocations,
+            ];
+        }
+
+        return $normalizedItems;
+    }
 }
-
-

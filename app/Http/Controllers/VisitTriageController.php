@@ -44,7 +44,7 @@ final readonly class VisitTriageController implements HasMiddleware
             return $this->redirect($visit, $redirectTo)->with('error', 'Your user account is not linked to a staff profile.');
         }
 
-        $createTriage->handle($visit, $request->validated());
+        $createTriage->handle($visit, $request->createDto());
 
         return $this->redirect($visit, $redirectTo)->with('success', 'Triage recorded successfully.');
     }

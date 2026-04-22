@@ -7,18 +7,31 @@ namespace App\Http\Requests;
 use App\Models\InventoryBatch;
 use App\Models\InventoryRequisition;
 use App\Support\InventoryStockLedger;
-use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 final class IssueInventoryRequisitionRequest extends FormRequest
 {
     /**
-
-     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
-
+     * @return array<string, mixed>
      */
+    public function rules(): array
+    {
+        return [
+            'issued_notes' => ['nullable', 'string'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.inventory_requisition_item_id' => ['required', 'string'],
+            'items.*.issue_quantity' => ['required', 'numeric', 'min:0'],
+            'items.*.notes' => ['nullable', 'string'],
+            'items.*.allocations' => ['required', 'array', 'min:1'],
+            'items.*.allocations.*.inventory_batch_id' => ['required', 'string'],
+            'items.*.allocations.*.quantity' => ['required', 'numeric', 'min:0'],
+        ];
+    }
 
+    /**
+     * @return array<int, callable(Validator): void>
+     */
     public function after(): array
     {
         return [
@@ -155,5 +168,3 @@ final class IssueInventoryRequisitionRequest extends FormRequest
         ];
     }
 }
-
-

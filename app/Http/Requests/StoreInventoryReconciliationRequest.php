@@ -7,20 +7,32 @@ namespace App\Http\Requests;
 use App\Models\InventoryBatch;
 use App\Support\BranchContext;
 use App\Support\InventoryStockLedger;
-use Closure;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 final class StoreInventoryReconciliationRequest extends FormRequest
 {
     /**
-
-     * @return array<int, callable(\\Illuminate\\Validation\\Validator): void>
-
+     * @return array<string, mixed>
      */
+    public function rules(): array
+    {
+        return [
+            'inventory_location_id' => ['required', 'string'],
+            'reconciliation_date' => ['required', 'date'],
+            'reason' => ['required', 'string'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.inventory_item_id' => ['required', 'string'],
+            'items.*.inventory_batch_id' => ['nullable', 'string'],
+            'items.*.actual_quantity' => ['required', 'numeric'],
+            'items.*.unit_cost' => ['nullable', 'numeric'],
+            'items.*.notes' => ['nullable', 'string'],
+        ];
+    }
 
+    /**
+     * @return array<int, callable(Validator): void>
+     */
     public function after(): array
     {
         return [
@@ -131,5 +143,3 @@ final class StoreInventoryReconciliationRequest extends FormRequest
         ];
     }
 }
-
-

@@ -4,78 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Pharmacy\PostDispenseDTO;
 use App\Enums\DispensingRecordStatus;
 use App\Models\DispensingRecord;
 use App\Models\InventoryBatch;
 use App\Support\BranchContext;
 use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryStockLedger;
-use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 final class PostDispenseRequest extends FormRequest
 {
-    /**
-     * @return list<array{
-     *   dispensing_record_item_id: string,
-     *   allocations: list<array{
-     *     inventory_batch_id: string,
-     *     quantity: int|float|string
-     *   }>
-     * }>
-     */
-    private function dispenseItems(): array
+    public function postDto(): PostDispenseDTO
     {
-        $items = $this->input('items', []);
-
-        if (! is_array($items)) {
-            return [];
-        }
-
-        $normalizedItems = [];
-
-        foreach ($items as $item) {
-            if (! is_array($item)) {
-                continue;
-            }
-
-            $dispensingRecordItemId = $item['dispensing_record_item_id'] ?? null;
-
-            if (! is_string($dispensingRecordItemId) || $dispensingRecordItemId === '') {
-                continue;
-            }
-
-            $allocations = [];
-            $rawAllocations = $item['allocations'] ?? [];
-
-            if (is_array($rawAllocations)) {
-                foreach ($rawAllocations as $allocation) {
-                    if (! is_array($allocation)) {
-                        continue;
-                    }
-
-                    $inventoryBatchId = $allocation['inventory_batch_id'] ?? null;
-                    $quantity = $allocation['quantity'] ?? null;
-
-                    if (! is_string($inventoryBatchId) || $inventoryBatchId === '' || ! is_numeric($quantity)) {
-                        continue;
-                    }
-
-                    $allocations[] = [
-                        'inventory_batch_id' => $inventoryBatchId,
-                        'quantity' => $quantity,
-                    ];
-                }
-            }
-
-            $normalizedItems[] = [
-                'dispensing_record_item_id' => $dispensingRecordItemId,
-                'allocations' => $allocations,
-            ];
-        }
-
-        return $normalizedItems;
+        return PostDispenseDTO::fromRequest($this);
     }
 
     /**
@@ -235,6 +178,66 @@ final class PostDispenseRequest extends FormRequest
             },
         ];
     }
+
+    /**
+     * @return list<array{
+     *   dispensing_record_item_id: string,
+     *   allocations: list<array{
+     *     inventory_batch_id: string,
+     *     quantity: int|float|string
+     *   }>
+     * }>
+     */
+    private function dispenseItems(): array
+    {
+        $items = $this->input('items', []);
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $normalizedItems = [];
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $dispensingRecordItemId = $item['dispensing_record_item_id'] ?? null;
+
+            if (! is_string($dispensingRecordItemId) || $dispensingRecordItemId === '') {
+                continue;
+            }
+
+            $allocations = [];
+            $rawAllocations = $item['allocations'] ?? [];
+
+            if (is_array($rawAllocations)) {
+                foreach ($rawAllocations as $allocation) {
+                    if (! is_array($allocation)) {
+                        continue;
+                    }
+
+                    $inventoryBatchId = $allocation['inventory_batch_id'] ?? null;
+                    $quantity = $allocation['quantity'] ?? null;
+
+                    if (! is_string($inventoryBatchId) || $inventoryBatchId === '' || ! is_numeric($quantity)) {
+                        continue;
+                    }
+
+                    $allocations[] = [
+                        'inventory_batch_id' => $inventoryBatchId,
+                        'quantity' => $quantity,
+                    ];
+                }
+            }
+
+            $normalizedItems[] = [
+                'dispensing_record_item_id' => $dispensingRecordItemId,
+                'allocations' => $allocations,
+            ];
+        }
+
+        return $normalizedItems;
+    }
 }
-
-
