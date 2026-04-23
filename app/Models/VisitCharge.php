@@ -8,7 +8,6 @@ use App\Enums\VisitChargeStatus;
 use App\Traits\BelongsToTenant;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -40,7 +39,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class VisitCharge extends Model
 {
     use BelongsToTenant;
-    use HasFactory;
     use HasUuids;
     use SoftDeletes;
 

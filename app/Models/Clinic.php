@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\GeneralStatus;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,7 +14,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class Clinic extends Model
 {
     use BelongsToTenant;
-    use HasFactory;
     use HasUuids;
     use SoftDeletes;
 

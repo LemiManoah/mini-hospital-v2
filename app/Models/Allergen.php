@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\AllergyType;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -26,10 +25,6 @@ use Illuminate\Support\Carbon;
 final class Allergen extends Model
 {
     use BelongsToTenant;
-
-    /** @use HasFactory<\Database\Factories\AllergenFactory> */
-    use HasFactory;
-
     use HasUuids;
     use SoftDeletes;
 

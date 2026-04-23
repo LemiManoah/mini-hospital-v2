@@ -6,8 +6,6 @@ namespace App\Models;
 
 use App\Enums\PrescriptionItemStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -35,9 +33,6 @@ use Illuminate\Support\Carbon;
  */
 final class PrescriptionItem extends Model
 {
-    /** @use HasFactory<Factory<self>> */
-    use HasFactory;
-
     use HasUuids;
 
     protected $casts = [
