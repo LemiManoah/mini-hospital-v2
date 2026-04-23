@@ -147,6 +147,7 @@ final class StoreLabResultEntryRequest extends FormRequest
             if (! is_string($parameterId)) {
                 continue;
             }
+
             if ($parameterId === '') {
                 continue;
             }

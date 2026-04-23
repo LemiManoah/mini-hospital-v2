@@ -174,6 +174,7 @@ final class UpdateLabTestCatalogRequest extends FormRequest
             if ($trimmed === '') {
                 continue;
             }
+
             if (in_array($trimmed, $specimenTypeIds, true)) {
                 continue;
             }

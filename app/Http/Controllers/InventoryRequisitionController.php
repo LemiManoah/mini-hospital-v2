@@ -513,9 +513,11 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             if (! is_string($sourceLineId)) {
                 continue;
             }
+
             if ($sourceLineId === '') {
                 continue;
             }
+
             $history[$sourceLineId] = $movements
                 ->map(static fn (StockMovement $movement): array => [
                     'quantity' => abs((float) $movement->quantity),
