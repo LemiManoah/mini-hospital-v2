@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Collection;
 use App\Enums\AttendanceType;
 use App\Enums\ConsciousLevel;
 use App\Enums\MobilityStatus;
@@ -36,10 +38,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read PatientVisit|null $visit
  * @property-read Staff|null $nurse
  * @property-read Clinic|null $assignedClinic
- * @property-read \Illuminate\Database\Eloquent\Collection<int, VitalSign> $vitalSigns
+ * @property-read Collection<int, VitalSign> $vitalSigns
  */
 final class TriageRecord extends Model
 {
+    use HasFactory;
     use BelongsToTenant;
     use HasUuids;
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Models\LabRequest;
 use App\Data\Clinical\CreateLabRequestItemConsumableDTO;
 use App\Enums\InventoryLocationType;
 use App\Enums\LabRequestItemStatus;
@@ -34,7 +35,7 @@ final readonly class RecordLabRequestItemConsumable
         return DB::transaction(function () use ($labRequestItem, $data, $staffId): LabRequestItemConsumable {
             $labRequestItem->loadMissing('request');
             $request = $labRequestItem->request;
-            if (! $request instanceof \App\Models\LabRequest) {
+            if (! $request instanceof LabRequest) {
                 throw ValidationException::withMessages([
                     'lab_request_item_id' => 'The selected lab request item is not linked to a valid lab request.',
                 ]);
@@ -87,7 +88,7 @@ final readonly class RecordLabRequestItemConsumable
     ): void {
         $labRequestItem->loadMissing('request');
         $request = $labRequestItem->request;
-        if (! $request instanceof \App\Models\LabRequest) {
+        if (! $request instanceof LabRequest) {
             throw ValidationException::withMessages([
                 'lab_request_item_id' => 'The selected lab request item is not linked to a valid lab request.',
             ]);

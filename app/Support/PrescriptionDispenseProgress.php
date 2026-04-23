@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Date;
 use App\Enums\DispensingRecordStatus;
 use App\Models\DispensingRecordItem;
 use Illuminate\Support\Carbon;
@@ -58,7 +59,7 @@ final class PrescriptionDispenseProgress
                     3,
                 ),
                 'latest_dispensed_at' => $row->latest_dispensed_at !== null
-                    ? Carbon::parse($row->latest_dispensed_at)
+                    ? Date::parse($row->latest_dispensed_at)
                     : null,
                 'external_pharmacy' => (bool) $row->external_pharmacy,
             ],

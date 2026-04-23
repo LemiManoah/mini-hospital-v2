@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Enums\PayerType;
 use App\Traits\BelongsToTenant;
 use Carbon\CarbonInterface;
@@ -30,6 +31,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 final class VisitPayer extends Model
 {
+    use HasFactory;
     use BelongsToTenant;
     use HasUuids;
     use SoftDeletes;

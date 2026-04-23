@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use App\Traits\BelongsToTenant;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -31,7 +32,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read CarbonInterface|null $deleted_at
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, PurchaseOrder> $purchaseOrders
+ * @property-read Collection<int, PurchaseOrder> $purchaseOrders
  */
 final class Supplier extends Model
 {

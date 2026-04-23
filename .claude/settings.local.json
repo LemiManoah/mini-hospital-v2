@@ -17,9 +17,8 @@
       "Bash(vendor/bin/pint --dirty)",
       "Bash(php.bat vendor/bin/pint --dirty)",
       "Bash(xargs grep *)",
-      "Read(//mnt/c/Users/Manoah/Desktop/projects/personal-practice/**)",
       "Bash(php vendor/bin/pint --dirty)",
-      "Bash(cmd /c \"vendor\\\\\\\\bin\\\\\\\\pint --dirty 2>&1\")"
+      "mcp__laravel-boost__application-info"
     ]
   },
   "enableAllProjectMcpServers": true,

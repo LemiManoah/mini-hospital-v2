@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Collection;
 use App\Enums\BillingStatus;
 use App\Enums\PayerType;
 use App\Traits\BelongsToTenant;
@@ -38,11 +40,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read FacilityBranch|null $branch
  * @property-read InsuranceCompany|null $insuranceCompany
  * @property-read InsurancePackage|null $insurancePackage
- * @property-read \Illuminate\Database\Eloquent\Collection<int, VisitCharge> $charges
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Payment> $payments
+ * @property-read Collection<int, VisitCharge> $charges
+ * @property-read Collection<int, Payment> $payments
  */
 final class VisitBilling extends Model
 {
+    use HasFactory;
     use BelongsToTenant;
     use HasUuids;
     use SoftDeletes;

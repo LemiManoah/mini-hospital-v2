@@ -73,9 +73,7 @@ final class PatientSeeder extends Seeder
             $address = $addresses->get($addressIndex % $addresses->count());
             $addressIndex++;
 
-            if (! $address instanceof Address) {
-                throw new RuntimeException('PatientSeeder expected a valid address instance.');
-            }
+            throw_unless($address instanceof Address, RuntimeException::class, 'PatientSeeder expected a valid address instance.');
 
             Patient::query()->firstOrCreate(
                 ['tenant_id' => $tenant->id, 'patient_number' => $data['patient_number']],

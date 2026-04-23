@@ -255,7 +255,7 @@ final readonly class PostDispense
         Collection $availableBatches,
         Collection $availableQuantities,
     ): array {
-        $allocations = $payload === null ? [] : $payload->allocations;
+        $allocations = $payload instanceof PostDispenseItemDTO ? $payload->allocations : [];
 
         if ($allocations === []) {
             throw ValidationException::withMessages([

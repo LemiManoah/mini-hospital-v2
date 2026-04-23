@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use Illuminate\Support\Collection;
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Enums\SubscriptionStatus;
@@ -67,13 +68,13 @@ final class FacilitySeeder extends Seeder
 
         throw_unless($package instanceof SubscriptionPackage, RuntimeException::class, 'FacilitySeeder requires at least one subscription package.');
 
-        /** @var \Illuminate\Support\Collection<string, Country> $countries */
+        /** @var Collection<string, Country> $countries */
         $countries = Country::query()
             ->whereIn('country_code', ['RW', 'UG', 'KE'])
             ->get()
             ->keyBy('country_code');
 
-        /** @var \Illuminate\Support\Collection<string, Currency> $currencies */
+        /** @var Collection<string, Currency> $currencies */
         $currencies = Currency::query()
             ->whereIn('code', ['RWF', 'UGX', 'KES'])
             ->get()
@@ -93,7 +94,10 @@ final class FacilitySeeder extends Seeder
         foreach ($facilityBlueprints as $facility) {
             $country = $countries->get($facility['country_code']);
             $currency = $currencies->get($facility['currency_code']);
-            if (! $country instanceof Country || ! $currency instanceof Currency) {
+            if (! $country instanceof Country) {
+                continue;
+            }
+            if (! $currency instanceof Currency) {
                 continue;
             }
 

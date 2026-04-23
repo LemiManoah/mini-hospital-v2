@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Models\PatientVisit;
 use App\Enums\BillableItemType;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
@@ -19,7 +20,7 @@ final readonly class SyncLabRequestCharge
     {
         $request->loadMissing(['visit.payer', 'items.test']);
         $visit = $request->visit;
-        if (! $visit instanceof \App\Models\PatientVisit) {
+        if (! $visit instanceof PatientVisit) {
             return;
         }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Enums\ReconciliationStatus;
 use App\Traits\BelongsToBranch;
 use App\Traits\BelongsToTenant;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Reconciliation extends Model
 {
+    use HasFactory;
     use BelongsToBranch;
     use BelongsToTenant;
     use HasUuids;

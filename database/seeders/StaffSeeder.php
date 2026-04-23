@@ -261,9 +261,7 @@ final class StaffSeeder extends Seeder
             $address = $addresses->get($addressIndex % $addresses->count());
             $addressIndex++;
 
-            if (! $address instanceof Address) {
-                throw new RuntimeException('StaffSeeder expected a valid address instance.');
-            }
+            throw_unless($address instanceof Address, RuntimeException::class, 'StaffSeeder expected a valid address instance.');
 
             // Create staff
             $staff = Staff::query()->firstOrCreate(

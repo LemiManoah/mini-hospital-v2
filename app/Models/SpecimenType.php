@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Collection;
 use App\Traits\BelongsToTenant;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -18,10 +20,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property-read bool $is_active
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, LabTestCatalog> $labTests
+ * @property-read Collection<int, LabTestCatalog> $labTests
  */
 final class SpecimenType extends Model
 {
+    use HasFactory;
     use BelongsToTenant;
     use HasUuids;
 

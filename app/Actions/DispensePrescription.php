@@ -36,9 +36,7 @@ final readonly class DispensePrescription
             $postItems = $record->items
                 ->map(function (DispensingRecordItem $recordItem) use ($sourceItemsByPrescriptionItem): PostDispenseItemDTO {
                     $matchingItem = $sourceItemsByPrescriptionItem[$recordItem->prescription_item_id] ?? null;
-                    if (! $matchingItem instanceof DispensePrescriptionItemDTO) {
-                        throw new RuntimeException('Dispensing record item could not be matched back to the prescription dispense payload.');
-                    }
+                    throw_unless($matchingItem instanceof DispensePrescriptionItemDTO, RuntimeException::class, 'Dispensing record item could not be matched back to the prescription dispense payload.');
 
                     return new PostDispenseItemDTO(
                         dispensingRecordItemId: $recordItem->id,

@@ -53,7 +53,7 @@ final readonly class CreateInventoryReconciliation
                     ->summarizeByLocation($branchId)
                     ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $locationId)
                     ->mapWithKeys(static fn (array $balance): array => [
-                        $balance['inventory_item_id'] => (float) $balance['quantity'],
+                        $balance['inventory_item_id'] => $balance['quantity'],
                     ])
                 : collect();
 

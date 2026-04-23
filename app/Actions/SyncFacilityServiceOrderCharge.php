@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Models\FacilityService;
+use App\Models\PatientVisit;
 use App\Enums\BillableItemType;
 use App\Models\FacilityServiceOrder;
 
@@ -20,7 +22,7 @@ final readonly class SyncFacilityServiceOrderCharge
 
         $service = $order->service;
         $visit = $order->visit;
-        if (! $service instanceof \App\Models\FacilityService || ! $visit instanceof \App\Models\PatientVisit || ! $service->is_billable) {
+        if (! $service instanceof FacilityService || ! $visit instanceof PatientVisit || ! $service->is_billable) {
             return;
         }
 

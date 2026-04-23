@@ -208,7 +208,7 @@ final readonly class ValidatesAppointmentScheduling
                 'start_time',
                 sprintf(
                     'This appointment falls within a doctor %s on %s.%s',
-                    mb_strtolower($typeLabel),
+                    mb_strtolower((string) $typeLabel),
                     $date->isoFormat('dddd, D MMMM YYYY'),
                     $reasonSuffix,
                 ),
