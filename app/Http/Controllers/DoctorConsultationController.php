@@ -13,6 +13,8 @@ use App\Enums\ConsultationOutcome;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
 use App\Models\Allergen;
+use App\Models\LabRequest;
+use App\Models\LabRequestItem;
 use App\Models\PatientVisit;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\DoctorConsultationAccess;
@@ -251,8 +253,8 @@ final readonly class DoctorConsultationController implements HasMiddleware
 
     private function hideUnreleasedLabResults(PatientVisit $visit): void
     {
-        $visit->labRequests?->each(function (mixed $labRequest): void {
-            $labRequest->items?->each(function (mixed $item): void {
+        $visit->labRequests->each(static function (LabRequest $labRequest): void {
+            $labRequest->items->each(static function (LabRequestItem $item): void {
                 if ($item->result_visible) {
                     return;
                 }

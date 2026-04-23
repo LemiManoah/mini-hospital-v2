@@ -11,6 +11,7 @@ use App\Models\Staff;
 use App\Models\StaffPosition;
 use App\Models\Tenant;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
@@ -49,8 +50,20 @@ final class SupportUserSeeder extends Seeder
     {
         return Tenant::query()
             ->with([
-                'branches' => fn ($query) => $query->orderByDesc('is_main_branch')->orderBy('name'),
-                'departments' => fn ($query) => $query->orderBy('department_name'),
+                'branches' => static function (mixed $query): void {
+                    if (! $query instanceof HasMany) {
+                        return;
+                    }
+
+                    $query->orderByDesc('is_main_branch')->orderBy('name');
+                },
+                'departments' => static function (mixed $query): void {
+                    if (! $query instanceof HasMany) {
+                        return;
+                    }
+
+                    $query->orderBy('department_name');
+                },
             ])
             ->orderBy('name')
             ->get()
@@ -116,6 +129,6 @@ final class SupportUserSeeder extends Seeder
 
     private function tenantSupportEmployeeNumber(Tenant $tenant): string
     {
-        return 'SUP-'.mb_strtoupper($tenant->domain);
+        return 'SUP-'.mb_strtoupper($tenant->domain ?? $tenant->id);
     }
 }

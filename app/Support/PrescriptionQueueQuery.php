@@ -6,8 +6,8 @@ namespace App\Support;
 
 use App\Enums\PrescriptionStatus;
 use App\Models\Prescription;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 final readonly class PrescriptionQueueQuery
 {

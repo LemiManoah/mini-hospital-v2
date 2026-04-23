@@ -24,19 +24,6 @@ final readonly class CreateImagingRequestDTO
         public PregnancyStatus $pregnancyStatus,
     ) {}
 
-    /**
-     * @param  array{
-     *   modality: ImagingModality|string,
-     *   body_part: string,
-     *   laterality: ImagingLaterality|string,
-     *   clinical_history: string,
-     *   indication: string,
-     *   priority: ImagingPriority|string,
-     *   requires_contrast?: bool,
-     *   contrast_allergy_status?: string|null,
-     *   pregnancy_status: PregnancyStatus|string
-     * }  $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

@@ -227,7 +227,7 @@ final readonly class PatientController implements HasMiddleware
     }
 
     /**
-     * @param  array<int, object{value: string, label: string}>  $cases
+     * @param  array<int, Gender|MaritalStatus|BloodGroup|Religion|KinRelationship>  $cases
      * @return array<int, array{value: string, label: string}>
      */
     private function enumOptions(array $cases): array

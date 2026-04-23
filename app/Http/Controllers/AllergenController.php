@@ -92,11 +92,14 @@ final readonly class AllergenController implements HasMiddleware
         return to_route('allergens.index')->with('success', 'Allergen deleted successfully.');
     }
 
+    /**
+     * @return list<array{value: string, label: string}>
+     */
     private function allergenOptions(): array
     {
-        return collect(AllergyType::cases())->map(fn (AllergyType $type): array => [
+        return array_values(collect(AllergyType::cases())->map(fn (AllergyType $type): array => [
             'value' => $type->value,
             'label' => $type->label(),
-        ])->values()->all();
+        ])->all());
     }
 }

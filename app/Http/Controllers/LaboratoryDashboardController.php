@@ -99,16 +99,14 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
                     ->get();
 
                 return $stockRows->mapWithKeys(static fn (object $stockRow): array => [
-                    $stockRow->inventory_item_id => is_int($stockRow->total_qty) || is_float($stockRow->total_qty)
-                        ? (float) $stockRow->total_qty
-                        : (is_string($stockRow->total_qty) ? (float) $stockRow->total_qty : 0.0),
+                    $stockRow->inventory_item_id => (float) $stockRow->total_qty,
                 ]);
             })()
             : collect();
 
         $minimumLevels = $labLocationItems
             ->groupBy('inventory_item_id')
-            ->map(static fn (Collection $items): float => (float) $items->sum('minimum_stock_level'));
+            ->map(static fn (Collection $items): float => $items->sum(static fn (mixed $item): float => $item instanceof InventoryLocationItem ? (float) $item->minimum_stock_level : 0.0));
 
         $stockItemIds = $labLocationItems
             ->pluck('inventory_item_id')
@@ -217,7 +215,11 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
                 'requestedBy:id,first_name,last_name',
                 'visit:id,visit_number,patient_id',
                 'visit.patient:id,patient_number,first_name,last_name',
-                'items' => function (HasMany $query): void {
+                'items' => static function (mixed $query): void {
+                    if (! $query instanceof HasMany) {
+                        return;
+                    }
+
                     $query->with([
                         'test:id,test_code,test_name,lab_test_category_id,result_type_id',
                         'test.labCategory:id,name',

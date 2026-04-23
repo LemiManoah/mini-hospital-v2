@@ -38,6 +38,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -352,8 +353,18 @@ final readonly class AppointmentController implements HasMiddleware
         return to_route('visits.show', $visit)->with('success', 'Appointment checked in successfully.');
     }
 
+    /**
+     * @return array{
+     *     patients: list<array{id: string, name: string, patient_number: string, phone_number: string|null}>,
+     *     doctors: list<array{id: string, name: string}>,
+     *     clinics: list<array{id: string, name: string}>,
+     *     appointmentCategories: list<array{id: string, name: string}>,
+     *     appointmentModes: list<array{id: string, name: string, is_virtual: bool}>
+     * }
+     */
     private function formOptions(?Appointment $appointment = null): array
     {
+        /** @var Collection<int, array{id: string, name: string, patient_number: string, phone_number: string|null}> $patients */
         $patients = Patient::query()
             ->latest()
             ->limit(200)
@@ -405,6 +416,7 @@ final readonly class AppointmentController implements HasMiddleware
             }
         }
 
+        /** @var Collection<int, array{id: string, name: string}> $doctors */
         $doctors = Staff::query()
             ->doctors()
             ->when(
@@ -422,7 +434,7 @@ final readonly class AppointmentController implements HasMiddleware
 
         if (
             $appointment?->doctor()->exists()
-            && ! $doctors->contains('id', $appointment->doctor_id)
+            && $doctors->doesntContain('id', $appointment->doctor_id)
         ) {
             $doctor = $appointment->doctor()->first(['id', 'first_name', 'last_name']);
 
@@ -434,6 +446,7 @@ final readonly class AppointmentController implements HasMiddleware
             }
         }
 
+        /** @var Collection<int, array{id: string, name: string}> $clinics */
         $clinics = Clinic::query()
             ->where('branch_id', BranchContext::getActiveBranchId())
             ->orderBy('clinic_name')
@@ -457,6 +470,7 @@ final readonly class AppointmentController implements HasMiddleware
             }
         }
 
+        /** @var Collection<int, array{id: string, name: string}> $appointmentCategories */
         $appointmentCategories = AppointmentCategory::query()
             ->where('is_active', true)
             ->orderBy('name')
@@ -483,6 +497,7 @@ final readonly class AppointmentController implements HasMiddleware
             }
         }
 
+        /** @var Collection<int, array{id: string, name: string, is_virtual: bool}> $appointmentModes */
         $appointmentModes = AppointmentMode::query()
             ->where('is_active', true)
             ->orderBy('name')
@@ -509,24 +524,30 @@ final readonly class AppointmentController implements HasMiddleware
         }
 
         return [
-            'patients' => $patients->values()->all(),
-            'doctors' => $doctors->values()->all(),
-            'clinics' => $clinics->values()->all(),
-            'appointmentCategories' => $appointmentCategories->values()->all(),
-            'appointmentModes' => $appointmentModes->values()->all(),
+            'patients' => array_values($patients->all()),
+            'doctors' => array_values($doctors->all()),
+            'clinics' => array_values($clinics->all()),
+            'appointmentCategories' => array_values($appointmentCategories->all()),
+            'appointmentModes' => array_values($appointmentModes->all()),
         ];
     }
 
+    /**
+     * @return list<array{value: string, label: string}>
+     */
     private function statusOptions(): array
     {
-        return collect(AppointmentStatus::cases())
+        return array_values(collect(AppointmentStatus::cases())
             ->map(static fn (AppointmentStatus $status): array => [
                 'value' => $status->value,
                 'label' => $status->label(),
             ])
-            ->all();
+            ->all());
     }
 
+    /**
+     * @return Builder<Appointment>
+     */
     private function appointmentQuery(): Builder
     {
         return $this->activeBranchWorkspace->apply(Appointment::query())->with([

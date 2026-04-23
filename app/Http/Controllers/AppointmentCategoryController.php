@@ -117,10 +117,13 @@ final readonly class AppointmentCategoryController implements HasMiddleware
         return to_route('appointment-categories.index')->with('success', 'Appointment category deleted successfully.');
     }
 
+    /**
+     * @return array{clinics: list<array{id: string, name: string}>}
+     */
     private function formOptions(): array
     {
         return [
-            'clinics' => Clinic::query()
+            'clinics' => array_values(Clinic::query()
                 ->where('branch_id', BranchContext::getActiveBranchId())
                 ->orderBy('clinic_name')
                 ->get(['id', 'clinic_name'])
@@ -128,7 +131,7 @@ final readonly class AppointmentCategoryController implements HasMiddleware
                     'id' => $clinic->id,
                     'name' => $clinic->clinic_name,
                 ])
-                ->all(),
+                ->all()),
         ];
     }
 

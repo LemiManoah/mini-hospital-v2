@@ -23,30 +23,6 @@ final readonly class UpdateConsultationDTO
         public ?string $primaryIcd10Code,
     ) {}
 
-    /**
-     * @param  array{
-     *   intent: string,
-     *   chief_complaint?: string|null,
-     *   history_of_present_illness?: string|null,
-     *   review_of_systems?: string|null,
-     *   past_medical_history_summary?: string|null,
-     *   family_history?: string|null,
-     *   social_history?: string|null,
-     *   subjective_notes?: string|null,
-     *   objective_findings?: string|null,
-     *   assessment?: string|null,
-     *   plan?: string|null,
-     *   primary_diagnosis?: string|null,
-     *   primary_icd10_code?: string|null,
-     *   outcome?: string|null,
-     *   follow_up_instructions?: string|null,
-     *   follow_up_days?: int|null,
-     *   is_referred?: bool,
-     *   referred_to_department?: string|null,
-     *   referred_to_facility?: string|null,
-     *   referral_reason?: string|null
-     * } $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

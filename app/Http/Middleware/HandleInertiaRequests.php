@@ -53,11 +53,11 @@ final class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'flash' => [
-                'success' => fn (): ?string => $request->session()->get('success'),
-                'error' => fn (): ?string => $request->session()->get('error'),
-                'info' => fn (): ?string => $request->session()->get('info'),
-                'warning' => fn (): ?string => $request->session()->get('warning'),
-                'reconciliationPrompt' => fn (): ?string => $request->session()->get('reconciliation_prompt'),
+                'success' => fn (): ?string => $this->sessionString($request, 'success'),
+                'error' => fn (): ?string => $this->sessionString($request, 'error'),
+                'info' => fn (): ?string => $this->sessionString($request, 'info'),
+                'warning' => fn (): ?string => $this->sessionString($request, 'warning'),
+                'reconciliationPrompt' => fn (): ?string => $this->sessionString($request, 'reconciliation_prompt'),
             ],
             'auth' => [
                 'user' => $this->sharedUser($user, $activeBranch),
@@ -78,31 +78,53 @@ final class HandleInertiaRequests extends Middleware
         }
 
         $relations = [
-            'tenant' => static fn (BelongsTo $query): BelongsTo => $query
-                ->select('tenants.id', 'tenants.name', 'tenants.onboarding_completed_at')
-                ->with([
-                    'currentSubscription' => static fn (HasOne $subscriptionQuery): HasOne => $subscriptionQuery
-                        ->select(
-                            'tenant_subscriptions.id',
-                            'tenant_subscriptions.tenant_id',
-                            'tenant_subscriptions.status',
-                            'tenant_subscriptions.trial_ends_at',
-                            'tenant_subscriptions.subscription_package_id',
-                        )
-                        ->with([
-                            'subscriptionPackage' => static fn (BelongsTo $packageQuery): BelongsTo => $packageQuery
+            'tenant' => static function (mixed $query): void {
+                if (! $query instanceof BelongsTo) {
+                    return;
+                }
+
+                $query
+                    ->select('tenants.id', 'tenants.name', 'tenants.onboarding_completed_at')
+                    ->with([
+                        'currentSubscription' => static function (mixed $subscriptionQuery): void {
+                            if (! $subscriptionQuery instanceof HasOne) {
+                                return;
+                            }
+
+                            $subscriptionQuery
                                 ->select(
-                                    'subscription_packages.id',
-                                    'subscription_packages.name',
-                                    'subscription_packages.price',
-                                ),
-                        ]),
-                ]),
+                                    'tenant_subscriptions.id',
+                                    'tenant_subscriptions.tenant_id',
+                                    'tenant_subscriptions.status',
+                                    'tenant_subscriptions.trial_ends_at',
+                                    'tenant_subscriptions.subscription_package_id',
+                                )
+                                ->with([
+                                    'subscriptionPackage' => static function (mixed $packageQuery): void {
+                                        if (! $packageQuery instanceof BelongsTo) {
+                                            return;
+                                        }
+
+                                        $packageQuery->select(
+                                            'subscription_packages.id',
+                                            'subscription_packages.name',
+                                            'subscription_packages.price',
+                                        );
+                                    },
+                                ]);
+                        },
+                    ]);
+            },
         ];
 
         if ($user->staffId() !== null) {
-            $relations['staff'] = static fn (BelongsTo $query): BelongsTo => $query
-                ->select('staff.id', 'staff.first_name', 'staff.last_name');
+            $relations['staff'] = static function (mixed $query): void {
+                if (! $query instanceof BelongsTo) {
+                    return;
+                }
+
+                $query->select('staff.id', 'staff.first_name', 'staff.last_name');
+            };
         }
 
         $user->loadMissing($relations);
@@ -116,9 +138,13 @@ final class HandleInertiaRequests extends Middleware
             'is_support' => $user->isSupportUser(),
             'tenant' => $this->sharedTenant($user),
             'active_branch' => $activeBranch,
-            'can' => $user->getAllPermissions()->pluck('name')->mapWithKeys(
-                fn (string $permission): array => [$permission => true]
-            ),
+            'can' => collect(
+                $user->getAllPermissions()
+                    ->pluck('name')
+                    ->filter(static fn (mixed $permission): bool => is_string($permission) && $permission !== '')
+                    ->values()
+                    ->all(),
+            )->mapWithKeys(static fn (string $permission): array => [$permission => true]),
             'roles' => $user->getRoleNames()->values()->all(),
         ];
     }
@@ -186,5 +212,12 @@ final class HandleInertiaRequests extends Middleware
                 'tenant_name' => $targetUser->tenant?->name,
             ],
         ];
+    }
+
+    private function sessionString(Request $request, string $key): ?string
+    {
+        $value = $request->session()->get($key);
+
+        return is_string($value) ? $value : null;
     }
 }

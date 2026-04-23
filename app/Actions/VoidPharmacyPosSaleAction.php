@@ -8,7 +8,6 @@ use App\Enums\PharmacyPosSaleStatus;
 use App\Enums\StockMovementType;
 use App\Models\PharmacyPosSale;
 use App\Models\PharmacyPosSaleItem;
-use App\Models\PharmacyPosSaleItemAllocation;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -31,15 +30,7 @@ final readonly class VoidPharmacyPosSaleAction
             }
 
             foreach ($sale->items as $saleItem) {
-                if (! $saleItem instanceof PharmacyPosSaleItem) {
-                    continue;
-                }
-
                 foreach ($saleItem->allocations as $allocation) {
-                    if (! $allocation instanceof PharmacyPosSaleItemAllocation) {
-                        continue;
-                    }
-
                     StockMovement::query()->create([
                         'tenant_id' => $sale->tenant_id,
                         'branch_id' => $sale->branch_id,

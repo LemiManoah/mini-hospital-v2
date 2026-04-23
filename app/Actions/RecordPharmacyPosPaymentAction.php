@@ -29,7 +29,7 @@ final readonly class RecordPharmacyPosPaymentAction
                 ]);
             }
 
-            $amount = max(0.0, round((float) ($attributes['amount'] ?? 0), 2));
+            $amount = max(0.0, round($this->floatValue($attributes['amount'] ?? null), 2));
 
             if ($amount <= 0) {
                 throw ValidationException::withMessages([
@@ -72,5 +72,18 @@ final readonly class RecordPharmacyPosPaymentAction
         $trimmed = mb_trim($value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function floatValue(mixed $value): float
+    {
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        if (! is_string($value) || ! is_numeric($value)) {
+            return 0.0;
+        }
+
+        return (float) $value;
     }
 }

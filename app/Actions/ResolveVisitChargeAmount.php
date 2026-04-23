@@ -50,10 +50,23 @@ final class ResolveVisitChargeAmount
                 ->value('price');
 
             if ($packagePrice !== null) {
-                return round((float) $packagePrice, 2);
+                return round($this->floatValue($packagePrice), 2);
             }
         }
 
         return $fallbackAmount === null ? null : round($fallbackAmount, 2);
+    }
+
+    private function floatValue(mixed $value): float
+    {
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        if (! is_string($value) || ! is_numeric($value)) {
+            return 0.0;
+        }
+
+        return (float) $value;
     }
 }

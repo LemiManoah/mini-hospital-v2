@@ -88,6 +88,37 @@ Verification:
   - stock-by-location listing from posted receipts and configured location items
 - `vendor/bin/pint --format agent` passed on the touched inventory files
 
+Implemented in this follow-up pass:
+
+- patient and visit controllers now use enum helper contracts that match the actual enum case types instead of pretending cases expose a `$label` property
+- pharmacy queue serialization now works from explicit `PrescriptionItem` and dispense-progress shapes, and its paginator/support typing matches the queue controller usage
+- laboratory dashboard and queue relation closures now use PHPStan-safe narrowing instead of over-specific eager-load callback signatures
+- pharmacy POS cart request boundaries now expose typed cart item attribute payloads before action handoff
+- visit-order lab-request removal now compares against the typed `LabRequestItemStatus` enum instead of a stale string literal
+
+Touched files:
+
+- [app/Http/Requests/StorePharmacyPosCartItemRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\StorePharmacyPosCartItemRequest.php)
+- [app/Http/Requests/UpdatePharmacyPosCartItemRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\UpdatePharmacyPosCartItemRequest.php)
+- [app/Http/Controllers/PharmacyPosCartController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\PharmacyPosCartController.php)
+- [app/Http/Controllers/PharmacyQueueController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\PharmacyQueueController.php)
+- [app/Support/PrescriptionQueueQuery.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Support\PrescriptionQueueQuery.php)
+- [app/Http/Controllers/LaboratoryDashboardController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\LaboratoryDashboardController.php)
+- [app/Http/Controllers/LaboratoryQueueController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\LaboratoryQueueController.php)
+- [app/Http/Controllers/PatientController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\PatientController.php)
+- [app/Http/Controllers/PatientVisitController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\PatientVisitController.php)
+- [app/Http/Controllers/VisitOrderController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\VisitOrderController.php)
+
+Verification:
+
+- focused `phpstan analyse` on this request/controller/support slice passed with `0` errors
+- focused feature tests passed for:
+  - [tests/Feature/Controllers/PatientRegistrationControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\PatientRegistrationControllerTest.php)
+  - [tests/Feature/Controllers/PharmacyQueueControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\PharmacyQueueControllerTest.php)
+  - [tests/Feature/Controllers/LabRequestItemConsumableControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\LabRequestItemConsumableControllerTest.php)
+  - [tests/Feature/Controllers/PermissionEnforcementTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\PermissionEnforcementTest.php)
+- `vendor/bin/pint --format agent` passed on the touched files
+
 ## Group 2: Controller To Action Payload Mismatch
 
 Representative files:
@@ -347,6 +378,24 @@ Current live files in this group from the latest `stan2.md`:
 - `app/Http/Requests/UpdateStaffRequest.php`
 - `app/Http/Requests/UpdateUnitRequest.php`
 
+Implemented in this pass:
+
+- `UpdateStaffRequest` now narrows the `staff` route parameter to `App\Models\Staff` before reading its id for unique-email validation
+- `UpdateUnitRequest` now narrows the `unit` route parameter to `App\Models\Unit` before building the unique-name and unique-symbol rules
+- added direct feature coverage for both update routes so this slice is verified beyond PHPStan
+
+Touched files:
+
+- [app/Http/Requests/UpdateStaffRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\UpdateStaffRequest.php)
+- [app/Http/Requests/UpdateUnitRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\UpdateUnitRequest.php)
+- [tests/Feature/Controllers/StaffAndUnitControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\StaffAndUnitControllerTest.php)
+
+Verification:
+
+- focused `phpstan analyse` on the two request files passed with `0` errors
+- [tests/Feature/Controllers/StaffAndUnitControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\StaffAndUnitControllerTest.php) passed
+- `vendor/bin/pint --format agent` passed on the touched files
+
 ## Group 6: Subscription Activation And Enum/Meta Payload Confusion
 
 Representative file:
@@ -374,6 +423,24 @@ Current live files in this group from the latest `stan2.md`:
 
 - `app/Http/Controllers/SubscriptionActivationController.php`
 
+Implemented in this pass:
+
+- `SubscriptionActivationController` now normalizes subscription `meta` into `array<string, mixed>` before spreading it into update payloads
+- subscription status serialization now stays on `SubscriptionStatus` until the final Inertia payload is built
+- nullable subscription package access is narrowed once before package fields are serialized
+- added focused feature coverage for the activation page payload and the pending-activation checkout handoff
+
+Touched files:
+
+- [app/Http/Controllers/SubscriptionActivationController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\SubscriptionActivationController.php)
+- [tests/Feature/Controllers/SubscriptionActivationControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\SubscriptionActivationControllerTest.php)
+
+Verification:
+
+- focused `phpstan analyse` on `SubscriptionActivationController` passed with `0` errors
+- [tests/Feature/Controllers/SubscriptionActivationControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\SubscriptionActivationControllerTest.php) passed
+- `vendor/bin/pint --format agent` passed on the touched files
+
 ## Group 7: Inertia Shared Props And Middleware Typing
 
 Representative file:
@@ -399,6 +466,24 @@ Priority:
 Current live files in this group from the latest `stan2.md`:
 
 - `app/Http/Middleware/HandleInertiaRequests.php`
+
+Implemented in this pass:
+
+- `HandleInertiaRequests` now uses PHPStan-safe eager-load closures that narrow relation arguments before mutating them
+- shared flash props now resolve through a dedicated `sessionString()` helper, which keeps `mixed` session values out of the shared payload contract
+- permission names are normalized to a real `list<string>` before `mapWithKeys()` builds the `can` map
+- existing middleware coverage was rerun after the type cleanup
+
+Touched files:
+
+- [app/Http/Middleware/HandleInertiaRequests.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Middleware\HandleInertiaRequests.php)
+- [tests/Unit/Middleware/HandleInertiaRequestsTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Unit\Middleware\HandleInertiaRequestsTest.php)
+
+Verification:
+
+- focused `phpstan analyse` on `HandleInertiaRequests` passed with `0` errors
+- [tests/Unit/Middleware/HandleInertiaRequestsTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Unit\Middleware\HandleInertiaRequestsTest.php) passed
+- `vendor/bin/pint --format agent` passed on the touched files
 
 ## Group 8: HasFactory Model Cleanup
 
@@ -440,38 +525,127 @@ Verification:
 - fix `HandleInertiaRequests` closure return types and relation closures
 - tighten `UpdateStaffRequest` and `UpdateUnitRequest` route-model narrowing
 
+## Smaller Final Cleanup Items
+
+Implemented in this pass:
+
+- `PrescriptionDispenseProgress` now parses posted dispense timestamps with `Carbon::parse()` and returns its typed progress map through a named local variable, which makes the collection shape explicit to PHPStan
+- `SupportUserSeeder` now uses PHPStan-safe eager-load closures for tenant branches and departments while still generating and attaching per-tenant support staff
+- added direct seeder coverage for the support-user bootstrap path
+- reran the focused pharmacy queue regression that exercises the dispense-progress helper in the live queue flow
+
+Touched files:
+
+- [app/Support/PrescriptionDispenseProgress.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Support\PrescriptionDispenseProgress.php)
+- [database/seeders/SupportUserSeeder.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\database\seeders\SupportUserSeeder.php)
+- [tests/Unit/Seeders/SupportUserSeederTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Unit\Seeders\SupportUserSeederTest.php)
+
+Verification:
+
+- focused `phpstan analyse` on `PrescriptionDispenseProgress` and `SupportUserSeeder` passed with `0` errors
+- [tests/Unit/Seeders/SupportUserSeederTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Unit\Seeders\SupportUserSeederTest.php) passed
+- focused pharmacy queue regression passed for the partial/local and fully-external dispense flow
+- `vendor/bin/pint --format agent` passed on the touched files
+
 ## Current Remaining Groups
 
-From the latest `stan2.md`, the active error groups are now:
+Implemented in this pass:
 
-1. Request normalization still returning `mixed`
-   Files:
-   - batch substantially reduced; rerun full `stan2.md` snapshot to refresh this list before taking another request-only pass
+- cleaned the action-layer typing issues in `StartTenantSubscription`, `RecordPharmacyPosPaymentAction`, `RefundPharmacyPosSaleAction`, `VoidPharmacyPosSaleAction`, `ResolveVisitChargeAmount`, `SyncAppointmentStatusFromVisit`, `UpdateOnboardingProfile`, `UpdateStaff`, and `RegisterPatientAndStartVisit`
+- normalized subscription meta handling into a typed helper and switched action refresh returns from `fresh()` to `refresh()` plus the original model instance
+- removed the stale top-level `@param ... $validated` docblocks from the DTOs that now build from `FormRequest` instead of raw array parameters
+- tightened administration general-settings typing around stored values and the platform visibility payload
+- added direct unit coverage for the subscription, onboarding profile, and appointment-sync helper paths
 
-2. Controller mixed/nullable serialization issues
-   Files:
-   - `LaboratoryDashboardController`
-   - `LaboratoryQueueController`
-   - `PatientController`
-   - `PatientVisitController`
-   - `PharmacyPosCartController`
-   - `PharmacyQueueController`
-   - `VisitOrderController`
+Touched files:
 
-3. Route-model narrowing issues
-   Files:
-   - `UpdateStaffRequest`
-   - `UpdateUnitRequest`
+- [app/Actions/StartTenantSubscription.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\StartTenantSubscription.php)
+- [app/Actions/RecordPharmacyPosPaymentAction.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\RecordPharmacyPosPaymentAction.php)
+- [app/Actions/RefundPharmacyPosSaleAction.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\RefundPharmacyPosSaleAction.php)
+- [app/Actions/VoidPharmacyPosSaleAction.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\VoidPharmacyPosSaleAction.php)
+- [app/Actions/ResolveVisitChargeAmount.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\ResolveVisitChargeAmount.php)
+- [app/Actions/SyncAppointmentStatusFromVisit.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\SyncAppointmentStatusFromVisit.php)
+- [app/Actions/UpdateOnboardingProfile.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\UpdateOnboardingProfile.php)
+- [app/Actions/UpdateStaff.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\UpdateStaff.php)
+- [app/Actions/RegisterPatientAndStartVisit.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\RegisterPatientAndStartVisit.php)
+- [app/Http/Controllers/AdministrationController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\AdministrationController.php)
+- the DTO files in `app/Data/Clinical`, `app/Data/Inventory`, `app/Data/Onboarding`, `app/Data/Patient`, and `app/Data/Pharmacy` that still had stale `@param ... $validated` method docs
+- [tests/Unit/Actions/StartTenantSubscriptionTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Unit\Actions\StartTenantSubscriptionTest.php)
+- [tests/Unit/Actions/UpdateOnboardingProfileTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Unit\Actions\UpdateOnboardingProfileTest.php)
+- [tests/Unit/Actions/SyncAppointmentStatusFromVisitTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Unit\Actions\SyncAppointmentStatusFromVisitTest.php)
 
-4. Inertia and subscription typing
-   Files:
-   - `HandleInertiaRequests`
-   - `SubscriptionActivationController`
+Verification:
 
-5. Smaller final cleanup items
+- focused `phpstan analyse` on the touched action, controller, and DTO slice passed with `0` errors
+- focused DTO and unit action tests passed
+- focused feature tests passed for:
+  - additional POS payment
+  - POS void and refund
+  - patient registration
+  - administration general settings
+  - staff update
+  - subscription activation
+- `vendor/bin/pint --format agent` passed on the touched files
+
+Implemented in this pass:
+
+- added explicit list/array return-shape typing to controller option payload builders in `AllergenController`, `AppointmentCategoryController`, `AppointmentController`, `DoctorScheduleController`, and `DoctorScheduleExceptionController`
+- added the missing `Builder<Appointment>` / `Builder<DispensingRecord>` return generics where controller query helpers were still untyped
+- removed stale enum/string ambiguity in `BranchSwitcherController`
+- narrowed authenticated users explicitly in `CurrencyExchangeRateController`
+- removed redundant nullable collection access in `DoctorConsultationController::hideUnreleasedLabResults()`
+- normalized `DispensingHistoryController` paginator typing, export-stream resource handling, and nullable relation serialization so the history payload no longer leaks `mixed`
+
+Touched files:
+
+- [app/Http/Controllers/AllergenController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\AllergenController.php)
+- [app/Http/Controllers/AppointmentCategoryController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\AppointmentCategoryController.php)
+- [app/Http/Controllers/AppointmentController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\AppointmentController.php)
+- [app/Http/Controllers/BranchSwitcherController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\BranchSwitcherController.php)
+- [app/Http/Controllers/CurrencyExchangeRateController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\CurrencyExchangeRateController.php)
+- [app/Http/Controllers/DispensingHistoryController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\DispensingHistoryController.php)
+- [app/Http/Controllers/DoctorConsultationController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\DoctorConsultationController.php)
+- [app/Http/Controllers/DoctorScheduleController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\DoctorScheduleController.php)
+- [app/Http/Controllers/DoctorScheduleExceptionController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\DoctorScheduleExceptionController.php)
+
+Verification:
+
+- focused `phpstan analyse` on this entire controller slice passed with `0` errors
+- focused feature tests passed for:
+  - [tests/Feature/Controllers/DispensingHistoryControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\DispensingHistoryControllerTest.php)
+  - [tests/Feature/Controllers/BranchIsolationTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\BranchIsolationTest.php) with the branch-switcher, appointment, and doctor-schedule filters
+  - [tests/Feature/Controllers/LabResultWorkflowControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\LabResultWorkflowControllerTest.php) with the unreleased-result consultation filter
+- `vendor/bin/pint --format agent` passed on the touched controller files
+
+Implemented in this pass:
+
+- cleaned the remaining collection, enum, and timestamp typing issues in `FacilityManagerController`
+- added the missing `Builder<Tenant>` generics on tenant-query helpers
+- removed stale enum/string dual handling from branch and tenant payloads
+- normalized subscription status serialization onto explicit helper methods
+- narrowed branch pivot access for `is_primary_location` so the support payload no longer depends on `mixed`
+- tightened the recent-activity feed to a real typed event collection instead of a loose `array<string, string|null>` approximation
+
+Touched files:
+
+- [app/Http/Controllers/FacilityManagerController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\FacilityManagerController.php)
+
+Verification:
+
+- focused `phpstan analyse` on `FacilityManagerController` passed with `0` errors
+- [tests/Feature/Controllers/FacilityManagerControllerTest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\tests\Feature\Controllers\FacilityManagerControllerTest.php) passed
+- `vendor/bin/pint --format agent` passed on the touched file
+
+From the refreshed `stan2.md`, the next grouped work is now:
+
+1. Facility service and dashboard follow-up controllers
    Files:
-   - `PrescriptionDispenseProgress`
-   - `SupportUserSeeder`
+   - `FacilityServiceController`
+   - `InventoryDashboardController`
+
+2. Any follow-up controller serialization edge cases left after that next pass
+   Files:
+   - whichever controllers still remain in the next refreshed `stan2.md` snapshot after the facility-service and dashboard slice
 
 ## Done Definition For This Round
 

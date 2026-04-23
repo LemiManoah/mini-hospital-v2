@@ -12,9 +12,6 @@ final readonly class UpdateFacilityServiceOrderDTO
         public string $facilityServiceId,
     ) {}
 
-    /**
-     * @param  array{facility_service_id: string}  $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{facility_service_id: string} $validated */

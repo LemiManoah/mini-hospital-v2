@@ -23,22 +23,6 @@ final readonly class CreateConsultationDTO
         public ?string $primaryIcd10Code,
     ) {}
 
-    /**
-     * @param  array{
-     *   chief_complaint?: string|null,
-     *   history_of_present_illness?: string|null,
-     *   review_of_systems?: string|null,
-     *   past_medical_history_summary?: string|null,
-     *   family_history?: string|null,
-     *   social_history?: string|null,
-     *   subjective_notes?: string|null,
-     *   objective_findings?: string|null,
-     *   assessment?: string|null,
-     *   plan?: string|null,
-     *   primary_diagnosis?: string|null,
-     *   primary_icd10_code?: string|null
-     * } $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

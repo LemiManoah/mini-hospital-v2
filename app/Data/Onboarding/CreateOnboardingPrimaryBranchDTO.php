@@ -20,19 +20,6 @@ final readonly class CreateOnboardingPrimaryBranchDTO
         public bool $hasStore,
     ) {}
 
-    /**
-     * @param  array{
-     *   name: string,
-     *   branch_code: string,
-     *   email?: string|null,
-     *   main_contact?: string|null,
-     *   other_contact?: string|null,
-     *   currency_id: string,
-     *   address_id: string,
-     *   country_id?: string|null,
-     *   has_store?: bool
-     * } $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

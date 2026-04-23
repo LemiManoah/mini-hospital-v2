@@ -18,8 +18,10 @@ use App\Support\InventoryStockLedger;
 use App\Support\PrescriptionDispenseProgress;
 use App\Support\PrescriptionQueueQuery;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -52,6 +54,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
             ? $this->itemBalancesForLocations($branchId, $dispensingLocations)
             : collect();
 
+        /** @var LengthAwarePaginator<int, Prescription> $prescriptions */
         $prescriptions = $this->prescriptionQueueQuery
             ->paginate($search, $status)
             ->through(fn (Prescription $prescription): array => $this->serializePrescriptionSummary($prescription, $stockBalances));
@@ -122,14 +125,40 @@ final readonly class PharmacyQueueController implements HasMiddleware
             ->all();
 
         if ($locationIds === []) {
-            return collect();
+            /** @var Collection<string, float> $emptyBalances */
+            $emptyBalances = collect();
+
+            return $emptyBalances;
         }
 
-        return $this->inventoryStockLedger
+        /** @var array<string, float> $balances */
+        $balances = $this->inventoryStockLedger
             ->summarizeByLocation($branchId)
             ->filter(static fn (array $balance): bool => in_array($balance['inventory_location_id'], $locationIds, true))
-            ->groupBy('inventory_item_id')
-            ->map(static fn (Collection $rows): float => (float) $rows->sum('quantity'));
+            ->reduce(
+                static function (array $carry, array $balance): array {
+                    $itemId = $balance['inventory_item_id'];
+                    $currentQuantity = 0.0;
+
+                    if (array_key_exists($itemId, $carry)) {
+                        $existingQuantity = $carry[$itemId];
+
+                        if (is_float($existingQuantity) || is_int($existingQuantity)) {
+                            $currentQuantity = (float) $existingQuantity;
+                        }
+                    }
+
+                    $carry[$itemId] = $currentQuantity + $balance['quantity'];
+
+                    return $carry;
+                },
+                [],
+            );
+
+        /** @var Collection<string, float> $balanceCollection */
+        $balanceCollection = collect($balances);
+
+        return $balanceCollection;
     }
 
     /**
@@ -139,12 +168,39 @@ final readonly class PharmacyQueueController implements HasMiddleware
     private function serializePrescriptionSummary(Prescription $prescription, Collection $stockBalances): array
     {
         $progress = $this->prescriptionDispenseProgress->postedLineSummaries($prescription->id);
+
+        /** @var Collection<int, array{
+         *   id: string,
+         *   inventory_item_id: string,
+         *   item_name: string|null,
+         *   generic_name: string|null,
+         *   brand_name: string|null,
+         *   strength: string|null,
+         *   dosage_form: string|null,
+         *   dosage: string,
+         *   frequency: string,
+         *   route: string,
+         *   duration_days: int,
+         *   quantity: float,
+         *   remaining_quantity: float,
+         *   covered_quantity: float,
+         *   locally_dispensed_quantity: float,
+         *   instructions: string|null,
+         *   status: string|null,
+         *   status_label: string|null,
+         *   dispensed_at: string|null,
+         *   external_pharmacy: bool,
+         *   available_quantity: float,
+         *   stock_status: string,
+         *   stock_status_label: string
+         * }> $items
+         */
         $items = $prescription->items
             ->map(fn (PrescriptionItem $item): array => $this->serializeItem($item, $stockBalances, $progress->get($item->id)))
             ->filter(static fn (array $item): bool => $item['remaining_quantity'] > 0.0005)
             ->values();
 
-        $availability = $this->resolveAvailabilitySummary($items);
+        $availability = $this->resolveAvailabilitySummary(array_values($items->all()));
 
         return [
             'id' => $prescription->id,
@@ -185,7 +241,42 @@ final readonly class PharmacyQueueController implements HasMiddleware
      * @param  Collection<string, float>  $stockBalances
      * @return array<string, mixed>
      */
-    private function serializeItem(mixed $item, Collection $stockBalances, ?array $progress): array
+    /**
+     * @param  Collection<string, float>  $stockBalances
+     * @param  array{
+     *   dispensed_quantity: float,
+     *   external_quantity: float,
+     *   covered_quantity: float,
+     *   latest_dispensed_at: Carbon|null,
+     *   external_pharmacy: bool
+     * }|null  $progress
+     * @return array{
+     *   id: string,
+     *   inventory_item_id: string,
+     *   item_name: string|null,
+     *   generic_name: string|null,
+     *   brand_name: string|null,
+     *   strength: string|null,
+     *   dosage_form: string|null,
+     *   dosage: string,
+     *   frequency: string,
+     *   route: string,
+     *   duration_days: int,
+     *   quantity: float,
+     *   remaining_quantity: float,
+     *   covered_quantity: float,
+     *   locally_dispensed_quantity: float,
+     *   instructions: string|null,
+     *   status: string|null,
+     *   status_label: string|null,
+     *   dispensed_at: string|null,
+     *   external_pharmacy: bool,
+     *   available_quantity: float,
+     *   stock_status: string,
+     *   stock_status_label: string
+     * }
+     */
+    private function serializeItem(PrescriptionItem $item, Collection $stockBalances, ?array $progress): array
     {
         $requestedQuantity = round((float) $item->quantity, 3);
         $coveredQuantity = min($requestedQuantity, round((float) ($progress['covered_quantity'] ?? 0), 3));
@@ -206,7 +297,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
             'generic_name' => $item->inventoryItem?->generic_name,
             'brand_name' => $item->inventoryItem?->brand_name,
             'strength' => $item->inventoryItem?->strength,
-            'dosage_form' => $item->inventoryItem?->dosage_form?->value ?? $item->inventoryItem?->dosage_form,
+            'dosage_form' => $item->inventoryItem?->dosage_form?->value,
             'dosage' => $item->dosage,
             'frequency' => $item->frequency,
             'route' => $item->route,
@@ -231,12 +322,12 @@ final readonly class PharmacyQueueController implements HasMiddleware
     }
 
     /**
-     * @param  Collection<int, array<string, mixed>>  $items
+     * @param  list<array{stock_status: string}>  $items
      * @return array<string, mixed>
      */
-    private function resolveAvailabilitySummary(Collection $items): array
+    private function resolveAvailabilitySummary(array $items): array
     {
-        if ($items->isEmpty()) {
+        if ($items === []) {
             return [
                 'status' => 'out_of_stock',
                 'label' => 'No Pending Lines',
@@ -246,12 +337,13 @@ final readonly class PharmacyQueueController implements HasMiddleware
             ];
         }
 
-        $readyCount = $items->where('stock_status', 'ready')->count();
-        $partialCount = $items->where('stock_status', 'partial')->count();
-        $outOfStockCount = $items->where('stock_status', 'out_of_stock')->count();
+        $itemCollection = collect($items);
+        $readyCount = $itemCollection->where('stock_status', 'ready')->count();
+        $partialCount = $itemCollection->where('stock_status', 'partial')->count();
+        $outOfStockCount = $itemCollection->where('stock_status', 'out_of_stock')->count();
 
         $status = match (true) {
-            $outOfStockCount === 0 && $partialCount === 0 && $items->isNotEmpty() => 'ready',
+            $outOfStockCount === 0 && $partialCount === 0 => 'ready',
             $readyCount > 0 || $partialCount > 0 => 'partial',
             default => 'out_of_stock',
         };
@@ -313,6 +405,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
             })
             ->map(static function (array $balance) use ($batches): array {
                 $batch = $batches[$balance['inventory_batch_id']] ?? null;
+                $inventoryItem = $batch?->inventoryItem;
 
                 return [
                     'inventory_batch_id' => $balance['inventory_batch_id'],
@@ -321,7 +414,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],
                     'quantity' => $balance['quantity'],
-                    'item_name' => $batch?->inventoryItem?->generic_name ?? $batch?->inventoryItem?->name,
+                    'item_name' => $inventoryItem === null ? null : ($inventoryItem->generic_name ?? $inventoryItem->name),
                 ];
             })
             ->sortBy(static fn (array $batch): string => sprintf(

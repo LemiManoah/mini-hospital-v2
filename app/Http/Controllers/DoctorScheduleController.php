@@ -141,6 +141,13 @@ final readonly class DoctorScheduleController implements HasMiddleware
             ->with('success', 'Doctor schedule deleted successfully.');
     }
 
+    /**
+     * @return array{
+     *     dayOptions: list<array{value: string, label: string}>,
+     *     doctors: list<array{id: string, name: string}>,
+     *     clinics: list<array{id: string, name: string}>
+     * }
+     */
     private function formOptions(?DoctorSchedule $schedule = null): array
     {
         $doctors = Staff::query()
@@ -190,14 +197,14 @@ final readonly class DoctorScheduleController implements HasMiddleware
         }
 
         return [
-            'dayOptions' => collect(ScheduleDay::cases())
+            'dayOptions' => array_values(collect(ScheduleDay::cases())
                 ->map(static fn (ScheduleDay $day): array => [
                     'value' => $day->value,
                     'label' => $day->label(),
                 ])
-                ->all(),
-            'doctors' => $doctors->values()->all(),
-            'clinics' => $clinics->values()->all(),
+                ->all()),
+            'doctors' => array_values($doctors->all()),
+            'clinics' => array_values($clinics->all()),
         ];
     }
 

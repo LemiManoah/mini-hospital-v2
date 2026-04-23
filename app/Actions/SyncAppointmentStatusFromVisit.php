@@ -12,6 +12,10 @@ final readonly class SyncAppointmentStatusFromVisit
 {
     public function handle(PatientVisit $visit): void
     {
+        if (! $visit->status instanceof VisitStatus) {
+            return;
+        }
+
         if ($visit->appointment_id === null) {
             return;
         }

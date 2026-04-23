@@ -16,18 +16,21 @@ final class UpdateOnboardingProfile
     {
         $address = isset($data['address_id'])
             ? Address::query()->find($data['address_id'])
-            : $tenant->address;
+            : $tenant->address()->first();
+        $addressId = $address instanceof Address ? $address->id : null;
 
         $tenant->update([
             'name' => $data['name'],
             'domain' => $data['domain'] ?: null,
             'facility_level' => $data['facility_level'],
-            'country_id' => $address?->country_id ?? ($data['country_id'] ?: null),
-            'address_id' => $address?->id,
+            'country_id' => $address instanceof Address ? $address->country_id : ($data['country_id'] ?: null),
+            'address_id' => $addressId,
             'updated_by' => auth()->id(),
             'onboarding_current_step' => 'branch',
         ]);
 
-        return $tenant->fresh();
+        $tenant->refresh();
+
+        return $tenant;
     }
 }

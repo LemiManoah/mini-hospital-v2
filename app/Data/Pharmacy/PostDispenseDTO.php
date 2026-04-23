@@ -15,17 +15,6 @@ final readonly class PostDispenseDTO
         public array $items,
     ) {}
 
-    /**
-     * @param  array{
-     *   items?: list<array{
-     *     dispensing_record_item_id: string,
-     *     allocations?: list<array{
-     *       inventory_batch_id: string,
-     *       quantity: int|float|string
-     *     }>
-     *   }>
-     * }  $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

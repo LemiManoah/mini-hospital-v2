@@ -20,15 +20,6 @@ final readonly class CreateLabRequestDTO
         public bool $isStat,
     ) {}
 
-    /**
-     * @param  array{
-     *   test_ids: list<string>,
-     *   clinical_notes?: string|null,
-     *   priority?: Priority|string,
-     *   diagnosis_code?: string|null,
-     *   is_stat?: bool
-     * }  $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

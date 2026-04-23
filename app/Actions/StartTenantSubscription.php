@@ -43,12 +43,14 @@ final class StartTenantSubscription
             'status' => SubscriptionStatus::PENDING_ACTIVATION,
             'updated_by' => $actor?->id,
             'meta' => [
-                ...($subscription->meta ?? []),
+                ...$this->metaArray($subscription),
                 'pending_activation_at' => now()->toIso8601String(),
             ],
         ]);
 
-        return $subscription->fresh();
+        $subscription->refresh();
+
+        return $subscription;
     }
 
     public function markActive(TenantSubscription $subscription, ?User $actor = null, int $billingDays = 30): TenantSubscription
@@ -62,13 +64,15 @@ final class StartTenantSubscription
             'current_period_ends_at' => $now->copy()->addDays($billingDays),
             'updated_by' => $actor?->id,
             'meta' => [
-                ...($subscription->meta ?? []),
+                ...$this->metaArray($subscription),
                 'activated_via' => 'checkout_callback',
                 'activated_at' => $now->toIso8601String(),
             ],
         ]);
 
-        return $subscription->fresh();
+        $subscription->refresh();
+
+        return $subscription;
     }
 
     public function markFailed(TenantSubscription $subscription, ?User $actor = null): TenantSubscription
@@ -77,11 +81,37 @@ final class StartTenantSubscription
             'status' => SubscriptionStatus::PAST_DUE,
             'updated_by' => $actor?->id,
             'meta' => [
-                ...($subscription->meta ?? []),
+                ...$this->metaArray($subscription),
                 'checkout_failed_at' => now()->toIso8601String(),
             ],
         ]);
 
-        return $subscription->fresh();
+        $subscription->refresh();
+
+        return $subscription;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function metaArray(TenantSubscription $subscription): array
+    {
+        $meta = $subscription->getAttributeValue('meta');
+
+        if (! is_array($meta)) {
+            return [];
+        }
+
+        $normalizedMeta = [];
+
+        foreach ($meta as $key => $value) {
+            if (! is_string($key)) {
+                continue;
+            }
+
+            $normalizedMeta[$key] = $value;
+        }
+
+        return $normalizedMeta;
     }
 }

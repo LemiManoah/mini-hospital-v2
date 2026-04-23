@@ -23,22 +23,6 @@ final readonly class CreateGoodsReceiptDTO
     ) {}
 
     /**
-     * @param  array{
-     *   purchase_order_id: string,
-     *   inventory_location_id: string,
-     *   receipt_date: string,
-     *   supplier_invoice_number?: string|null,
-     *   notes?: string|null,
-     *   items: list<array{
-     *     purchase_order_item_id: string,
-     *     inventory_item_id: string,
-     *     quantity_received: int|float|string,
-     *     unit_cost: int|float|string,
-     *     batch_number?: string|null,
-     *     expiry_date?: string|null,
-     *     notes?: string|null
-     *   }>
-     * }  $validated
      * @param  list<string>  $allowedLocationTypes
      */
     public static function fromRequest(FormRequest $request, array $allowedLocationTypes = []): self
@@ -72,7 +56,7 @@ final readonly class CreateGoodsReceiptDTO
                 CreateGoodsReceiptItemDTO::fromPayload(...),
                 $validated['items'],
             ),
-            allowedLocationTypes: array_values($allowedLocationTypes),
+            allowedLocationTypes: $allowedLocationTypes,
         );
     }
 

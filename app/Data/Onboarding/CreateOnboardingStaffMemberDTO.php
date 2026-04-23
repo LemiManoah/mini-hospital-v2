@@ -26,22 +26,6 @@ final readonly class CreateOnboardingStaffMemberDTO
         public bool $isActive,
     ) {}
 
-    /**
-     * @param  array{
-     *   first_name: string,
-     *   last_name: string,
-     *   middle_name?: string|null,
-     *   email: string,
-     *   phone?: string|null,
-     *   department_ids: list<string>,
-     *   staff_position_id: string,
-     *   type: string,
-     *   license_number?: string|null,
-     *   specialty?: string|null,
-     *   hire_date: string,
-     *   is_active?: bool
-     * } $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

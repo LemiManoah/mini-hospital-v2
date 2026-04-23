@@ -1,4 +1,99 @@
- :34    Instanceof between App\Models\PharmacyPosSaleItem and App\Models\PharmacyPosSaleItem will always evaluate to true.      
+ vendor/bin/phpstan analyse
+Note: Using configuration file C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\phpstan.neon.
+ 760/760 [============================] 100%
+
+
+  Line   app\Actions\RecordPharmacyPosPaymentAction.php  
+
+  :32    Cannot cast mixed to float.                     
+         🪪  cast.double                                 
+
+
+
+  Line   app\Actions\RefundPharmacyPosSaleAction.php                                                                             
+
+  :37    Instanceof between App\Models\PharmacyPosSaleItem and App\Models\PharmacyPosSaleItem will always evaluate to true.      
+         🪪  instanceof.alwaysTrue                                                                                               
+         💡  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false i  
+         n your phpstan.neon.                                                                                                    
+  :42    Instanceof between App\Models\PharmacyPosSaleItemAllocation and App\Models\PharmacyPosSaleItemAllocation will always    
+         evaluate to true.                                                                                                       
+         🪪  instanceof.alwaysTrue                                                                                               
+         💡  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false i  
+         n your phpstan.neon.                                                                                                    
+  :66    Cannot cast mixed to float.                                                                                             
+         🪪  cast.double                                                                                                         
+
+
+
+  Line   app\Actions\RegisterPatientAndStartVisit.php                                                      
+
+  :56    Using nullsafe property access "?->tenant_id" on left side of ?? is unnecessary. Use -> instead.  
+         🪪  nullsafe.neverNull                                                                            
+
+
+
+  Line   app\Actions\ResolveVisitChargeAmount.php  
+
+  :53    Cannot cast mixed to float.               
+         🪪  cast.double                           
+
+
+ 
+  Line   app\Actions\StartTenantSubscription.php                                                                              
+ 
+  :46    Only iterables can be unpacked, array|string given.                                                                  
+         🪪  arrayUnpacking.nonIterable                                                                                       
+  :51    Method App\Actions\StartTenantSubscription::markPendingActivation() should return App\Models\TenantSubscription but  
+         returns App\Models\TenantSubscription|null.                                                                          
+         🪪  return.type                                                                                                      
+  :65    Only iterables can be unpacked, array|string given.                                                                  
+         🪪  arrayUnpacking.nonIterable                                                                                       
+  :71    Method App\Actions\StartTenantSubscription::markActive() should return App\Models\TenantSubscription but returns     
+         App\Models\TenantSubscription|null.                                                                                  
+         🪪  return.type                                                                                                      
+  :80    Only iterables can be unpacked, array|string given.                                                                  
+         🪪  arrayUnpacking.nonIterable                                                                                       
+  :85    Method App\Actions\StartTenantSubscription::markFailed() should return App\Models\TenantSubscription but returns     
+         App\Models\TenantSubscription|null.                                                                                  
+         🪪  return.type                                                                                                      
+
+
+  Line   app\Actions\SyncAppointmentStatusFromVisit.php          
+
+  :25    Match expression does not handle remaining value: null  
+         🪪  match.unhandled                                     
+
+
+
+  Line   app\Actions\UpdateOnboardingProfile.php                                                                                 
+
+  :25    Access to an undefined property App\Models\Address|Illuminate\Database\Eloquent\Collection<int, App\Models\Address>::$  
+         country_id.                                                                                                             
+         🪪  property.notFound                                                                                                   
+         💡  Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property                                   
+  :25    Using nullsafe property access "?->country_id" on left side of ?? is unnecessary. Use -> instead.                       
+         🪪  nullsafe.neverNull                                                                                                  
+  :26    Access to an undefined property App\Models\Address|Illuminate\Database\Eloquent\Collection<int, App\Models\Address>::$  
+         id.                                                                                                                     
+         🪪  property.notFound                                                                                                   
+         💡  Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property                                   
+  :31    Method App\Actions\UpdateOnboardingProfile::handle() should return App\Models\Tenant but returns                        
+         App\Models\Tenant|null.                                                                                                 
+         🪪  return.type                                                                                                         
+
+
+
+  Line   app\Actions\UpdateStaff.php   
+
+  :28    Cannot cast mixed to string.  
+         🪪  cast.string               
+
+
+
+  Line   app\Actions\VoidPharmacyPosSaleAction.php                                                                               
+
+  :34    Instanceof between App\Models\PharmacyPosSaleItem and App\Models\PharmacyPosSaleItem will always evaluate to true.      
          🪪  instanceof.alwaysTrue                                                                                               
          💡  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false i  
          n your phpstan.neon.                                                                                                    
@@ -167,23 +262,23 @@
          🪪  nullsafe.neverNull                                                                                                  
 
 
-
+ 
   Line   app\Http\Controllers\AllergenController.php                                                                            
-
+ 
   :95    Method App\Http\Controllers\AllergenController::allergenOptions() return type has no value type specified in iterable  
          type array.                                                                                                            
          🪪  missingType.iterableValue                                                                                          
          💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                             
+ 
 
-
-
+ 
   Line   app\Http\Controllers\AppointmentCategoryController.php                                                               
-
+ 
   :120   Method App\Http\Controllers\AppointmentCategoryController::formOptions() return type has no value type specified in  
          iterable type array.                                                                                                 
          🪪  missingType.iterableValue                                                                                        
          💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                           
-
+ 
 
 
   Line   app\Http\Controllers\AppointmentController.php                                                                          
@@ -286,23 +381,23 @@
          🪪  nullsafe.neverNull                                                                                                  
 
 
-
+- 
   Line   app\Http\Controllers\DoctorScheduleController.php                                                               
-
+- 
   :144   Method App\Http\Controllers\DoctorScheduleController::formOptions() return type has no value type specified in  
          iterable type array.                                                                                            
          🪪  missingType.iterableValue                                                                                   
          💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                      
+- 
 
-
-
+- 
   Line   app\Http\Controllers\DoctorScheduleExceptionController.php                                                            
-
+- 
   :151   Method App\Http\Controllers\DoctorScheduleExceptionController::formOptions() return type has no value type specified  
          in iterable type array.                                                                                               
          🪪  missingType.iterableValue                                                                                         
          💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                            
-
+- 
 
 
   Line   app\Http\Controllers\FacilityManagerController.php                                                                      
@@ -400,14 +495,14 @@
          whats-up-with-template-covariant                                                                                        
 
 
-
+ 
   Line   app\Http\Controllers\FacilityServiceController.php                                                               
-
+ 
   :93    Method App\Http\Controllers\FacilityServiceController::formOptions() return type has no value type specified in  
          iterable type array.                                                                                             
          🪪  missingType.iterableValue                                                                                    
          💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                       
-
+ 
 
 
   Line   app\Http\Controllers\InventoryDashboardController.php                                                                   
@@ -456,9 +551,9 @@
          💡  See: https://phpstan.org/blog/solving-phpstan-error-unable-to-resolve-template-type                                 
 
 
-
+ 
   Line   app\Http\Controllers\InventoryMovementReportController.php                                           
-
+ 
   :91    Using nullsafe property access "?->generic_name" on left side of ?? is unnecessary. Use -> instead.  
          🪪  nullsafe.neverNull                                                                               
   :94    Using nullsafe property access on non-nullable type App\Enums\StockMovementType. Use -> instead.     
@@ -467,417 +562,13 @@
          🪪  nullsafe.neverNull                                                                               
   :100   Using nullsafe method call on non-nullable type Carbon\CarbonImmutable. Use -> instead.              
          🪪  nullsafe.neverNull                                                                               
-
-
-
-  Line   app\Http\Controllers\LaboratoryDashboardController.php                                                                  
-
-  :104   Ternary operator condition is always true.                                                                              
-         🪪  ternary.alwaysTrue                                                                                                  
-         💡  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false i  
-         n your phpstan.neon.                                                                                                    
-  :111   Cannot cast mixed to float.                                                                                             
-         🪪  cast.double                                                                                                         
-  :216   Parameter #1 $relations of method Illuminate\Database\Eloquent\Builder<App\Models\LabRequest>::with() expects array<ar  
-         ray|(Closure(Illuminate\Database\Eloquent\Relations\Relation<*, *, *>): mixed)|string>|string, array{0:                 
-         'requestedBy:id…', 1: 'visit:id,visit…', 2: 'visit.patient:id…', items:                                                 
-         Closure(Illuminate\Database\Eloquent\Relations\HasMany): void} given.                                                   
-         🪪  argument.type                                                                                                       
-
-
-
-  Line   app\Http\Controllers\LaboratoryQueueController.php                                                                      
-
-  :77    Parameter #1 $query of method App\Http\Controllers\LaboratoryQueueController::applyStageFilter() expects                
-         Illuminate\Database\Eloquent\Builder<App\Models\LabRequestItem>|Illuminate\Database\Eloquent\Relations\HasMany<App\Mod  
-         els\LabRequestItem, App\Models\LabRequest>, Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model> g  
-         iven.                                                                                                                   
-         🪪  argument.type                                                                                                       
-  :79    Parameter #1 $relations of method Illuminate\Database\Eloquent\Builder<App\Models\LabRequest>::with() expects array<ar  
-         ray|(Closure(Illuminate\Database\Eloquent\Relations\Relation<*, *, *>): mixed)|string>|string, array{0:                 
-         'requestedBy:id…', 1: 'visit:id,visit…', 2: 'visit.patient:id…', items:                                                 
-         Closure(Illuminate\Database\Eloquent\Relations\HasMany): void} given.                                                   
-         🪪  argument.type                                                                                                       
-
-
-
-  Line   app\Http\Controllers\PatientController.php                                                                              
-
-  :123   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\Gender::FEMALE|App\Enums\Gender::MALE> given.                              
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\Gender::MALE does not have property $label.                                                               
-         💡  App\Enums\Gender::FEMALE does not have property $label.                                                             
-  :124   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\MaritalStatus::DIVORCED|App\Enums\MaritalStatus::MARRIED|App\Enums\Marita  
-         lStatus::SEPARATED|App\Enums\MaritalStatus::SINGLE|App\Enums\MaritalStatus::WIDOWED> given.                             
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\MaritalStatus::SINGLE does not have property $label.                                                      
-         💡  App\Enums\MaritalStatus::MARRIED does not have property $label.                                                     
-         💡  App\Enums\MaritalStatus::DIVORCED does not have property $label.                                                    
-         💡  App\Enums\MaritalStatus::WIDOWED does not have property $label.                                                     
-         💡  App\Enums\MaritalStatus::SEPARATED does not have property $label.                                                   
-  :125   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\BloodGroup::A_NEGATIVE|App\Enums\BloodGroup::A_POSITIVE|App\Enums\BloodGr  
-         oup::AB_NEGATIVE|App\Enums\BloodGroup::AB_POSITIVE|App\Enums\BloodGroup::B_NEGATIVE|App\Enums\BloodGroup::B_POSITIVE|A  
-         pp\Enums\BloodGroup::O_NEGATIVE|App\Enums\BloodGroup::O_POSITIVE|App\Enums\BloodGroup::UNKNOWN> given.                  
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\BloodGroup::A_POSITIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::A_NEGATIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::B_POSITIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::B_NEGATIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::AB_POSITIVE does not have property $label.                                                    
-         💡  App\Enums\BloodGroup::AB_NEGATIVE does not have property $label.                                                    
-         💡  App\Enums\BloodGroup::O_POSITIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::O_NEGATIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::UNKNOWN does not have property $label.                                                        
-  :126   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\Religion::BUDDHIST|App\Enums\Religion::CHRISTIAN|App\Enums\Religion::HIND  
-         U|App\Enums\Religion::MUSLIM|App\Enums\Religion::OTHER|App\Enums\Religion::UNKNOWN> given.                              
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\Religion::CHRISTIAN does not have property $label.                                                        
-         💡  App\Enums\Religion::MUSLIM does not have property $label.                                                           
-         💡  App\Enums\Religion::HINDU does not have property $label.                                                            
-         💡  App\Enums\Religion::BUDDHIST does not have property $label.                                                         
-         💡  App\Enums\Religion::OTHER does not have property $label.                                                            
-         💡  App\Enums\Religion::UNKNOWN does not have property $label.                                                          
-  :127   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\KinRelationship::CHILD|App\Enums\KinRelationship::OTHER|App\Enums\KinRela  
-         tionship::PARENT|App\Enums\KinRelationship::SIBLING|App\Enums\KinRelationship::SPOUSE|App\Enums\KinRelationship::UNKNO  
-         WN> given.                                                                                                              
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\KinRelationship::SPOUSE does not have property $label.                                                    
-         💡  App\Enums\KinRelationship::PARENT does not have property $label.                                                    
-         💡  App\Enums\KinRelationship::CHILD does not have property $label.                                                     
-         💡  App\Enums\KinRelationship::SIBLING does not have property $label.                                                   
-         💡  App\Enums\KinRelationship::OTHER does not have property $label.                                                     
-         💡  App\Enums\KinRelationship::UNKNOWN does not have property $label.                                                   
-  :161   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\Gender::FEMALE|App\Enums\Gender::MALE> given.                              
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\Gender::MALE does not have property $label.                                                               
-         💡  App\Enums\Gender::FEMALE does not have property $label.                                                             
-  :162   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\MaritalStatus::DIVORCED|App\Enums\MaritalStatus::MARRIED|App\Enums\Marita  
-         lStatus::SEPARATED|App\Enums\MaritalStatus::SINGLE|App\Enums\MaritalStatus::WIDOWED> given.                             
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\MaritalStatus::SINGLE does not have property $label.                                                      
-         💡  App\Enums\MaritalStatus::MARRIED does not have property $label.                                                     
-         💡  App\Enums\MaritalStatus::DIVORCED does not have property $label.                                                    
-         💡  App\Enums\MaritalStatus::WIDOWED does not have property $label.                                                     
-         💡  App\Enums\MaritalStatus::SEPARATED does not have property $label.                                                   
-  :163   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\BloodGroup::A_NEGATIVE|App\Enums\BloodGroup::A_POSITIVE|App\Enums\BloodGr  
-         oup::AB_NEGATIVE|App\Enums\BloodGroup::AB_POSITIVE|App\Enums\BloodGroup::B_NEGATIVE|App\Enums\BloodGroup::B_POSITIVE|A  
-         pp\Enums\BloodGroup::O_NEGATIVE|App\Enums\BloodGroup::O_POSITIVE|App\Enums\BloodGroup::UNKNOWN> given.                  
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\BloodGroup::A_POSITIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::A_NEGATIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::B_POSITIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::B_NEGATIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::AB_POSITIVE does not have property $label.                                                    
-         💡  App\Enums\BloodGroup::AB_NEGATIVE does not have property $label.                                                    
-         💡  App\Enums\BloodGroup::O_POSITIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::O_NEGATIVE does not have property $label.                                                     
-         💡  App\Enums\BloodGroup::UNKNOWN does not have property $label.                                                        
-  :164   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\Religion::BUDDHIST|App\Enums\Religion::CHRISTIAN|App\Enums\Religion::HIND  
-         U|App\Enums\Religion::MUSLIM|App\Enums\Religion::OTHER|App\Enums\Religion::UNKNOWN> given.                              
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\Religion::CHRISTIAN does not have property $label.                                                        
-         💡  App\Enums\Religion::MUSLIM does not have property $label.                                                           
-         💡  App\Enums\Religion::HINDU does not have property $label.                                                            
-         💡  App\Enums\Religion::BUDDHIST does not have property $label.                                                         
-         💡  App\Enums\Religion::OTHER does not have property $label.                                                            
-         💡  App\Enums\Religion::UNKNOWN does not have property $label.                                                          
-  :165   Parameter #1 $cases of method App\Http\Controllers\PatientController::enumOptions() expects array<int, object{value: s  
-         tring, label: string}>, array<int, App\Enums\KinRelationship::CHILD|App\Enums\KinRelationship::OTHER|App\Enums\KinRela  
-         tionship::PARENT|App\Enums\KinRelationship::SIBLING|App\Enums\KinRelationship::SPOUSE|App\Enums\KinRelationship::UNKNO  
-         WN> given.                                                                                                              
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\KinRelationship::SPOUSE does not have property $label.                                                    
-         💡  App\Enums\KinRelationship::PARENT does not have property $label.                                                    
-         💡  App\Enums\KinRelationship::CHILD does not have property $label.                                                     
-         💡  App\Enums\KinRelationship::SIBLING does not have property $label.                                                   
-         💡  App\Enums\KinRelationship::OTHER does not have property $label.                                                     
-         💡  App\Enums\KinRelationship::UNKNOWN does not have property $label.                                                   
-  :240   Call to an undefined method object{value: string, label: string}::label().                                              
-         🪪  method.notFound                                                                                                     
-  :244   Method App\Http\Controllers\PatientController::enumOptions() should return array<int, array{value: string, label: stri  
-         ng}> but returns list<array{value: string, label: mixed}>.                                                              
-         🪪  return.type                                                                                                         
-         💡  Offset 'label' (string) does not accept type mixed.                                                                 
-
-
-
-  Line   app\Http\Controllers\PatientVisitController.php                                                                         
-
-  :205   Parameter #1 $cases of method App\Http\Controllers\PatientVisitController::enumOptions() expects array<int, object{val  
-         ue: string, label: string}>, array<int, App\Enums\TriageGrade::BLACK|App\Enums\TriageGrade::GREEN|App\Enums\TriageGrad  
-         e::RED|App\Enums\TriageGrade::YELLOW> given.                                                                            
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\TriageGrade::RED does not have property $label.                                                           
-         💡  App\Enums\TriageGrade::YELLOW does not have property $label.                                                        
-         💡  App\Enums\TriageGrade::GREEN does not have property $label.                                                         
-         💡  App\Enums\TriageGrade::BLACK does not have property $label.                                                         
-  :206   Parameter #1 $cases of method App\Http\Controllers\PatientVisitController::enumOptions() expects array<int, object{val  
-         ue: string, label: string}>, array<int, App\Enums\AttendanceType::NEW|App\Enums\AttendanceType::RE_ATTENDANCE|App\Enum  
-         s\AttendanceType::REFERRAL> given.                                                                                      
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\AttendanceType::NEW does not have property $label.                                                        
-         💡  App\Enums\AttendanceType::RE_ATTENDANCE does not have property $label.                                              
-         💡  App\Enums\AttendanceType::REFERRAL does not have property $label.                                                   
-  :207   Parameter #1 $cases of method App\Http\Controllers\PatientVisitController::enumOptions() expects array<int, object{val  
-         ue: string, label: string}>, array<int, App\Enums\ConsciousLevel::ALERT|App\Enums\ConsciousLevel::PAIN|App\Enums\Consc  
-         iousLevel::UNRESPONSIVE|App\Enums\ConsciousLevel::VOICE> given.                                                         
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\ConsciousLevel::ALERT does not have property $label.                                                      
-         💡  App\Enums\ConsciousLevel::VOICE does not have property $label.                                                      
-         💡  App\Enums\ConsciousLevel::PAIN does not have property $label.                                                       
-         💡  App\Enums\ConsciousLevel::UNRESPONSIVE does not have property $label.                                               
-  :208   Parameter #1 $cases of method App\Http\Controllers\PatientVisitController::enumOptions() expects array<int, object{val  
-         ue: string, label: string}>, array<int, App\Enums\MobilityStatus::ASSISTED|App\Enums\MobilityStatus::INDEPENDENT|App\E  
-         nums\MobilityStatus::STRETCHER|App\Enums\MobilityStatus::WHEELCHAIR> given.                                             
-         🪪  argument.type                                                                                                       
-         💡  App\Enums\MobilityStatus::INDEPENDENT does not have property $label.                                                
-         💡  App\Enums\MobilityStatus::ASSISTED does not have property $label.                                                   
-         💡  App\Enums\MobilityStatus::WHEELCHAIR does not have property $label.                                                 
-         💡  App\Enums\MobilityStatus::STRETCHER does not have property $label.                                                  
-  :267   Cannot access offset 'clinic_id' on mixed.                                                                              
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :268   Strict comparison using !== between mixed and null will always evaluate to true.                                        
-         🪪  notIdentical.alwaysTrue                                                                                             
-         💡  Type null has already been eliminated from mixed.                                                                   
-  :278   Cannot access offset 'doctor_id' on mixed.                                                                              
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :300   Cannot access offset 'visit_type' on mixed.                                                                             
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :302   Cannot access offset 'clinic_id' on mixed.                                                                              
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :303   Cannot access offset 'doctor_id' on mixed.                                                                              
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :304   Cannot access offset 'is_emergency' on mixed.                                                                           
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :314   Cannot access offset 'billing_type' on mixed.                                                                           
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :315   Cannot access offset 'billing_type' on mixed.                                                                           
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :316   Cannot access offset 'insurance_company_id' on mixed.                                                                   
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :319   Cannot access offset 'insurance_package_id' on mixed.                                                                   
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :339   Cannot access offset 'redirect_to' on mixed.                                                                            
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :361   Cannot access offset 'redirect_to' on mixed.                                                                            
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :367   Cannot access offset 'status' on mixed.                                                                                 
-         🪪  offsetAccess.nonOffsetAccessible                                                                                    
-  :368   Parameter #2 $redirectTo of method App\Http\Controllers\PatientVisitController::statusRedirect() expects string, mixed  
-         given.                                                                                                                  
-         🪪  argument.type                                                                                                       
-  :378   Parameter #2 $redirectTo of method App\Http\Controllers\PatientVisitController::statusRedirect() expects string, mixed  
-         given.                                                                                                                  
-         🪪  argument.type                                                                                                       
-  :382   Parameter #1 $value of static method App\Enums\VisitStatus::from() expects int|string, mixed given.                     
-         🪪  argument.type                                                                                                       
-  :384   Parameter #2 $redirectTo of method App\Http\Controllers\PatientVisitController::statusRedirect() expects string, mixed  
-         given.                                                                                                                  
-         🪪  argument.type                                                                                                       
-  :411   Call to an undefined method object{value: string, label: string}::label().                                              
-         🪪  method.notFound                                                                                                     
-  :415   Method App\Http\Controllers\PatientVisitController::enumOptions() should return array<int, array{value: string, label:  
-          string}> but returns list<array{value: string, label: mixed}>.                                                         
-         🪪  return.type                                                                                                         
-         💡  Offset 'label' (string) does not accept type mixed.                                                                 
-  :427   Using nullsafe method call on non-nullable type Illuminate\Database\Eloquent\Collection<int, App\Models\LabRequest>. U  
-         se -> instead.                                                                                                          
-         🪪  nullsafe.neverNull                                                                                                  
-  :428   Using nullsafe method call on non-nullable type Illuminate\Database\Eloquent\Collection<int, App\Models\LabRequestItem  
-         >. Use -> instead.                                                                                                      
-         🪪  nullsafe.neverNull                                                                                                  
-
-
-
-  Line   app\Http\Controllers\PharmacyPosCartController.php                                                                    
-
-  :37    Parameter #2 $attributes of method App\Actions\AddItemToPharmacyPosCartAction::handle() expects                       
-         array{inventory_item_id?: string, quantity?: float|int|string, unit_price?: float|int|string|null, discount_amount?:  
-         float|int|string|null, notes?: string|null}, array<string, mixed> given.                                              
-         🪪  argument.type                                                                                                     
-  :52    Parameter #2 $attributes of method App\Actions\UpdatePharmacyPosCartItemAction::handle() expects array{quantity?:     
-         float|int|string, unit_price?: float|int|string|null, discount_amount?: float|int|string|null, notes?: string|null},  
-         array<string, mixed> given.                                                                                           
-         🪪  argument.type                                                                                                     
-
-
-
-  Line   app\Http\Controllers\PharmacyQueueController.php                                                                        
-
-  :57    Call to an undefined method Illuminate\Contracts\Pagination\LengthAwarePaginator<int, App\Models\Prescription>::throug  
-         h().                                                                                                                    
-         🪪  method.notFound                                                                                                     
-  :125   Method App\Http\Controllers\PharmacyQueueController::itemBalancesForLocations() should return                           
-         Illuminate\Support\Collection<string, float> but returns Illuminate\Support\Collection<(int|string), mixed>.            
-         🪪  return.type                                                                                                         
-  :132   Cannot cast mixed to float.                                                                                             
-         🪪  cast.double                                                                                                         
-  :147   Parameter #1 $items of method App\Http\Controllers\PharmacyQueueController::resolveAvailabilitySummary() expects        
-         Illuminate\Support\Collection<int, array<string, mixed>>, Illuminate\Support\Collection<int, array<string, mixed>> giv  
-         en.                                                                                                                     
-         🪪  argument.type                                                                                                       
-         💡  Template type TValue on class Illuminate\Support\Collection is not covariant. Learn more: https://phpstan.org/blog/  
-         whats-up-with-template-covariant                                                                                        
-  :188   Method App\Http\Controllers\PharmacyQueueController::serializeItem() has parameter $progress with no value type         
-         specified in iterable type array.                                                                                       
-         🪪  missingType.iterableValue                                                                                           
-         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                              
-  :190   Cannot access property $quantity on mixed.                                                                              
-         🪪  property.nonObject                                                                                                  
-  :190   Cannot cast mixed to float.                                                                                             
-         🪪  cast.double                                                                                                         
-  :191   Cannot cast mixed to float.                                                                                             
-         🪪  cast.double                                                                                                         
-  :192   Cannot cast mixed to float.                                                                                             
-         🪪  cast.double                                                                                                         
-  :194   Cannot access property $inventory_item_id on mixed.                                                                     
-         🪪  property.nonObject                                                                                                  
-  :194   Cannot cast mixed to string.                                                                                            
-         🪪  cast.string                                                                                                         
-  :203   Cannot access property $id on mixed.                                                                                    
-         🪪  property.nonObject                                                                                                  
-  :204   Cannot access property $inventory_item_id on mixed.                                                                     
-         🪪  property.nonObject                                                                                                  
-  :205   Cannot access property $inventoryItem on mixed.                                                                         
-         🪪  property.nonObject                                                                                                  
-  :205   Cannot access property $name on mixed.                                                                                  
-         🪪  property.nonObject                                                                                                  
-  :206   Cannot access property $generic_name on mixed.                                                                          
-         🪪  property.nonObject                                                                                                  
-  :206   Cannot access property $inventoryItem on mixed.                                                                         
-         🪪  property.nonObject                                                                                                  
-  :207   Cannot access property $brand_name on mixed.                                                                            
-         🪪  property.nonObject                                                                                                  
-  :207   Cannot access property $inventoryItem on mixed.                                                                         
-         🪪  property.nonObject                                                                                                  
-  :208   Cannot access property $inventoryItem on mixed.                                                                         
-         🪪  property.nonObject                                                                                                  
-  :208   Cannot access property $strength on mixed.                                                                              
-         🪪  property.nonObject                                                                                                  
-  :209   Cannot access property $dosage_form on mixed.                                                                           
-         🪪  property.nonObject                                                                                                  
-  :209   Cannot access property $dosage_form on mixed.                                                                           
-         🪪  property.nonObject                                                                                                  
-  :209   Cannot access property $inventoryItem on mixed.                                                                         
-         🪪  property.nonObject                                                                                                  
-  :209   Cannot access property $inventoryItem on mixed.                                                                         
-         🪪  property.nonObject                                                                                                  
-  :209   Cannot access property $value on mixed.                                                                                 
-         🪪  property.nonObject                                                                                                  
-  :209   Using nullsafe property access "?->value" on left side of ?? is unnecessary. Use -> instead.                            
-         🪪  nullsafe.neverNull                                                                                                  
-  :210   Cannot access property $dosage on mixed.                                                                                
-         🪪  property.nonObject                                                                                                  
-  :211   Cannot access property $frequency on mixed.                                                                             
-         🪪  property.nonObject                                                                                                  
-  :212   Cannot access property $route on mixed.                                                                                 
-         🪪  property.nonObject                                                                                                  
-  :213   Cannot access property $duration_days on mixed.                                                                         
-         🪪  property.nonObject                                                                                                  
-  :218   Cannot access property $instructions on mixed.                                                                          
-         🪪  property.nonObject                                                                                                  
-  :219   Cannot access property $status on mixed.                                                                                
-         🪪  property.nonObject                                                                                                  
-  :219   Cannot access property $value on mixed.                                                                                 
-         🪪  property.nonObject                                                                                                  
-  :220   Cannot access property $status on mixed.                                                                                
-         🪪  property.nonObject                                                                                                  
-  :220   Cannot call method label() on mixed.                                                                                    
-         🪪  method.nonObject                                                                                                    
-  :221   Cannot access property $dispensed_at on mixed.                                                                          
-         🪪  property.nonObject                                                                                                  
-  :221   Cannot call method toISOString() on mixed.                                                                              
-         🪪  method.nonObject                                                                                                    
-  :222   Cannot access property $is_external_pharmacy on mixed.                                                                  
-         🪪  property.nonObject                                                                                                  
-  :324   Using nullsafe property access "?->generic_name" on left side of ?? is unnecessary. Use -> instead.                     
-         🪪  nullsafe.neverNull                                                                                                  
-
+ 
 
 
   Line   app\Http\Controllers\StaffController.php                                                                                
 
   :173   Parameter #1 $array of function array_unique expects an array of values castable to string, array<mixed, mixed> given.  
          🪪  argument.type                                                                                                       
-
-
-
-  Line   app\Http\Controllers\SubscriptionActivationController.php              
-
-  :73    Only iterables can be unpacked, array|string given.                    
-         🪪  arrayUnpacking.nonIterable                                         
-  :134   Only iterables can be unpacked, array|string given.                    
-         🪪  arrayUnpacking.nonIterable                                         
-  :168   Only iterables can be unpacked, array|string given.                    
-         🪪  arrayUnpacking.nonIterable                                         
-  :186   Cannot access property $value on string.                               
-         🪪  property.nonObject                                                 
-  :187   Cannot call method label() on string.                                  
-         🪪  method.nonObject                                                   
-  :197   Cannot access property $id on App\Models\SubscriptionPackage|null.     
-         🪪  property.nonObject                                                 
-  :198   Cannot access property $name on App\Models\SubscriptionPackage|null.   
-         🪪  property.nonObject                                                 
-  :199   Cannot access property $users on App\Models\SubscriptionPackage|null.  
-         🪪  property.nonObject                                                 
-  :200   Cannot access property $price on App\Models\SubscriptionPackage|null.  
-         🪪  property.nonObject                                                 
-
-
-
-  Line   app\Http\Controllers\VisitOrderController.php                                                                           
-
-  :149   Result of || is always true.                                                                                            
-         🪪  booleanOr.alwaysTrue                                                                                                
-         💡  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false i  
-         n your phpstan.neon.                                                                                                    
-         💡  If App\Http\Controllers\VisitOrderController::resolveStaffId() is impure, add @phpstan-impure PHPDoc tag above its   
-         declaration. Learn more: https://phpstan.org/blog/remembering-and-forgetting-returned-values                            
-  :149   Strict comparison using !== between App\Enums\LabRequestItemStatus and 'pending' will always evaluate to true.          
-         🪪  notIdentical.alwaysTrue                                                                                             
-         💡  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false i  
-         n your phpstan.neon.                                                                                                    
-  :154   Unreachable statement - code above always terminates.                                                                   
-         🪪  deadCode.unreachable                                                                                                
-
-
-
-  Line   app\Http\Middleware\HandleInertiaRequests.php                                                                           
-
-  :56    Anonymous function should return string|null but returns mixed.                                                         
-         🪪  return.type                                                                                                         
-  :57    Anonymous function should return string|null but returns mixed.                                                         
-         🪪  return.type                                                                                                         
-  :58    Anonymous function should return string|null but returns mixed.                                                         
-         🪪  return.type                                                                                                         
-  :59    Anonymous function should return string|null but returns mixed.                                                         
-         🪪  return.type                                                                                                         
-  :60    Anonymous function should return string|null but returns mixed.                                                         
-         🪪  return.type                                                                                                         
-  :83    Parameter #1 $relations of method Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>::with() exp  
-         ects array<array|(Closure(Illuminate\Database\Eloquent\Relations\Relation<*, *, *>): mixed)|string>|string,             
-         array{currentSubscription: Closure(Illuminate\Database\Eloquent\Relations\HasOne):                                      
-         Illuminate\Database\Eloquent\Relations\HasOne} given.                                                                   
-         🪪  argument.type                                                                                                       
-  :92    Parameter #1 $relations of method Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>::with() exp  
-         ects array<array|(Closure(Illuminate\Database\Eloquent\Relations\Relation<*, *, *>): mixed)|string>|string,             
-         array{subscriptionPackage: Closure(Illuminate\Database\Eloquent\Relations\BelongsTo):                                   
-         Illuminate\Database\Eloquent\Relations\BelongsTo} given.                                                                
-         🪪  argument.type                                                                                                       
-  :120   Parameter #1 $callback of method Illuminate\Support\Collection<(int|string),mixed>::mapWithKeys() expects               
-         callable(mixed, int|string): array<string, true>, Closure(string): non-empty-array<string, true> given.                 
-         🪪  argument.type                                                                                                       
-         💡  Type string of parameter #1 $permission of passed callable needs to be same or wider than parameter type mixed of   
-         accepting callable.                                                                                                     
 
 
 
@@ -902,14 +593,14 @@
          💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                              
 
 
-
+ 
   Line   app\Http\Requests\StoreConsultationImagingRequest.php                                                                  
-
+ 
   :22    Method App\Http\Requests\StoreConsultationImagingRequest::rules() return type has no value type specified in iterable  
          type array.                                                                                                            
          🪪  missingType.iterableValue                                                                                          
          💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                             
-
+ 
 
 
   Line   app\Http\Requests\StoreConsultationLabRequest.php                                                                       
@@ -920,63 +611,26 @@
          💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                              
 
 
-
+- 
   Line   app\Http\Requests\StoreConsultationPrescriptionRequest.php                                                            
-
+- 
   :58    Offset 'is_prn' on array{inventory_item_id: string, dosage: string, frequency: string, route: string, duration_days:  
          int, quantity: int, instructions: string|null, is_prn: bool, ...} on left side of ?? always exists and is not         
          nullable.                                                                                                             
-         🪪  nullCoalesce.offset                                                                                     
+         🪪  nullCoalesce.offset                                                                                               
+- 
 
+ 
   Line   app\Http\Requests\UpdateAppointmentCategoryRequest.php                                               
-
+ 
   :27    Using nullsafe property access on non-nullable type App\Models\AppointmentCategory. Use -> instead.  
          🪪  nullsafe.neverNull                                                                               
+ 
+
 
   Line   app\Http\Requests\UpdateAppointmentModeRequest.php                                               
 
   :27    Using nullsafe property access on non-nullable type App\Models\AppointmentMode. Use -> instead.  
          🪪  nullsafe.neverNull                                                                           
-
-  Line   app\Http\Requests\UpdateStaffRequest.php                                               
-
-  :24    Access to an undefined property (object|string|null)::$id.                             
-         🪪  property.notFound                                                                  
-         💡  Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
-  :30    Binary operation "." between 'unique:staff,email,' and mixed results in an error.      
-         🪪  binaryOp.invalid                                                                   
-
-
-
-  Line   app\Http\Requests\UpdateUnitRequest.php                                                
-
-  :30    Access to an undefined property (object|string|null)::$id.                             
-         🪪  property.notFound                                                                  
-         💡  Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
-  :36    Access to an undefined property (object|string|null)::$id.                             
-         🪪  property.notFound                                                                  
-         💡  Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
-
-
-
-  Line   app\Support\PrescriptionDispenseProgress.php                                                                            
-
-  :53    Method App\Support\PrescriptionDispenseProgress::postedLineSummaries() should return Illuminate\Support\Collection<str  
-         ing, array{dispensed_quantity: float, external_quantity: float, covered_quantity: float, latest_dispensed_at:           
-         Illuminate\Support\Carbon|null, external_pharmacy: bool}> but returns Illuminate\Support\Collection<string, array{disp  
-         ensed_quantity: float, external_quantity: float, covered_quantity: float, latest_dispensed_at:                          
-         Carbon\CarbonImmutable|null, external_pharmacy: bool}>.                                                                 
-         🪪  return.type                                                                                  
-
-  Line   database\seeders\SupportUserSeeder.php                                             
-
-  :52    Cannot call method orderBy() on mixed.                                             
-         🪪  method.nonObject                                                               
-  :52    Cannot call method orderByDesc() on mixed.                                         
-         🪪  method.nonObject                                                               
-  :53    Cannot call method orderBy() on mixed.                                             
-         🪪  method.nonObject                                                               
-  :119   Parameter #1 $string of function mb_strtoupper expects string, string|null given.  
-         🪪  argument.type                                                                                   
- [ERROR] Found 254 errors                                                                                               
-                                                                                                                        
+                                                                                                                    
+ [ERROR] Found 140 errors                                                                                          

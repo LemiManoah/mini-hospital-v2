@@ -9,6 +9,7 @@ use App\Models\LabRequestItem;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\VisitWorkflowGuard;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -80,7 +81,11 @@ final readonly class LaboratoryQueueController implements HasMiddleware
                 'requestedBy:id,first_name,last_name',
                 'visit:id,visit_number,patient_id',
                 'visit.patient:id,patient_number,first_name,last_name,gender,age,age_units,date_of_birth,phone_number',
-                'items' => function (HasMany $query) use ($stage): void {
+                'items' => function (mixed $query) use ($stage): void {
+                    if (! $query instanceof HasMany) {
+                        return;
+                    }
+
                     $this->applyStageFilter($query, $stage)
                         ->with([
                             'test:id,test_code,test_name,description,lab_test_category_id,result_type_id,base_price',
@@ -122,8 +127,8 @@ final readonly class LaboratoryQueueController implements HasMiddleware
     }
 
     /**
-     * @param  Builder<LabRequestItem>|HasMany<LabRequestItem, LabRequest>  $query
-     * @return Builder<LabRequestItem>|HasMany<LabRequestItem, LabRequest>
+     * @param  Builder<Model>|HasMany<LabRequestItem, LabRequest>  $query
+     * @return Builder<Model>|HasMany<LabRequestItem, LabRequest>
      */
     private function applyStageFilter(Builder|HasMany $query, string $stage): Builder|HasMany
     {

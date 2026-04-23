@@ -20,6 +20,7 @@ use App\Models\TenantSupportNote;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -75,12 +76,12 @@ final readonly class FacilityManagerController implements HasMiddleware
 
         $followUpTenants = $tenants
             ->filter(static fn (Tenant $tenant): bool => ! $tenant->isOnboardingComplete()
-                || $tenant->currentSubscription?->status?->value === 'past_due'
+                || $tenant->currentSubscription?->status === 'past_due'
                 || $tenant->currentSubscription === null)
             ->sortBy(static fn (Tenant $tenant): string => sprintf(
                 '%d-%d-%s',
                 $tenant->isOnboardingComplete() ? 1 : 0,
-                $tenant->currentSubscription?->status?->value === 'past_due' ? 0 : 1,
+                $tenant->currentSubscription?->status === 'past_due' ? 0 : 1,
                 mb_strtolower($tenant->name),
             ))
             ->take(8)
@@ -222,7 +223,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                         'id' => $branch->id,
                         'name' => $branch->name,
                         'branch_code' => $branch->branch_code,
-                        'status' => is_string($branch->status) ? $branch->status : $branch->status?->value,
+                        'status' => $branch->status->value,
                     ])
                     ->values()
                     ->all(),
@@ -262,7 +263,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 ],
                 [
                     'label' => 'Active Branches',
-                    'value' => $branches->filter(fn (FacilityBranch $branch): bool => $branch->status?->value === 'active')->count(),
+                    'value' => $branches->filter(fn (FacilityBranch $branch): bool => $branch->status->value === 'active')->count(),
                     'hint' => 'Branches currently marked active.',
                 ],
                 [
@@ -281,7 +282,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                     'id' => $branch->id,
                     'name' => $branch->name,
                     'branch_code' => $branch->branch_code,
-                    'status' => is_string($branch->status) ? $branch->status : $branch->status?->value,
+                    'status' => $branch->status->value,
                     'is_main_branch' => $branch->is_main_branch,
                     'has_store' => $branch->has_store,
                     'staff_count' => $branch->staff_count ?? 0,
@@ -587,6 +588,17 @@ final readonly class FacilityManagerController implements HasMiddleware
         return back()->with('success', 'Onboarding reopened for '.$tenant->name.'.');
     }
 
+    private static function isPrimaryBranchLocation(FacilityBranch $branch): bool
+    {
+        $pivot = $branch->getRelations()['pivot'] ?? null;
+
+        return $pivot instanceof Model
+            && (bool) $pivot->getAttribute('is_primary_location');
+    }
+
+    /**
+     * @return Builder<Tenant>
+     */
     private function filteredTenantQuery(Request $request): Builder
     {
         $search = $request->string('search')->value();
@@ -596,7 +608,7 @@ final readonly class FacilityManagerController implements HasMiddleware
         return Tenant::query()
             ->with('currentSubscription.subscriptionPackage')
             ->when(
-                is_string($search) && $search !== '',
+                $search !== '',
                 static fn (Builder $query): Builder => $query->where(
                     static function (Builder $tenantQuery) use ($search): void {
                         $tenantQuery
@@ -618,7 +630,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 static fn (Builder $query): Builder => $query->whereDoesntHave('currentSubscription'),
             )
             ->when(
-                is_string($subscription) && $subscription !== '' && $subscription !== 'no_subscription',
+                $subscription !== '' && $subscription !== 'no_subscription',
                 static fn (Builder $query): Builder => $query->whereHas(
                     'currentSubscription',
                     static fn (Builder $subscriptionQuery): Builder => $subscriptionQuery->where('status', $subscription),
@@ -626,6 +638,10 @@ final readonly class FacilityManagerController implements HasMiddleware
             );
     }
 
+    /**
+     * @param  Builder<Tenant>  $query
+     * @return Builder<Tenant>
+     */
     private function tenantsWithCounts(Builder $query): Builder
     {
         return $query->withCount([
@@ -653,12 +669,12 @@ final readonly class FacilityManagerController implements HasMiddleware
             'id' => $tenant->id,
             'name' => $tenant->name,
             'domain' => $tenant->domain,
-            'status' => $tenant->status?->value,
-            'facility_level' => $tenant->facility_level?->value,
+            'status' => $tenant->status->value,
+            'facility_level' => $tenant->facility_level->value,
             'onboarding_completed_at' => $tenant->onboarding_completed_at?->toISOString(),
             'current_subscription' => $tenant->currentSubscription ? [
-                'status' => $tenant->currentSubscription->status->value,
-                'status_label' => $tenant->currentSubscription->status->label(),
+                'status' => $this->subscriptionStatusValue($tenant->currentSubscription),
+                'status_label' => $this->subscriptionStatusLabel($tenant->currentSubscription),
                 'package' => $tenant->currentSubscription->subscriptionPackage ? [
                     'name' => $tenant->currentSubscription->subscriptionPackage->name,
                 ] : null,
@@ -690,8 +706,8 @@ final readonly class FacilityManagerController implements HasMiddleware
             'id' => $tenant->id,
             'name' => $tenant->name,
             'domain' => $tenant->domain,
-            'status' => $tenant->status?->value,
-            'facility_level' => $tenant->facility_level?->value,
+            'status' => $tenant->status->value,
+            'facility_level' => $tenant->facility_level->value,
             'onboarding_completed_at' => $tenant->onboarding_completed_at?->toISOString(),
             'country' => $tenant->country ? [
                 'country_name' => $tenant->country->country_name,
@@ -716,15 +732,15 @@ final readonly class FacilityManagerController implements HasMiddleware
     {
         return [
             'id' => $subscription->id,
-            'status' => $subscription->status->value,
-            'status_label' => $subscription->status->label(),
+            'status' => $this->subscriptionStatusValue($subscription),
+            'status_label' => $this->subscriptionStatusLabel($subscription),
             'package' => $subscription->subscriptionPackage ? [
                 'name' => $subscription->subscriptionPackage->name,
                 'price' => $subscription->subscriptionPackage->price,
             ] : null,
-            'trial_ends_at' => $subscription->trial_ends_at?->toISOString(),
-            'activated_at' => $subscription->activated_at?->toISOString(),
-            'current_period_ends_at' => $subscription->current_period_ends_at?->toISOString(),
+            'trial_ends_at' => $subscription->trial_ends_at,
+            'activated_at' => $subscription->activated_at,
+            'current_period_ends_at' => $subscription->current_period_ends_at,
             'created_at' => $subscription->created_at?->toISOString(),
         ];
     }
@@ -741,8 +757,8 @@ final readonly class FacilityManagerController implements HasMiddleware
             'position' => $user->staff?->position?->name,
             'roles' => $user->roles->pluck('name')->values()->all(),
             'email_verified_at' => $user->email_verified_at?->toISOString(),
-            'created_at' => $user->created_at?->toISOString(),
-            'is_active' => $user->staff?->is_active ?? false,
+            'created_at' => $user->created_at->toISOString(),
+            'is_active' => $user->staff !== null ? $user->staff->is_active : false,
             'employee_number' => $user->staff?->employee_number,
             'last_login_at' => $user->staff?->last_login_at?->toISOString(),
             'branches' => $includeBranches
@@ -750,7 +766,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                     ?->map(static fn (FacilityBranch $branch): array => [
                         'id' => $branch->id,
                         'name' => $branch->name,
-                        'is_primary_location' => (bool) ($branch->pivot?->is_primary_location ?? false),
+                        'is_primary_location' => self::isPrimaryBranchLocation($branch),
                     ])
                     ->values()
                     ->all() ?? []
@@ -779,7 +795,7 @@ final readonly class FacilityManagerController implements HasMiddleware
     }
 
     /**
-     * @return Collection<int, array<string, string|null>>
+     * @return Collection<int, array{type: string, title: string, subject: string|null, timestamp: string}>
      */
     private function recentActivityForTenant(string $tenantId): Collection
     {
@@ -806,7 +822,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'type' => 'Consultation',
                 'title' => 'Consultation started',
                 'subject' => $consultation->visit?->patient?->fullname(),
-                'timestamp' => $consultation->started_at?->toISOString(),
+                'timestamp' => $consultation->started_at->toISOString(),
             ]);
 
         $labEvents = LabRequest::query()
@@ -835,7 +851,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'type' => 'Pharmacy',
                 'title' => 'Prescription created',
                 'subject' => $prescription->visit?->patient?->fullname(),
-                'timestamp' => $prescription->created_at?->toISOString(),
+                'timestamp' => $prescription->created_at->toISOString(),
             ]);
 
         $serviceOrderEvents = FacilityServiceOrder::query()
@@ -851,12 +867,32 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'timestamp' => $order->ordered_at?->toISOString(),
             ]);
 
-        return collect([
+        /** @var Collection<int, array{type: string, title: string, subject: string|null, timestamp: string}> $events */
+        $events = collect([
             ...$visitEvents->all(),
             ...$consultationEvents->all(),
             ...$labEvents->all(),
             ...$prescriptionEvents->all(),
             ...$serviceOrderEvents->all(),
         ])->filter(static fn (array $event): bool => $event['timestamp'] !== null)->values();
+
+        return $events;
+    }
+
+    private function subscriptionStatusValue(TenantSubscription $subscription): string
+    {
+        return $subscription->status;
+    }
+
+    private function subscriptionStatusLabel(TenantSubscription $subscription): string
+    {
+        return match ($subscription->status) {
+            SubscriptionStatus::TRIAL->value => SubscriptionStatus::TRIAL->label(),
+            SubscriptionStatus::PENDING_ACTIVATION->value => SubscriptionStatus::PENDING_ACTIVATION->label(),
+            SubscriptionStatus::ACTIVE->value => SubscriptionStatus::ACTIVE->label(),
+            SubscriptionStatus::PAST_DUE->value => SubscriptionStatus::PAST_DUE->label(),
+            SubscriptionStatus::CANCELLED->value => SubscriptionStatus::CANCELLED->label(),
+            default => mb_convert_case(str_replace('_', ' ', $subscription->status), MB_CASE_TITLE, 'UTF-8'),
+        };
     }
 }

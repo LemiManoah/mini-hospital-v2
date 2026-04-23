@@ -50,7 +50,15 @@ final class PrescriptionDispenseProgress
             ->toBase()
             ->get();
 
-        return $rows->mapWithKeys(static fn (object $row): array => [
+        /** @var Collection<string, array{
+         *     dispensed_quantity: float,
+         *     external_quantity: float,
+         *     covered_quantity: float,
+         *     latest_dispensed_at: Carbon|null,
+         *     external_pharmacy: bool
+         * }> $progress
+         */
+        $progress = $rows->mapWithKeys(static fn (object $row): array => [
             (string) $row->prescription_item_id => [
                 'dispensed_quantity' => (float) $row->dispensed_quantity,
                 'external_quantity' => (float) $row->external_quantity,
@@ -64,5 +72,7 @@ final class PrescriptionDispenseProgress
                 'external_pharmacy' => (bool) $row->external_pharmacy,
             ],
         ]);
+
+        return $progress;
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\StaffType;
+use App\Models\Staff;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Validator;
@@ -21,13 +22,15 @@ final class UpdateStaffRequest extends FormRequest
      */
     public function rules(): array
     {
-        $staffId = $this->route('staff')->id;
+        $staff = $this->route('staff');
+
+        assert($staff instanceof Staff);
 
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:staff,email,'.$staffId],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:staff,email,'.$staff->id],
             'phone' => ['nullable', 'string', 'max:20'],
             'department_ids' => ['required', 'array', 'min:1'],
             'department_ids.*' => ['required', 'uuid', 'exists:departments,id'],

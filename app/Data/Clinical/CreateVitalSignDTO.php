@@ -30,29 +30,6 @@ final readonly class CreateVitalSignDTO
         public ?string $capillaryRefill,
     ) {}
 
-    /**
-     * @param  array{
-     *   temperature?: int|float|string|null,
-     *   temperature_unit: string,
-     *   pulse_rate?: int|null,
-     *   respiratory_rate?: int|null,
-     *   systolic_bp?: int|null,
-     *   diastolic_bp?: int|null,
-     *   oxygen_saturation?: int|float|string|null,
-     *   on_supplemental_oxygen?: bool,
-     *   oxygen_delivery_method?: string|null,
-     *   oxygen_flow_rate?: int|float|string|null,
-     *   blood_glucose?: int|float|string|null,
-     *   blood_glucose_unit: string,
-     *   pain_score?: int|null,
-     *   height_cm?: int|float|string|null,
-     *   weight_kg?: int|float|string|null,
-     *   head_circumference_cm?: int|float|string|null,
-     *   chest_circumference_cm?: int|float|string|null,
-     *   muac_cm?: int|float|string|null,
-     *   capillary_refill?: string|null
-     * }  $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

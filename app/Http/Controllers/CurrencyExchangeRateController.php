@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCurrencyExchangeRateRequest;
 use App\Models\Currency;
 use App\Models\CurrencyExchangeRate;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -28,7 +29,9 @@ final readonly class CurrencyExchangeRateController implements HasMiddleware
 
     public function index(Request $request): Response
     {
-        $tenantId = $request->user()?->tenant_id;
+        /** @var User|null $user */
+        $user = $request->user();
+        $tenantId = $user?->tenant_id;
 
         abort_unless(is_string($tenantId) && $tenantId !== '', 403);
 
@@ -54,7 +57,9 @@ final readonly class CurrencyExchangeRateController implements HasMiddleware
 
     public function store(StoreCurrencyExchangeRateRequest $request): RedirectResponse
     {
-        $tenantId = $request->user()?->tenant_id;
+        /** @var User|null $user */
+        $user = $request->user();
+        $tenantId = $user?->tenant_id;
 
         abort_unless(is_string($tenantId) && $tenantId !== '', 403);
 
@@ -78,9 +83,12 @@ final readonly class CurrencyExchangeRateController implements HasMiddleware
 
     public function destroy(Request $request, CurrencyExchangeRate $currencyExchangeRate): RedirectResponse
     {
-        abort_unless($request->user()?->can('currency_exchange_rates.delete'), 403);
+        /** @var User|null $user */
+        $user = $request->user();
 
-        $tenantId = $request->user()?->tenant_id;
+        abort_unless($user instanceof User && $user->can('currency_exchange_rates.delete'), 403);
+
+        $tenantId = $user->tenant_id;
 
         abort_unless($currencyExchangeRate->tenant_id === $tenantId, 403);
 

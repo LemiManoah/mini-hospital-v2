@@ -15,15 +15,6 @@ final readonly class CreateOnboardingDepartmentsDTO
         public array $departments,
     ) {}
 
-    /**
-     * @param  array{
-     *   departments: list<array{
-     *     name: string,
-     *     location?: string|null,
-     *     is_clinical?: bool
-     *   }>
-     * } $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

@@ -9,6 +9,7 @@ use App\Enums\PayerType;
 use App\Enums\VisitStatus;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\User;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\BranchContext;
@@ -29,6 +30,8 @@ final readonly class RegisterPatientAndStartVisit
     {
         return DB::transaction(function () use ($data): array {
             $activeBranch = BranchContext::getActiveBranch();
+            /** @var User|null $authenticatedUser */
+            $authenticatedUser = Auth::user();
             $userId = Auth::id();
 
             $patient = Patient::query()->create([
@@ -53,7 +56,7 @@ final readonly class RegisterPatientAndStartVisit
                 'blood_group' => $data->bloodGroup,
                 'patient_number' => $this->numberGenerator->nextPatientNumber(
                     $activeBranch?->name,
-                    (string) (Auth::user()?->tenant_id ?? ''),
+                    is_string($authenticatedUser?->tenant_id) ? $authenticatedUser->tenant_id : '',
                 ),
                 'created_by' => $userId,
                 'updated_by' => $userId,

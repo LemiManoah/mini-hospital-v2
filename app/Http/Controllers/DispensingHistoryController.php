@@ -5,14 +5,20 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\DispensingRecord;
+use App\Models\InventoryLocation;
+use App\Models\Patient;
+use App\Models\PatientVisit;
+use App\Models\User;
 use App\Support\BranchContext;
 use App\Support\InventoryNavigationContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final readonly class DispensingHistoryController implements HasMiddleware
@@ -26,24 +32,23 @@ final readonly class DispensingHistoryController implements HasMiddleware
 
     public function index(Request $request): Response
     {
+        /** @var LengthAwarePaginator<int, DispensingRecord> $records */
         $records = $this->baseQuery($request)
             ->paginate(30)
             ->withQueryString()
             ->through(static fn (DispensingRecord $record): array => [
                 'id' => $record->id,
                 'dispense_number' => $record->dispense_number,
-                'status' => $record->status?->value,
-                'status_label' => $record->status?->label(),
-                'dispensed_at' => $record->dispensed_at?->toISOString(),
+                'status' => $record->status->value,
+                'status_label' => $record->status->label(),
+                'dispensed_at' => $record->dispensed_at->toISOString(),
                 'visit_number' => $record->visit?->visit_number,
                 'patient_name' => $record->visit?->patient !== null
                     ? mb_trim(sprintf('%s %s', $record->visit->patient->first_name, $record->visit->patient->last_name))
                     : null,
                 'patient_number' => $record->visit?->patient?->patient_number,
                 'inventory_location_name' => $record->inventoryLocation?->name,
-                'dispensed_by' => $record->dispensedBy?->staff !== null
-                    ? mb_trim(sprintf('%s %s', $record->dispensedBy->staff->first_name, $record->dispensedBy->staff->last_name))
-                    : $record->dispensedBy?->email,
+                'dispensed_by' => self::dispensedByName($record),
             ]);
 
         return Inertia::render('pharmacy/dispenses/index', [
@@ -69,6 +74,7 @@ final readonly class DispensingHistoryController implements HasMiddleware
 
         return response()->streamDownload(function () use ($query): void {
             $handle = fopen('php://output', 'w');
+            throw_if($handle === false, RuntimeException::class, 'Unable to open output stream for dispensing export.');
 
             fputcsv($handle, [
                 'Dispense Number',
@@ -90,13 +96,25 @@ final readonly class DispensingHistoryController implements HasMiddleware
 
             $query->each(function (DispensingRecord $record) use ($handle): void {
                 foreach ($record->items as $item) {
-                    $patientName = $record->visit?->patient !== null
-                        ? mb_trim(sprintf('%s %s', $record->visit->patient->first_name, $record->visit->patient->last_name))
+                    $visit = $record->visit;
+                    $patient = $visit?->patient;
+                    $inventoryLocation = $record->inventoryLocation;
+                    $inventoryItem = $item->inventoryItem;
+
+                    $visitNumber = $visit instanceof PatientVisit
+                        ? $visit->visit_number
+                        : '';
+                    $patientNumber = $patient instanceof Patient
+                        ? $patient->patient_number
+                        : '';
+                    $inventoryLocationName = $inventoryLocation instanceof InventoryLocation
+                        ? $inventoryLocation->name
+                        : '';
+                    $patientName = $patient !== null
+                        ? mb_trim(sprintf('%s %s', $patient->first_name, $patient->last_name))
                         : '';
 
-                    $dispensedBy = $record->dispensedBy?->staff !== null
-                        ? mb_trim(sprintf('%s %s', $record->dispensedBy->staff->first_name, $record->dispensedBy->staff->last_name))
-                        : ($record->dispensedBy?->email ?? '');
+                    $dispensedBy = self::dispensedByName($record) ?? '';
 
                     $batchNumbers = $item->allocations
                         ->pluck('batch_number_snapshot')
@@ -105,18 +123,18 @@ final readonly class DispensingHistoryController implements HasMiddleware
 
                     fputcsv($handle, [
                         $record->dispense_number,
-                        $record->status?->label() ?? '',
-                        $record->dispensed_at?->format('Y-m-d H:i') ?? '',
-                        $record->visit?->visit_number ?? '',
+                        $record->status->label(),
+                        $record->dispensed_at->format('Y-m-d H:i'),
+                        $visitNumber,
                         $patientName,
-                        $record->visit?->patient?->patient_number ?? '',
-                        $record->inventoryLocation?->name ?? '',
+                        $patientNumber,
+                        $inventoryLocationName,
                         $dispensedBy,
-                        $item->inventoryItem?->generic_name ?? $item->inventoryItem?->name ?? '',
+                        $inventoryItem->generic_name ?? $inventoryItem->name ?? '',
                         number_format((float) $item->prescribed_quantity, 3),
                         number_format((float) $item->dispensed_quantity, 3),
                         number_format((float) $item->balance_quantity, 3),
-                        $item->dispense_status?->label() ?? '',
+                        $item->dispense_status->label(),
                         $batchNumbers,
                     ],
                         escape: '\\');
@@ -127,6 +145,20 @@ final readonly class DispensingHistoryController implements HasMiddleware
         }, $filename, ['Content-Type' => 'text/csv']);
     }
 
+    private static function dispensedByName(DispensingRecord $record): ?string
+    {
+        $dispensedBy = $record->dispensedBy;
+
+        if ($dispensedBy?->staff !== null) {
+            return mb_trim(sprintf('%s %s', $dispensedBy->staff->first_name, $dispensedBy->staff->last_name));
+        }
+
+        return $dispensedBy instanceof User ? $dispensedBy->email : null;
+    }
+
+    /**
+     * @return Builder<DispensingRecord>
+     */
     private function baseQuery(Request $request): Builder
     {
         $branchId = BranchContext::getActiveBranchId();

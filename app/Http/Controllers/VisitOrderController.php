@@ -14,6 +14,7 @@ use App\Actions\DeletePendingLabRequestItem;
 use App\Actions\UpdateFacilityServiceOrder;
 use App\Actions\UpdateLabRequest;
 use App\Enums\FacilityServiceOrderStatus;
+use App\Enums\LabRequestItemStatus;
 use App\Enums\LabRequestStatus;
 use App\Http\Requests\StoreConsultationFacilityServiceOrderRequest;
 use App\Http\Requests\StoreConsultationImagingRequest;
@@ -146,7 +147,7 @@ final readonly class VisitOrderController implements HasMiddleware
         abort_unless($labRequest->visit_id === $visit->id, 404);
         abort_unless($labRequestItem->request_id === $labRequest->id, 404);
 
-        if (! $this->labRequestIsEditable($labRequest) || $labRequestItem->status !== 'pending') {
+        if (! $this->labRequestIsEditable($labRequest) || $labRequestItem->status !== LabRequestItemStatus::PENDING) {
             return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
                 ->with('error', 'Only pending lab tests can be removed one by one.');
         }

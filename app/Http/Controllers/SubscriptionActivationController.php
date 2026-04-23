@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\StartTenantSubscription;
+use App\Enums\SubscriptionStatus;
+use App\Models\SubscriptionPackage;
 use App\Models\TenantSubscription;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -63,6 +65,7 @@ final readonly class SubscriptionActivationController
         }
 
         $this->startTenantSubscription->markPendingActivation($subscription, $user);
+        $meta = $this->subscriptionMeta($subscription);
 
         $subscription->update([
             'checkout_provider' => 'manual_placeholder',
@@ -70,7 +73,7 @@ final readonly class SubscriptionActivationController
             'checkout_url' => route('subscription.checkout.show'),
             'updated_by' => $user->id,
             'meta' => [
-                ...($subscription->meta ?? []),
+                ...$meta,
                 'checkout_requested_at' => now()->toIso8601String(),
             ],
         ]);
@@ -125,13 +128,14 @@ final readonly class SubscriptionActivationController
         }
 
         $this->startTenantSubscription->markActive($subscription, $user);
+        $meta = $this->subscriptionMeta($subscription);
 
         $subscription->update([
             'checkout_provider' => $subscription->checkout_provider ?? 'manual_placeholder',
             'checkout_url' => route('subscription.checkout.show'),
             'updated_by' => $user->id,
             'meta' => [
-                ...($subscription->meta ?? []),
+                ...$meta,
                 'checkout_completed_at' => now()->toIso8601String(),
             ],
         ]);
@@ -159,13 +163,14 @@ final readonly class SubscriptionActivationController
         }
 
         $this->startTenantSubscription->markFailed($subscription, $user);
+        $meta = $this->subscriptionMeta($subscription);
 
         $subscription->update([
             'checkout_provider' => $subscription->checkout_provider ?? 'manual_placeholder',
             'checkout_url' => route('subscription.checkout.show'),
             'updated_by' => $user->id,
             'meta' => [
-                ...($subscription->meta ?? []),
+                ...$meta,
                 'checkout_failed_at' => now()->toIso8601String(),
             ],
         ]);
@@ -181,10 +186,12 @@ final readonly class SubscriptionActivationController
      */
     private function subscriptionPayload(TenantSubscription $subscription): array
     {
+        $subscriptionPackage = $subscription->subscriptionPackage;
+
         return [
             'id' => $subscription->id,
-            'status' => $subscription->status->value,
-            'status_label' => $subscription->status->label(),
+            'status' => $this->subscriptionStatus($subscription)->value,
+            'status_label' => $this->subscriptionStatus($subscription)->label(),
             'starts_at' => $subscription->starts_at,
             'trial_ends_at' => $subscription->trial_ends_at,
             'activated_at' => $subscription->activated_at,
@@ -193,12 +200,52 @@ final readonly class SubscriptionActivationController
             'checkout_provider' => $subscription->checkout_provider,
             'checkout_reference' => $subscription->checkout_reference,
             'checkout_url' => $subscription->checkout_url,
-            'package' => [
-                'id' => $subscription->subscriptionPackage->id,
-                'name' => $subscription->subscriptionPackage->name,
-                'users' => $subscription->subscriptionPackage->users,
-                'price' => $subscription->subscriptionPackage->price,
-            ],
+            'package' => $subscriptionPackage instanceof SubscriptionPackage ? [
+                'id' => $subscriptionPackage->id,
+                'name' => $subscriptionPackage->name,
+                'users' => $subscriptionPackage->users,
+                'price' => $subscriptionPackage->price,
+            ] : null,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function subscriptionMeta(TenantSubscription $subscription): array
+    {
+        $meta = $subscription->getAttributeValue('meta');
+
+        if (! is_array($meta)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $normalizedMeta */
+        $normalizedMeta = [];
+
+        foreach ($meta as $key => $value) {
+            if (! is_string($key)) {
+                continue;
+            }
+
+            $normalizedMeta[$key] = $value;
+        }
+
+        return $normalizedMeta;
+    }
+
+    private function subscriptionStatus(TenantSubscription $subscription): SubscriptionStatus
+    {
+        $status = $subscription->getAttributeValue('status');
+
+        if ($status instanceof SubscriptionStatus) {
+            return $status;
+        }
+
+        if (is_string($status)) {
+            return SubscriptionStatus::from($status);
+        }
+
+        return SubscriptionStatus::PENDING_ACTIVATION;
     }
 }

@@ -148,6 +148,13 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
             ->with('success', 'Schedule exception deleted successfully.');
     }
 
+    /**
+     * @return array{
+     *     doctors: list<array{id: string, name: string}>,
+     *     clinics: list<array{id: string, name: string}>,
+     *     typeOptions: list<array{value: string, label: string}>
+     * }
+     */
     private function formOptions(?DoctorScheduleException $exception = null): array
     {
         $doctors = Staff::query()
@@ -197,14 +204,14 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
         }
 
         return [
-            'doctors' => $doctors->values()->all(),
-            'clinics' => $clinics->values()->all(),
-            'typeOptions' => collect(ScheduleExceptionType::cases())
+            'doctors' => array_values($doctors->all()),
+            'clinics' => array_values($clinics->all()),
+            'typeOptions' => array_values(collect(ScheduleExceptionType::cases())
                 ->map(static fn (ScheduleExceptionType $type): array => [
                     'value' => $type->value,
                     'label' => $type->label(),
                 ])
-                ->all(),
+                ->all()),
         ];
     }
 

@@ -38,38 +38,6 @@ final readonly class CreatePatientRegistrationDTO
         public ?string $insurancePackageId,
     ) {}
 
-    /**
-     * @param  array{
-     *   first_name: string,
-     *   last_name: string,
-     *   middle_name?: string|null,
-     *   age_input_mode: string,
-     *   date_of_birth?: string|null,
-     *   age?: int|numeric-string|null,
-     *   age_units?: string|null,
-     *   gender: string,
-     *   email?: string|null,
-     *   phone_number: string,
-     *   alternative_phone?: string|null,
-     *   next_of_kin_name?: string|null,
-     *   next_of_kin_phone?: string|null,
-     *   next_of_kin_relationship?: string|null,
-     *   address_id?: string|null,
-     *   marital_status?: string|null,
-     *   occupation?: string|null,
-     *   religion?: string|null,
-     *   country_id?: string|null,
-     *   blood_group?: string|null,
-     *   visit_type: string,
-     *   clinic_id?: string|null,
-     *   doctor_id?: string|null,
-     *   is_emergency?: bool,
-     *   billing_type: string,
-     *   insurance_company_id?: string|null,
-     *   insurance_package_id?: string|null,
-     *   redirect_to?: string|null
-     * } $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

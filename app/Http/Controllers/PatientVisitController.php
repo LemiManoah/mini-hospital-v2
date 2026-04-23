@@ -22,6 +22,8 @@ use App\Enums\TriageGrade;
 use App\Enums\VisitStatus;
 use App\Models\Allergen;
 use App\Models\Clinic;
+use App\Models\LabRequest;
+use App\Models\LabRequestItem;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Staff;
@@ -180,19 +182,23 @@ final readonly class PatientVisitController implements HasMiddleware
                     'scheduledBy:id,first_name,last_name',
                 ])
                 ->latest(),
-            'prescriptions' => static fn (HasMany $query): HasMany => $query
-                ->with([
-                    'prescribedBy:id,first_name,last_name',
-                    'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form',
-                ])
-                ->latest('prescription_date'),
-            'facilityServiceOrders' => static fn (HasMany $query): HasMany => $query
-                ->with([
-                    'service:id,name,service_code,category,selling_price,is_billable',
-                    'orderedBy:id,first_name,last_name',
-                    'performedBy:id,first_name,last_name',
-                ])
-                ->latest('ordered_at'),
+            'prescriptions' => static function (HasMany $query): void {
+                $query
+                    ->with([
+                        'prescribedBy:id,first_name,last_name',
+                        'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form',
+                    ])
+                    ->latest('prescription_date');
+            },
+            'facilityServiceOrders' => static function (HasMany $query): void {
+                $query
+                    ->with([
+                        'service:id,name,service_code,category,selling_price,is_billable',
+                        'orderedBy:id,first_name,last_name',
+                        'performedBy:id,first_name,last_name',
+                    ])
+                    ->latest('ordered_at');
+            },
         ]);
 
         $this->hideUnreleasedLabResults($visit);
@@ -252,6 +258,17 @@ final readonly class PatientVisitController implements HasMiddleware
             return back()->with('error', 'Patient already has an active visit. Please complete or cancel the existing visit first.');
         }
 
+        /** @var array{
+         *   visit_type: string,
+         *   clinic_id?: string|null,
+         *   doctor_id?: string|null,
+         *   is_emergency?: bool,
+         *   billing_type: 'cash'|'insurance',
+         *   insurance_company_id?: string|null,
+         *   insurance_package_id?: string|null,
+         *   redirect_to?: 'patient'|'visit'|'index'|null
+         * } $validated
+         */
         $validated = $request->validate([
             'visit_type' => ['required', 'string'],
             'clinic_id' => ['nullable', 'uuid', 'exists:clinics,id'],
@@ -264,7 +281,7 @@ final readonly class PatientVisitController implements HasMiddleware
         ]);
 
         if (
-            isset($validated['clinic_id'])
+            array_key_exists('clinic_id', $validated)
             && $validated['clinic_id'] !== null
             && ! Clinic::query()
                 ->whereKey($validated['clinic_id'])
@@ -275,8 +292,8 @@ final readonly class PatientVisitController implements HasMiddleware
         }
 
         if (
-            isset($validated['doctor_id'])
-            && is_string($validated['doctor_id'])
+            array_key_exists('doctor_id', $validated)
+            && $validated['doctor_id'] !== null
             && $validated['doctor_id'] !== ''
             && ! Staff::query()
                 ->whereKey($validated['doctor_id'])
@@ -290,6 +307,8 @@ final readonly class PatientVisitController implements HasMiddleware
 
         $visit = DB::transaction(function () use ($patient, $validated, $numberGenerator): PatientVisit {
             $activeBranch = BranchContext::getActiveBranch();
+            $insuranceCompanyId = $validated['insurance_company_id'] ?? null;
+            $insurancePackageId = $validated['insurance_package_id'] ?? null;
             $userId = Auth::id();
 
             $visit = PatientVisit::query()->create([
@@ -313,10 +332,10 @@ final readonly class PatientVisitController implements HasMiddleware
                 'patient_visit_id' => $visit->id,
                 'billing_type' => $validated['billing_type'],
                 'insurance_company_id' => $validated['billing_type'] === PayerType::INSURANCE->value
-                    ? $validated['insurance_company_id']
+                    ? $insuranceCompanyId
                     : null,
                 'insurance_package_id' => $validated['billing_type'] === PayerType::INSURANCE->value
-                    ? $validated['insurance_package_id']
+                    ? $insurancePackageId
                     : null,
                 'created_by' => $userId,
                 'updated_by' => $userId,
@@ -358,6 +377,7 @@ final readonly class PatientVisitController implements HasMiddleware
             'redirect_to' => ['nullable', Rule::in(['show', 'index'])],
         ]);
 
+        /** @var array{status: 'completed', redirect_to?: 'show'|'index'|null} $validated */
         $redirectTo = $validated['redirect_to'] ?? 'show';
 
         $allowedStatuses = collect($this->availableTransitions($visit))
@@ -369,14 +389,12 @@ final readonly class PatientVisitController implements HasMiddleware
                 ->with('error', 'That status change is not allowed for the current visit state.');
         }
 
-        if ($validated['status'] === VisitStatus::COMPLETED->value) {
-            $completionCheck = $assessment->handle($visit);
+        $completionCheck = $assessment->handle($visit);
 
-            if ($completionCheck['can_complete'] === false) {
-                $message = $completionCheck['blocking_reasons'][0] ?? 'This visit cannot be completed yet.';
+        if ($completionCheck['can_complete'] === false) {
+            $message = $completionCheck['blocking_reasons'][0] ?? 'This visit cannot be completed yet.';
 
-                return $this->statusRedirect($visit, $redirectTo)->with('error', $message);
-            }
+            return $this->statusRedirect($visit, $redirectTo)->with('error', $message);
         }
 
         $action->handle($visit, VisitStatus::from($validated['status']));
@@ -398,7 +416,7 @@ final readonly class PatientVisitController implements HasMiddleware
     }
 
     /**
-     * @param  array<int, object{value: string, label: string}>  $cases
+     * @param  array<int, TriageGrade|AttendanceType|ConsciousLevel|MobilityStatus>  $cases
      * @return array<int, array{value: string, label: string}>
      */
     private function enumOptions(array $cases): array
@@ -424,8 +442,8 @@ final readonly class PatientVisitController implements HasMiddleware
 
     private function hideUnreleasedLabResults(PatientVisit $visit): void
     {
-        $visit->labRequests?->each(function (mixed $labRequest): void {
-            $labRequest->items?->each(function (mixed $item): void {
+        $visit->labRequests->each(function (LabRequest $labRequest): void {
+            $labRequest->items->each(function (LabRequestItem $item): void {
                 if ($item->result_visible) {
                     return;
                 }

@@ -18,25 +18,6 @@ final readonly class DispensePrescriptionDTO
         public array $items,
     ) {}
 
-    /**
-     * @param  array{
-     *   inventory_location_id: string,
-     *   dispensed_at: string,
-     *   notes?: string|null,
-     *   items: list<array{
-     *     prescription_item_id: string,
-     *     dispensed_quantity: int|float|string,
-     *     external_pharmacy?: bool,
-     *     external_reason?: string|null,
-     *     notes?: string|null,
-     *     substitution_inventory_item_id?: string|null,
-     *     allocations?: list<array{
-     *       inventory_batch_id: string,
-     *       quantity: int|float|string
-     *     }>
-     *   }>
-     * }  $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

@@ -34,7 +34,7 @@ final readonly class PharmacyPosCartController implements HasMiddleware
         abort_unless($cart->branch_id === BranchContext::getActiveBranchId(), 404);
         abort_unless($cart->status === PharmacyPosCartStatus::Active, 403, 'This cart is no longer active.');
 
-        $action->handle($cart, $request->validated());
+        $action->handle($cart, $request->itemAttributes());
 
         return back()->with('success', 'Item added to cart.');
     }
@@ -49,7 +49,7 @@ final readonly class PharmacyPosCartController implements HasMiddleware
         abort_unless($item->pharmacy_pos_cart_id === $cart->id, 404);
         abort_unless($cart->status === PharmacyPosCartStatus::Active, 403, 'This cart is no longer active.');
 
-        $action->handle($item, $request->validated());
+        $action->handle($item, $request->itemAttributes());
 
         return back()->with('success', 'Cart item updated.');
     }

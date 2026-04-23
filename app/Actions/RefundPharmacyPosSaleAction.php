@@ -8,7 +8,6 @@ use App\Enums\PharmacyPosSaleStatus;
 use App\Enums\StockMovementType;
 use App\Models\PharmacyPosSale;
 use App\Models\PharmacyPosSaleItem;
-use App\Models\PharmacyPosSaleItemAllocation;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -34,15 +33,7 @@ final readonly class RefundPharmacyPosSaleAction
             }
 
             foreach ($sale->items as $saleItem) {
-                if (! $saleItem instanceof PharmacyPosSaleItem) {
-                    continue;
-                }
-
                 foreach ($saleItem->allocations as $allocation) {
-                    if (! $allocation instanceof PharmacyPosSaleItemAllocation) {
-                        continue;
-                    }
-
                     StockMovement::query()->create([
                         'tenant_id' => $sale->tenant_id,
                         'branch_id' => $sale->branch_id,
@@ -63,7 +54,7 @@ final readonly class RefundPharmacyPosSaleAction
                 }
             }
 
-            $refundAmount = (float) ($data['refund_amount'] ?? $sale->paid_amount);
+            $refundAmount = $this->floatValue($data['refund_amount'] ?? $sale->paid_amount);
 
             $sale->payments()->create([
                 'amount' => $refundAmount,
@@ -83,5 +74,18 @@ final readonly class RefundPharmacyPosSaleAction
 
             return $sale->refresh();
         });
+    }
+
+    private function floatValue(mixed $value): float
+    {
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        if (! is_string($value) || ! is_numeric($value)) {
+            return 0.0;
+        }
+
+        return (float) $value;
     }
 }

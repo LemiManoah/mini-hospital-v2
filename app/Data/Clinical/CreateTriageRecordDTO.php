@@ -27,26 +27,6 @@ final readonly class CreateTriageRecordDTO
         public ?string $nurseNotes,
     ) {}
 
-    /**
-     * @param  array{
-     *   triage_grade: string,
-     *   attendance_type: string,
-     *   news_score?: int|null,
-     *   pews_score?: int|null,
-     *   conscious_level: string,
-     *   mobility_status: string,
-     *   chief_complaint: string,
-     *   history_of_presenting_illness?: string|null,
-     *   assigned_clinic_id?: string|null,
-     *   requires_priority?: bool,
-     *   is_pediatric?: bool,
-     *   poisoning_case?: bool,
-     *   poisoning_agent?: string|null,
-     *   snake_bite_case?: bool,
-     *   referred_by?: string|null,
-     *   nurse_notes?: string|null
-     * }  $validated
-     */
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{

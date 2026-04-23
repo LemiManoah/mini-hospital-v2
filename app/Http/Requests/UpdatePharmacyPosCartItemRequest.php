@@ -25,4 +25,31 @@ final class UpdatePharmacyPosCartItemRequest extends FormRequest
             'notes' => ['nullable', 'string'],
         ];
     }
+
+    /**
+     * @return array{
+     *   quantity: int|float|numeric-string,
+     *   unit_price: int|float|numeric-string|null,
+     *   discount_amount: int|float|numeric-string|null,
+     *   notes: string|null
+     * }
+     */
+    public function itemAttributes(): array
+    {
+        /** @var array{
+         *   quantity: int|float|numeric-string,
+         *   unit_price: int|float|numeric-string,
+         *   discount_amount?: int|float|numeric-string|null,
+         *   notes?: string|null
+         * } $validated
+         */
+        $validated = $this->validated();
+
+        return [
+            'quantity' => $validated['quantity'],
+            'unit_price' => $validated['unit_price'],
+            'discount_amount' => $validated['discount_amount'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ];
+    }
 }

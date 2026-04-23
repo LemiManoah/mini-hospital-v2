@@ -27,6 +27,7 @@ final readonly class AdministrationController
             ->where('tenant_id', $tenantId)
             ->pluck('value', 'key')
             ->all();
+        /** @var array<string, string|null> $storedValues */
 
         return Inertia::render('administration/general-settings', [
             'sections' => GeneralSettingsRegistry::sections(),
@@ -40,7 +41,7 @@ final readonly class AdministrationController
                         '%s (%s%s)',
                         $currency->name,
                         $currency->code,
-                        $currency->symbol !== null && $currency->symbol !== ''
+                        $currency->symbol !== ''
                             ? ' - '.$currency->symbol
                             : '',
                     ),
@@ -171,7 +172,7 @@ final readonly class AdministrationController
                 'title' => 'Facility Manager',
                 'description' => 'Detailed support panel for facility status, onboarding, subscription state, and workspace intervention.',
                 'href' => '/facility-manager/dashboard',
-                'visible' => (bool) ($user?->is_support ?? false) || ($user?->hasRole('super_admin') ?? false),
+                'visible' => $user !== null && ($user->is_support || $user->hasRole('super_admin')),
             ],
         ])->filter(static fn (array $item): bool => $item['visible'])->values();
 

@@ -42,7 +42,7 @@ final readonly class BranchSwitcherController implements HasMiddleware
                 'name' => $branch->name,
                 'branch_code' => $branch->branch_code,
                 'is_main_branch' => $branch->is_main_branch,
-                'status' => is_string($branch->status) ? $branch->status : $branch->status->value,
+                'status' => $branch->status->value,
             ])
             ->values();
 
