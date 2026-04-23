@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\UpdateUser;
+use App\Data\User\UpdateUserDTO;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Notification;
@@ -14,9 +15,10 @@ it('may update a user', function (): void {
 
     $action = resolve(UpdateUser::class);
 
-    $action->handle($user, [
-        'email' => 'updated@email.com',
-    ]);
+    $action->handle($user, new UpdateUserDTO(
+        email: 'updated@email.com',
+        roles: null,
+    ));
 
     expect($user->refresh()->email)->toBe('updated@email.com');
 });
@@ -33,9 +35,10 @@ it('resets email verification and sends notification when email changes', functi
 
     $action = resolve(UpdateUser::class);
 
-    $action->handle($user, [
-        'email' => 'new@email.com',
-    ]);
+    $action->handle($user, new UpdateUserDTO(
+        email: 'new@email.com',
+        roles: null,
+    ));
 
     expect($user->refresh()->email)->toBe('new@email.com')
         ->and($user->email_verified_at)->toBeNull();
@@ -55,9 +58,10 @@ it('keeps email verification and does not send notification when email stays the
 
     $action = resolve(UpdateUser::class);
 
-    $action->handle($user, [
-        'email' => 'same@email.com',
-    ]);
+    $action->handle($user, new UpdateUserDTO(
+        email: 'same@email.com',
+        roles: null,
+    ));
 
     expect($user->refresh()->email_verified_at)->not->toBeNull()
         ->and($user->email)->toBe('same@email.com');

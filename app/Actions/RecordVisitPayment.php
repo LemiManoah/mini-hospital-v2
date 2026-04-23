@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Patient\CreateVisitPaymentDTO;
 use App\Models\PatientVisit;
 use App\Models\Payment;
 use App\Support\GeneralSettings\TenantGeneralSettings;
@@ -20,16 +21,20 @@ final readonly class RecordVisitPayment
         private TenantGeneralSettings $settings,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    public function handle(PatientVisit $visit, array $attributes): Payment
+    public function handle(PatientVisit $visit, CreateVisitPaymentDTO $data): Payment
     {
-        return DB::transaction(function () use ($visit, $attributes): Payment {
+        return DB::transaction(function () use ($visit, $data): Payment {
+            $tenantId = $visit->tenant_id;
+            if (! is_string($tenantId) || $tenantId === '') {
+                throw ValidationException::withMessages([
+                    'visit' => 'The selected visit is missing tenant context for payment processing.',
+                ]);
+            }
+
             $billing = $this->ensureVisitBilling->handle($visit);
             $billing = $this->recalculateVisitBilling->handle($billing);
 
-            $amount = round((float) $attributes['amount'], 2);
+            $amount = round($data->amount, 2);
 
             if ($billing->balance_amount <= 0) {
                 throw ValidationException::withMessages([
@@ -50,12 +55,12 @@ final readonly class RecordVisitPayment
                 'facility_branch_id' => $visit->facility_branch_id,
                 'visit_billing_id' => $billing->id,
                 'patient_visit_id' => $visit->id,
-                'receipt_number' => $this->generateReceiptNumber($visit->tenant_id),
-                'payment_date' => $attributes['payment_date'] ?? now(),
+                'receipt_number' => $this->generateReceiptNumber($tenantId),
+                'payment_date' => $data->paymentDate ?? now(),
                 'amount' => $amount,
-                'payment_method' => $attributes['payment_method'],
-                'reference_number' => $attributes['reference_number'] ?: null,
-                'notes' => $attributes['notes'] ?: null,
+                'payment_method' => $data->paymentMethod,
+                'reference_number' => $data->referenceNumber,
+                'notes' => $data->notes,
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ]);

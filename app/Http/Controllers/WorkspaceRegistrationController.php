@@ -54,10 +54,7 @@ final readonly class WorkspaceRegistrationController
         StoreWorkspaceRegistrationRequest $request,
         RegisterWorkspace $registerWorkspace,
     ): RedirectResponse {
-        $workspace = $registerWorkspace->handle(
-            $request->safe()->except('password'),
-            $request->string('password')->value(),
-        );
+        $workspace = $registerWorkspace->handle($request->createDto(), $request->password());
 
         Auth::login($workspace['user']);
         $request->session()->regenerate();

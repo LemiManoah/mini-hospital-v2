@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\User\CreateUserDTO;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
@@ -11,22 +12,16 @@ use SensitiveParameter;
 
 final readonly class CreateUser
 {
-    /**
-     * @param  array{roles?: list<string>} & array<string, mixed>  $attributes
-     */
-    public function handle(array $attributes, #[SensitiveParameter] string $password): User
+    public function handle(CreateUserDTO $data, #[SensitiveParameter] string $password): User
     {
-        return DB::transaction(function () use ($attributes, $password): User {
-            /** @var list<string> $roles */
-            $roles = $attributes['roles'] ?? [];
-            unset($attributes['roles']);
-
+        return DB::transaction(function () use ($data, $password): User {
             $user = User::query()->create([
-                ...$attributes,
+                'staff_id' => $data->staffId,
+                'email' => $data->email,
                 'password' => $password,
             ]);
 
-            $user->syncRoles($roles);
+            $user->syncRoles($data->roles);
 
             event(new Registered($user));
 

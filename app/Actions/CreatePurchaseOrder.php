@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Inventory\CreatePurchaseOrderDTO;
 use App\Enums\PurchaseOrderStatus;
 use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Auth;
@@ -12,48 +13,27 @@ use Illuminate\Support\Str;
 
 final readonly class CreatePurchaseOrder
 {
-    /**
-     * @param  array{
-     *      tenant_id?: string,
-     *      branch_id: string,
-     *      supplier_id: string,
-     *      order_date: string,
-     *      expected_delivery_date?: string|null,
-     *      notes?: string|null,
-     *      approved_by?: string|null,
-     *      approved_at?: string|null,
-     *      updated_by?: string|null,
-     *      total_amount?: float|int|string
-     *  }  $attributes
-     * @param  list<array{
-     *      inventory_item_id: string,
-     *      quantity_ordered: float|int|string,
-     *      unit_cost: float|int|string
-     *  }>  $items
-     */
-    public function handle(array $attributes, array $items): PurchaseOrder
+    public function handle(CreatePurchaseOrderDTO $data): PurchaseOrder
     {
-        return DB::transaction(function () use ($attributes, $items): PurchaseOrder {
-            $tenantId = is_string($attributes['tenant_id'] ?? null)
-                ? $attributes['tenant_id']
-                : Auth::user()?->tenantId();
+        return DB::transaction(function () use ($data): PurchaseOrder {
+            $tenantId = Auth::user()?->tenantId();
 
             $purchaseOrder = PurchaseOrder::query()->create([
-                ...$attributes,
+                'supplier_id' => $data->supplierId,
+                'order_date' => $data->orderDate,
+                'expected_delivery_date' => $data->expectedDeliveryDate,
+                'notes' => $data->notes,
                 'order_number' => $this->generateOrderNumber($tenantId),
                 'status' => PurchaseOrderStatus::Draft,
                 'created_by' => Auth::id(),
             ]);
 
-            foreach ($items as $item) {
-                $quantityOrdered = (float) $item['quantity_ordered'];
-                $unitCost = (float) $item['unit_cost'];
-
+            foreach ($data->items as $item) {
                 $purchaseOrder->items()->create([
-                    'inventory_item_id' => $item['inventory_item_id'],
-                    'quantity_ordered' => $quantityOrdered,
-                    'unit_cost' => $unitCost,
-                    'total_cost' => round($quantityOrdered * $unitCost, 2),
+                    'inventory_item_id' => $item->inventoryItemId,
+                    'quantity_ordered' => $item->quantityOrdered,
+                    'unit_cost' => $item->unitCost,
+                    'total_cost' => round($item->quantityOrdered * $item->unitCost, 2),
                 ]);
             }
 

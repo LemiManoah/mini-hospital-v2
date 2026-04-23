@@ -90,10 +90,7 @@ final readonly class UserController implements HasMiddleware
 
     public function store(CreateUserRequest $request, CreateUser $action): RedirectResponse
     {
-        $action->handle(
-            $request->validated(),
-            $request->string('password')->value(),
-        );
+        $action->handle($request->createDto(), $request->password());
 
         return to_route('users.index')->with('success', 'User created successfully.');
     }
@@ -118,7 +115,7 @@ final readonly class UserController implements HasMiddleware
     {
         $this->authorizeManagedUser($user);
 
-        $action->handle($user, $request->validated());
+        $action->handle($user, $request->updateDto());
 
         return to_route('users.index')->with('success', 'User updated successfully.');
     }
@@ -134,7 +131,10 @@ final readonly class UserController implements HasMiddleware
 
     public function destroyCurrentUser(DeleteUserRequest $request, DeleteUser $action): RedirectResponse
     {
-        $action->handle($request->user());
+        $user = $request->user();
+        assert($user instanceof User);
+
+        $action->handle($user);
 
         return to_route('login')->with('success', 'Account deleted successfully.');
     }

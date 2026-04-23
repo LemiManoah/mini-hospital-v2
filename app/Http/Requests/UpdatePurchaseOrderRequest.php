@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Inventory\UpdatePurchaseOrderDTO;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -35,5 +36,10 @@ final class UpdatePurchaseOrderRequest extends FormRequest
             'items.*.quantity_ordered' => ['required', 'numeric', 'gt:0'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
         ];
+    }
+
+    public function updateDto(): UpdatePurchaseOrderDTO
+    {
+        return UpdatePurchaseOrderDTO::fromRequest($this);
     }
 }

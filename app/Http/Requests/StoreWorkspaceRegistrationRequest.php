@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Onboarding\CreateWorkspaceRegistrationDTO;
 use App\Enums\FacilityLevel;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
@@ -43,5 +44,15 @@ final class StoreWorkspaceRegistrationRequest extends FormRequest
             'country_id' => ['nullable', 'string', 'exists:countries,id'],
             'domain' => ['nullable', 'string', 'max:100', Rule::unique(Tenant::class, 'domain')],
         ];
+    }
+
+    public function createDto(): CreateWorkspaceRegistrationDTO
+    {
+        return CreateWorkspaceRegistrationDTO::fromRequest($this);
+    }
+
+    public function password(): string
+    {
+        return $this->string('password')->value();
     }
 }

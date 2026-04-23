@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Onboarding\CreateWorkspaceRegistrationDTO;
 use App\Enums\GeneralStatus;
 use App\Enums\StaffType;
 use App\Models\Role;
@@ -23,35 +24,34 @@ final readonly class RegisterWorkspace
     ) {}
 
     /**
-     * @param  array<string, mixed>  $attributes
      * @return array{tenant: Tenant, staff: Staff, user: User}
      */
-    public function handle(array $attributes, #[SensitiveParameter] string $password): array
+    public function handle(CreateWorkspaceRegistrationDTO $data, #[SensitiveParameter] string $password): array
     {
-        return DB::transaction(function () use ($attributes, $password): array {
+        return DB::transaction(function () use ($data, $password): array {
             $package = SubscriptionPackage::query()->findOrFail(
-                $attributes['subscription_package_id'],
+                $data->subscriptionPackageId,
             );
 
             $tenant = Tenant::query()->create([
-                'name' => $attributes['workspace_name'],
-                'domain' => $attributes['domain'] ?: null,
+                'name' => $data->workspaceName,
+                'domain' => $data->domain,
                 'has_branches' => false,
                 'subscription_package_id' => $package->id,
                 'status' => GeneralStatus::PENDING,
-                'facility_level' => $attributes['facility_level'],
-                'country_id' => $attributes['country_id'] ?: null,
+                'facility_level' => $data->facilityLevel,
+                'country_id' => $data->countryId,
                 'onboarding_completed_at' => null,
             ]);
 
-            [$firstName, $lastName] = $this->splitName($attributes['owner_name']);
+            [$firstName, $lastName] = $this->splitName($data->ownerName);
 
             $staff = Staff::query()->create([
                 'tenant_id' => $tenant->id,
                 'employee_number' => sprintf('OWN-%s', Str::upper(Str::random(8))),
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'email' => $attributes['email'],
+                'email' => $data->email,
                 'type' => StaffType::ADMINISTRATIVE,
                 'hire_date' => now()->toDateString(),
                 'is_active' => true,
@@ -60,7 +60,7 @@ final readonly class RegisterWorkspace
             $user = User::query()->create([
                 'tenant_id' => $tenant->id,
                 'staff_id' => $staff->id,
-                'email' => $attributes['email'],
+                'email' => $data->email,
                 'password' => $password,
             ]);
 

@@ -4,28 +4,22 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\User\UpdateUserDTO;
 use App\Models\User;
 
 final readonly class UpdateUser
 {
-    /**
-     * @param  array{email?: string, roles?: list<string>} & array<string, mixed>  $attributes
-     */
-    public function handle(User $user, array $attributes): void
+    public function handle(User $user, UpdateUserDTO $data): void
     {
-        $emailChanged = isset($attributes['email']) && $user->email !== $attributes['email'];
-
-        /** @var list<string>|null $roles */
-        $roles = $attributes['roles'] ?? null;
-        unset($attributes['roles']);
+        $emailChanged = $user->email !== $data->email;
 
         $user->update([
-            ...$attributes,
+            'email' => $data->email,
             ...($emailChanged ? ['email_verified_at' => null] : []),
         ]);
 
-        if ($roles !== null) {
-            $user->syncRoles($roles);
+        if ($data->roles !== null) {
+            $user->syncRoles($data->roles);
         }
 
         if ($emailChanged) {

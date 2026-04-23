@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\User\CreateUserDTO;
 use App\Models\User;
 use App\Rules\ValidEmail;
 use Illuminate\Foundation\Http\FormRequest;
@@ -37,5 +38,15 @@ final class CreateUserRequest extends FormRequest
             'roles' => ['sometimes', 'array'],
             'roles.*' => ['string', 'exists:roles,id'],
         ];
+    }
+
+    public function createDto(): CreateUserDTO
+    {
+        return CreateUserDTO::fromRequest($this);
+    }
+
+    public function password(): string
+    {
+        return $this->string('password')->value();
     }
 }

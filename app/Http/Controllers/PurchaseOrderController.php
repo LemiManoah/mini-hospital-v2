@@ -93,11 +93,7 @@ final readonly class PurchaseOrderController implements HasMiddleware
 
     public function store(StorePurchaseOrderRequest $request, CreatePurchaseOrder $action): RedirectResponse
     {
-        $validated = $request->validated();
-        $items = $this->normalizeItems($validated['items'] ?? []);
-        unset($validated['items']);
-
-        $purchaseOrder = $action->handle($validated, $items);
+        $purchaseOrder = $action->handle($request->createDto());
 
         return to_route('purchase-orders.show', $purchaseOrder)->with('success', 'Purchase order created successfully.');
     }
@@ -143,11 +139,7 @@ final readonly class PurchaseOrderController implements HasMiddleware
 
     public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder, UpdatePurchaseOrder $action): RedirectResponse
     {
-        $validated = $request->validated();
-        $items = $this->normalizeItems($validated['items'] ?? []);
-        unset($validated['items']);
-
-        $action->handle($purchaseOrder, $validated, $items);
+        $action->handle($purchaseOrder, $request->updateDto());
 
         return to_route('purchase-orders.show', $purchaseOrder)->with('success', 'Purchase order updated successfully.');
     }
@@ -210,35 +202,5 @@ final readonly class PurchaseOrderController implements HasMiddleware
             );
 
         return $quantities;
-    }
-
-    /**
-     * @return array<int, array{inventory_item_id: string, quantity_ordered: float, unit_cost: float}>
-     */
-    private function normalizeItems(mixed $items): array
-    {
-        if (! is_array($items)) {
-            return [];
-        }
-
-        return collect($items)
-            ->filter(static fn (mixed $item): bool => is_array($item))
-            ->map(static function (array $item): array {
-                $inventoryItemId = $item['inventory_item_id'] ?? null;
-                $quantityOrdered = $item['quantity_ordered'] ?? null;
-                $unitCost = $item['unit_cost'] ?? null;
-
-                return [
-                    'inventory_item_id' => is_string($inventoryItemId) ? $inventoryItemId : '',
-                    'quantity_ordered' => is_int($quantityOrdered) || is_float($quantityOrdered) || is_string($quantityOrdered)
-                        ? (float) $quantityOrdered
-                        : 0.0,
-                    'unit_cost' => is_int($unitCost) || is_float($unitCost) || is_string($unitCost)
-                        ? (float) $unitCost
-                        : 0.0,
-                ];
-            })
-            ->values()
-            ->all();
     }
 }

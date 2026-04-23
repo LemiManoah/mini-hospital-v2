@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\User\UpdateUserDTO;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -31,5 +32,10 @@ final class UpdateUserRequest extends FormRequest
             'roles' => ['sometimes', 'array'],
             'roles.*' => ['string', 'exists:roles,id'],
         ];
+    }
+
+    public function updateDto(): UpdateUserDTO
+    {
+        return UpdateUserDTO::fromRequest($this);
     }
 }
