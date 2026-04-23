@@ -243,8 +243,13 @@ final class StoreDispenseRequest extends FormRequest
 
             $prescriptionItemId = $item['prescription_item_id'] ?? null;
             $dispensedQuantity = $item['dispensed_quantity'] ?? null;
-
-            if (! is_string($prescriptionItemId) || $prescriptionItemId === '' || ! is_numeric($dispensedQuantity)) {
+            if (! is_string($prescriptionItemId)) {
+                continue;
+            }
+            if ($prescriptionItemId === '') {
+                continue;
+            }
+            if (! is_numeric($dispensedQuantity)) {
                 continue;
             }
 

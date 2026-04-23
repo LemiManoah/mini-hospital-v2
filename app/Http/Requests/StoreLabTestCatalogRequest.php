@@ -168,8 +168,10 @@ final class StoreLabTestCatalogRequest extends FormRequest
             }
 
             $trimmed = mb_trim($item);
-
-            if ($trimmed === '' || in_array($trimmed, $specimenTypeIds, true)) {
+            if ($trimmed === '') {
+                continue;
+            }
+            if (in_array($trimmed, $specimenTypeIds, true)) {
                 continue;
             }
 

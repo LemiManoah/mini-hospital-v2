@@ -144,8 +144,10 @@ final class StoreLabResultEntryRequest extends FormRequest
             }
 
             $parameterId = $parameterValue['lab_test_result_parameter_id'] ?? null;
-
-            if (! is_string($parameterId) || $parameterId === '') {
+            if (! is_string($parameterId)) {
+                continue;
+            }
+            if ($parameterId === '') {
                 continue;
             }
 

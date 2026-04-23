@@ -221,7 +221,6 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
          * }> $rows */
         $rows = [];
 
-        /** @var InventoryLocation $firstLocation */
         $firstLocation = $accessibleLocations->first();
         $tenantId = $firstLocation->tenant_id;
 

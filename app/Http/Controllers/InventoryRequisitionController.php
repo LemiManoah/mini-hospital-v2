@@ -510,10 +510,12 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             ->groupBy('source_line_id');
 
         foreach ($movementsByLine as $sourceLineId => $movements) {
-            if (! is_string($sourceLineId) || $sourceLineId === '') {
+            if (! is_string($sourceLineId)) {
                 continue;
             }
-
+            if ($sourceLineId === '') {
+                continue;
+            }
             $history[$sourceLineId] = $movements
                 ->map(static fn (StockMovement $movement): array => [
                     'quantity' => abs((float) $movement->quantity),
