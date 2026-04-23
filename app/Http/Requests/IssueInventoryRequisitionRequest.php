@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Inventory\IssueInventoryRequisitionDTO;
 use App\Models\InventoryBatch;
 use App\Models\InventoryRequisition;
 use App\Support\InventoryStockLedger;
@@ -12,6 +13,11 @@ use Illuminate\Validation\Validator;
 
 final class IssueInventoryRequisitionRequest extends FormRequest
 {
+    public function issueDto(): IssueInventoryRequisitionDTO
+    {
+        return IssueInventoryRequisitionDTO::fromRequest($this);
+    }
+
     /**
      * @return array<string, mixed>
      */

@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Inventory\ApproveInventoryRequisitionDTO;
 use App\Models\InventoryRequisition;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 final class ApproveInventoryRequisitionRequest extends FormRequest
 {
+    public function approveDto(): ApproveInventoryRequisitionDTO
+    {
+        return ApproveInventoryRequisitionDTO::fromRequest($this);
+    }
+
     /**
      * @return array<string, mixed>
      */

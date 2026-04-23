@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\InventoryItemType;
+use App\Enums\InventoryLocationType;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\InventoryLocationItem;
@@ -53,13 +54,11 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
             ->when(
                 $search !== '',
                 static fn (Collection $collection): Collection => $collection->filter(
-                    static fn (array $row): bool => str_contains(
-                        mb_strtolower(implode(' ', [
-                            $row['item_name'],
-                            $row['item_type'],
-                        ])),
-                        mb_strtolower($search),
-                    ),
+                    static fn (array $row): bool => str_contains(mb_strtolower(sprintf(
+                        '%s %s',
+                        $row['item_name'],
+                        $row['item_type'],
+                    )), mb_strtolower($search)),
                 )
             )
             ->when(
@@ -98,9 +97,24 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
     }
 
     /**
+     * @param  list<InventoryLocationType|string>  $locationTypes
      * @return array{
-     *     rows: Collection<int, array<string, mixed>>,
-     *     locations: Collection<int, array<string, mixed>>
+     *     rows: Collection<int, array{
+     *         item_id: string,
+     *         item_name: string,
+     *         item_type: string,
+     *         unit: string|null,
+     *         minimum_stock_level: float,
+     *         total_quantity: float,
+     *         location_quantities: array<string, float>
+     *     }>,
+     *     locations: Collection<int, array{
+     *         id: string,
+     *         name: string,
+     *         code: string,
+     *         type: string,
+     *         label: string
+     *     }>
      * }
      */
     private function buildRows(array $locationTypes = [], ?string $workspaceKey = null): array
@@ -108,18 +122,46 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
         $activeBranchId = BranchContext::getActiveBranchId();
 
         if (! is_string($activeBranchId) || $activeBranchId === '') {
+            /** @var Collection<int, array{
+             *   item_id: string,
+             *   item_name: string,
+             *   item_type: string,
+             *   unit: string|null,
+             *   minimum_stock_level: float,
+             *   total_quantity: float,
+             *   location_quantities: array<string, float>
+             * }> $emptyRows
+             */
+            $emptyRows = collect();
+            /** @var Collection<int, array{id: string, name: string, code: string, type: string, label: string}> $emptyLocations */
+            $emptyLocations = collect();
+
             return [
-                'rows' => collect(),
-                'locations' => collect(),
+                'rows' => $emptyRows,
+                'locations' => $emptyLocations,
             ];
         }
 
         $accessibleLocations = $this->inventoryLocationAccess->accessibleLocations(Auth::user(), $activeBranchId, $locationTypes);
 
         if ($accessibleLocations->isEmpty()) {
+            /** @var Collection<int, array{
+             *   item_id: string,
+             *   item_name: string,
+             *   item_type: string,
+             *   unit: string|null,
+             *   minimum_stock_level: float,
+             *   total_quantity: float,
+             *   location_quantities: array<string, float>
+             * }> $emptyRows
+             */
+            $emptyRows = collect();
+            /** @var Collection<int, array{id: string, name: string, code: string, type: string, label: string}> $emptyLocations */
+            $emptyLocations = collect();
+
             return [
-                'rows' => collect(),
-                'locations' => collect(),
+                'rows' => $emptyRows,
+                'locations' => $emptyLocations,
             ];
         }
 
@@ -129,12 +171,13 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
             ->values()
             ->all();
 
+        /** @var Collection<int, array{id: string, name: string, code: string, type: string, label: string}> $locations */
         $locations = $accessibleLocations
             ->map(static fn (InventoryLocation $location): array => [
                 'id' => $location->id,
                 'name' => $location->name,
                 'code' => $location->location_code,
-                'type' => $location->type?->value,
+                'type' => $location->type->value,
                 'label' => sprintf('%s (%s)', $location->name, $location->location_code),
             ])
             ->values();
@@ -167,10 +210,20 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                 : [])
             ->all();
 
-        /** @var array<string, array<string, mixed>> $rows */
+        /** @var array<string, array{
+         *   item_id: string,
+         *   item_name: string,
+         *   item_type: string,
+         *   unit: string|null,
+         *   minimum_stock_level: float,
+         *   total_quantity: float,
+         *   location_quantities: array<string, float>
+         * }> $rows */
         $rows = [];
 
-        $tenantId = $accessibleLocations->first()?->tenant_id;
+        /** @var InventoryLocation $firstLocation */
+        $firstLocation = $accessibleLocations->first();
+        $tenantId = $firstLocation->tenant_id;
 
         $locationItems
             ->each(function (InventoryLocationItem $locationItem) use (&$rows, $locationQuantitiesTemplate): void {
@@ -187,7 +240,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                 $rows[$locationItem->inventory_item_id] = [
                     'item_id' => $item->id,
                     'item_name' => $item->generic_name ?? $item->name,
-                    'item_type' => $item->item_type?->value,
+                    'item_type' => $item->item_type->value,
                     'unit' => $item->unit?->symbol,
                     'minimum_stock_level' => (float) $locationItem->minimum_stock_level,
                     'total_quantity' => 0.0,
@@ -195,7 +248,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                 ];
             });
 
-        if (in_array($workspaceKey, ['laboratory', 'pharmacy'], true) && is_string($tenantId) && $tenantId !== '') {
+        if (in_array($workspaceKey, ['laboratory', 'pharmacy'], true) && $tenantId !== '') {
             InventoryItem::query()
                 ->where('tenant_id', $tenantId)
                 ->active()
@@ -210,7 +263,7 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                     $rows[$item->id] = [
                         'item_id' => $item->id,
                         'item_name' => $item->generic_name ?? $item->name,
-                        'item_type' => $item->item_type?->value,
+                        'item_type' => $item->item_type->value,
                         'unit' => $item->unit?->symbol,
                         'minimum_stock_level' => (float) $item->minimum_stock_level,
                         'total_quantity' => 0.0,
@@ -247,9 +300,11 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                     $rows[$key] = [
                         'item_id' => $item->id,
                         'item_name' => $item->generic_name ?? $item->name,
-                        'item_type' => $item->item_type?->value,
+                        'item_type' => $item->item_type->value,
                         'unit' => $item->unit?->symbol,
-                        'minimum_stock_level' => (float) ($locationItem?->minimum_stock_level ?? $item->minimum_stock_level),
+                        'minimum_stock_level' => $locationItem instanceof InventoryLocationItem
+                            ? (float) $locationItem->minimum_stock_level
+                            : (float) $item->minimum_stock_level,
                         'total_quantity' => 0.0,
                         'location_quantities' => $locationQuantitiesTemplate,
                     ];
@@ -259,21 +314,32 @@ final readonly class InventoryStockByLocationController implements HasMiddleware
                 $rows[$key]['total_quantity'] += $balance['quantity'];
             });
 
-        return [
-            'rows' => collect($rows)
-                ->map(function (array $row) use ($locations): array {
-                    $row['location_quantities'] = $locations
-                        ->mapWithKeys(static fn (array $location): array => [
-                            $location['id'] => (float) ($row['location_quantities'][$location['id']] ?? 0.0),
-                        ])
-                        ->all();
+        /** @var Collection<int, array{
+         *   item_id: string,
+         *   item_name: string,
+         *   item_type: string,
+         *   unit: string|null,
+         *   minimum_stock_level: float,
+         *   total_quantity: float,
+         *   location_quantities: array<string, float>
+         * }> $rowCollection */
+        $rowCollection = collect($rows)
+            ->map(function (array $row) use ($locations): array {
+                $row['location_quantities'] = $locations
+                    ->mapWithKeys(static fn (array $location): array => [
+                        $location['id'] => $row['location_quantities'][$location['id']] ?? 0.0,
+                    ])
+                    ->all();
 
-                    return $row;
-                })
-                ->sortBy([
-                    ['item_name', 'asc'],
-                ])
-                ->values(),
+                return $row;
+            })
+            ->sortBy([
+                ['item_name', 'asc'],
+            ])
+            ->values();
+
+        return [
+            'rows' => $rowCollection,
             'locations' => $locations,
         ];
     }

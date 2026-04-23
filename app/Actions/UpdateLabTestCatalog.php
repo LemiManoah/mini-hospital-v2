@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\UpdateLabTestCatalogDTO;
 use App\Models\LabTestCatalog;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateLabTestCatalog
@@ -14,17 +14,12 @@ final readonly class UpdateLabTestCatalog
         private SyncLabTestCatalogConfiguration $syncLabTestCatalogConfiguration,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    public function handle(LabTestCatalog $labTestCatalog, array $attributes): LabTestCatalog
+    public function handle(LabTestCatalog $labTestCatalog, UpdateLabTestCatalogDTO $data): LabTestCatalog
     {
-        return DB::transaction(function () use ($labTestCatalog, $attributes): LabTestCatalog {
-            $labTestCatalog->update(
-                Arr::except($attributes, ['specimen_type_ids', 'result_options', 'result_parameters']),
-            );
+        return DB::transaction(function () use ($labTestCatalog, $data): LabTestCatalog {
+            $labTestCatalog->update($data->toAttributes());
 
-            $this->syncLabTestCatalogConfiguration->handle($labTestCatalog, $attributes);
+            $this->syncLabTestCatalogConfiguration->handle($labTestCatalog, $data);
 
             return $labTestCatalog->refresh()->load([
                 'labCategory:id,name',

@@ -60,39 +60,39 @@ final class UpdateConsultationRequest extends FormRequest
                 return;
             }
 
-            if (mb_trim((string) $this->input('chief_complaint', '')) === '') {
+            if ($this->trimmedInput('chief_complaint') === null) {
                 $validator->errors()->add('chief_complaint', 'Chief complaint is required before completing the consultation.');
             }
 
-            if (mb_trim((string) $this->input('primary_diagnosis', '')) === '') {
+            if ($this->trimmedInput('primary_diagnosis') === null) {
                 $validator->errors()->add('primary_diagnosis', 'Primary diagnosis is required before completing the consultation.');
             }
 
             if (
-                mb_trim((string) $this->input('assessment', '')) === ''
-                && mb_trim((string) $this->input('plan', '')) === ''
+                $this->trimmedInput('assessment') === null
+                && $this->trimmedInput('plan') === null
             ) {
                 $validator->errors()->add('assessment', 'Add an assessment or a plan before completing the consultation.');
             }
 
-            if (mb_trim((string) $this->input('outcome', '')) === '') {
+            if ($this->trimmedInput('outcome') === null) {
                 $validator->errors()->add('outcome', 'Outcome is required before completing the consultation.');
             }
 
             if ($this->boolean('is_referred')) {
-                $hasDestination = mb_trim((string) $this->input('referred_to_department', '')) !== ''
-                    || mb_trim((string) $this->input('referred_to_facility', '')) !== '';
+                $hasDestination = $this->trimmedInput('referred_to_department') !== null
+                    || $this->trimmedInput('referred_to_facility') !== null;
 
                 if (! $hasDestination) {
                     $validator->errors()->add('referred_to_department', 'Add a referral destination before completing the consultation.');
                 }
 
-                if (mb_trim((string) $this->input('referral_reason', '')) === '') {
+                if ($this->trimmedInput('referral_reason') === null) {
                     $validator->errors()->add('referral_reason', 'Referral reason is required before completing the consultation.');
                 }
             }
 
-            if ($this->filled('follow_up_days') && mb_trim((string) $this->input('follow_up_instructions', '')) === '') {
+            if ($this->filled('follow_up_days') && $this->trimmedInput('follow_up_instructions') === null) {
                 $validator->errors()->add('follow_up_instructions', 'Follow-up instructions are required when follow-up days are provided.');
             }
         });
@@ -113,5 +113,18 @@ final class UpdateConsultationRequest extends FormRequest
             'is_referred' => $this->boolean('is_referred'),
             'outcome' => $this->filled('outcome') ? $this->input('outcome') : null,
         ]);
+    }
+
+    private function trimmedInput(string $key): ?string
+    {
+        $value = $this->input($key);
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = mb_trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 }

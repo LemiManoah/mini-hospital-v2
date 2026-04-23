@@ -34,7 +34,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -181,11 +180,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         $workspace = InventoryWorkspace::fromRequest($request);
         abort_unless($workspace->isRequester(), 404);
 
-        $validated = $request->validated();
-        $items = $validated['items'];
-        unset($validated['items']);
-
-        $requisition = $action->handle($validated, $items, $workspace->locationTypeValues());
+        $requisition = $action->handle($request->createDto(), $workspace->locationTypeValues());
 
         return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
             ->with('success', 'Requisition created. Submit it when you are ready for main store review.');
@@ -238,6 +233,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             'cancellation_reason' => ['required', 'string'],
         ]);
 
+        /** @var array{cancellation_reason: string} $validated */
         $action->handle($requisition, $validated['cancellation_reason']);
 
         return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
@@ -255,12 +251,9 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         $this->abortUnlessIncomingQueueItem($requisition);
         $this->abortUnlessCanProcess($requisition);
 
-        $validated = $request->validated();
-
         $action->handle(
             $requisition,
-            $validated['items'],
-            is_string($validated['approval_notes'] ?? null) ? $validated['approval_notes'] : null,
+            $request->approveDto(),
         );
 
         return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
@@ -279,6 +272,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             'rejection_reason' => ['required', 'string'],
         ]);
 
+        /** @var array{rejection_reason: string} $validated */
         $action->handle($requisition, $validated['rejection_reason']);
 
         return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
@@ -296,12 +290,9 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         $this->abortUnlessIncomingQueueItem($requisition);
         $this->abortUnlessCanProcess($requisition);
 
-        $validated = $request->validated();
-
         $action->handle(
             $requisition,
-            $validated['items'],
-            is_string($validated['issued_notes'] ?? null) ? $validated['issued_notes'] : null,
+            $request->issueDto(),
         );
 
         return to_route($workspace->requisitionShowRouteName(), $workspace->requisitionShowRouteParameters($requisition))
@@ -328,11 +319,11 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         return [
             'id' => $requisition->id,
             'requisition_number' => $requisition->requisition_number,
-            'status' => $requisition->status?->value,
-            'status_label' => $requisition->status?->label(),
-            'priority' => $requisition->priority?->value,
-            'priority_label' => $requisition->priority?->label(),
-            'requisition_date' => $requisition->requisition_date?->toDateString(),
+            'status' => $requisition->status->value,
+            'status_label' => $requisition->status->label(),
+            'priority' => $requisition->priority->value,
+            'priority_label' => $requisition->priority->label(),
+            'requisition_date' => $requisition->requisition_date->toDateString(),
             'notes' => $requisition->notes,
             'approval_notes' => $requisition->approval_notes,
             'rejection_reason' => $requisition->rejection_reason,
@@ -389,11 +380,11 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         return [
             'id' => $requisition->id,
             'requisition_number' => $requisition->requisition_number,
-            'status' => $requisition->status?->value,
-            'status_label' => $requisition->status?->label(),
-            'priority' => $requisition->priority?->value,
-            'priority_label' => $requisition->priority?->label(),
-            'requisition_date' => $requisition->requisition_date?->toDateString(),
+            'status' => $requisition->status->value,
+            'status_label' => $requisition->status->label(),
+            'priority' => $requisition->priority->value,
+            'priority_label' => $requisition->priority->label(),
+            'requisition_date' => $requisition->requisition_date->toDateString(),
             'fulfilling_location' => $fulfillingLocation,
             'requesting_location' => $requestingLocation,
             'issued_at' => $requisition->issued_at?->toIso8601String(),
@@ -437,6 +428,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             ->filter(static fn (array $balance): bool => $balance['inventory_location_id'] === $requisition->source_inventory_location_id && $balance['quantity'] > 0)
             ->map(static function (array $balance) use ($batches): array {
                 $batch = $batches[$balance['inventory_batch_id']] ?? null;
+                $inventoryItem = $batch?->inventoryItem;
 
                 return [
                     'inventory_batch_id' => $balance['inventory_batch_id'],
@@ -444,7 +436,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],
                     'quantity' => $balance['quantity'],
-                    'item_name' => $batch?->inventoryItem?->generic_name ?? $batch?->inventoryItem?->name,
+                    'item_name' => $inventoryItem === null ? null : ($inventoryItem->generic_name ?? $inventoryItem->name),
                 ];
             })
             ->values()
@@ -490,27 +482,49 @@ final readonly class InventoryRequisitionController implements HasMiddleware
     }
 
     /**
-     * @return array<string, array<int, array<string, mixed>>>
+     * @return array<string, array<int, array{
+     *   quantity: float,
+     *   batch_number: string|null,
+     *   expiry_date: string|null,
+     *   occurred_at: string
+     * }>>
      */
     private function issueHistory(InventoryRequisition $requisition): array
     {
-        return StockMovement::query()
+        /** @var array<string, array<int, array{
+         *   quantity: float,
+         *   batch_number: string|null,
+         *   expiry_date: string|null,
+         *   occurred_at: string
+         * }>> $history
+         */
+        $history = [];
+
+        $movementsByLine = StockMovement::query()
             ->with('inventoryBatch:id,batch_number,expiry_date')
             ->where('source_document_type', InventoryRequisition::class)
             ->where('source_document_id', $requisition->id)
             ->where('movement_type', StockMovementType::RequisitionOut)
             ->oldest('occurred_at')
             ->get()
-            ->groupBy('source_line_id')
-            ->map(static fn (Collection $movements): array => $movements
+            ->groupBy('source_line_id');
+
+        foreach ($movementsByLine as $sourceLineId => $movements) {
+            if (! is_string($sourceLineId) || $sourceLineId === '') {
+                continue;
+            }
+
+            $history[$sourceLineId] = $movements
                 ->map(static fn (StockMovement $movement): array => [
                     'quantity' => abs((float) $movement->quantity),
                     'batch_number' => $movement->inventoryBatch?->batch_number,
                     'expiry_date' => $movement->inventoryBatch?->expiry_date?->toDateString(),
-                    'occurred_at' => $movement->occurred_at?->toIso8601String(),
+                    'occurred_at' => $movement->occurred_at->toIso8601String(),
                 ])
                 ->values()
-                ->all())
-            ->all();
+                ->all();
+        }
+
+        return $history;
     }
 }

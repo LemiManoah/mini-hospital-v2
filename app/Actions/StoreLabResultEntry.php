@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\StoreLabResultEntryDTO;
 use App\Enums\LabRequestItemStatus;
 use App\Enums\LabSpecimenStatus;
 use App\Models\LabRequestItem;
@@ -17,10 +18,7 @@ final readonly class StoreLabResultEntry
         private SyncLabRequestProgress $syncLabRequestProgress,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    public function handle(LabRequestItem $labRequestItem, array $payload, string $staffId): LabRequestItem
+    public function handle(LabRequestItem $labRequestItem, StoreLabResultEntryDTO $payload, string $staffId): LabRequestItem
     {
         if ($labRequestItem->approved_at !== null || $labRequestItem->status === LabRequestItemStatus::COMPLETED) {
             throw ValidationException::withMessages([
@@ -51,7 +49,7 @@ final readonly class StoreLabResultEntry
                 'approved_at' => null,
                 'released_by' => null,
                 'released_at' => null,
-                'result_notes' => $this->nullableText($payload['result_notes'] ?? null),
+                'result_notes' => $payload->resultNotes,
                 'review_notes' => null,
                 'approval_notes' => null,
             ])->save();
@@ -61,23 +59,17 @@ final readonly class StoreLabResultEntry
             $resultType = $labRequestItem->test()->with(['resultParameters', 'resultOptions'])->firstOrFail()->result_capture_type;
 
             if ($resultType === 'parameter_panel') {
-                /** @var array<int, array<string, mixed>> $parameterValues */
-                $parameterValues = is_array($payload['parameter_values'] ?? null) ? $payload['parameter_values'] : [];
+                foreach ($payload->parameterValues as $index => $parameterValue) {
+                    $parameter = LabTestResultParameter::query()->whereKey($parameterValue->labTestResultParameterId)->first();
 
-                foreach ($parameterValues as $index => $parameterValue) {
-                    $parameterId = $parameterValue['lab_test_result_parameter_id'] ?? null;
-                    $parameter = is_string($parameterId)
-                        ? LabTestResultParameter::query()->whereKey($parameterId)->first()
-                        : null;
-
-                    $rawValue = $this->nullableText($parameterValue['value'] ?? null);
+                    $rawValue = $parameterValue->value;
                     $numericValue = $parameter?->value_type === 'numeric' && $rawValue !== null
                         ? (float) $rawValue
                         : null;
 
                     $resultEntry->values()->create([
                         'lab_test_result_parameter_id' => $parameter?->id,
-                        'label' => $parameter?->label ?? (string) ($parameterValue['label'] ?? 'Result'),
+                        'label' => $parameter instanceof LabTestResultParameter ? $parameter->label : 'Result',
                         'value_numeric' => $numericValue,
                         'value_text' => $parameter?->value_type === 'numeric' ? null : $rawValue,
                         'unit' => $parameter?->unit,
@@ -90,8 +82,8 @@ final readonly class StoreLabResultEntry
                 }
             } else {
                 $value = $resultType === 'defined_option'
-                    ? $this->nullableText($payload['selected_option_label'] ?? null)
-                    : $this->nullableText($payload['free_entry_value'] ?? null);
+                    ? $payload->selectedOptionLabel
+                    : $payload->freeEntryValue;
 
                 $resultEntry->values()->create([
                     'label' => 'Result',
@@ -117,16 +109,5 @@ final readonly class StoreLabResultEntry
 
             return $labRequestItem->refresh();
         });
-    }
-
-    private function nullableText(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $trimmed = mb_trim($value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 }

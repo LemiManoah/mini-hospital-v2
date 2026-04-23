@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Inventory\CreateInventoryReconciliationDTO;
 use App\Enums\ReconciliationStatus;
 use App\Models\Reconciliation;
 use App\Support\BranchContext;
@@ -18,35 +19,14 @@ final readonly class CreateInventoryReconciliation
         private InventoryStockLedger $inventoryStockLedger,
     ) {}
 
-    /**
-     * @param  array{
-     *      tenant_id?: string,
-     *      branch_id?: string,
-     *      inventory_location_id: string,
-     *      reconciliation_date: string,
-     *      reason: string,
-     *      notes?: string|null
-     *  }  $attributes
-     * @param  list<array{
-     *      inventory_item_id: string,
-     *      actual_quantity: float|int|string,
-     *      unit_cost: float|int|string,
-     *      inventory_batch_id?: string|null,
-     *      batch_number?: string|null,
-     *      expiry_date?: string|null,
-     *      notes?: string|null
-     *  }>  $items
-     */
-    public function handle(array $attributes, array $items): Reconciliation
+    public function handle(CreateInventoryReconciliationDTO $data): Reconciliation
     {
-        return DB::transaction(function () use ($attributes, $items): Reconciliation {
-            $tenantId = is_string($attributes['tenant_id'] ?? null)
-                ? $attributes['tenant_id']
-                : Auth::user()?->tenantId();
-            $branchId = is_string($attributes['branch_id'] ?? null)
-                ? $attributes['branch_id']
-                : BranchContext::getActiveBranchId();
-            $locationId = (string) $attributes['inventory_location_id'];
+        return DB::transaction(function () use ($data): Reconciliation {
+            $attributes = $data->toAttributes();
+            $items = $data->itemAttributes();
+            $tenantId = Auth::user()?->tenantId();
+            $branchId = BranchContext::getActiveBranchId();
+            $locationId = $data->inventoryLocationId;
 
             $currentQuantities = is_string($branchId) && $branchId !== ''
                 ? $this->inventoryStockLedger
@@ -65,7 +45,7 @@ final readonly class CreateInventoryReconciliation
                 'status' => ReconciliationStatus::Draft,
                 'adjustment_date' => $attributes['reconciliation_date'],
                 'reason' => $attributes['reason'],
-                'notes' => ($attributes['notes'] ?? '') !== '' ? $attributes['notes'] : null,
+                'notes' => $attributes['notes'],
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
@@ -84,9 +64,9 @@ final readonly class CreateInventoryReconciliation
                     'variance_quantity' => $varianceQuantity,
                     'quantity_delta' => $varianceQuantity,
                     'unit_cost' => $item['unit_cost'],
-                    'batch_number' => ($item['batch_number'] ?? '') !== '' ? $item['batch_number'] : null,
-                    'expiry_date' => ($item['expiry_date'] ?? '') !== '' ? $item['expiry_date'] : null,
-                    'notes' => ($item['notes'] ?? '') !== '' ? $item['notes'] : null,
+                    'batch_number' => $item['batch_number'],
+                    'expiry_date' => $item['expiry_date'],
+                    'notes' => $item['notes'],
                 ]);
             }
 

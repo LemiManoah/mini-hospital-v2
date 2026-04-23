@@ -138,6 +138,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             ])->values(),
             'batchBalances' => $batchBalances->map(static function (array $balance) use ($batches): array {
                 $batch = $batches[$balance['inventory_batch_id']] ?? null;
+                $inventoryItem = $batch?->inventoryItem;
 
                 return [
                     'inventory_batch_id' => $balance['inventory_batch_id'],
@@ -146,7 +147,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
                     'batch_number' => $balance['batch_number'],
                     'expiry_date' => $balance['expiry_date'],
                     'quantity' => $balance['quantity'],
-                    'item_name' => $batch?->inventoryItem?->generic_name ?? $batch?->inventoryItem?->name,
+                    'item_name' => $inventoryItem === null ? null : ($inventoryItem->generic_name ?? $inventoryItem->name),
                     'location_name' => $batch?->inventoryLocation?->name,
                 ];
             })->values(),
@@ -155,11 +156,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
 
     public function store(StoreInventoryReconciliationRequest $request, CreateInventoryReconciliation $action): RedirectResponse
     {
-        $validated = $request->validated();
-        $items = $validated['items'];
-        unset($validated['items']);
-
-        $reconciliation = $action->handle($validated, $items);
+        $reconciliation = $action->handle($request->createDto());
 
         return to_route('reconciliations.show', $reconciliation)
             ->with('success', 'Reconciliation created successfully.')
@@ -199,6 +196,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             'review_notes' => ['nullable', 'string'],
         ]);
 
+        /** @var array{review_notes?: string|null} $validated */
         $action->handle($reconciliation, $validated['review_notes'] ?? null);
 
         return to_route('reconciliations.show', $reconciliation)
@@ -213,6 +211,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             'approval_notes' => ['nullable', 'string'],
         ]);
 
+        /** @var array{approval_notes?: string|null} $validated */
         $action->handle($reconciliation, $validated['approval_notes'] ?? null);
 
         return to_route('reconciliations.show', $reconciliation)
@@ -228,6 +227,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             'rejection_reason' => ['required', 'string'],
         ]);
 
+        /** @var array{rejection_reason: string} $validated */
         $action->handle($reconciliation, $validated['rejection_reason']);
 
         return to_route('reconciliations.show', $reconciliation)
@@ -244,6 +244,10 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             ->with('success', 'Reconciliation posted. Inventory balances updated.');
     }
 
+    /**
+     * @param  Builder<Reconciliation>  $query
+     * @return Builder<Reconciliation>
+     */
     private function applyWorkflowStatusFilter(Builder $query, string $status): Builder
     {
         return match ($status) {
@@ -297,7 +301,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             'id' => $reconciliation->id,
             'adjustment_number' => $reconciliation->adjustment_number,
             'workflow_status' => $reconciliation->workflowStatus(),
-            'adjustment_date' => $reconciliation->adjustment_date?->toDateString(),
+            'adjustment_date' => $reconciliation->adjustment_date->toDateString(),
             'reason' => $reconciliation->reason,
             'posted_at' => $reconciliation->posted_at?->toIso8601String(),
             'inventory_location' => $reconciliation->inventoryLocation === null ? null : [
@@ -317,7 +321,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
             'id' => $reconciliation->id,
             'adjustment_number' => $reconciliation->adjustment_number,
             'workflow_status' => $reconciliation->workflowStatus(),
-            'adjustment_date' => $reconciliation->adjustment_date?->toDateString(),
+            'adjustment_date' => $reconciliation->adjustment_date->toDateString(),
             'reason' => $reconciliation->reason,
             'notes' => $reconciliation->notes,
             'review_notes' => $reconciliation->review_notes,

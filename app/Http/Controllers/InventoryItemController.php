@@ -81,23 +81,33 @@ final readonly class InventoryItemController implements HasMiddleware
         return Inertia::render('inventory/items/show', [
             'inventoryItem' => $inventoryItem->load([
                 'unit:id,name,symbol',
-                'batches' => static fn (HasMany $query): HasMany => $query
-                    ->with('inventoryLocation:id,name')
-                    ->when(
-                        $locationIds === [],
-                        static fn (Builder $builder): Builder => $builder->whereRaw('1 = 0'),
-                        static fn (Builder $builder): Builder => $builder->whereIn('inventory_location_id', $locationIds),
-                    )
-                    ->oldest('expiry_date'),
-                'stockMovements' => static fn (HasMany $query): HasMany => $query
-                    ->with(['inventoryLocation:id,name', 'user:id,name'])
-                    ->when(
-                        $locationIds === [],
-                        static fn (Builder $builder): Builder => $builder->whereRaw('1 = 0'),
-                        static fn (Builder $builder): Builder => $builder->whereIn('inventory_location_id', $locationIds),
-                    )
-                    ->latest()
-                    ->limit(50),
+                'batches' => static function (HasMany $query) use ($locationIds): void {
+                    $query->with('inventoryLocation:id,name');
+
+                    if ($locationIds === []) {
+                        $query->whereRaw('1 = 0');
+
+                        return;
+                    }
+
+                    $query
+                        ->whereIn('inventory_location_id', $locationIds)
+                        ->oldest('expiry_date');
+                },
+                'stockMovements' => static function (HasMany $query) use ($locationIds): void {
+                    $query->with(['inventoryLocation:id,name', 'user:id,name']);
+
+                    if ($locationIds === []) {
+                        $query->whereRaw('1 = 0');
+
+                        return;
+                    }
+
+                    $query
+                        ->whereIn('inventory_location_id', $locationIds)
+                        ->latest()
+                        ->limit(50);
+                },
             ]),
         ]);
     }
@@ -109,7 +119,7 @@ final readonly class InventoryItemController implements HasMiddleware
 
     public function store(StoreInventoryItemRequest $request, CreateInventoryItem $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        $action->handle($request->createDto());
 
         return to_route('inventory-items.index')->with('success', 'Inventory item created successfully.');
     }
@@ -124,7 +134,7 @@ final readonly class InventoryItemController implements HasMiddleware
 
     public function update(UpdateInventoryItemRequest $request, InventoryItem $inventoryItem, UpdateInventoryItem $action): RedirectResponse
     {
-        $action->handle($inventoryItem, $request->validated());
+        $action->handle($inventoryItem, $request->updateDto());
 
         return to_route('inventory-items.index')->with('success', 'Inventory item updated successfully.');
     }

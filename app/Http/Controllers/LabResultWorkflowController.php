@@ -71,7 +71,7 @@ final readonly class LabResultWorkflowController implements HasMiddleware
         return $this->handleAction(
             $request,
             $labRequestItem,
-            fn (string $staffId): LabRequestItem => $action->handle($labRequestItem, $request->validated(), $staffId),
+            fn (string $staffId): LabRequestItem => $action->handle($labRequestItem, $request->storeDto(), $staffId),
             'Lab results saved successfully.',
         );
     }

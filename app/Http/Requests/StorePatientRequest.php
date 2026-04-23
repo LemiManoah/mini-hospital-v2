@@ -79,7 +79,7 @@ final class StorePatientRequest extends FormRequest
                 Rule::exists('insurance_packages', 'id')->where(
                     function (Builder $query) use ($tenantId): void {
                         $query->where('tenant_id', $tenantId)
-                            ->where('insurance_company_id', (string) $this->input('insurance_company_id'));
+                            ->where('insurance_company_id', $this->insuranceCompanyIdInput());
                     }
                 ),
             ],
@@ -91,5 +91,12 @@ final class StorePatientRequest extends FormRequest
         $this->merge([
             'is_emergency' => $this->boolean('is_emergency'),
         ]);
+    }
+
+    private function insuranceCompanyIdInput(): ?string
+    {
+        $insuranceCompanyId = $this->input('insurance_company_id');
+
+        return is_string($insuranceCompanyId) ? $insuranceCompanyId : null;
     }
 }

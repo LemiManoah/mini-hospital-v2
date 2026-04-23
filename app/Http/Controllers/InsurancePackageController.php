@@ -76,7 +76,7 @@ final readonly class InsurancePackageController implements HasMiddleware
 
     public function store(StoreInsurancePackageRequest $request, CreateInsurancePackage $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        $action->handle($request->createDto());
 
         return to_route('insurance-packages.index')->with('success', 'Insurance package created successfully.');
     }
@@ -99,7 +99,7 @@ final readonly class InsurancePackageController implements HasMiddleware
         InsurancePackage $insurancePackage,
         UpdateInsurancePackage $action
     ): RedirectResponse {
-        $action->handle($insurancePackage, $request->validated());
+        $action->handle($insurancePackage, $request->updateDto());
 
         return to_route('insurance-packages.index')->with('success', 'Insurance package updated successfully.');
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Patient\UpdateInsurancePackageDTO;
 use App\Enums\GeneralStatus;
 use App\Models\InsurancePackage;
 use Illuminate\Database\Query\Builder;
@@ -13,6 +14,11 @@ use Illuminate\Validation\Rules\Enum;
 
 final class UpdateInsurancePackageRequest extends FormRequest
 {
+    public function updateDto(): UpdateInsurancePackageDTO
+    {
+        return UpdateInsurancePackageDTO::fromRequest($this);
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -44,11 +50,18 @@ final class UpdateInsurancePackageRequest extends FormRequest
                 Rule::unique('insurance_packages', 'name')
                     ->where(function (Builder $query) use ($tenantId): void {
                         $query->where('tenant_id', $tenantId)
-                            ->where('insurance_company_id', (string) $this->input('insurance_company_id'));
+                            ->where('insurance_company_id', $this->insuranceCompanyIdInput());
                     })
                     ->ignore($insurancePackage->id),
             ],
             'status' => ['required', new Enum(GeneralStatus::class)],
         ];
+    }
+
+    private function insuranceCompanyIdInput(): ?string
+    {
+        $insuranceCompanyId = $this->input('insurance_company_id');
+
+        return is_string($insuranceCompanyId) ? $insuranceCompanyId : null;
     }
 }

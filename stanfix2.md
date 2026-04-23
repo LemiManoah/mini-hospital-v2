@@ -2,12 +2,18 @@
 
 This file groups the current errors from [stan2.md](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\stan2.md) by root cause instead of by raw line order.
 
+Current snapshot:
+
+- the latest `stan2.md` run is down to `399` errors
+- the earlier `HasFactory` model noise is no longer present
+- the remaining work is now concentrated in controllers, request normalization helpers, a few route-model narrowing cases, and one seeder/support mismatch
+
 The main pattern in this batch is not one big architectural break. It is mostly:
 
 - loose controller-to-action payloads
 - request normalization methods that still return `mixed`
 - collection callbacks and relation closures that are too loosely typed
-- `HasFactory` generic noise on models
+- previously, `HasFactory` generic noise on models
 - redundant nullsafe / `??` / `is_array()` checks after types have already been narrowed
 
 Because this project now uses DTOs, the preferred fix is:
@@ -43,6 +49,44 @@ Fix approach:
 Priority:
 
 - high, because these errors often hide real data-shape ambiguity in UI serialization
+
+Implemented in this pass:
+
+- inventory reconciliation now hands its business payload to actions through `CreateInventoryReconciliationDTO`
+- inventory requisition create/approve/issue now flow through `CreateInventoryRequisitionDTO`, `ApproveInventoryRequisitionDTO`, and `IssueInventoryRequisitionDTO`
+- the inventory controllers now serialize known model and aggregate shapes instead of leaning on `mixed`, stale nullsafe calls, or fallback array branches
+
+Touched files:
+
+- [app/Data/Inventory/CreateInventoryReconciliationDTO.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Data\Inventory\CreateInventoryReconciliationDTO.php)
+- [app/Data/Inventory/CreateInventoryReconciliationItemDTO.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Data\Inventory\CreateInventoryReconciliationItemDTO.php)
+- [app/Data/Inventory/CreateInventoryRequisitionDTO.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Data\Inventory\CreateInventoryRequisitionDTO.php)
+- [app/Data/Inventory/CreateInventoryRequisitionItemDTO.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Data\Inventory\CreateInventoryRequisitionItemDTO.php)
+- [app/Data/Inventory/ApproveInventoryRequisitionDTO.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Data\Inventory\ApproveInventoryRequisitionDTO.php)
+- [app/Data/Inventory/ApproveInventoryRequisitionItemDTO.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Data\Inventory\ApproveInventoryRequisitionItemDTO.php)
+- [app/Data/Inventory/IssueInventoryRequisitionDTO.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Data\Inventory\IssueInventoryRequisitionDTO.php)
+- [app/Data/Inventory/IssueInventoryRequisitionItemDTO.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Data\Inventory\IssueInventoryRequisitionItemDTO.php)
+- [app/Data/Inventory/IssueInventoryRequisitionAllocationDTO.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Data\Inventory\IssueInventoryRequisitionAllocationDTO.php)
+- [app/Http/Requests/StoreInventoryReconciliationRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\StoreInventoryReconciliationRequest.php)
+- [app/Http/Requests/StoreInventoryRequisitionRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\StoreInventoryRequisitionRequest.php)
+- [app/Http/Requests/ApproveInventoryRequisitionRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\ApproveInventoryRequisitionRequest.php)
+- [app/Http/Requests/IssueInventoryRequisitionRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\IssueInventoryRequisitionRequest.php)
+- [app/Actions/CreateInventoryReconciliation.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\CreateInventoryReconciliation.php)
+- [app/Actions/CreateInventoryRequisition.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\CreateInventoryRequisition.php)
+- [app/Actions/ApproveInventoryRequisition.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\ApproveInventoryRequisition.php)
+- [app/Actions/IssueInventoryRequisition.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\IssueInventoryRequisition.php)
+- [app/Http/Controllers/InventoryReconciliationController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\InventoryReconciliationController.php)
+- [app/Http/Controllers/InventoryRequisitionController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\InventoryRequisitionController.php)
+- [app/Http/Controllers/InventoryStockByLocationController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\InventoryStockByLocationController.php)
+
+Verification:
+
+- focused `phpstan analyse` on the new DTO, request, action, and inventory-controller slice passed with `0` errors
+- focused feature tests passed for:
+  - inventory reconciliation create/workflow/reject
+  - inventory requisition create/approve-issue/reject
+  - stock-by-location listing from posted receipts and configured location items
+- `vendor/bin/pint --format agent` passed on the touched inventory files
 
 ## Group 2: Controller To Action Payload Mismatch
 
@@ -146,6 +190,89 @@ Priority:
 
 - very high, because these are the noisiest and most repetitive errors in the file
 
+Current live files in this group from the latest `stan2.md`:
+
+- `app/Http/Requests/DispensePrescriptionRequest.php`
+- `app/Http/Requests/StoreDispenseRequest.php`
+- `app/Http/Requests/StoreInsurancePackageRequest.php`
+- `app/Http/Requests/StoreInventoryItemRequest.php`
+- `app/Http/Requests/StoreLabResultEntryRequest.php`
+- `app/Http/Requests/StoreLabTestCatalogRequest.php`
+- `app/Http/Requests/StorePatientRequest.php`
+- `app/Http/Requests/UpdateConsultationRequest.php`
+- `app/Http/Requests/UpdateInsurancePackageRequest.php`
+- `app/Http/Requests/UpdateInventoryItemRequest.php`
+- `app/Http/Requests/UpdateLabTestCatalogRequest.php`
+
+Best next slice inside this group:
+
+- `StoreLabTestCatalogRequest`
+- `UpdateLabTestCatalogRequest`
+- `StoreInventoryItemRequest`
+- `UpdateInventoryItemRequest`
+
+Why this is the best next slice:
+
+- it is highly repetitive
+- it is contained to request helpers
+- it maps cleanly to the DTO direction we are already taking in the app
+- it should remove a large chunk of `collect(mixed)`, `cast.string`, and wrong return-shape errors quickly
+
+Implemented in this pass:
+
+- `StoreLabTestCatalogRequest` and `UpdateLabTestCatalogRequest` now normalize typed arrays before validation finishes, expose `createDto()` / `updateDto()`, and no longer feed `collect(mixed)` or `value('code')` directly into typed helpers
+- lab test catalog create/update now flow through `CreateLabTestCatalogDTO` and `UpdateLabTestCatalogDTO`
+- nested lab test catalog configuration now uses typed option/parameter DTOs instead of loose nested arrays
+- `StoreInventoryItemRequest` and `UpdateInventoryItemRequest` now expose `createDto()` / `updateDto()` and use narrowed numeric helpers instead of returning `mixed`
+- inventory item create/update now flow through `CreateInventoryItemDTO` and `UpdateInventoryItemDTO`
+- `StoreInsurancePackageRequest` and `UpdateInsurancePackageRequest` now expose `createDto()` / `updateDto()` and no longer cast raw `mixed` company IDs inside uniqueness rules
+- insurance package create/update now flow through `CreateInsurancePackageDTO` and `UpdateInsurancePackageDTO`
+- `StoreLabResultEntryRequest` now exposes `storeDto()`, normalizes parameter values into a stable typed list, and no longer builds lab result validation off `collect(mixed)`
+- lab result entry storage now flows through `StoreLabResultEntryDTO`
+- `StoreDispenseRequest` and `DispensePrescriptionRequest` now normalize typed dispense line lists before validation, narrow route prescription models explicitly, and guard visit tenant IDs before general-setting lookups
+- `StorePatientRequest` and `UpdateConsultationRequest` now use explicit typed helper methods instead of repeated string casts from raw `mixed`
+
+Touched files:
+
+- [app/Http/Requests/StoreLabTestCatalogRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\StoreLabTestCatalogRequest.php)
+- [app/Http/Requests/UpdateLabTestCatalogRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\UpdateLabTestCatalogRequest.php)
+- [app/Http/Requests/StoreInventoryItemRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\StoreInventoryItemRequest.php)
+- [app/Http/Requests/UpdateInventoryItemRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\UpdateInventoryItemRequest.php)
+- [app/Http/Requests/StoreInsurancePackageRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\StoreInsurancePackageRequest.php)
+- [app/Http/Requests/UpdateInsurancePackageRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\UpdateInsurancePackageRequest.php)
+- [app/Http/Requests/StoreLabResultEntryRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\StoreLabResultEntryRequest.php)
+- [app/Http/Requests/StoreDispenseRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\StoreDispenseRequest.php)
+- [app/Http/Requests/DispensePrescriptionRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\DispensePrescriptionRequest.php)
+- [app/Http/Requests/StorePatientRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\StorePatientRequest.php)
+- [app/Http/Requests/UpdateConsultationRequest.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Requests\UpdateConsultationRequest.php)
+- [app/Http/Controllers/LabTestCatalogController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\LabTestCatalogController.php)
+- [app/Http/Controllers/InventoryItemController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\InventoryItemController.php)
+- [app/Http/Controllers/InsurancePackageController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\InsurancePackageController.php)
+- [app/Http/Controllers/LabResultWorkflowController.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Http\Controllers\LabResultWorkflowController.php)
+- [app/Actions/CreateLabTestCatalog.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\CreateLabTestCatalog.php)
+- [app/Actions/UpdateLabTestCatalog.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\UpdateLabTestCatalog.php)
+- [app/Actions/SyncLabTestCatalogConfiguration.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\SyncLabTestCatalogConfiguration.php)
+- [app/Actions/CreateInventoryItem.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\CreateInventoryItem.php)
+- [app/Actions/UpdateInventoryItem.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\UpdateInventoryItem.php)
+- [app/Actions/CreateInsurancePackage.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\CreateInsurancePackage.php)
+- [app/Actions/UpdateInsurancePackage.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\UpdateInsurancePackage.php)
+- [app/Actions/StoreLabResultEntry.php](C:\Users\Manoah\Desktop\projects\personal-practice\mini-hospital-v2\app\Actions\StoreLabResultEntry.php)
+
+Verification:
+
+- focused `phpstan analyse` on this lab test catalog / inventory item slice passed with `0` errors
+- focused lab test catalog feature tests for create/update passed
+- new DTO and inventory action unit tests passed
+- focused `phpstan analyse` on the insurance package / lab result entry / pharmacy request slice passed with `0` errors
+- new DTO and insurance package action unit tests passed
+- focused lab workflow feature coverage passed for parameter-panel result entry
+- focused dispensing feature coverage passed for draft-create and direct-dispense flows
+
+What remains in Group 3 after this pass:
+
+- no major request-normalization holdouts from this grouped slice remain in the latest tracked batch
+- the next remaining request-side cleanup is smaller and overlaps with Group 4 style reductions rather than DTO boundary gaps
+
 ## Group 4: Redundant Guards After Type Narrowing
 
 Representative files:
@@ -173,6 +300,24 @@ Priority:
 
 - medium
 
+Current live files in this group from the latest `stan2.md`:
+
+- `app/Http/Controllers/InventoryReconciliationController.php`
+- `app/Http/Controllers/InventoryRequisitionController.php`
+- `app/Http/Controllers/InventoryStockByLocationController.php`
+- `app/Http/Controllers/PatientController.php`
+- `app/Http/Controllers/PatientVisitController.php`
+- `app/Http/Controllers/PharmacyPosCartController.php`
+- `app/Http/Controllers/PharmacyQueueController.php`
+- `app/Http/Controllers/VisitOrderController.php`
+- `app/Http/Requests/CorrectLabResultEntryRequest.php`
+- `app/Http/Requests/StoreConsultationFacilityServiceOrderRequest.php`
+- `app/Http/Requests/StoreConsultationImagingRequest.php`
+- `app/Http/Requests/StoreConsultationLabRequest.php`
+- `app/Http/Requests/StoreConsultationPrescriptionRequest.php`
+- `app/Http/Requests/UpdateAppointmentCategoryRequest.php`
+- `app/Http/Requests/UpdateAppointmentModeRequest.php`
+
 ## Group 5: Route Model And Request User Narrowing Problems
 
 Representative files:
@@ -197,6 +342,11 @@ Priority:
 
 - medium
 
+Current live files in this group from the latest `stan2.md`:
+
+- `app/Http/Requests/UpdateStaffRequest.php`
+- `app/Http/Requests/UpdateUnitRequest.php`
+
 ## Group 6: Subscription Activation And Enum/Meta Payload Confusion
 
 Representative file:
@@ -220,6 +370,10 @@ Priority:
 
 - medium-high
 
+Current live files in this group from the latest `stan2.md`:
+
+- `app/Http/Controllers/SubscriptionActivationController.php`
+
 ## Group 7: Inertia Shared Props And Middleware Typing
 
 Representative file:
@@ -242,51 +396,37 @@ Priority:
 
 - medium
 
-## Group 8: HasFactory Generic Noise On Models
+Current live files in this group from the latest `stan2.md`:
 
-Representative files:
+- `app/Http/Middleware/HandleInertiaRequests.php`
 
-- `app/Models/Allergen.php`
-- `app/Models/Department.php`
-- many models now showing `Class ... uses generic trait HasFactory but does not specify its types`
+## Group 8: HasFactory Model Cleanup
 
-Root cause:
+Status:
 
-- some models still have old `@use HasFactory<Database\Factories\...Factory>` docs for missing/non-generic factories
-- other models use `HasFactory` with no generic annotation at all
-- Rector and the codebase currently disagree on how aggressively `HasFactory` should be applied
+- completed
 
-Fix approach:
+What was done:
 
-- choose one consistent policy and apply it app-wide:
+- removed `HasFactory`, its import, and stale `@use HasFactory<...>` annotations from models that do not have real matching files in `database/factories`
+- kept `HasFactory` only on models that do have real factory files
+- verified that the remaining `HasFactory` usage now aligns with the actual repo factory set
 
-Option A:
-- keep `HasFactory` on models
-- where a real factory exists, use `/** @use HasFactory<Factory<self>> */`
-- where the old concrete factory PHPDoc is invalid, replace it with `Factory<self>` or remove the bad generic
+Verification:
 
-Option B:
-- if a model truly should not participate in factories, remove `HasFactory`
-
-Practical recommendation for this repo:
-
-- do not keep the old `Database\Factories\ConcreteFactory` generic form
-- prefer `Factory<self>` when the trait stays
-- keep the narrow PHPStan ignores only for legacy leftovers while we finish normalizing models
-
-Priority:
-
-- medium, but noisy
+- `stan2.md` no longer contains the earlier factory-related PHPStan errors
+- focused `phpstan analyse` on the changed model set passed with `0` errors
+- `vendor/bin/pint --format agent` passed on the touched model files
 
 ## Suggested Fix Order
 
-1. Controller-to-action payload mismatches
-2. Request normalization and DTO boundaries
+1. Request normalization and DTO boundaries
+2. Inventory controller payload/collection typing
 3. Inertia/controller relation closure typing
 4. Redundant nullsafe / dead-branch cleanup
 5. Route model narrowing
 6. Subscription activation typing
-7. HasFactory model normalization
+7. Seeder/support cleanup
 
 ## Fast Wins
 
@@ -296,8 +436,42 @@ Priority:
   - workspace registration
   - lab request item consumables
 - normalize `StoreLabTestCatalogRequest` and `UpdateLabTestCatalogRequest` helper methods so `collect()` only receives typed arrays
+- normalize the inventory reconciliation / requisition controller request handoff so mixed item lists stop leaking into actions
 - fix `HandleInertiaRequests` closure return types and relation closures
-- normalize model `HasFactory` docs to one convention
+- tighten `UpdateStaffRequest` and `UpdateUnitRequest` route-model narrowing
+
+## Current Remaining Groups
+
+From the latest `stan2.md`, the active error groups are now:
+
+1. Request normalization still returning `mixed`
+   Files:
+   - batch substantially reduced; rerun full `stan2.md` snapshot to refresh this list before taking another request-only pass
+
+2. Controller mixed/nullable serialization issues
+   Files:
+   - `LaboratoryDashboardController`
+   - `LaboratoryQueueController`
+   - `PatientController`
+   - `PatientVisitController`
+   - `PharmacyPosCartController`
+   - `PharmacyQueueController`
+   - `VisitOrderController`
+
+3. Route-model narrowing issues
+   Files:
+   - `UpdateStaffRequest`
+   - `UpdateUnitRequest`
+
+4. Inertia and subscription typing
+   Files:
+   - `HandleInertiaRequests`
+   - `SubscriptionActivationController`
+
+5. Smaller final cleanup items
+   Files:
+   - `PrescriptionDispenseProgress`
+   - `SupportUserSeeder`
 
 ## Done Definition For This Round
 

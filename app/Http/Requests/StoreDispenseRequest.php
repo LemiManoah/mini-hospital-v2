@@ -12,6 +12,7 @@ use App\Support\BranchContext;
 use App\Support\GeneralSettings\TenantGeneralSettings;
 use App\Support\InventoryLocationAccess;
 use App\Support\PrescriptionDispenseProgress;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
@@ -54,24 +55,22 @@ final class StoreDispenseRequest extends FormRequest
         ];
     }
 
-    /**
-     * @return array<int, callable(Validator): void>
-     */
+    /** @return array<int, Closure(Validator): void> */
     public function after(): array
     {
         return [
             function (Validator $validator): void {
                 $branchId = BranchContext::getActiveBranchId();
-                $prescriptionId = $this->route('prescription')?->getKey();
+                $prescription = $this->route('prescription');
+                $prescriptionId = $prescription instanceof Prescription ? $prescription->getKey() : null;
                 $locationId = $this->input('inventory_location_id');
-                $items = $this->input('items');
+                $items = $this->normalizedItems();
 
                 if (
                     ! is_string($branchId)
                     || $branchId === ''
                     || ! is_string($prescriptionId)
                     || ! is_string($locationId)
-                    || ! is_array($items)
                     || $validator->errors()->isNotEmpty()
                 ) {
                     return;
@@ -117,6 +116,12 @@ final class StoreDispenseRequest extends FormRequest
                     return;
                 }
 
+                if (! is_string($prescriptionVisit->tenant_id)) {
+                    $validator->errors()->add('items', 'The prescription visit tenant context could not be resolved.');
+
+                    return;
+                }
+
                 $prescriptionItems = $prescription->items->keyBy('id');
                 $postedLineSummaries = resolve(PrescriptionDispenseProgress::class)
                     ->postedLineSummaries($prescription->id);
@@ -127,15 +132,11 @@ final class StoreDispenseRequest extends FormRequest
                 $hasActionableLine = false;
 
                 foreach ($items as $index => $item) {
-                    if (! is_array($item)) {
-                        continue;
-                    }
+                    $prescriptionItemId = $item['prescription_item_id'];
+                    $dispensedQuantity = $item['dispensed_quantity'];
+                    $externalPharmacy = $item['external_pharmacy'];
 
-                    $prescriptionItemId = $item['prescription_item_id'] ?? null;
-                    $dispensedQuantity = $item['dispensed_quantity'] ?? null;
-                    $externalPharmacy = filter_var($item['external_pharmacy'] ?? false, FILTER_VALIDATE_BOOL);
-
-                    if (! is_string($prescriptionItemId) || ! $prescriptionItems->has($prescriptionItemId)) {
+                    if (! $prescriptionItems->has($prescriptionItemId)) {
                         $validator->errors()->add(
                             sprintf('items.%d.prescription_item_id', $index),
                             'Each dispense line must belong to the selected prescription.',
@@ -166,7 +167,7 @@ final class StoreDispenseRequest extends FormRequest
                     if ($externalPharmacy) {
                         $hasActionableLine = true;
 
-                        if (! is_string($item['external_reason'] ?? null) || mb_trim($item['external_reason']) === '') {
+                        if ($item['external_reason'] === null) {
                             $validator->errors()->add(
                                 sprintf('items.%d.external_reason', $index),
                                 'Add a reason when marking a line for external pharmacy fulfilment.',
@@ -213,5 +214,61 @@ final class StoreDispenseRequest extends FormRequest
                 }
             },
         ];
+    }
+
+    /**
+     * @return list<array{
+     *   prescription_item_id: string,
+     *   dispensed_quantity: int|float|string,
+     *   external_pharmacy: bool,
+     *   external_reason: ?string,
+     *   notes: ?string,
+     *   substitution_inventory_item_id: ?string
+     * }>
+     */
+    private function normalizedItems(): array
+    {
+        $items = $this->input('items');
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $normalizedItems = [];
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $prescriptionItemId = $item['prescription_item_id'] ?? null;
+            $dispensedQuantity = $item['dispensed_quantity'] ?? null;
+
+            if (! is_string($prescriptionItemId) || $prescriptionItemId === '' || ! is_numeric($dispensedQuantity)) {
+                continue;
+            }
+
+            $normalizedItems[] = [
+                'prescription_item_id' => $prescriptionItemId,
+                'dispensed_quantity' => $dispensedQuantity,
+                'external_pharmacy' => filter_var($item['external_pharmacy'] ?? false, FILTER_VALIDATE_BOOL),
+                'external_reason' => $this->nullableString($item['external_reason'] ?? null),
+                'notes' => $this->nullableString($item['notes'] ?? null),
+                'substitution_inventory_item_id' => $this->nullableString($item['substitution_inventory_item_id'] ?? null),
+            ];
+        }
+
+        return $normalizedItems;
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = mb_trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 }

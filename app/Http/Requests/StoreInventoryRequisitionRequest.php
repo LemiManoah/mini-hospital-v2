@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Inventory\CreateInventoryRequisitionDTO;
 use App\Enums\InventoryLocationType;
 use App\Enums\Priority;
 use App\Models\InventoryLocation;
@@ -17,6 +18,11 @@ use Illuminate\Validation\Validator;
 
 final class StoreInventoryRequisitionRequest extends FormRequest
 {
+    public function createDto(): CreateInventoryRequisitionDTO
+    {
+        return CreateInventoryRequisitionDTO::fromRequest($this);
+    }
+
     /**
      * @return array<string, mixed>
      */

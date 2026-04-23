@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreateLabTestCatalogDTO;
 use App\Models\LabTestCatalog;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreateLabTestCatalog
@@ -14,32 +14,12 @@ final readonly class CreateLabTestCatalog
         private SyncLabTestCatalogConfiguration $syncLabTestCatalogConfiguration,
     ) {}
 
-    /**
-     * @param  array{
-     *      tenant_id?: string|null,
-     *      test_code: string,
-     *      test_name: string,
-     *      lab_test_category_id: string,
-     *      result_type_id: string,
-     *      description?: string|null,
-     *      base_price?: float|int|string,
-     *      is_active?: bool,
-     *      specimen_type_ids?: list<string>,
-     *      result_options?: list<array<string, mixed>>,
-     *      result_parameters?: list<array<string, mixed>>
-     *  }  $attributes
-     */
-    public function handle(array $attributes): LabTestCatalog
+    public function handle(CreateLabTestCatalogDTO $data): LabTestCatalog
     {
-        return DB::transaction(function () use ($attributes): LabTestCatalog {
-            /** @var array<string, mixed> $createAttributes */
-            $createAttributes = Arr::except($attributes, ['specimen_type_ids', 'result_options', 'result_parameters']);
+        return DB::transaction(function () use ($data): LabTestCatalog {
+            $labTestCatalog = LabTestCatalog::query()->create($data->toAttributes());
 
-            $labTestCatalog = LabTestCatalog::query()->create(
-                $createAttributes,
-            );
-
-            $this->syncLabTestCatalogConfiguration->handle($labTestCatalog, $attributes);
+            $this->syncLabTestCatalogConfiguration->handle($labTestCatalog, $data);
 
             return $labTestCatalog->load([
                 'labCategory:id,name',

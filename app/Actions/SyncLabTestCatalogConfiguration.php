@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Clinical\CreateLabTestCatalogDTO;
+use App\Data\Clinical\LabTestCatalogResultOptionDTO;
+use App\Data\Clinical\LabTestCatalogResultParameterDTO;
+use App\Data\Clinical\UpdateLabTestCatalogDTO;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
-use Illuminate\Support\Arr;
 
 final readonly class SyncLabTestCatalogConfiguration
 {
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    public function handle(LabTestCatalog $labTestCatalog, array $attributes): void
+    public function handle(LabTestCatalog $labTestCatalog, CreateLabTestCatalogDTO|UpdateLabTestCatalogDTO $data): void
     {
-        $labTestCatalog->specimenTypes()->sync($this->normalizedSpecimenTypeIds($attributes['specimen_type_ids'] ?? []));
+        $labTestCatalog->specimenTypes()->sync($data->specimenTypeIds);
 
         $resultTypeCode = LabResultType::query()
             ->whereKey($labTestCatalog->result_type_id)
@@ -23,14 +23,14 @@ final readonly class SyncLabTestCatalogConfiguration
 
         if ($resultTypeCode === 'defined_option') {
             $labTestCatalog->resultParameters()->delete();
-            $this->syncResultOptions($labTestCatalog, $attributes['result_options'] ?? []);
+            $this->syncResultOptions($labTestCatalog, $data->resultOptions);
 
             return;
         }
 
         if ($resultTypeCode === 'parameter_panel') {
             $labTestCatalog->resultOptions()->delete();
-            $this->syncResultParameters($labTestCatalog, $attributes['result_parameters'] ?? []);
+            $this->syncResultParameters($labTestCatalog, $data->resultParameters);
 
             return;
         }
@@ -40,101 +40,16 @@ final readonly class SyncLabTestCatalogConfiguration
     }
 
     /**
-     * @return array<int, string>
+     * @param  list<LabTestCatalogResultOptionDTO>  $value
      */
-    private function normalizedSpecimenTypeIds(mixed $value): array
-    {
-        if (! is_array($value)) {
-            return [];
-        }
-
-        return collect($value)
-            ->filter(static fn (mixed $item): bool => is_string($item) && $item !== '')
-            ->unique()
-            ->values()
-            ->all();
-    }
-
-    /**
-     * @return array<int, array{label: string, sort_order: int, is_active: bool}>
-     */
-    private function normalizedResultOptions(mixed $value): array
-    {
-        if (! is_array($value)) {
-            return [];
-        }
-
-        return collect($value)
-            ->filter(static fn (mixed $item): bool => is_array($item))
-            ->map(static function (array $item, int $index): ?array {
-                $label = mb_trim((string) Arr::get($item, 'label', ''));
-
-                if ($label === '') {
-                    return null;
-                }
-
-                return [
-                    'label' => $label,
-                    'sort_order' => $index + 1,
-                    'is_active' => true,
-                ];
-            })
-            ->filter()
-            ->values()
-            ->all();
-    }
-
-    /**
-     * @return array<int, array{label: string, unit: ?string, gender: ?string, age_min: ?int, age_max: ?int, reference_range: ?string, value_type: string, sort_order: int, is_active: bool}>
-     */
-    private function normalizedResultParameters(mixed $value): array
-    {
-        if (! is_array($value)) {
-            return [];
-        }
-
-        return collect($value)
-            ->filter(static fn (mixed $item): bool => is_array($item))
-            ->map(static function (array $item, int $index): ?array {
-                $label = mb_trim((string) Arr::get($item, 'label', ''));
-
-                if ($label === '') {
-                    return null;
-                }
-
-                $unit = mb_trim((string) Arr::get($item, 'unit', ''));
-                $gender = mb_trim((string) Arr::get($item, 'gender', ''));
-                $ageMin = Arr::get($item, 'age_min');
-                $ageMax = Arr::get($item, 'age_max');
-                $referenceRange = mb_trim((string) Arr::get($item, 'reference_range', ''));
-                $valueType = mb_trim((string) Arr::get($item, 'value_type', 'numeric'));
-
-                if (! in_array($valueType, ['numeric', 'text'], true)) {
-                    $valueType = 'numeric';
-                }
-
-                return [
-                    'label' => $label,
-                    'unit' => $unit === '' ? null : $unit,
-                    'gender' => $gender === '' ? null : $gender,
-                    'age_min' => $ageMin === '' || $ageMin === null ? null : (int) $ageMin,
-                    'age_max' => $ageMax === '' || $ageMax === null ? null : (int) $ageMax,
-                    'reference_range' => $referenceRange === '' ? null : $referenceRange,
-                    'value_type' => $valueType,
-                    'sort_order' => $index + 1,
-                    'is_active' => true,
-                ];
-            })
-            ->filter()
-            ->values()
-            ->all();
-    }
-
-    private function syncResultOptions(LabTestCatalog $labTestCatalog, mixed $value): void
+    private function syncResultOptions(LabTestCatalog $labTestCatalog, array $value): void
     {
         $labTestCatalog->resultOptions()->delete();
+        $payload = [];
 
-        $payload = $this->normalizedResultOptions($value);
+        foreach ($value as $index => $option) {
+            $payload[] = $option->toRecordPayload($index + 1);
+        }
 
         if ($payload === []) {
             return;
@@ -143,11 +58,17 @@ final readonly class SyncLabTestCatalogConfiguration
         $labTestCatalog->resultOptions()->createMany($payload);
     }
 
-    private function syncResultParameters(LabTestCatalog $labTestCatalog, mixed $value): void
+    /**
+     * @param  list<LabTestCatalogResultParameterDTO>  $value
+     */
+    private function syncResultParameters(LabTestCatalog $labTestCatalog, array $value): void
     {
         $labTestCatalog->resultParameters()->delete();
+        $payload = [];
 
-        $payload = $this->normalizedResultParameters($value);
+        foreach ($value as $index => $parameter) {
+            $payload[] = $parameter->toRecordPayload($index + 1);
+        }
 
         if ($payload === []) {
             return;

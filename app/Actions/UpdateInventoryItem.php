@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Inventory\UpdateInventoryItemDTO;
 use App\Models\InventoryItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateInventoryItem
 {
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    public function handle(InventoryItem $inventoryItem, array $attributes): InventoryItem
+    public function handle(InventoryItem $inventoryItem, UpdateInventoryItemDTO $data): InventoryItem
     {
-        return DB::transaction(function () use ($inventoryItem, $attributes): InventoryItem {
+        return DB::transaction(function () use ($inventoryItem, $data): InventoryItem {
             $inventoryItem->update([
-                ...$attributes,
+                ...$data->toAttributes(),
                 'updated_by' => Auth::id(),
             ]);
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Inventory\CreateInventoryRequisitionDTO;
 use App\Enums\InventoryLocationType;
 use App\Enums\InventoryRequisitionStatus;
 use App\Models\InventoryRequisition;
@@ -20,30 +21,18 @@ final readonly class CreateInventoryRequisition
     ) {}
 
     /**
-     * @param  array{
-     *      tenant_id?: string,
-     *      branch_id?: string,
-     *      source_inventory_location_id: string,
-     *      destination_inventory_location_id: string,
-     *      priority: string,
-     *      requisition_date: string,
-     *      notes?: string|null
-     *  }  $attributes
-     * @param  list<array{
-     *      inventory_item_id: string,
-     *      requested_quantity: float|int|string,
-     *      notes?: string|null
-     *  }>  $items
      * @param  list<InventoryLocationType|string>  $destinationTypes
      */
-    public function handle(array $attributes, array $items, array $destinationTypes = []): InventoryRequisition
+    public function handle(CreateInventoryRequisitionDTO $data, array $destinationTypes = []): InventoryRequisition
     {
-        return DB::transaction(function () use ($attributes, $items, $destinationTypes): InventoryRequisition {
-            $tenantId = $attributes['tenant_id'] ?? Auth::user()?->tenantId();
-            $branchId = $attributes['branch_id'] ?? BranchContext::getActiveBranchId();
+        return DB::transaction(function () use ($data, $destinationTypes): InventoryRequisition {
+            $attributes = $data->toAttributes();
+            $items = $data->itemAttributes();
+            $tenantId = Auth::user()?->tenantId();
+            $branchId = BranchContext::getActiveBranchId();
 
-            $fulfillingLocationId = $attributes['source_inventory_location_id'];
-            $requestingLocationId = $attributes['destination_inventory_location_id'];
+            $fulfillingLocationId = $data->sourceInventoryLocationId;
+            $requestingLocationId = $data->destinationInventoryLocationId;
 
             $normalizedDestinationTypes = $destinationTypes;
 
@@ -70,7 +59,7 @@ final readonly class CreateInventoryRequisition
                 'status' => InventoryRequisitionStatus::Draft,
                 'priority' => $attributes['priority'],
                 'requisition_date' => $attributes['requisition_date'],
-                'notes' => ($attributes['notes'] ?? '') !== '' ? $attributes['notes'] : null,
+                'notes' => $attributes['notes'],
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
@@ -81,7 +70,7 @@ final readonly class CreateInventoryRequisition
                     'requested_quantity' => $item['requested_quantity'],
                     'approved_quantity' => 0,
                     'issued_quantity' => 0,
-                    'notes' => ($item['notes'] ?? '') !== '' ? $item['notes'] : null,
+                    'notes' => $item['notes'],
                 ]);
             }
 

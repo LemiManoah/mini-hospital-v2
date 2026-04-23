@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Inventory\UpdateInventoryItemDTO;
 use App\Enums\DrugCategory;
 use App\Enums\DrugDosageForm;
 use App\Enums\InventoryItemType;
@@ -56,6 +57,11 @@ final class UpdateInventoryItemRequest extends FormRequest
         ];
     }
 
+    public function updateDto(): UpdateInventoryItemDTO
+    {
+        return UpdateInventoryItemDTO::fromRequest($this);
+    }
+
     protected function prepareForValidation(): void
     {
         $itemType = $this->input('item_type');
@@ -83,6 +89,8 @@ final class UpdateInventoryItemRequest extends FormRequest
             'is_controlled' => $isDrug && $this->boolean('is_controlled'),
             'minimum_stock_level' => $this->numericOrDefault('minimum_stock_level', 0),
             'reorder_level' => $this->numericOrDefault('reorder_level', 0),
+            'default_purchase_price' => $this->nullableNumeric('default_purchase_price'),
+            'default_selling_price' => $this->nullableNumeric('default_selling_price'),
             'therapeutic_classes' => $isDrug ? $this->therapeuticClasses() : null,
         ]);
     }
@@ -100,7 +108,7 @@ final class UpdateInventoryItemRequest extends FormRequest
         return $trimmed === '' ? null : $trimmed;
     }
 
-    private function numericOrDefault(string $key, int|float $default): int|float|string
+    private function numericOrDefault(string $key, int|float $default): int|float
     {
         $value = $this->input($key);
 
@@ -108,7 +116,30 @@ final class UpdateInventoryItemRequest extends FormRequest
             return $default;
         }
 
-        return $value;
+        if (is_int($value) || is_float($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && is_numeric($value)) {
+            return (float) $value;
+        }
+
+        return $default;
+    }
+
+    private function nullableNumeric(string $key): int|float|string|null
+    {
+        $value = $this->input($key);
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_int($value) || is_float($value) || is_string($value)) {
+            return $value;
+        }
+
+        return null;
     }
 
     /**

@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Clinical\StoreLabResultEntryDTO;
 use App\Models\LabRequestItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 final class StoreLabResultEntryRequest extends FormRequest
 {
+    public function storeDto(): StoreLabResultEntryDTO
+    {
+        return StoreLabResultEntryDTO::fromRequest($this);
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -44,10 +50,15 @@ final class StoreLabResultEntryRequest extends FormRequest
                 'test.resultParameters:id,lab_test_catalog_id,label,value_type',
             ]);
 
-            $resultType = $labRequestItem->test?->result_capture_type;
+            $test = $labRequestItem->test;
+            $resultType = $test?->result_capture_type;
+
+            if ($test === null) {
+                return;
+            }
 
             if ($resultType === 'free_entry') {
-                if (mb_trim((string) $this->input('free_entry_value', '')) === '') {
+                if ($this->trimmedInput('free_entry_value') === null) {
                     $validator->errors()->add('free_entry_value', 'Enter the lab result before saving.');
                 }
 
@@ -55,10 +66,10 @@ final class StoreLabResultEntryRequest extends FormRequest
             }
 
             if ($resultType === 'defined_option') {
-                $selectedOption = mb_trim((string) $this->input('selected_option_label', ''));
-                $allowedOptions = $labRequestItem->test?->resultOptions?->pluck('label')->all() ?? [];
+                $selectedOption = $this->trimmedInput('selected_option_label');
+                $allowedOptions = $test->resultOptions->pluck('label')->all();
 
-                if ($selectedOption === '' || ! in_array($selectedOption, $allowedOptions, true)) {
+                if ($selectedOption === null || ! in_array($selectedOption, $allowedOptions, true)) {
                     $validator->errors()->add('selected_option_label', 'Choose a valid result option for this test.');
                 }
 
@@ -69,17 +80,16 @@ final class StoreLabResultEntryRequest extends FormRequest
                 return;
             }
 
-            $submittedValues = collect($this->input('parameter_values', []))
-                ->filter(static fn (mixed $item): bool => is_array($item))
+            $submittedValues = collect($this->parameterValuesInput())
                 ->mapWithKeys(static fn (array $item): array => [
-                    (string) ($item['lab_test_result_parameter_id'] ?? '') => $item,
+                    $item['lab_test_result_parameter_id'] => $item,
                 ]);
 
-            foreach ($labRequestItem->test?->resultParameters ?? [] as $parameter) {
+            foreach ($test->resultParameters as $parameter) {
                 $submitted = $submittedValues->get($parameter->id);
-                $value = mb_trim((string) ($submitted['value'] ?? ''));
+                $value = is_array($submitted) ? $submitted['value'] : null;
 
-                if ($value === '') {
+                if ($value === null) {
                     $validator->errors()->add(
                         'parameter_values',
                         sprintf('Enter a value for %s before saving the result.', $parameter->label),
@@ -101,13 +111,66 @@ final class StoreLabResultEntryRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'result_notes' => $this->filled('result_notes') ? $this->input('result_notes') : null,
-            'parameter_values' => is_array($this->input('parameter_values')) ? $this->input('parameter_values') : [],
+            'result_notes' => $this->trimmedInput('result_notes'),
+            'free_entry_value' => $this->trimmedInput('free_entry_value'),
+            'selected_option_label' => $this->trimmedInput('selected_option_label'),
+            'parameter_values' => $this->parameterValuesInput(),
         ]);
     }
 
-    private function labRequestItem(): mixed
+    private function labRequestItem(): ?LabRequestItem
     {
-        return $this->route('labRequestItem') ?? $this->route('lab_request_item');
+        $labRequestItem = $this->route('labRequestItem') ?? $this->route('lab_request_item');
+
+        return $labRequestItem instanceof LabRequestItem ? $labRequestItem : null;
+    }
+
+    /**
+     * @return list<array{lab_test_result_parameter_id: string, value: ?string}>
+     */
+    private function parameterValuesInput(): array
+    {
+        $parameterValues = $this->input('parameter_values');
+
+        if (! is_array($parameterValues)) {
+            return [];
+        }
+
+        $normalizedValues = [];
+
+        foreach ($parameterValues as $parameterValue) {
+            if (! is_array($parameterValue)) {
+                continue;
+            }
+
+            $parameterId = $parameterValue['lab_test_result_parameter_id'] ?? null;
+
+            if (! is_string($parameterId) || $parameterId === '') {
+                continue;
+            }
+
+            $normalizedValues[] = [
+                'lab_test_result_parameter_id' => $parameterId,
+                'value' => $this->nullableString($parameterValue['value'] ?? null),
+            ];
+        }
+
+        return $normalizedValues;
+    }
+
+    private function trimmedInput(string $key): ?string
+    {
+        return $this->nullableString($this->input($key));
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = mb_trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 }

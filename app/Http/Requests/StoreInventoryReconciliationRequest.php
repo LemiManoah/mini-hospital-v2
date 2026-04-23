@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Data\Inventory\CreateInventoryReconciliationDTO;
 use App\Models\InventoryBatch;
 use App\Support\BranchContext;
 use App\Support\InventoryStockLedger;
@@ -12,6 +13,11 @@ use Illuminate\Validation\Validator;
 
 final class StoreInventoryReconciliationRequest extends FormRequest
 {
+    public function createDto(): CreateInventoryReconciliationDTO
+    {
+        return CreateInventoryReconciliationDTO::fromRequest($this);
+    }
+
     /**
      * @return array<string, mixed>
      */

@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Patient\CreateInsurancePackageDTO;
 use App\Models\InsurancePackage;
 
 final readonly class CreateInsurancePackage
 {
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    public function handle(array $data): InsurancePackage
+    public function handle(CreateInsurancePackageDTO $data): InsurancePackage
     {
-        return InsurancePackage::query()->create($data);
+        return InsurancePackage::query()->create($data->toAttributes());
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Inventory\ApproveInventoryRequisitionDTO;
 use App\Enums\InventoryRequisitionStatus;
 use App\Models\InventoryRequisition;
 use App\Models\InventoryRequisitionItem;
@@ -13,12 +14,9 @@ use Illuminate\Support\Facades\DB;
 
 final class ApproveInventoryRequisition
 {
-    /**
-     * @param  array<int, array{inventory_requisition_item_id: string, approved_quantity: int|float|numeric-string|null}>  $items
-     */
-    public function handle(InventoryRequisition $requisition, array $items, ?string $approvalNotes = null): InventoryRequisition
+    public function handle(InventoryRequisition $requisition, ApproveInventoryRequisitionDTO $data): InventoryRequisition
     {
-        return DB::transaction(function () use ($requisition, $items, $approvalNotes): InventoryRequisition {
+        return DB::transaction(function () use ($requisition, $data): InventoryRequisition {
             /** @var InventoryRequisition $requisition */
             $requisition = InventoryRequisition::query()
                 ->with('items')
@@ -31,7 +29,7 @@ final class ApproveInventoryRequisition
                 'Only submitted requisitions can be approved.',
             );
 
-            $approvedQuantities = collect($items)
+            $approvedQuantities = collect($data->itemAttributes())
                 ->mapWithKeys(static fn (array $item): array => [
                     $item['inventory_requisition_item_id'] => is_numeric($item['approved_quantity'])
                         ? (float) $item['approved_quantity']
@@ -57,7 +55,7 @@ final class ApproveInventoryRequisition
                 'status' => InventoryRequisitionStatus::Approved,
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
-                'approval_notes' => $approvalNotes !== '' ? $approvalNotes : null,
+                'approval_notes' => $data->approvalNotes,
                 'updated_by' => Auth::id(),
             ]);
 

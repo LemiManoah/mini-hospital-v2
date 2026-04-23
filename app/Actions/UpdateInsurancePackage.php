@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Patient\UpdateInsurancePackageDTO;
 use App\Models\InsurancePackage;
 
 final class UpdateInsurancePackage
 {
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    public function handle(InsurancePackage $insurancePackage, array $attributes): InsurancePackage
+    public function handle(InsurancePackage $insurancePackage, UpdateInsurancePackageDTO $attributes): InsurancePackage
     {
-        $insurancePackage->update($attributes);
+        $insurancePackage->update($attributes->toAttributes());
 
         return $insurancePackage;
     }

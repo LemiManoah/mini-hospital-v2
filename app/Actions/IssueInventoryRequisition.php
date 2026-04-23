@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Data\Inventory\IssueInventoryRequisitionDTO;
 use App\Enums\InventoryRequisitionStatus;
 use App\Enums\StockMovementType;
 use App\Models\InventoryBatch;
@@ -21,17 +22,10 @@ final readonly class IssueInventoryRequisition
         private InventoryStockLedger $inventoryStockLedger,
     ) {}
 
-    /**
-     * @param  list<array{
-     *     inventory_requisition_item_id: string,
-     *     issue_quantity: float|int|string,
-     *     notes?: string|null,
-     *     allocations?: list<array{inventory_batch_id: string, quantity: float|int|string}>
-     * }>  $items
-     */
-    public function handle(InventoryRequisition $requisition, array $items, ?string $issuedNotes = null): InventoryRequisition
+    public function handle(InventoryRequisition $requisition, IssueInventoryRequisitionDTO $data): InventoryRequisition
     {
-        return DB::transaction(function () use ($requisition, $items, $issuedNotes): InventoryRequisition {
+        return DB::transaction(function () use ($requisition, $data): InventoryRequisition {
+            $items = $data->itemAttributes();
             $requisition = InventoryRequisition::query()
                 ->with('items.inventoryItem')
                 ->lockForUpdate()
@@ -50,7 +44,7 @@ final readonly class IssueInventoryRequisition
 
             /** @var list<string> $batchIds */
             $batchIds = $allocations
-                ->flatMap(static fn (array $item): array => collect($item['allocations'] ?? [])
+                ->flatMap(static fn (array $item): array => collect($item['allocations'])
                     ->pluck('inventory_batch_id')
                     ->filter(static fn (mixed $batchId): bool => is_string($batchId) && $batchId !== '')
                     ->values()
@@ -77,7 +71,7 @@ final readonly class IssueInventoryRequisition
                 abort_unless($line instanceof InventoryRequisitionItem, 422, 'One of the requisition lines is invalid.');
 
                 $issueQuantity = (float) $payload['issue_quantity'];
-                $allocationTotal = collect($payload['allocations'] ?? [])
+                $allocationTotal = collect($payload['allocations'])
                     ->sum(static fn (array $allocation): float => (float) $allocation['quantity']);
 
                 abort_unless(
@@ -91,7 +85,7 @@ final readonly class IssueInventoryRequisition
                     'The issue quantity cannot exceed the remaining approved quantity.',
                 );
 
-                foreach ($payload['allocations'] ?? [] as $allocation) {
+                foreach ($payload['allocations'] as $allocation) {
                     $batch = $sourceBatches->get($allocation['inventory_batch_id']);
                     abort_unless($batch instanceof InventoryBatch, 422, 'One of the selected source batches is invalid.');
                     abort_unless(
@@ -107,7 +101,7 @@ final readonly class IssueInventoryRequisition
                     );
                 }
 
-                foreach ($payload['allocations'] ?? [] as $allocation) {
+                foreach ($payload['allocations'] as $allocation) {
                     $batch = $sourceBatches->get($allocation['inventory_batch_id']);
                     if (! $batch instanceof InventoryBatch) {
                         continue;
@@ -171,7 +165,7 @@ final readonly class IssueInventoryRequisition
                     : InventoryRequisitionStatus::PartiallyIssued,
                 'issued_by' => Auth::id(),
                 'issued_at' => now(),
-                'issued_notes' => $issuedNotes !== '' ? $issuedNotes : null,
+                'issued_notes' => $data->issuedNotes,
                 'updated_by' => Auth::id(),
             ]);
 
