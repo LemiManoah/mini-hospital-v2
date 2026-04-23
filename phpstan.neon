@@ -17,6 +17,14 @@ parameters:
         analyse:
             - database/migrations/2026_03_06_091646_create_permission_tables.php
 
+    ignoreErrors:
+        -
+            message: '#PHPDoc tag @use has invalid type Database\\\\Factories\\\\.*Factory#'
+            path: app/Models/*
+        -
+            message: '#Type Database\\\\Factories\\\\.*Factory in generic type Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory<Database\\\\Factories\\\\.*Factory> in PHPDoc tag @use is not subtype of template type TFactory.*HasFactory#'
+            path: app/Models/*
+
     level: max
 
     tmpDir: /tmp/phpstan

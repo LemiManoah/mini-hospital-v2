@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use Illuminate\Support\Collection;
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Enums\SubscriptionStatus;
@@ -17,6 +16,7 @@ use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use RuntimeException;
 
 /**
@@ -97,6 +97,7 @@ final class FacilitySeeder extends Seeder
             if (! $country instanceof Country) {
                 continue;
             }
+
             if (! $currency instanceof Currency) {
                 continue;
             }

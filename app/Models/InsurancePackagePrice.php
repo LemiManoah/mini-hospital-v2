@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class InsurancePackagePrice extends Model
 {
-    use HasFactory;
     use BelongsToTenant;
+    use HasFactory;
     use HasUuids;
     use SoftDeletes;
 

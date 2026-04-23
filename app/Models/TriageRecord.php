@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Collection;
 use App\Enums\AttendanceType;
 use App\Enums\ConsciousLevel;
 use App\Enums\MobilityStatus;
 use App\Enums\TriageGrade;
 use App\Traits\BelongsToTenant;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -42,8 +42,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 final class TriageRecord extends Model
 {
-    use HasFactory;
     use BelongsToTenant;
+    use HasFactory;
     use HasUuids;
 
     protected $casts = [
