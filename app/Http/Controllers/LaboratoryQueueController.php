@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\LabRequestItem;
 use App\Models\LabRequest;
+use App\Models\LabRequestItem;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\VisitWorkflowGuard;
 use Illuminate\Database\Eloquent\Builder;
@@ -122,7 +122,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
     }
 
     /**
-     * @param Builder<LabRequestItem>|HasMany<LabRequestItem, LabRequest> $query
+     * @param  Builder<LabRequestItem>|HasMany<LabRequestItem, LabRequest>  $query
      * @return Builder<LabRequestItem>|HasMany<LabRequestItem, LabRequest>
      */
     private function applyStageFilter(Builder|HasMany $query, string $stage): Builder|HasMany

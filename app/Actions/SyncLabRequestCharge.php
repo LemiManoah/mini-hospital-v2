@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Models\PatientVisit;
 use App\Enums\BillableItemType;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
+use App\Models\PatientVisit;
 
 final readonly class SyncLabRequestCharge
 {

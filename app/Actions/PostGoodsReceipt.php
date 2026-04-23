@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use Illuminate\Database\Eloquent\Collection;
 use App\Enums\GoodsReceiptStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\StockMovementType;
@@ -14,6 +13,7 @@ use App\Models\InventoryBatch;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\StockMovement;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 

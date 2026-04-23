@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Models\LabRequest;
 use App\Data\Clinical\CreateLabRequestItemConsumableDTO;
 use App\Enums\InventoryLocationType;
 use App\Enums\LabRequestItemStatus;
 use App\Enums\StockMovementType;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLocation;
+use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabRequestItemConsumable;
 use App\Models\StockMovement;
