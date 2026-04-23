@@ -90,15 +90,18 @@ final readonly class FacilityServiceController implements HasMiddleware
         return to_route('facility-services.index')->with('success', 'Facility service deleted successfully.');
     }
 
+    /**
+     * @return array{categories: list<array{value: string, label: string}>}
+     */
     private function formOptions(): array
     {
         return [
-            'categories' => collect(FacilityServiceCategory::cases())
+            'categories' => array_values(collect(FacilityServiceCategory::cases())
                 ->map(static fn (FacilityServiceCategory $category): array => [
                     'value' => $category->value,
                     'label' => $category->label(),
                 ])
-                ->all(),
+                ->all()),
         ];
     }
 }

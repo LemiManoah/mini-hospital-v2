@@ -24,7 +24,7 @@ final class UpdateAppointmentModeRequest extends FormRequest
         $mode = $this->route('appointment_mode') ?? $this->route('appointmentMode');
 
         return [
-            'name' => ['required', 'string', 'max:100', Rule::unique('appointment_modes', 'name')->where('tenant_id', $this->user()?->tenant_id)->ignore($mode?->id)],
+            'name' => ['required', 'string', 'max:100', Rule::unique('appointment_modes', 'name')->where('tenant_id', $this->user()?->tenant_id)->ignore($mode->id)],
             'description' => ['nullable', 'string'],
             'is_virtual' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],

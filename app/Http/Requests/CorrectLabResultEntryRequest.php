@@ -61,10 +61,7 @@ final class CorrectLabResultEntryRequest extends FormRequest
 
             if ($resultType === 'defined_option') {
                 $selectedOption = mb_trim($this->string('selected_option_label')->toString());
-                $test = $labRequestItem->test;
-                $allowedOptions = $test !== null
-                    ? $test->resultOptions->pluck('label')->all()
-                    : [];
+                $allowedOptions = $labRequestItem->test->resultOptions->pluck('label')->all();
 
                 if ($selectedOption === '' || ! in_array($selectedOption, $allowedOptions, true)) {
                     $validator->errors()->add('selected_option_label', 'Choose a valid result option for this test.');
@@ -89,9 +86,7 @@ final class CorrectLabResultEntryRequest extends FormRequest
                     is_string($item['lab_test_result_parameter_id'] ?? null) ? $item['lab_test_result_parameter_id'] : '' => $item,
                 ]);
 
-            $test = $labRequestItem->test;
-
-            foreach ($test !== null ? $test->resultParameters : [] as $parameter) {
+            foreach ($labRequestItem->test->resultParameters as $parameter) {
                 $submitted = $submittedValues->get($parameter->id);
                 $submittedValue = is_array($submitted) ? ($submitted['value'] ?? '') : '';
                 $value = is_string($submittedValue) || is_numeric($submittedValue)

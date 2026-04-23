@@ -170,8 +170,25 @@ final readonly class StaffController implements HasMiddleware
             && $activeBranchId !== ''
             && is_array($branchIds)
             && $branchIds !== []
-            && count(array_unique($branchIds)) === 1
-            && $branchIds[0] === $activeBranchId
+            && $this->normalizedBranchIds($branchIds) !== []
+            && count(array_unique($this->normalizedBranchIds($branchIds))) === 1
+            && $this->normalizedBranchIds($branchIds)[0] === $activeBranchId
             && $primaryBranchId === $activeBranchId;
+    }
+
+    /**
+     * @param  array<mixed>  $branchIds
+     * @return list<string>
+     */
+    private function normalizedBranchIds(array $branchIds): array
+    {
+        $normalizedBranchIds = array_values(array_filter(
+            $branchIds,
+            static fn (mixed $branchId): bool => is_string($branchId) && $branchId !== '',
+        ));
+
+        return count($normalizedBranchIds) === count($branchIds)
+            ? $normalizedBranchIds
+            : [];
     }
 }

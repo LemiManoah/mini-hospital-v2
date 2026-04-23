@@ -24,7 +24,7 @@ final class UpdateAppointmentCategoryRequest extends FormRequest
         $category = $this->route('appointment_category') ?? $this->route('appointmentCategory');
 
         return [
-            'name' => ['required', 'string', 'max:150', Rule::unique('appointment_categories', 'name')->where('tenant_id', $this->user()?->tenant_id)->ignore($category?->id)],
+            'name' => ['required', 'string', 'max:150', Rule::unique('appointment_categories', 'name')->where('tenant_id', $this->user()?->tenant_id)->ignore($category->id)],
             'description' => ['nullable', 'string'],
             'clinic_id' => ['nullable', 'uuid', 'exists:clinics,id'],
             'is_active' => ['nullable', 'boolean'],

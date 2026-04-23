@@ -55,7 +55,7 @@ final class StoreConsultationPrescriptionRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             foreach ($this->prescriptionItems() as $index => $item) {
-                $isPrn = $item['is_prn'] ?? false;
+                $isPrn = $item['is_prn'];
                 $prnReason = mb_trim((string) ($item['prn_reason'] ?? ''));
 
                 if ($isPrn && $prnReason === '') {

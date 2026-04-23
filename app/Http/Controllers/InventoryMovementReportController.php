@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\StockMovementType;
+use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
 use App\Models\StockMovement;
 use App\Support\BranchContext;
@@ -86,19 +87,25 @@ final readonly class InventoryMovementReportController implements HasMiddleware
 
         $movements = $query
             ->paginate(20)
-            ->through(static fn (StockMovement $movement): array => [
-                'id' => $movement->id,
-                'item_name' => $movement->inventoryItem?->generic_name ?? $movement->inventoryItem?->name,
-                'location_name' => $movement->inventoryLocation?->name,
-                'location_code' => $movement->inventoryLocation?->location_code,
-                'movement_type' => $movement->movement_type?->value,
-                'movement_type_label' => $movement->movement_type?->label(),
-                'quantity' => (float) $movement->quantity,
-                'unit_cost' => $movement->unit_cost !== null ? (float) $movement->unit_cost : null,
-                'batch_number' => $movement->inventoryBatch?->batch_number,
-                'expiry_date' => $movement->inventoryBatch?->expiry_date?->toDateString(),
-                'occurred_at' => $movement->occurred_at?->toIso8601String(),
-            ]);
+            ->through(static function (StockMovement $movement): array {
+                $inventoryItem = $movement->inventoryItem;
+
+                return [
+                    'id' => $movement->id,
+                    'item_name' => $inventoryItem instanceof InventoryItem
+                        ? ($inventoryItem->generic_name ?? $inventoryItem->name)
+                        : null,
+                    'location_name' => $movement->inventoryLocation?->name,
+                    'location_code' => $movement->inventoryLocation?->location_code,
+                    'movement_type' => $movement->movement_type->value,
+                    'movement_type_label' => $movement->movement_type->label(),
+                    'quantity' => (float) $movement->quantity,
+                    'unit_cost' => $movement->unit_cost !== null ? (float) $movement->unit_cost : null,
+                    'batch_number' => $movement->inventoryBatch?->batch_number,
+                    'expiry_date' => $movement->inventoryBatch?->expiry_date?->toDateString(),
+                    'occurred_at' => $movement->occurred_at->toIso8601String(),
+                ];
+            });
 
         $locations = $accessibleLocations
             ->map(static fn (InventoryLocation $location): array => [

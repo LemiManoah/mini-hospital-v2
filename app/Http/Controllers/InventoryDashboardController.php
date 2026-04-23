@@ -55,21 +55,30 @@ final readonly class InventoryDashboardController implements HasMiddleware
             : collect();
 
         $outOfStockCount = $stockLevels
-            ->filter(static fn (StockMovement $stockLevel): bool => (float) $stockLevel->total_qty <= 0)
+            ->filter(static fn (StockMovement $stockLevel): bool => self::floatValue($stockLevel->getAttribute('total_qty')) <= 0)
             ->count();
 
         $lowStockCount = $stockLevels
             ->filter(static function (StockMovement $stockLevel): bool {
-                $minimumStockLevel = (float) ($stockLevel->inventoryItem?->minimum_stock_level ?? 0);
-                $totalQuantity = (float) $stockLevel->total_qty;
+                $inventoryItem = $stockLevel->inventoryItem;
+                $minimumStockLevel = $inventoryItem instanceof InventoryItem
+                    ? (float) $inventoryItem->minimum_stock_level
+                    : 0.0;
+                $totalQuantity = self::floatValue($stockLevel->getAttribute('total_qty'));
 
                 return $totalQuantity <= $minimumStockLevel && $totalQuantity > 0;
             })
             ->count();
 
         $totalStockValue = $stockLevels
-            ->sum(static fn (StockMovement $stockLevel): float => (float) $stockLevel->total_qty
-                * (float) ($stockLevel->inventoryItem?->default_purchase_price ?? 0));
+            ->sum(static function (StockMovement $stockLevel): float {
+                $inventoryItem = $stockLevel->inventoryItem;
+                $defaultPurchasePrice = $inventoryItem instanceof InventoryItem
+                    ? (float) $inventoryItem->default_purchase_price
+                    : 0.0;
+
+                return self::floatValue($stockLevel->getAttribute('total_qty')) * $defaultPurchasePrice;
+            });
 
         $expiringSoonCount = is_string($activeBranchId) && $activeBranchId !== '' && $locationIds !== []
             ? InventoryBatch::query()
@@ -83,20 +92,36 @@ final readonly class InventoryDashboardController implements HasMiddleware
 
         $distributionByType = InventoryItem::query()
             ->select('item_type')
-            ->selectRaw('count(*) as count')
+            ->selectRaw('count(*) as aggregate_count')
             ->groupBy('item_type')
             ->get()
-            ->mapWithKeys(static fn (InventoryItem $item): array => [$item->item_type->value => $item->count])
-            ->toArray();
+            ->reduce(
+                static function (array $carry, InventoryItem $item): array {
+                    $carry[$item->item_type->value] = self::intValue($item->getAttribute('aggregate_count'));
+
+                    return $carry;
+                },
+                [],
+            );
 
         $distributionByCategory = InventoryItem::query()
             ->whereNotNull('category')
             ->select('category')
-            ->selectRaw('count(*) as count')
+            ->selectRaw('count(*) as aggregate_count')
             ->groupBy('category')
             ->get()
-            ->mapWithKeys(static fn (InventoryItem $item): array => [$item->category->value => $item->count])
-            ->toArray();
+            ->reduce(
+                static function (array $carry, InventoryItem $item): array {
+                    if ($item->category === null) {
+                        return $carry;
+                    }
+
+                    $carry[$item->category->value] = self::intValue($item->getAttribute('aggregate_count'));
+
+                    return $carry;
+                },
+                [],
+            );
 
         $recentItems = InventoryItem::query()
             ->latest()
@@ -105,11 +130,17 @@ final readonly class InventoryDashboardController implements HasMiddleware
 
         $poStats = PurchaseOrder::query()
             ->select('status')
-            ->selectRaw('count(*) as count')
+            ->selectRaw('count(*) as aggregate_count')
             ->groupBy('status')
             ->get()
-            ->mapWithKeys(static fn (PurchaseOrder $po): array => [$po->status->value => $po->count])
-            ->toArray();
+            ->reduce(
+                static function (array $carry, PurchaseOrder $purchaseOrder): array {
+                    $carry[$purchaseOrder->status->value] = self::intValue($purchaseOrder->getAttribute('aggregate_count'));
+
+                    return $carry;
+                },
+                [],
+            );
 
         return Inertia::render('inventory/dashboard', [
             'stats' => [
@@ -132,5 +163,15 @@ final readonly class InventoryDashboardController implements HasMiddleware
                 'po_stats' => $poStats,
             ],
         ]);
+    }
+
+    private static function floatValue(mixed $value): float
+    {
+        return is_numeric($value) ? (float) $value : 0.0;
+    }
+
+    private static function intValue(mixed $value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
     }
 }
