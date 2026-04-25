@@ -45,7 +45,9 @@ final readonly class DispensingController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:visits.view', only: ['create', 'store', 'show', 'post', 'dispense']),
+            new Middleware('permission:pharmacy_dispensing.create', only: ['create', 'store', 'dispense']),
+            new Middleware('permission:pharmacy_dispensing.view', only: ['show']),
+            new Middleware('permission:pharmacy_dispensing.post', only: ['post']),
         ];
     }
 

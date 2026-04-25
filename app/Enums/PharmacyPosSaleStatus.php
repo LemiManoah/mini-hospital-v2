@@ -8,7 +8,7 @@ enum PharmacyPosSaleStatus: string
 {
     case Draft = 'draft';
     case Completed = 'completed';
-    case Cancelled = 'cancelled';
+    case Voided = 'voided';
     case Refunded = 'refunded';
 
     public function label(): string
@@ -16,7 +16,7 @@ enum PharmacyPosSaleStatus: string
         return match ($this) {
             self::Draft => 'Draft',
             self::Completed => 'Completed',
-            self::Cancelled => 'Cancelled',
+            self::Voided => 'Voided',
             self::Refunded => 'Refunded',
         };
     }

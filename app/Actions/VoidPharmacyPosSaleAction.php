@@ -52,7 +52,7 @@ final readonly class VoidPharmacyPosSaleAction
             }
 
             $sale->update([
-                'status' => PharmacyPosSaleStatus::Cancelled,
+                'status' => PharmacyPosSaleStatus::Voided,
                 'updated_by' => Auth::id(),
             ]);
 

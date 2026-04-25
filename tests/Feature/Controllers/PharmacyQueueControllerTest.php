@@ -349,7 +349,7 @@ it('shows the pharmacy prescription review page with line availability and dispe
             ->where('prescription.items.1.stock_status', 'partial'));
 });
 
-it('forbids the pharmacy queue without visit view permission', function (): void {
+it('forbids the pharmacy queue without pharmacy queue permission', function (): void {
     [$branch, , , $staff] = createPharmacyModuleContext();
 
     $user = User::query()->create([

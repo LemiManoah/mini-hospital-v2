@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\PharmacyPosSaleStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -25,7 +26,9 @@ return new class extends Migration
             $table->decimal('change_amount', 14, 2)->default(0);
             $table->string('customer_name', 255)->nullable();
             $table->string('customer_phone', 50)->nullable();
-            $table->enum('status', ['draft', 'completed', 'cancelled', 'refunded'])->default('draft')->index();
+            $table->enum('status', array_column(PharmacyPosSaleStatus::cases(), 'value'))
+                ->default(PharmacyPosSaleStatus::Draft->value)
+                ->index();
             $table->timestamp('sold_at')->nullable();
             $table->text('notes')->nullable();
             $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();

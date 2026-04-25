@@ -72,10 +72,11 @@ it('voids a completed sale and reverses stock', function (): void {
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
         ->post(route('pharmacy.pos.sales.void', $sale))
-        ->assertRedirect(route('pharmacy.pos.sales.show', $sale));
+        ->assertRedirect(route('pharmacy.pos.sales.show', $sale))
+        ->assertSessionHas('success', 'Sale voided and stock reversed.');
 
     $sale->refresh();
-    expect($sale->status)->toBe(PharmacyPosSaleStatus::Cancelled);
+    expect($sale->status)->toBe(PharmacyPosSaleStatus::Voided);
 
     $reversal = StockMovement::query()
         ->where('source_document_id', $sale->id)
@@ -133,18 +134,18 @@ it('rejects voiding a non-completed sale', function (): void {
         $pharmacyLocation,
     ] = createPharmacyModuleContext();
 
-    $cancelledSale = PharmacyPosSale::query()->create([
+    $voidedSale = PharmacyPosSale::query()->create([
         'tenant_id' => $branch->tenant_id,
         'branch_id' => $branch->id,
         'inventory_location_id' => $pharmacyLocation->id,
-        'sale_number' => 'POS-P5-CANCEL-001',
+        'sale_number' => 'POS-P5-VOID-001',
         'sale_type' => 'walk_in',
         'gross_amount' => 20,
         'discount_amount' => 0,
         'paid_amount' => 20,
         'balance_amount' => 0,
         'change_amount' => 0,
-        'status' => PharmacyPosSaleStatus::Cancelled,
+        'status' => PharmacyPosSaleStatus::Voided,
         'sold_at' => now(),
         'created_by' => $user->id,
         'updated_by' => $user->id,
@@ -152,8 +153,10 @@ it('rejects voiding a non-completed sale', function (): void {
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('pharmacy.pos.sales.void', $cancelledSale))
-        ->assertSessionHasErrors('sale');
+        ->post(route('pharmacy.pos.sales.void', $voidedSale))
+        ->assertSessionHasErrors([
+            'sale' => 'Only completed sales can be voided.',
+        ]);
 });
 
 it('rejects refunding a non-completed sale', function (): void {

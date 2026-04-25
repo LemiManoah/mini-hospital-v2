@@ -81,7 +81,7 @@ const statusTone = (status: string | null): string => {
     switch (status) {
         case 'completed':
             return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
-        case 'cancelled':
+        case 'voided':
             return 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300';
         case 'refunded':
             return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300';
@@ -238,13 +238,13 @@ export default function PharmacyPosSaleShow({
                                             <p className="font-medium">
                                                 {item.item_name ??
                                                     item.generic_name ??
-                                                    '—'}
+                                                    '-'}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {item.quantity.toFixed(3)} ×{' '}
+                                                {item.quantity.toFixed(3)} x{' '}
                                                 {item.unit_price.toFixed(2)}
                                                 {item.discount_amount > 0 &&
-                                                    ` − ${item.discount_amount.toFixed(2)}`}
+                                                    ` - ${item.discount_amount.toFixed(2)}`}
                                             </p>
                                         </div>
                                         <span className="font-medium">
@@ -268,7 +268,7 @@ export default function PharmacyPosSaleShow({
                                         Discount
                                     </span>
                                     <span className="text-rose-600">
-                                        − {sale.discount_amount.toFixed(2)}
+                                        - {sale.discount_amount.toFixed(2)}
                                     </span>
                                 </div>
                             )}
@@ -325,7 +325,7 @@ export default function PharmacyPosSaleShow({
                                         Location
                                     </span>
                                     <span>
-                                        {sale.inventory_location?.name ?? '—'}
+                                        {sale.inventory_location?.name ?? '-'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -395,7 +395,7 @@ export default function PharmacyPosSaleShow({
                                                         : ''
                                                 }
                                             >
-                                                {payment.is_refund ? '−' : ''}
+                                                {payment.is_refund ? '-' : ''}
                                                 {payment.amount.toFixed(2)}
                                             </span>
                                         </div>
@@ -414,9 +414,9 @@ export default function PharmacyPosSaleShow({
                         <DialogTitle>Void Sale</DialogTitle>
                     </DialogHeader>
                     <p className="text-sm text-muted-foreground">
-                        This will cancel <strong>{sale.sale_number}</strong> and
-                        reverse all stock movements. This action cannot be
-                        undone. Continue?
+                        This will mark <strong>{sale.sale_number}</strong> as
+                        voided and reverse all stock movements. This action
+                        cannot be undone. Continue?
                     </p>
                     <DialogFooter>
                         <Button
@@ -430,7 +430,7 @@ export default function PharmacyPosSaleShow({
                             disabled={voidForm.processing}
                             onClick={submitVoid}
                         >
-                            {voidForm.processing ? 'Voiding…' : 'Void Sale'}
+                            {voidForm.processing ? 'Voiding...' : 'Void Sale'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -526,7 +526,7 @@ export default function PharmacyPosSaleShow({
                             onClick={submitRefund}
                         >
                             {refundForm.processing
-                                ? 'Processing…'
+                                ? 'Processing...'
                                 : 'Confirm Refund'}
                         </Button>
                     </DialogFooter>

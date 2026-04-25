@@ -40,7 +40,7 @@ final readonly class PharmacyQueueController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:visits.view', only: ['index']),
+            new Middleware('permission:pharmacy_queue.view', only: ['index']),
         ];
     }
 

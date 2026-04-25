@@ -245,13 +245,13 @@ it('filters sales history by status', function (): void {
         'inventory_location_id' => $pharmacyLocation->id,
         'sale_number' => 'POS-STATUS-002',
         'sale_type' => 'walk_in',
-        'customer_name' => 'Cancelled Customer',
+        'customer_name' => 'Voided Customer',
         'gross_amount' => 30,
         'discount_amount' => 0,
         'paid_amount' => 0,
         'balance_amount' => 30,
         'change_amount' => 0,
-        'status' => PharmacyPosSaleStatus::Cancelled,
+        'status' => PharmacyPosSaleStatus::Voided,
         'sold_at' => now(),
         'created_by' => $user->id,
         'updated_by' => $user->id,
@@ -265,6 +265,8 @@ it('filters sales history by status', function (): void {
             ->component('pharmacy/pos/history')
             ->has('sales.data', 1)
             ->where('sales.data.0.customer_name', 'Completed Customer')
+            ->where('statuses.2.value', PharmacyPosSaleStatus::Voided->value)
+            ->where('statuses.2.label', PharmacyPosSaleStatus::Voided->label())
             ->where('filters.status', PharmacyPosSaleStatus::Completed->value));
 });
 

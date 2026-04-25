@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\CreateTriageRecord;
+use App\Actions\CreateVitalSign;
 use App\Http\Requests\StoreTriageRecordRequest;
 use App\Models\PatientVisit;
 use App\Support\ActiveBranchWorkspace;
@@ -12,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 final readonly class VisitTriageController implements HasMiddleware
 {
@@ -30,6 +32,7 @@ final readonly class VisitTriageController implements HasMiddleware
         StoreTriageRecordRequest $request,
         PatientVisit $visit,
         CreateTriageRecord $createTriage,
+        CreateVitalSign $createVitalSign,
     ): RedirectResponse {
         $this->activeBranchWorkspace->authorizeModel($visit);
 
@@ -44,7 +47,14 @@ final readonly class VisitTriageController implements HasMiddleware
             return $this->redirect($visit, $redirectTo)->with('error', 'Your user account is not linked to a staff profile.');
         }
 
-        $createTriage->handle($visit, $request->createDto());
+        DB::transaction(function () use ($request, $visit, $createTriage, $createVitalSign): void {
+            $triage = $createTriage->handle($visit, $request->createDto());
+
+            if ($request->hasVitalsData()) {
+                $visit->setRelation('triage', $triage);
+                $createVitalSign->handle($visit, $request->createVitalSignDto());
+            }
+        });
 
         return $this->redirect($visit, $redirectTo)->with('success', 'Triage recorded successfully.');
     }

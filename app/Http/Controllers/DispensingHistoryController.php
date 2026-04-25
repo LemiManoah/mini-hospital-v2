@@ -26,7 +26,7 @@ final readonly class DispensingHistoryController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:visits.view', only: ['index', 'export']),
+            new Middleware('permission:pharmacy_dispensing.view', only: ['index', 'export']),
         ];
     }
 

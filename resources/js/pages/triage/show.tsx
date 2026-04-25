@@ -1,6 +1,6 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -15,7 +15,6 @@ import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import {
-    type Consultation,
     type TriageRecord,
     type TriageShowPageProps,
     type VitalSign,
@@ -39,6 +38,15 @@ function formatDateTime(date: string | null | undefined): string {
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+    });
+}
+
+function formatDate(date: string | null | undefined): string {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
     });
 }
 
@@ -111,83 +119,69 @@ function TriageSummary({
     mobilityStatuses: { value: string; label: string }[];
 }) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Triage Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex flex-wrap items-center gap-3">
-                    <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${triageGradeClasses(triage.triage_grade)}`}
-                    >
-                        {findLabel(triageGrades, triage.triage_grade)}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                        Recorded {formatDateTime(triage.triage_datetime)}
-                    </span>
+        <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+                <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${triageGradeClasses(triage.triage_grade)}`}
+                >
+                    {findLabel(triageGrades, triage.triage_grade)}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                    Recorded {formatDateTime(triage.triage_datetime)}
+                </span>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <p className="text-sm text-muted-foreground">Attendance</p>
+                    <p className="font-medium">
+                        {findLabel(attendanceTypes, triage.attendance_type)}
+                    </p>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <div>
-                        <p className="text-sm text-muted-foreground">
-                            Attendance
-                        </p>
-                        <p className="font-medium">
-                            {findLabel(attendanceTypes, triage.attendance_type)}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">
-                            Conscious
-                        </p>
-                        <p className="font-medium">
-                            {findLabel(consciousLevels, triage.conscious_level)}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">
-                            Mobility
-                        </p>
-                        <p className="font-medium">
-                            {findLabel(
-                                mobilityStatuses,
-                                triage.mobility_status,
-                            )}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">Clinic</p>
-                        <p className="font-medium">
-                            {triage.assignedClinic?.name ||
-                                triage.assigned_clinic?.name ||
-                                'Not assigned'}
-                        </p>
-                    </div>
+                <div>
+                    <p className="text-sm text-muted-foreground">Conscious</p>
+                    <p className="font-medium">
+                        {findLabel(consciousLevels, triage.conscious_level)}
+                    </p>
                 </div>
-                <div className="grid gap-3 rounded-lg border p-4">
-                    <div>
-                        <p className="text-sm text-muted-foreground">
-                            Chief Complaint
-                        </p>
-                        <p className="font-medium">{triage.chief_complaint}</p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">
-                            History of Presenting Illness
-                        </p>
-                        <p className="font-medium">
-                            {triage.history_of_presenting_illness ||
-                                'Not documented'}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">Notes</p>
-                        <p className="font-medium">
-                            {triage.nurse_notes || 'Not documented'}
-                        </p>
-                    </div>
+                <div>
+                    <p className="text-sm text-muted-foreground">Mobility</p>
+                    <p className="font-medium">
+                        {findLabel(mobilityStatuses, triage.mobility_status)}
+                    </p>
                 </div>
-            </CardContent>
-        </Card>
+                <div>
+                    <p className="text-sm text-muted-foreground">Clinic</p>
+                    <p className="font-medium">
+                        {triage.assignedClinic?.name ||
+                            triage.assigned_clinic?.name ||
+                            'Not assigned'}
+                    </p>
+                </div>
+            </div>
+            <div className="grid gap-3 rounded-lg border p-4">
+                <div>
+                    <p className="text-sm text-muted-foreground">
+                        Chief Complaint
+                    </p>
+                    <p className="font-medium">{triage.chief_complaint}</p>
+                </div>
+                <div>
+                    <p className="text-sm text-muted-foreground">
+                        History of Presenting Illness
+                    </p>
+                    <p className="font-medium">
+                        {triage.history_of_presenting_illness ||
+                            'Not documented'}
+                    </p>
+                </div>
+                <div>
+                    <p className="text-sm text-muted-foreground">Notes</p>
+                    <p className="font-medium">
+                        {triage.nurse_notes || 'Not documented'}
+                    </p>
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -210,9 +204,9 @@ export default function TriageShow({
         .filter(Boolean)
         .join(' ');
     const triage: TriageRecord | null | undefined = visit.triage;
-    const consultation: Consultation | null | undefined = visit.consultation;
     const vitalSigns = triage?.vitalSigns ?? triage?.vital_signs ?? [];
     const latestVital = vitalSigns[0];
+    const visitDate = formatDate(visit.registered_at ?? visit.created_at);
 
     const [triageGrade, setTriageGrade] = useState(
         triageGrades.find((option) => option.value === 'green')?.value ??
@@ -240,11 +234,19 @@ export default function TriageShow({
     );
     const [temperatureUnit, setTemperatureUnit] = useState('celsius');
     const [bloodGlucoseUnit, setBloodGlucoseUnit] = useState('mg_dl');
+
     const canViewVisit = hasPermission('visits.view');
     const canViewPatient = hasPermission('patients.view');
     const canCreateTriage = hasPermission('triage.create');
     const canUpdateTriage = hasPermission('triage.update');
     const canViewConsultation = hasPermission('consultations.view');
+
+    const showSaveButton =
+        (!triage && canCreateTriage) || (!!triage && canUpdateTriage);
+
+    const formAction = triage
+        ? `/visits/${visit.id}/vitals`
+        : `/visits/${visit.id}/triage`;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Triage', href: '/triage' },
@@ -253,22 +255,53 @@ export default function TriageShow({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Triage ${visit.visit_number}`} />
+            <Head title={`Triage - ${patientName || visit.visit_number}`} />
 
             <div className="m-4 space-y-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
                             <HeartPulse className="h-6 w-6" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-semibold">
-                                Triage Workspace
-                            </h1>
-                            <p className="text-sm text-muted-foreground">
-                                {visit.visit_number} for{' '}
-                                {patientName || 'Unknown patient'}
-                            </p>
+                            <div className="flex flex-wrap items-baseline gap-2">
+                                <h1 className="text-2xl font-semibold">
+                                    {patientName || 'Unknown patient'}
+                                </h1>
+                                {visitDate ? (
+                                    <span className="text-sm text-muted-foreground">
+                                        {visitDate}
+                                    </span>
+                                ) : null}
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                                <span>
+                                    MRN:{' '}
+                                    <span className="font-medium text-foreground">
+                                        {visit.patient?.patient_number || 'N/A'}
+                                    </span>
+                                </span>
+                                <span className="opacity-40 select-none">
+                                    /
+                                </span>
+                                <span>
+                                    Clinic:{' '}
+                                    <span className="font-medium text-foreground">
+                                        {visit.clinic?.name || 'Not assigned'}
+                                    </span>
+                                </span>
+                                <span className="opacity-40 select-none">
+                                    /
+                                </span>
+                                <span>
+                                    Doctor:{' '}
+                                    <span className="font-medium text-foreground">
+                                        {visit.doctor
+                                            ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
+                                            : 'Not assigned'}
+                                    </span>
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -308,100 +341,73 @@ export default function TriageShow({
                     </div>
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-                    <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Visit Snapshot</CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                                <div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Patient
-                                    </p>
-                                    <p className="font-medium">
-                                        {patientName || 'Unknown patient'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">
-                                        MRN
-                                    </p>
-                                    <p className="font-medium">
-                                        {visit.patient?.patient_number || 'N/A'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Clinic
-                                    </p>
-                                    <p className="font-medium">
-                                        {visit.clinic?.name || 'Not assigned'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Doctor
-                                    </p>
-                                    <p className="font-medium">
-                                        {visit.doctor
-                                            ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
-                                            : 'Not assigned'}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
+                <Card className="overflow-hidden">
+                    <Form method="post" action={formAction}>
+                        {({ processing, errors }) => (
+                            <>
+                                {/* Hidden inputs */}
+                                <input
+                                    type="hidden"
+                                    name="redirect_to"
+                                    value="triage"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="temperature_unit"
+                                    value={temperatureUnit}
+                                />
+                                <input
+                                    type="hidden"
+                                    name="blood_glucose_unit"
+                                    value={bloodGlucoseUnit}
+                                />
+                                {!triage ? (
+                                    <>
+                                        <input
+                                            type="hidden"
+                                            name="triage_grade"
+                                            value={triageGrade}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="attendance_type"
+                                            value={attendanceType}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="conscious_level"
+                                            value={consciousLevel}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="mobility_status"
+                                            value={mobilityStatus}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="assigned_clinic_id"
+                                            value={
+                                                assignedClinicId === 'none'
+                                                    ? ''
+                                                    : assignedClinicId
+                                            }
+                                        />
+                                    </>
+                                ) : null}
 
-                        {!triage ? (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Start Triage</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {canCreateTriage ? (
-                                        <Form
-                                            method="post"
-                                            action={`/visits/${visit.id}/triage`}
-                                        >
-                                            {({ processing, errors }) => (
+                                <div className="flex flex-col divide-y md:flex-row md:divide-x md:divide-y-0">
+                                    {/* Left: Triage */}
+                                    <div className="min-w-0 flex-1 space-y-4 p-6">
+                                        <h2 className="text-base font-semibold">
+                                            {triage
+                                                ? 'Triage Summary'
+                                                : 'Start Triage'}
+                                        </h2>
+
+                                        {!triage ? (
+                                            canCreateTriage ? (
                                                 <div className="space-y-4">
-                                                    <input
-                                                        type="hidden"
-                                                        name="redirect_to"
-                                                        value="triage"
-                                                    />
-                                                    <input
-                                                        type="hidden"
-                                                        name="triage_grade"
-                                                        value={triageGrade}
-                                                    />
-                                                    <input
-                                                        type="hidden"
-                                                        name="attendance_type"
-                                                        value={attendanceType}
-                                                    />
-                                                    <input
-                                                        type="hidden"
-                                                        name="conscious_level"
-                                                        value={consciousLevel}
-                                                    />
-                                                    <input
-                                                        type="hidden"
-                                                        name="mobility_status"
-                                                        value={mobilityStatus}
-                                                    />
-                                                    <input
-                                                        type="hidden"
-                                                        name="assigned_clinic_id"
-                                                        value={
-                                                            assignedClinicId ===
-                                                            'none'
-                                                                ? ''
-                                                                : assignedClinicId
-                                                        }
-                                                    />
-
-                                                    <div className="grid gap-4 md:grid-cols-2">
+                                                    <div className="grid gap-4 sm:grid-cols-2">
                                                         <div className="grid gap-2">
                                                             <Label>
                                                                 Triage Grade
@@ -572,7 +578,7 @@ export default function TriageShow({
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid gap-4 md:grid-cols-3">
+                                                    <div className="grid gap-4 sm:grid-cols-3">
                                                         <div className="grid gap-2">
                                                             <Label htmlFor="news_score">
                                                                 NEWS Score
@@ -640,7 +646,7 @@ export default function TriageShow({
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid gap-4 md:grid-cols-2">
+                                                    <div className="grid gap-4 sm:grid-cols-2">
                                                         <div className="grid gap-2">
                                                             <Label htmlFor="chief_complaint">
                                                                 Chief Complaint
@@ -670,7 +676,7 @@ export default function TriageShow({
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid gap-4 md:grid-cols-2">
+                                                    <div className="grid gap-4 sm:grid-cols-2">
                                                         <div className="grid gap-2">
                                                             <Label htmlFor="poisoning_agent">
                                                                 Poisoning Agent
@@ -691,7 +697,7 @@ export default function TriageShow({
                                                                 placeholder="Enter referral source"
                                                             />
                                                         </div>
-                                                        <div className="grid gap-2 md:col-span-2">
+                                                        <div className="grid gap-2 sm:col-span-2">
                                                             <Label htmlFor="nurse_notes">
                                                                 Nurse Notes
                                                             </Label>
@@ -704,7 +710,7 @@ export default function TriageShow({
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+                                                    <div className="grid gap-3 text-sm sm:grid-cols-2">
                                                         <label className="flex items-center gap-2">
                                                             <input
                                                                 type="checkbox"
@@ -738,233 +744,155 @@ export default function TriageShow({
                                                             Snake bite case
                                                         </label>
                                                     </div>
-
-                                                    <div className="flex justify-end">
-                                                        <Button
-                                                            type="submit"
-                                                            disabled={
-                                                                processing
-                                                            }
-                                                        >
-                                                            {processing
-                                                                ? 'Saving...'
-                                                                : 'Save Triage'}
-                                                        </Button>
-                                                    </div>
                                                 </div>
-                                            )}
-                                        </Form>
-                                    ) : (
-                                        <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-                                            You can review this visit, but you
-                                            do not have permission to create the
-                                            triage record.
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <TriageSummary
-                                triage={triage}
-                                triageGrades={triageGrades}
-                                attendanceTypes={attendanceTypes}
-                                consciousLevels={consciousLevels}
-                                mobilityStatuses={mobilityStatuses}
-                            />
-                        )}
+                                            ) : (
+                                                <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                                    You can review this visit,
+                                                    but you do not have
+                                                    permission to create the
+                                                    triage record.
+                                                </div>
+                                            )
+                                        ) : (
+                                            <TriageSummary
+                                                triage={triage}
+                                                triageGrades={triageGrades}
+                                                attendanceTypes={
+                                                    attendanceTypes
+                                                }
+                                                consciousLevels={
+                                                    consciousLevels
+                                                }
+                                                mobilityStatuses={
+                                                    mobilityStatuses
+                                                }
+                                            />
+                                        )}
+                                    </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Vitals</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                {!triage ? (
-                                    <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-                                        Save triage first to unlock vital sign
-                                        capture.
-                                    </div>
-                                ) : !canUpdateTriage ? (
-                                    <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-                                        Vital history is visible here, but you
-                                        do not have permission to record new
-                                        vital signs.
-                                    </div>
-                                ) : (
-                                    <>
-                                        {latestVital ? (
-                                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                                                {vitalSummaryItems(
-                                                    latestVital,
-                                                ).map((item) => (
-                                                    <div
-                                                        key={item.label}
-                                                        className="rounded-lg border p-3"
-                                                    >
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {item.label}
-                                                        </p>
-                                                        <p className="font-medium">
-                                                            {item.value}
-                                                        </p>
-                                                    </div>
-                                                ))}
+                                    {/* Right: Vitals */}
+                                    <div className="min-w-0 flex-1 space-y-6 p-6">
+                                        <h2 className="text-base font-semibold">
+                                            Vitals
+                                        </h2>
+
+                                        {!canUpdateTriage ? (
+                                            <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                                You do not have permission to
+                                                record vital signs.
                                             </div>
-                                        ) : null}
+                                        ) : (
+                                            <>
+                                                {latestVital ? (
+                                                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                                                        {vitalSummaryItems(
+                                                            latestVital,
+                                                        ).map((item) => (
+                                                            <div
+                                                                key={item.label}
+                                                                className="rounded-lg border p-3"
+                                                            >
+                                                                <p className="text-sm text-muted-foreground">
+                                                                    {item.label}
+                                                                </p>
+                                                                <p className="font-medium">
+                                                                    {item.value}
+                                                                </p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : null}
 
-                                        <TriageVitalForm
-                                            visitId={visit.id}
-                                            temperatureUnit={temperatureUnit}
-                                            setTemperatureUnit={
-                                                setTemperatureUnit
-                                            }
-                                            bloodGlucoseUnit={bloodGlucoseUnit}
-                                            setBloodGlucoseUnit={
-                                                setBloodGlucoseUnit
-                                            }
-                                            temperatureUnits={temperatureUnits}
-                                            bloodGlucoseUnits={
-                                                bloodGlucoseUnits
-                                            }
-                                        />
+                                                <TriageVitalForm
+                                                    errors={errors}
+                                                    temperatureUnit={
+                                                        temperatureUnit
+                                                    }
+                                                    setTemperatureUnit={
+                                                        setTemperatureUnit
+                                                    }
+                                                    bloodGlucoseUnit={
+                                                        bloodGlucoseUnit
+                                                    }
+                                                    setBloodGlucoseUnit={
+                                                        setBloodGlucoseUnit
+                                                    }
+                                                    temperatureUnits={
+                                                        temperatureUnits
+                                                    }
+                                                    bloodGlucoseUnits={
+                                                        bloodGlucoseUnits
+                                                    }
+                                                />
 
-                                        {vitalSigns.length > 0 ? (
-                                            <div className="space-y-3">
-                                                <h3 className="font-medium">
-                                                    Vitals History
-                                                </h3>
-                                                {vitalSigns.map((vital) => (
-                                                    <div
-                                                        key={vital.id}
-                                                        className="rounded-lg border p-4"
-                                                    >
-                                                        <p className="font-medium">
-                                                            {formatDateTime(
-                                                                vital.recorded_at,
-                                                            )}
-                                                        </p>
-                                                        <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
-                                                            {vitalSummaryItems(
-                                                                vital,
-                                                            ).map((item) => (
+                                                {vitalSigns.length > 0 ? (
+                                                    <div className="space-y-3">
+                                                        <h3 className="font-medium">
+                                                            Vitals History
+                                                        </h3>
+                                                        {vitalSigns.map(
+                                                            (vital) => (
                                                                 <div
                                                                     key={
-                                                                        item.label
+                                                                        vital.id
                                                                     }
+                                                                    className="rounded-lg border p-4"
                                                                 >
-                                                                    <p>
-                                                                        {
-                                                                            item.label
-                                                                        }
+                                                                    <p className="font-medium">
+                                                                        {formatDateTime(
+                                                                            vital.recorded_at,
+                                                                        )}
                                                                     </p>
-                                                                    <p className="font-medium text-foreground">
-                                                                        {
-                                                                            item.value
-                                                                        }
-                                                                    </p>
+                                                                    <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
+                                                                        {vitalSummaryItems(
+                                                                            vital,
+                                                                        ).map(
+                                                                            (
+                                                                                item,
+                                                                            ) => (
+                                                                                <div
+                                                                                    key={
+                                                                                        item.label
+                                                                                    }
+                                                                                >
+                                                                                    <p>
+                                                                                        {
+                                                                                            item.label
+                                                                                        }
+                                                                                    </p>
+                                                                                    <p className="font-medium text-foreground">
+                                                                                        {
+                                                                                            item.value
+                                                                                        }
+                                                                                    </p>
+                                                                                </div>
+                                                                            ),
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                            ))}
-                                                        </div>
+                                                            ),
+                                                        )}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        ) : null}
-                                    </>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
+                                                ) : null}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
 
-                    <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Workflow Snapshot</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3 text-sm">
-                                <div>
-                                    <p className="text-muted-foreground">
-                                        Triage
-                                    </p>
-                                    <p className="font-medium">
-                                        {triage ? 'Recorded' : 'Pending'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-muted-foreground">
-                                        Latest Vitals
-                                    </p>
-                                    <p className="font-medium">
-                                        {latestVital
-                                            ? formatDateTime(
-                                                  latestVital.recorded_at,
-                                              )
-                                            : 'Not yet captured'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-muted-foreground">
-                                        Consultation
-                                    </p>
-                                    <p className="font-medium">
-                                        {consultation
-                                            ? consultation.completed_at
-                                                ? 'Finalized'
-                                                : 'In progress'
-                                            : triage
-                                              ? 'Ready to start'
-                                              : 'Locked until triage'}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Consultation Handoff</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3 text-sm">
-                                {!triage ? (
-                                    <p className="text-muted-foreground">
-                                        Complete triage first, then hand the
-                                        visit to the doctors workspace.
-                                    </p>
-                                ) : (
-                                    <>
-                                        <div>
-                                            <p className="text-muted-foreground">
-                                                Chief Complaint
-                                            </p>
-                                            <p className="font-medium">
-                                                {consultation?.chief_complaint ??
-                                                    triage.chief_complaint}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-muted-foreground">
-                                                Primary Diagnosis
-                                            </p>
-                                            <p className="font-medium">
-                                                {consultation?.primary_diagnosis ||
-                                                    'Not documented yet'}
-                                            </p>
-                                        </div>
-                                        {canViewConsultation ? (
-                                            <Button className="w-full" asChild>
-                                                <Link
-                                                    href={`/doctors/consultations/${visit.id}`}
-                                                >
-                                                    <NotebookPen className="mr-2 h-4 w-4" />
-                                                    {consultation
-                                                        ? 'Continue Consultation'
-                                                        : 'Start Consultation'}
-                                                </Link>
-                                            </Button>
-                                        ) : null}
-                                    </>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
+                                {showSaveButton ? (
+                                    <div className="flex justify-end border-t p-4">
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            {processing ? 'Saving...' : 'Save'}
+                                        </Button>
+                                    </div>
+                                ) : null}
+                            </>
+                        )}
+                    </Form>
+                </Card>
             </div>
         </AppLayout>
     );

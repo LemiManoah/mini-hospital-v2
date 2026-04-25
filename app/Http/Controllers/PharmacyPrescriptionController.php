@@ -35,7 +35,7 @@ final readonly class PharmacyPrescriptionController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:visits.view', only: ['show']),
+            new Middleware('permission:pharmacy_prescriptions.view', only: ['show']),
         ];
     }
 

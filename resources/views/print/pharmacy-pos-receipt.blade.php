@@ -109,6 +109,13 @@
         </table>
     </div>
 
+    @if ($sale->status?->value === 'cancelled')
+        <div class="section">
+            <h2 class="section-title">Sale Status</h2>
+            <p>This sale was cancelled and the related stock was reversed.</p>
+        </div>
+    @endif
+
     @if ($sale->payments->isNotEmpty())
         <div class="section">
             <h2 class="section-title">Payments</h2>
