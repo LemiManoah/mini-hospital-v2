@@ -150,6 +150,9 @@ export default function PharmacyPosSaleShow({
         });
     };
 
+    const refundSaleError =
+        refundForm.errors['sale' as keyof typeof refundForm.errors];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs(navigation, sale)}>
             <Head title={sale.sale_number} />
@@ -508,9 +511,9 @@ export default function PharmacyPosSaleShow({
                                 }
                             />
                         </div>
-                        {refundForm.errors.sale && (
+                        {refundSaleError && (
                             <p className="text-sm text-destructive">
-                                {refundForm.errors.sale}
+                                {refundSaleError}
                             </p>
                         )}
                     </div>

@@ -33,7 +33,6 @@ use App\Models\TenantSubscription;
 use App\Models\TenantSupportNote;
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -904,8 +903,8 @@ final readonly class FacilityManagerController implements HasMiddleware
             'status_label' => $this->tenantSupportStatus($tenant)->label(),
             'priority' => $this->tenantSupportPriority($tenant)->value,
             'priority_label' => $this->tenantSupportPriority($tenant)->label(),
-            'follow_up_at' => $this->tenantSupportDateTimeValue($tenant, 'support_follow_up_at'),
-            'last_contacted_at' => $this->tenantSupportDateTimeValue($tenant, 'support_last_contacted_at'),
+            'follow_up_at' => $tenant->support_follow_up_at?->toISOString(),
+            'last_contacted_at' => $tenant->support_last_contacted_at?->toISOString(),
         ];
     }
 
@@ -1410,12 +1409,6 @@ final readonly class FacilityManagerController implements HasMiddleware
 
     private function tenantSupportStatus(Tenant $tenant): TenantSupportStatus
     {
-        $attributes = $tenant->getAttributes();
-
-        if (! array_key_exists('support_status', $attributes)) {
-            return TenantSupportStatus::STABLE;
-        }
-
         $status = $tenant->getAttributeValue('support_status');
 
         if ($status instanceof TenantSupportStatus) {
@@ -1429,12 +1422,6 @@ final readonly class FacilityManagerController implements HasMiddleware
 
     private function tenantSupportPriority(Tenant $tenant): TenantSupportPriority
     {
-        $attributes = $tenant->getAttributes();
-
-        if (! array_key_exists('support_priority', $attributes)) {
-            return TenantSupportPriority::NORMAL;
-        }
-
         $priority = $tenant->getAttributeValue('support_priority');
 
         if ($priority instanceof TenantSupportPriority) {
@@ -1444,22 +1431,5 @@ final readonly class FacilityManagerController implements HasMiddleware
         return is_string($priority)
             ? TenantSupportPriority::tryFrom($priority) ?? TenantSupportPriority::NORMAL
             : TenantSupportPriority::NORMAL;
-    }
-
-    private function tenantSupportDateTimeValue(Tenant $tenant, string $attribute): ?string
-    {
-        $attributes = $tenant->getAttributes();
-
-        if (! array_key_exists($attribute, $attributes)) {
-            return null;
-        }
-
-        $value = $tenant->getAttributeValue($attribute);
-
-        if (! $value instanceof DateTimeInterface) {
-            return null;
-        }
-
-        return $value->format(DATE_ATOM);
     }
 }

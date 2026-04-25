@@ -20,11 +20,12 @@ function resolveExtraValues<TDefaults extends FilterDefaults>(
     filters: DateRangeFilters<TDefaults>,
     defaults: TDefaults,
 ): TDefaults {
-    return Object.keys(defaults).reduce((carry, key) => {
-        carry[key] = filters[key] ?? defaults[key];
-
-        return carry;
-    }, {} as TDefaults);
+    return Object.fromEntries(
+        (Object.keys(defaults) as Array<keyof TDefaults>).map((key) => [
+            key,
+            filters[key] ?? defaults[key],
+        ]),
+    ) as unknown as TDefaults;
 }
 
 export function useDateRangeQueryFilters<TDefaults extends FilterDefaults>({

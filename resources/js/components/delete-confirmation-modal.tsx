@@ -16,10 +16,15 @@ import { ReactNode } from 'react';
 interface Props {
     title: string;
     description: string;
-    action: {
-        action: string;
-        method: 'get' | 'post' | 'put' | 'patch' | 'delete';
-    };
+    action:
+        | {
+              action: string;
+              method: 'get' | 'post' | 'put' | 'patch' | 'delete';
+          }
+        | {
+              url: string;
+              method: 'get' | 'post' | 'put' | 'patch' | 'delete';
+          };
     onSuccess?: () => void;
     trigger?: ReactNode;
 }
@@ -31,6 +36,14 @@ export default function DeleteConfirmationModal({
     onSuccess,
     trigger,
 }: Props) {
+    const formAction =
+        'action' in action
+            ? action
+            : {
+                  action: action.url,
+                  method: action.method,
+              };
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -45,7 +58,11 @@ export default function DeleteConfirmationModal({
                 <DialogTitle>{title}</DialogTitle>
                 <DialogDescription>{description}</DialogDescription>
 
-                <Form {...action} onSuccess={onSuccess} className="space-y-6">
+                <Form
+                    {...formAction}
+                    onSuccess={onSuccess}
+                    className="space-y-6"
+                >
                     {({ processing, resetAndClearErrors, errors }) => (
                         <>
                             <InputError message={errors.delete} />

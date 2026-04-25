@@ -31,7 +31,9 @@ export default function StaffEdit({
         },
     ];
 
-    const [departmentId, setDepartmentId] = useState(staff.department_id || '');
+    const [departmentId, setDepartmentId] = useState(
+        staff.departments?.[0]?.id ?? '',
+    );
     const [positionId, setPositionId] = useState(staff.staff_position_id || '');
     const [staffType, setStaffType] = useState(staff.type || '');
     const [isActive, _setIsActive] = useState(staff.is_active);

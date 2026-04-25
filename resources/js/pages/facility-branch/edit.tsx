@@ -123,7 +123,11 @@ export default function FacilityBranchEdit({
                                     <Label htmlFor="status">Status</Label>
                                     <Select
                                         value={status}
-                                        onValueChange={setStatus}
+                                        onValueChange={(value) =>
+                                            setStatus(
+                                                value as typeof branch.status,
+                                            )
+                                        }
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select status" />

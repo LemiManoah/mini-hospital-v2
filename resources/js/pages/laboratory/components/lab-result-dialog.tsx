@@ -65,6 +65,10 @@ type ResultVisit = {
 
 type ResultRequest = {
     visit?: ResultVisit;
+    request_date?: string | null;
+    priority?: string | null;
+    status?: string | null;
+    clinical_notes?: string | null;
 } | null;
 
 type ResultItem = {

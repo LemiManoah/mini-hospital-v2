@@ -162,7 +162,9 @@ export default function SubscriptionPackageIndex({
                                                         href={SubscriptionPackageController.edit.url(
                                                             {
                                                                 subscription_package:
-                                                                    pkg.id,
+                                                                    String(
+                                                                        pkg.id,
+                                                                    ),
                                                             },
                                                         )}
                                                     >
@@ -180,7 +182,7 @@ export default function SubscriptionPackageIndex({
                                                     action={SubscriptionPackageController.destroy.form(
                                                         {
                                                             subscription_package:
-                                                                pkg.id,
+                                                                String(pkg.id),
                                                         },
                                                     )}
                                                     onSuccess={() =>

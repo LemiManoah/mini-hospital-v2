@@ -26,7 +26,7 @@ interface VisitStartDialogProps {
     patientId: string;
     patientName?: string;
     visitTypes: { value: string; label: string }[];
-    clinics: { id: string; name: string }[];
+    clinics: { id: string; name?: string; clinic_name?: string }[];
     doctors: { id: string; first_name: string; last_name: string }[];
     companies: { id: string; name: string }[];
     packages: { id: string; name: string; insurance_company_id: string }[];
@@ -73,7 +73,7 @@ export default function VisitStartDialog({
         () =>
             clinics.map((clinic) => ({
                 value: clinic.id,
-                label: clinic.name,
+                label: clinic.name ?? clinic.clinic_name ?? 'Unnamed clinic',
             })),
         [clinics],
     );

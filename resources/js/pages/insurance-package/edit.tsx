@@ -127,7 +127,11 @@ export default function InsurancePackageEdit({
                                         </Label>
                                         <Select
                                             value={status}
-                                            onValueChange={setStatus}
+                                            onValueChange={(value) =>
+                                                setStatus(
+                                                    value as typeof insurancePackage.status,
+                                                )
+                                            }
                                         >
                                             <SelectTrigger id="status">
                                                 <SelectValue placeholder="Select status" />

@@ -224,33 +224,45 @@ export default function UnitIndex({ units, filters }: UnitIndexPageProps) {
                                     />
                                 </PaginationItem>
 
-                                {units.links.map((link, idx) => {
-                                    const label = link.label
-                                        .replace(/<[^>]*>/g, '')
-                                        .trim();
-                                    if (label === '...') {
-                                        return (
-                                            <PaginationItem
-                                                key={`ellipsis-${idx}`}
-                                            >
-                                                <PaginationEllipsis />
-                                            </PaginationItem>
-                                        );
-                                    }
-                                    if (/^\d+$/.test(label)) {
-                                        return (
-                                            <PaginationItem key={label}>
-                                                <PaginationLink
-                                                    href={link.url ?? undefined}
-                                                    isActive={link.active}
+                                {units.links.map(
+                                    (
+                                        link: {
+                                            url: string | null;
+                                            label: string;
+                                            active: boolean;
+                                        },
+                                        idx: number,
+                                    ) => {
+                                        const label = link.label
+                                            .replace(/<[^>]*>/g, '')
+                                            .trim();
+                                        if (label === '...') {
+                                            return (
+                                                <PaginationItem
+                                                    key={`ellipsis-${idx}`}
                                                 >
-                                                    {label}
-                                                </PaginationLink>
-                                            </PaginationItem>
-                                        );
-                                    }
-                                    return null;
-                                })}
+                                                    <PaginationEllipsis />
+                                                </PaginationItem>
+                                            );
+                                        }
+                                        if (/^\d+$/.test(label)) {
+                                            return (
+                                                <PaginationItem key={label}>
+                                                    <PaginationLink
+                                                        href={
+                                                            link.url ??
+                                                            undefined
+                                                        }
+                                                        isActive={link.active}
+                                                    >
+                                                        {label}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            );
+                                        }
+                                        return null;
+                                    },
+                                )}
 
                                 <PaginationItem>
                                     <PaginationNext

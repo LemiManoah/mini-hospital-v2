@@ -121,14 +121,14 @@ export default function InventoryDashboard({ stats }: InventoryDashboardProps) {
                     </div>
                     <div className="flex flex-wrap gap-3">
                         {hasPermission('inventory_items.create') ? (
-                            <Button asChild shadow="sm">
+                            <Button asChild>
                                 <Link href="/inventory-items/create">
                                     Add Item
                                 </Link>
                             </Button>
                         ) : null}
                         {hasPermission('purchase_orders.create') ? (
-                            <Button asChild variant="outline" shadow="sm">
+                            <Button asChild variant="outline">
                                 <Link href="/purchase-orders/create">
                                     Raise PO
                                 </Link>

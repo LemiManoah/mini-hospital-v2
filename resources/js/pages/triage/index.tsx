@@ -201,31 +201,37 @@ export default function TriageIndex({ visits, filters }: TriageQueuePageProps) {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {new Date(
-                                                            activityDate,
-                                                        ).toLocaleDateString(
-                                                            'en-US',
-                                                            {
-                                                                year: 'numeric',
-                                                                month: 'short',
-                                                                day: 'numeric',
-                                                            },
-                                                        )}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {new Date(
-                                                            activityDate,
-                                                        ).toLocaleTimeString(
-                                                            'en-US',
-                                                            {
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                            },
-                                                        )}
-                                                    </p>
-                                                </div>
+                                                {activityDate ? (
+                                                    <div>
+                                                        <p className="font-medium">
+                                                            {new Date(
+                                                                activityDate,
+                                                            ).toLocaleDateString(
+                                                                'en-US',
+                                                                {
+                                                                    year: 'numeric',
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                },
+                                                            )}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {new Date(
+                                                                activityDate,
+                                                            ).toLocaleTimeString(
+                                                                'en-US',
+                                                                {
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit',
+                                                                },
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground">
+                                                        Not recorded
+                                                    </span>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 {canViewTriage ? (

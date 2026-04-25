@@ -54,7 +54,7 @@ export default function SubscriptionPackageEdit({
             <div className="m-2 overflow-hidden rounded border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <Form
                     {...SubscriptionPackageController.update.form({
-                        subscription_package: subscriptionPackage.id,
+                        subscription_package: String(subscriptionPackage.id),
                     })}
                     onSuccess={() =>
                         toast.success(

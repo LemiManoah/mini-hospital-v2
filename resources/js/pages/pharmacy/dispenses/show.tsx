@@ -155,6 +155,9 @@ export default function DispenseShowPage({
             `items.${itemId}.${suffix}` as keyof typeof postForm.errors
         ];
 
+    const dispensingRecordError =
+        postForm.errors['dispensing_record' as keyof typeof postForm.errors];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={dispensingRecord.dispense_number} />
@@ -301,9 +304,7 @@ export default function DispenseShowPage({
                             </p>
 
                             <InputError message={postForm.errors.items} />
-                            <InputError
-                                message={postForm.errors.dispensing_record}
-                            />
+                            <InputError message={dispensingRecordError} />
 
                             {postableItems.length === 0 ? (
                                 <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">

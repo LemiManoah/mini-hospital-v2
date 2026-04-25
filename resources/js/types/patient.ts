@@ -219,6 +219,7 @@ export interface ImagingRequest {
     visit_id: string;
     consultation_id: string | null;
     requested_by: string;
+    created_at?: string | null;
     modality: string;
     body_part: string;
     laterality: string;
