@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Enums\SubscriptionStatus;
+use App\Models\Country;
 use App\Models\FacilityBranch;
+use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Models\User;
@@ -144,6 +146,14 @@ it('allows support users to open facility manager child pages and record support
             ->where('tenant.id', $tenant->id));
 
     $this->actingAs($supportUser)
+        ->get(route('facility-manager.facilities.audit', $tenant))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('facility-manager/audit')
+            ->where('tenant.id', $tenant->id)
+            ->where('health.summary.total_checks', 10));
+
+    $this->actingAs($supportUser)
         ->get(route('facility-manager.facilities.notes', $tenant))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
@@ -163,6 +173,63 @@ it('allows support users to open facility manager child pages and record support
         'author_id' => $supportUser->id,
         'title' => 'Billing follow-up',
         'is_pinned' => true,
+    ]);
+});
+
+it('allows support users with tenants.update permission to create a facility from facility manager', function (): void {
+    $this->seed(PermissionSeeder::class);
+
+    $package = SubscriptionPackage::factory()->create();
+    $country = Country::factory()->create();
+    $supportUser = User::factory()->create([
+        'tenant_id' => null,
+        'is_support' => true,
+        'email_verified_at' => now(),
+    ]);
+    $supportUser->givePermissionTo('tenants.view');
+    $supportUser->givePermissionTo('tenants.update');
+
+    $this->actingAs($supportUser)
+        ->get(route('facility-manager.facilities.create'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('facility-manager/create')
+            ->has('facilityLevels')
+            ->has('subscriptionPackages')
+            ->has('countries'));
+
+    $response = $this->actingAs($supportUser)
+        ->post(route('facility-manager.facilities.store'), [
+            'owner_name' => 'Grace Hopper',
+            'workspace_name' => 'Support Created Hospital',
+            'email' => 'support-created@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'subscription_package_id' => $package->id,
+            'facility_level' => 'hospital',
+            'country_id' => $country->id,
+            'domain' => 'support-created-hospital',
+        ]);
+
+    $tenant = Tenant::query()
+        ->where('name', 'Support Created Hospital')
+        ->firstOrFail();
+
+    $response->assertRedirect(route('facility-manager.facilities.show', $tenant))
+        ->assertSessionHas('success', 'Facility created successfully. Use impersonation to continue onboarding when needed.');
+
+    $this->assertAuthenticatedAs($supportUser);
+    $this->assertDatabaseHas('tenants', [
+        'id' => $tenant->id,
+        'name' => 'Support Created Hospital',
+        'subscription_package_id' => $package->id,
+    ]);
+    $this->assertDatabaseHas('users', [
+        'tenant_id' => $tenant->id,
+        'email' => 'support-created@example.com',
+    ]);
+    $this->assertDatabaseHas('tenant_subscriptions', [
+        'tenant_id' => $tenant->id,
     ]);
 });
 

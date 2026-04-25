@@ -26,6 +26,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -84,6 +85,7 @@ export default function FacilityManagerIndex({
     filters,
     tenants,
 }: FacilityManagerIndexProps) {
+    const { hasPermission } = usePermissions();
     const [search, setSearch] = useState(filters.search ?? '');
     const [onboarding, setOnboarding] = useState(filters.onboarding ?? 'all');
     const [subscription, setSubscription] = useState(
@@ -142,11 +144,20 @@ export default function FacilityManagerIndex({
                             one detailed support panel.
                         </p>
                     </div>
-                    <Button asChild variant="outline">
-                        <Link href="/facility-manager/dashboard">
-                            Back to Dashboard
-                        </Link>
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button asChild variant="outline">
+                            <Link href="/facility-manager/dashboard">
+                                Back to Dashboard
+                            </Link>
+                        </Button>
+                        {hasPermission('tenants.update') ? (
+                            <Button asChild>
+                                <Link href="/facility-manager/facilities/create">
+                                    Create Facility
+                                </Link>
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_220px]">

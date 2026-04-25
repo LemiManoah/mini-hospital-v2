@@ -26,6 +26,28 @@ export interface FacilityManagerTenantSummary {
     } | null;
 }
 
+export interface FacilityHealthCheck {
+    key: string;
+    label: string;
+    status: string;
+    status_label: string;
+    detail: string;
+    recommendation: string;
+}
+
+export interface FacilityHealthSummary {
+    status: string;
+    status_label: string;
+    summary: {
+        total_checks: number;
+        passed: number;
+        warnings: number;
+        critical: number;
+    };
+    checks: FacilityHealthCheck[];
+    recommendations: string[];
+}
+
 export interface FacilityManagerMetric {
     label: string;
     value: number;

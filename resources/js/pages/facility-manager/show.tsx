@@ -19,6 +19,7 @@ import { FacilityManagerNav } from './components/facility-manager-nav';
 import { FacilityManagerSupportActions } from './components/facility-manager-support-actions';
 import { FacilityManagerTenantHeader } from './components/facility-manager-tenant-header';
 import {
+    type FacilityHealthSummary,
     type FacilityManagerMetric,
     type FacilityManagerTenantSummary,
 } from './types';
@@ -83,6 +84,7 @@ interface FacilityManagerShowProps {
     recent_users: RecentUser[];
     subscription_history: SubscriptionHistoryItem[];
     usage: UsageSummary;
+    health: FacilityHealthSummary;
 }
 
 const formatDate = (value: string | null): string =>
@@ -99,6 +101,7 @@ export default function FacilityManagerShow({
     recent_users,
     subscription_history,
     usage,
+    health,
 }: FacilityManagerShowProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
@@ -129,6 +132,11 @@ export default function FacilityManagerShow({
             label: 'Lab / Pharmacy',
             value: usage.lab_requests + usage.prescriptions,
             hint: `${usage.lab_requests} lab requests, ${usage.prescriptions} prescriptions`,
+        },
+        {
+            label: 'Health Alerts',
+            value: health.summary.critical + health.summary.warnings,
+            hint: `${health.summary.passed} of ${health.summary.total_checks} checks passed`,
         },
     ];
 
@@ -360,6 +368,86 @@ export default function FacilityManagerShow({
                     </div>
 
                     <div className="min-w-0 space-y-6">
+                        <Card className="border-none shadow-sm ring-1 ring-border/50">
+                            <CardContent className="space-y-4 p-6">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-1">
+                                        <h2 className="text-base font-semibold">
+                                            Health Summary
+                                        </h2>
+                                        <p className="text-sm text-muted-foreground">
+                                            Readiness checks for onboarding,
+                                            access, subscription, and module
+                                            setup.
+                                        </p>
+                                    </div>
+                                    <Badge variant="outline">
+                                        {health.status_label}
+                                    </Badge>
+                                </div>
+
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <div className="rounded-lg bg-muted/35 p-4">
+                                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                            Passed
+                                        </p>
+                                        <p className="mt-2 text-2xl font-semibold">
+                                            {health.summary.passed}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-lg bg-amber-50 p-4 dark:bg-amber-950/30">
+                                        <p className="text-xs font-medium tracking-wide text-amber-700 uppercase dark:text-amber-300">
+                                            Warnings
+                                        </p>
+                                        <p className="mt-2 text-2xl font-semibold text-amber-700 dark:text-amber-300">
+                                            {health.summary.warnings}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-lg bg-rose-50 p-4 dark:bg-rose-950/30">
+                                        <p className="text-xs font-medium tracking-wide text-rose-700 uppercase dark:text-rose-300">
+                                            Critical
+                                        </p>
+                                        <p className="mt-2 text-2xl font-semibold text-rose-700 dark:text-rose-300">
+                                            {health.summary.critical}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {health.recommendations.length > 0 ? (
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-medium">
+                                            Recommended next steps
+                                        </p>
+                                        <ul className="space-y-2 text-sm text-muted-foreground">
+                                            {health.recommendations
+                                                .slice(0, 3)
+                                                .map((recommendation) => (
+                                                    <li
+                                                        key={recommendation}
+                                                        className="rounded-lg bg-muted/35 px-3 py-2"
+                                                    >
+                                                        {recommendation}
+                                                    </li>
+                                                ))}
+                                        </ul>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">
+                                        No immediate health follow-up is needed
+                                        for this facility.
+                                    </p>
+                                )}
+
+                                <Button variant="outline" asChild>
+                                    <Link
+                                        href={`/facility-manager/facilities/${tenant.id}/audit`}
+                                    >
+                                        Open Full Audit
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+
                         <FacilityManagerSupportActions tenant={tenant} />
 
                         <Card className="border-none shadow-sm ring-1 ring-border/50">

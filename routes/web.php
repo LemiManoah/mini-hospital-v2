@@ -126,7 +126,10 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
             Route::post('impersonation/users/{user}', [FacilityImpersonationController::class, 'start'])->name('impersonation.start');
             Route::get('dashboard', [FacilityManagerController::class, 'dashboard'])->name('dashboard');
             Route::get('facilities', [FacilityManagerController::class, 'index'])->name('facilities.index');
+            Route::get('facilities/create', [FacilityManagerController::class, 'create'])->name('facilities.create');
+            Route::post('facilities', [FacilityManagerController::class, 'store'])->name('facilities.store');
             Route::get('facilities/{tenant}', [FacilityManagerController::class, 'show'])->name('facilities.show');
+            Route::get('facilities/{tenant}/audit', [FacilityManagerController::class, 'audit'])->name('facilities.audit');
             Route::get('facilities/{tenant}/branches', [FacilityManagerController::class, 'branches'])->name('facilities.branches');
             Route::get('facilities/{tenant}/users', [FacilityManagerController::class, 'users'])->name('facilities.users');
             Route::get('facilities/{tenant}/subscriptions', [FacilityManagerController::class, 'subscriptions'])->name('facilities.subscriptions');

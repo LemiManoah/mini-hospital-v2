@@ -4,16 +4,26 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\RegisterWorkspace;
 use App\Actions\StartTenantSubscription;
+use App\Enums\FacilityLevel;
+use App\Enums\GeneralStatus;
 use App\Enums\SubscriptionStatus;
 use App\Http\Requests\StoreTenantSupportNoteRequest;
+use App\Http\Requests\StoreWorkspaceRegistrationRequest;
 use App\Models\Consultation;
+use App\Models\Country;
 use App\Models\Department;
 use App\Models\FacilityBranch;
+use App\Models\FacilityService;
 use App\Models\FacilityServiceOrder;
+use App\Models\InventoryLocation;
 use App\Models\LabRequest;
+use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
 use App\Models\Prescription;
+use App\Models\Staff;
+use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Models\TenantSupportNote;
@@ -33,6 +43,7 @@ use Inertia\Response;
 final readonly class FacilityManagerController implements HasMiddleware
 {
     public function __construct(
+        private RegisterWorkspace $registerWorkspace,
         private StartTenantSubscription $startTenantSubscription,
     ) {}
 
@@ -42,6 +53,9 @@ final readonly class FacilityManagerController implements HasMiddleware
             new Middleware('permission:tenants.view', only: [
                 'dashboard',
                 'index',
+                'create',
+                'store',
+                'audit',
                 'show',
                 'branches',
                 'users',
@@ -50,6 +64,8 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'notes',
             ]),
             new Middleware('permission:tenants.update', only: [
+                'create',
+                'store',
                 'storeNote',
                 'activateSubscription',
                 'markSubscriptionPastDue',
@@ -75,13 +91,13 @@ final readonly class FacilityManagerController implements HasMiddleware
         $totalBranches = $tenants->sum('branches_count');
 
         $followUpTenants = $tenants
-            ->filter(static fn (Tenant $tenant): bool => ! $tenant->isOnboardingComplete()
-                || $tenant->currentSubscription?->status === 'past_due'
+            ->filter(fn (Tenant $tenant): bool => ! $tenant->isOnboardingComplete()
+                || $this->subscriptionStatusValueOrNull($tenant->currentSubscription) === SubscriptionStatus::PAST_DUE->value
                 || $tenant->currentSubscription === null)
-            ->sortBy(static fn (Tenant $tenant): string => sprintf(
+            ->sortBy(fn (Tenant $tenant): string => sprintf(
                 '%d-%d-%s',
                 $tenant->isOnboardingComplete() ? 1 : 0,
-                $tenant->currentSubscription?->status === 'past_due' ? 0 : 1,
+                $this->subscriptionStatusValueOrNull($tenant->currentSubscription) === SubscriptionStatus::PAST_DUE->value ? 0 : 1,
                 mb_strtolower($tenant->name),
             ))
             ->take(8)
@@ -148,6 +164,23 @@ final readonly class FacilityManagerController implements HasMiddleware
             'filters' => $filters,
             'tenants' => $tenants,
         ]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('facility-manager/create', [
+            'facilityLevels' => $this->facilityLevelOptions(),
+            'subscriptionPackages' => $this->subscriptionPackageOptions(),
+            'countries' => $this->countryOptions(),
+        ]);
+    }
+
+    public function store(StoreWorkspaceRegistrationRequest $request): RedirectResponse
+    {
+        $workspace = $this->registerWorkspace->handle($request->createDto(), $request->password());
+
+        return to_route('facility-manager.facilities.show', $workspace['tenant'])
+            ->with('success', 'Facility created successfully. Use impersonation to continue onboarding when needed.');
     }
 
     public function show(Tenant $tenant): Response
@@ -238,6 +271,17 @@ final readonly class FacilityManagerController implements HasMiddleware
             'recent_users' => $recentUsers,
             'subscription_history' => $subscriptionHistory,
             'usage' => $usage,
+            'health' => $this->facilityHealthPayload($tenant),
+        ]);
+    }
+
+    public function audit(Tenant $tenant): Response
+    {
+        Gate::authorize('view', $tenant);
+
+        return Inertia::render('facility-manager/audit', [
+            'tenant' => $this->tenantSummaryPayload($tenant),
+            'health' => $this->facilityHealthPayload($tenant),
         ]);
     }
 
@@ -902,5 +946,345 @@ final readonly class FacilityManagerController implements HasMiddleware
         }
 
         return SubscriptionStatus::PENDING_ACTIVATION;
+    }
+
+    /**
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function facilityLevelOptions(): array
+    {
+        return collect(FacilityLevel::cases())
+            ->map(static fn (FacilityLevel $level): array => [
+                'value' => $level->value,
+                'label' => $level->label(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{id: string, name: string, users: int, price: mixed}>
+     */
+    private function subscriptionPackageOptions(): array
+    {
+        return SubscriptionPackage::query()
+            ->orderBy('users')
+            ->orderBy('name')
+            ->get(['id', 'name', 'users', 'price'])
+            ->map(static fn (SubscriptionPackage $package): array => [
+                'id' => (string) $package->id,
+                'name' => $package->name,
+                'users' => (int) $package->users,
+                'price' => $package->price,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{id: string, name: string}>
+     */
+    private function countryOptions(): array
+    {
+        return Country::query()
+            ->orderBy('country_name')
+            ->get(['id', 'country_name'])
+            ->map(static fn (Country $country): array => [
+                'id' => $country->id,
+                'name' => $country->country_name,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array{
+     *     status: string,
+     *     status_label: string,
+     *     summary: array{total_checks: int, passed: int, warnings: int, critical: int},
+     *     checks: array<int, array{
+     *         key: string,
+     *         label: string,
+     *         status: string,
+     *         status_label: string,
+     *         detail: string,
+     *         recommendation: string
+     *     }>,
+     *     recommendations: array<int, string>
+     * }
+     */
+    private function facilityHealthPayload(Tenant $tenant): array
+    {
+        $tenant->loadMissing('currentSubscription.subscriptionPackage');
+
+        $thirtyDaysAgo = CarbonImmutable::now()->subDays(30);
+        $activeBranches = FacilityBranch::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('status', GeneralStatus::ACTIVE)
+            ->count();
+        $hasPrimaryBranch = FacilityBranch::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_main_branch', true)
+            ->exists();
+        $departmentCount = Department::query()
+            ->where('tenant_id', $tenant->id)
+            ->count();
+        $userCount = User::query()
+            ->where('tenant_id', $tenant->id)
+            ->count();
+        $verifiedUsers = $this->verifiedUsersQueryForTenant($tenant->id)->count();
+        $activeStaff = Staff::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->count();
+        $serviceCatalogItems = FacilityService::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->count();
+        $labCatalogItems = LabTestCatalog::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->count();
+        $inventoryLocations = InventoryLocation::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->count();
+        $recentOperationalActivity = PatientVisit::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('registered_at', '>=', $thirtyDaysAgo)
+            ->count()
+            + LabRequest::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('request_date', '>=', $thirtyDaysAgo)
+                ->count()
+            + $this->prescriptionsQueryForTenant($tenant->id)
+                ->where('prescriptions.created_at', '>=', $thirtyDaysAgo)
+                ->count()
+            + FacilityServiceOrder::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('ordered_at', '>=', $thirtyDaysAgo)
+                ->count();
+
+        $subscriptionStatus = $tenant->currentSubscription instanceof TenantSubscription
+            ? $this->subscriptionStatus($tenant->currentSubscription)
+            : null;
+
+        /** @var array<int, array{
+         *     key: string,
+         *     label: string,
+         *     status: string,
+         *     status_label: string,
+         *     detail: string,
+         *     recommendation: string
+         * }> $checks
+         */
+        $checks = [
+            $this->healthCheck(
+                key: 'onboarding',
+                label: 'Onboarding Completion',
+                status: $tenant->isOnboardingComplete() ? 'pass' : 'warning',
+                detail: $tenant->isOnboardingComplete()
+                    ? 'Core onboarding has been completed for this facility.'
+                    : 'This facility is still in the onboarding flow.',
+                recommendation: $tenant->isOnboardingComplete()
+                    ? 'No action needed.'
+                    : 'Impersonate the facility user and complete the remaining onboarding steps.',
+            ),
+            $this->healthCheck(
+                key: 'subscription',
+                label: 'Subscription State',
+                status: match ($subscriptionStatus) {
+                    SubscriptionStatus::ACTIVE, SubscriptionStatus::TRIAL => 'pass',
+                    SubscriptionStatus::PENDING_ACTIVATION, SubscriptionStatus::PAST_DUE => 'warning',
+                    SubscriptionStatus::CANCELLED, null => 'critical',
+                },
+                detail: match ($subscriptionStatus) {
+                    SubscriptionStatus::ACTIVE => 'An active subscription is in place.',
+                    SubscriptionStatus::TRIAL => 'The facility is operating on a trial subscription.',
+                    SubscriptionStatus::PENDING_ACTIVATION => 'A subscription exists but still needs activation follow-up.',
+                    SubscriptionStatus::PAST_DUE => 'The subscription is past due and needs billing intervention.',
+                    SubscriptionStatus::CANCELLED => 'The current subscription has been cancelled.',
+                    null => 'No subscription record exists for this facility.',
+                },
+                recommendation: match ($subscriptionStatus) {
+                    SubscriptionStatus::ACTIVE, SubscriptionStatus::TRIAL => 'No action needed.',
+                    SubscriptionStatus::PENDING_ACTIVATION => 'Complete the activation handoff and confirm billing status.',
+                    SubscriptionStatus::PAST_DUE => 'Follow up on billing and either reactivate or confirm the facility status.',
+                    SubscriptionStatus::CANCELLED, null => 'Create or restore a valid subscription record before go-live support.',
+                },
+            ),
+            $this->healthCheck(
+                key: 'primary_branch',
+                label: 'Primary Branch',
+                status: $hasPrimaryBranch ? 'pass' : 'critical',
+                detail: $hasPrimaryBranch
+                    ? 'A primary branch is configured for the facility.'
+                    : 'No primary branch has been configured yet.',
+                recommendation: $hasPrimaryBranch
+                    ? 'No action needed.'
+                    : 'Resume onboarding or configure the first operating branch.',
+            ),
+            $this->healthCheck(
+                key: 'active_branches',
+                label: 'Active Branches',
+                status: $activeBranches > 0 ? 'pass' : 'critical',
+                detail: $activeBranches > 0
+                    ? sprintf('%d active branch%s available.', $activeBranches, $activeBranches === 1 ? '' : 'es')
+                    : 'No active branches are available.',
+                recommendation: $activeBranches > 0
+                    ? 'No action needed.'
+                    : 'Review branch setup and reactivate or create a working branch.',
+            ),
+            $this->healthCheck(
+                key: 'departments',
+                label: 'Departments',
+                status: $departmentCount > 0 ? 'pass' : 'warning',
+                detail: $departmentCount > 0
+                    ? sprintf('%d department%s configured.', $departmentCount, $departmentCount === 1 ? '' : 's')
+                    : 'No departments have been configured.',
+                recommendation: $departmentCount > 0
+                    ? 'No action needed.'
+                    : 'Add operational departments so staff can be assigned correctly.',
+            ),
+            $this->healthCheck(
+                key: 'users',
+                label: 'User Access',
+                status: match (true) {
+                    $userCount === 0 => 'critical',
+                    $verifiedUsers === 0 => 'warning',
+                    default => 'pass',
+                },
+                detail: match (true) {
+                    $userCount === 0 => 'No tenant-linked user accounts exist.',
+                    $verifiedUsers === 0 => 'User accounts exist, but none are verified yet.',
+                    default => sprintf('%d verified user%s ready for access.', $verifiedUsers, $verifiedUsers === 1 ? '' : 's'),
+                },
+                recommendation: match (true) {
+                    $userCount === 0 => 'Create or restore at least one tenant user account.',
+                    $verifiedUsers === 0 => 'Have the facility owner verify email access or reset access as support.',
+                    default => 'No action needed.',
+                },
+            ),
+            $this->healthCheck(
+                key: 'active_staff',
+                label: 'Active Staff Records',
+                status: $activeStaff > 0 ? 'pass' : 'warning',
+                detail: $activeStaff > 0
+                    ? sprintf('%d active staff record%s configured.', $activeStaff, $activeStaff === 1 ? '' : 's')
+                    : 'No active staff records are configured.',
+                recommendation: $activeStaff > 0
+                    ? 'No action needed.'
+                    : 'Complete the first staff setup so operational users can work in the tenant.',
+            ),
+            $this->healthCheck(
+                key: 'facility_services',
+                label: 'Facility Services Catalog',
+                status: $serviceCatalogItems > 0 ? 'pass' : 'warning',
+                detail: $serviceCatalogItems > 0
+                    ? sprintf('%d active facility service%s configured.', $serviceCatalogItems, $serviceCatalogItems === 1 ? '' : 's')
+                    : 'No active facility services are configured.',
+                recommendation: $serviceCatalogItems > 0
+                    ? 'No action needed.'
+                    : 'Add facility services before procedures and service orders go live.',
+            ),
+            $this->healthCheck(
+                key: 'lab_catalog',
+                label: 'Laboratory Catalog',
+                status: $labCatalogItems > 0 ? 'pass' : 'warning',
+                detail: $labCatalogItems > 0
+                    ? sprintf('%d active lab test%s configured.', $labCatalogItems, $labCatalogItems === 1 ? '' : 's')
+                    : 'No active lab tests are configured.',
+                recommendation: $labCatalogItems > 0
+                    ? 'No action needed.'
+                    : 'Load the lab catalog before laboratory ordering begins.',
+            ),
+            $this->healthCheck(
+                key: 'inventory_locations',
+                label: 'Inventory Locations',
+                status: $inventoryLocations > 0 ? 'pass' : 'warning',
+                detail: $inventoryLocations > 0
+                    ? sprintf('%d active inventory location%s configured.', $inventoryLocations, $inventoryLocations === 1 ? '' : 's')
+                    : 'No active inventory locations are configured.',
+                recommendation: $inventoryLocations > 0
+                    ? 'No action needed.'
+                    : 'Create inventory locations before stock, pharmacy, or lab store workflows begin.',
+            ),
+            $this->healthCheck(
+                key: 'recent_activity',
+                label: 'Recent Operational Activity',
+                status: $recentOperationalActivity > 0 ? 'pass' : 'warning',
+                detail: $recentOperationalActivity > 0
+                    ? sprintf('%d recent operational event%s recorded in the last 30 days.', $recentOperationalActivity, $recentOperationalActivity === 1 ? '' : 's')
+                    : 'No visits, lab requests, prescriptions, or service orders were recorded in the last 30 days.',
+                recommendation: $recentOperationalActivity > 0
+                    ? 'No action needed.'
+                    : 'Confirm whether the facility is newly onboarded, inactive, or blocked by missing setup.',
+            ),
+        ];
+
+        $critical = collect($checks)->where('status', 'critical')->count();
+        $warnings = collect($checks)->where('status', 'warning')->count();
+        $passed = collect($checks)->where('status', 'pass')->count();
+        $overallStatus = $critical > 0 ? 'critical' : ($warnings > 0 ? 'warning' : 'healthy');
+
+        return [
+            'status' => $overallStatus,
+            'status_label' => match ($overallStatus) {
+                'critical' => 'Critical Attention',
+                'warning' => 'Needs Follow-Up',
+                default => 'Healthy',
+            },
+            'summary' => [
+                'total_checks' => count($checks),
+                'passed' => $passed,
+                'warnings' => $warnings,
+                'critical' => $critical,
+            ],
+            'checks' => $checks,
+            'recommendations' => collect($checks)
+                ->where('status', '!=', 'pass')
+                ->map(static fn (array $check): string => $check['recommendation'])
+                ->unique()
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * @return array{
+     *     key: string,
+     *     label: string,
+     *     status: string,
+     *     status_label: string,
+     *     detail: string,
+     *     recommendation: string
+     * }
+     */
+    private function healthCheck(
+        string $key,
+        string $label,
+        string $status,
+        string $detail,
+        string $recommendation,
+    ): array {
+        return [
+            'key' => $key,
+            'label' => $label,
+            'status' => $status,
+            'status_label' => match ($status) {
+                'critical' => 'Critical',
+                'warning' => 'Warning',
+                default => 'Passed',
+            },
+            'detail' => $detail,
+            'recommendation' => $recommendation,
+        ];
+    }
+
+    private function subscriptionStatusValueOrNull(?TenantSubscription $subscription): ?string
+    {
+        return $subscription instanceof TenantSubscription
+            ? $this->subscriptionStatusValue($subscription)
+            : null;
     }
 }

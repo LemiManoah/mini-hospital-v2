@@ -16,6 +16,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 
@@ -70,6 +71,8 @@ export default function FacilityManagerDashboard({
     metrics,
     follow_up_tenants,
 }: FacilityManagerDashboardProps) {
+    const { hasPermission } = usePermissions();
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Facility Manager" />
@@ -86,11 +89,20 @@ export default function FacilityManagerDashboard({
                             intervention.
                         </p>
                     </div>
-                    <Button asChild>
-                        <Link href="/facility-manager/facilities">
-                            Open Facilities
-                        </Link>
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" asChild>
+                            <Link href="/facility-manager/facilities">
+                                Open Facilities
+                            </Link>
+                        </Button>
+                        {hasPermission('tenants.update') ? (
+                            <Button asChild>
+                                <Link href="/facility-manager/facilities/create">
+                                    Create Facility
+                                </Link>
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
