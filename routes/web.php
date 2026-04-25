@@ -69,6 +69,7 @@ use App\Http\Controllers\Print\PrescriptionPrintController;
 use App\Http\Controllers\Print\VisitPaymentPrintController;
 use App\Http\Controllers\Print\VisitSummaryPrintController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\ReferralFacilityController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\SpecimenTypeController;
@@ -177,6 +178,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::resource('subscription-packages', SubscriptionPackageController::class)->except(['show']);
     Route::resource('staff-positions', StaffPositionController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::resource('referral-facilities', ReferralFacilityController::class)->except(['show']);
     Route::resource('facility-branches', FacilityBranchController::class)->except(['show']);
     Route::resource('clinics', ClinicController::class)->except(['show']);
     Route::resource('insurance-companies', InsuranceCompanyController::class)->except(['show']);

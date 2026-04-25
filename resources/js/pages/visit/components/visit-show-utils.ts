@@ -117,30 +117,67 @@ function measurement(value: number | null | undefined, suffix: string): string {
 export function vitalSummaryItems(vital: VitalSign | undefined) {
     if (!vital) return [];
 
-    return [
-        {
+    const items: { label: string; value: string }[] = [];
+    const pushNumeric = (
+        label: string,
+        value: number | null | undefined,
+        suffix: string,
+    ) => {
+        if (value === null || value === undefined) {
+            return;
+        }
+
+        items.push({ label, value: measurement(value, suffix) });
+    };
+    const pushText = (label: string, value: string | null | undefined) => {
+        if (!value) {
+            return;
+        }
+
+        items.push({ label, value });
+    };
+
+    if (vital.temperature !== null) {
+        items.push({
             label: 'Temperature',
-            value:
-                vital.temperature === null
-                    ? 'N/A'
-                    : `${vital.temperature} ${vital.temperature_unit === 'celsius' ? 'C' : 'F'}`,
-        },
-        { label: 'Pulse', value: measurement(vital.pulse_rate, 'bpm') },
-        {
-            label: 'Respiratory',
-            value: measurement(vital.respiratory_rate, '/min'),
-        },
-        {
+            value: `${vital.temperature} ${vital.temperature_unit === 'celsius' ? 'C' : 'F'}`,
+        });
+    }
+
+    pushNumeric('Pulse', vital.pulse_rate, 'bpm');
+    pushNumeric('Respiratory', vital.respiratory_rate, '/min');
+
+    if (vital.systolic_bp !== null || vital.diastolic_bp !== null) {
+        items.push({
             label: 'Blood Pressure',
             value:
                 vital.systolic_bp === null || vital.diastolic_bp === null
-                    ? 'N/A'
+                    ? 'Incomplete'
                     : `${vital.systolic_bp}/${vital.diastolic_bp} mmHg`,
-        },
-        { label: 'SpO2', value: measurement(vital.oxygen_saturation, '%') },
-        {
-            label: 'Pain',
-            value: vital.pain_score === null ? 'N/A' : `${vital.pain_score}/10`,
-        },
-    ];
+        });
+    }
+
+    pushNumeric('MAP', vital.map, 'mmHg');
+    pushNumeric('SpO2', vital.oxygen_saturation, '%');
+    pushText(
+        'Supplemental Oxygen',
+        vital.on_supplemental_oxygen ? 'Yes' : null,
+    );
+    pushText('Oxygen Delivery', vital.oxygen_delivery_method);
+    pushNumeric('Oxygen Flow', vital.oxygen_flow_rate, 'L/min');
+    pushNumeric(
+        'Blood Glucose',
+        vital.blood_glucose,
+        vital.blood_glucose_unit === 'mmol_l' ? 'mmol/L' : 'mg/dL',
+    );
+    pushNumeric('Pain', vital.pain_score, '/10');
+    pushNumeric('Height', vital.height_cm, 'cm');
+    pushNumeric('Weight', vital.weight_kg, 'kg');
+    pushNumeric('BMI', vital.bmi, '');
+    pushNumeric('Head Circumference', vital.head_circumference_cm, 'cm');
+    pushNumeric('Chest Circumference', vital.chest_circumference_cm, 'cm');
+    pushNumeric('MUAC', vital.muac_cm, 'cm');
+    pushText('Capillary Refill', vital.capillary_refill);
+
+    return items;
 }

@@ -36,7 +36,7 @@ final class StoreTriageRecordRequest extends FormRequest
             'muac_cm', 'capillary_refill', 'oxygen_delivery_method', 'oxygen_flow_rate',
         ];
 
-        return array_any($fields, fn ($field): bool => filled($validated[$field] ?? null));
+        return array_any($fields, static fn (string $field): bool => filled($validated[$field] ?? null));
     }
 
     public function authorize(): bool

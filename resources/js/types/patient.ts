@@ -93,6 +93,15 @@ export interface Consultation {
     doctor?: { id: string; first_name: string; last_name: string } | null;
 }
 
+export interface ReferralFacilityOption {
+    id: string;
+    name: string;
+    facility_type: string | null;
+    phone: string | null;
+    email: string | null;
+    is_active: boolean;
+}
+
 export interface LabTestOption {
     id: string;
     test_code: string;
@@ -514,6 +523,8 @@ export interface DoctorConsultationShowPageProps {
     visit: PatientVisit;
     activeTab: string;
     consultationOutcomes: { value: string; label: string }[];
+    referralDepartmentOptions: { value: string; label: string }[];
+    referralFacilityOptions: ReferralFacilityOption[];
     labTestOptions: LabTestOption[];
     drugOptions: DrugOption[];
     labPriorities: { value: string; label: string }[];

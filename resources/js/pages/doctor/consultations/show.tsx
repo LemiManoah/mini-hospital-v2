@@ -66,34 +66,66 @@ function vitalSummaryItems(
 ): { label: string; value: string }[] {
     if (!vital) return [];
 
-    return [
-        {
+    const items: { label: string; value: string }[] = [];
+    const pushNumeric = (
+        label: string,
+        value: number | null | undefined,
+        suffix: string,
+    ) => {
+        if (value === null || value === undefined) return;
+        items.push({ label, value: `${value} ${suffix}`.trim() });
+    };
+    const pushText = (label: string, value: string | null | undefined) => {
+        if (!value) return;
+        items.push({ label, value });
+    };
+
+    if (vital.temperature !== null) {
+        items.push({
             label: 'Temperature',
+            value: `${vital.temperature} ${vital.temperature_unit === 'celsius' ? 'C' : 'F'}`,
+        });
+    }
+
+    pushNumeric('Pulse', vital.pulse_rate, 'bpm');
+    pushNumeric('Respiratory Rate', vital.respiratory_rate, '/min');
+
+    if (vital.systolic_bp !== null || vital.diastolic_bp !== null) {
+        items.push({
+            label: 'Blood Pressure',
             value:
-                vital.temperature === null
-                    ? 'N/A'
-                    : `${vital.temperature} ${vital.temperature_unit === 'celsius' ? 'C' : 'F'}`,
-        },
-        {
-            label: 'Pulse',
-            value:
-                vital.pulse_rate === null ? 'N/A' : `${vital.pulse_rate} bpm`,
-        },
-        {
-            label: 'Respiratory Rate',
-            value:
-                vital.respiratory_rate === null
-                    ? 'N/A'
-                    : `${vital.respiratory_rate} /min`,
-        },
-        {
-            label: 'SpO2',
-            value:
-                vital.oxygen_saturation === null
-                    ? 'N/A'
-                    : `${vital.oxygen_saturation} %`,
-        },
-    ];
+                vital.systolic_bp === null || vital.diastolic_bp === null
+                    ? 'Incomplete'
+                    : `${vital.systolic_bp}/${vital.diastolic_bp} mmHg`,
+        });
+    }
+
+    pushNumeric('MAP', vital.map, 'mmHg');
+    pushNumeric('SpO2', vital.oxygen_saturation, '%');
+    pushNumeric('Oxygen Flow Rate', vital.oxygen_flow_rate, 'L/min');
+    pushNumeric(
+        'Blood Glucose',
+        vital.blood_glucose,
+        vital.blood_glucose_unit === 'mmol_l' ? 'mmol/L' : 'mg/dL',
+    );
+    pushNumeric('Pain Score', vital.pain_score, '/10');
+    pushNumeric('Height', vital.height_cm, 'cm');
+    pushNumeric('Weight', vital.weight_kg, 'kg');
+    pushNumeric('BMI', vital.bmi, '');
+    pushNumeric('Head Circumference', vital.head_circumference_cm, 'cm');
+    pushNumeric('Chest Circumference', vital.chest_circumference_cm, 'cm');
+    pushNumeric('MUAC', vital.muac_cm, 'cm');
+    pushText('Capillary Refill', vital.capillary_refill);
+    pushText('Oxygen Delivery Method', vital.oxygen_delivery_method);
+
+    if (vital.on_supplemental_oxygen) {
+        items.push({
+            label: 'Supplemental Oxygen',
+            value: 'Yes',
+        });
+    }
+
+    return items;
 }
 
 function triageGradeClasses(grade: string | undefined): string {
@@ -148,6 +180,8 @@ export default function DoctorConsultationShow({
     visit,
     activeTab,
     consultationOutcomes,
+    referralDepartmentOptions,
+    referralFacilityOptions,
     labTestOptions,
     drugOptions,
     labPriorities,
@@ -180,6 +214,12 @@ export default function DoctorConsultationShow({
     const isConsultationFinalized = consultation?.completed_at != null;
     const [selectedTab, setSelectedTab] = useState(activeTab || 'overview');
     const [outcome, setOutcome] = useState(consultation?.outcome ?? '');
+    const [referredToDepartment, setReferredToDepartment] = useState(
+        consultation?.referred_to_department ?? '',
+    );
+    const [referredToFacility, setReferredToFacility] = useState(
+        consultation?.referred_to_facility ?? '',
+    );
     const canViewVisit = hasPermission('visits.view');
     const canCreateConsultation = hasPermission('consultations.create');
     const canUpdateConsultation = hasPermission('consultations.update');
@@ -197,6 +237,8 @@ export default function DoctorConsultationShow({
     ];
 
     const canPlaceOrders = !isConsultationFinalized && canUpdateConsultation;
+    const showFollowUpFields = outcome === 'follow_up_required';
+    const showReferralFields = outcome === 'referred';
 
     const [labModalOpen, setLabModalOpen] = useState(false);
     const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
@@ -403,6 +445,33 @@ export default function DoctorConsultationShow({
                                                                     name="outcome"
                                                                     value={
                                                                         outcome
+                                                                    }
+                                                                />
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="is_referred"
+                                                                    value={
+                                                                        showReferralFields
+                                                                            ? '1'
+                                                                            : '0'
+                                                                    }
+                                                                />
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="referred_to_department"
+                                                                    value={
+                                                                        showReferralFields
+                                                                            ? referredToDepartment
+                                                                            : ''
+                                                                    }
+                                                                />
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="referred_to_facility"
+                                                                    value={
+                                                                        showReferralFields
+                                                                            ? referredToFacility
+                                                                            : ''
                                                                     }
                                                                 />
                                                                 <div className="grid gap-2">
@@ -699,9 +768,25 @@ export default function DoctorConsultationShow({
                                                                                 value={
                                                                                     outcome
                                                                                 }
-                                                                                onValueChange={
-                                                                                    setOutcome
-                                                                                }
+                                                                                onValueChange={(
+                                                                                    value,
+                                                                                ) => {
+                                                                                    setOutcome(
+                                                                                        value,
+                                                                                    );
+
+                                                                                    if (
+                                                                                        value !==
+                                                                                        'referred'
+                                                                                    ) {
+                                                                                        setReferredToDepartment(
+                                                                                            '',
+                                                                                        );
+                                                                                        setReferredToFacility(
+                                                                                            '',
+                                                                                        );
+                                                                                    }
+                                                                                }}
                                                                             >
                                                                                 <SelectTrigger>
                                                                                     <SelectValue placeholder="Select outcome" />
@@ -733,136 +818,178 @@ export default function DoctorConsultationShow({
                                                                                 }
                                                                             />
                                                                         </div>
+                                                                        {showFollowUpFields ? (
+                                                                            <div className="grid gap-2">
+                                                                                <Label htmlFor="follow_up_days">
+                                                                                    Follow-up
+                                                                                    Days
+                                                                                </Label>
+                                                                                <Input
+                                                                                    id="follow_up_days"
+                                                                                    name="follow_up_days"
+                                                                                    type="number"
+                                                                                    min={
+                                                                                        1
+                                                                                    }
+                                                                                    max={
+                                                                                        365
+                                                                                    }
+                                                                                    defaultValue={
+                                                                                        consultation?.follow_up_days ??
+                                                                                        ''
+                                                                                    }
+                                                                                />
+                                                                                <InputError
+                                                                                    message={
+                                                                                        errors.follow_up_days
+                                                                                    }
+                                                                                />
+                                                                            </div>
+                                                                        ) : null}
+                                                                    </div>
+                                                                    {showFollowUpFields ? (
                                                                         <div className="grid gap-2">
-                                                                            <Label htmlFor="follow_up_days">
+                                                                            <Label htmlFor="follow_up_instructions">
                                                                                 Follow-up
-                                                                                Days
+                                                                                Instructions
                                                                             </Label>
-                                                                            <Input
-                                                                                id="follow_up_days"
-                                                                                name="follow_up_days"
-                                                                                type="number"
-                                                                                min={
-                                                                                    1
-                                                                                }
-                                                                                max={
-                                                                                    365
+                                                                            <Textarea
+                                                                                id="follow_up_instructions"
+                                                                                name="follow_up_instructions"
+                                                                                rows={
+                                                                                    3
                                                                                 }
                                                                                 defaultValue={
-                                                                                    consultation?.follow_up_days ??
+                                                                                    consultation?.follow_up_instructions ??
                                                                                     ''
                                                                                 }
                                                                             />
                                                                             <InputError
                                                                                 message={
-                                                                                    errors.follow_up_days
+                                                                                    errors.follow_up_instructions
                                                                                 }
                                                                             />
                                                                         </div>
-                                                                    </div>
-                                                                    <div className="grid gap-2">
-                                                                        <Label htmlFor="follow_up_instructions">
-                                                                            Follow-up
-                                                                            Instructions
-                                                                        </Label>
-                                                                        <Textarea
-                                                                            id="follow_up_instructions"
-                                                                            name="follow_up_instructions"
-                                                                            rows={
-                                                                                3
-                                                                            }
-                                                                            defaultValue={
-                                                                                consultation?.follow_up_instructions ??
-                                                                                ''
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                errors.follow_up_instructions
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                    <div className="grid gap-4 md:grid-cols-2">
-                                                                        <div className="grid gap-2">
-                                                                            <Label htmlFor="referred_to_department">
-                                                                                Referred
-                                                                                To
-                                                                                Department
-                                                                            </Label>
-                                                                            <Input
-                                                                                id="referred_to_department"
-                                                                                name="referred_to_department"
-                                                                                defaultValue={
-                                                                                    consultation?.referred_to_department ??
-                                                                                    ''
-                                                                                }
-                                                                            />
-                                                                            <InputError
-                                                                                message={
-                                                                                    errors.referred_to_department
-                                                                                }
-                                                                            />
-                                                                        </div>
-                                                                        <div className="grid gap-2">
-                                                                            <Label htmlFor="referred_to_facility">
-                                                                                Referred
-                                                                                To
-                                                                                Facility
-                                                                            </Label>
-                                                                            <Input
-                                                                                id="referred_to_facility"
-                                                                                name="referred_to_facility"
-                                                                                defaultValue={
-                                                                                    consultation?.referred_to_facility ??
-                                                                                    ''
-                                                                                }
-                                                                            />
-                                                                            <InputError
-                                                                                message={
-                                                                                    errors.referred_to_facility
-                                                                                }
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="grid gap-2">
-                                                                        <Label htmlFor="referral_reason">
-                                                                            Referral
-                                                                            Reason
-                                                                        </Label>
-                                                                        <Textarea
-                                                                            id="referral_reason"
-                                                                            name="referral_reason"
-                                                                            rows={
-                                                                                3
-                                                                            }
-                                                                            defaultValue={
-                                                                                consultation?.referral_reason ??
-                                                                                ''
-                                                                            }
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                errors.referral_reason
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                    <label className="flex items-center gap-2 text-sm">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            name="is_referred"
-                                                                            value="1"
-                                                                            defaultChecked={
-                                                                                consultation?.is_referred ??
-                                                                                false
-                                                                            }
-                                                                            className="h-4 w-4"
-                                                                        />
-                                                                        Mark
-                                                                        this
-                                                                        consultation
-                                                                        as a
-                                                                        referral
-                                                                    </label>
+                                                                    ) : null}
+                                                                    {showReferralFields ? (
+                                                                        <>
+                                                                            <div className="grid gap-4 md:grid-cols-2">
+                                                                                <div className="grid gap-2">
+                                                                                    <Label>
+                                                                                        Referred
+                                                                                        To
+                                                                                        Department
+                                                                                    </Label>
+                                                                                    <Select
+                                                                                        value={
+                                                                                            referredToDepartment
+                                                                                        }
+                                                                                        onValueChange={
+                                                                                            setReferredToDepartment
+                                                                                        }
+                                                                                    >
+                                                                                        <SelectTrigger>
+                                                                                            <SelectValue placeholder="Select department" />
+                                                                                        </SelectTrigger>
+                                                                                        <SelectContent>
+                                                                                            {referralDepartmentOptions.map(
+                                                                                                (
+                                                                                                    option,
+                                                                                                ) => (
+                                                                                                    <SelectItem
+                                                                                                        key={
+                                                                                                            option.value
+                                                                                                        }
+                                                                                                        value={
+                                                                                                            option.value
+                                                                                                        }
+                                                                                                    >
+                                                                                                        {
+                                                                                                            option.label
+                                                                                                        }
+                                                                                                    </SelectItem>
+                                                                                                ),
+                                                                                            )}
+                                                                                        </SelectContent>
+                                                                                    </Select>
+                                                                                    <InputError
+                                                                                        message={
+                                                                                            errors.referred_to_department
+                                                                                        }
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="grid gap-2">
+                                                                                    <Label>
+                                                                                        Referred
+                                                                                        To
+                                                                                        Facility
+                                                                                    </Label>
+                                                                                    <Select
+                                                                                        value={
+                                                                                            referredToFacility
+                                                                                        }
+                                                                                        onValueChange={
+                                                                                            setReferredToFacility
+                                                                                        }
+                                                                                    >
+                                                                                        <SelectTrigger>
+                                                                                            <SelectValue placeholder="Select facility" />
+                                                                                        </SelectTrigger>
+                                                                                        <SelectContent>
+                                                                                            {referralFacilityOptions.map(
+                                                                                                (
+                                                                                                    facility,
+                                                                                                ) => (
+                                                                                                    <SelectItem
+                                                                                                        key={
+                                                                                                            facility.id
+                                                                                                        }
+                                                                                                        value={
+                                                                                                            facility.name
+                                                                                                        }
+                                                                                                    >
+                                                                                                        {
+                                                                                                            facility.name
+                                                                                                        }
+                                                                                                        {facility.facility_type
+                                                                                                            ? ` (${facility.facility_type})`
+                                                                                                            : ''}
+                                                                                                    </SelectItem>
+                                                                                                ),
+                                                                                            )}
+                                                                                        </SelectContent>
+                                                                                    </Select>
+                                                                                    <InputError
+                                                                                        message={
+                                                                                            errors.referred_to_facility
+                                                                                        }
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="grid gap-2">
+                                                                                <Label htmlFor="referral_reason">
+                                                                                    Referral
+                                                                                    Reason
+                                                                                </Label>
+                                                                                <Textarea
+                                                                                    id="referral_reason"
+                                                                                    name="referral_reason"
+                                                                                    rows={
+                                                                                        3
+                                                                                    }
+                                                                                    defaultValue={
+                                                                                        consultation?.referral_reason ??
+                                                                                        ''
+                                                                                    }
+                                                                                />
+                                                                                <InputError
+                                                                                    message={
+                                                                                        errors.referral_reason
+                                                                                    }
+                                                                                />
+                                                                            </div>
+                                                                        </>
+                                                                    ) : null}
                                                                 </div>
                                                                 <div className="flex items-center justify-between gap-3">
                                                                     <p className="text-sm text-muted-foreground">

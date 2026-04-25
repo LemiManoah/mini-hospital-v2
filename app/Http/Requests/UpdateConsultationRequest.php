@@ -79,7 +79,7 @@ final class UpdateConsultationRequest extends FormRequest
                 $validator->errors()->add('outcome', 'Outcome is required before completing the consultation.');
             }
 
-            if ($this->boolean('is_referred')) {
+            if ($this->string('outcome')->toString() === ConsultationOutcome::REFERRED->value) {
                 $hasDestination = $this->trimmedInput('referred_to_department') !== null
                     || $this->trimmedInput('referred_to_facility') !== null;
 
@@ -92,8 +92,14 @@ final class UpdateConsultationRequest extends FormRequest
                 }
             }
 
-            if ($this->filled('follow_up_days') && $this->trimmedInput('follow_up_instructions') === null) {
-                $validator->errors()->add('follow_up_instructions', 'Follow-up instructions are required when follow-up days are provided.');
+            if ($this->string('outcome')->toString() === ConsultationOutcome::FOLLOW_UP_REQUIRED->value) {
+                if (! $this->filled('follow_up_days')) {
+                    $validator->errors()->add('follow_up_days', 'Follow-up days are required when the outcome is follow up required.');
+                }
+
+                if ($this->trimmedInput('follow_up_instructions') === null) {
+                    $validator->errors()->add('follow_up_instructions', 'Follow-up instructions are required when the outcome is follow up required.');
+                }
             }
         });
     }
@@ -110,7 +116,7 @@ final class UpdateConsultationRequest extends FormRequest
 
         $this->merge([
             'intent' => $this->input('intent') ?: 'save_draft',
-            'is_referred' => $this->boolean('is_referred'),
+            'is_referred' => $this->input('outcome') === ConsultationOutcome::REFERRED->value,
             'outcome' => $this->filled('outcome') ? $this->input('outcome') : null,
         ]);
     }

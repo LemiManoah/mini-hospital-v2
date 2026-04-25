@@ -142,6 +142,12 @@ final readonly class AdministrationController
                     'permission' => 'departments.view',
                 ],
                 [
+                    'title' => 'Referral Facilities',
+                    'description' => 'Maintain referral destinations used when consultations end in external referral.',
+                    'href' => '/referral-facilities',
+                    'permission' => 'referral_facilities.view',
+                ],
+                [
                     'title' => 'Facility Services',
                     'description' => 'Manage chargeable services, pricing, and service availability.',
                     'href' => '/facility-services',

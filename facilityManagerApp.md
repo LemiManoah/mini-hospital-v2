@@ -1,19 +1,34 @@
-# Facility Manager Panel Review and Updated Implementation Guide
+# Facility Manager Review, Current Status, and Recommended Workflow
 
-**Date:** April 20, 2026  
-**Goal:** Reassess the Facility Manager work against the current codebase, clarify what is actually complete, what is partial, what is still missing, and define the right next implementation order.
+**Date:** April 25, 2026  
+**Goal:** Capture the current Facility Manager implementation accurately, distinguish what is done vs partial vs not done, and recommend the right workflow for onboarding new facilities.
 
 ---
 
 ## 1) Short Answer
 
-No, the Facility Manager app is **not fully complete yet**.
+Yes, it does make sense to have facility creation visible from Facility Manager, but not as a completely separate creation system.
 
-But it is also no longer just a plan.
+The best fit is:
 
-The current codebase already has a solid support-facing Facility Manager slice with:
+- Facility Manager should be the **support control center**
+- facility creation should be available there as a **support entry point**
+- creation should still reuse the existing **workspace registration + onboarding pipeline**
 
-- support-only access control
+So the recommendation is:
+
+- **add a `Create Facility` action inside Facility Manager**
+- **reuse the current `/create-workspace` + `/onboarding` flow underneath**
+- **do not build a second parallel tenant-creation workflow**
+
+---
+
+## 2) Current Reality In The Codebase
+
+### 2.1 What Facility Manager Already Does
+
+Implemented under `/facility-manager`:
+
 - dashboard
 - facilities list
 - facility overview
@@ -21,61 +36,24 @@ The current codebase already has a solid support-facing Facility Manager slice w
 - users page
 - subscriptions page
 - activity page
-- support notes
+- support notes page
+- impersonation listing
+- start impersonation
+- activate subscription
+- mark subscription past due
+- mark onboarding complete
+- reopen onboarding
 
-It also has related support operations implemented in the separate `facility-switcher` flow, such as:
-
-- switching into a tenant
-- activating a subscription
-- marking subscription past due
-- completing onboarding
-- reopening onboarding
-
-So the correct current read is:
-
-- **core Facility Manager foundation: implemented**
-- **operational support tooling: partially implemented**
-- **health, audit, analytics depth, and advanced support controls: not yet complete**
-
----
-
-## 2) What Is Actually Implemented Now
-
-### 2.1 Access Model and Navigation
-
-Implemented:
-
-- support-only route group under `/facility-manager`
-- support-only route group under `/facility-switcher`
-- `Facility Manager` sidebar entry for support / platform-level users
-- permission checks based on `tenants.view` and `tenants.update`
-- policy-based tenant authorization on detail pages
-
-Relevant files:
+Relevant routes:
 
 - [routes/web.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/routes/web.php)
-- [resources/js/components/app-sidebar.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/components/app-sidebar.tsx)
+
+Relevant controllers:
+
 - [app/Http/Controllers/FacilityManagerController.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Controllers/FacilityManagerController.php)
-- [app/Http/Controllers/FacilitySwitcherController.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Controllers/FacilitySwitcherController.php)
+- [app/Http/Controllers/FacilityImpersonationController.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Controllers/FacilityImpersonationController.php)
 
-Assessment:
-
-- this part is **complete for the current slice**
-
-### 2.2 Main Facility Manager Pages
-
-Implemented routes and pages:
-
-- `/facility-manager/dashboard`
-- `/facility-manager/facilities`
-- `/facility-manager/facilities/{tenant}`
-- `/facility-manager/facilities/{tenant}/branches`
-- `/facility-manager/facilities/{tenant}/users`
-- `/facility-manager/facilities/{tenant}/subscriptions`
-- `/facility-manager/facilities/{tenant}/activity`
-- `/facility-manager/facilities/{tenant}/support-notes`
-
-Frontend pages exist in:
+Relevant pages:
 
 - [resources/js/pages/facility-manager/dashboard.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/dashboard.tsx)
 - [resources/js/pages/facility-manager/index.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/index.tsx)
@@ -85,543 +63,452 @@ Frontend pages exist in:
 - [resources/js/pages/facility-manager/subscriptions.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/subscriptions.tsx)
 - [resources/js/pages/facility-manager/activity.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/activity.tsx)
 - [resources/js/pages/facility-manager/support-notes.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/support-notes.tsx)
+- [resources/js/pages/facility-manager/impersonation/index.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-manager/impersonation/index.tsx)
 
-Assessment:
+### 2.2 What Creates New Facilities Today
 
-- this page structure is **implemented**
+New facilities are **not** created from Facility Manager today.
 
-### 2.3 Facilities List
+They are created through:
 
-Implemented on the list page:
-
-- tenant name
-- domain
-- onboarding status filtering
-- subscription status filtering
-- counts for branches, departments, users, patients, visits, lab requests, and prescriptions
-- pagination
-- searchable facility list
-
-Assessment:
-
-- this is **more than partial**
-- the list page is **functionally complete for the current generation**
-
-Still missing later:
-
-- package filter
-- last activity column
-- health warning column
-- export
-- bulk support actions
-
-### 2.4 Facility Overview Page
-
-Implemented:
-
-- tenant identity
-- country / address context
-- onboarding state
-- current subscription summary
-- recent users
-- recent subscription history
-- usage counters
-- last activity timestamps for visits, lab requests, prescriptions, and support notes
-- quick overview of branches and departments
-
-Assessment:
-
-- this is **implemented**
-- but still not the final “deep support control center”
-
-### 2.5 Branches Page
-
-Implemented:
-
-- total branches
-- active branches
-- main branches
-- store-enabled count
-- branch list with:
-  - name
-  - code
-  - status
-  - main branch flag
-  - store-enabled flag
-  - staff count
-  - currency
-  - address summary
-
-Assessment:
-
-- **implemented**
-
-### 2.6 Users Page
-
-Implemented:
-
-- tenant-scoped users listing
-- search
-- active/inactive filtering
-- verified count
-- active staff count
-- user role display
-- staff position display
-- branch assignments
-- employee number
-- email verification state
-- last login timestamp
-
-Assessment:
-
-- **implemented**
-
-### 2.7 Subscriptions Page
-
-Implemented:
-
-- current subscription display
-- subscription history
-- counts of active, trial, and past-due records
-
-Assessment:
-
-- **implemented as a read-and-review page**
-
-Important nuance:
-
-- operational subscription actions are not handled directly here yet
-- they are still handled through the separate `facility-switcher` support flow
-
-So this page is:
-
-- **implemented for visibility**
-- **partial for direct operational control**
-
-### 2.8 Activity Page
-
-Implemented:
-
-- visits in the last 7 days
-- consultations in the last 30 days
-- lab requests in the last 30 days
-- prescriptions in the last 30 days
-- service orders in the last 30 days
-- recent activity feed
-
-Assessment:
-
-- **implemented as summary analytics**
-- **partial as a full analytics module**
-
-Missing:
-
-- trend charts
-- day-by-day trend lines
-- inactive facility detection
-- module usage trend analysis
-
-### 2.9 Support Notes
-
-Implemented:
-
-- `tenant_support_notes` table
-- support note model and persistence
-- pinned notes
-- support note history
-- note creation
+- `GET /create-workspace`
+- `POST /create-workspace`
+- then redirected into `/onboarding`
 
 Relevant files:
 
-- [database/migrations/2026_04_11_130000_create_tenant_support_notes_table.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/database/migrations/2026_04_11_130000_create_tenant_support_notes_table.php)
-- [app/Models/TenantSupportNote.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Models/TenantSupportNote.php)
-- [app/Http/Requests/StoreTenantSupportNoteRequest.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Requests/StoreTenantSupportNoteRequest.php)
+- [app/Http/Controllers/WorkspaceRegistrationController.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Controllers/WorkspaceRegistrationController.php)
+- [resources/js/pages/saas/register.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/saas/register.tsx)
+- [app/Http/Controllers/OnboardingController.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Http/Controllers/OnboardingController.php)
+- [resources/js/pages/onboarding/show.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/onboarding/show.tsx)
 
-Assessment:
+So the current split is:
 
-- **implemented**
+- **Facility Manager** manages existing facilities
+- **Create Workspace** creates new facilities
+- **Onboarding** completes setup inside the tenant context
 
-### 2.10 Separate Facility Switcher Support Operations
+---
 
-Implemented outside the Facility Manager pages:
+## 3) Done, Partial, Not Yet Done
 
-- `/facility-switcher`
-- `/facility-switcher/{tenant}`
-- switch into tenant
+## 3.1 Done
+
+These parts are implemented and working as a real product slice.
+
+### Access and navigation
+
+Done:
+
+- support-only route group for Facility Manager
+- permission-based access using `tenants.view` and `tenants.update`
+- support sidebar entry
+- tenant detail navigation structure
+
+### Main pages
+
+Done:
+
+- dashboard
+- facilities index
+- facility overview
+- branches
+- users
+- subscriptions
+- activity
+- support notes
+
+### Facility list behavior
+
+Done:
+
+- search
+- onboarding filter
+- subscription filter
+- pagination
+- counts for branches, departments, users, patients, visits, lab requests, and prescriptions
+
+### Support actions already inside Facility Manager
+
+Done:
+
+- support notes creation
 - activate subscription
 - mark subscription past due
 - complete onboarding
 - reopen onboarding
 
-Relevant files:
-
-- [resources/js/pages/facility-switcher/index.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-switcher/index.tsx)
-- [resources/js/pages/facility-switcher/show.tsx](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/resources/js/pages/facility-switcher/show.tsx)
-- [app/Services/SwitchTenantContext.php](/c:/Users/Manoah/Desktop/projects/personal-practice/mini-hospital-v2/app/Services/SwitchTenantContext.php)
-
-Assessment:
-
-- these operations are **implemented**
-- but the Facility Manager experience is still **partially fragmented**, because the core support operator has to move between:
-  - `facility-manager`
-  - `facility-switcher`
-
----
-
-## 3) What Is Partial
-
-These areas exist, but are not yet at the level originally envisioned.
-
-### 3.1 Operational Controls Are Split Across Two Support Areas
-
-Current state:
-
-- visibility and analytics live in `Facility Manager`
-- some support actions live in `Facility Switcher`
-
-Why this is partial:
-
-- the support operator does not yet get one unified tenant control center
-- action placement is split
-- the mental model is still more “switcher + manager” than one rich support console
-
-### 3.2 Activity Analytics Exist, But Not Full Analytics
-
-Current state:
-
-- summary counts and recent activity feed exist
-
-Missing:
-
-- trend charts
-- module usage trends
-- growth / decline indicators
-- inactivity heuristics
-- tenant comparison snapshots
-
-### 3.3 Subscription Management Exists, But Not Full Subscription Operations In One Place
-
-Current state:
-
-- subscription visibility exists
-- activation and past-due marking exist
-
-Missing:
-
-- direct package change flow inside Facility Manager
-- full subscription edit/reassignment flow
-- cleaner support action controls on the subscriptions page itself
-
-### 3.4 Overview Page Is Strong, But Not Yet a Full Health Console
-
-Current state:
-
-- overview metrics and last-activity timestamps exist
-
-Missing:
-
-- health flags
-- setup warnings
-- operational risk signals
-- missing configuration audits
-
----
-
-## 4) What Is Not Yet Implemented
-
-These items are still genuinely pending.
-
-### 4.1 Health Checks
-
-Not yet implemented:
-
-- no active branch
-- no active users
-- no clinicians configured
-- no facility services
-- no inventory locations where expected
-- no lab catalog where expected
-- onboarding incomplete risk flags
-
-### 4.2 Configuration Audit Page
-
-Not yet implemented:
-
-- tenant setup audit
-- branch readiness audit
-- service catalog readiness audit
-- insurance configuration audit
-- role coverage audit
-- inventory readiness audit
-
-### 4.3 Snapshot-Based Analytics
-
-Not yet implemented:
-
-- `tenant_health_snapshots`
-- `tenant_usage_snapshots`
-- daily or weekly historical rollups
-- cached trend reporting
-
-### 4.4 Inactive / Low-Usage Facility Detection
-
-Not yet implemented:
-
-- facilities with no recent users
-- facilities with no recent visits
-- facilities with expiring activity
-- early churn-risk detection
-
-### 4.5 Exports
-
-Not yet implemented:
-
-- facility list export
-- subscription report export
-- support notes export
-- activity export
-
-### 4.6 Richer Support Tooling
-
-Not yet implemented:
-
-- support flags / escalations
-- support task reminders
-- bulk platform actions
-- richer impersonation safeguards
-- more guided intervention workflows
-
----
-
-## 5) Updated Status By Phase
-
-### Phase 1: Better Facility List
-
-Deliverables:
-
-- facility manager index page
-- searchable/filterable tenant list
-- onboarding and subscription columns
-- counts
-- path into facility detail
-
-Status:
-
-- **completed**
-
-### Phase 2: Facility Detail Experience
-
-Deliverables:
-
-- tenant overview
-- branch summary
-- user summary
-- subscription summary
-- activity summary
-- support notes
-
-Status:
-
-- **completed**
-
-### Phase 3: Operational Support Controls
-
-Deliverables:
-
-- onboarding controls
-- subscription operations
-- support notes
-- switch-into-tenant action
-
-Status:
-
-- **partially completed**
+### Impersonation support flow
 
 Done:
 
-- support notes
-- switch-into-tenant action
-- subscription activate / past-due actions
-- onboarding complete / reopen actions
+- impersonation index page
+- start impersonation from Facility Manager
+- stop impersonation route
 
-Still partial because:
-
-- these actions are not yet unified inside the Facility Manager page set itself
-
-### Phase 4: Health And Audit Layer
-
-Deliverables:
-
-- facility health checks
-- missing setup warnings
-- configuration audit page
-
-Status:
-
-- **not yet implemented**
-
-### Phase 5: Analytics Depth
-
-Deliverables:
-
-- charts
-- trends
-- inactive facility detection
-- snapshot reporting
-
-Status:
-
-- **partially completed**
+### Onboarding pipeline
 
 Done:
 
-- summary metrics
-- recent activity feed
+- tenant profile step
+- primary branch step
+- departments step
+- first staff step
+- completion path back into the app
 
-Pending:
+### Workspace creation pipeline
 
-- charts
+Done:
+
+- create workspace page
+- create first tenant + user
+- choose package
+- handoff into onboarding
+
+---
+
+## 3.2 Partial
+
+These parts exist, but they are not yet at the best workflow level.
+
+### Facility Manager as the full support control center
+
+Partial because:
+
+- it manages existing facilities well
+- but it does not yet let support staff create a new facility directly from the same console
+
+### Subscription management
+
+Partial because:
+
+- support can activate and mark past due
+- but there is no richer subscription editing flow yet
+- no package reassignment flow in-context
+- no billing history / invoice-style operational tooling
+
+### Activity analytics
+
+Partial because:
+
+- summary metrics and recent activity exist
+- but there are no charts, trends, snapshots, or inactivity heuristics
+
+### Onboarding support workflow
+
+Partial because:
+
+- support can reopen or complete onboarding
+- support can impersonate a tenant user
+- but there is no explicit “resume onboarding as support” workflow button tied directly to the onboarding steps
+
+### Facility creation support workflow
+
+Partial because:
+
+- the system can create facilities
+- but Facility Manager does not expose that creation flow yet
+
+---
+
+## 3.3 Not Yet Done
+
+These are still genuinely missing.
+
+### Create Facility inside Facility Manager
+
+Not yet done:
+
+- no `Create Facility` button in Facility Manager
+- no support-facing create flow under `/facility-manager`
+- no direct handoff from Facility Manager into workspace creation
+
+### Health and readiness checks
+
+Not yet done:
+
+- no active branch warning
+- no verified users warning
+- no clinicians configured warning
+- no service catalog warning
+- no stock / lab readiness checks
+- no tenant health summary
+
+### Configuration audit page
+
+Not yet done:
+
+- no facility audit page
+- no setup checklist page
+- no module readiness audit
+
+### Trend analytics
+
+Not yet done:
+
+- no charts
+- no trend lines
+- no low-usage detection
+- no dormant facility detection
+
+### Export and advanced support tooling
+
+Not yet done:
+
+- no facility export
+- no support-note export
+- no support flags / escalations
+- no reminders or task queue for follow-up
+
+---
+
+## 4) Updated Phase Status
+
+### Phase 1: Facility Manager foundation
+
+Includes:
+
+- support access
+- dashboard
+- facilities list
+- tenant detail navigation
+
+Status:
+
+- **done**
+
+### Phase 2: Facility detail and operational visibility
+
+Includes:
+
+- overview
+- branches
+- users
+- subscriptions
+- activity
+- support notes
+
+Status:
+
+- **done**
+
+### Phase 3: Support intervention actions
+
+Includes:
+
+- subscription state actions
+- onboarding state actions
+- impersonation
+- support notes
+
+Status:
+
+- **done for the current slice**
+
+### Phase 4: Facility creation from support console
+
+Includes:
+
+- create facility entry point inside Facility Manager
+- support-safe handoff into onboarding
+
+Status:
+
+- **not yet done**
+
+### Phase 5: Health and audit layer
+
+Includes:
+
+- health warnings
+- readiness checks
+- audit page
+
+Status:
+
+- **not yet done**
+
+### Phase 6: Analytics depth and support operations
+
+Includes:
+
 - trends
-- detection logic
-- snapshots
-
-### Phase 6: Advanced Support Tooling
-
-Deliverables:
-
+- churn / inactivity detection
 - exports
 - support flags
-- escalations
-- richer intervention tooling
 
 Status:
 
-- **not yet implemented**
+- **not yet done**
 
 ---
 
-## 6) Recommended Next Order
+## 5) Should Facility Creation Be In Facility Manager?
 
-This is the recommended order from here.
+## 5.1 Why It Does Make Sense
 
-### 1. Unify Operational Controls Into Facility Manager
+It makes sense because Facility Manager is already the support operator’s home for:
+
+- reviewing facility state
+- intervening in onboarding
+- intervening in subscriptions
+- impersonating tenant users
+
+Adding creation there gives support a complete lifecycle:
+
+- create facility
+- monitor onboarding
+- unblock setup
+- activate subscription
+- manage support follow-up
+
+That is a clean mental model.
+
+## 5.2 What Should Not Happen
+
+It should **not** become a second unrelated onboarding engine.
+
+That would create duplicate logic for:
+
+- tenant creation
+- owner user creation
+- package selection
+- onboarding step transitions
+
+The app already has those flows. Duplicating them would create maintenance drift.
+
+## 5.3 Best Product Shape
+
+Best shape:
+
+- support user clicks `Create Facility` inside Facility Manager
+- Facility Manager opens a support-friendly version of the existing workspace registration flow
+- after creation, support is taken to the new facility record
+- support can then:
+  - view status
+  - impersonate
+  - resume onboarding
+  - manage subscription state
+
+---
+
+## 6) Recommended Workflow
+
+This is the recommended workflow for new facility onboarding going forward.
+
+### Recommended operator workflow
+
+1. Support user opens `/facility-manager/facilities`
+2. Support clicks `Create Facility`
+3. System uses the existing workspace registration pipeline to create:
+   - tenant
+   - initial owner/admin user
+   - initial subscription record
+4. After creation, support is redirected to the new facility’s Facility Manager detail page
+5. The detail page clearly shows:
+   - onboarding status
+   - subscription status
+   - quick action to impersonate
+   - quick action to resume onboarding
+6. Support uses impersonation to enter the tenant context when hands-on onboarding is needed
+7. Tenant onboarding continues through the existing `/onboarding` steps
+8. When setup is complete, Facility Manager becomes the ongoing support console for that facility
+
+### Recommended UI additions
+
+Add to Facility Manager:
+
+- `Create Facility` primary button on dashboard and facilities index
+- optional `Resume Onboarding` action on facility detail
+- optional `Open Onboarding Status` card on facility overview
+
+### Recommended implementation strategy
+
+Preferred:
+
+- reuse `WorkspaceRegistrationController`
+- reuse `RegisterWorkspace`
+- reuse `OnboardingController`
+- add a support-facing entry point and redirect flow
+
+Avoid:
+
+- duplicate controller logic for tenant creation
+- duplicate onboarding forms under a second route tree
+
+---
+
+## 7) Recommended Next Build Order
+
+### 1. Add `Create Facility` entry point to Facility Manager
 
 Why first:
 
-- the underlying actions already exist
-- this gives the biggest UX improvement fastest
-- it turns Facility Manager into the real support console instead of a mostly read-only console plus a separate switcher
+- highest workflow value
+- closes the biggest product gap
+- avoids support having to leave the management console for creation
 
-What to do:
-
-- surface:
-  - switch into tenant
-  - activate subscription
-  - mark subscription past due
-  - complete onboarding
-  - reopen onboarding
-- directly from facility overview and subscriptions page
-
-### 2. Add Facility Health Checks
+### 2. Add “Resume Onboarding” support action
 
 Why next:
 
-- highest support value
-- immediately helps support identify broken or incomplete tenants
+- creation and onboarding should feel like one lifecycle
+- support should be able to move directly from Facility Manager into the tenant onboarding journey
 
-Suggested checks:
-
-- no active branch
-- no verified users
-- no active clinicians
-- no facility services
-- no pharmacy or lab setup where expected
-- no inventory locations where expected
-
-### 3. Build Configuration Audit Page
+### 3. Add health / readiness indicators on facility overview
 
 Why next:
 
-- health flags tell support *that* something is wrong
-- audit page tells support *what specifically is missing*
+- support needs to quickly know why a facility is stuck
 
-Suggested page:
+### 4. Add a dedicated audit page
 
-- `/facility-manager/facilities/{tenant}/audit`
+Why next:
 
-### 4. Add Trend Analytics and Low-Usage Detection
+- overview flags tell support something is wrong
+- audit tells support exactly what is missing
 
-Why then:
-
-- once support has a better operational console, trends become more valuable
-
-Suggested outputs:
-
-- 7-day vs previous 7-day
-- 30-day activity trend
-- inactive facility flags
-- low-adoption facility flags
-
-### 5. Add Exports and Support Flags
+### 5. Add trend analytics and exports
 
 Why later:
 
-- useful, but lower priority than health and audit
-
-Suggested outputs:
-
-- export tenants list
-- export subscription state
-- export support notes
-- support escalation flags
-
----
-
-## 7) Recommended Definition of Complete
-
-The Facility Manager app should be considered complete when:
-
-- support users have one unified management console
-- facility list is searchable and operationally useful
-- facility detail page acts as a real support control center
-- support notes are auditable
-- onboarding and subscription actions are available in-context
-- health checks and configuration audits exist
-- activity trends and low-usage detection exist
-- exports and support flags exist where needed
-
-Right now, the system is not there yet.
-
-But it is well past the “plan only” stage.
+- useful, but not as urgent as creation + onboarding + health workflow coherence
 
 ---
 
 ## 8) Bottom Line
 
-The Facility Manager app is **partially complete**.
+Facility Manager is already a real support console for existing facilities.
 
-What is already solid:
+What is done:
 
 - support-only access
-- core Facility Manager route structure
 - dashboard
 - facilities list
 - detail pages
 - support notes
-- tenant switching and basic support actions through the switcher flow
+- impersonation
+- onboarding state actions
+- subscription state actions
+- workspace creation and onboarding pipeline outside Facility Manager
 
-What is still incomplete:
+What is partial:
 
-- unified in-context operational controls
+- full lifecycle support workflow from creation to onboarding to support
+- richer subscription operations
+- richer onboarding intervention flow
+- deeper analytics
+
+What is not yet done:
+
+- support-facing `Create Facility` inside Facility Manager
 - health checks
-- configuration audits
-- trend analytics
-- inactive-facility detection
+- audit page
+- trends
 - exports
-- richer support tooling
 
-So the right current verdict is:
+Recommended decision:
 
-- **foundation complete**
-- **operational slice partially complete**
-- **advanced support/admin console not yet complete**
+- **yes, put facility creation into Facility Manager**
+- **but implement it by reusing the existing workspace registration and onboarding flow**
+- **do not create a separate second facility-creation system**

@@ -68,6 +68,7 @@ final class PermissionSeeder extends Seeder
             'staff_positions' => ['view', 'create', 'update', 'delete'],
             'staff' => ['view', 'create', 'update', 'delete'],
             'departments' => ['view', 'create', 'update', 'delete'],
+            'referral_facilities' => ['view', 'create', 'update', 'delete'],
             'clinics' => ['view', 'create', 'update', 'delete'],
             'units' => ['view', 'create', 'update', 'delete'],
             'inventory_items' => ['view', 'create', 'update', 'delete'],
@@ -180,6 +181,7 @@ final class PermissionSeeder extends Seeder
                 'staff' => ['view', 'create', 'update', 'delete'],
                 'staff_positions' => ['view', 'create', 'update', 'delete'],
                 'departments' => ['view'],
+                'referral_facilities' => ['view'],
                 'clinics' => ['view'],
             ],
             'store_keeper' => [

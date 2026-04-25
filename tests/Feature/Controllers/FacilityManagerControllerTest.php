@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Enums\SubscriptionStatus;
 use App\Models\FacilityBranch;
 use App\Models\Tenant;
+use App\Models\TenantSubscription;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Inertia\Testing\AssertableInertia;
@@ -36,6 +38,41 @@ it('allows support users with tenants.view permission to open the facility manag
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('facility-manager/index')
             ->where('tenants.data.0.id', $tenant->id));
+});
+
+it('serializes enum-cast subscription statuses on the facility manager facilities list', function (): void {
+    $this->seed(PermissionSeeder::class);
+
+    $tenant = Tenant::factory()->create();
+    FacilityBranch::factory()->create([
+        'tenant_id' => $tenant->id,
+    ]);
+
+    TenantSubscription::query()->create([
+        'tenant_id' => $tenant->id,
+        'subscription_package_id' => $tenant->subscription_package_id,
+        'status' => SubscriptionStatus::ACTIVE,
+        'starts_at' => now()->subMonth(),
+        'activated_at' => now()->subWeek(),
+        'current_period_starts_at' => now()->subWeek(),
+        'current_period_ends_at' => now()->addWeeks(3),
+    ]);
+
+    $supportUser = User::factory()->create([
+        'tenant_id' => null,
+        'is_support' => true,
+        'email_verified_at' => now(),
+    ]);
+    $supportUser->givePermissionTo('tenants.view');
+
+    $this->actingAs($supportUser)
+        ->get(route('facility-manager.facilities.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('facility-manager/index')
+            ->where('tenants.data.0.id', $tenant->id)
+            ->where('tenants.data.0.current_subscription.status', SubscriptionStatus::ACTIVE->value)
+            ->where('tenants.data.0.current_subscription.status_label', SubscriptionStatus::ACTIVE->label()));
 });
 
 it('allows support users with tenants.view permission to open a facility manager detail page', function (): void {

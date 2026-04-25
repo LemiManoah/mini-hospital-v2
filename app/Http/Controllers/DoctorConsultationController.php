@@ -13,9 +13,11 @@ use App\Enums\ConsultationOutcome;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
 use App\Models\Allergen;
+use App\Models\Department;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\PatientVisit;
+use App\Models\ReferralFacility;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\DoctorConsultationAccess;
 use App\Support\VisitOrderOptions;
@@ -177,6 +179,29 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 ->map(static fn (ConsultationOutcome $outcome): array => [
                     'value' => $outcome->value,
                     'label' => $outcome->label(),
+                ])
+                ->values()
+                ->all(),
+            'referralDepartmentOptions' => Department::query()
+                ->orderBy('department_name')
+                ->get(['id', 'department_name'])
+                ->map(static fn (Department $department): array => [
+                    'value' => $department->department_name,
+                    'label' => $department->department_name,
+                ])
+                ->values()
+                ->all(),
+            'referralFacilityOptions' => ReferralFacility::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'name', 'facility_type', 'phone', 'email', 'is_active'])
+                ->map(static fn (ReferralFacility $facility): array => [
+                    'id' => $facility->id,
+                    'name' => $facility->name,
+                    'facility_type' => $facility->facility_type,
+                    'phone' => $facility->phone,
+                    'email' => $facility->email,
+                    'is_active' => $facility->is_active,
                 ])
                 ->values()
                 ->all(),

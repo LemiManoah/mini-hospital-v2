@@ -881,18 +881,26 @@ final readonly class FacilityManagerController implements HasMiddleware
 
     private function subscriptionStatusValue(TenantSubscription $subscription): string
     {
-        return $subscription->status;
+        return $this->subscriptionStatus($subscription)->value;
     }
 
     private function subscriptionStatusLabel(TenantSubscription $subscription): string
     {
-        return match ($subscription->status) {
-            SubscriptionStatus::TRIAL->value => SubscriptionStatus::TRIAL->label(),
-            SubscriptionStatus::PENDING_ACTIVATION->value => SubscriptionStatus::PENDING_ACTIVATION->label(),
-            SubscriptionStatus::ACTIVE->value => SubscriptionStatus::ACTIVE->label(),
-            SubscriptionStatus::PAST_DUE->value => SubscriptionStatus::PAST_DUE->label(),
-            SubscriptionStatus::CANCELLED->value => SubscriptionStatus::CANCELLED->label(),
-            default => mb_convert_case(str_replace('_', ' ', $subscription->status), MB_CASE_TITLE, 'UTF-8'),
-        };
+        return $this->subscriptionStatus($subscription)->label();
+    }
+
+    private function subscriptionStatus(TenantSubscription $subscription): SubscriptionStatus
+    {
+        $status = $subscription->getAttributeValue('status');
+
+        if ($status instanceof SubscriptionStatus) {
+            return $status;
+        }
+
+        if (is_string($status)) {
+            return SubscriptionStatus::from($status);
+        }
+
+        return SubscriptionStatus::PENDING_ACTIVATION;
     }
 }
