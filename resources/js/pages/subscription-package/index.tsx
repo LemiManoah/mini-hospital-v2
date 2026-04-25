@@ -160,12 +160,7 @@ export default function SubscriptionPackageIndex({
                                                 >
                                                     <Link
                                                         href={SubscriptionPackageController.edit.url(
-                                                            {
-                                                                subscription_package:
-                                                                    String(
-                                                                        pkg.id,
-                                                                    ),
-                                                            },
+                                                            pkg.id,
                                                         )}
                                                     >
                                                         Edit
@@ -180,10 +175,7 @@ export default function SubscriptionPackageIndex({
                                                     title="Delete Package"
                                                     description={`Are you sure you want to delete "${pkg.name}"? This action cannot be undone.`}
                                                     action={SubscriptionPackageController.destroy.form(
-                                                        {
-                                                            subscription_package:
-                                                                String(pkg.id),
-                                                        },
+                                                        pkg.id,
                                                     )}
                                                     onSuccess={() =>
                                                         toast.success(
