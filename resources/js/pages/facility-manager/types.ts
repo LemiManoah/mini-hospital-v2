@@ -5,6 +5,7 @@ export interface FacilityManagerTenantSummary {
     status: string | null;
     facility_level: string | null;
     onboarding_completed_at: string | null;
+    support_workflow: FacilityManagerSupportWorkflow;
     address?: {
         display_name: string;
     } | null;
@@ -24,6 +25,15 @@ export interface FacilityManagerTenantSummary {
         } | null;
         created_at?: string | null;
     } | null;
+}
+
+export interface FacilityManagerSupportWorkflow {
+    status: string;
+    status_label: string;
+    priority: string;
+    priority_label: string;
+    follow_up_at: string | null;
+    last_contacted_at: string | null;
 }
 
 export interface FacilityHealthCheck {

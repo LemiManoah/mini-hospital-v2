@@ -6,11 +6,15 @@ namespace App\Http\Controllers;
 
 use App\Actions\RegisterWorkspace;
 use App\Actions\StartTenantSubscription;
+use App\Actions\UpdateTenantSupportWorkflow;
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Enums\SubscriptionStatus;
+use App\Enums\TenantSupportPriority;
+use App\Enums\TenantSupportStatus;
 use App\Http\Requests\StoreTenantSupportNoteRequest;
 use App\Http\Requests\StoreWorkspaceRegistrationRequest;
+use App\Http\Requests\UpdateTenantSupportWorkflowRequest;
 use App\Models\Consultation;
 use App\Models\Country;
 use App\Models\Department;
@@ -29,6 +33,7 @@ use App\Models\TenantSubscription;
 use App\Models\TenantSupportNote;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -39,12 +44,15 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final readonly class FacilityManagerController implements HasMiddleware
 {
     public function __construct(
         private RegisterWorkspace $registerWorkspace,
         private StartTenantSubscription $startTenantSubscription,
+        private UpdateTenantSupportWorkflow $updateTenantSupportWorkflow,
     ) {}
 
     public static function middleware(): array
@@ -55,6 +63,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'index',
                 'create',
                 'store',
+                'export',
                 'audit',
                 'show',
                 'branches',
@@ -67,6 +76,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'create',
                 'store',
                 'storeNote',
+                'updateSupportWorkflow',
                 'activateSubscription',
                 'markSubscriptionPastDue',
                 'completeOnboarding',
@@ -93,11 +103,13 @@ final readonly class FacilityManagerController implements HasMiddleware
         $followUpTenants = $tenants
             ->filter(fn (Tenant $tenant): bool => ! $tenant->isOnboardingComplete()
                 || $this->subscriptionStatusValueOrNull($tenant->currentSubscription) === SubscriptionStatus::PAST_DUE->value
-                || $tenant->currentSubscription === null)
+                || $tenant->currentSubscription === null
+                || $this->tenantSupportStatus($tenant)->needsAttention())
             ->sortBy(fn (Tenant $tenant): string => sprintf(
-                '%d-%d-%s',
+                '%d-%d-%d-%s',
                 $tenant->isOnboardingComplete() ? 1 : 0,
                 $this->subscriptionStatusValueOrNull($tenant->currentSubscription) === SubscriptionStatus::PAST_DUE->value ? 0 : 1,
+                $this->tenantSupportStatus($tenant)->needsAttention() ? 0 : 1,
                 mb_strtolower($tenant->name),
             ))
             ->take(8)
@@ -152,6 +164,7 @@ final readonly class FacilityManagerController implements HasMiddleware
             'search' => $request->string('search')->value() ?: null,
             'onboarding' => $request->string('onboarding')->value() ?: null,
             'subscription' => $request->string('subscription')->value() ?: null,
+            'support' => $request->string('support')->value() ?: null,
         ];
 
         $tenants = $this->tenantsWithCounts($this->filteredTenantQuery($request))
@@ -164,6 +177,70 @@ final readonly class FacilityManagerController implements HasMiddleware
             'filters' => $filters,
             'tenants' => $tenants,
         ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        Gate::authorize('viewAny', Tenant::class);
+
+        $query = $this->tenantsWithCounts($this->filteredTenantQuery($request))
+            ->orderBy('name');
+
+        $filename = sprintf('facility-manager-facilities-%s.csv', now()->format('Y-m-d'));
+
+        return response()->streamDownload(function () use ($query): void {
+            $handle = fopen('php://output', 'w');
+            throw_if($handle === false, RuntimeException::class, 'Unable to open output stream for facility export.');
+
+            fputcsv($handle, [
+                'Facility',
+                'Domain',
+                'Facility Level',
+                'Onboarding',
+                'Subscription',
+                'Package',
+                'Support Status',
+                'Support Priority',
+                'Next Follow-Up',
+                'Last Contacted',
+                'Branches',
+                'Users',
+                'Patients',
+                'Visits',
+                'Lab Requests',
+                'Prescriptions',
+            ], escape: '\\');
+
+            $query->each(function (Tenant $tenant) use ($handle): void {
+                /** @var array<int, bool|float|int|string|null> $row */
+                $row = [
+                    $tenant->name,
+                    $tenant->domain,
+                    $tenant->facility_level->value,
+                    $tenant->isOnboardingComplete() ? 'Completed' : 'Open',
+                    $tenant->currentSubscription !== null ? $this->subscriptionStatusLabel($tenant->currentSubscription) : 'No subscription',
+                    $tenant->currentSubscription !== null
+                        ? ($tenant->currentSubscription->subscriptionPackage !== null
+                            ? $tenant->currentSubscription->subscriptionPackage->name
+                            : '')
+                        : '',
+                    $this->tenantSupportStatus($tenant)->label(),
+                    $this->tenantSupportPriority($tenant)->label(),
+                    $tenant->support_follow_up_at?->format('Y-m-d H:i') ?? '',
+                    $tenant->support_last_contacted_at?->format('Y-m-d H:i') ?? '',
+                    $tenant->branches_count ?? 0,
+                    $tenant->users_count ?? 0,
+                    $tenant->patients_count ?? 0,
+                    $tenant->visits_count ?? 0,
+                    $tenant->lab_requests_count ?? 0,
+                    $tenant->prescriptions_count ?? 0,
+                ];
+
+                fputcsv($handle, $row, escape: '\\');
+            });
+
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 
     public function create(): Response
@@ -578,6 +655,27 @@ final readonly class FacilityManagerController implements HasMiddleware
             ->with('success', 'Support note added for '.$tenant->name.'.');
     }
 
+    public function updateSupportWorkflow(UpdateTenantSupportWorkflowRequest $request, Tenant $tenant): RedirectResponse
+    {
+        Gate::authorize('update', $tenant);
+
+        $validated = $request->validated();
+        $status = $validated['status'] ?? null;
+        $priority = $validated['priority'] ?? null;
+
+        abort_if(! is_string($status) || ! is_string($priority), 422, 'Support workflow status and priority must be strings.');
+
+        $this->updateTenantSupportWorkflow->handle($tenant, [
+            'status' => $status,
+            'priority' => $priority,
+            'follow_up_at' => $validated['follow_up_at'] ?? null,
+            'last_contacted_at' => $validated['last_contacted_at'] ?? null,
+        ]);
+
+        return to_route('facility-manager.facilities.notes', $tenant)
+            ->with('success', 'Support workflow updated for '.$tenant->name.'.');
+    }
+
     public function activateSubscription(Request $request, Tenant $tenant): RedirectResponse
     {
         /** @var User $user */
@@ -648,6 +746,7 @@ final readonly class FacilityManagerController implements HasMiddleware
         $search = $request->string('search')->value();
         $onboarding = $request->string('onboarding')->value();
         $subscription = $request->string('subscription')->value();
+        $support = $request->string('support')->value();
 
         return Tenant::query()
             ->with('currentSubscription.subscriptionPackage')
@@ -679,6 +778,10 @@ final readonly class FacilityManagerController implements HasMiddleware
                     'currentSubscription',
                     static fn (Builder $subscriptionQuery): Builder => $subscriptionQuery->where('status', $subscription),
                 ),
+            )
+            ->when(
+                $support !== '',
+                static fn (Builder $query): Builder => $query->where('support_status', $support),
             );
     }
 
@@ -716,6 +819,7 @@ final readonly class FacilityManagerController implements HasMiddleware
             'status' => $tenant->status->value,
             'facility_level' => $tenant->facility_level->value,
             'onboarding_completed_at' => $tenant->onboarding_completed_at?->toISOString(),
+            'support_workflow' => $this->tenantSupportWorkflowPayload($tenant),
             'current_subscription' => $tenant->currentSubscription ? [
                 'status' => $this->subscriptionStatusValue($tenant->currentSubscription),
                 'status_label' => $this->subscriptionStatusLabel($tenant->currentSubscription),
@@ -753,6 +857,7 @@ final readonly class FacilityManagerController implements HasMiddleware
             'status' => $tenant->status->value,
             'facility_level' => $tenant->facility_level->value,
             'onboarding_completed_at' => $tenant->onboarding_completed_at?->toISOString(),
+            'support_workflow' => $this->tenantSupportWorkflowPayload($tenant),
             'country' => $tenant->country ? [
                 'country_name' => $tenant->country->country_name,
             ] : null,
@@ -786,6 +891,21 @@ final readonly class FacilityManagerController implements HasMiddleware
             'activated_at' => $subscription->activated_at,
             'current_period_ends_at' => $subscription->current_period_ends_at,
             'created_at' => $subscription->created_at?->toISOString(),
+        ];
+    }
+
+    /**
+     * @return array{status: string, status_label: string, priority: string, priority_label: string, follow_up_at: string|null, last_contacted_at: string|null}
+     */
+    private function tenantSupportWorkflowPayload(Tenant $tenant): array
+    {
+        return [
+            'status' => $this->tenantSupportStatus($tenant)->value,
+            'status_label' => $this->tenantSupportStatus($tenant)->label(),
+            'priority' => $this->tenantSupportPriority($tenant)->value,
+            'priority_label' => $this->tenantSupportPriority($tenant)->label(),
+            'follow_up_at' => $this->tenantSupportDateTimeValue($tenant, 'support_follow_up_at'),
+            'last_contacted_at' => $this->tenantSupportDateTimeValue($tenant, 'support_last_contacted_at'),
         ];
     }
 
@@ -1286,5 +1406,60 @@ final readonly class FacilityManagerController implements HasMiddleware
         return $subscription instanceof TenantSubscription
             ? $this->subscriptionStatusValue($subscription)
             : null;
+    }
+
+    private function tenantSupportStatus(Tenant $tenant): TenantSupportStatus
+    {
+        $attributes = $tenant->getAttributes();
+
+        if (! array_key_exists('support_status', $attributes)) {
+            return TenantSupportStatus::STABLE;
+        }
+
+        $status = $tenant->getAttributeValue('support_status');
+
+        if ($status instanceof TenantSupportStatus) {
+            return $status;
+        }
+
+        return is_string($status)
+            ? TenantSupportStatus::tryFrom($status) ?? TenantSupportStatus::STABLE
+            : TenantSupportStatus::STABLE;
+    }
+
+    private function tenantSupportPriority(Tenant $tenant): TenantSupportPriority
+    {
+        $attributes = $tenant->getAttributes();
+
+        if (! array_key_exists('support_priority', $attributes)) {
+            return TenantSupportPriority::NORMAL;
+        }
+
+        $priority = $tenant->getAttributeValue('support_priority');
+
+        if ($priority instanceof TenantSupportPriority) {
+            return $priority;
+        }
+
+        return is_string($priority)
+            ? TenantSupportPriority::tryFrom($priority) ?? TenantSupportPriority::NORMAL
+            : TenantSupportPriority::NORMAL;
+    }
+
+    private function tenantSupportDateTimeValue(Tenant $tenant, string $attribute): ?string
+    {
+        $attributes = $tenant->getAttributes();
+
+        if (! array_key_exists($attribute, $attributes)) {
+            return null;
+        }
+
+        $value = $tenant->getAttributeValue($attribute);
+
+        if (! $value instanceof DateTimeInterface) {
+            return null;
+        }
+
+        return $value->format(DATE_ATOM);
     }
 }

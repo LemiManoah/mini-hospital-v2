@@ -20,6 +20,8 @@ import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 
+import { FacilityManagerExportButton } from './components/facility-manager-export-button';
+
 interface Metric {
     label: string;
     value: number;
@@ -31,6 +33,12 @@ interface FollowUpTenant {
     name: string;
     domain: string;
     onboarding_completed_at: string | null;
+    support_workflow: {
+        status: string;
+        status_label: string;
+        priority: string;
+        priority_label: string;
+    };
     current_subscription?: {
         status: string;
         status_label: string;
@@ -90,6 +98,7 @@ export default function FacilityManagerDashboard({
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        <FacilityManagerExportButton href="/facility-manager/facilities/export" />
                         <Button variant="outline" asChild>
                             <Link href="/facility-manager/facilities">
                                 Open Facilities
@@ -142,7 +151,8 @@ export default function FacilityManagerDashboard({
                             <CardTitle>Facilities Needing Follow-Up</CardTitle>
                             <CardDescription>
                                 Start with tenants that are missing onboarding,
-                                lack a subscription, or are already past due.
+                                lack a subscription, are already past due, or
+                                have an open support flag.
                             </CardDescription>
                         </div>
                         <Button variant="outline" size="sm" asChild>
@@ -164,6 +174,7 @@ export default function FacilityManagerDashboard({
                                         <TableHead>Facility</TableHead>
                                         <TableHead>Onboarding</TableHead>
                                         <TableHead>Subscription</TableHead>
+                                        <TableHead>Support</TableHead>
                                         <TableHead>Users</TableHead>
                                         <TableHead>Patients</TableHead>
                                         <TableHead>Visits</TableHead>
@@ -206,6 +217,25 @@ export default function FacilityManagerDashboard({
                                                             .current_subscription
                                                             ?.package?.name ??
                                                             'No package'}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col gap-1">
+                                                    <Badge variant="outline">
+                                                        {
+                                                            tenant
+                                                                .support_workflow
+                                                                .status_label
+                                                        }
+                                                    </Badge>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {
+                                                            tenant
+                                                                .support_workflow
+                                                                .priority_label
+                                                        }{' '}
+                                                        priority
                                                     </span>
                                                 </div>
                                             </TableCell>

@@ -10,6 +10,13 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
@@ -21,6 +28,11 @@ import { FacilityManagerMetrics } from './components/facility-manager-metrics';
 import { FacilityManagerNav } from './components/facility-manager-nav';
 import { FacilityManagerPagination } from './components/facility-manager-pagination';
 import { FacilityManagerTenantHeader } from './components/facility-manager-tenant-header';
+import {
+    facilitySupportPriorityOptions,
+    facilitySupportStatusOptions,
+    toDateTimeLocalValue,
+} from './support-workflow';
 import {
     type FacilityManagerMetric,
     type FacilityManagerTenantSummary,
@@ -69,6 +81,16 @@ export default function FacilityManagerSupportNotes({
         body: '',
         is_pinned: false,
     });
+    const workflowForm = useForm({
+        status: tenant.support_workflow.status,
+        priority: tenant.support_workflow.priority,
+        follow_up_at: toDateTimeLocalValue(
+            tenant.support_workflow.follow_up_at,
+        ),
+        last_contacted_at: toDateTimeLocalValue(
+            tenant.support_workflow.last_contacted_at,
+        ),
+    });
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
@@ -88,6 +110,15 @@ export default function FacilityManagerSupportNotes({
             preserveScroll: true,
             onSuccess: () => form.reset('title', 'body', 'is_pinned'),
         });
+    };
+
+    const submitWorkflow = () => {
+        workflowForm.patch(
+            `/facility-manager/facilities/${tenant.id}/support-workflow`,
+            {
+                preserveScroll: true,
+            },
+        );
     };
 
     return (
@@ -114,73 +145,237 @@ export default function FacilityManagerSupportNotes({
 
                 <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
                     {hasPermission('tenants.update') ? (
-                        <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader>
-                                <CardTitle>Add Support Note</CardTitle>
-                                <CardDescription>
-                                    Capture internal context for onboarding,
-                                    billing, or support follow-up.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="title">Title</Label>
-                                    <Input
-                                        id="title"
-                                        value={form.data.title}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'title',
-                                                event.target.value,
-                                            )
-                                        }
-                                        placeholder="e.g. Billing follow-up"
-                                    />
-                                    <InputError message={form.errors.title} />
-                                </div>
+                        <div className="space-y-6">
+                            <Card className="border-none shadow-sm ring-1 ring-border/50">
+                                <CardHeader>
+                                    <CardTitle>Support Workflow</CardTitle>
+                                    <CardDescription>
+                                        Track whether this facility needs
+                                        follow-up, is waiting on customer input,
+                                        or should be escalated.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="support_status">
+                                                Status
+                                            </Label>
+                                            <Select
+                                                value={workflowForm.data.status}
+                                                onValueChange={(value) =>
+                                                    workflowForm.setData(
+                                                        'status',
+                                                        value,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger id="support_status">
+                                                    <SelectValue placeholder="Select support status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {facilitySupportStatusOptions.map(
+                                                        (option) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    option.value
+                                                                }
+                                                                value={
+                                                                    option.value
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError
+                                                message={
+                                                    workflowForm.errors.status
+                                                }
+                                            />
+                                        </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="body">Note</Label>
-                                    <Textarea
-                                        id="body"
-                                        value={form.data.body}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'body',
-                                                event.target.value,
-                                            )
-                                        }
-                                        placeholder="Write the internal note for this facility..."
-                                        rows={8}
-                                    />
-                                    <InputError message={form.errors.body} />
-                                </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="support_priority">
+                                                Priority
+                                            </Label>
+                                            <Select
+                                                value={
+                                                    workflowForm.data.priority
+                                                }
+                                                onValueChange={(value) =>
+                                                    workflowForm.setData(
+                                                        'priority',
+                                                        value,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger id="support_priority">
+                                                    <SelectValue placeholder="Select support priority" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {facilitySupportPriorityOptions.map(
+                                                        (option) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    option.value
+                                                                }
+                                                                value={
+                                                                    option.value
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError
+                                                message={
+                                                    workflowForm.errors.priority
+                                                }
+                                            />
+                                        </div>
+                                    </div>
 
-                                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-3">
-                                    <Checkbox
-                                        id="is_pinned"
-                                        checked={form.data.is_pinned}
-                                        onCheckedChange={(checked) =>
-                                            form.setData(
-                                                'is_pinned',
-                                                checked === true,
-                                            )
-                                        }
-                                    />
-                                    <Label htmlFor="is_pinned">
-                                        Pin this note to keep it at the top
-                                    </Label>
-                                </div>
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="follow_up_at">
+                                                Next Follow-Up
+                                            </Label>
+                                            <Input
+                                                id="follow_up_at"
+                                                type="datetime-local"
+                                                value={
+                                                    workflowForm.data
+                                                        .follow_up_at
+                                                }
+                                                onChange={(event) =>
+                                                    workflowForm.setData(
+                                                        'follow_up_at',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    workflowForm.errors
+                                                        .follow_up_at
+                                                }
+                                            />
+                                        </div>
 
-                                <Button
-                                    type="button"
-                                    onClick={submit}
-                                    disabled={form.processing}
-                                >
-                                    Save Support Note
-                                </Button>
-                            </CardContent>
-                        </Card>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="last_contacted_at">
+                                                Last Contacted
+                                            </Label>
+                                            <Input
+                                                id="last_contacted_at"
+                                                type="datetime-local"
+                                                value={
+                                                    workflowForm.data
+                                                        .last_contacted_at
+                                                }
+                                                onChange={(event) =>
+                                                    workflowForm.setData(
+                                                        'last_contacted_at',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    workflowForm.errors
+                                                        .last_contacted_at
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        onClick={submitWorkflow}
+                                        disabled={workflowForm.processing}
+                                    >
+                                        Save Support Workflow
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-none shadow-sm ring-1 ring-border/50">
+                                <CardHeader>
+                                    <CardTitle>Add Support Note</CardTitle>
+                                    <CardDescription>
+                                        Capture internal context for onboarding,
+                                        billing, or support follow-up.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="title">Title</Label>
+                                        <Input
+                                            id="title"
+                                            value={form.data.title}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'title',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="e.g. Billing follow-up"
+                                        />
+                                        <InputError
+                                            message={form.errors.title}
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="body">Note</Label>
+                                        <Textarea
+                                            id="body"
+                                            value={form.data.body}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'body',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Write the internal note for this facility..."
+                                            rows={8}
+                                        />
+                                        <InputError
+                                            message={form.errors.body}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-3">
+                                        <Checkbox
+                                            id="is_pinned"
+                                            checked={form.data.is_pinned}
+                                            onCheckedChange={(checked) =>
+                                                form.setData(
+                                                    'is_pinned',
+                                                    checked === true,
+                                                )
+                                            }
+                                        />
+                                        <Label htmlFor="is_pinned">
+                                            Pin this note to keep it at the top
+                                        </Label>
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        onClick={submit}
+                                        disabled={form.processing}
+                                    >
+                                        Save Support Note
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </div>
                     ) : null}
 
                     <Card className="border-none shadow-sm ring-1 ring-border/50">

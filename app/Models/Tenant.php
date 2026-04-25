@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
+use App\Enums\TenantSupportPriority;
+use App\Enums\TenantSupportStatus;
 use Carbon\CarbonInterface;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -29,6 +31,10 @@ final class Tenant extends Model
         'status' => GeneralStatus::class,
         'facility_level' => FacilityLevel::class,
         'onboarding_completed_at' => 'datetime',
+        'support_status' => TenantSupportStatus::class,
+        'support_priority' => TenantSupportPriority::class,
+        'support_follow_up_at' => 'datetime',
+        'support_last_contacted_at' => 'datetime',
     ];
 
     public function isOnboardingComplete(): bool

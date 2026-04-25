@@ -96,6 +96,17 @@ const formatDate = (value: string | null): string =>
           })
         : 'Not set';
 
+const formatDateTime = (value: string | null): string =>
+    value
+        ? new Date(value).toLocaleString('en-UG', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+          })
+        : 'Not set';
+
 export default function FacilityManagerShow({
     tenant,
     recent_users,
@@ -449,6 +460,70 @@ export default function FacilityManagerShow({
                         </Card>
 
                         <FacilityManagerSupportActions tenant={tenant} />
+
+                        <Card className="border-none shadow-sm ring-1 ring-border/50">
+                            <CardContent className="space-y-4 p-6">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-1">
+                                        <h2 className="text-base font-semibold">
+                                            Support Workflow
+                                        </h2>
+                                        <p className="text-sm text-muted-foreground">
+                                            Current support owner state,
+                                            urgency, and next follow-up timing.
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        <Badge variant="outline">
+                                            {
+                                                tenant.support_workflow
+                                                    .status_label
+                                            }
+                                        </Badge>
+                                        <Badge variant="outline">
+                                            {
+                                                tenant.support_workflow
+                                                    .priority_label
+                                            }{' '}
+                                            Priority
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <Table>
+                                    <TableBody>
+                                        <TableRow>
+                                            <TableHead className="w-40">
+                                                Next Follow-Up
+                                            </TableHead>
+                                            <TableCell>
+                                                {formatDateTime(
+                                                    tenant.support_workflow
+                                                        .follow_up_at,
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableHead>
+                                                Last Contacted
+                                            </TableHead>
+                                            <TableCell>
+                                                {formatDateTime(
+                                                    tenant.support_workflow
+                                                        .last_contacted_at,
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
+                                <Button variant="outline" asChild>
+                                    <Link
+                                        href={`/facility-manager/facilities/${tenant.id}/support-notes`}
+                                    >
+                                        Open Support Notes
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
 
                         <Card className="border-none shadow-sm ring-1 ring-border/50">
                             <CardContent className="space-y-4 p-6">

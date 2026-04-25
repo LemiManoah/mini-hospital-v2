@@ -127,6 +127,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
             Route::get('dashboard', [FacilityManagerController::class, 'dashboard'])->name('dashboard');
             Route::get('facilities', [FacilityManagerController::class, 'index'])->name('facilities.index');
             Route::get('facilities/create', [FacilityManagerController::class, 'create'])->name('facilities.create');
+            Route::get('facilities/export', [FacilityManagerController::class, 'export'])->name('facilities.export');
             Route::post('facilities', [FacilityManagerController::class, 'store'])->name('facilities.store');
             Route::get('facilities/{tenant}', [FacilityManagerController::class, 'show'])->name('facilities.show');
             Route::get('facilities/{tenant}/audit', [FacilityManagerController::class, 'audit'])->name('facilities.audit');
@@ -136,6 +137,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
             Route::get('facilities/{tenant}/activity', [FacilityManagerController::class, 'activity'])->name('facilities.activity');
             Route::get('facilities/{tenant}/support-notes', [FacilityManagerController::class, 'notes'])->name('facilities.notes');
             Route::post('facilities/{tenant}/support-notes', [FacilityManagerController::class, 'storeNote'])->name('facilities.notes.store');
+            Route::patch('facilities/{tenant}/support-workflow', [FacilityManagerController::class, 'updateSupportWorkflow'])->name('facilities.support-workflow.update');
             Route::post('facilities/{tenant}/activate-subscription', [FacilityManagerController::class, 'activateSubscription'])->name('facilities.activate-subscription');
             Route::post('facilities/{tenant}/mark-subscription-past-due', [FacilityManagerController::class, 'markSubscriptionPastDue'])->name('facilities.mark-subscription-past-due');
             Route::post('facilities/{tenant}/complete-onboarding', [FacilityManagerController::class, 'completeOnboarding'])->name('facilities.complete-onboarding');

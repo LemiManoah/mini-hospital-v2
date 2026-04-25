@@ -31,12 +31,21 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
+import { FacilityManagerExportButton } from './components/facility-manager-export-button';
+
 interface FacilityRow {
     id: string;
     name: string;
     domain: string;
     status: string | null;
     onboarding_completed_at: string | null;
+    support_workflow: {
+        status: string;
+        status_label: string;
+        priority: string;
+        priority_label: string;
+        follow_up_at: string | null;
+    };
     current_subscription?: {
         status: string;
         status_label: string;
@@ -60,6 +69,7 @@ interface FacilityManagerIndexProps {
         search: string | null;
         onboarding: string | null;
         subscription: string | null;
+        support: string | null;
     };
     tenants: {
         data: FacilityRow[];
@@ -91,12 +101,40 @@ export default function FacilityManagerIndex({
     const [subscription, setSubscription] = useState(
         filters.subscription ?? 'all',
     );
+    const [support, setSupport] = useState(filters.support ?? 'all');
+
+    const exportUrl = (() => {
+        const query = new URLSearchParams();
+
+        if (search.trim() !== '') {
+            query.set('search', search.trim());
+        }
+
+        if (onboarding !== 'all') {
+            query.set('onboarding', onboarding);
+        }
+
+        if (subscription !== 'all') {
+            query.set('subscription', subscription);
+        }
+
+        if (support !== 'all') {
+            query.set('support', support);
+        }
+
+        const queryString = query.toString();
+
+        return queryString === ''
+            ? '/facility-manager/facilities/export'
+            : `/facility-manager/facilities/export?${queryString}`;
+    })();
 
     useEffect(() => {
         if (
             search === (filters.search ?? '') &&
             onboarding === (filters.onboarding ?? 'all') &&
-            subscription === (filters.subscription ?? 'all')
+            subscription === (filters.subscription ?? 'all') &&
+            support === (filters.support ?? 'all')
         ) {
             return;
         }
@@ -109,6 +147,7 @@ export default function FacilityManagerIndex({
                     onboarding: onboarding === 'all' ? undefined : onboarding,
                     subscription:
                         subscription === 'all' ? undefined : subscription,
+                    support: support === 'all' ? undefined : support,
                 },
                 {
                     preserveState: true,
@@ -124,9 +163,11 @@ export default function FacilityManagerIndex({
         search,
         onboarding,
         subscription,
+        support,
         filters.search,
         filters.onboarding,
         filters.subscription,
+        filters.support,
     ]);
 
     return (
@@ -145,6 +186,7 @@ export default function FacilityManagerIndex({
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        <FacilityManagerExportButton href={exportUrl} />
                         <Button asChild variant="outline">
                             <Link href="/facility-manager/dashboard">
                                 Back to Dashboard
@@ -160,7 +202,7 @@ export default function FacilityManagerIndex({
                     </div>
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_220px]">
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_220px_220px_220px]">
                     <Input
                         placeholder="Search facility name or domain..."
                         value={search}
@@ -195,15 +237,33 @@ export default function FacilityManagerIndex({
                             </SelectItem>
                         </SelectContent>
                     </Select>
+                    <Select value={support} onValueChange={setSupport}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Support" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All support</SelectItem>
+                            <SelectItem value="stable">Stable</SelectItem>
+                            <SelectItem value="follow_up">
+                                Needs Follow-Up
+                            </SelectItem>
+                            <SelectItem value="awaiting_facility">
+                                Awaiting Facility
+                            </SelectItem>
+                            <SelectItem value="escalated">Escalated</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-border bg-background p-4">
-                    <Table className="min-w-[1080px]">
+                    <Table className="min-w-[1220px]">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Facility</TableHead>
                                 <TableHead>Onboarding</TableHead>
                                 <TableHead>Subscription</TableHead>
+                                <TableHead>Support</TableHead>
                                 <TableHead>Branches</TableHead>
                                 <TableHead>Users</TableHead>
                                 <TableHead>Patients</TableHead>
@@ -252,6 +312,23 @@ export default function FacilityManagerIndex({
                                             </div>
                                         </TableCell>
                                         <TableCell>
+                                            <div className="flex flex-col gap-1">
+                                                <Badge variant="outline">
+                                                    {
+                                                        tenant.support_workflow
+                                                            .status_label
+                                                    }
+                                                </Badge>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {
+                                                        tenant.support_workflow
+                                                            .priority_label
+                                                    }{' '}
+                                                    priority
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
                                             {tenant.counts.branches}
                                         </TableCell>
                                         <TableCell>
@@ -287,7 +364,7 @@ export default function FacilityManagerIndex({
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={10}
+                                        colSpan={11}
                                         className="py-12 text-center text-sm text-muted-foreground"
                                     >
                                         No facilities match the current filters.

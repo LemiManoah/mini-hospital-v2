@@ -53,6 +53,12 @@ export function FacilityManagerTenantHeader({
                             {tenant.current_subscription?.status_label ??
                                 'No subscription'}
                         </Badge>
+                        <Badge variant="outline">
+                            {tenant.support_workflow.status_label}
+                        </Badge>
+                        <Badge variant="outline">
+                            {tenant.support_workflow.priority_label} Priority
+                        </Badge>
                         {tenant.status ? (
                             <Badge variant="outline">{tenant.status}</Badge>
                         ) : null}

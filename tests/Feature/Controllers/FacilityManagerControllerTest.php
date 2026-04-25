@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\SubscriptionStatus;
+use App\Enums\TenantSupportPriority;
+use App\Enums\TenantSupportStatus;
 use App\Models\Country;
 use App\Models\FacilityBranch;
 use App\Models\SubscriptionPackage;
@@ -39,7 +41,9 @@ it('allows support users with tenants.view permission to open the facility manag
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('facility-manager/index')
-            ->where('tenants.data.0.id', $tenant->id));
+            ->where('tenants.data.0.id', $tenant->id)
+            ->where('tenants.data.0.support_workflow.status', TenantSupportStatus::STABLE->value)
+            ->where('tenants.data.0.support_workflow.priority', TenantSupportPriority::NORMAL->value));
 });
 
 it('serializes enum-cast subscription statuses on the facility manager facilities list', function (): void {
@@ -98,7 +102,8 @@ it('allows support users with tenants.view permission to open a facility manager
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('facility-manager/show')
             ->where('tenant.id', $tenant->id)
-            ->where('tenant.counts.branches', 1));
+            ->where('tenant.counts.branches', 1)
+            ->where('tenant.support_workflow.status', TenantSupportStatus::STABLE->value));
 });
 
 it('allows support users to open facility manager child pages and record support notes', function (): void {
@@ -174,6 +179,41 @@ it('allows support users to open facility manager child pages and record support
         'title' => 'Billing follow-up',
         'is_pinned' => true,
     ]);
+
+    $followUpAt = now()->addDay()->format('Y-m-d H:i:s');
+    $lastContactedAt = now()->format('Y-m-d H:i:s');
+
+    $this->actingAs($supportUser)
+        ->patch(route('facility-manager.facilities.support-workflow.update', $tenant), [
+            'status' => TenantSupportStatus::ESCALATED->value,
+            'priority' => TenantSupportPriority::URGENT->value,
+            'follow_up_at' => $followUpAt,
+            'last_contacted_at' => $lastContactedAt,
+        ])
+        ->assertRedirect(route('facility-manager.facilities.notes', $tenant))
+        ->assertSessionHas('success', 'Support workflow updated for '.$tenant->name.'.');
+
+    $this->assertDatabaseHas('tenants', [
+        'id' => $tenant->id,
+        'support_status' => TenantSupportStatus::ESCALATED->value,
+        'support_priority' => TenantSupportPriority::URGENT->value,
+        'support_follow_up_at' => $followUpAt,
+        'support_last_contacted_at' => $lastContactedAt,
+    ]);
+
+    $exportResponse = $this->actingAs($supportUser)
+        ->get(route('facility-manager.facilities.export', [
+            'support' => TenantSupportStatus::ESCALATED->value,
+        ]));
+
+    $exportResponse->assertOk();
+
+    expect((string) $exportResponse->headers->get('content-type'))->toContain('text/csv');
+    expect($exportResponse->streamedContent())
+        ->toContain('Support Status')
+        ->toContain($tenant->name)
+        ->toContain(TenantSupportStatus::ESCALATED->label())
+        ->toContain(TenantSupportPriority::URGENT->label());
 });
 
 it('allows support users with tenants.update permission to create a facility from facility manager', function (): void {
