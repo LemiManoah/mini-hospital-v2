@@ -151,7 +151,7 @@ it('allows support users to open facility manager child pages and record support
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('facility-manager/audit')
             ->where('tenant.id', $tenant->id)
-            ->where('health.summary.total_checks', 10));
+            ->where('health.summary.total_checks', 11));
 
     $this->actingAs($supportUser)
         ->get(route('facility-manager.facilities.notes', $tenant))
