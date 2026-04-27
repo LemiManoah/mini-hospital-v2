@@ -70,6 +70,11 @@ use App\Http\Controllers\Print\VisitPaymentPrintController;
 use App\Http\Controllers\Print\VisitSummaryPrintController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReferralFacilityController;
+use App\Http\Controllers\Reports\AppointmentScheduleReportController;
+use App\Http\Controllers\Reports\DailyRevenueReportController;
+use App\Http\Controllers\Reports\LowStockAlertReportController;
+use App\Http\Controllers\Reports\ReportGeneratorController;
+use App\Http\Controllers\Reports\StockLevelReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\SpecimenTypeController;
@@ -117,6 +122,19 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->middleware('permission:dashboard.view')
         ->name('dashboard');
+
+    Route::prefix('reports')->name('reports.')->group(function (): void {
+        Route::get('/', [ReportGeneratorController::class, 'index'])->name('index');
+        Route::get('export-csv', [ReportGeneratorController::class, 'exportCsv'])->name('export-csv');
+        Route::get('daily-revenue', [DailyRevenueReportController::class, 'index'])->name('daily-revenue.index');
+        Route::get('daily-revenue/download', [DailyRevenueReportController::class, 'download'])->name('daily-revenue.download');
+        Route::get('stock-level', [StockLevelReportController::class, 'index'])->name('stock-level.index');
+        Route::get('stock-level/download', [StockLevelReportController::class, 'download'])->name('stock-level.download');
+        Route::get('low-stock', [LowStockAlertReportController::class, 'index'])->name('low-stock.index');
+        Route::get('low-stock/download', [LowStockAlertReportController::class, 'download'])->name('low-stock.download');
+        Route::get('appointment-schedule', [AppointmentScheduleReportController::class, 'index'])->name('appointment-schedule.index');
+        Route::get('appointment-schedule/download', [AppointmentScheduleReportController::class, 'download'])->name('appointment-schedule.download');
+    });
 
     Route::middleware('support.only')
         ->prefix('facility-manager')

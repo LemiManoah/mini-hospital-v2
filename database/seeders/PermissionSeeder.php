@@ -96,6 +96,7 @@ final class PermissionSeeder extends Seeder
             'visit_billings' => ['view', 'create', 'update', 'delete'],
             'visit_charges' => ['view', 'create', 'update', 'delete'],
             'payments' => ['view', 'create', 'update', 'delete'],
+            'reports' => ['view'],
         ];
     }
 
@@ -154,6 +155,7 @@ final class PermissionSeeder extends Seeder
                 'pharmacy_pos' => ['view', 'create', 'complete', 'void', 'refund', 'view_history'],
                 'units' => ['view', 'create', 'update', 'delete'],
                 'facility_services' => ['view', 'create', 'update', 'delete'],
+                'reports' => ['view'],
             ],
             'receptionist' => [
                 'patients' => ['view', 'create', 'update'],
@@ -169,11 +171,13 @@ final class PermissionSeeder extends Seeder
                 'patients' => ['view'],
                 'visits' => ['view'],
                 'appointments' => ['view'],
+                'reports' => ['view'],
             ],
             'cashier' => [
                 'patients' => ['view', 'create', 'update'],
                 'visits' => ['view', 'create', 'update'],
                 'appointments' => ['view'],
+                'reports' => ['view'],
             ],
             'human_resource' => [
                 'users' => ['view', 'create', 'update'],

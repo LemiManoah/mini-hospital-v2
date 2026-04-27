@@ -441,6 +441,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         ],
                     },
                     {
+                        title: 'Reports',
+                        url: '/reports',
+                        permissions: [
+                            'reports.view',
+                            'patient_reports.view',
+                            'visit_reports.view',
+                            'pharmacy_reports.view',
+                            'laboratory_reports.view',
+                            'inventory_reports.view',
+                        ],
+                    },
+                    {
                         title: 'Insurance Setup',
                         url: '/administration/insurance-setup',
                         permissions: [

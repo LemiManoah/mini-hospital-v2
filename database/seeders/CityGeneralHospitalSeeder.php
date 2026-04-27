@@ -19,6 +19,7 @@ final class CityGeneralHospitalSeeder extends Seeder
             CityGeneralHospitalInventoryWorkflowSeeder::class,
             CityGeneralHospitalPatientSeeder::class,
             CityGeneralHospitalEncounterSeeder::class,
+            CityGeneralHospitalReportSeeder::class,
         ]);
     }
 }
