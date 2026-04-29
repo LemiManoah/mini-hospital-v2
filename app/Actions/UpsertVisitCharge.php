@@ -24,6 +24,7 @@ final readonly class UpsertVisitCharge
         float $unitPrice,
         float $quantity = 1,
         ?string $chargeCode = null,
+        ?string $chargeMasterId = null,
         ?string $notes = null,
     ): VisitCharge {
         $billing = $this->ensureVisitBilling->handle($visit);
@@ -40,6 +41,7 @@ final readonly class UpsertVisitCharge
                 'tenant_id' => $visit->tenant_id,
                 'facility_branch_id' => $visit->facility_branch_id,
                 'visit_billing_id' => $billing->id,
+                'charge_master_id' => $chargeMasterId,
                 'charge_code' => $chargeCode,
                 'description' => $description,
                 'quantity' => round($quantity, 2),

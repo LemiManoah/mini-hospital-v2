@@ -129,8 +129,11 @@ final readonly class PatientVisitController implements HasMiddleware
         ]);
     }
 
-    public function show(Request $request, PatientVisit $visit, AssessPatientVisitCompletion $assessment): Response
-    {
+    public function show(
+        Request $request,
+        PatientVisit $visit,
+        AssessPatientVisitCompletion $assessment,
+    ): Response {
         $this->activeBranchWorkspace->authorizeModel($visit);
 
         $billing = resolve(EnsureVisitBilling::class)->handle($visit);
@@ -151,10 +154,10 @@ final readonly class PatientVisitController implements HasMiddleware
             'payer.insurancePackage:id,name',
             'billing:id,patient_visit_id,visit_payer_id,payer_type,gross_amount,discount_amount,paid_amount,balance_amount,status,billed_at,settled_at',
             'billing.payments' => static fn (HasMany $query): HasMany => $query
-                ->select('id', 'visit_billing_id', 'patient_visit_id', 'receipt_number', 'payment_date', 'amount', 'payment_method', 'reference_number', 'is_refund', 'notes')
+                ->select('id', 'visit_billing_id', 'patient_visit_id', 'payment_method_id', 'receipt_number', 'payment_date', 'amount', 'payment_method', 'reference_number', 'is_refund', 'notes')
                 ->latest('payment_date'),
             'charges' => static fn (HasMany $query): HasMany => $query
-                ->select('id', 'visit_billing_id', 'patient_visit_id', 'source_type', 'source_id', 'charge_code', 'description', 'quantity', 'unit_price', 'line_total', 'status', 'charged_at')
+                ->select('id', 'visit_billing_id', 'patient_visit_id', 'source_type', 'source_id', 'charge_master_id', 'charge_code', 'description', 'quantity', 'unit_price', 'line_total', 'status', 'charged_at')
                 ->latest('charged_at'),
             'triage:id,visit_id,nurse_id,triage_datetime,triage_grade,attendance_type,news_score,pews_score,conscious_level,mobility_status,chief_complaint,history_of_presenting_illness,assigned_clinic_id,requires_priority,is_pediatric,poisoning_case,poisoning_agent,snake_bite_case,referred_by,nurse_notes',
             'triage.nurse:id,first_name,last_name',
@@ -162,7 +165,7 @@ final readonly class PatientVisitController implements HasMiddleware
             'triage.vitalSigns' => static fn (HasMany $query): HasMany => $query
                 ->with(['recordedBy:id,first_name,last_name'])
                 ->latest('recorded_at'),
-            'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code',
+            'consultation:id,visit_id,doctor_id,consultation_type,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code',
             'consultation.doctor:id,first_name,last_name',
             'labRequests' => static fn (HasMany $query): HasMany => $query
                 ->with([
@@ -225,12 +228,6 @@ final readonly class PatientVisitController implements HasMiddleware
             'bloodGlucoseUnits' => [
                 ['value' => 'mg_dl', 'label' => 'mg/dL'],
                 ['value' => 'mmol_l', 'label' => 'mmol/L'],
-            ],
-            'paymentMethods' => [
-                ['value' => 'cash', 'label' => 'Cash'],
-                ['value' => 'card', 'label' => 'Card'],
-                ['value' => 'mobile_money', 'label' => 'Mobile Money'],
-                ['value' => 'bank_transfer', 'label' => 'Bank Transfer'],
             ],
             'allergens' => Allergen::query()->orderBy('name')->get(['id', 'name', 'type']),
             'severityOptions' => collect(AllergySeverity::cases())->map(fn (AllergySeverity $case): array => [

@@ -8,6 +8,7 @@ use App\Enums\FacilityServiceCategory;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class FacilityService extends Model
@@ -33,5 +34,13 @@ final class FacilityService extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(FacilityServiceOrder::class, 'facility_service_id');
+    }
+
+    /**
+     * @return BelongsTo<ChargeMaster, $this>
+     */
+    public function chargeMaster(): BelongsTo
+    {
+        return $this->belongsTo(ChargeMaster::class);
     }
 }

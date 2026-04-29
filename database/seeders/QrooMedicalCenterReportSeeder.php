@@ -21,14 +21,14 @@ use App\Models\User;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use Carbon\CarbonInterface;
-use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
+use Database\Seeders\Concerns\InteractsWithQrooMedicalCenter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use RuntimeException;
 
-final class CityGeneralHospitalReportSeeder extends Seeder
+final class QrooMedicalCenterReportSeeder extends Seeder
 {
-    use InteractsWithCityGeneralHospital;
+    use InteractsWithQrooMedicalCenter;
 
     public function run(): void
     {
@@ -42,7 +42,7 @@ final class CityGeneralHospitalReportSeeder extends Seeder
         /** @var Collection<string, FacilityBranch> $branches */
         $branches = FacilityBranch::query()
             ->where('tenant_id', $tenant->id)
-            ->whereIn('branch_code', ['CGH-MAIN', 'CGH-ENT'])
+            ->whereIn('branch_code', ['QMC-MAIN'])
             ->get()
             ->keyBy('branch_code');
 
@@ -50,11 +50,11 @@ final class CityGeneralHospitalReportSeeder extends Seeder
         $patients = Patient::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('patient_number', [
-                'CGH-PAT-1001',
-                'CGH-PAT-1002',
-                'CGH-PAT-1003',
-                'CGH-PAT-1004',
-                'CGH-PAT-1005',
+                'QMC-PAT-1001',
+                'QMC-PAT-1002',
+                'QMC-PAT-1003',
+                'QMC-PAT-1004',
+                'QMC-PAT-1005',
             ])
             ->get()
             ->keyBy('patient_number');
@@ -62,7 +62,7 @@ final class CityGeneralHospitalReportSeeder extends Seeder
         /** @var Collection<string, Clinic> $clinics */
         $clinics = Clinic::query()
             ->where('tenant_id', $tenant->id)
-            ->whereIn('clinic_code', ['CGH-OPD-MAIN', 'CGH-OPD-ENT'])
+            ->whereIn('clinic_code', ['QMC-OPD-MAIN', 'QMC-SURG-MAIN'])
             ->get()
             ->keyBy('clinic_code');
 
@@ -70,8 +70,8 @@ final class CityGeneralHospitalReportSeeder extends Seeder
         $staff = Staff::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('email', [
-                'dr.grace.namara@citygeneral.ug',
-                'dr.patricia.nalukwago@citygeneral.ug',
+                'dr.grace.namara@qroomedical.ug',
+                'dr.patricia.nalukwago@qroomedical.ug',
             ])
             ->get()
             ->keyBy('email');
@@ -86,8 +86,8 @@ final class CityGeneralHospitalReportSeeder extends Seeder
                 'name' => 'Review Visit',
             ],
             [
-                'facility_branch_id' => $branches->get('CGH-MAIN')?->id,
-                'clinic_id' => $clinics->get('CGH-OPD-MAIN')?->id,
+                'facility_branch_id' => $branches->get('QMC-MAIN')?->id,
+                'clinic_id' => $clinics->get('QMC-OPD-MAIN')?->id,
                 'description' => 'Follow-up and routine review bookings.',
                 'is_active' => true,
                 'created_by' => $registrar->id,
@@ -101,8 +101,8 @@ final class CityGeneralHospitalReportSeeder extends Seeder
                 'name' => 'New Consultation',
             ],
             [
-                'facility_branch_id' => $branches->get('CGH-MAIN')?->id,
-                'clinic_id' => $clinics->get('CGH-OPD-MAIN')?->id,
+                'facility_branch_id' => $branches->get('QMC-MAIN')?->id,
+                'clinic_id' => $clinics->get('QMC-OPD-MAIN')?->id,
                 'description' => 'New outpatient consultation bookings.',
                 'is_active' => true,
                 'created_by' => $registrar->id,
@@ -143,10 +143,10 @@ final class CityGeneralHospitalReportSeeder extends Seeder
 
         $this->seedAppointment(
             tenant: $tenant,
-            branch: $this->requireBranch($branches, 'CGH-MAIN'),
-            patient: $this->requirePatient($patients, 'CGH-PAT-1001'),
-            doctor: $this->requireStaff($staff, 'dr.grace.namara@citygeneral.ug'),
-            clinic: $this->requireClinic($clinics, 'CGH-OPD-MAIN'),
+            branch: $this->requireBranch($branches, 'QMC-MAIN'),
+            patient: $this->requirePatient($patients, 'QMC-PAT-1001'),
+            doctor: $this->requireStaff($staff, 'dr.grace.namara@qroomedical.ug'),
+            clinic: $this->requireClinic($clinics, 'QMC-OPD-MAIN'),
             category: $newPatientCategory,
             mode: $physicalMode,
             startTime: '09:00:00',
@@ -161,10 +161,10 @@ final class CityGeneralHospitalReportSeeder extends Seeder
 
         $this->seedAppointment(
             tenant: $tenant,
-            branch: $this->requireBranch($branches, 'CGH-MAIN'),
-            patient: $this->requirePatient($patients, 'CGH-PAT-1002'),
-            doctor: $this->requireStaff($staff, 'dr.grace.namara@citygeneral.ug'),
-            clinic: $this->requireClinic($clinics, 'CGH-OPD-MAIN'),
+            branch: $this->requireBranch($branches, 'QMC-MAIN'),
+            patient: $this->requirePatient($patients, 'QMC-PAT-1002'),
+            doctor: $this->requireStaff($staff, 'dr.grace.namara@qroomedical.ug'),
+            clinic: $this->requireClinic($clinics, 'QMC-OPD-MAIN'),
             category: $reviewCategory,
             mode: $physicalMode,
             startTime: '10:00:00',
@@ -179,10 +179,10 @@ final class CityGeneralHospitalReportSeeder extends Seeder
 
         $this->seedAppointment(
             tenant: $tenant,
-            branch: $this->requireBranch($branches, 'CGH-MAIN'),
-            patient: $this->requirePatient($patients, 'CGH-PAT-1005'),
-            doctor: $this->requireStaff($staff, 'dr.grace.namara@citygeneral.ug'),
-            clinic: $this->requireClinic($clinics, 'CGH-OPD-MAIN'),
+            branch: $this->requireBranch($branches, 'QMC-MAIN'),
+            patient: $this->requirePatient($patients, 'QMC-PAT-1005'),
+            doctor: $this->requireStaff($staff, 'dr.grace.namara@qroomedical.ug'),
+            clinic: $this->requireClinic($clinics, 'QMC-OPD-MAIN'),
             category: $reviewCategory,
             mode: $virtualMode,
             startTime: '11:30:00',
@@ -197,10 +197,10 @@ final class CityGeneralHospitalReportSeeder extends Seeder
 
         $this->seedAppointment(
             tenant: $tenant,
-            branch: $this->requireBranch($branches, 'CGH-ENT'),
-            patient: $this->requirePatient($patients, 'CGH-PAT-1004'),
-            doctor: $this->requireStaff($staff, 'dr.patricia.nalukwago@citygeneral.ug'),
-            clinic: $this->requireClinic($clinics, 'CGH-OPD-ENT'),
+            branch: $this->requireBranch($branches, 'QMC-MAIN'),
+            patient: $this->requirePatient($patients, 'QMC-PAT-1004'),
+            doctor: $this->requireStaff($staff, 'dr.patricia.nalukwago@qroomedical.ug'),
+            clinic: $this->requireClinic($clinics, 'QMC-SURG-MAIN'),
             category: $reviewCategory,
             mode: $physicalMode,
             startTime: '14:00:00',
@@ -215,13 +215,13 @@ final class CityGeneralHospitalReportSeeder extends Seeder
 
         $this->seedTodayRevenue(
             tenant: $tenant,
-            branch: $this->requireBranch($branches, 'CGH-MAIN'),
-            patient: $this->requirePatient($patients, 'CGH-PAT-1002'),
-            clinic: $this->requireClinic($clinics, 'CGH-OPD-MAIN'),
-            doctor: $this->requireStaff($staff, 'dr.grace.namara@citygeneral.ug'),
-            visitNumber: 'CGH-VIS-RPT-001',
-            invoiceNumber: 'CGH-INV-RPT-001',
-            receiptNumber: 'CGH-RCP-RPT-001',
+            branch: $this->requireBranch($branches, 'QMC-MAIN'),
+            patient: $this->requirePatient($patients, 'QMC-PAT-1002'),
+            clinic: $this->requireClinic($clinics, 'QMC-OPD-MAIN'),
+            doctor: $this->requireStaff($staff, 'dr.grace.namara@qroomedical.ug'),
+            visitNumber: 'QMC-VIS-RPT-001',
+            invoiceNumber: 'QMC-INV-RPT-001',
+            receiptNumber: 'QMC-RCP-RPT-001',
             amount: 45000,
             paymentMethod: 'cash',
             referenceNumber: 'RPT-CASH-001',
@@ -231,13 +231,13 @@ final class CityGeneralHospitalReportSeeder extends Seeder
 
         $this->seedTodayRevenue(
             tenant: $tenant,
-            branch: $this->requireBranch($branches, 'CGH-MAIN'),
-            patient: $this->requirePatient($patients, 'CGH-PAT-1003'),
-            clinic: $this->requireClinic($clinics, 'CGH-OPD-MAIN'),
-            doctor: $this->requireStaff($staff, 'dr.grace.namara@citygeneral.ug'),
-            visitNumber: 'CGH-VIS-RPT-002',
-            invoiceNumber: 'CGH-INV-RPT-002',
-            receiptNumber: 'CGH-RCP-RPT-002',
+            branch: $this->requireBranch($branches, 'QMC-MAIN'),
+            patient: $this->requirePatient($patients, 'QMC-PAT-1003'),
+            clinic: $this->requireClinic($clinics, 'QMC-OPD-MAIN'),
+            doctor: $this->requireStaff($staff, 'dr.grace.namara@qroomedical.ug'),
+            visitNumber: 'QMC-VIS-RPT-002',
+            invoiceNumber: 'QMC-INV-RPT-002',
+            receiptNumber: 'QMC-RCP-RPT-002',
             amount: 65000,
             paymentMethod: 'mobile_money',
             referenceNumber: 'RPT-MM-002',
@@ -247,13 +247,13 @@ final class CityGeneralHospitalReportSeeder extends Seeder
 
         $this->seedTodayRevenue(
             tenant: $tenant,
-            branch: $this->requireBranch($branches, 'CGH-ENT'),
-            patient: $this->requirePatient($patients, 'CGH-PAT-1004'),
-            clinic: $this->requireClinic($clinics, 'CGH-OPD-ENT'),
-            doctor: $this->requireStaff($staff, 'dr.patricia.nalukwago@citygeneral.ug'),
-            visitNumber: 'CGH-VIS-RPT-003',
-            invoiceNumber: 'CGH-INV-RPT-003',
-            receiptNumber: 'CGH-RCP-RPT-003',
+            branch: $this->requireBranch($branches, 'QMC-MAIN'),
+            patient: $this->requirePatient($patients, 'QMC-PAT-1004'),
+            clinic: $this->requireClinic($clinics, 'QMC-SURG-MAIN'),
+            doctor: $this->requireStaff($staff, 'dr.patricia.nalukwago@qroomedical.ug'),
+            visitNumber: 'QMC-VIS-RPT-003',
+            invoiceNumber: 'QMC-INV-RPT-003',
+            receiptNumber: 'QMC-RCP-RPT-003',
             amount: 30000,
             paymentMethod: 'card',
             referenceNumber: 'RPT-CARD-003',

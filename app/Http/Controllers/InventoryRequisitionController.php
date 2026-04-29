@@ -8,6 +8,7 @@ use App\Actions\ApproveInventoryRequisition;
 use App\Actions\CancelInventoryRequisition;
 use App\Actions\CreateInventoryRequisition;
 use App\Actions\IssueInventoryRequisition;
+use App\Actions\ListAuditTimeline;
 use App\Actions\RejectInventoryRequisition;
 use App\Actions\SubmitInventoryRequisition;
 use App\Enums\InventoryRequisitionStatus;
@@ -45,6 +46,7 @@ final readonly class InventoryRequisitionController implements HasMiddleware
         private InventoryLocationAccess $inventoryLocationAccess,
         private InventoryRequisitionAccess $inventoryRequisitionAccess,
         private InventoryRequisitionWorkflow $inventoryRequisitionWorkflow,
+        private ListAuditTimeline $listAuditTimeline,
     ) {}
 
     public static function middleware(): array
@@ -203,6 +205,11 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             'navigation' => InventoryNavigationContext::fromRequest($request),
             'requisition' => $this->serializeDetail($requisition, $this->issueHistory($requisition)),
             'availableBatchBalances' => $this->availableBatchBalances($requisition),
+            'audit_activity' => $this->listAuditTimeline->handle(
+                subjects: [$requisition],
+                tenantId: $requisition->tenant_id,
+                logNames: ['inventory'],
+            ),
         ]);
     }
 

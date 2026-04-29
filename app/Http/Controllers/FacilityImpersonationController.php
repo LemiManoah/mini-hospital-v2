@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\RecordAuditActivity;
 use App\Models\FacilityBranch;
 use App\Models\Role;
 use App\Models\Staff;
@@ -22,6 +23,10 @@ use Inertia\Response;
 
 final readonly class FacilityImpersonationController implements HasMiddleware
 {
+    public function __construct(
+        private RecordAuditActivity $recordAuditActivity,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -122,6 +127,27 @@ final readonly class FacilityImpersonationController implements HasMiddleware
         BranchContext::clear();
         $request->session()->regenerate();
 
+        $this->recordAuditActivity->handle(
+            logName: 'support',
+            event: 'support.impersonation.started',
+            subject: $user,
+            description: 'Support impersonation started.',
+            actor: $actor,
+            tenantId: $user->tenantId(),
+            branchId: null,
+            staffId: $user->staffId(),
+            newValues: [
+                'target_user_id' => $user->id,
+                'target_tenant_id' => $user->tenantId(),
+                'target_staff_id' => $user->staffId(),
+            ],
+            metadata: [
+                'real_user_id' => $actor->id,
+                'real_user_email' => $actor->email,
+                'target_user_email' => $user->email,
+            ],
+        );
+
         if ($user->tenant !== null && ! $user->tenant->isOnboardingComplete()) {
             return to_route('onboarding.show')
                 ->with('success', 'Now acting as '.$user->name.'.');
@@ -150,9 +176,33 @@ final readonly class FacilityImpersonationController implements HasMiddleware
     public function stop(Request $request): RedirectResponse
     {
         $realUser = ImpersonationContext::realUser($request);
+        $targetUser = ImpersonationContext::targetUser($request);
 
         abort_unless($realUser instanceof User, 403, 'No active impersonation session was found.');
         abort_if(! $realUser->isSupportUser() && ! $realUser->hasRole('super_admin'), 403, 'Only support users can stop impersonation.');
+
+        if ($targetUser instanceof User) {
+            $this->recordAuditActivity->handle(
+                logName: 'support',
+                event: 'support.impersonation.stopped',
+                subject: $targetUser,
+                description: 'Support impersonation stopped.',
+                actor: $realUser,
+                tenantId: $targetUser->tenantId(),
+                branchId: null,
+                staffId: $targetUser->staffId(),
+                newValues: [
+                    'target_user_id' => $targetUser->id,
+                    'target_tenant_id' => $targetUser->tenantId(),
+                    'target_staff_id' => $targetUser->staffId(),
+                ],
+                metadata: [
+                    'real_user_id' => $realUser->id,
+                    'real_user_email' => $realUser->email,
+                    'target_user_email' => $targetUser->email,
+                ],
+            );
+        }
 
         ImpersonationContext::stop($request);
         BranchContext::clear();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Data\Clinical;
 
+use App\Enums\ConsultationType;
 use Illuminate\Foundation\Http\FormRequest;
 
 final readonly class CreateConsultationDTO
@@ -21,6 +22,7 @@ final readonly class CreateConsultationDTO
         public ?string $plan,
         public ?string $primaryDiagnosis,
         public ?string $primaryIcd10Code,
+        public ?ConsultationType $consultationType,
     ) {}
 
     public static function fromRequest(FormRequest $request): self
@@ -37,7 +39,8 @@ final readonly class CreateConsultationDTO
          *   assessment?: string|null,
          *   plan?: string|null,
          *   primary_diagnosis?: string|null,
-         *   primary_icd10_code?: string|null
+         *   primary_icd10_code?: string|null,
+         *   consultation_type?: string|null
          * } $validated
          */
         $validated = $request->validated();
@@ -55,6 +58,7 @@ final readonly class CreateConsultationDTO
             plan: self::nullableString($validated['plan'] ?? null),
             primaryDiagnosis: self::nullableString($validated['primary_diagnosis'] ?? null),
             primaryIcd10Code: self::nullableString($validated['primary_icd10_code'] ?? null),
+            consultationType: self::nullableConsultationType($validated['consultation_type'] ?? null),
         );
     }
 
@@ -67,5 +71,14 @@ final readonly class CreateConsultationDTO
         $trimmed = mb_trim($value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private static function nullableConsultationType(mixed $value): ?ConsultationType
+    {
+        if (! is_string($value) || $value === '') {
+            return null;
+        }
+
+        return ConsultationType::tryFrom($value);
     }
 }

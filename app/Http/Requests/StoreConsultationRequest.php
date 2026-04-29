@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Data\Clinical\CreateConsultationDTO;
+use App\Enums\ConsultationType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class StoreConsultationRequest extends FormRequest
 {
@@ -37,6 +39,7 @@ final class StoreConsultationRequest extends FormRequest
             'plan' => ['nullable', 'string'],
             'primary_diagnosis' => ['nullable', 'string', 'max:255'],
             'primary_icd10_code' => ['nullable', 'string', 'max:10'],
+            'consultation_type' => ['nullable', Rule::enum(ConsultationType::class)],
         ];
     }
 

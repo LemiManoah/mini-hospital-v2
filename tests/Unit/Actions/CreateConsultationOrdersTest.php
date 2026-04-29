@@ -391,6 +391,7 @@ it('creates a prescription with multiple drug items', function (): void {
         'category' => DrugCategory::ANALGESIC->value,
         'dosage_form' => DrugDosageForm::TABLET->value,
         'strength' => '500mg',
+        'default_selling_price' => 1500,
         'expires' => true,
         'is_controlled' => false,
         'is_active' => true,
@@ -419,6 +420,82 @@ it('creates a prescription with multiple drug items', function (): void {
     expect($prescription->consultation_id)->toBe($context['consultation']->id)
         ->and($prescription->items)->toHaveCount(1)
         ->and($prescription->items->first()?->quantity)->toBe(15);
+
+    $charge = VisitCharge::query()
+        ->where('patient_visit_id', $context['visit_id'])
+        ->where('source_type', $prescription->getMorphClass())
+        ->where('source_id', $prescription->id)
+        ->first();
+
+    expect($charge)->not()->toBeNull()
+        ->and((float) $charge->unit_price)->toBe(22500.0)
+        ->and((float) $charge->line_total)->toBe(22500.0)
+        ->and($charge->description)->toBe('Prescription: 1 medication');
+});
+
+it('uses insurance package prices when syncing prescription charges', function (): void {
+    $context = seedConsultationContext('insurance');
+    $drugId = (string) Str::uuid();
+
+    DB::table('inventory_items')->insert([
+        'id' => $drugId,
+        'tenant_id' => $context['tenant_id'],
+        'item_type' => InventoryItemType::DRUG->value,
+        'name' => 'Amoxicillin',
+        'generic_name' => 'Amoxicillin',
+        'brand_name' => null,
+        'category' => DrugCategory::ANTIBIOTIC->value,
+        'dosage_form' => DrugDosageForm::CAPSULE->value,
+        'strength' => '500mg',
+        'default_selling_price' => 2000,
+        'expires' => true,
+        'is_controlled' => false,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('insurance_package_prices')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => $context['branch_id'],
+        'insurance_package_id' => $context['insurance_package_id'],
+        'billable_type' => 'drug',
+        'billable_id' => $drugId,
+        'price' => 1200,
+        'status' => 'active',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $prescription = resolve(CreatePrescription::class)->handle($context['consultation'], CreatePrescriptionDTO::fromRequest(createPrescriptionDtoRequest([
+        'primary_diagnosis' => 'Bacterial infection',
+        'pharmacy_notes' => null,
+        'is_discharge_medication' => false,
+        'is_long_term' => false,
+        'items' => [[
+            'inventory_item_id' => $drugId,
+            'dosage' => '1 capsule',
+            'frequency' => 'BD',
+            'route' => 'oral',
+            'duration_days' => 7,
+            'quantity' => 14,
+            'instructions' => 'After food',
+            'is_prn' => false,
+            'prn_reason' => null,
+            'is_external_pharmacy' => false,
+        ]],
+    ])), $context['staff_id']);
+
+    $charge = VisitCharge::query()
+        ->where('patient_visit_id', $context['visit_id'])
+        ->where('source_type', $prescription->getMorphClass())
+        ->where('source_id', $prescription->id)
+        ->first();
+
+    expect($charge)->not()->toBeNull()
+        ->and((float) $charge->unit_price)->toBe(16800.0)
+        ->and((float) $charge->line_total)->toBe(16800.0);
 });
 
 it('creates an imaging request linked to the consultation', function (): void {

@@ -44,6 +44,7 @@ final readonly class SyncFacilityServiceOrderCharge
             $amount,
             1,
             $service->service_code,
+            $service->charge_master_id,
         );
     }
 }

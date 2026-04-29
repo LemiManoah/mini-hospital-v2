@@ -5,13 +5,21 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Data\Clinical\CompleteConsultationDTO;
+use App\Enums\ConsultationType;
 use App\Models\Consultation;
 
 final readonly class CompleteConsultation
 {
+    public function __construct(
+        private SyncConsultationCharge $syncConsultationCharge,
+    ) {}
+
     public function handle(Consultation $consultation, CompleteConsultationDTO $data): Consultation
     {
         $consultation->update([
+            'consultation_type' => $data->consultationType
+                ?? $consultation->consultation_type
+                ?? ConsultationType::defaultForVisit($consultation->visit()->firstOrFail()),
             'chief_complaint' => $data->chiefComplaint,
             'history_of_present_illness' => $data->historyOfPresentIllness,
             'review_of_systems' => $data->reviewOfSystems,
@@ -33,6 +41,8 @@ final readonly class CompleteConsultation
             'referral_reason' => $data->referralReason,
             'completed_at' => now(),
         ]);
+
+        $this->syncConsultationCharge->handle($consultation->refresh());
 
         return $consultation->refresh();
     }

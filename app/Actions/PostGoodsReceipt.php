@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class PostGoodsReceipt
 {
+    public function __construct(private RecordAuditActivity $recordAuditActivity) {}
+
     public function handle(GoodsReceipt $goodsReceipt): GoodsReceipt
     {
         return DB::transaction(function () use ($goodsReceipt): GoodsReceipt {
@@ -57,6 +59,30 @@ final readonly class PostGoodsReceipt
             }
 
             $this->updatePurchaseOrderStatus($purchaseOrder);
+
+            $this->recordAuditActivity->handle(
+                logName: 'inventory',
+                event: 'inventory.goods_receipt.posted',
+                subject: $goodsReceipt,
+                description: 'Goods receipt posted.',
+                tenantId: $goodsReceipt->tenant_id,
+                branchId: $goodsReceipt->branch_id,
+                staffId: Auth::user()?->staff_id,
+                newValues: [
+                    'goods_receipt_id' => $goodsReceipt->id,
+                    'status' => $goodsReceipt->status->value,
+                    'posted_by' => $goodsReceipt->posted_by,
+                    'posted_at' => $goodsReceipt->posted_at?->toISOString(),
+                    'item_count' => $receiptItems->count(),
+                    'quantity_received_total' => round($receiptItems->sum(
+                        static fn (GoodsReceiptItem $item): float => (float) $item->quantity_received
+                    ), 3),
+                ],
+                metadata: [
+                    'inventory_location_id' => $goodsReceipt->inventory_location_id,
+                    'purchase_order_id' => $goodsReceipt->purchase_order_id,
+                ],
+            );
 
             return $goodsReceipt->refresh()->load('items.purchaseOrderItem');
         });

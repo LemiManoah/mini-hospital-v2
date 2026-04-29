@@ -476,6 +476,15 @@ it('posts a goods receipt and updates PO item quantities', function (): void {
 
     $po->refresh();
     expect($po->status)->toBe(PurchaseOrderStatus::Partial);
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $tenant->id,
+        'branch_id' => $branch->id,
+        'log_name' => 'inventory',
+        'event' => 'inventory.goods_receipt.posted',
+        'subject_type' => GoodsReceipt::class,
+        'subject_id' => $gr->id,
+    ]);
 });
 
 it('fully receiving all items marks PO as received', function (): void {
@@ -606,7 +615,8 @@ it('shows a goods receipt detail page', function (): void {
             ->component('inventory/goods-receipts/show')
             ->has('goodsReceipt')
             ->where('goodsReceipt.receipt_number', 'GR-SHOW-001')
-            ->has('goodsReceipt.items', 1));
+            ->has('goodsReceipt.items', 1)
+            ->has('audit_activity', 0));
 });
 
 it('limits receiving locations for pharmacy users to pharmacy stores', function (): void {

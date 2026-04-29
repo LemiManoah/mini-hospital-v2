@@ -12,8 +12,10 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-final class ApproveInventoryRequisition
+final readonly class ApproveInventoryRequisition
 {
+    public function __construct(private RecordAuditActivity $recordAuditActivity) {}
+
     public function handle(InventoryRequisition $requisition, ApproveInventoryRequisitionDTO $data): InventoryRequisition
     {
         return DB::transaction(function () use ($requisition, $data): InventoryRequisition {
@@ -58,6 +60,29 @@ final class ApproveInventoryRequisition
                 'approval_notes' => $data->approvalNotes,
                 'updated_by' => Auth::id(),
             ]);
+
+            $this->recordAuditActivity->handle(
+                logName: 'inventory',
+                event: 'inventory.requisition.approved',
+                subject: $requisition,
+                description: 'Inventory requisition approved.',
+                tenantId: $requisition->tenant_id,
+                branchId: $requisition->branch_id,
+                staffId: Auth::user()?->staff_id,
+                newValues: [
+                    'requisition_id' => $requisition->id,
+                    'status' => $requisition->status->value,
+                    'approved_by' => $requisition->approved_by,
+                    'approved_at' => $requisition->approved_at?->toISOString(),
+                    'approved_line_count' => $approvedQuantities->filter(
+                        static fn (float $quantity): bool => $quantity > 0
+                    )->count(),
+                    'approved_quantity_total' => round($approvedQuantities->sum(), 3),
+                ],
+                metadata: [
+                    'approval_notes' => $data->approvalNotes,
+                ],
+            );
 
             return $requisition->refresh()->load('items.inventoryItem');
         });

@@ -24,13 +24,13 @@ use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\InventoryStockLedger;
-use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
+use Database\Seeders\Concerns\InteractsWithQrooMedicalCenter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 
-final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
+final class QrooMedicalCenterInventoryWorkflowSeeder extends Seeder
 {
-    use InteractsWithCityGeneralHospital;
+    use InteractsWithQrooMedicalCenter;
 
     public function run(): void
     {
@@ -136,7 +136,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         array $locations,
         array $items,
     ): void {
-        $mainStore = $locations['CGH-MAIN-STORE'] ?? null;
+        $mainStore = $locations['QMC-MAIN-STORE'] ?? null;
 
         $this->ensurePostedReceipt(
             tenantId: $tenantId,
@@ -144,12 +144,12 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             userId: $userId,
             supplier: $suppliers['medical'],
             location: $mainStore,
-            orderNumber: 'CGH-PO-INV-001',
-            receiptNumber: 'CGH-GR-INV-001',
+            orderNumber: 'QMC-PO-INV-001',
+            receiptNumber: 'QMC-GR-INV-001',
             itemLines: [
-                ['item' => $items['Paracetamol'] ?? null, 'ordered_quantity' => 1500, 'received_quantity' => 1500, 'unit_cost' => 120, 'batch' => 'CGH-PARA-202604', 'expiry' => now()->addMonths(16)->toDateString()],
-                ['item' => $items['Amoxicillin'] ?? null, 'ordered_quantity' => 800, 'received_quantity' => 800, 'unit_cost' => 180, 'batch' => 'CGH-AMOX-202604', 'expiry' => now()->addMonths(14)->toDateString()],
-                ['item' => $items['Examination Gloves'] ?? null, 'ordered_quantity' => 240, 'received_quantity' => 180, 'unit_cost' => 18000, 'batch' => 'CGH-GLOVE-202604', 'expiry' => now()->addMonths(10)->toDateString()],
+                ['item' => $items['Paracetamol'] ?? null, 'ordered_quantity' => 1500, 'received_quantity' => 1500, 'unit_cost' => 120, 'batch' => 'QMC-PARA-202604', 'expiry' => now()->addMonths(16)->toDateString()],
+                ['item' => $items['Amoxicillin'] ?? null, 'ordered_quantity' => 800, 'received_quantity' => 800, 'unit_cost' => 180, 'batch' => 'QMC-AMOX-202604', 'expiry' => now()->addMonths(14)->toDateString()],
+                ['item' => $items['Examination Gloves'] ?? null, 'ordered_quantity' => 240, 'received_quantity' => 180, 'unit_cost' => 18000, 'batch' => 'QMC-GLOVE-202604', 'expiry' => now()->addMonths(10)->toDateString()],
             ],
         );
 
@@ -159,12 +159,12 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             userId: $userId,
             supplier: $suppliers['medical'],
             location: $mainStore,
-            orderNumber: 'CGH-PO-INV-002',
-            receiptNumber: 'CGH-GR-INV-002',
+            orderNumber: 'QMC-PO-INV-002',
+            receiptNumber: 'QMC-GR-INV-002',
             itemLines: [
-                ['item' => $items['Omeprazole'] ?? null, 'ordered_quantity' => 400, 'received_quantity' => 250, 'unit_cost' => 220, 'batch' => 'CGH-OMEP-202604', 'expiry' => now()->addMonths(15)->toDateString()],
-                ['item' => $items['5ml Syringe'] ?? null, 'ordered_quantity' => 320, 'received_quantity' => 160, 'unit_cost' => 250, 'batch' => 'CGH-SYR-202604', 'expiry' => now()->addMonths(9)->toDateString()],
-                ['item' => $items['Sterile Gauze Roll'] ?? null, 'ordered_quantity' => 140, 'received_quantity' => 80, 'unit_cost' => 3500, 'batch' => 'CGH-GAUZE-202604', 'expiry' => now()->addMonths(11)->toDateString()],
+                ['item' => $items['Omeprazole'] ?? null, 'ordered_quantity' => 400, 'received_quantity' => 250, 'unit_cost' => 220, 'batch' => 'QMC-OMEP-202604', 'expiry' => now()->addMonths(15)->toDateString()],
+                ['item' => $items['5ml Syringe'] ?? null, 'ordered_quantity' => 320, 'received_quantity' => 160, 'unit_cost' => 250, 'batch' => 'QMC-SYR-202604', 'expiry' => now()->addMonths(9)->toDateString()],
+                ['item' => $items['Sterile Gauze Roll'] ?? null, 'ordered_quantity' => 140, 'received_quantity' => 80, 'unit_cost' => 3500, 'batch' => 'QMC-GAUZE-202604', 'expiry' => now()->addMonths(11)->toDateString()],
             ],
         );
 
@@ -174,11 +174,11 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             userId: $userId,
             supplier: $suppliers['laboratory'],
             location: $mainStore,
-            orderNumber: 'CGH-PO-INV-003',
-            receiptNumber: 'CGH-GR-INV-003',
+            orderNumber: 'QMC-PO-INV-003',
+            receiptNumber: 'QMC-GR-INV-003',
             itemLines: [
-                ['item' => $items['CBC Reagent Pack'] ?? null, 'ordered_quantity' => 24, 'received_quantity' => 18, 'unit_cost' => 145000, 'batch' => 'CGH-CBC-202604', 'expiry' => now()->addMonths(8)->toDateString()],
-                ['item' => $items['Malaria Rapid Test Kit'] ?? null, 'ordered_quantity' => 120, 'received_quantity' => 90, 'unit_cost' => 9500, 'batch' => 'CGH-MRDT-202604', 'expiry' => now()->addMonths(7)->toDateString()],
+                ['item' => $items['CBC Reagent Pack'] ?? null, 'ordered_quantity' => 24, 'received_quantity' => 18, 'unit_cost' => 145000, 'batch' => 'QMC-CBC-202604', 'expiry' => now()->addMonths(8)->toDateString()],
+                ['item' => $items['Malaria Rapid Test Kit'] ?? null, 'ordered_quantity' => 120, 'received_quantity' => 90, 'unit_cost' => 9500, 'batch' => 'QMC-MRDT-202604', 'expiry' => now()->addMonths(7)->toDateString()],
             ],
         );
 
@@ -188,11 +188,11 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             userId: $userId,
             supplier: $suppliers['medical'],
             location: $mainStore,
-            orderNumber: 'CGH-PO-INV-004',
-            receiptNumber: 'CGH-GR-INV-004',
+            orderNumber: 'QMC-PO-INV-004',
+            receiptNumber: 'QMC-GR-INV-004',
             itemLines: [
-                ['item' => $items['Ceftriaxone'] ?? null, 'ordered_quantity' => 80, 'received_quantity' => 40, 'unit_cost' => 2500, 'batch' => 'CGH-CEF-202604', 'expiry' => now()->addMonths(11)->toDateString()],
-                ['item' => $items['Sharps Container'] ?? null, 'ordered_quantity' => 24, 'received_quantity' => 12, 'unit_cost' => 9500, 'batch' => 'CGH-SHARP-202604', 'expiry' => null],
+                ['item' => $items['Ceftriaxone'] ?? null, 'ordered_quantity' => 80, 'received_quantity' => 40, 'unit_cost' => 2500, 'batch' => 'QMC-CEF-202604', 'expiry' => now()->addMonths(11)->toDateString()],
+                ['item' => $items['Sharps Container'] ?? null, 'ordered_quantity' => 24, 'received_quantity' => 12, 'unit_cost' => 9500, 'batch' => 'QMC-SHARP-202604', 'expiry' => null],
             ],
         );
     }
@@ -330,7 +330,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
                 $balance['inventory_location_id'].'|'.$balance['inventory_item_id'] => $balance['quantity'],
             ]);
 
-        $storeLocation = $locations['CGH-MAIN-STORE'] ?? null;
+        $storeLocation = $locations['QMC-MAIN-STORE'] ?? null;
         $paracetamol = $items['Paracetamol'] ?? null;
         $amoxicillin = $items['Amoxicillin'] ?? null;
         $gloves = $items['Examination Gloves'] ?? null;
@@ -358,7 +358,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
             $postedReconciliation = Reconciliation::query()->firstOrCreate(
                 [
                     'tenant_id' => $tenantId,
-                    'adjustment_number' => 'CGH-REC-001',
+                    'adjustment_number' => 'QMC-REC-001',
                 ],
                 [
                     'branch_id' => $branchId,
@@ -405,7 +405,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         $approvedReconciliation = Reconciliation::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
-                'adjustment_number' => 'CGH-REC-002',
+                'adjustment_number' => 'QMC-REC-002',
             ],
             [
                 'branch_id' => $branchId,
@@ -438,7 +438,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
                 'variance_quantity' => 6,
                 'quantity_delta' => 6,
                 'unit_cost' => 18000,
-                'batch_number' => 'CGH-GLOVE-REC-001',
+                'batch_number' => 'QMC-GLOVE-REC-001',
                 'expiry_date' => now()->addMonths(6)->toDateString(),
                 'notes' => 'Additional glove stock found during shelf consolidation.',
             ],
@@ -449,7 +449,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         Reconciliation::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
-                'adjustment_number' => 'CGH-REC-003',
+                'adjustment_number' => 'QMC-REC-003',
             ],
             [
                 'branch_id' => $branchId,
@@ -487,9 +487,9 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         array $locations,
         array $items,
     ): void {
-        $storeLocation = $locations['CGH-MAIN-STORE'] ?? null;
-        $pharmacyLocation = $locations['CGH-MAIN-PHARM'] ?? null;
-        $labLocation = $locations['CGH-MAIN-LAB'] ?? null;
+        $storeLocation = $locations['QMC-MAIN-STORE'] ?? null;
+        $pharmacyLocation = $locations['QMC-MAIN-PHARM'] ?? null;
+        $labLocation = $locations['QMC-MAIN-LAB'] ?? null;
         $paracetamol = $items['Paracetamol'] ?? null;
         $amoxicillin = $items['Amoxicillin'] ?? null;
         $gloves = $items['Examination Gloves'] ?? null;
@@ -510,7 +510,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         InventoryRequisition::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
-                'requisition_number' => 'CGH-REQ-001',
+                'requisition_number' => 'QMC-REQ-001',
             ],
             [
                 'branch_id' => $branchId,
@@ -538,7 +538,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         InventoryRequisition::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
-                'requisition_number' => 'CGH-REQ-002',
+                'requisition_number' => 'QMC-REQ-002',
             ],
             [
                 'branch_id' => $branchId,
@@ -568,7 +568,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         InventoryRequisition::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
-                'requisition_number' => 'CGH-REQ-003',
+                'requisition_number' => 'QMC-REQ-003',
             ],
             [
                 'branch_id' => $branchId,
@@ -596,7 +596,7 @@ final class CityGeneralHospitalInventoryWorkflowSeeder extends Seeder
         InventoryRequisition::query()->firstOrCreate(
             [
                 'tenant_id' => $tenantId,
-                'requisition_number' => 'CGH-REQ-004',
+                'requisition_number' => 'QMC-REQ-004',
             ],
             [
                 'branch_id' => $branchId,

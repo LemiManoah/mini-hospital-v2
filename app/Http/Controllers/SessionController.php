@@ -41,8 +41,14 @@ final readonly class SessionController
 
         $request->session()->regenerate();
 
+        $accessibleBranches = BranchContext::getAccessibleBranches($user);
+
         if ($user->isSupportUser()) {
-            BranchContext::clear();
+            if ($accessibleBranches->isNotEmpty()) {
+                BranchContext::setActiveBranchId((string) $accessibleBranches->first()->id);
+            } else {
+                BranchContext::clear();
+            }
 
             return $user->can('tenants.impersonate')
                 ? to_route('facility-manager.impersonation.index')
@@ -54,8 +60,6 @@ final readonly class SessionController
 
             return to_route('onboarding.show');
         }
-
-        $accessibleBranches = BranchContext::getAccessibleBranches($user);
 
         if ($accessibleBranches->isNotEmpty()) {
             BranchContext::setActiveBranchId((string) $accessibleBranches->first()->id);

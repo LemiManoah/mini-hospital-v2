@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Models\FacilityBranch;
+use App\Models\Tenant;
 use App\Models\User;
+use App\Support\BranchContext;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
@@ -51,6 +54,36 @@ it('may create a session with remember me', function (): void {
     $response->assertRedirectToRoute('dashboard');
 
     $this->assertAuthenticatedAs($user);
+});
+
+it('assigns qroo main branch context when a support user logs in', function (): void {
+    $tenant = Tenant::factory()->create([
+        'domain' => 'qroo',
+        'name' => 'Qroo Medical Center',
+    ]);
+
+    $branch = FacilityBranch::factory()->create([
+        'tenant_id' => $tenant->id,
+        'name' => 'Main Branch',
+        'branch_code' => 'QMC-MAIN',
+        'is_main_branch' => true,
+    ]);
+
+    $user = User::factory()->withoutTwoFactor()->create([
+        'tenant_id' => $tenant->id,
+        'email' => 'support@mini-hospital.com',
+        'password' => Hash::make('password'),
+        'is_support' => true,
+    ]);
+
+    $response = $this->fromRoute('login')
+        ->post(route('login.store'), [
+            'email' => 'support@mini-hospital.com',
+            'password' => 'password',
+        ]);
+
+    $response->assertRedirectToRoute('facility-manager.dashboard');
+    $response->assertSessionHas(BranchContext::SESSION_KEY, $branch->id);
 });
 
 it('redirects to two-factor challenge when enabled', function (): void {

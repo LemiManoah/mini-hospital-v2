@@ -10,7 +10,7 @@ final readonly class CreateVisitPaymentDTO
 {
     public function __construct(
         public float $amount,
-        public string $paymentMethod,
+        public string $paymentMethodId,
         public ?string $paymentDate,
         public ?string $referenceNumber,
         public ?string $notes,
@@ -21,7 +21,7 @@ final readonly class CreateVisitPaymentDTO
         /**
          * @var array{
          *     amount: int|float|string,
-         *     payment_method: string,
+         *     payment_method_id: string,
          *     payment_date?: string|null,
          *     reference_number?: string|null,
          *     notes?: string|null
@@ -31,7 +31,7 @@ final readonly class CreateVisitPaymentDTO
 
         return new self(
             amount: self::numericValue($validated['amount']),
-            paymentMethod: $validated['payment_method'],
+            paymentMethodId: $validated['payment_method_id'],
             paymentDate: self::nullableString($validated['payment_date'] ?? null),
             referenceNumber: self::nullableString($validated['reference_number'] ?? null),
             notes: self::nullableString($validated['notes'] ?? null),

@@ -1,3 +1,4 @@
+import { AuditTimelineCard } from '@/components/audit-timeline-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +24,7 @@ const labelize = (value: string): string =>
 export default function GoodsReceiptShow({
     navigation,
     goodsReceipt: gr,
+    audit_activity,
 }: GoodsReceiptShowPageProps) {
     const { hasPermission } = usePermissions();
 
@@ -192,6 +194,12 @@ export default function GoodsReceiptShow({
                         </Table>
                     </div>
                 </div>
+
+                <AuditTimelineCard
+                    title="Goods Receipt Audit Log"
+                    entries={audit_activity}
+                    emptyMessage="No inventory audit activity recorded for this goods receipt yet."
+                />
             </div>
         </AppLayout>
     );

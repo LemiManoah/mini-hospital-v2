@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ConsultationOutcome;
+use App\Enums\ConsultationType;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,7 @@ final class Consultation extends Model
         'facility_branch_id' => 'string',
         'visit_id' => 'string',
         'doctor_id' => 'string',
+        'consultation_type' => ConsultationType::class,
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'secondary_diagnoses' => 'array',

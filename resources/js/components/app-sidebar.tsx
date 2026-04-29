@@ -1,10 +1,12 @@
 'use client';
 
 import {
+    Bell,
     Bot,
     Boxes,
     Building,
     CalendarDays,
+    CircleDollarSign,
     FlaskConical,
     HeartPulse,
     LayoutGrid,
@@ -39,6 +41,8 @@ import { index as indexRoles } from '@/routes/roles';
 import { index as indexStaff } from '@/routes/staff';
 import { index as indexStaffPositions } from '@/routes/staff-positions';
 import { create as createUsers, index as indexUsers } from '@/routes/users';
+import { type SharedData } from '@/types';
+import { usePage } from '@inertiajs/react';
 
 type NavChild = {
     title: string;
@@ -68,6 +72,7 @@ function filterItems(
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { user, hasPermission, hasRole } = usePermissions();
+    const { unread_notifications_count } = usePage<SharedData>().props;
 
     if (!user) {
         return null;
@@ -101,6 +106,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 [{ title: 'Overview', url: dashboard().url }],
                 hasPermission,
             ),
+        },
+        {
+            title: 'Notifications',
+            url: '/notifications',
+            icon: Bell,
+            items: [
+                {
+                    title:
+                        unread_notifications_count > 0
+                            ? `Inbox (${unread_notifications_count})`
+                            : 'Inbox',
+                    url: '/notifications',
+                },
+            ],
         },
         {
             title: 'Outpatient',
@@ -367,6 +386,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ),
         },
         {
+            title: 'Finance & Accounting',
+            url: '/finance/opd-payments',
+            icon: CircleDollarSign,
+            items: filterItems(
+                [
+                    {
+                        title: 'Incoming OPD Payments',
+                        url: '/finance/opd-payments',
+                        permission: 'payments.view',
+                    },
+                    {
+                        title: 'Daily Revenue',
+                        url: '/reports/daily-revenue',
+                        permission: 'reports.view',
+                    },
+                ],
+                hasPermission,
+            ),
+        },
+        {
             title: 'User Management',
             url: indexUsers(),
             icon: UserCog,
@@ -439,6 +478,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             'subscription_packages.view',
                             'tenants.view',
                         ],
+                    },
+                    {
+                        title: 'Consultation Tariffs',
+                        url: '/consultation-tariffs',
+                        permission: 'consultation_tariffs.view',
                     },
                     {
                         title: 'Reports',

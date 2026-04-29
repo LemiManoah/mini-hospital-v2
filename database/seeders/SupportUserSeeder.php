@@ -25,16 +25,15 @@ final class SupportUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create or repair the internal support user account.
         $user = User::query()->firstOrNew([
             'email' => self::SUPPORT_EMAIL,
         ]);
 
-        $defaultSupportStaff = $this->seedTenantSupportStaff()->first();
+        $supportStaff = $this->preferredSupportStaff($this->seedTenantSupportStaff());
 
         $user->forceFill([
-            'tenant_id' => $defaultSupportStaff?->tenant_id,
-            'staff_id' => $defaultSupportStaff?->id,
+            'tenant_id' => $supportStaff?->tenant_id,
+            'staff_id' => $supportStaff?->id,
             'password' => $user->exists ? $user->password : Hash::make('password'),
             'is_support' => true,
             'email_verified_at' => $user->email_verified_at ?? now(),
@@ -120,6 +119,22 @@ final class SupportUserSeeder extends Seeder
             })
             ->filter(fn (?Staff $staff): bool => $staff instanceof Staff)
             ->values();
+    }
+
+    /**
+     * @param  Collection<int, Staff>  $supportStaff
+     */
+    private function preferredSupportStaff(Collection $supportStaff): ?Staff
+    {
+        $preferred = $supportStaff->first(function (Staff $staff): bool {
+            $tenant = Tenant::query()
+                ->select('id', 'domain')
+                ->find($staff->tenant_id);
+
+            return $tenant instanceof Tenant && $tenant->domain === 'qroo';
+        });
+
+        return $preferred instanceof Staff ? $preferred : $supportStaff->first();
     }
 
     private function tenantSupportEmail(Tenant $tenant): string

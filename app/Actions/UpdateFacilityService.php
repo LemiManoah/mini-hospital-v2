@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateFacilityService
 {
+    public function __construct(
+        private SyncFacilityServiceChargeMaster $syncFacilityServiceChargeMaster,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $attributes
      */
@@ -18,9 +22,10 @@ final readonly class UpdateFacilityService
         return DB::transaction(function () use ($service, $attributes): FacilityService {
             $service->update([
                 ...$attributes,
-                'charge_master_id' => ($attributes['is_billable'] ?? $service->is_billable) ? $service->id : null,
                 'updated_by' => Auth::id(),
             ]);
+
+            $this->syncFacilityServiceChargeMaster->handle($service->refresh());
 
             return $service->refresh();
         });

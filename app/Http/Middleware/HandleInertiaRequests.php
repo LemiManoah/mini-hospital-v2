@@ -62,6 +62,9 @@ final class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $this->sharedUser($user, $activeBranch),
             ],
+            'unread_notifications_count' => fn (): int => $user instanceof User
+                ? $user->unreadNotifications()->count()
+                : 0,
             'impersonation' => $this->sharedImpersonation($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

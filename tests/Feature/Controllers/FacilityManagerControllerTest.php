@@ -10,6 +10,7 @@ use App\Models\FacilityBranch;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
+use App\Models\TenantSupportNote;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Inertia\Testing\AssertableInertia;
@@ -179,6 +180,12 @@ it('allows support users to open facility manager child pages and record support
         'title' => 'Billing follow-up',
         'is_pinned' => true,
     ]);
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $tenant->id,
+        'log_name' => 'support',
+        'event' => 'support.note_created',
+        'subject_type' => TenantSupportNote::class,
+    ]);
 
     $followUpAt = now()->addDay()->format('Y-m-d H:i:s');
     $lastContactedAt = now()->format('Y-m-d H:i:s');
@@ -200,6 +207,88 @@ it('allows support users to open facility manager child pages and record support
         'support_follow_up_at' => $followUpAt,
         'support_last_contacted_at' => $lastContactedAt,
     ]);
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $tenant->id,
+        'log_name' => 'support',
+        'event' => 'support.workflow_updated',
+        'subject_type' => Tenant::class,
+        'subject_id' => $tenant->id,
+    ]);
+
+    $subscription = TenantSubscription::query()->create([
+        'tenant_id' => $tenant->id,
+        'subscription_package_id' => $tenant->subscription_package_id,
+        'status' => SubscriptionStatus::PENDING_ACTIVATION,
+        'starts_at' => now(),
+        'current_period_starts_at' => now(),
+        'current_period_ends_at' => now()->addDays(14),
+    ]);
+
+    $this->actingAs($supportUser)
+        ->post(route('facility-manager.facilities.activate-subscription', $tenant))
+        ->assertRedirect()
+        ->assertSessionHas('success', 'Subscription activated for '.$tenant->name.'.');
+
+    $subscription->refresh();
+
+    expect($subscription->status)->toBe(SubscriptionStatus::ACTIVE);
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $tenant->id,
+        'log_name' => 'support',
+        'event' => 'tenant.subscription.activated',
+        'subject_type' => TenantSubscription::class,
+        'subject_id' => $subscription->id,
+    ]);
+
+    $this->actingAs($supportUser)
+        ->post(route('facility-manager.facilities.mark-subscription-past-due', $tenant))
+        ->assertRedirect()
+        ->assertSessionHas('success', 'Subscription marked as past due for '.$tenant->name.'.');
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $tenant->id,
+        'log_name' => 'support',
+        'event' => 'tenant.subscription.past_due',
+        'subject_type' => TenantSubscription::class,
+        'subject_id' => $subscription->id,
+    ]);
+
+    $this->actingAs($supportUser)
+        ->post(route('facility-manager.facilities.complete-onboarding', $tenant))
+        ->assertRedirect()
+        ->assertSessionHas('success', 'Onboarding marked complete for '.$tenant->name.'.');
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $tenant->id,
+        'log_name' => 'support',
+        'event' => 'support.onboarding.completed',
+        'subject_type' => Tenant::class,
+        'subject_id' => $tenant->id,
+    ]);
+
+    $this->actingAs($supportUser)
+        ->post(route('facility-manager.facilities.reopen-onboarding', $tenant))
+        ->assertRedirect()
+        ->assertSessionHas('success', 'Onboarding reopened for '.$tenant->name.'.');
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $tenant->id,
+        'log_name' => 'support',
+        'event' => 'support.onboarding.reopened',
+        'subject_type' => Tenant::class,
+        'subject_id' => $tenant->id,
+    ]);
+
+    $this->actingAs($supportUser)
+        ->get(route('facility-manager.facilities.activity', $tenant))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('facility-manager/activity')
+            ->where('tenant.id', $tenant->id)
+            ->has('support_activity', 6)
+            ->where('support_activity.0.title', 'Onboarding reopened')
+            ->where('support_activity.1.title', 'Onboarding marked complete'));
 
     $exportResponse = $this->actingAs($supportUser)
         ->get(route('facility-manager.facilities.export', [

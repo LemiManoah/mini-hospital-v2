@@ -8,8 +8,10 @@ use App\Enums\LabRequestItemStatus;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabResultEntry;
+use App\Models\LabResultValue;
 use App\Models\LabTestCatalog;
 use App\Models\LabTestResultParameter;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -17,6 +19,7 @@ final readonly class CorrectLabResultEntry
 {
     public function __construct(
         private SyncLabRequestProgress $syncLabRequestProgress,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     /**
@@ -41,6 +44,22 @@ final readonly class CorrectLabResultEntry
 
         return DB::transaction(function () use ($labRequestItem, $resultEntry, $payload, $staffId): LabRequestItem {
             $timestamp = now();
+            $oldValues = [
+                'result_notes' => $resultEntry->result_notes,
+                'review_notes' => $resultEntry->review_notes,
+                'approval_notes' => $resultEntry->approval_notes,
+                'released_at' => $resultEntry->released_at?->toISOString(),
+                'approved_at' => $resultEntry->approved_at?->toISOString(),
+                'values' => $resultEntry->values()->orderBy('sort_order')->get()->map(
+                    static fn (LabResultValue $value): array => [
+                        'id' => $value->id,
+                        'parameter_id' => $value->lab_test_result_parameter_id,
+                        'label' => $value->label,
+                        'value_numeric' => $value->value_numeric,
+                        'value_text' => $value->value_text,
+                    ],
+                )->all(),
+            ];
 
             $resultEntry->forceFill([
                 'entered_by' => $staffId,
@@ -121,6 +140,32 @@ final readonly class CorrectLabResultEntry
             $labRequest = $labRequestItem->request()->firstOrFail();
 
             $this->syncLabRequestProgress->handle($labRequest);
+
+            $this->recordAuditActivity->handle(
+                logName: 'laboratory',
+                event: 'lab_result.corrected',
+                subject: $resultEntry,
+                description: 'Lab result corrected and reopened for review.',
+                tenantId: $labRequest->tenant_id,
+                branchId: $labRequest->facility_branch_id,
+                staffId: $staffId,
+                reason: $this->nullableText($payload['correction_reason'] ?? null),
+                oldValues: $oldValues,
+                newValues: [
+                    'lab_request_id' => $labRequest->id,
+                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_result_entry_id' => $resultEntry->id,
+                    'status' => $labRequestItem->status->value,
+                    'entered_by' => $staffId,
+                    'entered_at' => $timestamp->toISOString(),
+                    'corrected_by' => $staffId,
+                    'corrected_at' => $timestamp->toISOString(),
+                    'correction_reason' => $this->nullableText($payload['correction_reason'] ?? null),
+                ],
+                metadata: [
+                    'causer_user_id' => Auth::id(),
+                ],
+            );
 
             return $labRequestItem->refresh();
         });

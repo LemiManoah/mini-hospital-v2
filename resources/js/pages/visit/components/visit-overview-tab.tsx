@@ -93,6 +93,15 @@ export function VisitOverviewTab({
         'Not applicable';
     const billingStatus =
         visit.billing?.status?.replaceAll('_', ' ') ?? 'Not billed';
+    const servicePaymentStatus =
+        (visit.billing?.balance_amount ?? 0) <= 0 &&
+        (visit.billing?.gross_amount ?? 0) > 0
+            ? 'Services paid'
+            : (visit.billing?.paid_amount ?? 0) > 0
+              ? 'Services partially paid'
+              : (visit.billing?.gross_amount ?? 0) > 0
+                ? 'Services not yet paid'
+                : 'No billable services yet';
     const canCompleteVisit =
         canUpdateVisit &&
         ['in_progress', 'awaiting_payment'].includes(visit.status);
@@ -178,20 +187,12 @@ export function VisitOverviewTab({
                             label="Billing Status"
                             value={billingStatus}
                         />
+                        <SummaryItem
+                            label="Service Payment"
+                            value={servicePaymentStatus}
+                        />
                         <SummaryItem label="Insurer" value={insurer} />
                         <SummaryItem label="Package" value={packageName} />
-                        <SummaryItem
-                            label="Gross Charges"
-                            value={formatMoney(visit.billing?.gross_amount)}
-                        />
-                        <SummaryItem
-                            label="Paid Amount"
-                            value={formatMoney(visit.billing?.paid_amount)}
-                        />
-                        <SummaryItem
-                            label="Balance"
-                            value={formatMoney(visit.billing?.balance_amount)}
-                        />
                     </div>
 
                     {(completionCheck?.has_pending_services ||

@@ -11,13 +11,18 @@ use App\Models\Consultation;
 use App\Models\InventoryItem;
 use App\Models\PatientVisit;
 use App\Models\Prescription;
+use App\Notifications\PrescriptionCreatedNotification;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreatePrescription
 {
     public function __construct(
+        private SyncPrescriptionCharge $syncPrescriptionCharge,
         private TransitionPatientVisitStatus $transitionStatus,
+        private NotifyUsersWithPermission $notifyUsersWithPermission,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(Consultation|PatientVisit $context, CreatePrescriptionDTO $data, string $staffId): Prescription
@@ -35,7 +40,7 @@ final readonly class CreatePrescription
             ->get()
             ->keyBy('id');
 
-        return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $inventoryItems): Prescription {
+        $prescription = DB::transaction(function () use ($visit, $consultation, $data, $staffId, $inventoryItems): Prescription {
             $prescription = Prescription::query()->create([
                 'visit_id' => $visit->id,
                 'consultation_id' => $consultation?->id,
@@ -71,13 +76,46 @@ final readonly class CreatePrescription
 
             $prescription = $prescription->loadMissing([
                 'prescribedBy:id,first_name,last_name',
-                'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form',
+                'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form,default_selling_price',
             ]);
 
+            $this->syncPrescriptionCharge->handle($prescription);
             $this->ensureVisitInProgress($visit);
 
             return $prescription;
         });
+
+        $this->recordAuditActivity->handle(
+            logName: 'pharmacy',
+            event: 'prescription.created',
+            subject: $prescription,
+            description: 'Prescription created.',
+            tenantId: $visit->tenant_id,
+            branchId: $visit->facility_branch_id,
+            staffId: $staffId,
+            newValues: [
+                'visit_id' => $visit->id,
+                'consultation_id' => $consultation?->id,
+                'prescription_id' => $prescription->id,
+                'item_count' => $prescription->items->count(),
+                'status' => $prescription->status,
+            ],
+            metadata: [
+                'is_discharge_medication' => $prescription->is_discharge_medication,
+                'is_long_term' => $prescription->is_long_term,
+                'causer_user_id' => Auth::id(),
+            ],
+        );
+
+        if ($visit->tenant_id !== null) {
+            $this->notifyUsersWithPermission->handle(
+                $visit->tenant_id,
+                ['pharmacy_dispensing.view', 'pharmacy_dispensing.create'],
+                new PrescriptionCreatedNotification($prescription),
+            );
+        }
+
+        return $prescription;
     }
 
     /**

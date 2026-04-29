@@ -19,13 +19,13 @@ use App\Models\SpecimenType;
 use App\Models\Staff;
 use App\Models\StaffPosition;
 use App\Models\Tenant;
-use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
+use Database\Seeders\Concerns\InteractsWithQrooMedicalCenter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 
-final class CityGeneralHospitalReferenceSeeder extends Seeder
+final class QrooMedicalCenterReferenceSeeder extends Seeder
 {
-    use InteractsWithCityGeneralHospital;
+    use InteractsWithQrooMedicalCenter;
 
     public function run(): void
     {
@@ -66,87 +66,87 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
 
         $staffBlueprints = [
             [
-                'employee_number' => 'CGH-DR-001',
+                'employee_number' => 'QMC-DR-001',
                 'first_name' => 'Grace',
                 'last_name' => 'Namara',
-                'email' => 'dr.grace.namara@citygeneral.ug',
+                'email' => 'dr.grace.namara@qroomedical.ug',
                 'phone' => '+256 701 210001',
                 'department' => 'Internal Medicine',
                 'positions' => ['Consultant Doctor', 'Doctor'],
                 'type' => StaffType::MEDICAL,
                 'license_number' => 'UGMC-2026-001',
                 'specialty' => 'Family Medicine',
-                'branch_code' => 'CGH-MAIN',
+                'branch_code' => 'QMC-MAIN',
                 'address' => ['city' => 'Kampala', 'district' => 'Nakawa', 'state' => 'Central'],
             ],
             [
-                'employee_number' => 'CGH-DR-002',
+                'employee_number' => 'QMC-DR-002',
                 'first_name' => 'Samuel',
                 'last_name' => 'Kirabo',
-                'email' => 'dr.samuel.kirabo@citygeneral.ug',
+                'email' => 'dr.samuel.kirabo@qroomedical.ug',
                 'phone' => '+256 701 210002',
                 'department' => 'Pediatrics',
                 'positions' => ['Doctor', 'Consultant Doctor'],
                 'type' => StaffType::MEDICAL,
                 'license_number' => 'UGMC-2026-002',
                 'specialty' => 'Pediatrics',
-                'branch_code' => 'CGH-MAIN',
+                'branch_code' => 'QMC-MAIN',
                 'address' => ['city' => 'Kampala', 'district' => 'Makindye', 'state' => 'Central'],
             ],
             [
-                'employee_number' => 'CGH-DR-003',
+                'employee_number' => 'QMC-DR-003',
                 'first_name' => 'Patricia',
                 'last_name' => 'Nalukwago',
-                'email' => 'dr.patricia.nalukwago@citygeneral.ug',
+                'email' => 'dr.patricia.nalukwago@qroomedical.ug',
                 'phone' => '+256 701 210003',
                 'department' => 'Surgery',
                 'positions' => ['Doctor', 'Consultant Doctor'],
                 'type' => StaffType::MEDICAL,
                 'license_number' => 'UGMC-2026-003',
                 'specialty' => 'General Surgery',
-                'branch_code' => 'CGH-ENT',
-                'address' => ['city' => 'Entebbe', 'district' => 'Wakiso', 'state' => 'Central'],
+                'branch_code' => 'QMC-MAIN',
+                'address' => ['city' => 'Kampala', 'district' => 'Wakiso', 'state' => 'Central'],
             ],
             [
-                'employee_number' => 'CGH-NUR-001',
+                'employee_number' => 'QMC-NUR-001',
                 'first_name' => 'Esther',
                 'last_name' => 'Mugerwa',
-                'email' => 'esther.mugerwa@citygeneral.ug',
+                'email' => 'esther.mugerwa@qroomedical.ug',
                 'phone' => '+256 701 210004',
                 'department' => 'Nursing',
                 'positions' => ['Head Nurse', 'Senior Nurse'],
                 'type' => StaffType::NURSING,
                 'license_number' => null,
                 'specialty' => 'Outpatient Nursing',
-                'branch_code' => 'CGH-MAIN',
+                'branch_code' => 'QMC-MAIN',
                 'address' => ['city' => 'Kampala', 'district' => 'Rubaga', 'state' => 'Central'],
             ],
             [
-                'employee_number' => 'CGH-NUR-002',
+                'employee_number' => 'QMC-NUR-002',
                 'first_name' => 'Joel',
                 'last_name' => 'Ssekimpi',
-                'email' => 'joel.ssekimpi@citygeneral.ug',
+                'email' => 'joel.ssekimpi@qroomedical.ug',
                 'phone' => '+256 701 210005',
                 'department' => 'Nursing',
                 'positions' => ['Registered Nurse', 'Senior Nurse'],
                 'type' => StaffType::NURSING,
                 'license_number' => null,
                 'specialty' => 'Treatment Room Nursing',
-                'branch_code' => 'CGH-ENT',
-                'address' => ['city' => 'Entebbe', 'district' => 'Wakiso', 'state' => 'Central'],
+                'branch_code' => 'QMC-MAIN',
+                'address' => ['city' => 'Kampala', 'district' => 'Wakiso', 'state' => 'Central'],
             ],
             [
-                'employee_number' => 'CGH-LAB-001',
+                'employee_number' => 'QMC-LAB-001',
                 'first_name' => 'Lillian',
                 'last_name' => 'Nabukeera',
-                'email' => 'lillian.nabukeera@citygeneral.ug',
+                'email' => 'lillian.nabukeera@qroomedical.ug',
                 'phone' => '+256 701 210006',
                 'department' => 'Laboratory',
                 'positions' => ['Laboratory Technician'],
                 'type' => StaffType::ALLIED_HEALTH,
                 'license_number' => null,
                 'specialty' => 'Clinical Laboratory',
-                'branch_code' => 'CGH-MAIN',
+                'branch_code' => 'QMC-MAIN',
                 'address' => ['city' => 'Kampala', 'district' => 'Central', 'state' => 'Central'],
             ],
         ];
@@ -212,43 +212,43 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
 
         $clinics = [
             [
-                'branch_code' => 'CGH-MAIN',
+                'branch_code' => 'QMC-MAIN',
                 'department' => 'Internal Medicine',
-                'clinic_code' => 'CGH-OPD-MAIN',
-                'clinic_name' => 'City General OPD',
+                'clinic_code' => 'QMC-OPD-MAIN',
+                'clinic_name' => 'Qroo General OPD',
                 'location' => 'Main building, ground floor',
                 'phone' => '+256 414 123460',
             ],
             [
-                'branch_code' => 'CGH-MAIN',
+                'branch_code' => 'QMC-MAIN',
                 'department' => 'Pediatrics',
-                'clinic_code' => 'CGH-PEDS-MAIN',
+                'clinic_code' => 'QMC-PEDS-MAIN',
                 'clinic_name' => 'Children Wellness Clinic',
                 'location' => 'Main building, first floor',
                 'phone' => '+256 414 123461',
             ],
             [
-                'branch_code' => 'CGH-MAIN',
+                'branch_code' => 'QMC-MAIN',
                 'department' => 'Nursing',
-                'clinic_code' => 'CGH-TREAT-MAIN',
+                'clinic_code' => 'QMC-TREAT-MAIN',
                 'clinic_name' => 'Main Treatment Room',
                 'location' => 'Main building, urgent care wing',
                 'phone' => '+256 414 123462',
             ],
             [
-                'branch_code' => 'CGH-ENT',
+                'branch_code' => 'QMC-MAIN',
                 'department' => 'Surgery',
-                'clinic_code' => 'CGH-OPD-ENT',
-                'clinic_name' => 'Entebbe Surgical OPD',
-                'location' => 'Entebbe branch, consultation bay A',
+                'clinic_code' => 'QMC-SURG-MAIN',
+                'clinic_name' => 'Surgical OPD',
+                'location' => 'Main building, surgery wing',
                 'phone' => '+256 414 234570',
             ],
             [
-                'branch_code' => 'CGH-ENT',
+                'branch_code' => 'QMC-MAIN',
                 'department' => 'Nursing',
-                'clinic_code' => 'CGH-TREAT-ENT',
-                'clinic_name' => 'Entebbe Dressing Room',
-                'location' => 'Entebbe branch, treatment room',
+                'clinic_code' => 'QMC-DRESS-MAIN',
+                'clinic_name' => 'Dressing Room',
+                'location' => 'Main building, treatment room',
                 'phone' => '+256 414 234571',
             ],
         ];
@@ -287,7 +287,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
     {
         $services = [
             [
-                'service_code' => 'CGH-SVC-NEB',
+                'service_code' => 'QMC-SVC-NEB',
                 'name' => 'Nebulization Session',
                 'category' => FacilityServiceCategory::NURSING,
                 'description' => 'Short-stay nebulization with nursing monitoring.',
@@ -296,7 +296,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
                 'is_billable' => true,
             ],
             [
-                'service_code' => 'CGH-SVC-DRESS',
+                'service_code' => 'QMC-SVC-DRESS',
                 'name' => 'Wound Dressing',
                 'category' => FacilityServiceCategory::DRESSING,
                 'description' => 'Sterile wound cleaning and dressing change.',
@@ -305,7 +305,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
                 'is_billable' => true,
             ],
             [
-                'service_code' => 'CGH-SVC-IV',
+                'service_code' => 'QMC-SVC-IV',
                 'name' => 'IV Cannulation',
                 'category' => FacilityServiceCategory::NURSING,
                 'description' => 'Peripheral IV line placement and setup.',
@@ -314,7 +314,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
                 'is_billable' => true,
             ],
             [
-                'service_code' => 'CGH-SVC-PROC',
+                'service_code' => 'QMC-SVC-PROC',
                 'name' => 'Minor Procedure Pack',
                 'category' => FacilityServiceCategory::PROCEDURE,
                 'description' => 'Consumables and setup for a simple outpatient procedure.',
@@ -367,7 +367,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
 
         $tests = [
             [
-                'test_code' => 'CGH-LAB-CBC',
+                'test_code' => 'QMC-LAB-CBC',
                 'test_name' => 'Complete Blood Count',
                 'category' => 'Hematology',
                 'result_type' => 'parameter_panel',
@@ -382,7 +382,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
                 'options' => [],
             ],
             [
-                'test_code' => 'CGH-LAB-MAL',
+                'test_code' => 'QMC-LAB-MAL',
                 'test_name' => 'Malaria Rapid Test',
                 'category' => 'Parasitology',
                 'result_type' => 'defined_option',
@@ -393,7 +393,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
                 'options' => ['Positive', 'Negative'],
             ],
             [
-                'test_code' => 'CGH-LAB-UA',
+                'test_code' => 'QMC-LAB-UA',
                 'test_name' => 'Urinalysis',
                 'category' => 'Chemistry',
                 'result_type' => 'parameter_panel',
@@ -408,7 +408,7 @@ final class CityGeneralHospitalReferenceSeeder extends Seeder
                 'options' => [],
             ],
             [
-                'test_code' => 'CGH-LAB-CRP',
+                'test_code' => 'QMC-LAB-CRP',
                 'test_name' => 'C-Reactive Protein',
                 'category' => 'Chemistry',
                 'result_type' => 'free_entry',

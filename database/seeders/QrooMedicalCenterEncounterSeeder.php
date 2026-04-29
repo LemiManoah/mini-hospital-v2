@@ -36,7 +36,7 @@ use App\Models\Tenant;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use Carbon\CarbonInterface;
-use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
+use Database\Seeders\Concerns\InteractsWithQrooMedicalCenter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use RuntimeException;
@@ -113,9 +113,9 @@ use RuntimeException;
  *   payment: PaymentData|null
  * }
  */
-final class CityGeneralHospitalEncounterSeeder extends Seeder
+final class QrooMedicalCenterEncounterSeeder extends Seeder
 {
-    use InteractsWithCityGeneralHospital;
+    use InteractsWithQrooMedicalCenter;
 
     public function run(): void
     {
@@ -136,11 +136,11 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         $patients = Patient::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('patient_number', [
-                'CGH-PAT-1001',
-                'CGH-PAT-1002',
-                'CGH-PAT-1003',
-                'CGH-PAT-1004',
-                'CGH-PAT-1005',
+                'QMC-PAT-1001',
+                'QMC-PAT-1002',
+                'QMC-PAT-1003',
+                'QMC-PAT-1004',
+                'QMC-PAT-1005',
             ])
             ->get()
             ->keyBy('patient_number');
@@ -149,10 +149,10 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         $clinics = Clinic::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('clinic_code', [
-                'CGH-OPD-MAIN',
-                'CGH-TREAT-MAIN',
-                'CGH-OPD-ENT',
-                'CGH-TREAT-ENT',
+                'QMC-OPD-MAIN',
+                'QMC-TREAT-MAIN',
+                'QMC-SURG-MAIN',
+                'QMC-DRESS-MAIN',
             ])
             ->get()
             ->keyBy('clinic_code');
@@ -161,12 +161,12 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         $staff = Staff::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('email', [
-                'dr.grace.namara@citygeneral.ug',
-                'dr.samuel.kirabo@citygeneral.ug',
-                'dr.patricia.nalukwago@citygeneral.ug',
-                'esther.mugerwa@citygeneral.ug',
-                'joel.ssekimpi@citygeneral.ug',
-                'lillian.nabukeera@citygeneral.ug',
+                'dr.grace.namara@qroomedical.ug',
+                'dr.samuel.kirabo@qroomedical.ug',
+                'dr.patricia.nalukwago@qroomedical.ug',
+                'esther.mugerwa@qroomedical.ug',
+                'joel.ssekimpi@qroomedical.ug',
+                'lillian.nabukeera@qroomedical.ug',
             ])
             ->get()
             ->keyBy('email');
@@ -175,10 +175,10 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         $tests = LabTestCatalog::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('test_code', [
-                'CGH-LAB-CBC',
-                'CGH-LAB-MAL',
-                'CGH-LAB-UA',
-                'CGH-LAB-CRP',
+                'QMC-LAB-CBC',
+                'QMC-LAB-MAL',
+                'QMC-LAB-UA',
+                'QMC-LAB-CRP',
             ])
             ->get()
             ->keyBy('test_code');
@@ -187,9 +187,9 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
         $services = FacilityService::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('service_code', [
-                'CGH-SVC-NEB',
-                'CGH-SVC-DRESS',
-                'CGH-SVC-IV',
+                'QMC-SVC-NEB',
+                'QMC-SVC-DRESS',
+                'QMC-SVC-IV',
             ])
             ->get()
             ->keyBy('service_code');
@@ -580,12 +580,12 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
     {
         return [
             [
-                'visit_number' => 'CGH-VIS-2026001',
-                'patient_number' => 'CGH-PAT-1001',
-                'branch_code' => 'CGH-MAIN',
-                'clinic_code' => 'CGH-OPD-MAIN',
-                'doctor_email' => 'dr.grace.namara@citygeneral.ug',
-                'invoice_number' => 'CGH-INV-0001',
+                'visit_number' => 'QMC-VIS-2026001',
+                'patient_number' => 'QMC-PAT-1001',
+                'branch_code' => 'QMC-MAIN',
+                'clinic_code' => 'QMC-OPD-MAIN',
+                'doctor_email' => 'dr.grace.namara@qroomedical.ug',
+                'invoice_number' => 'QMC-INV-0001',
                 'visit_type' => VisitType::OPD_CONSULTATION,
                 'status' => VisitStatus::COMPLETED,
                 'is_emergency' => false,
@@ -613,10 +613,10 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                     'priority' => Priority::URGENT,
                     'status' => LabRequestStatus::COMPLETED,
                     'billing_status' => LabBillingStatus::PAID,
-                    'workflow_staff_email' => 'lillian.nabukeera@citygeneral.ug',
+                    'workflow_staff_email' => 'lillian.nabukeera@qroomedical.ug',
                     'tests' => [
                         [
-                            'test_code' => 'CGH-LAB-MAL',
+                            'test_code' => 'QMC-LAB-MAL',
                             'status' => LabRequestItemStatus::COMPLETED,
                             'completed_at' => now()->subDays(4)->setTime(10, 5),
                             'result' => [
@@ -627,7 +627,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                             ],
                         ],
                         [
-                            'test_code' => 'CGH-LAB-CBC',
+                            'test_code' => 'QMC-LAB-CBC',
                             'status' => LabRequestItemStatus::COMPLETED,
                             'completed_at' => now()->subDays(4)->setTime(10, 15),
                             'result' => [
@@ -643,15 +643,15 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                 ],
                 'service_orders' => [
                     [
-                        'service_code' => 'CGH-SVC-IV',
+                        'service_code' => 'QMC-SVC-IV',
                         'status' => FacilityServiceOrderStatus::COMPLETED,
                         'ordered_at' => now()->subDays(4)->setTime(9, 10),
                         'completed_at' => now()->subDays(4)->setTime(9, 30),
-                        'performed_by_email' => 'esther.mugerwa@citygeneral.ug',
+                        'performed_by_email' => 'esther.mugerwa@qroomedical.ug',
                     ],
                 ],
                 'payment' => [
-                    'receipt_number' => 'CGH-RCP-0001',
+                    'receipt_number' => 'QMC-RCP-0001',
                     'payment_date' => now()->subDays(4)->setTime(11, 20),
                     'amount' => 78000,
                     'payment_method' => 'cash',
@@ -659,12 +659,12 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                 ],
             ],
             [
-                'visit_number' => 'CGH-VIS-2026002',
-                'patient_number' => 'CGH-PAT-1002',
-                'branch_code' => 'CGH-MAIN',
-                'clinic_code' => 'CGH-OPD-MAIN',
-                'doctor_email' => 'dr.grace.namara@citygeneral.ug',
-                'invoice_number' => 'CGH-INV-0002',
+                'visit_number' => 'QMC-VIS-2026002',
+                'patient_number' => 'QMC-PAT-1002',
+                'branch_code' => 'QMC-MAIN',
+                'clinic_code' => 'QMC-OPD-MAIN',
+                'doctor_email' => 'dr.grace.namara@qroomedical.ug',
+                'invoice_number' => 'QMC-INV-0002',
                 'visit_type' => VisitType::OUTPATIENT,
                 'status' => VisitStatus::IN_PROGRESS,
                 'is_emergency' => true,
@@ -692,16 +692,16 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                     'priority' => Priority::ROUTINE,
                     'status' => LabRequestStatus::IN_PROGRESS,
                     'billing_status' => LabBillingStatus::PENDING,
-                    'workflow_staff_email' => 'lillian.nabukeera@citygeneral.ug',
+                    'workflow_staff_email' => 'lillian.nabukeera@qroomedical.ug',
                     'tests' => [
                         [
-                            'test_code' => 'CGH-LAB-CBC',
+                            'test_code' => 'QMC-LAB-CBC',
                             'status' => LabRequestItemStatus::IN_PROGRESS,
                             'completed_at' => null,
                             'result' => null,
                         ],
                         [
-                            'test_code' => 'CGH-LAB-CRP',
+                            'test_code' => 'QMC-LAB-CRP',
                             'status' => LabRequestItemStatus::PENDING,
                             'completed_at' => null,
                             'result' => null,
@@ -710,22 +710,22 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                 ],
                 'service_orders' => [
                     [
-                        'service_code' => 'CGH-SVC-NEB',
+                        'service_code' => 'QMC-SVC-NEB',
                         'status' => FacilityServiceOrderStatus::IN_PROGRESS,
                         'ordered_at' => now()->subDays(1)->setTime(14, 35),
                         'completed_at' => null,
-                        'performed_by_email' => 'esther.mugerwa@citygeneral.ug',
+                        'performed_by_email' => 'esther.mugerwa@qroomedical.ug',
                     ],
                 ],
                 'payment' => null,
             ],
             [
-                'visit_number' => 'CGH-VIS-2026003',
-                'patient_number' => 'CGH-PAT-1003',
-                'branch_code' => 'CGH-MAIN',
-                'clinic_code' => 'CGH-OPD-MAIN',
-                'doctor_email' => 'dr.grace.namara@citygeneral.ug',
-                'invoice_number' => 'CGH-INV-0003',
+                'visit_number' => 'QMC-VIS-2026003',
+                'patient_number' => 'QMC-PAT-1003',
+                'branch_code' => 'QMC-MAIN',
+                'clinic_code' => 'QMC-OPD-MAIN',
+                'doctor_email' => 'dr.grace.namara@qroomedical.ug',
+                'invoice_number' => 'QMC-INV-0003',
                 'visit_type' => VisitType::NEW,
                 'status' => VisitStatus::COMPLETED,
                 'is_emergency' => false,
@@ -753,10 +753,10 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                     'priority' => Priority::ROUTINE,
                     'status' => LabRequestStatus::COMPLETED,
                     'billing_status' => LabBillingStatus::PAID,
-                    'workflow_staff_email' => 'lillian.nabukeera@citygeneral.ug',
+                    'workflow_staff_email' => 'lillian.nabukeera@qroomedical.ug',
                     'tests' => [
                         [
-                            'test_code' => 'CGH-LAB-UA',
+                            'test_code' => 'QMC-LAB-UA',
                             'status' => LabRequestItemStatus::COMPLETED,
                             'completed_at' => now()->subDays(2)->setTime(11, 35),
                             'result' => [
@@ -772,7 +772,7 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                 ],
                 'service_orders' => [],
                 'payment' => [
-                    'receipt_number' => 'CGH-RCP-0003',
+                    'receipt_number' => 'QMC-RCP-0003',
                     'payment_date' => now()->subDays(2)->setTime(12, 15),
                     'amount' => 20000,
                     'payment_method' => 'mobile_money',
@@ -780,12 +780,12 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                 ],
             ],
             [
-                'visit_number' => 'CGH-VIS-2026004',
-                'patient_number' => 'CGH-PAT-1004',
-                'branch_code' => 'CGH-ENT',
-                'clinic_code' => 'CGH-OPD-ENT',
-                'doctor_email' => 'dr.patricia.nalukwago@citygeneral.ug',
-                'invoice_number' => 'CGH-INV-0004',
+                'visit_number' => 'QMC-VIS-2026004',
+                'patient_number' => 'QMC-PAT-1004',
+                'branch_code' => 'QMC-MAIN',
+                'clinic_code' => 'QMC-SURG-MAIN',
+                'doctor_email' => 'dr.patricia.nalukwago@qroomedical.ug',
+                'invoice_number' => 'QMC-INV-0004',
                 'visit_type' => VisitType::FOLLOW_UP,
                 'status' => VisitStatus::COMPLETED,
                 'is_emergency' => false,
@@ -810,15 +810,15 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                 'lab_request' => null,
                 'service_orders' => [
                     [
-                        'service_code' => 'CGH-SVC-DRESS',
+                        'service_code' => 'QMC-SVC-DRESS',
                         'status' => FacilityServiceOrderStatus::COMPLETED,
                         'ordered_at' => now()->subDays(3)->setTime(10, 0),
                         'completed_at' => now()->subDays(3)->setTime(10, 20),
-                        'performed_by_email' => 'joel.ssekimpi@citygeneral.ug',
+                        'performed_by_email' => 'joel.ssekimpi@qroomedical.ug',
                     ],
                 ],
                 'payment' => [
-                    'receipt_number' => 'CGH-RCP-0004',
+                    'receipt_number' => 'QMC-RCP-0004',
                     'payment_date' => now()->subDays(3)->setTime(11, 5),
                     'amount' => 15000,
                     'payment_method' => 'cash',
@@ -826,12 +826,12 @@ final class CityGeneralHospitalEncounterSeeder extends Seeder
                 ],
             ],
             [
-                'visit_number' => 'CGH-VIS-2026005',
-                'patient_number' => 'CGH-PAT-1005',
-                'branch_code' => 'CGH-MAIN',
-                'clinic_code' => 'CGH-OPD-MAIN',
-                'doctor_email' => 'dr.grace.namara@citygeneral.ug',
-                'invoice_number' => 'CGH-INV-0005',
+                'visit_number' => 'QMC-VIS-2026005',
+                'patient_number' => 'QMC-PAT-1005',
+                'branch_code' => 'QMC-MAIN',
+                'clinic_code' => 'QMC-OPD-MAIN',
+                'doctor_email' => 'dr.grace.namara@qroomedical.ug',
+                'invoice_number' => 'QMC-INV-0005',
                 'visit_type' => VisitType::OUTPATIENT,
                 'status' => VisitStatus::REGISTERED,
                 'is_emergency' => false,

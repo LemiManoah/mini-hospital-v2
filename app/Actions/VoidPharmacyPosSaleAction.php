@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class VoidPharmacyPosSaleAction
 {
+    public function __construct(private RecordAuditActivity $recordAuditActivity) {}
+
     public function handle(PharmacyPosSale $sale): PharmacyPosSale
     {
         return DB::transaction(function () use ($sale): PharmacyPosSale {
@@ -55,6 +57,23 @@ final readonly class VoidPharmacyPosSaleAction
                 'status' => PharmacyPosSaleStatus::Voided,
                 'updated_by' => Auth::id(),
             ]);
+
+            $this->recordAuditActivity->handle(
+                logName: 'pharmacy',
+                event: 'pharmacy.sale.voided',
+                subject: $sale,
+                description: 'Pharmacy POS sale voided.',
+                tenantId: $sale->tenant_id,
+                branchId: $sale->branch_id,
+                staffId: Auth::user()?->staff_id,
+                newValues: [
+                    'sale_id' => $sale->id,
+                    'status' => $sale->status->value,
+                ],
+                metadata: [
+                    'inventory_location_id' => $sale->inventory_location_id,
+                ],
+            );
 
             return $sale->refresh();
         });

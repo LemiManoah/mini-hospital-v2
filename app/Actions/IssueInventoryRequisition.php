@@ -20,6 +20,7 @@ final readonly class IssueInventoryRequisition
 {
     public function __construct(
         private InventoryStockLedger $inventoryStockLedger,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(InventoryRequisition $requisition, IssueInventoryRequisitionDTO $data): InventoryRequisition
@@ -168,6 +169,31 @@ final readonly class IssueInventoryRequisition
                 'issued_notes' => $data->issuedNotes,
                 'updated_by' => Auth::id(),
             ]);
+
+            $this->recordAuditActivity->handle(
+                logName: 'inventory',
+                event: 'inventory.requisition.issued',
+                subject: $requisition,
+                description: 'Inventory requisition issue posted.',
+                tenantId: $requisition->tenant_id,
+                branchId: $requisition->branch_id,
+                staffId: Auth::user()?->staff_id,
+                newValues: [
+                    'requisition_id' => $requisition->id,
+                    'status' => $requisition->status->value,
+                    'issued_by' => $requisition->issued_by,
+                    'issued_at' => $requisition->issued_at?->toISOString(),
+                    'issued_line_count' => $allocations->count(),
+                    'issued_quantity_total' => round($allocations->sum(
+                        static fn (array $item): float => (float) $item['issue_quantity']
+                    ), 3),
+                ],
+                metadata: [
+                    'issued_notes' => $data->issuedNotes,
+                    'source_inventory_location_id' => $requisition->source_inventory_location_id,
+                    'destination_inventory_location_id' => $requisition->destination_inventory_location_id,
+                ],
+            );
 
             return $requisition->refresh()->load([
                 'fulfillingLocation',

@@ -6,10 +6,16 @@ namespace App\Actions;
 
 use App\Enums\InventoryRequisitionStatus;
 use App\Models\InventoryRequisition;
+use App\Notifications\InventoryRequisitionSubmittedNotification;
 use Illuminate\Support\Facades\Auth;
 
-final class SubmitInventoryRequisition
+final readonly class SubmitInventoryRequisition
 {
+    public function __construct(
+        private NotifyUsersWithPermission $notifyUsersWithPermission,
+        private RecordAuditActivity $recordAuditActivity,
+    ) {}
+
     public function handle(InventoryRequisition $requisition): InventoryRequisition
     {
         $updatedRows = InventoryRequisition::query()
@@ -24,6 +30,38 @@ final class SubmitInventoryRequisition
 
         abort_unless($updatedRows === 1, 422, 'Only draft requisitions can be submitted.');
 
-        return $requisition->refresh();
+        $requisition = $requisition->refresh();
+
+        $tenantId = $requisition->getAttributeValue('tenant_id');
+
+        if (is_string($tenantId) && $tenantId !== '') {
+            $this->recordAuditActivity->handle(
+                logName: 'inventory',
+                event: 'inventory.requisition.submitted',
+                subject: $requisition,
+                description: 'Inventory requisition submitted.',
+                tenantId: $requisition->tenant_id,
+                branchId: $requisition->branch_id,
+                staffId: Auth::user()?->staff_id,
+                newValues: [
+                    'requisition_id' => $requisition->id,
+                    'status' => $requisition->status->value,
+                    'submitted_by' => $requisition->submitted_by,
+                    'submitted_at' => $requisition->submitted_at?->toISOString(),
+                ],
+                metadata: [
+                    'source_inventory_location_id' => $requisition->source_inventory_location_id,
+                    'destination_inventory_location_id' => $requisition->destination_inventory_location_id,
+                ],
+            );
+
+            $this->notifyUsersWithPermission->handle(
+                $tenantId,
+                ['inventory_requisitions.review', 'inventory_requisitions.issue'],
+                new InventoryRequisitionSubmittedNotification($requisition),
+            );
+        }
+
+        return $requisition;
     }
 }

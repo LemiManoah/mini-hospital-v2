@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Data\Clinical\CompleteConsultationDTO;
 use App\Data\Clinical\UpdateConsultationDTO;
 use App\Enums\ConsultationOutcome;
+use App\Enums\ConsultationType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -42,6 +43,7 @@ final class UpdateConsultationRequest extends FormRequest
             'plan' => ['nullable', 'string'],
             'primary_diagnosis' => ['nullable', 'string', 'max:255'],
             'primary_icd10_code' => ['nullable', 'string', 'max:10'],
+            'consultation_type' => ['nullable', Rule::enum(ConsultationType::class)],
             'outcome' => ['nullable', Rule::enum(ConsultationOutcome::class)],
             'follow_up_instructions' => ['nullable', 'string'],
             'follow_up_days' => ['nullable', 'integer', 'min:1', 'max:365'],

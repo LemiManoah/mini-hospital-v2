@@ -9,9 +9,14 @@ use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Models\User;
+use Carbon\CarbonInterface;
 
-final class StartTenantSubscription
+final readonly class StartTenantSubscription
 {
+    public function __construct(
+        private RecordAuditActivity $recordAuditActivity,
+    ) {}
+
     public function handle(
         Tenant $tenant,
         SubscriptionPackage $package,
@@ -20,7 +25,7 @@ final class StartTenantSubscription
     ): TenantSubscription {
         $now = now();
 
-        return TenantSubscription::query()->create([
+        $subscription = TenantSubscription::query()->create([
             'tenant_id' => $tenant->id,
             'subscription_package_id' => $package->id,
             'status' => SubscriptionStatus::TRIAL,
@@ -35,10 +40,34 @@ final class StartTenantSubscription
                 'trial_days' => $trialDays,
             ],
         ]);
+
+        $this->recordAuditActivity->handle(
+            logName: 'support',
+            event: 'tenant.subscription.started',
+            subject: $subscription,
+            description: 'Tenant trial subscription started.',
+            actor: $actor,
+            tenantId: $tenant->id,
+            newValues: [
+                'subscription_id' => $subscription->id,
+                'subscription_package_id' => $package->id,
+                'status' => SubscriptionStatus::TRIAL->value,
+                'starts_at' => $this->dateIsoString($subscription, 'starts_at'),
+                'trial_ends_at' => $this->dateIsoString($subscription, 'trial_ends_at'),
+            ],
+            metadata: [
+                'source' => 'workspace_registration',
+                'trial_days' => $trialDays,
+            ],
+        );
+
+        return $subscription;
     }
 
     public function markPendingActivation(TenantSubscription $subscription, ?User $actor = null): TenantSubscription
     {
+        $oldStatus = $this->statusValue($subscription);
+
         $subscription->update([
             'status' => SubscriptionStatus::PENDING_ACTIVATION,
             'updated_by' => $actor?->id,
@@ -50,12 +79,29 @@ final class StartTenantSubscription
 
         $subscription->refresh();
 
+        $this->recordAuditActivity->handle(
+            logName: 'support',
+            event: 'tenant.subscription.pending_activation',
+            subject: $subscription,
+            description: 'Tenant subscription marked pending activation.',
+            actor: $actor,
+            tenantId: $subscription->tenant_id,
+            oldValues: [
+                'status' => $oldStatus,
+            ],
+            newValues: [
+                'subscription_id' => $subscription->id,
+                'status' => SubscriptionStatus::PENDING_ACTIVATION->value,
+            ],
+        );
+
         return $subscription;
     }
 
     public function markActive(TenantSubscription $subscription, ?User $actor = null, int $billingDays = 30): TenantSubscription
     {
         $now = now();
+        $oldStatus = $this->statusValue($subscription);
 
         $subscription->update([
             'status' => SubscriptionStatus::ACTIVE,
@@ -72,11 +118,35 @@ final class StartTenantSubscription
 
         $subscription->refresh();
 
+        $this->recordAuditActivity->handle(
+            logName: 'support',
+            event: 'tenant.subscription.activated',
+            subject: $subscription,
+            description: 'Tenant subscription activated.',
+            actor: $actor,
+            tenantId: $subscription->tenant_id,
+            oldValues: [
+                'status' => $oldStatus,
+            ],
+            newValues: [
+                'subscription_id' => $subscription->id,
+                'status' => SubscriptionStatus::ACTIVE->value,
+                'activated_at' => $this->dateIsoString($subscription, 'activated_at'),
+                'current_period_starts_at' => $this->dateIsoString($subscription, 'current_period_starts_at'),
+                'current_period_ends_at' => $this->dateIsoString($subscription, 'current_period_ends_at'),
+            ],
+            metadata: [
+                'billing_days' => $billingDays,
+            ],
+        );
+
         return $subscription;
     }
 
     public function markFailed(TenantSubscription $subscription, ?User $actor = null): TenantSubscription
     {
+        $oldStatus = $this->statusValue($subscription);
+
         $subscription->update([
             'status' => SubscriptionStatus::PAST_DUE,
             'updated_by' => $actor?->id,
@@ -87,6 +157,22 @@ final class StartTenantSubscription
         ]);
 
         $subscription->refresh();
+
+        $this->recordAuditActivity->handle(
+            logName: 'support',
+            event: 'tenant.subscription.past_due',
+            subject: $subscription,
+            description: 'Tenant subscription marked past due.',
+            actor: $actor,
+            tenantId: $subscription->tenant_id,
+            oldValues: [
+                'status' => $oldStatus,
+            ],
+            newValues: [
+                'subscription_id' => $subscription->id,
+                'status' => SubscriptionStatus::PAST_DUE->value,
+            ],
+        );
 
         return $subscription;
     }
@@ -113,5 +199,23 @@ final class StartTenantSubscription
         }
 
         return $normalizedMeta;
+    }
+
+    private function statusValue(TenantSubscription $subscription): ?string
+    {
+        $status = $subscription->getAttributeValue('status');
+
+        if ($status instanceof SubscriptionStatus) {
+            return $status->value;
+        }
+
+        return is_string($status) ? $status : null;
+    }
+
+    private function dateIsoString(TenantSubscription $subscription, string $attribute): ?string
+    {
+        $date = $subscription->getAttributeValue($attribute);
+
+        return $date instanceof CarbonInterface ? $date->toISOString() : null;
     }
 }

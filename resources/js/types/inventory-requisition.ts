@@ -1,3 +1,4 @@
+import type { AuditTimelineEntry } from './audit';
 import type { InventoryItem } from './inventory-item';
 import type { InventoryNavigationContext } from './inventory-navigation';
 
@@ -122,4 +123,5 @@ export interface InventoryRequisitionShowPageProps {
     navigation: InventoryNavigationContext;
     requisition: InventoryRequisition;
     availableBatchBalances: InventoryRequisitionAvailableBatch[];
+    audit_activity: AuditTimelineEntry[];
 }

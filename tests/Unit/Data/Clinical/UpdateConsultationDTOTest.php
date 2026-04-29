@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Data\Clinical\UpdateConsultationDTO;
+use App\Enums\ConsultationType;
 use Illuminate\Foundation\Http\FormRequest;
 
 function updateConsultationRequest(array $validated): FormRequest
@@ -26,8 +27,10 @@ it('builds an update consultation dto from validated input', function (): void {
         'intent' => 'save_draft',
         'chief_complaint' => '  Updated complaint  ',
         'plan' => '  Return if worse  ',
+        'consultation_type' => 'emergency',
     ]));
 
     expect($dto->chiefComplaint)->toBe('Updated complaint')
-        ->and($dto->plan)->toBe('Return if worse');
+        ->and($dto->plan)->toBe('Return if worse')
+        ->and($dto->consultationType)->toBe(ConsultationType::EMERGENCY);
 });

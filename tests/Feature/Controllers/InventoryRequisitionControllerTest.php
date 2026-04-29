@@ -445,6 +445,15 @@ it('allows requester workspaces to cancel draft requisitions', function (): void
 
     expect($requisition->status)->toBe(InventoryRequisitionStatus::Cancelled)
         ->and($requisition->cancellation_reason)->toBe('Requested in error.');
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'log_name' => 'inventory',
+        'event' => 'inventory.requisition.cancelled',
+        'subject_type' => InventoryRequisition::class,
+        'subject_id' => $requisition->id,
+    ]);
 });
 
 it('allows requester workspaces to withdraw submitted requisitions before review', function (): void {
@@ -485,6 +494,15 @@ it('allows requester workspaces to withdraw submitted requisitions before review
 
     expect($requisition->status)->toBe(InventoryRequisitionStatus::Cancelled)
         ->and($requisition->cancellation_reason)->toBe('Need changed before review.');
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'log_name' => 'inventory',
+        'event' => 'inventory.requisition.cancelled',
+        'subject_type' => InventoryRequisition::class,
+        'subject_id' => $requisition->id,
+    ]);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user->fresh())
@@ -625,6 +643,31 @@ it('submits approves and partially issues a requisition', function (): void {
         ->and((float) $line->approved_quantity)->toBe(6.0)
         ->and((float) $line->issued_quantity)->toBe(4.0);
 
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'log_name' => 'inventory',
+        'event' => 'inventory.requisition.submitted',
+        'subject_type' => InventoryRequisition::class,
+        'subject_id' => $requisition->id,
+    ]);
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'log_name' => 'inventory',
+        'event' => 'inventory.requisition.approved',
+        'subject_type' => InventoryRequisition::class,
+        'subject_id' => $requisition->id,
+    ]);
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'log_name' => 'inventory',
+        'event' => 'inventory.requisition.issued',
+        'subject_type' => InventoryRequisition::class,
+        'subject_id' => $requisition->id,
+    ]);
+
     $outbound = StockMovement::query()->withoutGlobalScopes()
         ->where('source_document_type', InventoryRequisition::class)
         ->where('source_document_id', $requisition->id)
@@ -649,6 +692,15 @@ it('submits approves and partially issues a requisition', function (): void {
 
     expect((float) $sourceBalance)->toBe(8.0)
         ->and((float) $destinationBalance)->toBe(4.0);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('inventory-requisitions.show', $requisition))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('inventory/requisitions/show')
+            ->has('audit_activity', 3)
+            ->where('audit_activity.0.title', 'Inventory requisition issue posted.'));
 });
 
 it('fulfills a requisition when all approved stock is issued', function (): void {
@@ -727,6 +779,15 @@ it('rejects a submitted requisition', function (): void {
     expect($requisition->status)->toBe(InventoryRequisitionStatus::Rejected)
         ->and($requisition->rejection_reason)
         ->toBe('Requested quantity should be revised first.');
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $user->tenant_id,
+        'branch_id' => $branch->id,
+        'log_name' => 'inventory',
+        'event' => 'inventory.requisition.rejected',
+        'subject_type' => InventoryRequisition::class,
+        'subject_id' => $requisition->id,
+    ]);
 });
 
 it('prevents pharmacy users from approving main store requisitions', function (): void {

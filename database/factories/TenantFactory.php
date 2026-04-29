@@ -24,8 +24,8 @@ final class TenantFactory extends Factory
         return [
             'name' => fake()->company(),
             'domain' => fake()->unique()->domainName(),
-            'country_id' => Country::factory(),
-            'subscription_package_id' => SubscriptionPackage::factory(),
+            'country_id' => Country::query()->inRandomOrder()->first() ?? Country::factory(),
+            'subscription_package_id' => SubscriptionPackage::query()->inRandomOrder()->first() ?? SubscriptionPackage::factory(),
             'facility_level' => FacilityLevel::CLINIC,
             'status' => GeneralStatus::ACTIVE,
             'onboarding_completed_at' => now(),

@@ -16,6 +16,7 @@
         "laravel/framework": "^12.57.0",
         "laravel/wayfinder": "^0.1.16",
         "nunomaduro/essentials": "^1.2.0",
+        "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-permission": "^7.3.0"
     },
     "require-dev": {

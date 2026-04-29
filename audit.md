@@ -638,6 +638,105 @@ Recommended rollout:
 
 This staged approach avoids flooding the database with low-value events before the highest-risk workflows are covered.
 
+## Current Implementation Status
+
+The audit implementation has started in code. The project is no longer at a planning-only stage.
+
+### Completed So Far
+
+- Spatie Activitylog package has been installed.
+- The application now has a local audit model at `app/Models/Activity.php`.
+- The application now has a local config file at `config/activitylog.php`.
+- A shared audit action has been added at `app/Actions/RecordAuditActivity.php`.
+- The published activity migration has been adapted for this codebase to support:
+  - UUID subject morphs
+  - UUID causer morphs
+  - `tenant_id`
+  - `branch_id`
+  - `staff_id`
+  - `ip_address`
+  - `user_agent`
+  - tenant, branch, log, and event indexes
+
+### Manual Events Already Implemented
+
+The following business events have already been wired into application actions and controllers:
+
+- `payment.recorded`
+- `prescription.created`
+- `pharmacy.sale.finalized`
+- `pharmacy.sale.voided`
+- `pharmacy.sale.refunded`
+- `inventory.requisition.submitted`
+- `inventory.requisition.approved`
+- `inventory.requisition.rejected`
+- `inventory.requisition.cancelled`
+- `inventory.requisition.issued`
+- `inventory.goods_receipt.posted`
+- `lab_result.approved`
+- `lab_result.corrected`
+- `support.note_created`
+- `support.workflow_updated`
+- `support.onboarding.completed`
+- `support.onboarding.reopened`
+- `tenant.subscription.started`
+- `tenant.subscription.pending_activation`
+- `tenant.subscription.activated`
+- `tenant.subscription.past_due`
+- `support.impersonation.started`
+- `support.impersonation.stopped`
+
+### Timeline UI Already Started
+
+The Facility Manager activity page now has two activity sections:
+
+- operational recent activity
+- support timeline
+
+The support timeline is intended to show:
+
+- support notes
+- support workflow changes
+- onboarding complete and reopen actions
+- subscription state changes
+- impersonation activity
+
+This is the first user-facing audit surface backed by the new activity log.
+
+Additional audit timelines now exist on core operational detail screens:
+
+- Finance OPD payment show page
+- Pharmacy POS sale show page
+- Inventory requisition show page
+- Goods receipt show page
+
+### Tests Already Added
+
+Focused tests have already been added or extended for:
+
+- the shared audit action
+- payment activity logging
+- lab approval activity logging
+- lab correction activity logging
+- support note activity logging
+- support workflow activity logging
+- subscription activity logging
+- impersonation activity logging
+
+Some of the broader feature files are slower to run because they build full tenant, branch, permission, and Inertia state. Use focused test filters when validating only the new audit slice.
+
+### Still Not Complete
+
+The audit implementation is not finished yet. The following important work remains:
+
+- finish verification of the new support-side test additions
+- add access and user-management events
+- add more billing, pharmacy, and inventory events
+- add patient, visit, lab, and billing timeline views
+- add audit permissions and export/review policy where needed
+- define retention and cleanup policy before production rollout
+- add carefully selected automatic model logging for low-volume administrative records
+
 ## Suggested Audit Review Schedule
 
 ### Daily

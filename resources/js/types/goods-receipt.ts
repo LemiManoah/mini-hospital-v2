@@ -1,3 +1,4 @@
+import type { AuditTimelineEntry } from './audit';
 import type { InventoryItem } from './inventory-item';
 import type { InventoryNavigationContext } from './inventory-navigation';
 import type { PurchaseOrder, PurchaseOrderItem } from './purchase-order';
@@ -81,4 +82,5 @@ export interface GoodsReceiptFormPageProps {
 export interface GoodsReceiptShowPageProps {
     navigation: InventoryNavigationContext;
     goodsReceipt: GoodsReceipt;
+    audit_activity: AuditTimelineEntry[];
 }

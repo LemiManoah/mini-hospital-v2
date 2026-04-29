@@ -35,7 +35,7 @@ final readonly class VisitOrderOptions
             ->drugs()
             ->where('is_active', true)
             ->orderBy('generic_name')
-            ->get(['id', 'generic_name', 'brand_name', 'strength', 'dosage_form']);
+            ->get(['id', 'generic_name', 'brand_name', 'strength', 'dosage_form', 'default_selling_price']);
 
         $facilityServices = FacilityService::query()
             ->where('is_active', true)
@@ -66,8 +66,9 @@ final readonly class VisitOrderOptions
                     'brand_name' => $drug->brand_name,
                     'strength' => $drug->strength,
                     'dosage_form' => $drug->dosage_form?->value,
-                    'quoted_price' => $drugPriceMap[$drug->id] ?? null,
-                    'price_source' => isset($drugPriceMap[$drug->id]) ? 'insurance_package' : null,
+                    'default_selling_price' => $drug->default_selling_price,
+                    'quoted_price' => $drugPriceMap[$drug->id] ?? $drug->default_selling_price,
+                    'price_source' => isset($drugPriceMap[$drug->id]) ? 'insurance_package' : 'catalog_base',
                 ])
                 ->all(),
             'labPriorities' => collect(Priority::cases())

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Data\Clinical\CompleteConsultationDTO;
+use App\Enums\ConsultationType;
 use Illuminate\Foundation\Http\FormRequest;
 
 function completeConsultationRequest(array $validated): FormRequest
@@ -26,6 +27,7 @@ it('builds a complete consultation dto from validated input', function (): void 
         'intent' => 'complete',
         'chief_complaint' => '  Severe cough  ',
         'primary_diagnosis' => '  Pneumonia  ',
+        'consultation_type' => 'follow_up',
         'outcome' => 'follow_up_required',
         'follow_up_instructions' => '  Review in one week  ',
         'follow_up_days' => 7,
@@ -37,6 +39,7 @@ it('builds a complete consultation dto from validated input', function (): void 
 
     expect($dto->chiefComplaint)->toBe('Severe cough')
         ->and($dto->primaryDiagnosis)->toBe('Pneumonia')
+        ->and($dto->consultationType)->toBe(ConsultationType::FOLLOW_UP)
         ->and($dto->outcome)->toBe('follow_up_required')
         ->and($dto->followUpDays)->toBe(7)
         ->and($dto->isReferred)->toBeTrue()

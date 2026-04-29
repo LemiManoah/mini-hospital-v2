@@ -1,3 +1,4 @@
+import { AuditTimelineCard } from '@/components/audit-timeline-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
+import { type AuditTimelineEntry } from '@/types/audit';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryNavigationContext } from '@/types/inventory-navigation';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -75,6 +77,7 @@ interface PharmacyPosSaleShowProps {
     navigation: InventoryNavigationContext;
     sale: Sale;
     can: { void: boolean; refund: boolean };
+    audit_activity: AuditTimelineEntry[];
 }
 
 const statusTone = (status: string | null): string => {
@@ -124,6 +127,7 @@ export default function PharmacyPosSaleShow({
     navigation,
     sale,
     can,
+    audit_activity,
 }: PharmacyPosSaleShowProps) {
     const [showVoidConfirm, setShowVoidConfirm] = useState(false);
     const [showRefundModal, setShowRefundModal] = useState(false);
@@ -406,6 +410,12 @@ export default function PharmacyPosSaleShow({
                                 )}
                             </CardContent>
                         </Card>
+
+                        <AuditTimelineCard
+                            title="Sale Audit Log"
+                            entries={audit_activity}
+                            emptyMessage="No pharmacy audit activity recorded for this sale yet."
+                        />
                     </div>
                 </div>
             </div>

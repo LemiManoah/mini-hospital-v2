@@ -1,3 +1,4 @@
+import { AuditTimelineCard } from '@/components/audit-timeline-card';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
@@ -25,6 +26,7 @@ export default function InventoryRequisitionShow({
     navigation,
     requisition,
     availableBatchBalances,
+    audit_activity,
 }: InventoryRequisitionShowPageProps) {
     const { hasPermission } = usePermissions();
     const breadcrumbs: BreadcrumbItem[] = [
@@ -238,6 +240,12 @@ export default function InventoryRequisitionShow({
                         </div>
                     ) : null}
                 </div>
+
+                <AuditTimelineCard
+                    title="Requisition Audit Log"
+                    entries={audit_activity}
+                    emptyMessage="No inventory audit activity recorded for this requisition yet."
+                />
 
                 <RequisitionLinesTable requisition={requisition} />
             </div>

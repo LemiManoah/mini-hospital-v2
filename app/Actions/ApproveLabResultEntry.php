@@ -9,6 +9,9 @@ use App\Enums\LabSpecimenStatus;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabResultEntry;
+use App\Models\User;
+use App\Notifications\LabResultReleasedNotification;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -16,6 +19,7 @@ final readonly class ApproveLabResultEntry
 {
     public function __construct(
         private SyncLabRequestProgress $syncLabRequestProgress,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(
@@ -39,7 +43,10 @@ final readonly class ApproveLabResultEntry
             ]);
         }
 
-        return DB::transaction(function () use ($labRequestItem, $resultEntry, $staffId, $reviewNotes, $approvalNotes): LabRequestItem {
+        /** @var LabRequest|null $labRequest */
+        $labRequest = null;
+
+        $labRequestItem = DB::transaction(function () use ($labRequestItem, $resultEntry, $staffId, $reviewNotes, $approvalNotes, &$labRequest): LabRequestItem {
             $timestamp = now();
             $reviewTimestamp = $resultEntry->reviewed_at ?? $timestamp;
             $reviewerId = $resultEntry->reviewed_by ?? $staffId;
@@ -64,12 +71,55 @@ final readonly class ApproveLabResultEntry
                 'completed_at' => $timestamp,
             ])->save();
 
-            /** @var LabRequest $labRequest */
-            $labRequest = $labRequestItem->request()->firstOrFail();
+            /** @var LabRequest $resolvedRequest */
+            $resolvedRequest = $labRequestItem->request()->firstOrFail();
+            $labRequest = $resolvedRequest;
 
-            $this->syncLabRequestProgress->handle($labRequest);
+            $this->syncLabRequestProgress->handle($resolvedRequest);
+
+            $this->recordAuditActivity->handle(
+                logName: 'laboratory',
+                event: 'lab_result.approved',
+                subject: $resultEntry,
+                description: 'Lab result approved and released.',
+                tenantId: $resolvedRequest->tenant_id,
+                branchId: $resolvedRequest->facility_branch_id,
+                staffId: $staffId,
+                newValues: [
+                    'lab_request_id' => $resolvedRequest->id,
+                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_result_entry_id' => $resultEntry->id,
+                    'reviewed_by' => $reviewerId,
+                    'approved_by' => $staffId,
+                    'released_by' => $staffId,
+                    'reviewed_at' => $reviewTimestamp->toISOString(),
+                    'approved_at' => $timestamp->toISOString(),
+                    'released_at' => $timestamp->toISOString(),
+                ],
+                metadata: [
+                    'review_notes' => $reviewNotes,
+                    'approval_notes' => $approvalNotes,
+                    'causer_user_id' => Auth::id(),
+                ],
+            );
 
             return $labRequestItem->refresh();
         });
+
+        if ($labRequest instanceof LabRequest) {
+            $this->notifyRequestingDoctor($labRequest, $labRequestItem);
+        }
+
+        return $labRequestItem;
+    }
+
+    private function notifyRequestingDoctor(LabRequest $labRequest, LabRequestItem $labRequestItem): void
+    {
+        $doctor = User::query()
+            ->where('staff_id', $labRequest->requested_by)
+            ->where('tenant_id', $labRequest->tenant_id)
+            ->first();
+
+        $doctor?->notify(new LabResultReleasedNotification($labRequestItem));
     }
 }

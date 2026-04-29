@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\CreateGoodsReceipt;
+use App\Actions\ListAuditTimeline;
 use App\Actions\PostGoodsReceipt;
 use App\Enums\GoodsReceiptStatus;
 use App\Enums\PurchaseOrderStatus;
@@ -29,6 +30,7 @@ final readonly class GoodsReceiptController implements HasMiddleware
 {
     public function __construct(
         private InventoryLocationAccess $inventoryLocationAccess,
+        private ListAuditTimeline $listAuditTimeline,
     ) {}
 
     public static function middleware(): array
@@ -153,6 +155,11 @@ final readonly class GoodsReceiptController implements HasMiddleware
         return Inertia::render($workspace->goodsReceiptShowComponent(), [
             'navigation' => InventoryNavigationContext::fromRequest($request),
             'goodsReceipt' => $goodsReceipt,
+            'audit_activity' => $this->listAuditTimeline->handle(
+                subjects: [$goodsReceipt],
+                tenantId: $goodsReceipt->tenant_id,
+                logNames: ['inventory'],
+            ),
         ]);
     }
 

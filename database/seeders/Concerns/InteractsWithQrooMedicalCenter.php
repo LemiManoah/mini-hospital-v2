@@ -13,12 +13,12 @@ use App\Models\StaffPosition;
 use App\Models\Tenant;
 use App\Models\User;
 
-trait InteractsWithCityGeneralHospital
+trait InteractsWithQrooMedicalCenter
 {
     protected function cityGeneralTenant(): ?Tenant
     {
         return Tenant::query()
-            ->where('domain', 'citygeneral')
+            ->where('domain', 'qroo')
             ->first();
     }
 
@@ -26,7 +26,7 @@ trait InteractsWithCityGeneralHospital
     {
         return FacilityBranch::query()
             ->where('tenant_id', $tenant->id)
-            ->where('branch_code', 'CGH-MAIN')
+            ->where('branch_code', 'QMC-MAIN')
             ->first()
             ?? FacilityBranch::query()
                 ->where('tenant_id', $tenant->id)
@@ -38,7 +38,7 @@ trait InteractsWithCityGeneralHospital
     protected function cityGeneralRegistrar(Tenant $tenant): ?User
     {
         return User::query()
-            ->where('email', 'support+citygeneral@mini-hospital.com')
+            ->where('email', 'support+qroo@mini-hospital.com')
             ->first()
             ?? User::query()
                 ->where('tenant_id', $tenant->id)->oldest()
@@ -49,7 +49,7 @@ trait InteractsWithCityGeneralHospital
     {
         return Staff::query()
             ->where('tenant_id', $tenant->id)
-            ->where('email', 'support+citygeneral@mini-hospital.com')
+            ->where('email', 'support+qroo@mini-hospital.com')
             ->first()
             ?? Staff::query()
                 ->where('tenant_id', $tenant->id)->oldest()

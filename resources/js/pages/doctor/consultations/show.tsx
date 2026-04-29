@@ -180,6 +180,8 @@ export default function DoctorConsultationShow({
     visit,
     activeTab,
     consultationOutcomes,
+    consultationTypeOptions,
+    defaultConsultationType,
     referralDepartmentOptions,
     referralFacilityOptions,
     labTestOptions,
@@ -214,6 +216,9 @@ export default function DoctorConsultationShow({
     const isConsultationFinalized = consultation?.completed_at != null;
     const [selectedTab, setSelectedTab] = useState(activeTab || 'overview');
     const [outcome, setOutcome] = useState(consultation?.outcome ?? '');
+    const [consultationType, setConsultationType] = useState(
+        consultation?.consultation_type ?? defaultConsultationType,
+    );
     const [referredToDepartment, setReferredToDepartment] = useState(
         consultation?.referred_to_department ?? '',
     );
@@ -442,6 +447,13 @@ export default function DoctorConsultationShow({
                                                             <div className="space-y-4 rounded-lg border p-4">
                                                                 <input
                                                                     type="hidden"
+                                                                    name="consultation_type"
+                                                                    value={
+                                                                        consultationType
+                                                                    }
+                                                                />
+                                                                <input
+                                                                    type="hidden"
                                                                     name="outcome"
                                                                     value={
                                                                         outcome
@@ -474,6 +486,49 @@ export default function DoctorConsultationShow({
                                                                             : ''
                                                                     }
                                                                 />
+                                                                <div className="grid gap-2">
+                                                                    <Label>
+                                                                        Consultation
+                                                                        Type
+                                                                    </Label>
+                                                                    <Select
+                                                                        value={
+                                                                            consultationType
+                                                                        }
+                                                                        onValueChange={
+                                                                            setConsultationType
+                                                                        }
+                                                                    >
+                                                                        <SelectTrigger>
+                                                                            <SelectValue placeholder="Select consultation type" />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            {consultationTypeOptions.map(
+                                                                                (
+                                                                                    option,
+                                                                                ) => (
+                                                                                    <SelectItem
+                                                                                        key={
+                                                                                            option.value
+                                                                                        }
+                                                                                        value={
+                                                                                            option.value
+                                                                                        }
+                                                                                    >
+                                                                                        {
+                                                                                            option.label
+                                                                                        }
+                                                                                    </SelectItem>
+                                                                                ),
+                                                                            )}
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                    <InputError
+                                                                        message={
+                                                                            errors.consultation_type
+                                                                        }
+                                                                    />
+                                                                </div>
                                                                 <div className="grid gap-2">
                                                                     <Label htmlFor="chief_complaint">
                                                                         Chief

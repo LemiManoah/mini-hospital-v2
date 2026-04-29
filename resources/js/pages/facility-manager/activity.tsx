@@ -38,6 +38,7 @@ interface FacilityManagerActivityProps {
     tenant: FacilityManagerTenantSummary;
     metrics: FacilityManagerMetric[];
     recent_activity: ActivityEvent[];
+    support_activity: ActivityEvent[];
 }
 
 const formatDateTime = (value: string | null): string =>
@@ -55,6 +56,7 @@ export default function FacilityManagerActivity({
     tenant,
     metrics,
     recent_activity,
+    support_activity,
 }: FacilityManagerActivityProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Facility Manager', href: '/facility-manager/dashboard' },
@@ -135,6 +137,59 @@ export default function FacilityManagerActivity({
                                         >
                                             No recent activity has been recorded
                                             yet.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-sm ring-1 ring-border/50">
+                    <CardHeader>
+                        <CardTitle>Support Timeline</CardTitle>
+                        <CardDescription>
+                            Recent support actions for this facility, including
+                            notes, subscription updates, and impersonation
+                            events.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Area</TableHead>
+                                    <TableHead>Event</TableHead>
+                                    <TableHead>Subject</TableHead>
+                                    <TableHead>When</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {support_activity.length > 0 ? (
+                                    support_activity.map((event, index) => (
+                                        <TableRow
+                                            key={`${event.type}-${event.timestamp}-support-${index}`}
+                                        >
+                                            <TableCell>{event.type}</TableCell>
+                                            <TableCell>{event.title}</TableCell>
+                                            <TableCell>
+                                                {event.subject ?? 'No subject'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {formatDateTime(
+                                                    event.timestamp,
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={4}
+                                            className="py-12 text-center text-sm text-muted-foreground"
+                                        >
+                                            No support activity has been
+                                            recorded yet.
                                         </TableCell>
                                     </TableRow>
                                 )}

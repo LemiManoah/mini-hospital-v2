@@ -11,6 +11,10 @@ use Illuminate\Support\Str;
 
 final readonly class CreateFacilityService
 {
+    public function __construct(
+        private SyncFacilityServiceChargeMaster $syncFacilityServiceChargeMaster,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $attributes
      */
@@ -23,9 +27,7 @@ final readonly class CreateFacilityService
                 'created_by' => Auth::id(),
             ]);
 
-            $service->forceFill([
-                'charge_master_id' => $service->is_billable ? $service->id : null,
-            ])->save();
+            $this->syncFacilityServiceChargeMaster->handle($service);
 
             return $service->refresh();
         });

@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class RefundPharmacyPosSaleAction
 {
+    public function __construct(private RecordAuditActivity $recordAuditActivity) {}
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -71,6 +73,27 @@ final readonly class RefundPharmacyPosSaleAction
                 'status' => PharmacyPosSaleStatus::Refunded,
                 'updated_by' => Auth::id(),
             ]);
+
+            $this->recordAuditActivity->handle(
+                logName: 'pharmacy',
+                event: 'pharmacy.sale.refunded',
+                subject: $sale,
+                description: 'Pharmacy POS sale refunded.',
+                tenantId: $sale->tenant_id,
+                branchId: $sale->branch_id,
+                staffId: Auth::user()?->staff_id,
+                reason: is_string($data['notes'] ?? null) ? $data['notes'] : null,
+                newValues: [
+                    'sale_id' => $sale->id,
+                    'status' => $sale->status->value,
+                    'refund_amount' => $refundAmount,
+                ],
+                metadata: [
+                    'payment_method' => $data['payment_method'] ?? 'cash',
+                    'reference_number' => $data['reference_number'] ?? null,
+                    'notes' => $data['notes'] ?? null,
+                ],
+            );
 
             return $sale->refresh();
         });

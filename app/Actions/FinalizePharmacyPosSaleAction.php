@@ -25,6 +25,7 @@ final readonly class FinalizePharmacyPosSaleAction
     public function __construct(
         private PharmacyPosSaleNumberGenerator $saleNumberGenerator,
         private InventoryStockLedger $inventoryStockLedger,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     /**
@@ -139,6 +140,32 @@ final readonly class FinalizePharmacyPosSaleAction
                 'status' => PharmacyPosCartStatus::Converted,
                 'converted_at' => now(),
             ]);
+
+            $this->recordAuditActivity->handle(
+                logName: 'pharmacy',
+                event: 'pharmacy.sale.finalized',
+                subject: $sale,
+                description: 'Pharmacy POS sale finalized.',
+                tenantId: $sale->tenant_id,
+                branchId: $sale->branch_id,
+                staffId: Auth::user()?->staff_id,
+                newValues: [
+                    'sale_id' => $sale->id,
+                    'sale_number' => $sale->sale_number,
+                    'status' => $sale->status->value,
+                    'gross_amount' => $grossAmount,
+                    'discount_amount' => $discountAmount,
+                    'paid_amount' => $paidAmount,
+                    'balance_amount' => $balanceAmount,
+                    'change_amount' => $changeAmount,
+                    'item_count' => $sale->items()->count(),
+                ],
+                metadata: [
+                    'payment_method' => $paymentData['payment_method'] ?? 'cash',
+                    'reference_number' => $paymentData['reference_number'] ?? null,
+                    'inventory_location_id' => $sale->inventory_location_id,
+                ],
+            );
 
             return $sale->refresh()->load(['items.inventoryItem', 'items.allocations', 'payments', 'inventoryLocation']);
         });

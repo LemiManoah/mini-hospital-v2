@@ -48,6 +48,7 @@ export interface SharedData {
         reconciliationPrompt?: string | null;
     };
     sidebarOpen: boolean;
+    unread_notifications_count: number;
     [key: string]: unknown;
 }
 

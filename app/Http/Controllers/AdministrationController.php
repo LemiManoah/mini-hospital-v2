@@ -148,6 +148,12 @@ final readonly class AdministrationController
                     'permission' => 'referral_facilities.view',
                 ],
                 [
+                    'title' => 'Consultation Tariffs',
+                    'description' => 'Map consultation types and visit types to billable consultation tariffs for the active branch.',
+                    'href' => '/consultation-tariffs',
+                    'permission' => 'consultation_tariffs.view',
+                ],
+                [
                     'title' => 'Facility Services',
                     'description' => 'Manage chargeable services, pricing, and service availability.',
                     'href' => '/facility-services',

@@ -30,6 +30,7 @@ use Illuminate\Support\Carbon;
  * @property-read VisitBilling|null $billing
  * @property-read PatientVisit|null $visit
  * @property-read FacilityBranch|null $branch
+ * @property-read PaymentMethod|null $paymentMethod
  */
 final class Payment extends Model
 {
@@ -42,6 +43,7 @@ final class Payment extends Model
         'facility_branch_id' => 'string',
         'visit_billing_id' => 'string',
         'patient_visit_id' => 'string',
+        'payment_method_id' => 'string',
         'payment_date' => 'datetime',
         'amount' => 'decimal:2',
         'is_refund' => 'boolean',
@@ -63,5 +65,11 @@ final class Payment extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(FacilityBranch::class, 'facility_branch_id');
+    }
+
+    /** @return BelongsTo<PaymentMethod, $this> */
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class);
     }
 }

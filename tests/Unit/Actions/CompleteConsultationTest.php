@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Actions\CompleteConsultation;
 use App\Data\Clinical\CompleteConsultationDTO;
+use App\Enums\ConsultationType;
 use App\Models\Consultation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -71,6 +72,7 @@ it('completes a consultation using a typed dto', function (): void {
         plan: 'Final plan',
         primaryDiagnosis: 'Final diagnosis',
         primaryIcd10Code: 'B02',
+        consultationType: ConsultationType::GENERAL,
         outcome: 'follow_up_required',
         followUpInstructions: 'Review after medication',
         followUpDays: 14,

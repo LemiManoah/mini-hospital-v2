@@ -10,6 +10,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AppointmentModeController;
 use App\Http\Controllers\BranchSwitcherController;
 use App\Http\Controllers\ClinicController;
+use App\Http\Controllers\ConsultationTariffController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyExchangeRateController;
 use App\Http\Controllers\DashboardController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\FacilityBranchController;
 use App\Http\Controllers\FacilityImpersonationController;
 use App\Http\Controllers\FacilityManagerController;
 use App\Http\Controllers\FacilityServiceController;
+use App\Http\Controllers\FinanceOpdPaymentController;
 use App\Http\Controllers\GoodsReceiptController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\InsurancePackageController;
@@ -47,6 +49,7 @@ use App\Http\Controllers\LabResultTypeController;
 use App\Http\Controllers\LabResultWorkflowController;
 use App\Http\Controllers\LabTestCatalogController;
 use App\Http\Controllers\LabTestCategoryController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PatientAllergyController;
 use App\Http\Controllers\PatientController;
@@ -116,6 +119,13 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function (): void {
+    Route::prefix('notifications')->name('notifications.')->group(function (): void {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('{notificationId}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
+        Route::post('mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::delete('{notificationId}', [NotificationController::class, 'destroy'])->name('destroy');
+    });
+
     Route::get('modules', fn () => Inertia::render('modules'))
         ->middleware('permission:dashboard.view')
         ->name('modules');
@@ -213,6 +223,9 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('visits/{visit}/summary/print', [VisitSummaryPrintController::class, 'show'])->name('visits.summary.print');
     Route::post('visits/{visit}/payments', [VisitPaymentController::class, 'store'])->name('visits.payments.store');
     Route::get('visits/{visit}/payments/{payment}/print', [VisitPaymentPrintController::class, 'show'])->name('visits.payments.print');
+    Route::get('finance/opd-payments', [FinanceOpdPaymentController::class, 'index'])->name('finance.opd-payments.index');
+    Route::get('finance/opd-payments/{visit}', [FinanceOpdPaymentController::class, 'show'])->name('finance.opd-payments.show');
+    Route::post('finance/opd-payments/{visit}/payments', [FinanceOpdPaymentController::class, 'store'])->name('finance.opd-payments.store');
     Route::get('prescriptions/{prescription}/print', [PrescriptionPrintController::class, 'show'])->name('prescriptions.print');
     Route::post('visits/{visit}/lab-requests', [VisitOrderController::class, 'storeLabRequest'])->name('visits.lab-requests.store');
     Route::patch('visits/{visit}/lab-requests/{labRequest}', [VisitOrderController::class, 'updateLabRequest'])->name('visits.lab-requests.update');
@@ -268,6 +281,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('reconciliations/{reconciliation}/reject', [InventoryReconciliationController::class, 'reject'])->name('reconciliations.reject');
     Route::post('reconciliations/{reconciliation}/post', [InventoryReconciliationController::class, 'post'])->name('reconciliations.post');
     Route::resource('facility-services', FacilityServiceController::class)->except(['show']);
+    Route::resource('consultation-tariffs', ConsultationTariffController::class)->except(['show']);
     Route::resource('lab-test-categories', LabTestCategoryController::class)->except(['show']);
     Route::resource('specimen-types', SpecimenTypeController::class)->except(['show']);
     Route::resource('result-types', LabResultTypeController::class)->except(['show']);

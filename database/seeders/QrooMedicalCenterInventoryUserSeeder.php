@@ -9,13 +9,13 @@ use App\Models\FacilityBranch;
 use App\Models\Staff;
 use App\Models\Tenant;
 use App\Models\User;
-use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
+use Database\Seeders\Concerns\InteractsWithQrooMedicalCenter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-final class CityGeneralHospitalInventoryUserSeeder extends Seeder
+final class QrooMedicalCenterInventoryUserSeeder extends Seeder
 {
-    use InteractsWithCityGeneralHospital;
+    use InteractsWithQrooMedicalCenter;
 
     public function run(): void
     {
@@ -29,8 +29,8 @@ final class CityGeneralHospitalInventoryUserSeeder extends Seeder
         $this->createInventoryUser(
             tenantId: $tenant->id,
             branchId: $mainBranch->id,
-            email: 'storekeeper@citygeneral.ug',
-            employeeNumber: 'CGH-INV-STORE-001',
+            email: 'storekeeper@qroomedical.ug',
+            employeeNumber: 'QMC-INV-STORE-001',
             firstName: 'Moses',
             lastName: 'Kato',
             phone: '+256 701 330001',
@@ -44,8 +44,8 @@ final class CityGeneralHospitalInventoryUserSeeder extends Seeder
         $this->createInventoryUser(
             tenantId: $tenant->id,
             branchId: $mainBranch->id,
-            email: 'pharmacy@citygeneral.ug',
-            employeeNumber: 'CGH-INV-PHARM-001',
+            email: 'pharmacy@qroomedical.ug',
+            employeeNumber: 'QMC-INV-PHARM-001',
             firstName: 'Sarah',
             lastName: 'Namusoke',
             phone: '+256 701 330002',
@@ -59,8 +59,8 @@ final class CityGeneralHospitalInventoryUserSeeder extends Seeder
         $this->createInventoryUser(
             tenantId: $tenant->id,
             branchId: $mainBranch->id,
-            email: 'lab@citygeneral.ug',
-            employeeNumber: 'CGH-INV-LAB-001',
+            email: 'lab@qroomedical.ug',
+            employeeNumber: 'QMC-INV-LAB-001',
             firstName: 'Brian',
             lastName: 'Ssemanda',
             phone: '+256 701 330003',

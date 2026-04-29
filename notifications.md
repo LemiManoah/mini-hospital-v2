@@ -1,390 +1,196 @@
 # Notifications in This EMR
 
-## What notifications are
+## Purpose
 
-Notifications are system-generated messages that tell the right person that something important happened or is about to happen.
+This document describes the current notification state of Mini-Hospital v2, what has already been achieved, what is only partial, and what still needs to be built for a production-grade hospital notification system.
 
-In an EMR, notifications are not just a convenience feature. They help the system move work from one person or department to the next without relying only on users manually refreshing pages or asking colleagues what changed.
+It is written as a status document for developers, product owners, and support teams. The goal is to avoid guessing whether notifications are "done" when the codebase really contains only a first internal slice.
 
-Examples:
+## Short Answer
 
-- a lab technician is notified that a new lab request arrived
-- a doctor is notified that a lab result is ready
-- pharmacy is notified that a prescription is ready to dispense
-- reception is reminded that an appointment is tomorrow
-- finance is notified about an unpaid balance or failed subscription checkout
+Notifications are **partially implemented**.
 
-## Why notifications matter in a system like this
+The system already has:
 
-This project already has multiple operational modules:
+- Laravel database notifications
+- a notifications table
+- a dedicated notifications inbox page
+- unread notification count in shared Inertia props
+- mark-as-read, mark-all-read, and delete actions
+- three working internal workflow notifications:
+  - `lab_result_released`
+  - `prescription_created`
+  - `inventory_requisition_submitted`
+- auth-related mail notifications through Laravel and Fortify:
+  - password reset
+  - email verification
 
-- appointments
-- visits and triage
-- doctor consultation
-- laboratory
-- pharmacy
-- inventory
-- reports
-- subscriptions and facility manager workflows
+The system does **not** yet have a broad, production-ready notification program across appointments, billing, support, subscriptions, patient reminders, broadcasts, digests, escalation rules, or delivery preferences.
 
-That means the system already has many handoff points.
+## What Has Been Achieved
 
-Without notifications, the workflow becomes passive:
+### 1. Core notification infrastructure is in place
 
-- users must remember to check queues manually
-- departments may react late
-- important actions can be missed
-- the system feels slower than it really is
+The application already uses Laravel's notification system on the `User` model through the `Notifiable` trait.
 
-With notifications, the workflow becomes event-driven:
+Current building blocks found in the repo:
 
-- people see new tasks earlier
-- delays reduce
-- the system feels more alive
-- fewer steps depend on memory or verbal follow-up
-
-## Why notifications are especially important in healthcare software
-
-Healthcare workflows involve time-sensitive work, task ownership, and accountability.
-
-Notifications help with:
-
-- patient safety
-- turnaround time
-- staff coordination
-- follow-up reliability
-- operational visibility
-
-In this app, notifications would be useful for both clinical and operational work.
-
-## High-value notification examples for this project
-
-## 1. Appointment notifications
-
-Useful events:
-
-- appointment created
-- appointment rescheduled
-- appointment cancelled
-- upcoming appointment reminder
-- patient checked in
-
-Who should receive them:
-
-- reception
-- assigned doctor
-- patient later if external channels are added
-
-## 2. Triage and doctor workflow notifications
-
-Useful events:
-
-- patient triaged and ready for doctor review
-- consultation completed
-- follow-up required
-- referral documented
-
-Who should receive them:
-
-- assigned doctor
-- triage or front desk teams where appropriate
-
-## 3. Laboratory notifications
-
-Useful events:
-
-- new lab request created
-- sample collected
-- result ready for review
-- result approved and released
-
-Who should receive them:
-
-- lab staff
-- requesting doctor
-- visit care team
-
-This is one of the strongest notification opportunities in the current codebase because the lab workflow already has clear status transitions.
-
-## 4. Pharmacy notifications
-
-Useful events:
-
-- prescription created
-- prescription ready for dispensing
-- prescription partially dispensed
-- prescription fulfilled
-- stock item out of stock during dispense
-
-Who should receive them:
-
-- pharmacy team
-- doctor in some cases
-- inventory team for stock issues
-
-## 5. Inventory notifications
-
-Useful events:
-
-- requisition submitted
-- requisition approved or rejected
-- goods receipt posted
-- stock below reorder level
-- item out of stock
-- stock nearing expiry
-
-Who should receive them:
-
-- main store
-- pharmacy
-- laboratory
-- branch administrators
-
-## 6. Billing and subscription notifications
-
-Useful events:
-
-- payment recorded
-- insurance billing pending too long
-- visit balance still unpaid
-- subscription activation success or failure
-- subscription nearing expiry
-
-Who should receive them:
-
-- finance users
-- support users
-- tenant administrators
-
-## Notification types you could support
-
-Laravel can support several notification channels.
-
-## 1. Database notifications
-
-These are stored in the database and shown inside the app.
-
-Best first choice for this project because:
-
-- no external provider is needed
-- easy to build incrementally
-- fits the current app well
-- works nicely with an in-app notification bell or inbox
-
-## 2. Mail notifications
-
-Useful for:
-
-- password reset
-- account verification
-- appointment reminders
-- subscription and billing alerts
-
-## 3. Broadcast / real-time notifications
-
-Useful for:
-
-- live lab queue updates
-- live pharmacy queue updates
-- new requisition alerts
-
-These become more valuable later if you add Laravel Reverb or another broadcast system.
-
-## 4. SMS or WhatsApp later
-
-Useful for:
-
-- appointment reminders
-- patient-facing result-ready messages
-- overdue payment reminders
-
-This is valuable later, but I would not start here.
-
-## Best first implementation for this project
-
-The best first notification type here is:
-
-- database notifications
-
-Why:
-
-- simplest to ship
-- useful across many modules
-- no external dependency
-- gives immediate internal operational value
-
-## How notifications work in Laravel
-
-Laravel has a built-in notification system using notification classes.
-
-The main pieces are:
-
-- a notification class in `app/Notifications`
-- a notifiable model, usually `User`
-- a channel such as `database`, `mail`, or `broadcast`
-- code that dispatches the notification when an event happens
-
-Basic example:
-
-```php
-use App\Notifications\LabResultReleasedNotification;
-
-$user->notify(new LabResultReleasedNotification($labRequestItem));
-```
-
-## Recommended implementation approach in this codebase
-
-This project uses Actions heavily for business logic.
-
-That means the cleanest notification strategy is:
-
-- perform the business action in an Action class
-- notify interested users after the action succeeds
-
-This fits the existing architecture much better than scattering notifications in controllers.
-
-## Where notification triggering should live here
-
-Best places:
-
-- Action classes after successful state changes
-- possibly dedicated event classes later
-
-Examples:
-
-- after `CreateLabRequest`
-- after lab result approval or release action
-- after `CreateAppointment`
-- after `CheckInAppointment`
-- after dispensing post action
-- after requisition submit or issue action
-- after subscription activation actions
-
-## Recommended first notification modules
-
-If I were adding notifications here, I would start in this order:
-
-1. Laboratory
-2. Pharmacy
-3. Appointments
-4. Inventory requisitions
-5. Subscription and finance alerts
-
-Why this order:
-
-- these modules already have clear workflow state changes
-- they already involve cross-team handoffs
-- notifications would create immediate value
-
-## Suggested notification architecture for this app
-
-## Step 1: use Laravel database notifications
-
-Laravel needs a notifications table.
-
-Run:
-
-```bash
-php artisan notifications:table --no-interaction
-php artisan migrate
-```
-
-This adds a `notifications` table where in-app notifications can be stored.
-
-## Step 2: make sure `User` is notifiable
-
-Laravel usually uses the `Notifiable` trait on the `User` model.
-
-Example:
-
-```php
-use Illuminate\Notifications\Notifiable;
-
-final class User extends Authenticatable
-{
-    use Notifiable;
-}
-```
-
-## Step 3: create notification classes
-
-Create a notification:
-
-```bash
-php artisan make:notification LabResultReleasedNotification --no-interaction
-```
-
-Example structure:
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Notifications;
-
-use App\Models\LabRequestItem;
-use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-
-final class LabResultReleasedNotification extends Notification
-{
-    use Queueable;
-
-    public function __construct(private LabRequestItem $labRequestItem) {}
-
-    public function via(object $notifiable): array
-    {
-        return ['database'];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'type' => 'lab_result_released',
-            'title' => 'Lab result released',
-            'message' => 'A laboratory result is now available for review.',
-            'lab_request_item_id' => $this->labRequestItem->id,
-            'visit_id' => $this->labRequestItem->request?->visit_id,
-        ];
-    }
-}
-```
-
-## Step 4: send notifications from Actions
-
-Example idea:
-
-```php
-$doctorUser?->notify(new LabResultReleasedNotification($labRequestItem));
-```
-
-In this codebase, this should happen after the lab result release or approval action successfully commits.
-
-## Step 5: add a notifications UI
-
-Once database notifications exist, add:
-
-- unread count in the sidebar or top bar
-- notifications dropdown or dedicated page
-- mark-as-read action
-
-A good first page would be:
-
-- `resources/js/pages/notifications/index.tsx`
-
-And a simple controller:
-
+- `app/Models/User.php`
+- `database/migrations/2026_04_28_200346_create_notifications_table.php`
 - `app/Http/Controllers/NotificationController.php`
+- `resources/js/pages/notifications/index.tsx`
+- `app/Http/Middleware/HandleInertiaRequests.php`
 
-## Step 6: model a consistent payload shape
+This means the app has moved beyond planning. There is a real in-app notification layer.
 
-Keep notification payloads predictable.
+### 2. In-app database notifications exist
 
-Recommended fields:
+The system supports database-backed notifications that can be viewed inside the application.
+
+Current user-facing capabilities:
+
+- list notifications
+- paginate notifications
+- show notification title, message, type, action URL, and timestamps
+- mark one notification as read
+- mark all notifications as read
+- delete a notification
+- expose unread count globally through shared Inertia props
+
+This is a solid internal starting point for staff-facing alerts.
+
+### 3. Three domain notifications are already implemented
+
+#### Laboratory
+
+`app/Notifications/LabResultReleasedNotification.php`
+
+This is sent after lab approval/release in:
+
+- `app/Actions/ApproveLabResultEntry.php`
+
+Current recipient pattern:
+
+- the requesting doctor user, resolved from `requested_by` staff ID and tenant
+
+What it currently communicates:
+
+- notification type
+- title
+- readable message
+- visit action URL
+- resource ID and type
+- occurrence timestamp
+
+#### Pharmacy
+
+`app/Notifications/PrescriptionCreatedNotification.php`
+
+This is sent after prescription creation in:
+
+- `app/Actions/CreatePrescription.php`
+
+Current recipient pattern:
+
+- users in the tenant with pharmacy dispensing permissions
+
+This is a good internal handoff from consultation to pharmacy.
+
+#### Inventory
+
+`app/Notifications/InventoryRequisitionSubmittedNotification.php`
+
+This is sent after requisition submission in:
+
+- `app/Actions/SubmitInventoryRequisition.php`
+
+Current recipient pattern:
+
+- users in the tenant with inventory requisition review or issue permissions
+
+This is a good internal handoff from requesting location to store/review users.
+
+### 4. Recipient targeting helper exists
+
+The system already has:
+
+- `app/Actions/NotifyUsersWithPermission.php`
+
+This is important because it avoids hardcoding notification recipients everywhere.
+
+Current behavior:
+
+- scopes recipients to tenant
+- filters users by direct or role-based permissions
+- sends the provided notification to all matching users
+
+This is useful, but it is still tenant-wide rather than truly branch-aware.
+
+### 5. Authentication mail notifications are working
+
+The system also includes auth notification flows through Laravel and Fortify:
+
+- password reset notification flow
+- email verification notification flow
+
+Relevant code:
+
+- `app/Actions/CreateUserEmailResetNotification.php`
+- `app/Actions/CreateUserEmailVerificationNotification.php`
+- `app/Http/Controllers/UserEmailResetNotificationController.php`
+- `app/Http/Controllers/UserEmailVerificationNotificationController.php`
+
+These are not operational hospital notifications, but they are part of the platform's notification surface and they are already tested.
+
+### 6. Notification UI and controller tests already exist
+
+There is already a focused feature test file:
+
+- `tests/Feature/NotificationControllerTest.php`
+
+It covers:
+
+- auth requirement
+- notifications index rendering
+- user isolation
+- mark one as read
+- mark all as read
+- delete notification
+- unread notification count in shared props
+
+That is a good base for expanding the module safely.
+
+## What Is Partial
+
+These areas exist, but they are not production-complete yet.
+
+### 1. Notification coverage across modules is still narrow
+
+Only three operational workflows currently generate internal database notifications:
+
+- lab result released
+- prescription created
+- inventory requisition submitted
+
+That leaves many major hospital workflows without notifications.
+
+### 2. Recipient targeting is only partly mature
+
+`NotifyUsersWithPermission` is a useful first helper, but it is still incomplete for a real hospital environment.
+
+Current gaps:
+
+- no explicit branch filtering
+- no shift or assignment awareness
+- no user preference handling
+- no throttling or deduplication
+- no escalation path when no recipient matches
+
+For a multi-branch system, branch-aware targeting will matter a lot.
+
+### 3. Notification payload shape is good but still basic
+
+Current payload fields are fairly consistent:
 
 - `type`
 - `title`
@@ -394,191 +200,175 @@ Recommended fields:
 - `resource_type`
 - `occurred_at`
 
-That makes frontend rendering easier.
+That is good enough for the current inbox UI, but still limited.
+
+Missing production-friendly fields may include:
+
+- tenant ID
+- branch ID
+- severity
+- workflow status
+- actor name or role
+- patient-safe summary text
+- deduplication key
+- expiration date
+
+### 4. The inbox UI exists, but there is no notification center experience yet
+
+Current UI supports a dedicated notifications page.
+
+Still missing:
+
+- top-bar dropdown or bell tray
+- grouped unread vs read sections
+- filtering by type
+- filtering by branch
+- filtering by date or severity
+- bulk delete
+- bulk archive
+- richer deep links
+- empty-state guidance by role
+
+### 5. Notifications are internal only
+
+The notification system today is mostly in-app and staff-facing.
+
+Still missing:
+
+- email reminders for operational workflows
+- SMS or WhatsApp for patients
+- real-time broadcast events
+- push notifications
+- scheduled digest notifications
+
+### 6. Queue posture is only partially mature
+
+The notification classes use `Queueable`, which is a good sign, but the repo does not yet show a broader notification delivery strategy built around queued fan-out, retries, and failure monitoring for operational messages.
+
+That means production-readiness is still partial here.
+
+## What Is Not Done
+
+The following high-value areas are still not implemented, or at least not found in the codebase as working notification flows.
+
+### Clinical and operational workflows not yet covered
+
+- appointment created
+- appointment rescheduled
+- appointment cancelled
+- appointment reminder
+- patient checked in
+- triage completed and ready for clinician
+- consultation completed
+- referral created
+- imaging order ready
+- imaging result ready
+- prescription dispensed
+- prescription partially dispensed
+- stock-out during dispensing
+- goods receipt posted
+- requisition approved
+- requisition rejected
+- low stock alert
+- expiry warning
+- payment recorded
+- outstanding balance reminder
+- insurance claim exception
+- subscription nearing expiry
+- subscription failed payment
+- support follow-up reminder
+
+### Delivery channels not yet done
 
-## Example notification use cases for this exact app
-
-## Laboratory result released
-
-Trigger:
-
-- when a lab result becomes visible or released
-
-Recipients:
-
-- the doctor who requested it
-- maybe branch clinical staff with the right permission later
-
-## New prescription created
-
-Trigger:
-
-- when the doctor creates a prescription
-
-Recipients:
-
-- pharmacy users in the active branch
-
-## Inventory requisition submitted
-
-Trigger:
-
-- when pharmacy or lab submits a requisition
-
-Recipients:
-
-- main store users in that branch
-
-## Appointment reminder
-
-Trigger:
-
-- scheduled job checks tomorrow's appointments
-
-Recipients:
-
-- reception users
-- patient later through email or SMS
-
-## Subscription near expiry
-
-Trigger:
-
-- scheduled job checks expiring subscriptions
-
-Recipients:
-
-- tenant admins
-- support or facility manager users if needed
-
-## How to choose recipients in this app
-
-This is important.
-
-Do not notify every user in the system.
-
-Choose recipients based on:
-
-- active branch
-- role
-- permission
-- ownership
-- assigned doctor or actor
-
-Examples:
-
-- lab notifications should target users in the same branch with lab permissions
-- pharmacy notifications should target users in the same branch with pharmacy permissions
-- doctor notifications should target the assigned doctor if one exists
-- inventory alerts should target the right store roles
-
-## A practical recipient pattern
-
-For branch-scoped internal notifications, a small helper Action or service would be useful.
-
-Example ideas:
-
-- `NotifyBranchUsersWithPermission`
-- `GetBranchUsersByPermission`
-
-That way your Actions can stay clean and say:
-
-```php
-$this->notifyBranchUsersWithPermission->handle(
-    $branchId,
-    'lab_requests.view',
-    new LabResultReleasedNotification($labRequestItem),
-);
-```
-
-## Should notifications be queued?
-
-Yes, eventually.
-
-Why:
-
-- keeps requests fast
-- cleaner if later you add email or broadcast channels
-- better for bursts of activity
-
-Laravel supports queued notifications naturally.
-
-For a first step, database notifications can be synchronous if needed, but the better production direction is queued notifications.
-
-## Good first queue-ready design
-
-- create notification classes now
-- keep payloads small
-- avoid loading huge relations inside `toArray()`
-- later switch to queued notifications without redesigning the feature
-
-## Common mistakes to avoid
-
-## 1. Notifying too many users
-
-This creates noise and users start ignoring notifications.
-
-## 2. Sending vague messages
-
-Bad:
-
-- "Something changed"
-
-Better:
-
-- "Lab result released for visit VIS-10023"
-
-## 3. Missing action links
-
-Notifications should usually help the user navigate to the relevant screen.
-
-## 4. Firing notifications before the transaction succeeds
-
-If the database transaction fails, you do not want users notified about something that did not persist.
-
-In this project, that means notification dispatch should happen after successful writes.
-
-## 5. Mixing every notification format together
-
-Define a consistent payload style early.
-
-## 6. Forgetting read-state UX
-
-If users cannot mark notifications as read, the feature quickly becomes messy.
-
-## Suggested first implementation slice
-
-If you want to build notifications safely in this project, I would start with this slice:
-
-1. database notifications setup
-2. unread notification count for logged-in user
-3. notifications page or dropdown
-4. lab result released notification
-5. inventory requisition submitted notification
-6. prescription created notification
-
-This would prove the pattern across three strong workflow handoffs.
-
-## Suggested future enhancements
-
-Later, you can add:
-
-- queued notifications
 - real-time broadcasting
-- email reminders
-- scheduled appointment reminders
-- stock and expiry alert digests
-- tenant admin operational summaries
+- mail-based operational notifications
+- patient-facing reminders
+- scheduled summary digests
+- delivery preferences per user
+- mute or snooze controls
 
-## Bottom line
+### Operational controls not yet done
 
-Notifications are important in this EMR because the app already has multiple cross-team workflows where work moves from one person or module to another.
+- severity levels
+- escalation rules
+- de-duplication
+- notification retention/archive policy
+- audit linkage between notification and business event
+- analytics on sent/read/actioned notifications
 
-The best implementation path here is:
+## Current Status by Area
 
-1. start with Laravel database notifications
-2. trigger them from Action classes after successful workflow changes
-3. target users by branch and permission
-4. add an in-app inbox or notification bell
+### Completed
 
-The highest-value first notifications for this codebase are laboratory, pharmacy, appointments, and inventory requisitions.
+- Laravel notifications foundation
+- notifications table
+- `User` notifiable setup
+- notifications index page
+- unread count in shared props
+- mark-as-read flow
+- mark-all-read flow
+- delete notification flow
+- lab result released notification
+- prescription created notification
+- inventory requisition submitted notification
+- auth notification flows for password reset and email verification
+- feature coverage for notification inbox behavior
+
+### Partial
+
+- permission-based recipient targeting
+- notification payload standardization
+- queue readiness
+- staff-facing inbox UX
+- cross-module notification coverage
+
+### Not Done
+
+- branch-aware routing
+- billing notifications
+- appointment reminders
+- support and subscription notifications
+- patient-facing messaging
+- broadcast or real-time delivery
+- notification preferences
+- severity and escalation policy
+- delivery observability and reporting
+
+## Recommended Next Notification Steps
+
+If we want a production-grade hospital notification module, the next steps should be:
+
+1. Make recipient targeting branch-aware.
+2. Add notifications for billing, support, and subscription follow-up.
+3. Add appointment reminders and triage-to-clinician handoff alerts.
+4. Add requisition approval, low-stock, and near-expiry inventory alerts.
+5. Add a top-bar notification tray and filtering by type.
+6. Queue operational notifications consistently.
+7. Decide which notifications stay internal and which later become email or SMS.
+8. Add audit linkage so major notifications correspond cleanly to business events.
+
+## Suggested Production-Ready Notification Scope
+
+To be genuinely production useful, this system should eventually support:
+
+- internal database notifications for all critical handoffs
+- role- and branch-aware recipient selection
+- real-time refresh or broadcast for urgent operational queues
+- email for account and administrative reminders
+- optional patient reminders through external channels
+- severity levels and escalation rules
+- notification preferences and retention rules
+- strong tests around recipient isolation and message generation
+
+## Bottom Line
+
+Notifications are **started and genuinely useful**, but they are **not complete**.
+
+The current implementation proves the architecture:
+
+- Laravel database notifications work
+- the inbox UI works
+- unread counts work
+- real workflows can trigger notifications
+
+What exists today is a good first operational slice, not yet the full production-grade notification module that a hospital system will need.

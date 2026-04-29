@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\FinalizePharmacyPosSaleAction;
+use App\Actions\ListAuditTimeline;
 use App\Enums\PharmacyPosCartStatus;
 use App\Enums\PharmacyPosSaleStatus;
 use App\Http\Requests\FinalizePharmacyPosSaleRequest;
@@ -26,6 +27,8 @@ use Inertia\Response;
 
 final readonly class PharmacyPosSaleController implements HasMiddleware
 {
+    public function __construct(private ListAuditTimeline $listAuditTimeline) {}
+
     public static function middleware(): array
     {
         return [
@@ -152,6 +155,11 @@ final readonly class PharmacyPosSaleController implements HasMiddleware
                 'void' => $authUser?->can('pharmacy_pos.void') ?? false,
                 'refund' => $authUser?->can('pharmacy_pos.refund') ?? false,
             ],
+            'audit_activity' => $this->listAuditTimeline->handle(
+                subjects: [$sale],
+                tenantId: $sale->tenant_id,
+                logNames: ['pharmacy'],
+            ),
             'sale' => [
                 'id' => $sale->id,
                 'sale_number' => $sale->sale_number,

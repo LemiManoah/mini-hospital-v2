@@ -3,9 +3,8 @@ import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type VisitShowPageProps } from '@/types/patient';
-import { Head, useForm } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { useState } from 'react';
-import { VisitBillingTab } from './components/visit-billing-tab';
 import { VisitClinicalTab } from './components/visit-clinical-tab';
 import { VisitHeader } from './components/visit-header';
 import { VisitOrdersTab } from './components/visit-orders-tab';
@@ -23,7 +22,6 @@ export default function VisitShow({
     imagingLateralities,
     pregnancyStatuses,
     facilityServiceOptions,
-    paymentMethods,
     completionCheck,
     triageGrades,
     allergens,
@@ -31,22 +29,14 @@ export default function VisitShow({
     reactionOptions,
 }: VisitShowPageProps) {
     const { hasPermission } = usePermissions();
-    const [selectedTab, setSelectedTab] = useState(activeTab || 'overview');
+    const allowedTabs = ['overview', 'clinical', 'orders'];
+    const [selectedTab, setSelectedTab] = useState(
+        allowedTabs.includes(activeTab) ? activeTab : 'overview',
+    );
     const canViewPatient = hasPermission('patients.view');
     const canViewTriage = hasPermission('triage.view');
     const canViewConsultation = hasPermission('consultations.view');
     const canUpdateVisit = hasPermission('visits.update');
-    const canCreatePayment = hasPermission('payments.create');
-
-    const paymentForm = useForm({
-        amount: visit.billing?.balance_amount
-            ? String(visit.billing.balance_amount)
-            : '',
-        payment_method: paymentMethods[0]?.value ?? 'cash',
-        payment_date: '',
-        reference_number: '',
-        notes: '',
-    });
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Active Visits', href: '/visits' },
@@ -84,7 +74,6 @@ export default function VisitShow({
                         <TabsTrigger value="overview">Overview</TabsTrigger>
                         <TabsTrigger value="clinical">Clinical</TabsTrigger>
                         <TabsTrigger value="orders">Visit Services</TabsTrigger>
-                        <TabsTrigger value="billing">Billing</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="overview" className="space-y-6">
@@ -125,28 +114,6 @@ export default function VisitShow({
                             allergens={allergens}
                             severityOptions={severityOptions}
                             reactionOptions={reactionOptions}
-                        />
-                    </TabsContent>
-
-                    <TabsContent value="billing" className="space-y-6">
-                        <VisitBillingTab
-                            visitId={visit.id}
-                            billing={visit.billing}
-                            charges={visit.charges ?? []}
-                            payments={
-                                visit.billing?.payments ?? visit.payments ?? []
-                            }
-                            canCreatePayment={canCreatePayment}
-                            paymentMethods={paymentMethods}
-                            paymentForm={paymentForm.data}
-                            paymentErrors={paymentForm.errors}
-                            paymentProcessing={paymentForm.processing}
-                            onPaymentChange={(field, value) =>
-                                paymentForm.setData(field, value)
-                            }
-                            onPaymentSubmit={() =>
-                                paymentForm.post(`/visits/${visit.id}/payments`)
-                            }
                         />
                     </TabsContent>
                 </Tabs>

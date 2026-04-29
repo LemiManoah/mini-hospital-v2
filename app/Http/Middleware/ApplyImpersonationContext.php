@@ -38,14 +38,20 @@ final class ApplyImpersonationContext
             return $next($request);
         }
 
-        if ($authenticatedUser->id !== $realUserId) {
+        if ($authenticatedUser->id !== $realUserId && $authenticatedUser->id !== $targetUserId) {
             ImpersonationContext::stop($request);
             BranchContext::clear();
 
             return $next($request);
         }
 
-        if (! $authenticatedUser->isSupportUser() && ! $authenticatedUser->hasRole('super_admin')) {
+        $realUser = $authenticatedUser;
+
+        if ($authenticatedUser->id === $targetUserId) {
+            $realUser = User::query()->whereKey($realUserId)->first();
+        }
+
+        if (! $realUser instanceof User || (! $realUser->isSupportUser() && ! $realUser->hasRole('super_admin'))) {
             ImpersonationContext::stop($request);
             BranchContext::clear();
 
@@ -66,8 +72,12 @@ final class ApplyImpersonationContext
             return $next($request);
         }
 
-        $request->attributes->set('impersonation.real_user', $authenticatedUser);
+        $request->attributes->set('impersonation.real_user', $realUser);
         $request->attributes->set('impersonation.target_user', $targetUser);
+
+        if ($request->routeIs('facility-manager.impersonation.stop')) {
+            return $next($request);
+        }
 
         Auth::setUser($targetUser);
         $request->setUserResolver(static fn (): User => $targetUser);

@@ -73,6 +73,15 @@ it('posts stock movements when a sale is finalized', function (): void {
         ->and($movement->movement_type)->toBe(StockMovementType::PosSale)
         ->and((float) $movement->quantity)->toBe(-5.0)
         ->and($movement->inventory_batch_id)->toBe($batch->id);
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $branch->tenant_id,
+        'branch_id' => $branch->id,
+        'log_name' => 'pharmacy',
+        'event' => 'pharmacy.sale.finalized',
+        'subject_type' => PharmacyPosSale::class,
+        'subject_id' => $sale->id,
+    ]);
 });
 
 it('creates sale item allocations when finalizing', function (): void {

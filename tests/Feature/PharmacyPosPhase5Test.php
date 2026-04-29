@@ -85,6 +85,15 @@ it('voids a completed sale and reverses stock', function (): void {
 
     expect($reversal)->not->toBeNull()
         ->and((float) $reversal->quantity)->toBeGreaterThan(0.0);
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $branch->tenant_id,
+        'branch_id' => $branch->id,
+        'log_name' => 'pharmacy',
+        'event' => 'pharmacy.sale.voided',
+        'subject_type' => PharmacyPosSale::class,
+        'subject_id' => $sale->id,
+    ]);
 });
 
 it('refunds a completed sale and reverses stock', function (): void {
@@ -123,6 +132,15 @@ it('refunds a completed sale and reverses stock', function (): void {
     $refundPayment = $sale->payments()->where('is_refund', true)->first();
     expect($refundPayment)->not->toBeNull()
         ->and((float) $refundPayment->amount)->toBe(20.0);
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $branch->tenant_id,
+        'branch_id' => $branch->id,
+        'log_name' => 'pharmacy',
+        'event' => 'pharmacy.sale.refunded',
+        'subject_type' => PharmacyPosSale::class,
+        'subject_id' => $sale->id,
+    ]);
 });
 
 it('rejects voiding a non-completed sale', function (): void {
@@ -215,5 +233,7 @@ it('shows void and refund buttons on sale show page for authorized user', functi
         ->assertInertia(fn ($page) => $page
             ->component('pharmacy/pos/sales/show')
             ->where('can.void', true)
-            ->where('can.refund', true));
+            ->where('can.refund', true)
+            ->has('audit_activity', 1)
+            ->where('audit_activity.0.title', 'Pharmacy POS sale finalized'));
 });

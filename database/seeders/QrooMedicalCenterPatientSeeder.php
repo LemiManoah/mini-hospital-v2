@@ -12,12 +12,12 @@ use App\Enums\Religion;
 use App\Models\Country;
 use App\Models\Patient;
 use App\Models\Tenant;
-use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
+use Database\Seeders\Concerns\InteractsWithQrooMedicalCenter;
 use Illuminate\Database\Seeder;
 
-final class CityGeneralHospitalPatientSeeder extends Seeder
+final class QrooMedicalCenterPatientSeeder extends Seeder
 {
-    use InteractsWithCityGeneralHospital;
+    use InteractsWithQrooMedicalCenter;
 
     public function run(): void
     {
@@ -30,7 +30,7 @@ final class CityGeneralHospitalPatientSeeder extends Seeder
 
         $patients = [
             [
-                'patient_number' => 'CGH-PAT-1001',
+                'patient_number' => 'QMC-PAT-1001',
                 'first_name' => 'Aisha',
                 'last_name' => 'Nakanwagi',
                 'date_of_birth' => '1994-08-12',
@@ -47,7 +47,7 @@ final class CityGeneralHospitalPatientSeeder extends Seeder
                 'address' => ['city' => 'Kampala', 'district' => 'Nakawa', 'state' => 'Central'],
             ],
             [
-                'patient_number' => 'CGH-PAT-1002',
+                'patient_number' => 'QMC-PAT-1002',
                 'first_name' => 'Joel',
                 'last_name' => 'Byaruhanga',
                 'date_of_birth' => '1988-02-03',
@@ -64,7 +64,7 @@ final class CityGeneralHospitalPatientSeeder extends Seeder
                 'address' => ['city' => 'Kampala', 'district' => 'Rubaga', 'state' => 'Central'],
             ],
             [
-                'patient_number' => 'CGH-PAT-1003',
+                'patient_number' => 'QMC-PAT-1003',
                 'first_name' => 'Ruth',
                 'last_name' => 'Nansubuga',
                 'date_of_birth' => '1999-11-25',
@@ -81,7 +81,7 @@ final class CityGeneralHospitalPatientSeeder extends Seeder
                 'address' => ['city' => 'Kampala', 'district' => 'Makindye', 'state' => 'Central'],
             ],
             [
-                'patient_number' => 'CGH-PAT-1004',
+                'patient_number' => 'QMC-PAT-1004',
                 'first_name' => 'Isaac',
                 'last_name' => 'Tumusiime',
                 'date_of_birth' => '2016-05-06',
@@ -98,7 +98,7 @@ final class CityGeneralHospitalPatientSeeder extends Seeder
                 'address' => ['city' => 'Entebbe', 'district' => 'Wakiso', 'state' => 'Central'],
             ],
             [
-                'patient_number' => 'CGH-PAT-1005',
+                'patient_number' => 'QMC-PAT-1005',
                 'first_name' => 'Sarah',
                 'last_name' => 'Atwine',
                 'date_of_birth' => '1972-09-18',

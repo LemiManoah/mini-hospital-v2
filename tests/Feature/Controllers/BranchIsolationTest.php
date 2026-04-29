@@ -6,6 +6,7 @@ use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Enums\StaffType;
 use App\Enums\VisitStatus;
+use App\Models\Activity;
 use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Country;
@@ -559,9 +560,60 @@ it('allows support users to start impersonation and swaps branch context to the 
     $response->assertSessionHas('success', 'Now acting as '.$targetUser->name.'.');
     $response->assertSessionHas('impersonation.real_user_id', $supportUser->id);
     $response->assertSessionHas('impersonation.target_user_id', $targetUser->id);
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $targetTenant->id,
+        'log_name' => 'support',
+        'event' => 'support.impersonation.started',
+        'subject_type' => User::class,
+        'subject_id' => $targetUser->id,
+        'causer_id' => $supportUser->id,
+    ]);
 
     $this->assertDatabaseHas('users', [
         'id' => $supportUser->id,
         'tenant_id' => $sourceTenant->id,
     ]);
+});
+
+it('allows support users to stop impersonation and records the stop event', function (): void {
+    $this->seed(PermissionSeeder::class);
+
+    [$sourceTenant] = createTenantWithBranches();
+    [$targetTenant] = createTenantWithBranches(1);
+
+    $targetUser = User::query()->create([
+        'tenant_id' => $targetTenant->id,
+        'email' => 'stop.target@hospital.com',
+        'password' => Hash::make('password'),
+        'is_support' => false,
+    ]);
+    $targetUser->forceFill(['email_verified_at' => now()])->save();
+
+    $supportUser = User::query()->create([
+        'tenant_id' => $sourceTenant->id,
+        'email' => 'stop.support@hospital.com',
+        'password' => Hash::make('password'),
+        'is_support' => true,
+    ]);
+    $supportUser->forceFill(['email_verified_at' => now()])->save();
+
+    $this->actingAs($targetUser)
+        ->withSession([
+            'impersonation.real_user_id' => $supportUser->id,
+            'impersonation.target_user_id' => $targetUser->id,
+            'impersonation.started_at' => now()->toISOString(),
+        ])
+        ->post(route('facility-manager.impersonation.stop'))
+        ->assertRedirectToRoute('facility-manager.impersonation.index')
+        ->assertSessionHas('success', 'Returned to your support account.');
+
+    $activity = Activity::query()
+        ->where('event', 'support.impersonation.stopped')
+        ->where('subject_id', $targetUser->id)
+        ->latest('id')
+        ->first();
+
+    expect($activity)->not()->toBeNull()
+        ->and($activity?->tenant_id)->toBe($targetTenant->id)
+        ->and($activity?->causer_id)->toBe($supportUser->id);
 });

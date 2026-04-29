@@ -25,7 +25,7 @@ import {
 
 type PaymentFormState = {
     amount: string;
-    payment_method: string;
+    payment_method_id: string;
     payment_date: string;
     reference_number: string;
     notes: string;
@@ -254,10 +254,12 @@ export function VisitBillingTab({
                                             Payment Method
                                         </Label>
                                         <Select
-                                            value={paymentForm.payment_method}
+                                            value={
+                                                paymentForm.payment_method_id
+                                            }
                                             onValueChange={(value) =>
                                                 onPaymentChange(
-                                                    'payment_method',
+                                                    'payment_method_id',
                                                     value,
                                                 )
                                             }
@@ -282,7 +284,7 @@ export function VisitBillingTab({
                                         </Select>
                                         <InputError
                                             message={
-                                                paymentErrors.payment_method
+                                                paymentErrors.payment_method_id
                                             }
                                         />
                                     </div>

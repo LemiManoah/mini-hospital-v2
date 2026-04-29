@@ -6,7 +6,9 @@ use App\Actions\RecordVisitPayment;
 use App\Data\Patient\CreateVisitPaymentDTO;
 use App\Enums\GeneralStatus;
 use App\Enums\PayerType;
+use App\Models\Activity;
 use App\Models\PatientVisit;
+use App\Models\Payment;
 use App\Models\User;
 use App\Models\VisitBilling;
 use Illuminate\Support\Facades\DB;
@@ -138,6 +140,22 @@ it('records a visit payment from a typed dto and recalculates billing', function
         'updated_at' => now(),
     ]);
 
+    $paymentMethodId = (string) Str::uuid();
+
+    DB::table('payment_methods')->insert([
+        'id' => $paymentMethodId,
+        'tenant_id' => $tenantId,
+        'facility_branch_id' => $branchId,
+        'code' => 'cash',
+        'name' => 'Cash',
+        'type' => 'cash',
+        'requires_reference' => false,
+        'is_active' => true,
+        'sort_order' => 10,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     $user = User::factory()->create([
         'tenant_id' => $tenantId,
     ]);
@@ -148,7 +166,7 @@ it('records a visit payment from a typed dto and recalculates billing', function
         PatientVisit::query()->findOrFail($visitId),
         new CreateVisitPaymentDTO(
             amount: 40.0,
-            paymentMethod: 'cash',
+            paymentMethodId: $paymentMethodId,
             paymentDate: '2026-04-23',
             referenceNumber: 'RCT-200',
             notes: 'Partial settlement',
@@ -156,10 +174,25 @@ it('records a visit payment from a typed dto and recalculates billing', function
     );
 
     $billing = VisitBilling::query()->findOrFail($billingId);
+    $activity = Activity::query()
+        ->where('event', 'payment.recorded')
+        ->where('subject_type', Payment::class)
+        ->where('subject_id', $payment->id)
+        ->first();
 
     expect((float) $payment->amount)->toBe(40.0)
+        ->and($payment->payment_method_id)->toBe($paymentMethodId)
         ->and($payment->payment_method)->toBe('cash')
         ->and($payment->reference_number)->toBe('RCT-200')
         ->and((float) $billing->paid_amount)->toBe(40.0)
-        ->and((float) $billing->balance_amount)->toBe(35.0);
+        ->and((float) $billing->balance_amount)->toBe(35.0)
+        ->and($activity)->not()->toBeNull()
+        ->and($activity?->log_name)->toBe('billing')
+        ->and($activity?->tenant_id)->toBe($tenantId)
+        ->and($activity?->branch_id)->toBe($branchId)
+        ->and($activity?->staff_id)->toBeNull()
+        ->and($activity?->causer_id)->toBe($user->id)
+        ->and($activity?->getProperty('new_values.payment_id'))->toBe($payment->id)
+        ->and($activity?->getProperty('new_values.payment_method_id'))->toBe($paymentMethodId)
+        ->and((float) $activity?->getProperty('new_values.amount'))->toBe(40.0);
 });

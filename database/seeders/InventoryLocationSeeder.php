@@ -8,12 +8,12 @@ use App\Enums\InventoryLocationType;
 use App\Models\FacilityBranch;
 use App\Models\InventoryLocation;
 use App\Models\Tenant;
-use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
+use Database\Seeders\Concerns\InteractsWithQrooMedicalCenter;
 use Illuminate\Database\Seeder;
 
 final class InventoryLocationSeeder extends Seeder
 {
-    use InteractsWithCityGeneralHospital;
+    use InteractsWithQrooMedicalCenter;
 
     public function run(): void
     {
@@ -58,28 +58,28 @@ final class InventoryLocationSeeder extends Seeder
     {
         return [
             [
-                'location_code' => 'CGH-MAIN-STORE',
+                'location_code' => 'QMC-MAIN-STORE',
                 'name' => 'Main Medical Store',
                 'type' => InventoryLocationType::MAIN_STORE,
-                'description' => 'Central stock holding point for City General Hospital main branch.',
+                'description' => 'Central stock holding point for Qroo Medical Center main branch.',
                 'is_dispensing_point' => false,
             ],
             [
-                'location_code' => 'CGH-MAIN-PHARM',
+                'location_code' => 'QMC-MAIN-PHARM',
                 'name' => 'Main Pharmacy',
                 'type' => InventoryLocationType::PHARMACY,
                 'description' => 'Primary dispensing counter for outpatient prescriptions at the main branch.',
                 'is_dispensing_point' => true,
             ],
             [
-                'location_code' => 'CGH-MAIN-LAB',
+                'location_code' => 'QMC-MAIN-LAB',
                 'name' => 'Laboratory Store',
                 'type' => InventoryLocationType::LABORATORY,
                 'description' => 'Laboratory reagent and consumable store for the main branch.',
                 'is_dispensing_point' => false,
             ],
             [
-                'location_code' => 'CGH-MAIN-PROC',
+                'location_code' => 'QMC-MAIN-PROC',
                 'name' => 'Procedure Room Cabinet',
                 'type' => InventoryLocationType::PROCEDURE_ROOM,
                 'description' => 'Fast-access cabinet for treatment room consumables and emergency items.',

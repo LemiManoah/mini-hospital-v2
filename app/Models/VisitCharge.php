@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read VisitBilling|null $billing
  * @property-read PatientVisit|null $visit
  * @property-read FacilityBranch|null $branch
+ * @property-read ChargeMaster|null $chargeMaster
  * @property-read Model|null $source
  */
 final class VisitCharge extends Model
@@ -47,6 +48,7 @@ final class VisitCharge extends Model
         'facility_branch_id' => 'string',
         'visit_billing_id' => 'string',
         'patient_visit_id' => 'string',
+        'charge_master_id' => 'string',
         'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
         'line_total' => 'decimal:2',
@@ -76,6 +78,14 @@ final class VisitCharge extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(FacilityBranch::class, 'facility_branch_id');
+    }
+
+    /**
+     * @return BelongsTo<ChargeMaster, $this>
+     */
+    public function chargeMaster(): BelongsTo
+    {
+        return $this->belongsTo(ChargeMaster::class);
     }
 
     /**

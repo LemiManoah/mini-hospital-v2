@@ -9,6 +9,7 @@ use App\Enums\GeneralStatus;
 use App\Enums\MobilityStatus;
 use App\Enums\StaffType;
 use App\Enums\TriageGrade;
+use App\Models\Activity;
 use App\Models\Consultation;
 use App\Models\Country;
 use App\Models\Currency;
@@ -441,11 +442,21 @@ it('can review and release parameter-panel lab results in one approval step', fu
     $resultEntry = DB::table('lab_result_entries')
         ->where('lab_request_item_id', $requestItem->id)
         ->first();
+    $activity = Activity::query()
+        ->where('event', 'lab_result.approved')
+        ->where('subject_id', $resultEntry?->id)
+        ->first();
 
     expect($requestItem->reviewed_at)->not()->toBeNull()
         ->and($requestItem->approved_at)->not()->toBeNull()
         ->and($requestItem->status->value)->toBe('completed')
-        ->and($requestItem->result_visible)->toBeTrue();
+        ->and($requestItem->result_visible)->toBeTrue()
+        ->and($activity)->not()->toBeNull()
+        ->and($activity?->log_name)->toBe('laboratory')
+        ->and($activity?->tenant_id)->toBe($branch->tenant_id)
+        ->and($activity?->branch_id)->toBe($branch->id)
+        ->and($activity?->staff_id)->toBe($user->staff_id)
+        ->and($activity?->causer_id)->toBe($user->id);
 
     expect($resultEntry?->reviewed_at)->not()->toBeNull();
 });
@@ -551,6 +562,11 @@ it('corrects a released result, records the audit reason, and requires release a
 
     $requestItem->refresh();
     $resultEntry = $requestItem->resultEntry()->with('values')->firstOrFail();
+    $activity = Activity::query()
+        ->where('event', 'lab_result.corrected')
+        ->where('subject_id', $resultEntry->id)
+        ->latest('id')
+        ->first();
 
     expect($requestItem->status->value)->toBe('in_progress')
         ->and($requestItem->workflow_stage)->toBe('result_entered')
@@ -560,7 +576,14 @@ it('corrects a released result, records the audit reason, and requires release a
         ->and($resultEntry->corrected_at)->not->toBeNull()
         ->and($resultEntry->correction_reason)->toBe('Analyzer decimal point was entered incorrectly.')
         ->and($resultEntry->values->first()?->value_numeric)->toBe(11.4)
-        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('in_progress');
+        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('in_progress')
+        ->and($activity)->not()->toBeNull()
+        ->and($activity?->log_name)->toBe('laboratory')
+        ->and($activity?->tenant_id)->toBe($branch->tenant_id)
+        ->and($activity?->branch_id)->toBe($branch->id)
+        ->and($activity?->staff_id)->toBe($user->staff_id)
+        ->and($activity?->causer_id)->toBe($user->id)
+        ->and($activity?->getProperty('reason'))->toBe('Analyzer decimal point was entered incorrectly.');
 
     approveWorkflowResult(
         $branch,

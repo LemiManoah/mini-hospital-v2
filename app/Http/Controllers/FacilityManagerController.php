@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\RecordAuditActivity;
 use App\Actions\RegisterWorkspace;
 use App\Actions\StartTenantSubscription;
 use App\Actions\UpdateTenantSupportWorkflow;
@@ -15,6 +16,7 @@ use App\Enums\TenantSupportStatus;
 use App\Http\Requests\StoreTenantSupportNoteRequest;
 use App\Http\Requests\StoreWorkspaceRegistrationRequest;
 use App\Http\Requests\UpdateTenantSupportWorkflowRequest;
+use App\Models\Activity;
 use App\Models\Consultation;
 use App\Models\Country;
 use App\Models\Department;
@@ -49,6 +51,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 final readonly class FacilityManagerController implements HasMiddleware
 {
     public function __construct(
+        private RecordAuditActivity $recordAuditActivity,
         private RegisterWorkspace $registerWorkspace,
         private StartTenantSubscription $startTenantSubscription,
         private UpdateTenantSupportWorkflow $updateTenantSupportWorkflow,
@@ -544,6 +547,10 @@ final readonly class FacilityManagerController implements HasMiddleware
             ->take(12)
             ->values()
             ->all();
+        $supportActivity = $this->supportActivityForTenant($tenant->id)
+            ->take(12)
+            ->values()
+            ->all();
 
         return Inertia::render('facility-manager/activity', [
             'tenant' => $this->tenantSummaryPayload($tenant),
@@ -589,6 +596,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 ],
             ],
             'recent_activity' => $recentActivity,
+            'support_activity' => $supportActivity,
         ]);
     }
 
@@ -642,13 +650,30 @@ final readonly class FacilityManagerController implements HasMiddleware
         $user = $request->user();
         $validated = $request->validated();
 
-        TenantSupportNote::query()->create([
+        $note = TenantSupportNote::query()->create([
             'tenant_id' => $tenant->id,
             'author_id' => $user->id,
             'title' => $validated['title'] ?: null,
             'body' => $validated['body'],
             'is_pinned' => (bool) ($validated['is_pinned'] ?? false),
         ]);
+
+        $this->recordAuditActivity->handle(
+            logName: 'support',
+            event: 'support.note_created',
+            subject: $note,
+            description: 'Support note created.',
+            actor: $user,
+            tenantId: $tenant->id,
+            newValues: [
+                'note_id' => $note->id,
+                'title' => $note->title,
+                'is_pinned' => $note->is_pinned,
+            ],
+            metadata: [
+                'body' => $note->body,
+            ],
+        );
 
         return to_route('facility-manager.facilities.notes', $tenant)
             ->with('success', 'Support note added for '.$tenant->name.'.');
@@ -669,7 +694,7 @@ final readonly class FacilityManagerController implements HasMiddleware
             'priority' => $priority,
             'follow_up_at' => $validated['follow_up_at'] ?? null,
             'last_contacted_at' => $validated['last_contacted_at'] ?? null,
-        ]);
+        ], $request->user());
 
         return to_route('facility-manager.facilities.notes', $tenant)
             ->with('success', 'Support workflow updated for '.$tenant->name.'.');
@@ -715,6 +740,17 @@ final readonly class FacilityManagerController implements HasMiddleware
             'onboarding_completed_at' => now(),
         ]);
 
+        $this->recordAuditActivity->handle(
+            logName: 'support',
+            event: 'support.onboarding.completed',
+            subject: $tenant,
+            description: 'Facility onboarding marked complete.',
+            tenantId: $tenant->id,
+            newValues: [
+                'onboarding_completed_at' => $tenant->onboarding_completed_at?->toISOString(),
+            ],
+        );
+
         return back()->with('success', 'Onboarding marked complete for '.$tenant->name.'.');
     }
 
@@ -725,6 +761,20 @@ final readonly class FacilityManagerController implements HasMiddleware
         $tenant->update([
             'onboarding_completed_at' => null,
         ]);
+
+        $this->recordAuditActivity->handle(
+            logName: 'support',
+            event: 'support.onboarding.reopened',
+            subject: $tenant,
+            description: 'Facility onboarding reopened.',
+            tenantId: $tenant->id,
+            oldValues: [
+                'onboarding_completed_at' => true,
+            ],
+            newValues: [
+                'onboarding_completed_at' => null,
+            ],
+        );
 
         return back()->with('success', 'Onboarding reopened for '.$tenant->name.'.');
     }
@@ -1040,6 +1090,67 @@ final readonly class FacilityManagerController implements HasMiddleware
         ])->filter(static fn (array $event): bool => $event['timestamp'] !== null)->values();
 
         return $events;
+    }
+
+    /**
+     * @return Collection<int, array{type: 'Support', title: string, subject: string|null, timestamp: string|null}>
+     */
+    private function supportActivityForTenant(string $tenantId): Collection
+    {
+        return Activity::query()
+            ->where('tenant_id', $tenantId)
+            ->inLog(['support'])
+            ->latest('created_at')
+            ->limit(20)
+            ->get()
+            ->map(function (Activity $activity): array {
+                $subjectLabel = match ($activity->event) {
+                    'support.note_created' => $this->activityPropertyString($activity, 'new_values.title') ?? 'Support note',
+                    'support.workflow_updated' => $this->activityPropertyString($activity, 'new_values.support_status'),
+                    'support.onboarding.completed' => 'Completed',
+                    'support.onboarding.reopened' => 'Reopened',
+                    'tenant.subscription.started',
+                    'tenant.subscription.pending_activation',
+                    'tenant.subscription.activated',
+                    'tenant.subscription.past_due' => $activity->subject instanceof TenantSubscription
+                        ? $this->subscriptionStatusLabel($activity->subject)
+                        : ($this->activityPropertyString($activity, 'new_values.status') ?? 'Subscription'),
+                    'support.impersonation.started',
+                    'support.impersonation.stopped' => $this->activityPropertyString($activity, 'metadata.target_user_email') ?? $activity->subject instanceof User ? $activity->subject->email : null,
+                    default => null,
+                };
+
+                return [
+                    'type' => 'Support',
+                    'title' => $this->supportActivityTitle($activity),
+                    'subject' => $subjectLabel,
+                    'timestamp' => $activity->created_at?->toISOString(),
+                ];
+            });
+    }
+
+    private function activityPropertyString(Activity $activity, string $key): ?string
+    {
+        $value = $activity->getProperty($key);
+
+        return is_string($value) ? $value : null;
+    }
+
+    private function supportActivityTitle(Activity $activity): string
+    {
+        return match ($activity->event) {
+            'support.note_created' => 'Support note created',
+            'support.workflow_updated' => 'Support workflow updated',
+            'support.onboarding.completed' => 'Onboarding marked complete',
+            'support.onboarding.reopened' => 'Onboarding reopened',
+            'tenant.subscription.started' => 'Trial subscription started',
+            'tenant.subscription.pending_activation' => 'Subscription marked pending activation',
+            'tenant.subscription.activated' => 'Subscription activated',
+            'tenant.subscription.past_due' => 'Subscription marked past due',
+            'support.impersonation.started' => 'Impersonation started',
+            'support.impersonation.stopped' => 'Impersonation stopped',
+            default => $activity->description,
+        };
     }
 
     private function subscriptionStatusValue(TenantSubscription $subscription): string

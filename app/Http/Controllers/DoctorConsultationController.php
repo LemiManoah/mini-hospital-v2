@@ -10,6 +10,7 @@ use App\Actions\UpdateConsultation;
 use App\Enums\AllergyReaction;
 use App\Enums\AllergySeverity;
 use App\Enums\ConsultationOutcome;
+use App\Enums\ConsultationType;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
 use App\Models\Allergen;
@@ -131,7 +132,7 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 $query->with(['recordedBy:id,first_name,last_name'])
                     ->latest('recorded_at');
             },
-            'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code,outcome,follow_up_instructions,follow_up_days,is_referred,referred_to_department,referred_to_facility,referral_reason',
+            'consultation:id,visit_id,doctor_id,consultation_type,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code,outcome,follow_up_instructions,follow_up_days,is_referred,referred_to_department,referred_to_facility,referral_reason',
             'consultation.doctor:id,first_name,last_name',
             'labRequests' => static function (HasMany $query): void {
                 $query->with([
@@ -182,6 +183,14 @@ final readonly class DoctorConsultationController implements HasMiddleware
                 ])
                 ->values()
                 ->all(),
+            'consultationTypeOptions' => collect(ConsultationType::cases())
+                ->map(static fn (ConsultationType $consultationType): array => [
+                    'value' => $consultationType->value,
+                    'label' => $consultationType->label(),
+                ])
+                ->values()
+                ->all(),
+            'defaultConsultationType' => ConsultationType::defaultForVisit($visit)->value,
             'referralDepartmentOptions' => Department::query()
                 ->orderBy('department_name')
                 ->get(['id', 'department_name'])

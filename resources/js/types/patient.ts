@@ -69,6 +69,7 @@ export interface Consultation {
     id: string;
     visit_id: string;
     doctor_id: string;
+    consultation_type?: string | null;
     started_at: string;
     completed_at: string | null;
     chief_complaint: string | null;
@@ -178,6 +179,7 @@ export interface DrugOption {
     brand_name: string | null;
     strength: string | null;
     dosage_form: string | null;
+    default_selling_price?: number | null;
     quoted_price?: number | null;
     price_source?: string | null;
 }
@@ -279,6 +281,7 @@ export interface VisitCharge {
     patient_visit_id: string;
     source_type: string;
     source_id: string;
+    charge_master_id?: string | null;
     charge_code: string | null;
     description: string;
     quantity: number;
@@ -292,6 +295,7 @@ export interface VisitPayment {
     id: string;
     visit_billing_id: string;
     patient_visit_id: string;
+    payment_method_id?: string | null;
     receipt_number: string | null;
     payment_date: string | null;
     amount: number;
@@ -474,7 +478,6 @@ export interface VisitShowPageProps {
     activeTab: string;
     activeClinicalTab: string;
     completionCheck?: VisitCompletionCheck;
-    paymentMethods: { value: string; label: string }[];
     triageGrades: { value: string; label: string }[];
     attendanceTypes: { value: string; label: string }[];
     consciousLevels: { value: string; label: string }[];
@@ -524,6 +527,8 @@ export interface DoctorConsultationShowPageProps {
     visit: PatientVisit;
     activeTab: string;
     consultationOutcomes: { value: string; label: string }[];
+    consultationTypeOptions: { value: string; label: string }[];
+    defaultConsultationType: string;
     referralDepartmentOptions: { value: string; label: string }[];
     referralFacilityOptions: ReferralFacilityOption[];
     labTestOptions: LabTestOption[];

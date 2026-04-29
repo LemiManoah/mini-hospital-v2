@@ -12,12 +12,12 @@ use App\Models\FacilityBranch;
 use App\Models\InventoryItem;
 use App\Models\Tenant;
 use App\Models\Unit;
-use Database\Seeders\Concerns\InteractsWithCityGeneralHospital;
+use Database\Seeders\Concerns\InteractsWithQrooMedicalCenter;
 use Illuminate\Database\Seeder;
 
 final class InventoryItemSeeder extends Seeder
 {
-    use InteractsWithCityGeneralHospital;
+    use InteractsWithQrooMedicalCenter;
 
     public function run(): void
     {
