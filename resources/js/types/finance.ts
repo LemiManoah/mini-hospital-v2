@@ -38,6 +38,14 @@ export interface FinanceOpdPaymentsIndexPageProps {
     statusOptions: { value: string; label: string }[];
 }
 
+export interface FinanceOpdVisitBilling {
+    gross_amount?: number | null;
+    paid_amount?: number | null;
+    balance_amount?: number | null;
+    status?: string | null;
+    payments?: VisitPayment[] | null;
+}
+
 export interface FinanceOpdPaymentsShowPageProps {
     visit: {
         id: string;
@@ -60,13 +68,7 @@ export interface FinanceOpdPaymentsShowPageProps {
             insurance_company?: { name?: string | null } | null;
             insurance_package?: { name?: string | null } | null;
         } | null;
-        billing?: {
-            gross_amount?: number | null;
-            paid_amount?: number | null;
-            balance_amount?: number | null;
-            status?: string | null;
-            payments?: VisitPayment[] | null;
-        } | null;
+        billing?: FinanceOpdVisitBilling | null;
         charges?: VisitCharge[] | null;
     };
     paymentMethods: { value: string; label: string }[];

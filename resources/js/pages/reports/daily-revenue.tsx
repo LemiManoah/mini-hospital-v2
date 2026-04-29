@@ -42,6 +42,8 @@ interface Payment {
     } | null;
 }
 
+type PaymentPatient = NonNullable<Payment['visit']>['patient'];
+
 interface ReportData {
     date: string;
     currency: string;
@@ -62,7 +64,7 @@ function fmt(currency: string, amount: number): string {
     return `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function patientName(p: Payment['visit']['patient'] | null): string {
+function patientName(p: PaymentPatient): string {
     if (!p) return '—';
     return [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ');
 }

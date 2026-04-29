@@ -16,11 +16,8 @@ import {
     formatDateTime,
     formatMoney,
 } from '@/pages/visit/components/visit-show-utils';
-import {
-    type VisitBilling,
-    type VisitCharge,
-    type VisitPayment,
-} from '@/types/patient';
+import { type FinanceOpdVisitBilling } from '@/types/finance';
+import { type VisitCharge, type VisitPayment } from '@/types/patient';
 import { Receipt } from 'lucide-react';
 
 type PaymentFormState = {
@@ -35,7 +32,7 @@ type PaymentFormErrors = Partial<Record<keyof PaymentFormState, string>>;
 
 type OpdPaymentWorkspaceProps = {
     visitId: string;
-    billing?: VisitBilling | null;
+    billing?: FinanceOpdVisitBilling | null;
     charges: VisitCharge[];
     payments: VisitPayment[];
     paymentMethods: { value: string; label: string }[];
@@ -124,7 +121,7 @@ export function OpdPaymentWorkspace({
                                         Billing Status
                                     </p>
                                     <p className="font-medium">
-                                        {billing
+                                        {billing?.status
                                             ? billing.status.replaceAll(
                                                   '_',
                                                   ' ',
@@ -133,7 +130,7 @@ export function OpdPaymentWorkspace({
                                     </p>
                                 </div>
                             </div>
-                            {billing ? (
+                            {billing?.status ? (
                                 <span
                                     className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${billingStatusClasses(billing.status)}`}
                                 >
