@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Reports;
 
+use App\Models\Appointment;
 use App\Models\InventoryLocation;
+use App\Models\Payment;
 use App\Models\Staff;
 use App\Models\User;
 use App\Support\InventoryLocationAccess;
@@ -267,7 +269,7 @@ final readonly class BuildReportGeneratorAction
         $reportDate = Date::parse($date ?? now()->toDateString());
         $data = $this->dailyRevenueReport->handle($reportDate, $branchId);
         /** @var list<array<string, string>> $rows */
-        $rows = array_values($data['rows']->map(fn ($payment): array => [
+        $rows = array_values($data['rows']->map(fn (Payment $payment): array => [
             'receipt_number' => $payment->receipt_number ?? '-',
             'patient' => $payment->visit?->patient !== null
                 ? mb_trim(sprintf('%s %s %s', $payment->visit->patient->first_name, $payment->visit->patient->middle_name ?? '', $payment->visit->patient->last_name))
@@ -435,7 +437,7 @@ final readonly class BuildReportGeneratorAction
         $reportDate = Date::parse($date ?? now()->toDateString());
         $data = $this->appointmentScheduleReport->handle($reportDate, $branchId, $doctorId);
         /** @var list<array<string, string>> $rows */
-        $rows = array_values($data['rows']->map(static fn ($appointment): array => [
+        $rows = array_values($data['rows']->map(static fn (Appointment $appointment): array => [
             'time' => sprintf('%s - %s', mb_substr((string) $appointment->start_time, 0, 5), mb_substr((string) $appointment->end_time, 0, 5)),
             'patient' => $appointment->patient !== null
                 ? mb_trim(sprintf('%s %s %s', $appointment->patient->first_name, $appointment->patient->middle_name ?? '', $appointment->patient->last_name))

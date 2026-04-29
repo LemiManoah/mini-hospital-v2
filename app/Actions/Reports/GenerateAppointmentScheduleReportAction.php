@@ -6,6 +6,7 @@ namespace App\Actions\Reports;
 
 use App\Models\Appointment;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 final readonly class GenerateAppointmentScheduleReportAction
@@ -34,7 +35,7 @@ final readonly class GenerateAppointmentScheduleReportAction
             ])
             ->where('facility_branch_id', $branchId)
             ->whereDate('appointment_date', $date)
-            ->when($doctorId, fn ($q) => $q->where('doctor_id', $doctorId))
+            ->when($doctorId, fn (Builder $query): Builder => $query->where('doctor_id', $doctorId))
             ->orderBy('start_time')
             ->get();
 

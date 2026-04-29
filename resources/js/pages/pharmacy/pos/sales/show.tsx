@@ -20,8 +20,8 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
-import { type AuditTimelineEntry } from '@/types/audit';
 import { type BreadcrumbItem } from '@/types';
+import { type AuditTimelineEntry } from '@/types/audit';
 import { type InventoryNavigationContext } from '@/types/inventory-navigation';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Printer } from 'lucide-react';

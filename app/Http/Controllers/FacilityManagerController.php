@@ -1104,6 +1104,7 @@ final readonly class FacilityManagerController implements HasMiddleware
             ->limit(20)
             ->get()
             ->map(function (Activity $activity): array {
+                $targetUserEmail = $this->activityPropertyString($activity, 'metadata.target_user_email');
                 $subjectLabel = match ($activity->event) {
                     'support.note_created' => $this->activityPropertyString($activity, 'new_values.title') ?? 'Support note',
                     'support.workflow_updated' => $this->activityPropertyString($activity, 'new_values.support_status'),
@@ -1116,7 +1117,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                         ? $this->subscriptionStatusLabel($activity->subject)
                         : ($this->activityPropertyString($activity, 'new_values.status') ?? 'Subscription'),
                     'support.impersonation.started',
-                    'support.impersonation.stopped' => $this->activityPropertyString($activity, 'metadata.target_user_email') ?? $activity->subject instanceof User ? $activity->subject->email : null,
+                    'support.impersonation.stopped' => $targetUserEmail ?? ($activity->subject instanceof User ? $activity->subject->email : null),
                     default => null,
                 };
 

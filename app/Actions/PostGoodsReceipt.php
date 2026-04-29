@@ -13,6 +13,7 @@ use App\Models\InventoryBatch;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\StockMovement;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -60,6 +61,8 @@ final readonly class PostGoodsReceipt
 
             $this->updatePurchaseOrderStatus($purchaseOrder);
 
+            $user = Auth::user();
+
             $this->recordAuditActivity->handle(
                 logName: 'inventory',
                 event: 'inventory.goods_receipt.posted',
@@ -67,7 +70,7 @@ final readonly class PostGoodsReceipt
                 description: 'Goods receipt posted.',
                 tenantId: $goodsReceipt->tenant_id,
                 branchId: $goodsReceipt->branch_id,
-                staffId: Auth::user()?->staff_id,
+                staffId: $user instanceof User ? $user->staffId() : null,
                 newValues: [
                     'goods_receipt_id' => $goodsReceipt->id,
                     'status' => $goodsReceipt->status->value,

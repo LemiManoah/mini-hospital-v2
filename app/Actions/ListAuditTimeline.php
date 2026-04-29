@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Models\Activity;
 use App\Models\Staff;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -33,10 +34,16 @@ final readonly class ListAuditTimeline
         array $logNames = [],
         int $limit = 20,
     ): array {
+        $subjectList = [];
+
+        foreach ($subjects as $subject) {
+            if ($subject instanceof Model && $this->modelKey($subject) !== null) {
+                $subjectList[] = $subject;
+            }
+        }
+
         /** @var Collection<int, Model> $resolvedSubjects */
-        $resolvedSubjects = collect($subjects)
-            ->filter(static fn (mixed $subject): bool => $subject instanceof Model && $subject->getKey() !== null)
-            ->values();
+        $resolvedSubjects = collect($subjectList);
 
         if ($resolvedSubjects->isEmpty()) {
             return [];
@@ -45,18 +52,24 @@ final readonly class ListAuditTimeline
         $activity = Activity::query()
             ->when(
                 $tenantId !== null && $tenantId !== '',
-                static fn ($query) => $query->where('tenant_id', $tenantId),
+                static fn (Builder $query): Builder => $query->where('tenant_id', $tenantId),
             )
             ->when(
                 $logNames !== [],
-                static fn ($query) => $query->inLog($logNames),
+                static fn (Builder $query): Builder => $query->inLog($logNames),
             )
-            ->where(function ($query) use ($resolvedSubjects): void {
+            ->where(function (Builder $query) use ($resolvedSubjects): void {
                 foreach ($resolvedSubjects as $subject) {
-                    $query->orWhere(function ($subjectQuery) use ($subject): void {
+                    $subjectKey = $this->modelKey($subject);
+
+                    if ($subjectKey === null) {
+                        continue;
+                    }
+
+                    $query->orWhere(function (Builder $subjectQuery) use ($subject, $subjectKey): void {
                         $subjectQuery
                             ->where('subject_type', $subject::class)
-                            ->where('subject_id', (string) $subject->getKey());
+                            ->where('subject_id', $subjectKey);
                     });
                 }
             })
@@ -66,7 +79,7 @@ final readonly class ListAuditTimeline
 
         return $activity
             ->map(fn (Activity $entry): array => [
-                'id' => (string) $entry->getKey(),
+                'id' => $this->modelKey($entry) ?? '',
                 'log_name' => $entry->log_name,
                 'event' => $entry->event,
                 'title' => $this->title($entry),
@@ -81,7 +94,7 @@ final readonly class ListAuditTimeline
 
     private function title(Activity $activity): string
     {
-        if (is_string($activity->description) && $activity->description !== '') {
+        if ($activity->description !== '') {
             return $activity->description;
         }
 
@@ -131,5 +144,12 @@ final readonly class ListAuditTimeline
         return is_string($notes) && $notes !== ''
             ? $notes
             : null;
+    }
+
+    private function modelKey(Model $model): ?string
+    {
+        $key = $model->getKey();
+
+        return is_string($key) || is_int($key) ? (string) $key : null;
     }
 }

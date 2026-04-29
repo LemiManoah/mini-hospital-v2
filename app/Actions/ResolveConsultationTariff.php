@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Enums\ConsultationType;
 use App\Models\Consultation;
 use App\Models\ConsultationTariff;
+use Illuminate\Database\Eloquent\Builder;
 
 final class ResolveConsultationTariff
 {
@@ -30,7 +31,7 @@ final class ResolveConsultationTariff
             ->where('facility_branch_id', $visit->facility_branch_id)
             ->where('consultation_type', $consultationType->value)
             ->where('is_active', true)
-            ->where(function ($query) use ($visit): void {
+            ->where(function (Builder $query) use ($visit): void {
                 $query->where('visit_type', $visit->visit_type?->value)
                     ->orWhereNull('visit_type');
             })

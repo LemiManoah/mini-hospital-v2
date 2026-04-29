@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\Notification;
 
 final readonly class NotifyUsersWithPermission
@@ -20,12 +21,12 @@ final readonly class NotifyUsersWithPermission
         $users = User::query()
             ->where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
-            ->where(function ($query) use ($permissions): void {
+            ->where(function (Builder $query) use ($permissions): void {
                 foreach ($permissions as $permission) {
-                    $query->orWhereHas('roles.permissions', function ($q) use ($permission): void {
-                        $q->where('name', $permission);
-                    })->orWhereHas('permissions', function ($q) use ($permission): void {
-                        $q->where('name', $permission);
+                    $query->orWhereHas('roles.permissions', function (Builder $permissionQuery) use ($permission): void {
+                        $permissionQuery->where('name', $permission);
+                    })->orWhereHas('permissions', function (Builder $permissionQuery) use ($permission): void {
+                        $permissionQuery->where('name', $permission);
                     });
                 }
             })

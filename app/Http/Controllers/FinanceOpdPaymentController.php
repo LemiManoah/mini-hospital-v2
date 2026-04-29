@@ -11,6 +11,7 @@ use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Http\Requests\StoreVisitPaymentRequest;
 use App\Models\PatientVisit;
+use App\Models\PaymentMethod;
 use App\Support\ActiveBranchWorkspace;
 use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
@@ -176,7 +177,7 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
             'visit' => $visit,
             'paymentMethods' => $this->ensureBranchPaymentMethods
                 ->handle($tenantId, $visit->facility_branch_id)
-                ->map(fn ($method): array => [
+                ->map(fn (PaymentMethod $method): array => [
                     'value' => $method->id,
                     'label' => $method->name,
                 ])

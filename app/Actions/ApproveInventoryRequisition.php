@@ -8,6 +8,7 @@ use App\Data\Inventory\ApproveInventoryRequisitionDTO;
 use App\Enums\InventoryRequisitionStatus;
 use App\Models\InventoryRequisition;
 use App\Models\InventoryRequisitionItem;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -61,6 +62,12 @@ final readonly class ApproveInventoryRequisition
                 'updated_by' => Auth::id(),
             ]);
 
+            $user = Auth::user();
+            $approvedQuantityTotal = $approvedQuantities->reduce(
+                static fn (float $total, float $quantity): float => $total + $quantity,
+                0.0,
+            );
+
             $this->recordAuditActivity->handle(
                 logName: 'inventory',
                 event: 'inventory.requisition.approved',
@@ -68,7 +75,7 @@ final readonly class ApproveInventoryRequisition
                 description: 'Inventory requisition approved.',
                 tenantId: $requisition->tenant_id,
                 branchId: $requisition->branch_id,
-                staffId: Auth::user()?->staff_id,
+                staffId: $user instanceof User ? $user->staffId() : null,
                 newValues: [
                     'requisition_id' => $requisition->id,
                     'status' => $requisition->status->value,
@@ -77,7 +84,7 @@ final readonly class ApproveInventoryRequisition
                     'approved_line_count' => $approvedQuantities->filter(
                         static fn (float $quantity): bool => $quantity > 0
                     )->count(),
-                    'approved_quantity_total' => round($approvedQuantities->sum(), 3),
+                    'approved_quantity_total' => round($approvedQuantityTotal, 3),
                 ],
                 metadata: [
                     'approval_notes' => $data->approvalNotes,

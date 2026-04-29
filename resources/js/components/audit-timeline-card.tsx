@@ -48,7 +48,9 @@ export function AuditTimelineCard({
                                 </span>
                             </div>
                             <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                                {entry.actor && <span>Actor: {entry.actor}</span>}
+                                {entry.actor && (
+                                    <span>Actor: {entry.actor}</span>
+                                )}
                                 {entry.log_name && (
                                     <span className="capitalize">
                                         Log: {entry.log_name}
