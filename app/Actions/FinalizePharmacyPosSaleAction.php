@@ -13,6 +13,7 @@ use App\Models\PharmacyPosCartItem;
 use App\Models\PharmacyPosSale;
 use App\Models\PharmacyPosSaleItem;
 use App\Models\StockMovement;
+use App\Models\User;
 use App\Support\InventoryStockLedger;
 use App\Support\PharmacyPosSaleNumberGenerator;
 use Illuminate\Support\Collection;
@@ -141,14 +142,16 @@ final readonly class FinalizePharmacyPosSaleAction
                 'converted_at' => now(),
             ]);
 
+            $user = Auth::user();
+
             $this->recordAuditActivity->handle(
                 logName: 'pharmacy',
                 event: 'pharmacy.sale.finalized',
                 subject: $sale,
-                description: 'Pharmacy POS sale finalized.',
+                description: 'Pharmacy POS sale finalized',
                 tenantId: $sale->tenant_id,
                 branchId: $sale->branch_id,
-                staffId: Auth::user()?->staff_id,
+                staffId: $user instanceof User ? $user->staffId() : null,
                 newValues: [
                     'sale_id' => $sale->id,
                     'sale_number' => $sale->sale_number,

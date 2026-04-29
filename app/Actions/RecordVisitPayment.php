@@ -8,6 +8,7 @@ use App\Data\Patient\CreateVisitPaymentDTO;
 use App\Models\PatientVisit;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\User;
 use App\Support\GeneralSettings\TenantGeneralSettings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -82,14 +83,16 @@ final readonly class RecordVisitPayment
 
             $this->recalculateVisitBilling->handle($billing);
 
+            $user = Auth::user();
+
             $this->recordAuditActivity->handle(
                 logName: 'billing',
                 event: 'payment.recorded',
                 subject: $payment,
-                description: 'Visit payment recorded.',
+                description: 'Payment recorded for patient visit.',
                 tenantId: $visit->tenant_id,
                 branchId: $visit->facility_branch_id,
-                staffId: Auth::user()?->staff_id,
+                staffId: $user instanceof User ? $user->staffId() : null,
                 newValues: [
                     'payment_id' => $payment->id,
                     'visit_id' => $visit->id,

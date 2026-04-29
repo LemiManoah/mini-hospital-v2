@@ -9,6 +9,7 @@ use App\Enums\StockMovementType;
 use App\Models\PharmacyPosSale;
 use App\Models\PharmacyPosSaleItem;
 use App\Models\StockMovement;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -58,6 +59,8 @@ final readonly class VoidPharmacyPosSaleAction
                 'updated_by' => Auth::id(),
             ]);
 
+            $user = Auth::user();
+
             $this->recordAuditActivity->handle(
                 logName: 'pharmacy',
                 event: 'pharmacy.sale.voided',
@@ -65,7 +68,7 @@ final readonly class VoidPharmacyPosSaleAction
                 description: 'Pharmacy POS sale voided.',
                 tenantId: $sale->tenant_id,
                 branchId: $sale->branch_id,
-                staffId: Auth::user()?->staff_id,
+                staffId: $user instanceof User ? $user->staffId() : null,
                 newValues: [
                     'sale_id' => $sale->id,
                     'status' => $sale->status->value,

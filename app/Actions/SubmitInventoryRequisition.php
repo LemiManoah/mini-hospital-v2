@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\InventoryRequisitionStatus;
 use App\Models\InventoryRequisition;
+use App\Models\User;
 use App\Notifications\InventoryRequisitionSubmittedNotification;
 use Illuminate\Support\Facades\Auth;
 
@@ -35,6 +36,8 @@ final readonly class SubmitInventoryRequisition
         $tenantId = $requisition->getAttributeValue('tenant_id');
 
         if (is_string($tenantId) && $tenantId !== '') {
+            $user = Auth::user();
+
             $this->recordAuditActivity->handle(
                 logName: 'inventory',
                 event: 'inventory.requisition.submitted',
@@ -42,7 +45,7 @@ final readonly class SubmitInventoryRequisition
                 description: 'Inventory requisition submitted.',
                 tenantId: $requisition->tenant_id,
                 branchId: $requisition->branch_id,
-                staffId: Auth::user()?->staff_id,
+                staffId: $user instanceof User ? $user->staffId() : null,
                 newValues: [
                     'requisition_id' => $requisition->id,
                     'status' => $requisition->status->value,

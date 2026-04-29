@@ -9,6 +9,7 @@ use App\Enums\StockMovementType;
 use App\Models\PharmacyPosSale;
 use App\Models\PharmacyPosSaleItem;
 use App\Models\StockMovement;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -74,6 +75,8 @@ final readonly class RefundPharmacyPosSaleAction
                 'updated_by' => Auth::id(),
             ]);
 
+            $user = Auth::user();
+
             $this->recordAuditActivity->handle(
                 logName: 'pharmacy',
                 event: 'pharmacy.sale.refunded',
@@ -81,7 +84,7 @@ final readonly class RefundPharmacyPosSaleAction
                 description: 'Pharmacy POS sale refunded.',
                 tenantId: $sale->tenant_id,
                 branchId: $sale->branch_id,
-                staffId: Auth::user()?->staff_id,
+                staffId: $user instanceof User ? $user->staffId() : null,
                 reason: is_string($data['notes'] ?? null) ? $data['notes'] : null,
                 newValues: [
                     'sale_id' => $sale->id,

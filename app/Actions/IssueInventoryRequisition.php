@@ -11,6 +11,7 @@ use App\Models\InventoryBatch;
 use App\Models\InventoryRequisition;
 use App\Models\InventoryRequisitionItem;
 use App\Models\StockMovement;
+use App\Models\User;
 use App\Support\InventoryStockLedger;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -170,6 +171,8 @@ final readonly class IssueInventoryRequisition
                 'updated_by' => Auth::id(),
             ]);
 
+            $user = Auth::user();
+
             $this->recordAuditActivity->handle(
                 logName: 'inventory',
                 event: 'inventory.requisition.issued',
@@ -177,7 +180,7 @@ final readonly class IssueInventoryRequisition
                 description: 'Inventory requisition issue posted.',
                 tenantId: $requisition->tenant_id,
                 branchId: $requisition->branch_id,
-                staffId: Auth::user()?->staff_id,
+                staffId: $user instanceof User ? $user->staffId() : null,
                 newValues: [
                     'requisition_id' => $requisition->id,
                     'status' => $requisition->status->value,

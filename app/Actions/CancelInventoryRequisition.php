@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\InventoryRequisitionStatus;
 use App\Models\InventoryRequisition;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 final readonly class CancelInventoryRequisition
@@ -32,6 +33,8 @@ final readonly class CancelInventoryRequisition
 
         $requisition = $requisition->refresh();
 
+        $user = Auth::user();
+
         $this->recordAuditActivity->handle(
             logName: 'inventory',
             event: 'inventory.requisition.cancelled',
@@ -39,7 +42,7 @@ final readonly class CancelInventoryRequisition
             description: 'Inventory requisition cancelled.',
             tenantId: $requisition->tenant_id,
             branchId: $requisition->branch_id,
-            staffId: Auth::user()?->staff_id,
+            staffId: $user instanceof User ? $user->staffId() : null,
             reason: $reason,
             newValues: [
                 'requisition_id' => $requisition->id,
