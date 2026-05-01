@@ -1,4 +1,5 @@
 import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,12 +12,16 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { usePermissions } from '@/lib/permissions';
 import {
     billingStatusClasses,
     formatDateTime,
     formatMoney,
 } from '@/pages/visit/components/visit-show-utils';
-import { type FinanceOpdVisitBilling } from '@/types/finance';
+import {
+    type BillingDiscount,
+    type FinanceOpdVisitBilling,
+} from '@/types/finance';
 import { type VisitCharge, type VisitPayment } from '@/types/patient';
 import { Receipt } from 'lucide-react';
 
@@ -30,17 +35,35 @@ type PaymentFormState = {
 
 type PaymentFormErrors = Partial<Record<keyof PaymentFormState, string>>;
 
+type DiscountFormState = {
+    amount: string;
+    reason: string;
+    notes: string;
+};
+
+type DiscountFormErrors = Partial<Record<keyof DiscountFormState, string>>;
+
 type OpdPaymentWorkspaceProps = {
     visitId: string;
     billing?: FinanceOpdVisitBilling | null;
     charges: VisitCharge[];
     payments: VisitPayment[];
+    discounts: BillingDiscount[];
     paymentMethods: { value: string; label: string }[];
     paymentForm: PaymentFormState;
     paymentErrors: PaymentFormErrors;
     paymentProcessing: boolean;
+    discountForm: DiscountFormState;
+    discountErrors: DiscountFormErrors;
+    discountProcessing: boolean;
+    reversalReasons: Record<string, string>;
     onPaymentChange: (field: keyof PaymentFormState, value: string) => void;
     onPaymentSubmit: () => void;
+    onDiscountChange: (field: keyof DiscountFormState, value: string) => void;
+    onDiscountSubmit: () => void;
+    onApproveDiscount: (discountId: string) => void;
+    onReverseReasonChange: (discountId: string, value: string) => void;
+    onReverseDiscount: (discountId: string) => void;
 };
 
 export function OpdPaymentWorkspace({
@@ -48,13 +71,28 @@ export function OpdPaymentWorkspace({
     billing,
     charges,
     payments,
+    discounts,
     paymentMethods,
     paymentForm,
     paymentErrors,
     paymentProcessing,
+    discountForm,
+    discountErrors,
+    discountProcessing,
+    reversalReasons,
     onPaymentChange,
     onPaymentSubmit,
+    onDiscountChange,
+    onDiscountSubmit,
+    onApproveDiscount,
+    onReverseReasonChange,
+    onReverseDiscount,
 }: OpdPaymentWorkspaceProps) {
+    const { hasPermission } = usePermissions();
+    const canRequestDiscount = hasPermission('billing_discounts.create');
+    const canApproveDiscount = hasPermission('billing_discounts.approve');
+    const canReverseDiscount = hasPermission('billing_discounts.reverse');
+
     return (
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <Card>
@@ -139,7 +177,7 @@ export function OpdPaymentWorkspace({
                             ) : null}
                         </div>
 
-                        <div className="grid gap-3 sm:grid-cols-3">
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             <div className="rounded-lg border p-3">
                                 <p className="text-sm text-muted-foreground">
                                     Gross
@@ -154,6 +192,14 @@ export function OpdPaymentWorkspace({
                                 </p>
                                 <p className="text-lg font-semibold">
                                     {formatMoney(billing?.paid_amount ?? 0)}
+                                </p>
+                            </div>
+                            <div className="rounded-lg border p-3">
+                                <p className="text-sm text-muted-foreground">
+                                    Discount
+                                </p>
+                                <p className="text-lg font-semibold">
+                                    {formatMoney(billing?.discount_amount ?? 0)}
                                 </p>
                             </div>
                             <div className="rounded-lg border p-3">
@@ -299,6 +345,199 @@ export function OpdPaymentWorkspace({
                                     Receive Payment
                                 </Button>
                             </form>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Discount Governance</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {(billing?.balance_amount ?? 0) <= 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                This visit does not currently have an
+                                outstanding balance for a discount.
+                            </p>
+                        ) : canRequestDiscount ? (
+                            <form
+                                className="space-y-4"
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    onDiscountSubmit();
+                                }}
+                            >
+                                <div className="space-y-2">
+                                    <Label htmlFor="discount_amount">
+                                        Amount
+                                    </Label>
+                                    <Input
+                                        id="discount_amount"
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        max={String(
+                                            billing?.balance_amount ?? '',
+                                        )}
+                                        value={discountForm.amount}
+                                        onChange={(event) =>
+                                            onDiscountChange(
+                                                'amount',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={discountErrors.amount}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="discount_reason">
+                                        Reason
+                                    </Label>
+                                    <Input
+                                        id="discount_reason"
+                                        value={discountForm.reason}
+                                        onChange={(event) =>
+                                            onDiscountChange(
+                                                'reason',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={discountErrors.reason}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="discount_notes">
+                                        Notes
+                                    </Label>
+                                    <Textarea
+                                        id="discount_notes"
+                                        value={discountForm.notes}
+                                        onChange={(event) =>
+                                            onDiscountChange(
+                                                'notes',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={discountErrors.notes}
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    className="w-full"
+                                    disabled={discountProcessing}
+                                >
+                                    Request Discount
+                                </Button>
+                            </form>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                You do not have permission to request billing
+                                discounts.
+                            </p>
+                        )}
+
+                        {discounts.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                No discounts have been requested for this visit
+                                yet.
+                            </p>
+                        ) : (
+                            discounts.map((discount) => (
+                                <div
+                                    key={discount.id}
+                                    className="rounded-lg border p-3"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="font-medium">
+                                                {formatMoney(discount.amount)}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {discount.reason}
+                                            </p>
+                                        </div>
+                                        <Badge variant="secondary">
+                                            {discount.status.replaceAll(
+                                                '_',
+                                                ' ',
+                                            )}
+                                        </Badge>
+                                    </div>
+                                    {discount.notes ? (
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                            {discount.notes}
+                                        </p>
+                                    ) : null}
+                                    {discount.reversal_reason ? (
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                            Reversal: {discount.reversal_reason}
+                                        </p>
+                                    ) : null}
+                                    {discount.status === 'pending' &&
+                                    canApproveDiscount ? (
+                                        <div className="mt-3 flex justify-end">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    onApproveDiscount(
+                                                        discount.id,
+                                                    )
+                                                }
+                                            >
+                                                Approve
+                                            </Button>
+                                        </div>
+                                    ) : null}
+                                    {discount.status === 'approved' &&
+                                    canReverseDiscount ? (
+                                        <form
+                                            className="mt-3 flex flex-col gap-3"
+                                            onSubmit={(event) => {
+                                                event.preventDefault();
+                                                onReverseDiscount(discount.id);
+                                            }}
+                                        >
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor={`reversal_reason_${discount.id}`}
+                                                >
+                                                    Reversal Reason
+                                                </Label>
+                                                <Input
+                                                    id={`reversal_reason_${discount.id}`}
+                                                    value={
+                                                        reversalReasons[
+                                                            discount.id
+                                                        ] ?? ''
+                                                    }
+                                                    onChange={(event) =>
+                                                        onReverseReasonChange(
+                                                            discount.id,
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+                                            <Button
+                                                type="submit"
+                                                variant="outline"
+                                                size="sm"
+                                                className="self-end"
+                                            >
+                                                Reverse
+                                            </Button>
+                                        </form>
+                                    ) : null}
+                                </div>
+                            ))
                         )}
                     </CardContent>
                 </Card>

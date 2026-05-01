@@ -96,6 +96,7 @@ final class PermissionSeeder extends Seeder
             'switch_facility' => ['view', 'create', 'update', 'delete'],
             'visit_billings' => ['view', 'create', 'update', 'delete'],
             'visit_charges' => ['view', 'create', 'update', 'delete'],
+            'billing_discounts' => ['view', 'create', 'approve', 'reverse'],
             'payments' => ['view', 'create', 'update', 'delete'],
             'reports' => ['view'],
         ];
@@ -174,6 +175,7 @@ final class PermissionSeeder extends Seeder
                 'appointments' => ['view'],
                 'visit_billings' => ['view'],
                 'visit_charges' => ['view'],
+                'billing_discounts' => ['view', 'create', 'approve', 'reverse'],
                 'payments' => ['view', 'create', 'update', 'delete'],
                 'insurance_claims' => ['view', 'create', 'update'],
                 'insurance_payments' => ['view', 'create', 'update'],
@@ -185,6 +187,7 @@ final class PermissionSeeder extends Seeder
                 'appointments' => ['view'],
                 'visit_billings' => ['view'],
                 'visit_charges' => ['view'],
+                'billing_discounts' => ['view', 'create'],
                 'payments' => ['view', 'create', 'update'],
                 'reports' => ['view'],
             ],

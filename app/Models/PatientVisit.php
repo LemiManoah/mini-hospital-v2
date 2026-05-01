@@ -50,6 +50,8 @@ use Illuminate\Support\Carbon;
  * @property-read VisitBilling|null $billing
  * @property-read Collection<int, VisitCharge> $charges
  * @property-read Collection<int, Payment> $payments
+ * @property-read Collection<int, BillingDiscount> $discounts
+ * @property-read InsuredVisitClaim|null $insuredClaim
  */
 final class PatientVisit extends Model
 {
@@ -172,5 +174,17 @@ final class PatientVisit extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class, 'patient_visit_id');
+    }
+
+    /** @return HasMany<BillingDiscount, $this> */
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(BillingDiscount::class, 'patient_visit_id');
+    }
+
+    /** @return HasOne<InsuredVisitClaim, $this> */
+    public function insuredClaim(): HasOne
+    {
+        return $this->hasOne(InsuredVisitClaim::class, 'patient_visit_id');
     }
 }

@@ -8,6 +8,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class InsuranceCompanyInvoicePayment extends Model
@@ -46,5 +47,13 @@ final class InsuranceCompanyInvoicePayment extends Model
     public function insuranceCompanyInvoice(): BelongsTo
     {
         return $this->belongsTo(InsuranceCompanyInvoice::class);
+    }
+
+    /**
+     * @return HasMany<InsuranceClaimAllocation, $this>
+     */
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(InsuranceClaimAllocation::class);
     }
 }

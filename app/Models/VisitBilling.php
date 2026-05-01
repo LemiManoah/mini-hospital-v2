@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -41,6 +42,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read InsurancePackage|null $insurancePackage
  * @property-read Collection<int, VisitCharge> $charges
  * @property-read Collection<int, Payment> $payments
+ * @property-read Collection<int, BillingDiscount> $discounts
+ * @property-read InsuredVisitClaim|null $insuredClaim
  */
 final class VisitBilling extends Model
 {
@@ -119,5 +122,21 @@ final class VisitBilling extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * @return HasMany<BillingDiscount, $this>
+     */
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(BillingDiscount::class, 'visit_billing_id');
+    }
+
+    /**
+     * @return HasOne<InsuredVisitClaim, $this>
+     */
+    public function insuredClaim(): HasOne
+    {
+        return $this->hasOne(InsuredVisitClaim::class, 'visit_billing_id');
     }
 }

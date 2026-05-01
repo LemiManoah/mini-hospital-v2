@@ -62,4 +62,20 @@ final class InsuranceCompanyInvoice extends Model
     {
         return $this->hasMany(InsuranceCompanyInvoicePayment::class);
     }
+
+    /**
+     * @return HasMany<InsuredVisitClaim, $this>
+     */
+    public function claims(): HasMany
+    {
+        return $this->hasMany(InsuredVisitClaim::class);
+    }
+
+    /**
+     * @return HasMany<InsuranceClaimAllocation, $this>
+     */
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(InsuranceClaimAllocation::class);
+    }
 }

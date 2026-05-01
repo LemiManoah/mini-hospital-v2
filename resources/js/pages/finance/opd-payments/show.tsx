@@ -4,8 +4,9 @@ import AppLayout from '@/layouts/app-layout';
 import { formatMoney } from '@/pages/visit/components/visit-show-utils';
 import { type BreadcrumbItem } from '@/types';
 import { type FinanceOpdPaymentsShowPageProps } from '@/types/finance';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
 import { OpdPaymentWorkspace } from './components/opd-payment-workspace';
 
 export default function FinanceOpdPaymentsShowPage({
@@ -22,6 +23,14 @@ export default function FinanceOpdPaymentsShowPage({
         reference_number: '',
         notes: '',
     });
+    const discountForm = useForm({
+        amount: '',
+        reason: '',
+        notes: '',
+    });
+    const [reversalReasons, setReversalReasons] = useState<
+        Record<string, string>
+    >({});
 
     const patientName = [
         visit.patient?.first_name,
@@ -93,6 +102,16 @@ export default function FinanceOpdPaymentsShowPage({
                                     {formatMoney(visit.billing?.paid_amount)}
                                 </span>
                             </div>
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-muted-foreground">
+                                    Discounts
+                                </span>
+                                <span>
+                                    {formatMoney(
+                                        visit.billing?.discount_amount,
+                                    )}
+                                </span>
+                            </div>
                             <div className="flex items-center justify-between gap-3 font-medium">
                                 <span className="text-muted-foreground">
                                     Outstanding
@@ -114,12 +133,60 @@ export default function FinanceOpdPaymentsShowPage({
                     paymentForm={paymentForm.data}
                     paymentErrors={paymentForm.errors}
                     paymentProcessing={paymentForm.processing}
+                    discounts={visit.billing?.discounts ?? []}
+                    discountForm={discountForm.data}
+                    discountErrors={discountForm.errors}
+                    discountProcessing={discountForm.processing}
+                    reversalReasons={reversalReasons}
                     onPaymentChange={(field, value) =>
                         paymentForm.setData(field, value)
                     }
                     onPaymentSubmit={() =>
                         paymentForm.post(
                             `/finance/opd-payments/${visit.id}/payments`,
+                        )
+                    }
+                    onDiscountChange={(field, value) =>
+                        discountForm.setData(field, value)
+                    }
+                    onDiscountSubmit={() =>
+                        discountForm.post(
+                            `/finance/opd-payments/${visit.id}/discounts`,
+                            {
+                                onSuccess: () =>
+                                    discountForm.reset(
+                                        'amount',
+                                        'reason',
+                                        'notes',
+                                    ),
+                            },
+                        )
+                    }
+                    onApproveDiscount={(discountId) =>
+                        router.post(
+                            `/finance/opd-payments/${visit.id}/discounts/${discountId}/approve`,
+                        )
+                    }
+                    onReverseReasonChange={(discountId, value) =>
+                        setReversalReasons((current) => ({
+                            ...current,
+                            [discountId]: value,
+                        }))
+                    }
+                    onReverseDiscount={(discountId) =>
+                        router.post(
+                            `/finance/opd-payments/${visit.id}/discounts/${discountId}/reverse`,
+                            {
+                                reversal_reason:
+                                    reversalReasons[discountId] ?? '',
+                            },
+                            {
+                                onSuccess: () =>
+                                    setReversalReasons((current) => ({
+                                        ...current,
+                                        [discountId]: '',
+                                    })),
+                            },
                         )
                     }
                 />

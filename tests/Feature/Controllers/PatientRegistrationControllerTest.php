@@ -10,6 +10,7 @@ use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
+use Inertia\Testing\AssertableInertia;
 
 beforeEach(function (): void {
     $this->seed(PermissionSeeder::class);
@@ -31,7 +32,7 @@ function createPatientRegistrationContext(): array
         'email_verified_at' => now(),
     ]);
 
-    $user->givePermissionTo('patients.create');
+    $user->givePermissionTo(['patients.create', 'visits.view']);
 
     return [$tenantContext['tenant_id'], $branch, $user];
 }
@@ -91,6 +92,32 @@ it('registers a patient and opens the new visit page using the seeded numbering 
 
     expect($newPatient->patient_number)->toBe('CGH-PAT-1006');
     expect($newVisit->visit_number)->toBe('CGH-VIS-2026006');
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'log_name' => 'clinical',
+        'event' => 'patient.registered',
+        'subject_type' => Patient::class,
+        'subject_id' => $newPatient->id,
+    ]);
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'log_name' => 'clinical',
+        'event' => 'visit.started',
+        'subject_type' => PatientVisit::class,
+        'subject_id' => $newVisit->id,
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('visits.show', $newVisit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('visit/show')
+            ->has('audit_activity', 2)
+            ->where('audit_activity.0.title', 'Patient visit started.'));
 });
 
 it('rejects invalid dropdown values during patient registration', function (): void {

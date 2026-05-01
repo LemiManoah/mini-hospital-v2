@@ -10,6 +10,7 @@ use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\FacilityServiceOrder;
 use App\Models\PatientVisit;
+use App\Notifications\FacilityServiceOrderCreatedNotification;
 use Illuminate\Validation\ValidationException;
 
 final readonly class CreateFacilityServiceOrder
@@ -17,6 +18,8 @@ final readonly class CreateFacilityServiceOrder
     public function __construct(
         private SyncFacilityServiceOrderCharge $syncFacilityServiceOrderCharge,
         private TransitionPatientVisitStatus $transitionStatus,
+        private RecordAuditActivity $recordAuditActivity,
+        private NotifyUsersWithPermission $notifyUsersWithPermission,
     ) {}
 
     public function handle(Consultation|PatientVisit $context, CreateFacilityServiceOrderDTO $data, string $staffId): FacilityServiceOrder
@@ -51,6 +54,30 @@ final readonly class CreateFacilityServiceOrder
 
         $this->syncFacilityServiceOrderCharge->handle($order);
         $this->ensureVisitInProgress($visit);
+
+        $this->recordAuditActivity->handle(
+            logName: 'clinical',
+            event: 'service_order.created',
+            subject: $order,
+            description: 'Facility service order created.',
+            tenantId: $order->tenant_id,
+            branchId: $order->facility_branch_id,
+            staffId: $staffId,
+            newValues: [
+                'visit_id' => $order->visit_id,
+                'consultation_id' => $order->consultation_id,
+                'facility_service_id' => $order->facility_service_id,
+                'status' => $order->status->value,
+            ],
+        );
+
+        if ($visit->tenant_id !== null) {
+            $this->notifyUsersWithPermission->handle(
+                $visit->tenant_id,
+                ['facility_services.view', 'facility_services.update'],
+                new FacilityServiceOrderCreatedNotification($order),
+            );
+        }
 
         return $order;
     }

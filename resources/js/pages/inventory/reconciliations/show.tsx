@@ -1,3 +1,4 @@
+import { AuditTimelineCard } from '@/components/audit-timeline-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,6 +44,7 @@ const badgeVariant = (
 
 export default function InventoryReconciliationShow({
     reconciliation,
+    audit_activity,
 }: InventoryReconciliationShowPageProps) {
     const { hasPermission } = usePermissions();
     const { flash } = usePage<SharedData>().props;
@@ -587,6 +589,12 @@ export default function InventoryReconciliationShow({
                         </Table>
                     </div>
                 </div>
+
+                <AuditTimelineCard
+                    title="Reconciliation Audit Log"
+                    entries={audit_activity}
+                    emptyMessage="No reconciliation audit activity recorded yet."
+                />
             </div>
         </AppLayout>
     );

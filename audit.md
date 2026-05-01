@@ -366,7 +366,12 @@ Example event types:
 - `appointment.cancelled`
 - `lab_result.entered`
 - `lab_result.approved`
+- `lab_result.entered`
+- `lab_result.reviewed`
+- `lab_result.released`
 - `lab_result.corrected`
+- `lab_specimen.collected`
+- `lab_request_item.received`
 - `inventory.requisition.approved`
 - `inventory.stock_moved`
 - `pharmacy.sale.finalized`
@@ -662,8 +667,26 @@ The audit implementation has started in code. The project is no longer at a plan
 
 The following business events have already been wired into application actions and controllers:
 
+- `appointment.created`
+- `appointment.updated`
+- `appointment.confirmed`
+- `appointment.cancelled`
+- `appointment.rescheduled`
+- `appointment.checked_in`
+- `appointment.no_show`
 - `payment.recorded`
+- `consultation.started`
+- `consultation.updated`
+- `consultation.completed`
+- `lab_request.created`
+- `lab_request.updated`
+- `lab_request.deleted`
+- `lab_request.item_removed`
+- `imaging_request.created`
 - `prescription.created`
+- `service_order.created`
+- `service_order.updated`
+- `service_order.deleted`
 - `pharmacy.sale.finalized`
 - `pharmacy.sale.voided`
 - `pharmacy.sale.refunded`
@@ -673,6 +696,27 @@ The following business events have already been wired into application actions a
 - `inventory.requisition.cancelled`
 - `inventory.requisition.issued`
 - `inventory.goods_receipt.posted`
+- `inventory.reconciliation.created`
+- `inventory.reconciliation.submitted`
+- `inventory.reconciliation.reviewed`
+- `inventory.reconciliation.approved`
+- `inventory.reconciliation.rejected`
+- `inventory.reconciliation.posted`
+- `access.user.created`
+- `access.user.updated`
+- `access.user.roles_changed`
+- `access.user.deleted`
+- `access.role.created`
+- `access.role.updated`
+- `access.role.permissions_changed`
+- `access.role.deleted`
+- `access.login.succeeded`
+- `access.logout`
+- `patient.registered`
+- `visit.started`
+- `visit.completed`
+- `triage.recorded`
+- `vital_sign.recorded`
 - `lab_result.approved`
 - `lab_result.corrected`
 - `support.note_created`
@@ -705,10 +749,28 @@ This is the first user-facing audit surface backed by the new activity log.
 
 Additional audit timelines now exist on core operational detail screens:
 
+- Appointment show page
 - Finance OPD payment show page
 - Pharmacy POS sale show page
 - Inventory requisition show page
+- Inventory reconciliation show page
 - Goods receipt show page
+- Patient profile page
+- Visit show page
+
+Support users can also browse a facility-level audit explorer from Facility Manager:
+
+- Facility Manager audit log page with tenant-scoped filters for log name and event
+- Facility Manager audit metrics now include an `Admin` bucket for master-data and operational configuration changes
+
+Patient and visit timelines now carry more of the clinical sequence as new events are logged:
+
+- appointment check-in activity
+- consultation start, save, and completion activity
+- laboratory request creation, update, and removal activity
+- lab result entry, review, approval, release, and correction activity on visit timelines
+- imaging request creation
+- facility service order creation, update, and removal activity
 
 ### Tests Already Added
 
@@ -722,6 +784,16 @@ Focused tests have already been added or extended for:
 - support workflow activity logging
 - subscription activity logging
 - impersonation activity logging
+- access and role activity logging
+- login and logout activity logging
+- patient registration and visit timeline activity logging
+- appointment confirmation activity logging
+- consultation start, update, and completion activity logging
+- laboratory request, imaging request, and facility service order activity logging
+- lab result entry, review, and release activity logging
+- lab specimen collection and request-item receipt activity logging
+- inventory reconciliation workflow activity logging
+- administration master-data activity logging for departments, clinics, facility services, appointment categories, and appointment modes
 
 Some of the broader feature files are slower to run because they build full tenant, branch, permission, and Inertia state. Use focused test filters when validating only the new audit slice.
 
@@ -729,13 +801,96 @@ Some of the broader feature files are slower to run because they build full tena
 
 The audit implementation is not finished yet. The following important work remains:
 
-- finish verification of the new support-side test additions
-- add access and user-management events
-- add more billing, pharmacy, and inventory events
-- add patient, visit, lab, and billing timeline views
+- finish verification of the newest appointment and consultation/order audit assertions
+- add more appointment lifecycle assertions for cancellation, reschedule, no-show, and check-in
+- add more billing, pharmacy, laboratory, and inventory events where update and reversal flows are still thin
+- add dedicated lab, imaging, and administration timeline views
+- extend administration auditing further into catalog/config records such as lab catalogs, insurance packages, referral facilities, and staff positions
+
+### Simple CRUD Uses `HasActivity`
+
+For low-volume master-data records, the system now also uses Spatie Activitylog's model-based logging pattern directly.
+
+Current examples:
+
+- `Department`
+- `Clinic`
+- `FacilityService`
+- `AppointmentCategory`
+- `AppointmentMode`
+- `ReferralFacility`
+- `InsuranceCompany`
+- `InsurancePackage`
+- `StaffPosition`
+- `Unit`
+- `LabTestCategory`
+- `SpecimenType`
+- `LabResultType`
+- `LabTestCatalog` (top-level record only)
+- `Currency` (global setup record)
+
+These models use `HasActivity` with `getActivitylogOptions()` and `beforeActivityLogged()` so they can:
+
+- log create, update, and delete events automatically
+- write into the `administration` log
+- capture attribute changes through Spatie's `attribute_changes`
+- still fill this project's extra audit columns such as `tenant_id`, `branch_id`, and `staff_id`
+
+This is now the preferred approach for obvious CRUD-style setup records where the important question is simply that a record was created, edited, or deleted. Manual action-based audit logging should still remain the default for workflow-heavy business events such as payments, lab release, dispensing, requisition issuing, impersonation, and result correction.
+
+The administration events now coming from this model-level logging include:
+
+- `department.created`
+- `department.updated`
+- `department.deleted`
+- `clinic.created`
+- `clinic.updated`
+- `clinic.deleted`
+- `facility_service.created`
+- `facility_service.updated`
+- `facility_service.deleted`
+- `appointment_category.created`
+- `appointment_category.updated`
+- `appointment_category.deleted`
+- `appointment_mode.created`
+- `appointment_mode.updated`
+- `appointment_mode.deleted`
+- `referral_facility.created`
+- `referral_facility.updated`
+- `referral_facility.deleted`
+- `insurance_company.created`
+- `insurance_company.updated`
+- `insurance_company.deleted`
+- `insurance_package.created`
+- `insurance_package.updated`
+- `insurance_package.deleted`
+- `staff_position.created`
+- `staff_position.updated`
+- `staff_position.deleted`
+- `unit.created`
+- `unit.updated`
+- `unit.deleted`
+- `lab_test_category.created`
+- `lab_test_category.updated`
+- `lab_test_category.deleted`
+- `specimen_type.created`
+- `specimen_type.updated`
+- `specimen_type.deleted`
+- `lab_result_type.created`
+- `lab_result_type.updated`
+- `lab_result_type.deleted`
+- `lab_test_catalog.created`
+- `lab_test_catalog.updated`
+- `lab_test_catalog.deleted`
+- `currency.created`
+- `currency.updated`
+- `currency.deleted`
+
+Remaining gaps after this step:
+
 - add audit permissions and export/review policy where needed
 - define retention and cleanup policy before production rollout
-- add carefully selected automatic model logging for low-volume administrative records
+- extend model-based logging carefully into nested configuration records such as lab result options, lab result parameters, exchange-rate setup, and similar records where CRUD is simple but the surrounding business meaning is richer
 
 ## Suggested Audit Review Schedule
 

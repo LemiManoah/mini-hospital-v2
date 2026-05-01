@@ -8,6 +8,7 @@ use App\Actions\CancelAppointment;
 use App\Actions\CheckInAppointment;
 use App\Actions\ConfirmAppointment;
 use App\Actions\CreateAppointment;
+use App\Actions\ListAuditTimeline;
 use App\Actions\MarkAppointmentNoShow;
 use App\Actions\RescheduleAppointment;
 use App\Actions\ResolveDateRange;
@@ -47,6 +48,7 @@ final readonly class AppointmentController implements HasMiddleware
     public function __construct(
         private ResolveDateRange $resolveDateRange,
         private ActiveBranchWorkspace $activeBranchWorkspace,
+        private ListAuditTimeline $listAuditTimeline,
     ) {}
 
     public static function middleware(): array
@@ -256,6 +258,14 @@ final readonly class AppointmentController implements HasMiddleware
 
         return Inertia::render('appointments/show', [
             'appointment' => $appointment,
+            'audit_activity' => $this->listAuditTimeline->handle(
+                subjects: [
+                    $appointment,
+                    $appointment->visit,
+                ],
+                tenantId: $appointment->tenant_id,
+                logNames: ['appointments', 'clinical'],
+            ),
             ...$this->formOptions($appointment),
             'statusOptions' => $this->statusOptions(),
             'visitTypes' => collect(VisitType::cases())

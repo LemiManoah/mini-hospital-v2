@@ -9,6 +9,7 @@ use App\Enums\LabRequestItemStatus;
 use App\Enums\LabSpecimenStatus;
 use App\Models\LabRequestItem;
 use App\Models\LabTestResultParameter;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -16,6 +17,7 @@ final readonly class StoreLabResultEntry
 {
     public function __construct(
         private SyncLabRequestProgress $syncLabRequestProgress,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(LabRequestItem $labRequestItem, StoreLabResultEntryDTO $payload, string $staffId): LabRequestItem
@@ -106,6 +108,29 @@ final readonly class StoreLabResultEntry
             ])->save();
 
             $this->syncLabRequestProgress->handle($labRequestItem->request()->firstOrFail());
+
+            $labRequest = $labRequestItem->request()->firstOrFail();
+
+            $this->recordAuditActivity->handle(
+                logName: 'laboratory',
+                event: 'lab_result.entered',
+                subject: $resultEntry,
+                description: 'Lab result entered.',
+                tenantId: $labRequest->tenant_id,
+                branchId: $labRequest->facility_branch_id,
+                staffId: $staffId,
+                newValues: [
+                    'lab_request_id' => $labRequest->id,
+                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_result_entry_id' => $resultEntry->id,
+                    'entered_at' => $resultEntry->entered_at?->toISOString(),
+                    'result_entered_at' => $labRequestItem->result_entered_at?->toISOString(),
+                ],
+                metadata: [
+                    'result_notes' => $payload->resultNotes,
+                    'causer_user_id' => Auth::id(),
+                ],
+            );
 
             return $labRequestItem->refresh();
         });

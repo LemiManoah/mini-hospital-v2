@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Enums\LabRequestItemStatus;
 use App\Enums\LabSpecimenStatus;
 use App\Models\LabRequestItem;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -14,6 +15,7 @@ final readonly class ReceiveLabRequestItem
 {
     public function __construct(
         private SyncLabRequestProgress $syncLabRequestProgress,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(LabRequestItem $labRequestItem, string $staffId): LabRequestItem
@@ -42,7 +44,28 @@ final readonly class ReceiveLabRequestItem
                 'status' => LabRequestItemStatus::IN_PROGRESS,
             ])->save();
 
-            $this->syncLabRequestProgress->handle($labRequestItem->request()->firstOrFail());
+            $labRequest = $labRequestItem->request()->firstOrFail();
+
+            $this->syncLabRequestProgress->handle($labRequest);
+
+            $this->recordAuditActivity->handle(
+                logName: 'laboratory',
+                event: 'lab_request_item.received',
+                subject: $labRequestItem,
+                description: 'Lab request item received.',
+                tenantId: $labRequest->tenant_id,
+                branchId: $labRequest->facility_branch_id,
+                staffId: $staffId,
+                newValues: [
+                    'lab_request_id' => $labRequest->id,
+                    'lab_request_item_id' => $labRequestItem->id,
+                    'received_at' => $labRequestItem->received_at?->toISOString(),
+                    'status' => $labRequestItem->status->value,
+                ],
+                metadata: [
+                    'causer_user_id' => Auth::id(),
+                ],
+            );
 
             return $labRequestItem->refresh();
         });

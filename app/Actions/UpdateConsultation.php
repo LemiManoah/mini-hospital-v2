@@ -7,15 +7,27 @@ namespace App\Actions;
 use App\Data\Clinical\UpdateConsultationDTO;
 use App\Enums\ConsultationType;
 use App\Models\Consultation;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 final readonly class UpdateConsultation
 {
     public function __construct(
         private SyncConsultationCharge $syncConsultationCharge,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(Consultation $consultation, UpdateConsultationDTO $data): Consultation
     {
+        $oldValues = [
+            'consultation_type' => $consultation->consultation_type?->value,
+            'chief_complaint' => $consultation->chief_complaint,
+            'assessment' => $consultation->assessment,
+            'plan' => $consultation->plan,
+            'primary_diagnosis' => $consultation->primary_diagnosis,
+            'primary_icd10_code' => $consultation->primary_icd10_code,
+        ];
+
         $consultation->update([
             'consultation_type' => $data->consultationType
                 ?? $consultation->consultation_type
@@ -36,6 +48,28 @@ final readonly class UpdateConsultation
 
         $this->syncConsultationCharge->handle($consultation->refresh());
 
-        return $consultation->refresh();
+        $consultation = $consultation->refresh();
+        $user = Auth::user();
+
+        $this->recordAuditActivity->handle(
+            logName: 'clinical',
+            event: 'consultation.updated',
+            subject: $consultation,
+            description: 'Consultation updated.',
+            tenantId: $consultation->tenant_id,
+            branchId: $consultation->facility_branch_id,
+            staffId: $user instanceof User ? $user->staffId() : null,
+            oldValues: $oldValues,
+            newValues: [
+                'consultation_type' => $consultation->consultation_type?->value,
+                'chief_complaint' => $consultation->chief_complaint,
+                'assessment' => $consultation->assessment,
+                'plan' => $consultation->plan,
+                'primary_diagnosis' => $consultation->primary_diagnosis,
+                'primary_icd10_code' => $consultation->primary_icd10_code,
+            ],
+        );
+
+        return $consultation;
     }
 }

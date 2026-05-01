@@ -517,6 +517,12 @@ describe('Visit workflow permissions', function (): void {
             'visit_id' => $visit->id,
             'nurse_id' => $nurseUser->staff_id,
         ]);
+        $this->assertDatabaseHas('activity_log', [
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+            'log_name' => 'clinical',
+            'event' => 'triage.recorded',
+        ]);
     });
 
     it('forbids and allows vital sign creation based on triage.update permission', function (): void {
@@ -556,6 +562,12 @@ describe('Visit workflow permissions', function (): void {
         $this->assertDatabaseHas('vital_signs', [
             'triage_id' => $visit->triage->id,
             'recorded_by' => $nurseUser->staff_id,
+        ]);
+        $this->assertDatabaseHas('activity_log', [
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+            'log_name' => 'clinical',
+            'event' => 'vital_sign.recorded',
         ]);
     });
 });
@@ -649,6 +661,12 @@ describe('Consultation workflow permissions', function (): void {
             'visit_id' => $visit->id,
             'doctor_id' => $doctorUser->staff_id,
         ]);
+        $this->assertDatabaseHas('activity_log', [
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+            'log_name' => 'clinical',
+            'event' => 'consultation.started',
+        ]);
     });
 
     it('forbids and allows consultation updates based on consultations.update permission', function (): void {
@@ -687,6 +705,12 @@ describe('Consultation workflow permissions', function (): void {
         $response->assertSessionHas('success', 'Consultation saved successfully.');
 
         expect($visit->consultation->fresh()->assessment)->toBe('Updated assessment');
+        $this->assertDatabaseHas('activity_log', [
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+            'log_name' => 'clinical',
+            'event' => 'consultation.updated',
+        ]);
     });
 
     it('forbids and allows lab request creation based on consultations.update permission', function (): void {
@@ -724,6 +748,12 @@ describe('Consultation workflow permissions', function (): void {
 
         $response->assertRedirect(route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'lab']));
         $response->assertSessionHas('success', 'Laboratory request created successfully.');
+        $this->assertDatabaseHas('activity_log', [
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+            'log_name' => 'laboratory',
+            'event' => 'lab_request.created',
+        ]);
     });
 
     it('forbids and allows prescription creation based on consultations.update permission', function (): void {
@@ -802,6 +832,12 @@ describe('Consultation workflow permissions', function (): void {
 
         $response->assertRedirect(route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'services']));
         $response->assertSessionHas('success', 'Facility service order created successfully.');
+        $this->assertDatabaseHas('activity_log', [
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+            'log_name' => 'clinical',
+            'event' => 'service_order.created',
+        ]);
     });
 
     it('forbids and allows pending facility service order removal based on consultations.update permission', function (): void {
@@ -923,5 +959,11 @@ describe('Appointment action permissions', function (): void {
         $response->assertSessionHas('success', 'Appointment confirmed successfully.');
 
         expect($appointment->fresh()->status->value)->toBe('confirmed');
+        $this->assertDatabaseHas('activity_log', [
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+            'log_name' => 'appointments',
+            'event' => 'appointment.confirmed',
+        ]);
     });
 });

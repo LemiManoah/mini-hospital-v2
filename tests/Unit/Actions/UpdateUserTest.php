@@ -4,14 +4,23 @@ declare(strict_types=1);
 
 use App\Actions\UpdateUser;
 use App\Data\User\UpdateUserDTO;
+use App\Models\Activity;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Notification;
+
+use function Pest\Laravel\actingAs;
 
 it('may update a user', function (): void {
     $user = User::factory()->create([
         'email' => 'old@email.com',
     ]);
+    $actor = User::factory()->create([
+        'tenant_id' => $user->tenant_id,
+    ]);
+
+    actingAs($actor);
 
     $action = resolve(UpdateUser::class);
 
@@ -20,7 +29,15 @@ it('may update a user', function (): void {
         roles: null,
     ));
 
-    expect($user->refresh()->email)->toBe('updated@email.com');
+    $activity = Activity::query()
+        ->where('event', 'access.user.updated')
+        ->where('subject_type', User::class)
+        ->where('subject_id', $user->id)
+        ->first();
+
+    expect($user->refresh()->email)->toBe('updated@email.com')
+        ->and($activity)->not->toBeNull()
+        ->and($activity?->causer_id)->toBe($actor->id);
 });
 
 it('resets email verification and sends notification when email changes', function (): void {
@@ -67,4 +84,38 @@ it('keeps email verification and does not send notification when email stays the
         ->and($user->email)->toBe('same@email.com');
 
     Notification::assertNotSentTo($user, VerifyEmail::class);
+});
+
+it('records role changes when updating a user roles', function (): void {
+    $roleOne = Role::query()->create([
+        'name' => 'Role One',
+        'guard_name' => 'web',
+    ]);
+    $roleTwo = Role::query()->create([
+        'name' => 'Role Two',
+        'guard_name' => 'web',
+    ]);
+    $user = User::factory()->create();
+    $user->assignRole($roleOne);
+
+    $actor = User::factory()->create([
+        'tenant_id' => $user->tenant_id,
+    ]);
+
+    actingAs($actor);
+
+    resolve(UpdateUser::class)->handle($user, new UpdateUserDTO(
+        email: $user->email,
+        roles: [$roleTwo->id],
+    ));
+
+    $activity = Activity::query()
+        ->where('event', 'access.user.roles_changed')
+        ->where('subject_type', User::class)
+        ->where('subject_id', $user->id)
+        ->first();
+
+    expect($activity)->not->toBeNull()
+        ->and($activity?->getProperty('old_values.roles'))->toBe(['Role One'])
+        ->and($activity?->getProperty('new_values.roles'))->toBe(['Role Two']);
 });

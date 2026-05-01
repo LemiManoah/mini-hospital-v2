@@ -31,7 +31,13 @@ Pre-authorisation is intentionally out of scope for now and should be revisited 
 
 ## Executive Answer
 
-Yes, the billing module should let each role do the following:
+As of May 1, 2026, the billing module is **not fully implemented**.
+
+It is partially implemented and already useful for OPD billing: the app has visit payer setup, visit billing headers, charge lines, package-aware charge pricing, branch payment methods, payment capture, receipt printing, daily revenue reporting, and a dedicated OPD finance payment desk.
+
+It is not yet a complete production hospital billing module because insurance claim submission/rejection handling, billing-officer insurer workflows, debtor management, write-off governance, inpatient deposits, controlled document sequencing, cashier reconciliation, and manager-grade receivables reporting are still missing or incomplete.
+
+A complete billing module should let each role do the following:
 
 - Patient: understand the bill, pay fully or partially, receive a receipt, and see what insurance covered.
 - Receptionist: set the payer correctly at visit start and surface old balances.
@@ -133,11 +139,17 @@ The current application already contains useful billing foundations. These shoul
 | `visit_billings` | Per-visit billing header with gross, discount, paid, balance, payer type, status | Keep |
 | `visit_charges` | Per-visit line items tied to source records through a morph relation | Keep |
 | `payments` | Patient-facing payment records with receipt number, payment method, refund flag | Keep |
+| `payment_methods` | Branch-scoped payment method master data used by OPD payment capture | Keep and strengthen |
+| `charge_masters` | Tariff catalog currently synced from billable facility services | Keep and expand |
 | `insurance_companies` | Payer master data | Keep |
 | `insurance_packages` | Insurer package master data | Keep |
 | `insurance_package_prices` | Package-based price overrides by billable item and date range | Keep |
 | `insurance_company_invoices` | Batched insurer invoice header | Keep |
 | `insurance_company_invoice_payments` | Payments received against insurer invoices | Keep |
+| `insured_visit_claims` | Visit-level insured claim lifecycle records generated from insured billing | Keep and expand |
+| `insurance_claim_allocations` | Claim-level insurer payment allocation detail | Keep and wire into remittance posting |
+| `pharmacy_pos_sales` and `pharmacy_pos_payments` | Walk-in pharmacy sale and payment records | Keep as a separate POS billing stream |
+| `stock_movements` | Operational inventory movement ledger for receipts, issues, dispensing, POS sales, and reversals | Keep as the inventory subledger |
 | `EnsureVisitBilling` | Creates billing header when a visit begins charging | Keep |
 | `UpsertVisitCharge` | Creates or updates visit charge lines from billable events | Keep |
 | `ResolveVisitChargeAmount` | Resolves insured package price or fallback cash price | Keep |
@@ -157,23 +169,28 @@ The current application already contains useful billing foundations. These shoul
 - Payments already reduce the balance through recalculation.
 - Payment activity is already being audited.
 - Cash collection has been moved out of the visit profile into a dedicated finance queue and payment desk.
+- Branch payment methods now exist and OPD payment capture validates `payment_method_id`.
+- Payment receipts can be printed as PDFs.
 - Consultation charges can now be created when a matching consultation tariff service is configured.
 - Prescription orders now create visit charges using drug tariff or cash price resolution.
+- Walk-in pharmacy POS sales can capture payments and post stock movements.
+- Goods receipts can post inventory batches and stock movements.
 
 ### What is still missing or weak in the current system
 
-- no dedicated visit-level insurance claim ledger separate from the billing header
-- no proper claim lifecycle tracking from open to invoiced to paid
-- no discount history table with approval and reversal workflow
+- visit-level insurance claim ledger now exists at the backend level, with invoice batching and remittance allocation actions, but full billing-officer UI is still pending
+- claim lifecycle tracking now starts with open and ready-for-invoice states, but downstream invoiced, submitted, disputed, rejected, and paid workflows still need UI and actions
+- discount history now exists at the backend level, but cashier and manager UI surfaces still need to be added
 - no write-off workflow
-- no payment-method master table tied to accounting control
+- payment methods exist, but they are not yet tied to cash tills, bank accounts, cashier shifts, or a general ledger
 - no inpatient deposit workflow
 - no debtor-management workflow beyond the raw balance
 - no receipt or invoice sequence strategy suitable for finance control
-- no remittance allocation model for partial insurer settlements
+- remittance allocation now exists at the backend level, but needs UI, remittance import, and exception handling for rejected or disputed claim lines
 - no production-grade reporting model for collections, claims aging, discounts, write-offs, and debtors
 - no explicit billing document specification for patient invoices, receipts, insurer invoices, and credit/refund documents
-- consultation charging currently depends on tariff setup by reserved service codes, which is workable now but still needs a proper admin mapping model
+- no general-ledger posting for revenue, receivables, cash, bank, inventory, cost of goods sold, supplier liabilities, discounts, write-offs, or refunds
+- consultation charging is now tariff-driven, but it still needs fuller charge-catalog and revenue-account mapping
 - prescription billing captures ordered drug value, but dispense-time billing, substitutions, and stock-linked pricing controls still need a fuller pharmacy-billing policy
 
 So the current system is a strong base, but it is still a foundation rather than a finished hospital billing module.
@@ -354,21 +371,17 @@ Every charge must store:
 - `visit_billings`
 - `visit_charges`
 - `payments`
+- `payment_methods`
+- `charge_masters`
 - `insurance_companies`
 - `insurance_packages`
 - `insurance_package_prices`
 - `insurance_company_invoices`
 - `insurance_company_invoice_payments`
+- `pharmacy_pos_sales`
+- `pharmacy_pos_payments`
 
 ### Add as required production tables
-
-#### `charge_masters`
-
-Purpose:
-Standard charge catalog for billable items, charge codes, department grouping, and base pricing.
-
-Why:
-The system currently stores charge descriptions and amounts on visit charges, but it needs a master tariff catalog for consistency, pricing governance, and reporting.
 
 #### `insured_visit_claims`
 
@@ -403,6 +416,18 @@ Allocation rows linking insurer payments or remittances to individual visit clai
 Why:
 When an insurer pays one bulk invoice partially, finance still needs to know how much of that payment settled each visit claim.
 
+Implemented baseline:
+
+- `tenant_id`
+- `facility_branch_id`
+- `insured_visit_claim_id`
+- `insurance_company_invoice_id`
+- `insurance_company_invoice_payment_id`
+- `allocation_date`
+- `allocated_amount`
+- `notes`
+- audit timestamps and user stamps
+
 #### `billing_discounts`
 
 Purpose:
@@ -418,14 +443,6 @@ Formal record of balances removed from receivables as bad debt, charity, or admi
 
 Why:
 Write-off is not the same as discount and must be reported separately.
-
-#### `payment_methods`
-
-Purpose:
-Managed master table for cash, card, mobile money, transfer, cheque, and future methods.
-
-Why:
-The current free-text `payments.payment_method` is too weak for branch control and reconciliation.
 
 #### `billing_deposits`
 
@@ -473,11 +490,30 @@ Add or strengthen:
 
 Add or strengthen:
 
-- `payment_method_id`
+- keep `payment_method_id` required for production payment capture
 - `received_by`
 - `cashier_shift_id` if shift reconciliation is planned
 - `currency_id`, `foreign_amount`, `exchange_rate` if foreign-currency collection matters
 - stronger refund metadata
+
+### `payment_methods`
+
+Add or strengthen:
+
+- cash or bank control account mapping once the accounting ledger exists
+- branch till or cashier-shift rules
+- external reference validation rules by method type
+- reconciliation grouping for cash, card, mobile money, transfer, cheque, and other methods
+
+### `charge_masters`
+
+Add or strengthen:
+
+- department and revenue-category mapping
+- full support for drugs, lab tests, procedures, imaging, bed charges, and miscellaneous charges
+- date-effective price versions for all billable item types
+- approval or audit trail for tariff changes
+- accounting revenue account mapping once the accounting ledger exists
 
 ### `insurance_company_invoices`
 
@@ -497,6 +533,13 @@ Add or strengthen:
 - reference number
 - remittance number
 - allocation status
+
+Implemented baseline:
+
+- `RecordInsuranceCompanyInvoicePayment` records insurer invoice payments.
+- Payments require explicit claim allocations.
+- Claim allocations update claim `paid_amount` and claim status.
+- Invoice `paid_amount` and status are recalculated from recorded payments.
 
 ---
 
@@ -656,9 +699,9 @@ At minimum, separate permissions should exist for:
 
 ## Recommended Implementation Order
 
-1. Keep the current visit-billing core and stabilize it as the single visit billing anchor.
-2. Add `charge_masters` and link charges to a governed tariff source.
-3. Add `payment_methods` and move away from free-text payment methods.
+1. Keep the current visit-billing core and stabilize it as the single visit billing anchor. Done.
+2. Add `charge_masters` and link charges to a governed tariff source. Partially done.
+3. Add `payment_methods` and move away from free-text payment methods. Done for OPD payments.
 4. Add `billing_discounts` and approval workflow.
 5. Add `insured_visit_claims` and claim lifecycle tracking.
 6. Add insurer payment allocation detail with `insurance_claim_allocations`.
@@ -666,6 +709,7 @@ At minimum, separate permissions should exist for:
 8. Add `billing_deposits` for inpatient use.
 9. Add controlled document numbering.
 10. Expand reporting and reconciliation views.
+11. Connect billing events to the future accounting ledger described in `accounting.md`.
 
 Pre-authorisation should come after the above, not before.
 
@@ -686,12 +730,17 @@ Pre-authorisation should come after the above, not before.
 | Patient payment collection | Partial | Payment capture, receipts, and partial settlement exist; refund and write-off governance are not complete. |
 | Consultation charging | Done | Consultation records now carry a `consultation_type`, and branch admins manage explicit consultation tariff mappings by visit type and consultation type. |
 | Prescription charging | Partial | Prescription creation now raises visit charges from drug pricing, but downstream dispense reconciliation and substitution adjustments are still pending. |
-| Insurance claim lifecycle | Not done | Invoice header tables exist, but visit-level claim ledger and statuses are still missing. |
-| Discount governance | Not done | No dedicated approval-backed discount history workflow yet. |
+| Pharmacy POS billing | Partial | Walk-in sales, payments, receipts, refunds, voids, and stock movements exist, but POS payments are not yet tied to the branch payment-method master or accounting ledger. |
+| Procurement and inventory cost capture | Partial | Purchase orders, goods receipts, batches, and stock movements exist, but supplier invoices and accounts payable accounting are not implemented. |
+| Insurance claim lifecycle | Partial | `insured_visit_claims` now stores one visit-level claim per insured billing, with claim reference, payer, package, claim amounts, and lifecycle status. Ready claims can now be batched into `insurance_company_invoices`, and insurer payments can be allocated to claims; submission, rejection, dispute, and UI workflows remain pending. |
+| Insurer invoice batching | Partial | `GenerateInsuranceCompanyInvoice` creates insurer invoices from ready claims, freezes those claims as invoiced, and audits the batch. A finance UI and submission/export workflow are still pending. |
+| Insurer remittance allocation | Partial | `RecordInsuranceCompanyInvoicePayment` records insurer payments, requires claim-level allocations, updates claim paid status, updates invoice paid status, and audits the remittance. A finance UI, remittance import, and exception handling are still pending. |
+| Discount governance | Partial | `billing_discounts` now records requested, approved, and reversed discounts, and billing totals recalculate from approved discount records; finance UI and reports are still missing. |
 | Debtor management and write-offs | Not done | Balance exists, but the operational debt workspace and write-off controls are still missing. |
 | Deposit workflows | Not done | No inpatient deposit model yet. |
 | Document sequencing | Not done | Receipt numbering exists, but controlled finance document sequencing is not complete. |
 | Reporting and reconciliation | Partial | Finance queue and some revenue reporting exist; production-grade finance reporting is still missing. |
+| General accounting ledger | Not done | There is no chart of accounts, journal entry table, accounting period close, or automatic double-entry posting yet. |
 
 - [x] Milestone 1: Keep the current visit-billing core and stabilize it as the single visit billing anchor.
   Current visit billing, charge syncing, recalculation, and payment recording remain the anchor pattern for the module.
@@ -699,9 +748,12 @@ Pre-authorisation should come after the above, not before.
   `charge_masters` now exists, billable facility services now sync to charge master records, and facility-service visit charges now store `charge_master_id`.
 - [x] Milestone 3: Add `payment_methods` and move away from free-text payment methods.
   `payment_methods` now exists, branch defaults are auto-provisioned, visit payment capture now validates `payment_method_id`, and payments now store the FK while still preserving the string snapshot.
-- [ ] Milestone 4: Add `billing_discounts` and approval workflow.
-- [ ] Milestone 5: Add `insured_visit_claims` and claim lifecycle tracking.
-- [ ] Milestone 6: Add insurer payment allocation detail with `insurance_claim_allocations`.
+- [x] Milestone 4: Add `billing_discounts` and approval workflow.
+  `billing_discounts` now exists with pending, approved, and reversed states. Billing recalculation derives `visit_billings.discount_amount` from approved discount records, and actions now request, approve, reverse, and audit discount decisions.
+- [x] Milestone 5: Add `insured_visit_claims` and claim lifecycle tracking.
+  `insured_visit_claims` now exists and is automatically synced from insured visit billing while the claim is open or ready for invoice. Claims are frozen from automatic amount rewrites once they move into later lifecycle states such as invoiced or submitted.
+- [x] Milestone 6: Add insurer payment allocation detail with `insurance_claim_allocations`.
+  `insurance_claim_allocations` now exists, ready insured claims can be batched into `insurance_company_invoices` through `GenerateInsuranceCompanyInvoice`, and insurer remittances can be recorded through `RecordInsuranceCompanyInvoicePayment` with explicit claim-level allocation rows and paid-status updates.
 - [ ] Milestone 7: Add debtor management views and write-off workflow.
 - [ ] Milestone 8: Add `billing_deposits` for inpatient use.
 - [ ] Milestone 9: Add controlled document numbering.

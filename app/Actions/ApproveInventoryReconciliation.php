@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Auth;
 
 final readonly class ApproveInventoryReconciliation
 {
+    public function __construct(
+        private RecordAuditActivity $recordAuditActivity,
+    ) {}
+
     public function handle(Reconciliation $reconciliation, ?string $approvalNotes = null): Reconciliation
     {
         $updatedRows = Reconciliation::query()
@@ -27,8 +31,24 @@ final readonly class ApproveInventoryReconciliation
 
         abort_unless($updatedRows === 1, 422, 'Only reviewed reconciliations can be approved.');
 
-        return Reconciliation::query()
+        $reconciliation = Reconciliation::query()
             ->with('items.inventoryItem', 'items.inventoryBatch', 'inventoryLocation')
             ->findOrFail($reconciliation->id);
+
+        $this->recordAuditActivity->handle(
+            logName: 'inventory',
+            event: 'inventory.reconciliation.approved',
+            subject: $reconciliation,
+            description: 'Stock reconciliation approved.',
+            tenantId: $reconciliation->tenant_id,
+            branchId: $reconciliation->branch_id,
+            reason: $approvalNotes,
+            newValues: [
+                'reconciliation_id' => $reconciliation->id,
+                'approved_at' => $reconciliation->approved_at?->toISOString(),
+            ],
+        );
+
+        return $reconciliation;
     }
 }

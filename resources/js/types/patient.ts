@@ -1,3 +1,4 @@
+import type { AuditTimelineEntry } from './audit';
 import { InsuranceCompany } from './insurance-company';
 import { InsurancePackage } from './insurance-package';
 
@@ -457,6 +458,7 @@ export interface PatientShowPageProps extends VisitFormOptions {
     allergens: { id: string; name: string; type: string }[];
     severityOptions: { value: string; label: string }[];
     reactionOptions: { value: string; label: string }[];
+    audit_activity: AuditTimelineEntry[];
 }
 
 export interface ActiveVisitsPageProps {
@@ -477,6 +479,7 @@ export interface VisitShowPageProps {
     visit: PatientVisit;
     activeTab: string;
     activeClinicalTab: string;
+    audit_activity: AuditTimelineEntry[];
     completionCheck?: VisitCompletionCheck;
     triageGrades: { value: string; label: string }[];
     attendanceTypes: { value: string; label: string }[];

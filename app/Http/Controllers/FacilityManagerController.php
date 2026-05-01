@@ -67,6 +67,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'store',
                 'export',
                 'audit',
+                'auditLog',
                 'show',
                 'branches',
                 'users',
@@ -361,6 +362,109 @@ final readonly class FacilityManagerController implements HasMiddleware
         return Inertia::render('facility-manager/audit', [
             'tenant' => $this->tenantSummaryPayload($tenant),
             'health' => $this->facilityHealthPayload($tenant),
+        ]);
+    }
+
+    public function auditLog(Request $request, Tenant $tenant): Response
+    {
+        Gate::authorize('view', $tenant);
+
+        $filters = [
+            'search' => $request->string('search')->value() ?: null,
+            'log_name' => $request->string('log_name')->value() ?: null,
+            'event' => $request->string('event')->value() ?: null,
+        ];
+
+        $activityQuery = Activity::query()
+            ->where('tenant_id', $tenant->id)
+            ->when(
+                $filters['search'] !== null,
+                static function (Builder $query) use ($filters): void {
+                    $search = $filters['search'];
+
+                    $query->where(function (Builder $inner) use ($search): void {
+                        $inner
+                            ->where('description', 'like', sprintf('%%%s%%', $search))
+                            ->orWhere('event', 'like', sprintf('%%%s%%', $search))
+                            ->orWhere('subject_type', 'like', sprintf('%%%s%%', $search))
+                            ->orWhere('properties', 'like', sprintf('%%%s%%', $search));
+                    });
+                },
+            )
+            ->when(
+                $filters['log_name'] !== null,
+                static fn (Builder $query): Builder => $query->where('log_name', $filters['log_name']),
+            )
+            ->when(
+                $filters['event'] !== null,
+                static fn (Builder $query): Builder => $query->where('event', $filters['event']),
+            )
+            ->latest('created_at');
+
+        $auditLogs = (clone $activityQuery)
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (Activity $activity): array => $this->auditLogPayload($activity));
+
+        return Inertia::render('facility-manager/audit-log', [
+            'tenant' => $this->tenantSummaryPayload($tenant),
+            'filters' => $filters,
+            'metrics' => [
+                [
+                    'label' => 'Total Logs',
+                    'value' => Activity::query()->where('tenant_id', $tenant->id)->count(),
+                    'hint' => 'All captured audit events for this facility.',
+                ],
+                [
+                    'label' => 'Access',
+                    'value' => Activity::query()->where('tenant_id', $tenant->id)->where('log_name', 'access')->count(),
+                    'hint' => 'User, role, login, and security audit events.',
+                ],
+                [
+                    'label' => 'Clinical',
+                    'value' => Activity::query()->where('tenant_id', $tenant->id)->where('log_name', 'clinical')->count(),
+                    'hint' => 'Patient, visit, triage, and clinical workflow events.',
+                ],
+                [
+                    'label' => 'Admin',
+                    'value' => Activity::query()->where('tenant_id', $tenant->id)->where('log_name', 'administration')->count(),
+                    'hint' => 'Master data and operational configuration changes.',
+                ],
+                [
+                    'label' => 'Billing',
+                    'value' => Activity::query()->where('tenant_id', $tenant->id)->where('log_name', 'billing')->count(),
+                    'hint' => 'Payments and related finance audit events.',
+                ],
+                [
+                    'label' => 'Pharmacy',
+                    'value' => Activity::query()->where('tenant_id', $tenant->id)->where('log_name', 'pharmacy')->count(),
+                    'hint' => 'Prescription and POS audit events.',
+                ],
+                [
+                    'label' => 'Inventory',
+                    'value' => Activity::query()->where('tenant_id', $tenant->id)->where('log_name', 'inventory')->count(),
+                    'hint' => 'Stock, requisition, and goods receipt audit events.',
+                ],
+            ],
+            'audit_logs' => $auditLogs,
+            'log_name_options' => Activity::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereNotNull('log_name')
+                ->distinct()
+                ->orderBy('log_name')
+                ->pluck('log_name')
+                ->filter(static fn (mixed $value): bool => is_string($value) && $value !== '')
+                ->values()
+                ->all(),
+            'event_options' => Activity::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereNotNull('event')
+                ->distinct()
+                ->orderBy('event')
+                ->pluck('event')
+                ->filter(static fn (mixed $value): bool => is_string($value) && $value !== '')
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -1152,6 +1256,88 @@ final readonly class FacilityManagerController implements HasMiddleware
             'support.impersonation.stopped' => 'Impersonation stopped',
             default => $activity->description,
         };
+    }
+
+    /**
+     * @return array{
+     *   id: string,
+     *   log_name: string|null,
+     *   event: string|null,
+     *   title: string,
+     *   actor: string|null,
+     *   subject: string|null,
+     *   reason: string|null,
+     *   created_at: string|null
+     * }
+     */
+    private function auditLogPayload(Activity $activity): array
+    {
+        return [
+            'id' => $this->modelKeyString($activity) ?? '',
+            'log_name' => $activity->log_name,
+            'event' => $activity->event,
+            'title' => $activity->description !== ''
+                ? $activity->description
+                : 'Audit event',
+            'actor' => $this->activityActorLabel($activity),
+            'subject' => $this->activitySubjectLabel($activity),
+            'reason' => $this->activityPropertyString($activity, 'reason')
+                ?? $this->activityPropertyString($activity, 'metadata.notes'),
+            'created_at' => $activity->created_at?->toISOString(),
+        ];
+    }
+
+    private function activityActorLabel(Activity $activity): ?string
+    {
+        $causer = $activity->causer;
+
+        if ($causer instanceof User) {
+            $causer->loadMissing('staff');
+
+            if ($causer->staff instanceof Staff) {
+                return mb_trim(sprintf('%s %s', $causer->staff->first_name, $causer->staff->last_name));
+            }
+
+            return $causer->email;
+        }
+
+        if ($activity->staff instanceof Staff) {
+            return mb_trim(sprintf('%s %s', $activity->staff->first_name, $activity->staff->last_name));
+        }
+
+        return null;
+    }
+
+    private function activitySubjectLabel(Activity $activity): ?string
+    {
+        if ($activity->subject instanceof TenantSupportNote) {
+            return $activity->subject->title;
+        }
+
+        if ($activity->subject instanceof TenantSubscription) {
+            return $this->subscriptionStatusLabel($activity->subject);
+        }
+
+        if ($activity->subject instanceof User) {
+            return $activity->subject->email;
+        }
+
+        if ($activity->subject instanceof Model) {
+            return sprintf('%s %s', class_basename($activity->subject), $this->modelKeyString($activity->subject));
+        }
+
+        if (is_string($activity->subject_type) && is_int($activity->subject_id)) {
+            return sprintf('%s %s', class_basename($activity->subject_type), $activity->subject_id);
+        }
+
+        return null;
+    }
+
+    private function modelKeyString(Model $model): ?string
+    {
+        $key = $model->getKey();
+
+        return is_string($key) || is_int($key) ? (string) $key : null;
     }
 
     private function subscriptionStatusValue(TenantSubscription $subscription): string

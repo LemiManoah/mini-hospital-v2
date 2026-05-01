@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\UpdateConsultation;
 use App\Data\Clinical\UpdateConsultationDTO;
 use App\Enums\ConsultationType;
+use App\Models\Activity;
 use App\Models\Consultation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -82,4 +83,11 @@ it('updates a consultation using a typed dto', function (): void {
         ->and($updated->plan)->toBe('Updated plan')
         ->and($updated->primary_diagnosis)->toBe('Updated diagnosis')
         ->and($updated->primary_icd10_code)->toBe('A01');
+
+    expect(Activity::query()
+        ->where('log_name', 'clinical')
+        ->where('event', 'consultation.updated')
+        ->where('subject_type', $consultation->getMorphClass())
+        ->where('subject_id', $consultation->id)
+        ->exists())->toBeTrue();
 });

@@ -11,10 +11,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Concerns\HasActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 final class LabTestCatalog extends Model
 {
     use BelongsToTenant;
+    use HasActivity;
     use HasUuids;
 
     protected $casts = [
@@ -77,6 +81,35 @@ final class LabTestCatalog extends Model
         return $this->hasMany(LabTestResultParameter::class, 'lab_test_catalog_id')
             ->orderBy('sort_order')
             ->orderBy('label');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('administration')
+            ->logOnly([
+                'test_code',
+                'test_name',
+                'lab_test_category_id',
+                'result_type_id',
+                'description',
+                'base_price',
+                'is_active',
+            ])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(static fn (string $eventName): string => 'lab_test_catalog.'.$eventName);
+    }
+
+    public function beforeActivityLogged(Activity $activity, string $event): void
+    {
+        $user = Auth::user();
+
+        $activity->forceFill([
+            'tenant_id' => $this->tenant_id,
+            'branch_id' => null,
+            'staff_id' => $user instanceof User ? $user->staffId() : null,
+        ]);
     }
 
     /** @return Attribute<string|null, never> */

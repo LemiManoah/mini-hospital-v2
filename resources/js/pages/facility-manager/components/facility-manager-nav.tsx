@@ -5,6 +5,7 @@ import { Link } from '@inertiajs/react';
 type FacilityManagerTab =
     | 'overview'
     | 'audit'
+    | 'audit-log'
     | 'branches'
     | 'users'
     | 'subscriptions'
@@ -30,6 +31,12 @@ const tabs: Array<{
         key: 'audit',
         label: 'Audit',
         href: (tenantId) => `/facility-manager/facilities/${tenantId}/audit`,
+    },
+    {
+        key: 'audit-log',
+        label: 'Audit Log',
+        href: (tenantId) =>
+            `/facility-manager/facilities/${tenantId}/audit-log`,
     },
     {
         key: 'branches',

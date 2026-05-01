@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Concerns\HasActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * @property-read string $id
@@ -24,6 +27,8 @@ use Illuminate\Support\Carbon;
  */
 final class Currency extends Model
 {
+    use HasActivity;
+
     /** @use HasFactory<CurrencyFactory> */
     use HasFactory;
 
@@ -59,5 +64,26 @@ final class Currency extends Model
     public function exchangeRatesTo(): HasMany
     {
         return $this->hasMany(CurrencyExchangeRate::class, 'to_currency_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('administration')
+            ->logOnly(['code', 'name', 'symbol', 'decimal_places', 'symbol_position', 'modifiable'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(static fn (string $eventName): string => 'currency.'.$eventName);
+    }
+
+    public function beforeActivityLogged(Activity $activity, string $event): void
+    {
+        $user = Auth::user();
+
+        $activity->forceFill([
+            'tenant_id' => null,
+            'branch_id' => null,
+            'staff_id' => $user instanceof User ? $user->staffId() : null,
+        ]);
     }
 }

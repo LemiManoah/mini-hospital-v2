@@ -11,10 +11,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Concerns\HasActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 final class InsurancePackage extends Model
 {
     use BelongsToTenant;
+    use HasActivity;
     use HasUuids;
     use SoftDeletes;
 
@@ -22,6 +26,8 @@ final class InsurancePackage extends Model
         'tenant_id' => 'string',
         'insurance_company_id' => 'string',
         'status' => GeneralStatus::class,
+        'created_by' => 'string',
+        'updated_by' => 'string',
     ];
 
     /**
@@ -46,5 +52,34 @@ final class InsurancePackage extends Model
     public function prices(): HasMany
     {
         return $this->hasMany(InsurancePackagePrice::class);
+    }
+
+    /**
+     * @return HasMany<InsuredVisitClaim, $this>
+     */
+    public function claims(): HasMany
+    {
+        return $this->hasMany(InsuredVisitClaim::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('administration')
+            ->logOnly(['insurance_company_id', 'name', 'status'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(static fn (string $eventName): string => 'insurance_package.'.$eventName);
+    }
+
+    public function beforeActivityLogged(Activity $activity, string $event): void
+    {
+        $user = Auth::user();
+
+        $activity->forceFill([
+            'tenant_id' => $this->tenant_id,
+            'branch_id' => null,
+            'staff_id' => $user instanceof User ? $user->staffId() : null,
+        ]);
     }
 }

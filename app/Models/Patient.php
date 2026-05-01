@@ -78,6 +78,14 @@ final class Patient extends Model
         return $this->hasMany(PatientVisit::class);
     }
 
+    /**
+     * @return HasMany<Appointment, $this>
+     */
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
     // scopes
     public function fullname(): string
     {

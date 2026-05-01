@@ -1,3 +1,4 @@
+import { AuditTimelineCard } from '@/components/audit-timeline-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
@@ -14,6 +15,7 @@ import { formatDateTime } from './components/visit-show-utils';
 export default function VisitShow({
     visit,
     activeTab,
+    audit_activity,
     labTestOptions,
     drugOptions,
     labPriorities,
@@ -82,6 +84,11 @@ export default function VisitShow({
                             timeline={timeline}
                             completionCheck={completionCheck}
                             canUpdateVisit={canUpdateVisit}
+                        />
+                        <AuditTimelineCard
+                            title="Visit Audit Log"
+                            entries={audit_activity}
+                            emptyMessage="No audit activity recorded for this visit yet."
                         />
                     </TabsContent>
 

@@ -11,6 +11,7 @@ use App\Enums\VisitType;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\User;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\BranchContext;
@@ -23,6 +24,7 @@ final readonly class CheckInAppointment
 {
     public function __construct(
         private BranchScopedNumberGenerator $numberGenerator,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     /**
@@ -106,6 +108,42 @@ final readonly class CheckInAppointment
                 'checked_in_at' => now(),
                 'updated_by' => $userId,
             ]);
+
+            $user = Auth::user();
+            $staffId = $user instanceof User ? $user->staffId() : null;
+
+            $this->recordAuditActivity->handle(
+                logName: 'appointments',
+                event: 'appointment.checked_in',
+                subject: $appointment->refresh(),
+                description: 'Appointment checked in.',
+                tenantId: $appointment->tenant_id,
+                branchId: $appointment->facility_branch_id,
+                staffId: $staffId,
+                newValues: [
+                    'status' => AppointmentStatus::CHECKED_IN->value,
+                    'checked_in_at' => $appointment->checked_in_at?->toISOString(),
+                    'visit_id' => $visit->id,
+                    'visit_number' => $visit->visit_number,
+                ],
+            );
+
+            $this->recordAuditActivity->handle(
+                logName: 'clinical',
+                event: 'visit.started',
+                subject: $visit,
+                description: 'Patient visit started from appointment check-in.',
+                tenantId: $visit->tenant_id,
+                branchId: $visit->facility_branch_id,
+                staffId: $staffId,
+                newValues: [
+                    'visit_id' => $visit->id,
+                    'visit_number' => $visit->visit_number,
+                    'appointment_id' => $appointment->id,
+                    'status' => VisitStatus::REGISTERED->value,
+                    'registered_at' => $visit->registered_at?->toISOString(),
+                ],
+            );
 
             return $visit;
         });

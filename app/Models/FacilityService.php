@@ -10,10 +10,14 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Concerns\HasActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 final class FacilityService extends Model
 {
     use BelongsToTenant;
+    use HasActivity;
     use HasUuids;
 
     protected $casts = [
@@ -42,5 +46,26 @@ final class FacilityService extends Model
     public function chargeMaster(): BelongsTo
     {
         return $this->belongsTo(ChargeMaster::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('administration')
+            ->logOnly(['service_code', 'name', 'category', 'is_billable', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(static fn (string $eventName): string => 'facility_service.'.$eventName);
+    }
+
+    public function beforeActivityLogged(Activity $activity, string $event): void
+    {
+        $user = Auth::user();
+
+        $activity->forceFill([
+            'tenant_id' => $this->tenant_id,
+            'branch_id' => null,
+            'staff_id' => $user instanceof User ? $user->staffId() : null,
+        ]);
     }
 }

@@ -9,11 +9,14 @@ use App\Enums\VisitStatus;
 use App\Models\Consultation;
 use App\Models\ImagingRequest;
 use App\Models\PatientVisit;
+use App\Notifications\ImagingRequestCreatedNotification;
 
 final readonly class CreateImagingRequest
 {
     public function __construct(
         private TransitionPatientVisitStatus $transitionStatus,
+        private RecordAuditActivity $recordAuditActivity,
+        private NotifyUsersWithPermission $notifyUsersWithPermission,
     ) {}
 
     public function handle(Consultation|PatientVisit $context, CreateImagingRequestDTO $data, string $staffId): ImagingRequest
@@ -38,6 +41,31 @@ final readonly class CreateImagingRequest
 
         if ($visit->status === VisitStatus::REGISTERED) {
             $this->transitionStatus->handle($visit, VisitStatus::IN_PROGRESS);
+        }
+
+        $this->recordAuditActivity->handle(
+            logName: 'clinical',
+            event: 'imaging_request.created',
+            subject: $request,
+            description: 'Imaging request created.',
+            tenantId: $visit->tenant_id,
+            branchId: $visit->facility_branch_id,
+            staffId: $staffId,
+            newValues: [
+                'visit_id' => $request->visit_id,
+                'consultation_id' => $request->consultation_id,
+                'modality' => $request->modality->value,
+                'body_part' => $request->body_part,
+                'priority' => $request->priority->value,
+            ],
+        );
+
+        if ($visit->tenant_id !== null) {
+            $this->notifyUsersWithPermission->handle(
+                $visit->tenant_id,
+                ['lab_requests.view', 'lab_requests.update'],
+                new ImagingRequestCreatedNotification($request),
+            );
         }
 
         return $request;

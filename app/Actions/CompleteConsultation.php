@@ -7,11 +7,14 @@ namespace App\Actions;
 use App\Data\Clinical\CompleteConsultationDTO;
 use App\Enums\ConsultationType;
 use App\Models\Consultation;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 final readonly class CompleteConsultation
 {
     public function __construct(
         private SyncConsultationCharge $syncConsultationCharge,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(Consultation $consultation, CompleteConsultationDTO $data): Consultation
@@ -44,6 +47,26 @@ final readonly class CompleteConsultation
 
         $this->syncConsultationCharge->handle($consultation->refresh());
 
-        return $consultation->refresh();
+        $consultation = $consultation->refresh();
+        $user = Auth::user();
+
+        $this->recordAuditActivity->handle(
+            logName: 'clinical',
+            event: 'consultation.completed',
+            subject: $consultation,
+            description: 'Consultation completed.',
+            tenantId: $consultation->tenant_id,
+            branchId: $consultation->facility_branch_id,
+            staffId: $user instanceof User ? $user->staffId() : null,
+            newValues: [
+                'consultation_type' => $consultation->consultation_type?->value,
+                'primary_diagnosis' => $consultation->primary_diagnosis,
+                'outcome' => $consultation->outcome?->value,
+                'is_referred' => $consultation->is_referred,
+                'completed_at' => $consultation->completed_at?->toISOString(),
+            ],
+        );
+
+        return $consultation;
     }
 }

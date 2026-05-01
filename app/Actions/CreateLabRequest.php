@@ -11,6 +11,7 @@ use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
+use App\Notifications\LabRequestCreatedNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,8 @@ final readonly class CreateLabRequest
     public function __construct(
         private SyncLabRequestCharge $syncLabRequestCharge,
         private TransitionPatientVisitStatus $transitionStatus,
+        private RecordAuditActivity $recordAuditActivity,
+        private NotifyUsersWithPermission $notifyUsersWithPermission,
     ) {}
 
     public function handle(Consultation|PatientVisit $context, CreateLabRequestDTO $data, string $staffId): LabRequest
@@ -35,7 +38,7 @@ final readonly class CreateLabRequest
 
         $this->ensureNoPendingDuplicates($visit, $data->testIds);
 
-        return DB::transaction(function () use ($visit, $consultation, $data, $staffId, $tests): LabRequest {
+        $request = DB::transaction(function () use ($visit, $consultation, $data, $staffId, $tests): LabRequest {
             $request = LabRequest::query()->create([
                 'tenant_id' => $visit->tenant_id,
                 'facility_branch_id' => $visit->facility_branch_id,
@@ -72,8 +75,35 @@ final readonly class CreateLabRequest
             $this->syncLabRequestCharge->handle($request);
             $this->ensureVisitInProgress($visit);
 
+            $this->recordAuditActivity->handle(
+                logName: 'laboratory',
+                event: 'lab_request.created',
+                subject: $request,
+                description: 'Laboratory request created.',
+                tenantId: $request->tenant_id,
+                branchId: $request->facility_branch_id,
+                staffId: $staffId,
+                newValues: [
+                    'visit_id' => $request->visit_id,
+                    'consultation_id' => $request->consultation_id,
+                    'test_ids' => $request->items->pluck('test_id')->all(),
+                    'priority' => $request->priority?->value,
+                    'is_stat' => $request->is_stat,
+                ],
+            );
+
             return $request;
         });
+
+        if ($visit->tenant_id !== null) {
+            $this->notifyUsersWithPermission->handle(
+                $visit->tenant_id,
+                ['lab_requests.view', 'lab_requests.update'],
+                new LabRequestCreatedNotification($request),
+            );
+        }
+
+        return $request;
     }
 
     /**

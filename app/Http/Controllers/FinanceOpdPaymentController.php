@@ -168,6 +168,9 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
             'billing.payments' => static fn (HasMany $query): HasMany => $query
                 ->select('id', 'visit_billing_id', 'patient_visit_id', 'payment_method_id', 'receipt_number', 'payment_date', 'amount', 'payment_method', 'reference_number', 'is_refund', 'notes')
                 ->latest('payment_date'),
+            'billing.discounts' => static fn (HasMany $query): HasMany => $query
+                ->select('id', 'visit_billing_id', 'patient_visit_id', 'amount', 'reason', 'status', 'notes', 'requested_by', 'requested_at', 'approved_by', 'approved_at', 'reversed_by', 'reversed_at', 'reversal_reason')
+                ->latest(),
             'charges' => static fn (HasMany $query): HasMany => $query
                 ->select('id', 'visit_billing_id', 'patient_visit_id', 'source_type', 'source_id', 'charge_master_id', 'charge_code', 'description', 'quantity', 'unit_price', 'line_total', 'status', 'charged_at')
                 ->latest('charged_at'),
@@ -187,6 +190,7 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
                 subjects: [
                     $visit->billing,
                     ...($visit->billing?->payments?->all() ?? []),
+                    ...($visit->billing?->discounts?->all() ?? []),
                 ],
                 tenantId: $tenantId,
                 logNames: ['billing'],

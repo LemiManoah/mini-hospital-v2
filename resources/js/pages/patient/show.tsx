@@ -1,5 +1,6 @@
 import { AllergenModal } from '@/components/allergen-modal';
 import { AllergyAlert } from '@/components/allergy-alert';
+import { AuditTimelineCard } from '@/components/audit-timeline-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import VisitStartDialog from '@/components/visit-start-dialog';
@@ -65,6 +66,7 @@ export default function PatientShow({
     allergens,
     severityOptions,
     reactionOptions,
+    audit_activity,
 }: PatientShowPageProps) {
     const { hasPermission } = usePermissions();
     const [allergenModalOpen, setAllergenModalOpen] = useState(false);
@@ -334,6 +336,12 @@ export default function PatientShow({
                                 )}
                             </CardContent>
                         </Card>
+
+                        <AuditTimelineCard
+                            title="Patient Timeline"
+                            entries={audit_activity}
+                            emptyMessage="No patient audit activity recorded yet."
+                        />
                     </div>
 
                     <div className="space-y-6">

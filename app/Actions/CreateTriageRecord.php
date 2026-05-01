@@ -8,12 +8,14 @@ use App\Data\Clinical\CreateTriageRecordDTO;
 use App\Enums\VisitStatus;
 use App\Models\PatientVisit;
 use App\Models\TriageRecord;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 final readonly class CreateTriageRecord
 {
     public function __construct(
         private TransitionPatientVisitStatus $transitionStatus,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(PatientVisit $visit, CreateTriageRecordDTO $data): TriageRecord
@@ -52,6 +54,29 @@ final readonly class CreateTriageRecord
         if ($visit->status === VisitStatus::REGISTERED) {
             $this->transitionStatus->handle($visit, VisitStatus::IN_PROGRESS);
         }
+
+        $user = Auth::user();
+
+        $this->recordAuditActivity->handle(
+            logName: 'clinical',
+            event: 'triage.recorded',
+            subject: $triage,
+            description: 'Triage record created.',
+            tenantId: $visit->tenant_id,
+            branchId: $visit->facility_branch_id,
+            staffId: $staffId,
+            newValues: [
+                'visit_id' => $visit->id,
+                'triage_id' => $triage->id,
+                'triage_grade' => $triage->triage_grade,
+                'attendance_type' => $triage->attendance_type,
+            ],
+            metadata: [
+                'requires_priority' => $triage->requires_priority,
+                'assigned_clinic_id' => $triage->assigned_clinic_id,
+                'causer_user_id' => $user instanceof User ? $user->id : null,
+            ],
+        );
 
         return $triage;
     }

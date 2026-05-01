@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\CompleteConsultation;
 use App\Data\Clinical\CompleteConsultationDTO;
 use App\Enums\ConsultationType;
+use App\Models\Activity;
 use App\Models\Consultation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -93,4 +94,11 @@ it('completes a consultation using a typed dto', function (): void {
         ->and($completed->referred_to_department)->toBe('Cardiology')
         ->and($completed->referral_reason)->toBe('Needs specialist opinion')
         ->and($completed->completed_at)->not->toBeNull();
+
+    expect(Activity::query()
+        ->where('log_name', 'clinical')
+        ->where('event', 'consultation.completed')
+        ->where('subject_type', $consultation->getMorphClass())
+        ->where('subject_id', $consultation->id)
+        ->exists())->toBeTrue();
 });

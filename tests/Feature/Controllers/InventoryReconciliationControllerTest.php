@@ -11,6 +11,7 @@ use App\Enums\InventoryLocationType;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\ReconciliationStatus;
 use App\Enums\StockMovementType;
+use App\Models\Activity;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
@@ -235,6 +236,11 @@ it('creates a draft reconciliation with expected and actual quantities', functio
         ->and((string) $reconciliation->items->first()->actual_quantity)->toBe('6.000')
         ->and((string) $reconciliation->items->first()->quantity_delta)->toBe('-2.000');
 
+    expect(Activity::query()
+        ->where('event', 'inventory.reconciliation.created')
+        ->where('subject_id', $reconciliation?->id)
+        ->exists())->toBeTrue();
+
     $response->assertRedirect(route('reconciliations.show', $reconciliation))
         ->assertSessionHas('reconciliation_prompt', 'submit');
 
@@ -303,6 +309,23 @@ it('runs the submit review approve and post workflow', function (): void {
         ->and($reconciliation->approved_at)->not->toBeNull()
         ->and($reconciliation->posted_at)->not->toBeNull();
 
+    expect(Activity::query()
+        ->where('event', 'inventory.reconciliation.submitted')
+        ->where('subject_id', $reconciliation->id)
+        ->exists())->toBeTrue()
+        ->and(Activity::query()
+            ->where('event', 'inventory.reconciliation.reviewed')
+            ->where('subject_id', $reconciliation->id)
+            ->exists())->toBeTrue()
+        ->and(Activity::query()
+            ->where('event', 'inventory.reconciliation.approved')
+            ->where('subject_id', $reconciliation->id)
+            ->exists())->toBeTrue()
+        ->and(Activity::query()
+            ->where('event', 'inventory.reconciliation.posted')
+            ->where('subject_id', $reconciliation->id)
+            ->exists())->toBeTrue();
+
     $movement = StockMovement::query()->withoutGlobalScopes()
         ->where('source_document_type', Reconciliation::class)
         ->where('source_document_id', $reconciliation->id)
@@ -341,7 +364,11 @@ it('allows a submitted reconciliation to be rejected', function (): void {
 
     expect($reconciliation->rejected_at)->not->toBeNull()
         ->and($reconciliation->rejection_reason)
-        ->toBe('Please recount the shelf before approval.');
+        ->toBe('Please recount the shelf before approval.')
+        ->and(Activity::query()
+            ->where('event', 'inventory.reconciliation.rejected')
+            ->where('subject_id', $reconciliation->id)
+            ->exists())->toBeTrue();
 });
 
 it('shows a reconciliation detail page', function (): void {
@@ -377,5 +404,6 @@ it('shows a reconciliation detail page', function (): void {
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('inventory/reconciliations/show')
             ->where('reconciliation.adjustment_number', 'REC-SHOW-001')
-            ->has('reconciliation.items', 1));
+            ->has('reconciliation.items', 1)
+            ->has('audit_activity'));
 });

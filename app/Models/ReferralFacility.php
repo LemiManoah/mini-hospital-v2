@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Concerns\HasActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * @property-read string $id
@@ -33,6 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class ReferralFacility extends Model
 {
     use BelongsToTenant;
+    use HasActivity;
 
     /** @use HasFactory<ReferralFacilityFactory> */
     use HasFactory;
@@ -58,6 +62,27 @@ final class ReferralFacility extends Model
             'updated_by' => 'string',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('administration')
+            ->logOnly(['name', 'facility_type', 'contact_person', 'phone', 'email', 'is_active'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(static fn (string $eventName): string => 'referral_facility.'.$eventName);
+    }
+
+    public function beforeActivityLogged(Activity $activity, string $event): void
+    {
+        $user = Auth::user();
+
+        $activity->forceFill([
+            'tenant_id' => $this->tenant_id,
+            'branch_id' => null,
+            'staff_id' => $user instanceof User ? $user->staffId() : null,
+        ]);
     }
 
     /**

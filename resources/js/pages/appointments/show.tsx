@@ -1,3 +1,4 @@
+import { AuditTimelineCard } from '@/components/audit-timeline-card';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,7 @@ export default function AppointmentShow({
     billingTypes,
     insuranceCompanies,
     insurancePackages,
+    audit_activity,
 }: AppointmentShowPageProps) {
     const { hasPermission } = usePermissions();
     const [doctorId, setDoctorId] = useState(
@@ -1075,6 +1077,14 @@ export default function AppointmentShow({
                                 </p>
                             )}
                         </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <AuditTimelineCard
+                            title="Appointment Audit Log"
+                            entries={audit_activity}
+                            emptyMessage="No appointment audit activity recorded yet."
+                        />
                     </div>
                 </div>
             </div>

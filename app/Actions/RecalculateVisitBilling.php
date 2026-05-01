@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\BillingDiscountStatus;
 use App\Enums\BillingStatus;
 use App\Enums\PayerType;
 use App\Enums\VisitChargeStatus;
 use App\Models\VisitBilling;
 
-final class RecalculateVisitBilling
+final readonly class RecalculateVisitBilling
 {
+    public function __construct(private SyncInsuredVisitClaim $syncInsuredVisitClaim) {}
+
     public function handle(VisitBilling $billing): VisitBilling
     {
         $grossAmount = (float) $billing->charges()
@@ -25,7 +28,9 @@ final class RecalculateVisitBilling
             ->where('is_refund', true)
             ->sum('amount');
 
-        $discountAmount = (float) ($billing->discount_amount ?? 0);
+        $discountAmount = (float) $billing->discounts()
+            ->where('status', BillingDiscountStatus::APPROVED->value)
+            ->sum('amount');
         $paidAmount = max(0, $collectedPayments - $refunds);
         $balanceAmount = max(0, $grossAmount - $discountAmount - $paidAmount);
 
@@ -39,6 +44,7 @@ final class RecalculateVisitBilling
 
         $billing->forceFill([
             'gross_amount' => $grossAmount,
+            'discount_amount' => $discountAmount,
             'paid_amount' => $paidAmount,
             'balance_amount' => $balanceAmount,
             'status' => $status,
@@ -46,6 +52,10 @@ final class RecalculateVisitBilling
             'settled_at' => $status === BillingStatus::FULLY_PAID ? now() : null,
         ])->save();
 
-        return $billing->refresh();
+        $billing = $billing->refresh();
+
+        $this->syncInsuredVisitClaim->handle($billing);
+
+        return $billing;
     }
 }

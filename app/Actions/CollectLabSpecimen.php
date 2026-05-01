@@ -11,6 +11,7 @@ use App\Models\LabRequestItem;
 use App\Models\LabSpecimen;
 use App\Models\LabTestCatalog;
 use App\Models\SpecimenType;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +20,7 @@ final readonly class CollectLabSpecimen
 {
     public function __construct(
         private SyncLabRequestProgress $syncLabRequestProgress,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     /**
@@ -88,6 +90,32 @@ final readonly class CollectLabSpecimen
             $labRequest = $labRequestItem->request()->firstOrFail();
 
             $this->syncLabRequestProgress->handle($labRequest);
+
+            $specimen = $labRequestItem->specimen()->firstOrFail();
+
+            $this->recordAuditActivity->handle(
+                logName: 'laboratory',
+                event: 'lab_specimen.collected',
+                subject: $labRequestItem,
+                description: 'Lab specimen collected.',
+                tenantId: $labRequest->tenant_id,
+                branchId: $labRequest->facility_branch_id,
+                staffId: $staffId,
+                newValues: [
+                    'lab_request_id' => $labRequest->id,
+                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_specimen_id' => $specimen->id,
+                    'specimen_type_id' => $specimen->specimen_type_id,
+                    'collected_at' => $specimen->collected_at?->toISOString(),
+                    'outside_sample' => $specimen->outside_sample,
+                ],
+                metadata: [
+                    'specimen_type_name' => $specimen->specimen_type_name,
+                    'outside_sample_origin' => $specimen->outside_sample_origin,
+                    'notes' => $specimen->notes,
+                    'causer_user_id' => Auth::id(),
+                ],
+            );
 
             return $labRequestItem->refresh()->loadMissing([
                 'specimen',

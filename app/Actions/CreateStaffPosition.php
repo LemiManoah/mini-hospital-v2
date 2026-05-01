@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Models\StaffPosition;
+use Illuminate\Support\Facades\Auth;
 
 final class CreateStaffPosition
 {
@@ -13,6 +14,9 @@ final class CreateStaffPosition
      */
     public function handle(array $data): StaffPosition
     {
-        return StaffPosition::query()->create($data);
+        return StaffPosition::query()->create([
+            ...$data,
+            'created_by' => Auth::id(),
+        ]);
     }
 }

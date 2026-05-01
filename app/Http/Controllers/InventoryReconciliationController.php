@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\ApproveInventoryReconciliation;
 use App\Actions\CreateInventoryReconciliation;
+use App\Actions\ListAuditTimeline;
 use App\Actions\PostInventoryReconciliation;
 use App\Actions\RejectInventoryReconciliation;
 use App\Actions\ReviewInventoryReconciliation;
@@ -34,6 +35,7 @@ final readonly class InventoryReconciliationController implements HasMiddleware
     public function __construct(
         private InventoryStockLedger $inventoryStockLedger,
         private InventoryLocationAccess $inventoryLocationAccess,
+        private ListAuditTimeline $listAuditTimeline,
     ) {}
 
     public static function middleware(): array
@@ -175,6 +177,11 @@ final readonly class InventoryReconciliationController implements HasMiddleware
 
         return Inertia::render('inventory/reconciliations/show', [
             'reconciliation' => $this->serializeReconciliationDetail($reconciliation),
+            'audit_activity' => $this->listAuditTimeline->handle(
+                subjects: [$reconciliation],
+                tenantId: $reconciliation->tenant_id,
+                logNames: ['inventory'],
+            ),
         ]);
     }
 

@@ -195,3 +195,71 @@ it('records payments from the finance opd payment desk', function (): void {
             ->has('audit_activity', 1)
             ->where('audit_activity.0.title', 'Payment recorded for patient visit.'));
 });
+
+it('requests approves and reverses a billing discount from the finance desk', function (): void {
+    [, $branch, $user, $visit] = createFinancePaymentContext();
+    $user->givePermissionTo([
+        'payments.view',
+        'billing_discounts.create',
+        'billing_discounts.approve',
+        'billing_discounts.reverse',
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('finance.opd-payments.discounts.store', $visit), [
+            'amount' => 25,
+            'reason' => 'Approved support adjustment',
+            'notes' => 'Manager reviewed at desk.',
+        ])
+        ->assertRedirect(route('finance.opd-payments.show', $visit))
+        ->assertSessionHas('success', 'Discount requested successfully.');
+
+    $discountId = DB::table('billing_discounts')
+        ->where('patient_visit_id', $visit->id)
+        ->value('id');
+
+    expect($discountId)->not()->toBeNull();
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('finance.opd-payments.discounts.approve', [$visit, $discountId]))
+        ->assertRedirect(route('finance.opd-payments.show', $visit))
+        ->assertSessionHas('success', 'Discount approved successfully.');
+
+    $this->assertDatabaseHas('visit_billings', [
+        'patient_visit_id' => $visit->id,
+        'discount_amount' => '25.00',
+        'balance_amount' => '125.00',
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('finance.opd-payments.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('finance/opd-payments/show')
+            ->where('visit.billing.discounts.0.status', 'approved')
+            ->where('visit.billing.discount_amount', '25.00'));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('finance.opd-payments.discounts.reverse', [$visit, $discountId]), [
+            'reversal_reason' => 'Discount approved on the wrong visit.',
+        ])
+        ->assertRedirect(route('finance.opd-payments.show', $visit))
+        ->assertSessionHas('success', 'Discount reversed successfully.');
+
+    $this->assertDatabaseHas('visit_billings', [
+        'patient_visit_id' => $visit->id,
+        'discount_amount' => '0.00',
+        'balance_amount' => '150.00',
+    ]);
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $visit->tenant_id,
+        'branch_id' => $visit->facility_branch_id,
+        'log_name' => 'billing',
+        'event' => 'discount.reversed',
+    ]);
+});

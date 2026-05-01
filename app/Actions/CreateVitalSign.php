@@ -6,17 +6,20 @@ namespace App\Actions;
 
 use App\Data\Clinical\CreateVitalSignDTO;
 use App\Models\PatientVisit;
+use App\Models\User;
 use App\Models\VitalSign;
 use Illuminate\Support\Facades\Auth;
 
 final readonly class CreateVitalSign
 {
+    public function __construct(private RecordAuditActivity $recordAuditActivity) {}
+
     public function handle(PatientVisit $visit, CreateVitalSignDTO $data): VitalSign
     {
         $triage = $visit->triage;
         $staffId = Auth::user()?->staff_id;
 
-        return VitalSign::query()->create([
+        $vitalSign = VitalSign::query()->create([
             'temperature' => $data->temperature,
             'temperature_unit' => $data->temperatureUnit,
             'pulse_rate' => $data->pulseRate,
@@ -42,5 +45,28 @@ final readonly class CreateVitalSign
             'recorded_at' => now(),
             'recorded_by' => $staffId,
         ]);
+
+        $user = Auth::user();
+
+        $this->recordAuditActivity->handle(
+            logName: 'clinical',
+            event: 'vital_sign.recorded',
+            subject: $vitalSign,
+            description: 'Vital signs recorded.',
+            tenantId: $visit->tenant_id,
+            branchId: $visit->facility_branch_id,
+            staffId: $staffId,
+            newValues: [
+                'visit_id' => $visit->id,
+                'triage_id' => $triage?->id,
+                'vital_sign_id' => $vitalSign->id,
+                'recorded_at' => $vitalSign->recorded_at?->toISOString(),
+            ],
+            metadata: [
+                'causer_user_id' => $user instanceof User ? $user->id : null,
+            ],
+        );
+
+        return $vitalSign;
     }
 }

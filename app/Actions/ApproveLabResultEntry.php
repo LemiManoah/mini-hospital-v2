@@ -103,6 +103,26 @@ final readonly class ApproveLabResultEntry
                 ],
             );
 
+            $this->recordAuditActivity->handle(
+                logName: 'laboratory',
+                event: 'lab_result.released',
+                subject: $resultEntry,
+                description: 'Lab result released.',
+                tenantId: $resolvedRequest->tenant_id,
+                branchId: $resolvedRequest->facility_branch_id,
+                staffId: $staffId,
+                newValues: [
+                    'lab_request_id' => $resolvedRequest->id,
+                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_result_entry_id' => $resultEntry->id,
+                    'released_at' => $timestamp->toISOString(),
+                ],
+                metadata: [
+                    'released_via' => 'approval',
+                    'causer_user_id' => Auth::id(),
+                ],
+            );
+
             return $labRequestItem->refresh();
         });
 

@@ -1,3 +1,4 @@
+import type { AuditTimelineEntry } from './audit';
 import type { InventoryItem } from './inventory-item';
 
 export interface InventoryReconciliationItem {
@@ -111,4 +112,5 @@ export interface InventoryReconciliationFormPageProps {
 
 export interface InventoryReconciliationShowPageProps {
     reconciliation: InventoryReconciliation;
+    audit_activity: AuditTimelineEntry[];
 }

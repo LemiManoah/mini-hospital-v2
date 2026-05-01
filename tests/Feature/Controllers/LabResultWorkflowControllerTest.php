@@ -307,7 +307,11 @@ it('picks a sample for a laboratory request item from the incoming queue', funct
     expect($requestItem->status->value)->toBe('pending')
         ->and($requestItem->received_at)->not()->toBeNull()
         ->and(DB::table('lab_specimens')->where('lab_request_item_id', $requestItem->id)->value('outside_sample'))->toBe(1)
-        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('sample_collected');
+        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('sample_collected')
+        ->and(Activity::query()
+            ->where('event', 'lab_specimen.collected')
+            ->where('subject_id', $requestItem->id)
+            ->exists())->toBeTrue();
 });
 
 it('marks a collected sample as received and moves the request item into processing', function (): void {
@@ -334,7 +338,11 @@ it('marks a collected sample as received and moves the request item into process
 
     expect($requestItem->status->value)->toBe('in_progress')
         ->and($requestItem->received_at)->not()->toBeNull()
-        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('in_progress');
+        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('in_progress')
+        ->and(Activity::query()
+            ->where('event', 'lab_request_item.received')
+            ->where('subject_id', $requestItem->id)
+            ->exists())->toBeTrue();
 });
 
 it('stores reviews and approves parameter-panel lab results', function (): void {
@@ -383,11 +391,25 @@ it('stores reviews and approves parameter-panel lab results', function (): void 
         ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
 
     $requestItem->refresh();
+    $resultEntry = $requestItem->resultEntry()->firstOrFail();
 
     expect($requestItem->status->value)->toBe('completed')
         ->and($requestItem->approved_at)->not()->toBeNull()
         ->and($requestItem->result_visible)->toBeTrue()
         ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('completed');
+
+    expect(Activity::query()
+        ->where('event', 'lab_result.entered')
+        ->where('subject_id', $resultEntry->id)
+        ->exists())->toBeTrue()
+        ->and(Activity::query()
+            ->where('event', 'lab_result.reviewed')
+            ->where('subject_id', $resultEntry->id)
+            ->exists())->toBeTrue()
+        ->and(Activity::query()
+            ->where('event', 'lab_result.released')
+            ->where('subject_id', $resultEntry->id)
+            ->exists())->toBeTrue();
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -495,7 +517,15 @@ it('auto releases reviewed results when approval is not required by general sett
         ->and($requestItem->approved_at)->not()->toBeNull()
         ->and($requestItem->result_visible)->toBeTrue()
         ->and($resultEntry->approved_at)->not()->toBeNull()
-        ->and($resultEntry->released_at)->not()->toBeNull();
+        ->and($resultEntry->released_at)->not()->toBeNull()
+        ->and(Activity::query()
+            ->where('event', 'lab_result.reviewed')
+            ->where('subject_id', $resultEntry->id)
+            ->exists())->toBeTrue()
+        ->and(Activity::query()
+            ->where('event', 'lab_result.released')
+            ->where('subject_id', $resultEntry->id)
+            ->exists())->toBeTrue();
 });
 
 it('moves a request item between the incoming and enter-results queues after sample picking', function (): void {

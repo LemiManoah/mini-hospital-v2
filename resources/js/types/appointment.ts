@@ -1,3 +1,5 @@
+import type { AuditTimelineEntry } from '@/types/audit';
+
 export interface AppointmentClinicOption {
     id: string;
     name: string;
@@ -225,6 +227,7 @@ export interface AppointmentFormPageProps {
 
 export interface AppointmentShowPageProps extends AppointmentFormPageProps {
     appointment: Appointment;
+    audit_activity: AuditTimelineEntry[];
     statusOptions: { value: string; label: string }[];
     visitTypes: { value: string; label: string }[];
     billingTypes: { value: string; label: string }[];

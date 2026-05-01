@@ -21,6 +21,7 @@ final readonly class RegisterPatientAndStartVisit
 {
     public function __construct(
         private BranchScopedNumberGenerator $numberGenerator,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     /**
@@ -101,6 +102,37 @@ final readonly class RegisterPatientAndStartVisit
                 'insurance_company_id' => $payer->insurance_company_id,
                 'insurance_package_id' => $payer->insurance_package_id,
             ]);
+
+            $this->recordAuditActivity->handle(
+                logName: 'clinical',
+                event: 'patient.registered',
+                subject: $patient,
+                description: 'Patient registered.',
+                tenantId: $patient->tenant_id,
+                branchId: $activeBranch?->id,
+                staffId: $authenticatedUser?->staffId(),
+                newValues: [
+                    'patient_id' => $patient->id,
+                    'patient_number' => $patient->patient_number,
+                ],
+            );
+
+            $this->recordAuditActivity->handle(
+                logName: 'clinical',
+                event: 'visit.started',
+                subject: $visit,
+                description: 'Patient visit started.',
+                tenantId: $visit->tenant_id,
+                branchId: $visit->facility_branch_id,
+                staffId: $authenticatedUser?->staffId(),
+                newValues: [
+                    'visit_id' => $visit->id,
+                    'visit_number' => $visit->visit_number,
+                    'patient_id' => $patient->id,
+                    'status' => VisitStatus::REGISTERED->value,
+                    'registered_at' => $visit->registered_at?->toISOString(),
+                ],
+            );
 
             return [
                 'patient' => $patient,

@@ -18,8 +18,11 @@ use App\Enums\ImagingModality;
 use App\Enums\InventoryItemType;
 use App\Enums\Priority;
 use App\Enums\VisitStatus;
+use App\Models\Activity;
 use App\Models\Consultation;
 use App\Models\PatientVisit;
+use App\Models\Permission;
+use App\Models\User;
 use App\Models\VisitCharge;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
@@ -228,8 +231,29 @@ if (! function_exists('createImagingRequestDtoRequest')) {
     }
 }
 
+function createOrderNotificationRecipient(string $tenantId, array $permissions): User
+{
+    foreach ($permissions as $permission) {
+        Permission::query()->firstOrCreate([
+            'name' => $permission,
+            'guard_name' => 'web',
+        ]);
+    }
+
+    $user = User::factory()
+        ->withoutTwoFactor()
+        ->create([
+            'tenant_id' => $tenantId,
+        ]);
+
+    $user->givePermissionTo($permissions);
+
+    return $user;
+}
+
 it('creates a lab request with priced items from the consultation context and syncs a visit charge', function (): void {
     $context = seedConsultationContext();
+    $recipient = createOrderNotificationRecipient($context['tenant_id'], ['lab_requests.view']);
     $testId = (string) Str::uuid();
     [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
 
@@ -274,6 +298,19 @@ it('creates a lab request with priced items from the consultation context and sy
     expect($charge)->not()->toBeNull()
         ->and((float) $charge->unit_price)->toBe(25000.0)
         ->and((float) $charge->line_total)->toBe(25000.0);
+
+    expect(Activity::query()
+        ->where('log_name', 'laboratory')
+        ->where('event', 'lab_request.created')
+        ->where('subject_type', $request->getMorphClass())
+        ->where('subject_id', $request->id)
+        ->exists())->toBeTrue();
+
+    $notification = $recipient->notifications()->first();
+
+    expect($notification)->not()->toBeNull()
+        ->and($notification?->data['type'] ?? null)->toBe('lab_request_created')
+        ->and($notification?->data['resource_id'] ?? null)->toBe($request->id);
 });
 
 it('moves a registered visit into progress when a visit-level lab request is created', function (): void {
@@ -379,6 +416,7 @@ it('uses insurance package prices when syncing lab request charges', function ()
 
 it('creates a prescription with multiple drug items', function (): void {
     $context = seedConsultationContext();
+    $recipient = createOrderNotificationRecipient($context['tenant_id'], ['pharmacy_dispensing.view']);
     $drugId = (string) Str::uuid();
 
     DB::table('inventory_items')->insert([
@@ -431,6 +469,12 @@ it('creates a prescription with multiple drug items', function (): void {
         ->and((float) $charge->unit_price)->toBe(22500.0)
         ->and((float) $charge->line_total)->toBe(22500.0)
         ->and($charge->description)->toBe('Prescription: 1 medication');
+
+    $notification = $recipient->notifications()->first();
+
+    expect($notification)->not()->toBeNull()
+        ->and($notification?->data['type'] ?? null)->toBe('prescription_created')
+        ->and($notification?->data['resource_id'] ?? null)->toBe($prescription->id);
 });
 
 it('uses insurance package prices when syncing prescription charges', function (): void {
@@ -500,6 +544,7 @@ it('uses insurance package prices when syncing prescription charges', function (
 
 it('creates an imaging request linked to the consultation', function (): void {
     $context = seedConsultationContext();
+    $recipient = createOrderNotificationRecipient($context['tenant_id'], ['lab_requests.view']);
 
     $request = resolve(CreateImagingRequest::class)->handle($context['consultation'], CreateImagingRequestDTO::fromRequest(createImagingRequestDtoRequest([
         'modality' => 'xray',
@@ -516,10 +561,24 @@ it('creates an imaging request linked to the consultation', function (): void {
     expect($request->consultation_id)->toBe($context['consultation']->id)
         ->and($request->body_part)->toBe('Chest')
         ->and($request->modality)->toBe(ImagingModality::XRAY);
+
+    expect(Activity::query()
+        ->where('log_name', 'clinical')
+        ->where('event', 'imaging_request.created')
+        ->where('subject_type', $request->getMorphClass())
+        ->where('subject_id', $request->id)
+        ->exists())->toBeTrue();
+
+    $notification = $recipient->notifications()->first();
+
+    expect($notification)->not()->toBeNull()
+        ->and($notification?->data['type'] ?? null)->toBe('imaging_request_created')
+        ->and($notification?->data['resource_id'] ?? null)->toBe($request->id);
 });
 
 it('creates a facility service order with consultation context and syncs an insurance-priced charge', function (): void {
     $context = seedConsultationContext('insurance');
+    $recipient = createOrderNotificationRecipient($context['tenant_id'], ['facility_services.view']);
     $serviceId = (string) Str::uuid();
 
     DB::table('facility_services')->insert([
@@ -591,6 +650,19 @@ it('creates a facility service order with consultation context and syncs an insu
         ->and((float) $charge->unit_price)->toBe(9500.0)
         ->and((float) $charge->line_total)->toBe(9500.0)
         ->and($charge->description)->toBe('Facility service: Nebulization');
+
+    expect(Activity::query()
+        ->where('log_name', 'clinical')
+        ->where('event', 'service_order.created')
+        ->where('subject_type', $order->getMorphClass())
+        ->where('subject_id', $order->id)
+        ->exists())->toBeTrue();
+
+    $notification = $recipient->notifications()->first();
+
+    expect($notification)->not()->toBeNull()
+        ->and($notification?->data['type'] ?? null)->toBe('facility_service_order_created')
+        ->and($notification?->data['resource_id'] ?? null)->toBe($order->id);
 });
 
 it('creates a facility service order with the service selling price for cash visits', function (): void {

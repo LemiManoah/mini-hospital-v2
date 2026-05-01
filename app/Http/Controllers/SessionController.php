@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\RecordAuditActivity;
 use App\Http\Requests\CreateSessionRequest;
+use App\Models\User;
 use App\Support\BranchContext;
 use App\Support\ImpersonationContext;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +18,8 @@ use Inertia\Response;
 
 final readonly class SessionController
 {
+    public function __construct(private RecordAuditActivity $recordAuditActivity) {}
+
     public function create(Request $request): Response
     {
         return Inertia::render('session/create', [
@@ -50,6 +54,20 @@ final readonly class SessionController
                 BranchContext::clear();
             }
 
+            $this->recordAuditActivity->handle(
+                logName: 'access',
+                event: 'access.login.succeeded',
+                subject: $user,
+                description: 'User logged in.',
+                actor: $user,
+                tenantId: $user->tenantId(),
+                branchId: BranchContext::getActiveBranchId(),
+                staffId: $user->staffId(),
+                metadata: [
+                    'remember' => $request->boolean('remember'),
+                ],
+            );
+
             return $user->can('tenants.impersonate')
                 ? to_route('facility-manager.impersonation.index')
                 : to_route('facility-manager.dashboard');
@@ -67,11 +85,40 @@ final readonly class SessionController
             BranchContext::clear();
         }
 
+        $this->recordAuditActivity->handle(
+            logName: 'access',
+            event: 'access.login.succeeded',
+            subject: $user,
+            description: 'User logged in.',
+            actor: $user,
+            tenantId: $user->tenantId(),
+            branchId: BranchContext::getActiveBranchId(),
+            staffId: $user->staffId(),
+            metadata: [
+                'remember' => $request->boolean('remember'),
+            ],
+        );
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
+        if ($user instanceof User) {
+            $this->recordAuditActivity->handle(
+                logName: 'access',
+                event: 'access.logout',
+                subject: $user,
+                description: 'User logged out.',
+                actor: $user,
+                tenantId: $user->tenantId(),
+                branchId: BranchContext::getActiveBranchId(),
+                staffId: $user->staffId(),
+            );
+        }
+
         BranchContext::clear();
         ImpersonationContext::stop($request);
 

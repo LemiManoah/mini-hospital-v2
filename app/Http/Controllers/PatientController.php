@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\DeletePatient;
+use App\Actions\ListAuditTimeline;
 use App\Actions\RegisterPatientAndStartVisit;
 use App\Actions\UpdatePatient;
 use App\Data\Patient\CreatePatientRegistrationDTO;
@@ -40,6 +41,8 @@ use Inertia\Response;
 
 final readonly class PatientController implements HasMiddleware
 {
+    public function __construct(private ListAuditTimeline $listAuditTimeline) {}
+
     public static function middleware(): array
     {
         return [
@@ -198,6 +201,10 @@ final readonly class PatientController implements HasMiddleware
                     ->latest()
                     ->limit(10);
             },
+            'appointments' => static function (HasMany $query): void {
+                $query->latest('appointment_date')
+                    ->limit(10);
+            },
         ]);
 
         $stats = [
@@ -210,6 +217,15 @@ final readonly class PatientController implements HasMiddleware
         return Inertia::render('patient/show', [
             'patient' => $patient,
             'stats' => $stats,
+            'audit_activity' => $this->listAuditTimeline->handle(
+                subjects: [
+                    $patient,
+                    ...$patient->appointments->all(),
+                    ...$patient->visits->all(),
+                ],
+                tenantId: $patient->tenant_id,
+                logNames: ['appointments', 'clinical', 'laboratory', 'pharmacy', 'billing'],
+            ),
             'allergens' => Allergen::query()->orderBy('name')->get(['id', 'name', 'type']),
             'severityOptions' => collect(AllergySeverity::cases())->map(fn (AllergySeverity $case): array => [
                 'value' => $case->value,

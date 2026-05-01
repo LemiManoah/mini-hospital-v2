@@ -140,6 +140,14 @@ it('creates a managed user for active branch staff and assigns roles', function 
         ->and(Hash::check('password123', $user->password))->toBeTrue()
         ->and($user->roles->pluck('name')->all())->toBe(['Registrar']);
 
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $admin->tenant_id,
+        'log_name' => 'access',
+        'event' => 'access.user.created',
+        'subject_type' => User::class,
+        'subject_id' => $user->id,
+    ]);
+
     Event::assertDispatched(Registered::class);
 });
 
@@ -242,4 +250,12 @@ it('deletes a managed user in the active branch after confirming the current pas
         ->assertSessionHas('success', 'User deleted successfully.');
 
     expect($managedUser->fresh())->toBeNull();
+
+    $this->assertDatabaseHas('activity_log', [
+        'tenant_id' => $admin->tenant_id,
+        'log_name' => 'access',
+        'event' => 'access.user.deleted',
+        'subject_type' => User::class,
+        'subject_id' => $managedUser->id,
+    ]);
 });

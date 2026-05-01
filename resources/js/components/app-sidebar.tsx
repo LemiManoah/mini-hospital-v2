@@ -397,6 +397,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'payments.view',
                     },
                     {
+                        title: 'Insurance Invoices',
+                        url: '/finance/insurance-invoices',
+                        permission: 'insurance_claims.view',
+                    },
+                    {
                         title: 'Daily Revenue',
                         url: '/reports/daily-revenue',
                         permission: 'reports.view',

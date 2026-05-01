@@ -6,6 +6,7 @@ use App\Actions\CreateConsultation;
 use App\Data\Clinical\CreateConsultationDTO;
 use App\Enums\ConsultationType;
 use App\Enums\VisitStatus;
+use App\Models\Activity;
 use App\Models\PatientVisit;
 use App\Models\User;
 use App\Models\VisitCharge;
@@ -116,6 +117,13 @@ it('creates a consultation using triage context and the authenticated clinician'
         ->and($consultation->started_at)->not->toBeNull()
         ->and($visit->fresh()->status)->toBe(VisitStatus::IN_PROGRESS)
         ->and($visit->fresh()->started_at)->not->toBeNull();
+
+    expect(Activity::query()
+        ->where('log_name', 'clinical')
+        ->where('event', 'consultation.started')
+        ->where('subject_type', $consultation->getMorphClass())
+        ->where('subject_id', $consultation->id)
+        ->exists())->toBeTrue();
 });
 
 it('syncs a consultation charge when a matching consultation tariff service is configured', function (): void {

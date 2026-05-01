@@ -17,6 +17,7 @@ final readonly class CreateInventoryReconciliation
 {
     public function __construct(
         private InventoryStockLedger $inventoryStockLedger,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(CreateInventoryReconciliationDTO $data): Reconciliation
@@ -70,7 +71,28 @@ final readonly class CreateInventoryReconciliation
                 ]);
             }
 
-            return $reconciliation->refresh()->load('items.inventoryItem', 'items.inventoryBatch', 'inventoryLocation');
+            $reconciliation = $reconciliation->refresh()->load('items.inventoryItem', 'items.inventoryBatch', 'inventoryLocation');
+
+            $this->recordAuditActivity->handle(
+                logName: 'inventory',
+                event: 'inventory.reconciliation.created',
+                subject: $reconciliation,
+                description: 'Stock reconciliation created.',
+                tenantId: $reconciliation->tenant_id,
+                branchId: $reconciliation->branch_id,
+                newValues: [
+                    'reconciliation_id' => $reconciliation->id,
+                    'adjustment_number' => $reconciliation->adjustment_number,
+                    'inventory_location_id' => $reconciliation->inventory_location_id,
+                    'status' => $reconciliation->status->value,
+                ],
+                metadata: [
+                    'item_count' => $reconciliation->items->count(),
+                    'reason' => $reconciliation->reason,
+                ],
+            );
+
+            return $reconciliation;
         });
     }
 

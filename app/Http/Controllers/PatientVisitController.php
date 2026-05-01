@@ -6,7 +6,9 @@ namespace App\Http\Controllers;
 
 use App\Actions\AssessPatientVisitCompletion;
 use App\Actions\EnsureVisitBilling;
+use App\Actions\ListAuditTimeline;
 use App\Actions\RecalculateVisitBilling;
+use App\Actions\RecordAuditActivity;
 use App\Actions\TransitionPatientVisitStatus;
 use App\Enums\AllergyReaction;
 use App\Enums\AllergySeverity;
@@ -24,9 +26,12 @@ use App\Models\Allergen;
 use App\Models\Clinic;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
+use App\Models\LabResultEntry;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Staff;
+use App\Models\TriageRecord;
+use App\Models\User;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use App\Support\ActiveBranchWorkspace;
@@ -40,6 +45,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -51,6 +57,8 @@ final readonly class PatientVisitController implements HasMiddleware
     public function __construct(
         private ActiveBranchWorkspace $activeBranchWorkspace,
         private VisitOrderOptions $visitOrderOptions,
+        private ListAuditTimeline $listAuditTimeline,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public static function middleware(): array
@@ -147,6 +155,7 @@ final readonly class PatientVisitController implements HasMiddleware
             'branch:id,name',
             'clinic:id,clinic_name',
             'doctor:id,first_name,last_name',
+            'appointment:id,patient_id,status,appointment_date,start_time,end_time,checked_in_at',
             'registeredBy:id,staff_id,email',
             'registeredBy.staff:id,first_name,last_name',
             'payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
@@ -206,10 +215,44 @@ final readonly class PatientVisitController implements HasMiddleware
 
         $this->hideUnreleasedLabResults($visit);
 
+        /** @var Collection<int, LabRequest> $labRequests */
+        $labRequests = $visit->labRequests;
+        $triage = $visit->triage;
+        $vitalSigns = $triage instanceof TriageRecord ? $triage->vitalSigns->all() : [];
+        /** @var list<LabRequestItem> $labRequestItems */
+        $labRequestItems = $labRequests
+            ->flatMap(static fn (LabRequest $labRequest): Collection => $labRequest->items)
+            ->all();
+        /** @var list<LabResultEntry> $labResultEntries */
+        $labResultEntries = $labRequests
+            ->flatMap(static fn (LabRequest $labRequest): Collection => $labRequest->items
+                ->map(static fn (LabRequestItem $item) => $item->resultEntry)
+                ->filter())
+            ->all();
+
         return Inertia::render('visit/show', [
             'visit' => $visit,
             'activeTab' => $request->query('tab', 'overview'),
             'activeClinicalTab' => $request->query('clinical_tab', 'lab'),
+            'audit_activity' => $this->listAuditTimeline->handle(
+                subjects: [
+                    $visit,
+                    $triage,
+                    ...$vitalSigns,
+                    $visit->consultation,
+                    ...$labRequests->all(),
+                    ...$labRequestItems,
+                    ...$labResultEntries,
+                    ...$visit->imagingRequests->all(),
+                    ...$visit->prescriptions->all(),
+                    ...$visit->facilityServiceOrders->all(),
+                    $visit->appointment,
+                    $visit->billing,
+                    ...($visit->billing !== null ? $visit->billing->payments->all() : []),
+                ],
+                tenantId: $visit->tenant_id,
+                logNames: ['appointments', 'clinical', 'laboratory', 'pharmacy', 'billing'],
+            ),
             'completionCheck' => $assessment->handle($visit),
             'triageGrades' => $this->enumOptions(TriageGrade::cases()),
             'attendanceTypes' => $this->enumOptions(AttendanceType::cases()),
@@ -351,6 +394,25 @@ final readonly class PatientVisitController implements HasMiddleware
             return $visit;
         });
 
+        $user = Auth::user();
+
+        $this->recordAuditActivity->handle(
+            logName: 'clinical',
+            event: 'visit.started',
+            subject: $visit,
+            description: 'Patient visit started.',
+            tenantId: $visit->tenant_id,
+            branchId: $visit->facility_branch_id,
+            staffId: $user instanceof User ? $user->staffId() : null,
+            newValues: [
+                'visit_id' => $visit->id,
+                'visit_number' => $visit->visit_number,
+                'patient_id' => $patient->id,
+                'status' => VisitStatus::REGISTERED->value,
+                'registered_at' => $visit->registered_at?->toISOString(),
+            ],
+        );
+
         $message = 'Visit started successfully.';
         $redirectTo = $validated['redirect_to'] ?? 'patient';
 
@@ -395,6 +457,25 @@ final readonly class PatientVisitController implements HasMiddleware
         }
 
         $action->handle($visit, VisitStatus::from($validated['status']));
+
+        $visit = $visit->refresh();
+        $user = Auth::user();
+
+        $this->recordAuditActivity->handle(
+            logName: 'clinical',
+            event: 'visit.completed',
+            subject: $visit,
+            description: 'Patient visit completed.',
+            tenantId: $visit->tenant_id,
+            branchId: $visit->facility_branch_id,
+            staffId: $user instanceof User ? $user->staffId() : null,
+            newValues: [
+                'visit_id' => $visit->id,
+                'visit_number' => $visit->visit_number,
+                'status' => VisitStatus::COMPLETED->value,
+                'completed_at' => $visit->completed_at?->toISOString(),
+            ],
+        );
 
         return $this->statusRedirect($visit, $redirectTo)->with('success', 'Visit status updated successfully.');
     }

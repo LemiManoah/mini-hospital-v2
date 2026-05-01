@@ -18,6 +18,7 @@ final readonly class PostInventoryReconciliation
 {
     public function __construct(
         private InventoryStockLedger $inventoryStockLedger,
+        private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(Reconciliation $reconciliation): Reconciliation
@@ -47,6 +48,8 @@ final readonly class PostInventoryReconciliation
                 ->with('items.inventoryBatch', 'items.inventoryItem', 'inventoryLocation')
                 ->findOrFail($reconciliation->id);
 
+            $movementCount = 0;
+
             foreach ($reconciliation->items as $item) {
                 $varianceQuantity = (float) $item->quantity_delta;
 
@@ -75,7 +78,26 @@ final readonly class PostInventoryReconciliation
                     'occurred_at' => $reconciliation->posted_at ?? now(),
                     'created_by' => Auth::id(),
                 ]);
+
+                $movementCount++;
             }
+
+            $this->recordAuditActivity->handle(
+                logName: 'inventory',
+                event: 'inventory.reconciliation.posted',
+                subject: $reconciliation,
+                description: 'Stock reconciliation posted.',
+                tenantId: $reconciliation->tenant_id,
+                branchId: $reconciliation->branch_id,
+                newValues: [
+                    'reconciliation_id' => $reconciliation->id,
+                    'status' => $reconciliation->status->value,
+                    'posted_at' => $reconciliation->posted_at?->toISOString(),
+                ],
+                metadata: [
+                    'movement_count' => $movementCount,
+                ],
+            );
 
             return $reconciliation;
         });

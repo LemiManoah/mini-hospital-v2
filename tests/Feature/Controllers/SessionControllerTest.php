@@ -36,6 +36,12 @@ it('may create a session', function (): void {
     $response->assertRedirectToRoute('dashboard');
 
     $this->assertAuthenticatedAs($user);
+    $this->assertDatabaseHas('activity_log', [
+        'log_name' => 'access',
+        'event' => 'access.login.succeeded',
+        'subject_type' => User::class,
+        'subject_id' => $user->id,
+    ]);
 });
 
 it('may create a session with remember me', function (): void {
@@ -154,6 +160,12 @@ it('may destroy a session', function (): void {
     $response->assertRedirect('/');
 
     $this->assertGuest();
+    $this->assertDatabaseHas('activity_log', [
+        'log_name' => 'access',
+        'event' => 'access.logout',
+        'subject_type' => User::class,
+        'subject_id' => $user->id,
+    ]);
 });
 
 it('redirects authenticated users away from login', function (): void {

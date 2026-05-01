@@ -160,6 +160,16 @@ it('allows support users to open facility manager child pages and record support
             ->where('health.summary.total_checks', 11));
 
     $this->actingAs($supportUser)
+        ->get(route('facility-manager.facilities.audit-log', $tenant))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('facility-manager/audit-log')
+            ->where('tenant.id', $tenant->id)
+            ->has('audit_logs')
+            ->has('metrics', 7)
+            ->has('filters'));
+
+    $this->actingAs($supportUser)
         ->get(route('facility-manager.facilities.notes', $tenant))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
@@ -289,6 +299,19 @@ it('allows support users to open facility manager child pages and record support
             ->has('support_activity', 6)
             ->where('support_activity.0.title', 'Onboarding reopened')
             ->where('support_activity.1.title', 'Onboarding marked complete'));
+
+    $this->actingAs($supportUser)
+        ->get(route('facility-manager.facilities.audit-log', [
+            'tenant' => $tenant,
+            'log_name' => 'support',
+            'event' => 'support.note_created',
+        ]))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('facility-manager/audit-log')
+            ->where('filters.log_name', 'support')
+            ->where('filters.event', 'support.note_created')
+            ->where('audit_logs.data.0.title', 'Support note created.'));
 
     $exportResponse = $this->actingAs($supportUser)
         ->get(route('facility-manager.facilities.export', [
