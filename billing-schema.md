@@ -31,11 +31,11 @@ Pre-authorisation is intentionally out of scope for now and should be revisited 
 
 ## Executive Answer
 
-As of May 1, 2026, the billing module is **not fully implemented**.
+As of May 2, 2026, the billing module is **not fully implemented**.
 
-It is partially implemented and already useful for OPD billing: the app has visit payer setup, visit billing headers, charge lines, package-aware charge pricing, branch payment methods, payment capture, receipt printing, daily revenue reporting, and a dedicated OPD finance payment desk.
+It is partially implemented and already useful for OPD billing: the app has visit payer setup, visit billing headers, charge lines, package-aware charge pricing, branch payment methods, payment capture, controlled receipt numbering, receipt printing, deposit capture/application, insurer invoice batching, debtor/write-off governance, daily revenue reporting, a billing summary report, and dedicated finance workspaces.
 
-It is not yet a complete production hospital billing module because insurance claim submission/rejection handling, billing-officer insurer workflows, debtor management, write-off governance, inpatient deposits, controlled document sequencing, cashier reconciliation, and manager-grade receivables reporting are still missing or incomplete.
+It is not yet a complete production hospital billing module because insurance claim submission/rejection handling, insurer submission/export workflows, refund governance, cashier reconciliation, debtor aging/collections follow-up, and double-entry accounting are still missing or incomplete.
 
 A complete billing module should let each role do the following:
 
@@ -178,15 +178,15 @@ The current application already contains useful billing foundations. These shoul
 
 ### What is still missing or weak in the current system
 
-- visit-level insurance claim ledger now exists at the backend level, with invoice batching and remittance allocation actions, but full billing-officer UI is still pending
+- visit-level insurance claim ledger now exists at the backend level, and finance users now have insurer invoice batching and remittance allocation screens
 - claim lifecycle tracking now starts with open and ready-for-invoice states, but downstream invoiced, submitted, disputed, rejected, and paid workflows still need UI and actions
 - discount history now exists at the backend level, but cashier and manager UI surfaces still need to be added
-- no write-off workflow
+- write-off workflow exists, but aging buckets, collections notes, and follow-up reminders are still pending
 - payment methods exist, but they are not yet tied to cash tills, bank accounts, cashier shifts, or a general ledger
 - no inpatient deposit workflow
 - no debtor-management workflow beyond the raw balance
 - no receipt or invoice sequence strategy suitable for finance control
-- remittance allocation now exists at the backend level, but needs UI, remittance import, and exception handling for rejected or disputed claim lines
+- remittance allocation now exists in the finance UI, but still needs remittance import and exception handling for rejected or disputed claim lines
 - no production-grade reporting model for collections, claims aging, discounts, write-offs, and debtors
 - no explicit billing document specification for patient invoices, receipts, insurer invoices, and credit/refund documents
 - no general-ledger posting for revenue, receivables, cash, bank, inventory, cost of goods sold, supplier liabilities, discounts, write-offs, or refunds
@@ -726,20 +726,20 @@ Pre-authorisation should come after the above, not before.
 | Tariff governance (`charge_masters`) | Partial | Facility services are governed; drugs and consultation tariffs still rely on service and item catalogs rather than a full governed charge catalog. |
 | Payer setup at registration | Done | Visit-level cash or insurance setup already exists. |
 | Visit profile billing UI | Partial | Read-only payer and paid/unpaid state remain on visit profile; cashier actions were intentionally removed. |
-| Finance cashier queue | Partial | Incoming OPD payments queue and payment desk exist, but broader cashier workflows like refunds and discount approvals are still missing. |
-| Patient payment collection | Partial | Payment capture, receipts, and partial settlement exist; refund and write-off governance are not complete. |
+| Finance cashier queue | Partial | Incoming OPD payments queue, payment desk, discount governance, deposits, insurer invoice workspace, debtor workspace, and billing summary exist; refund workflow and cashier reconciliation are still pending. |
+| Patient payment collection | Partial | Payment capture, controlled receipts, partial settlement, deposits, discounts, and write-offs exist; refund governance is not complete. |
 | Consultation charging | Done | Consultation records now carry a `consultation_type`, and branch admins manage explicit consultation tariff mappings by visit type and consultation type. |
 | Prescription charging | Partial | Prescription creation now raises visit charges from drug pricing, but downstream dispense reconciliation and substitution adjustments are still pending. |
 | Pharmacy POS billing | Partial | Walk-in sales, payments, receipts, refunds, voids, and stock movements exist, but POS payments are not yet tied to the branch payment-method master or accounting ledger. |
 | Procurement and inventory cost capture | Partial | Purchase orders, goods receipts, batches, and stock movements exist, but supplier invoices and accounts payable accounting are not implemented. |
 | Insurance claim lifecycle | Partial | `insured_visit_claims` now stores one visit-level claim per insured billing, with claim reference, payer, package, claim amounts, and lifecycle status. Ready claims can now be batched into `insurance_company_invoices`, and insurer payments can be allocated to claims; submission, rejection, dispute, and UI workflows remain pending. |
-| Insurer invoice batching | Partial | `GenerateInsuranceCompanyInvoice` creates insurer invoices from ready claims, freezes those claims as invoiced, and audits the batch. A finance UI and submission/export workflow are still pending. |
-| Insurer remittance allocation | Partial | `RecordInsuranceCompanyInvoicePayment` records insurer payments, requires claim-level allocations, updates claim paid status, updates invoice paid status, and audits the remittance. A finance UI, remittance import, and exception handling are still pending. |
-| Discount governance | Partial | `billing_discounts` now records requested, approved, and reversed discounts, and billing totals recalculate from approved discount records; finance UI and reports are still missing. |
-| Debtor management and write-offs | Not done | Balance exists, but the operational debt workspace and write-off controls are still missing. |
-| Deposit workflows | Not done | No inpatient deposit model yet. |
-| Document sequencing | Not done | Receipt numbering exists, but controlled finance document sequencing is not complete. |
-| Reporting and reconciliation | Partial | Finance queue and some revenue reporting exist; production-grade finance reporting is still missing. |
+| Insurer invoice batching | Partial | `GenerateInsuranceCompanyInvoice` creates insurer invoices from ready claims, freezes those claims as invoiced, audits the batch, and is now exposed in Finance & Accounting > Insurance Invoices. Submission/export workflow remains pending. |
+| Insurer remittance allocation | Partial | `RecordInsuranceCompanyInvoicePayment` records insurer payments, requires claim-level allocations, updates claim paid status, updates invoice paid status, audits the remittance, and is now exposed on insurer invoice detail pages. Remittance import and exception handling are still pending. |
+| Discount governance | Partial | `billing_discounts` now records requested, approved, and reversed discounts, billing totals recalculate from approved discount records, and OPD finance UI exposes discount governance. Discount reporting is still missing. |
+| Debtor management and write-offs | Partial | `billing_write_offs` now records pending, approved, and reversed write-offs. Approved write-offs reduce `visit_billings.balance_amount` through recalculation, and Finance & Accounting now has a Debtors workspace. Aging buckets, collections notes, and debtor reporting remain pending. |
+| Deposit workflows | Partial | `billing_deposits` now records held, partially applied, and applied advance deposits. Finance & Accounting has a Deposits workspace for recording deposits and applying held balances to billed visits. Refund and cancellation workflows remain pending. |
+| Document sequencing | Partial | `billing_document_sequences` now issues controlled branch-scoped numbers for patient receipts, deposit receipts, and insurer invoices. Admin configuration UI and credit/refund document types remain pending. |
+| Reporting and reconciliation | Partial | Finance queue, daily revenue reporting, and Finance & Accounting > Billing Summary now exist. Cashier shift close, formal reconciliation workflow, exports, and aging reports remain pending. |
 | General accounting ledger | Not done | There is no chart of accounts, journal entry table, accounting period close, or automatic double-entry posting yet. |
 
 - [x] Milestone 1: Keep the current visit-billing core and stabilize it as the single visit billing anchor.
@@ -754,10 +754,14 @@ Pre-authorisation should come after the above, not before.
   `insured_visit_claims` now exists and is automatically synced from insured visit billing while the claim is open or ready for invoice. Claims are frozen from automatic amount rewrites once they move into later lifecycle states such as invoiced or submitted.
 - [x] Milestone 6: Add insurer payment allocation detail with `insurance_claim_allocations`.
   `insurance_claim_allocations` now exists, ready insured claims can be batched into `insurance_company_invoices` through `GenerateInsuranceCompanyInvoice`, and insurer remittances can be recorded through `RecordInsuranceCompanyInvoicePayment` with explicit claim-level allocation rows and paid-status updates.
-- [ ] Milestone 7: Add debtor management views and write-off workflow.
-- [ ] Milestone 8: Add `billing_deposits` for inpatient use.
-- [ ] Milestone 9: Add controlled document numbering.
-- [ ] Milestone 10: Expand reporting and reconciliation views.
+- [x] Milestone 7: Add debtor management views and write-off workflow.
+  `billing_write_offs` now exists with request, approval, and reversal states. Approved write-offs feed `visit_billings.write_off_amount`, billing recalculation, and audit activity. A Finance & Accounting > Debtors workspace now lists outstanding balances and exposes write-off governance on the debtor detail page. Remaining debtor work is aging, collections notes, reminders, and manager-grade debtor reporting.
+- [x] Milestone 8: Add `billing_deposits` for inpatient use.
+  `billing_deposits` now tracks advance deposits with amount, applied amount, refunded amount, payment method snapshot, status, receipt number, patient/visit links, and audit users. `RecordBillingDeposit` records held deposits, `ApplyBillingDeposit` applies held balances through normal `payments`, and Finance & Accounting > Deposits exposes the workflow. Remaining deposit work is refund/cancel governance and inpatient discharge integration.
+- [x] Milestone 9: Add controlled document numbering.
+  `billing_document_sequences` now supports controlled numbering by tenant, branch, document type, prefix, reset period, and next number. `GenerateBillingDocumentNumber` is used for patient receipts, deposit receipts, and insurer invoices. Remaining work is admin sequence management and additional document types such as credit/refund notes.
+- [x] Milestone 10: Expand reporting and reconciliation views.
+  `GenerateFinanceBillingSummary` now powers Finance & Accounting > Billing Summary with date-filtered gross billings, patient collections, refunds, discounts, write-offs, deposits, insurer invoice position, and current debtor balance. Remaining work is cashier shift close, exportable reconciliation packs, and aging/collections reports.
 
 ### Current consultation charging rule
 
@@ -816,6 +820,6 @@ The current app already has real billing bones: visit payer setup, visit billing
 
 That is enough to build on.
 
-What it does not yet have is the full production billing operating model for hospital use: controlled tariffs, claim lifecycle management, debtor workflows, discount and write-off governance, deposit handling, payment-method control, and manager-grade reporting.
+What it does not yet have is the full production billing operating model for hospital use: full tariff governance across every charge source, insurer claim submission and dispute handling, debtor aging and collections follow-up, refund governance, deposit refund/cancel governance, cashier reconciliation, exportable reconciliation packs, and double-entry accounting.
 
 That is the gap this billing blueprint is meant to close.

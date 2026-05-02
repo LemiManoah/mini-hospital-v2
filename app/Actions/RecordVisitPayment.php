@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Data\Patient\CreateVisitPaymentDTO;
+use App\Enums\BillingDocumentType;
 use App\Models\PatientVisit;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\User;
-use App\Support\GeneralSettings\TenantGeneralSettings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final readonly class RecordVisitPayment
@@ -20,7 +19,7 @@ final readonly class RecordVisitPayment
     public function __construct(
         private EnsureVisitBilling $ensureVisitBilling,
         private RecalculateVisitBilling $recalculateVisitBilling,
-        private TenantGeneralSettings $settings,
+        private GenerateBillingDocumentNumber $documentNumber,
         private RecordAuditActivity $recordAuditActivity,
     ) {}
 
@@ -70,7 +69,7 @@ final readonly class RecordVisitPayment
                 'facility_branch_id' => $visit->facility_branch_id,
                 'visit_billing_id' => $billing->id,
                 'patient_visit_id' => $visit->id,
-                'receipt_number' => $this->generateReceiptNumber($tenantId),
+                'receipt_number' => $this->documentNumber->handle(BillingDocumentType::PatientReceipt, $tenantId, $visit->facility_branch_id),
                 'payment_date' => $data->paymentDate ?? now(),
                 'amount' => $amount,
                 'payment_method_id' => $paymentMethod->id,
@@ -107,13 +106,5 @@ final readonly class RecordVisitPayment
 
             return $payment;
         });
-    }
-
-    private function generateReceiptNumber(string $tenantId): string
-    {
-        $rawPrefix = (string) ($this->settings->value($tenantId, 'receipt_number_prefix') ?: 'RCT');
-        $prefix = mb_strtoupper(mb_trim($rawPrefix)) ?: 'RCT';
-
-        return $prefix.'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
     }
 }

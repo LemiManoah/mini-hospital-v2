@@ -43,6 +43,11 @@ Important financial audit points include:
 
 - Visit charges generated or updated.
 - Payments recorded.
+- Billing discounts requested, approved, or reversed.
+- Billing write-offs requested, approved, or reversed.
+- Insurance visit claims created or synced.
+- Insurer invoices generated from ready claims.
+- Insurer remittances recorded and allocated to individual claims.
 - Pharmacy POS sales finalized, voided, or refunded.
 - Insurance package prices updated.
 - Currency exchange rates created or changed.
@@ -515,6 +520,18 @@ High-priority events:
 - `prescription.created`
 - `prescription.dispensed`
 - `payment.recorded`
+- `discount.requested`
+- `discount.approved`
+- `discount.reversed`
+- `deposit.recorded`
+- `deposit.applied`
+- `write_off.requested`
+- `write_off.approved`
+- `write_off.reversed`
+- `insurance_claim.created`
+- `insurance_claim.synced`
+- `insurance_invoice.generated`
+- `insurance_invoice_payment.recorded`
 - `pharmacy.sale.finalized`
 - `pharmacy.sale.voided`
 - `pharmacy.sale.refunded`
@@ -675,6 +692,16 @@ The following business events have already been wired into application actions a
 - `appointment.checked_in`
 - `appointment.no_show`
 - `payment.recorded`
+- `discount.requested`
+- `discount.approved`
+- `discount.reversed`
+- `write_off.requested`
+- `write_off.approved`
+- `write_off.reversed`
+- `insurance_claim.created`
+- `insurance_claim.synced`
+- `insurance_invoice.generated`
+- `insurance_invoice_payment.recorded`
 - `consultation.started`
 - `consultation.updated`
 - `consultation.completed`
@@ -751,6 +778,8 @@ Additional audit timelines now exist on core operational detail screens:
 
 - Appointment show page
 - Finance OPD payment show page
+- Finance insurance invoice show page
+- Finance debtor show page
 - Pharmacy POS sale show page
 - Inventory requisition show page
 - Inventory reconciliation show page
@@ -772,12 +801,26 @@ Patient and visit timelines now carry more of the clinical sequence as new event
 - imaging request creation
 - facility service order creation, update, and removal activity
 
+Finance timelines now include more of the money-moving sequence:
+
+- patient payment recording activity on OPD payment views
+- billing discount request, approval, and reversal activity on OPD payment views
+- billing write-off request, approval, and reversal activity on debtor views
+- insured claim creation and sync activity
+- insurer invoice generation activity
+- insurer remittance recording and claim-allocation activity on insurance invoice views
+
 ### Tests Already Added
 
 Focused tests have already been added or extended for:
 
 - the shared audit action
 - payment activity logging
+- billing discount request, approval, and reversal activity logging
+- billing write-off request, approval, and reversal activity logging
+- insured claim creation and sync activity logging
+- insurer invoice generation activity logging
+- insurer remittance allocation activity logging
 - lab approval activity logging
 - lab correction activity logging
 - support note activity logging
@@ -803,7 +846,8 @@ The audit implementation is not finished yet. The following important work remai
 
 - finish verification of the newest appointment and consultation/order audit assertions
 - add more appointment lifecycle assertions for cancellation, reschedule, no-show, and check-in
-- add more billing, pharmacy, laboratory, and inventory events where update and reversal flows are still thin
+- add more pharmacy, laboratory, and inventory events where update and reversal flows are still thin
+- add insurer submission, rejection, dispute, and remittance-import audit events once those workflows exist
 - add dedicated lab, imaging, and administration timeline views
 - extend administration auditing further into catalog/config records such as lab catalogs, insurance packages, referral facilities, and staff positions
 

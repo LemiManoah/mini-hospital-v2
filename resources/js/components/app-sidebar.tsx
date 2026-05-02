@@ -402,6 +402,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'insurance_claims.view',
                     },
                     {
+                        title: 'Deposits',
+                        url: '/finance/deposits',
+                        permission: 'billing_deposits.view',
+                    },
+                    {
+                        title: 'Debtors',
+                        url: '/finance/debtors',
+                        permission: 'visit_billings.view',
+                    },
+                    {
+                        title: 'Billing Summary',
+                        url: '/finance/billing-summary',
+                        permission: 'reports.view',
+                    },
+                    {
                         title: 'Daily Revenue',
                         url: '/reports/daily-revenue',
                         permission: 'reports.view',

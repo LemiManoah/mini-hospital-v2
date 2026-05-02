@@ -160,3 +160,110 @@ export interface FinanceInsuranceInvoicesShowPageProps {
     invoice: InsuranceInvoiceDetail;
     audit_activity: AuditTimelineEntry[];
 }
+
+export interface FinanceDebtorRow {
+    id: string;
+    visit_number?: string | null;
+    registered_at?: string | null;
+    patient_name: string;
+    patient_number?: string | null;
+    payer_type: string;
+    insurance_company_name?: string | null;
+    gross_amount: number;
+    discount_amount: number;
+    write_off_amount: number;
+    paid_amount: number;
+    balance_amount: number;
+    status: string;
+}
+
+export interface BillingWriteOff {
+    id: string;
+    amount: number;
+    reason: string;
+    status: 'pending' | 'approved' | 'reversed';
+    notes?: string | null;
+    requested_at?: string | null;
+    approved_at?: string | null;
+    reversed_at?: string | null;
+    reversal_reason?: string | null;
+}
+
+export interface FinanceDebtorDetail extends FinanceDebtorRow {
+    charges: VisitCharge[];
+    payments: VisitPayment[];
+    write_offs: BillingWriteOff[];
+}
+
+export interface FinanceDebtorsIndexPageProps {
+    billings: PaginatedList<FinanceDebtorRow>;
+    filters: {
+        search: string | null;
+    };
+}
+
+export interface FinanceDebtorsShowPageProps {
+    billing: FinanceDebtorDetail;
+    audit_activity: AuditTimelineEntry[];
+}
+
+export interface BillingDepositRow {
+    id: string;
+    deposit_number: string;
+    patient_name: string;
+    patient_number?: string | null;
+    visit_number?: string | null;
+    payment_method?: string | null;
+    reference_number?: string | null;
+    amount: number;
+    applied_amount: number;
+    refunded_amount: number;
+    available_amount: number;
+    status: 'held' | 'partially_applied' | 'applied' | 'refunded' | 'cancelled';
+    received_at?: string | null;
+    notes?: string | null;
+}
+
+export interface FinanceDepositsIndexPageProps {
+    deposits: PaginatedList<BillingDepositRow>;
+    filters: {
+        search: string | null;
+    };
+    paymentMethods: { value: string; label: string }[];
+}
+
+export interface FinanceBillingSummaryPageProps {
+    filters: {
+        start_date: string;
+        end_date: string;
+    };
+    summary: {
+        gross_billings: number;
+        patient_collections: number;
+        patient_refunds: number;
+        approved_discounts: number;
+        approved_write_offs: number;
+        deposits_received: number;
+        deposits_applied: number;
+        deposits_held: number;
+        insurer_invoices_billed: number;
+        insurer_invoices_paid: number;
+        current_debtor_balance: number;
+    };
+    paymentMethods: {
+        payment_method: string;
+        amount: number;
+        count: number;
+    }[];
+    depositStatuses: {
+        status: string;
+        amount: number;
+        applied_amount: number;
+        held_amount: number;
+        count: number;
+    }[];
+    insurerInvoices: {
+        count: number;
+        balance: number;
+    };
+}

@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\BillingDiscountStatus;
 use App\Enums\BillingStatus;
+use App\Enums\BillingWriteOffStatus;
 use App\Enums\PayerType;
 use App\Enums\VisitChargeStatus;
 use App\Models\VisitBilling;
@@ -31,10 +32,14 @@ final readonly class RecalculateVisitBilling
         $discountAmount = (float) $billing->discounts()
             ->where('status', BillingDiscountStatus::APPROVED->value)
             ->sum('amount');
+        $writeOffAmount = (float) $billing->writeOffs()
+            ->where('status', BillingWriteOffStatus::APPROVED->value)
+            ->sum('amount');
         $paidAmount = max(0, $collectedPayments - $refunds);
-        $balanceAmount = max(0, $grossAmount - $discountAmount - $paidAmount);
+        $balanceAmount = max(0, $grossAmount - $discountAmount - $writeOffAmount - $paidAmount);
 
         $status = match (true) {
+            $grossAmount > 0 && $writeOffAmount > 0 && $balanceAmount <= 0 => BillingStatus::WRITTEN_OFF,
             $grossAmount > 0 && $balanceAmount <= 0 => BillingStatus::FULLY_PAID,
             $paidAmount > 0 && $balanceAmount > 0 => BillingStatus::PARTIAL_PAID,
             $grossAmount > 0 && $billing->payer_type === PayerType::INSURANCE => BillingStatus::INSURANCE_PENDING,
@@ -45,6 +50,7 @@ final readonly class RecalculateVisitBilling
         $billing->forceFill([
             'gross_amount' => $grossAmount,
             'discount_amount' => $discountAmount,
+            'write_off_amount' => $writeOffAmount,
             'paid_amount' => $paidAmount,
             'balance_amount' => $balanceAmount,
             'status' => $status,

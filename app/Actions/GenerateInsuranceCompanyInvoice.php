@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\BillingDocumentType;
 use App\Enums\BillingStatus;
 use App\Enums\InsuredVisitClaimStatus;
 use App\Models\InsuranceCompanyInvoice;
@@ -11,12 +12,14 @@ use App\Models\InsuredVisitClaim;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final readonly class GenerateInsuranceCompanyInvoice
 {
-    public function __construct(private RecordAuditActivity $recordAuditActivity) {}
+    public function __construct(
+        private GenerateBillingDocumentNumber $documentNumber,
+        private RecordAuditActivity $recordAuditActivity,
+    ) {}
 
     public function handle(
         string $tenantId,
@@ -49,7 +52,7 @@ final readonly class GenerateInsuranceCompanyInvoice
                 'tenant_id' => $tenantId,
                 'facility_branch_id' => $branchId,
                 'insurance_company_id' => $insuranceCompanyId,
-                'code' => $this->generateInvoiceCode(),
+                'code' => $this->documentNumber->handle(BillingDocumentType::InsuranceInvoice, $tenantId, $branchId),
                 'start_date' => $startDate ?? $claims->min('created_at')?->toDateString(),
                 'end_date' => $endDate ?? $claims->max('created_at')?->toDateString(),
                 'bill_amount' => $claimAmount,
@@ -92,10 +95,5 @@ final readonly class GenerateInsuranceCompanyInvoice
 
             return $invoice->refresh();
         });
-    }
-
-    private function generateInvoiceCode(): string
-    {
-        return 'ICI-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
     }
 }

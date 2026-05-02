@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read PayerType|null $payer_type
  * @property-read numeric-string|null $gross_amount
  * @property-read numeric-string|null $discount_amount
+ * @property-read numeric-string|null $write_off_amount
  * @property-read numeric-string|null $paid_amount
  * @property-read numeric-string|null $balance_amount
  * @property-read BillingStatus|null $status
@@ -43,6 +44,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read Collection<int, VisitCharge> $charges
  * @property-read Collection<int, Payment> $payments
  * @property-read Collection<int, BillingDiscount> $discounts
+ * @property-read Collection<int, BillingWriteOff> $writeOffs
  * @property-read InsuredVisitClaim|null $insuredClaim
  */
 final class VisitBilling extends Model
@@ -61,6 +63,7 @@ final class VisitBilling extends Model
         'payer_type' => PayerType::class,
         'gross_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
+        'write_off_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'balance_amount' => 'decimal:2',
         'status' => BillingStatus::class,
@@ -130,6 +133,14 @@ final class VisitBilling extends Model
     public function discounts(): HasMany
     {
         return $this->hasMany(BillingDiscount::class, 'visit_billing_id');
+    }
+
+    /**
+     * @return HasMany<BillingWriteOff, $this>
+     */
+    public function writeOffs(): HasMany
+    {
+        return $this->hasMany(BillingWriteOff::class, 'visit_billing_id');
     }
 
     /**
