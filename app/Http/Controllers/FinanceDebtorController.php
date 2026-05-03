@@ -11,7 +11,9 @@ use App\Actions\ReverseBillingWriteOff;
 use App\Http\Requests\ReverseBillingWriteOffRequest;
 use App\Http\Requests\StoreBillingWriteOffRequest;
 use App\Models\BillingWriteOff;
+use App\Models\Payment;
 use App\Models\VisitBilling;
+use App\Models\VisitCharge;
 use App\Support\ActiveBranchWorkspace;
 use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
@@ -177,7 +179,7 @@ final readonly class FinanceDebtorController implements HasMiddleware
     {
         return [
             ...$this->serializeDebtorRow($billing),
-            'charges' => $billing->charges->map(static fn ($charge): array => [
+            'charges' => $billing->charges->map(static fn (VisitCharge $charge): array => [
                 'id' => $charge->id,
                 'description' => $charge->description,
                 'quantity' => round((float) $charge->quantity, 2),
@@ -186,7 +188,7 @@ final readonly class FinanceDebtorController implements HasMiddleware
                 'status' => $charge->status,
                 'charged_at' => $charge->charged_at?->toISOString(),
             ])->values()->all(),
-            'payments' => $billing->payments->map(static fn ($payment): array => [
+            'payments' => $billing->payments->map(static fn (Payment $payment): array => [
                 'id' => $payment->id,
                 'receipt_number' => $payment->receipt_number,
                 'payment_date' => $payment->payment_date?->toISOString(),

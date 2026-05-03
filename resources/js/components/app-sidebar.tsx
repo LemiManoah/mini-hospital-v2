@@ -537,6 +537,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             'facility_services.view',
                         ],
                     },
+                    {
+                        title: 'Data Upload',
+                        url: '/data-upload',
+                        permission: 'patients.create',
+                    },
                     ...(canSwitchFacility ||
                     hasPermission('subscription_packages.view') ||
                     hasPermission('facility_branches.view')

@@ -10,6 +10,7 @@ use App\Enums\InsuredVisitClaimStatus;
 use App\Models\InsuranceCompanyInvoice;
 use App\Models\InsuredVisitClaim;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -34,9 +35,9 @@ final readonly class GenerateInsuranceCompanyInvoice
                 ->where('insurance_company_id', $insuranceCompanyId)
                 ->where('status', InsuredVisitClaimStatus::READY_FOR_INVOICE)
                 ->whereNull('insurance_company_invoice_id')
-                ->when($branchId !== null, fn ($query) => $query->where('facility_branch_id', $branchId))
-                ->when($startDate !== null, fn ($query) => $query->whereDate('created_at', '>=', $startDate))
-                ->when($endDate !== null, fn ($query) => $query->whereDate('created_at', '<=', $endDate))
+                ->when($branchId !== null, fn (Builder $query): Builder => $query->where('facility_branch_id', $branchId))
+                ->when($startDate !== null, fn (Builder $query): Builder => $query->whereDate('created_at', '>=', $startDate))
+                ->when($endDate !== null, fn (Builder $query): Builder => $query->whereDate('created_at', '<=', $endDate))
                 ->lockForUpdate()
                 ->get();
 

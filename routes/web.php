@@ -16,6 +16,7 @@ use App\Http\Controllers\ConsultationTariffController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyExchangeRateController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DataUploadController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DispensingController;
 use App\Http\Controllers\DispensingHistoryController;
@@ -221,6 +222,10 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::resource('referral-facilities', ReferralFacilityController::class)->except(['show']);
     Route::resource('facility-branches', FacilityBranchController::class)->except(['show']);
     Route::resource('clinics', ClinicController::class)->except(['show']);
+    Route::get('data-upload', [DataUploadController::class, 'index'])->name('data-upload.index');
+    Route::get('data-upload/patients/template', [DataUploadController::class, 'patientTemplate'])->name('data-upload.patients.template');
+    Route::post('data-upload/patients/import', [DataUploadController::class, 'importPatients'])->name('data-upload.patients.import');
+
     Route::resource('insurance-companies', InsuranceCompanyController::class)->except(['show']);
     Route::resource('insurance-packages', InsurancePackageController::class)->except(['show']);
     Route::get('insurance-packages/{insurance_package}', [InsurancePackageController::class, 'show'])->name('insurance-packages.show');

@@ -25,7 +25,7 @@ return new class extends Migration
                 $table->integer('age')->nullable();
                 $table->enum('age_units', ['year', 'month', 'day'])->nullable();
                 $table->string('gender', 10);
-                $table->string('email', 255)->nullable()->unique();
+                $table->string('email', 255)->nullable();
                 $table->string('phone_number', 20);
                 $table->string('alternative_phone', 20)->nullable();
                 $table->string('next_of_kin_name', 100)->nullable();
@@ -41,6 +41,7 @@ return new class extends Migration
                 $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamps();
                 $table->softDeletes();
+                $table->unique(['tenant_id', 'email'], 'patients_tenant_id_email_unique');
                 $table->index(['last_name', 'first_name']);
                 $table->unique(['tenant_id', 'patient_number']);
                 $table->index('patient_number');

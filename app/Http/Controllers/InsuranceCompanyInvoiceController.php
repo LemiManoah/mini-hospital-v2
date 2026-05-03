@@ -11,12 +11,14 @@ use App\Enums\InsuredVisitClaimStatus;
 use App\Http\Requests\StoreInsuranceCompanyInvoiceBatchRequest;
 use App\Http\Requests\StoreInsuranceCompanyInvoicePaymentRequest;
 use App\Models\FacilityBranch;
+use App\Models\InsuranceClaimAllocation;
 use App\Models\InsuranceCompanyInvoice;
 use App\Models\InsuranceCompanyInvoicePayment;
 use App\Models\InsuredVisitClaim;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
 use BackedEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
@@ -58,7 +60,7 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
             ->withCount('claims')
             ->when(
                 $status !== '' && $status !== 'all',
-                static fn ($query) => $query->where('status', $status),
+                static fn (Builder $query): Builder => $query->where('status', $status),
             )
             ->latest()
             ->paginate(12)
@@ -207,7 +209,7 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
                     'receipt' => $payment->receipt,
                     'paid_amount' => round((float) $payment->paid_amount, 2),
                     'allocations' => $payment->allocations
-                        ->map(static fn ($allocation): array => [
+                        ->map(static fn (InsuranceClaimAllocation $allocation): array => [
                             'id' => $allocation->id,
                             'claim_reference' => $allocation->claim?->claim_reference,
                             'allocated_amount' => round((float) $allocation->allocated_amount, 2),
