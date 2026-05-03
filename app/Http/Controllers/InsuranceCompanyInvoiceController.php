@@ -125,21 +125,22 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
     {
         $this->activeBranchWorkspace->authorizeModel($invoice);
 
-        $invoice->load([
-            'insuranceCompany:id,name',
-            'claims' => static fn (HasMany $query): HasMany => $query
-                ->select('id', 'tenant_id', 'facility_branch_id', 'visit_billing_id', 'patient_visit_id', 'insurance_company_id', 'insurance_package_id', 'insurance_company_invoice_id', 'claim_reference', 'claimed_amount', 'approved_amount', 'rejected_amount', 'copay_amount', 'paid_amount', 'status', 'invoiced_at', 'paid_at')
-                ->with([
-                    'visit' => static fn (BelongsTo $query): BelongsTo => $query
-                        ->select('id', 'patient_id', 'visit_number')
-                        ->with('patient:id,patient_number,first_name,last_name'),
-                ])
-                ->orderBy('claim_reference'),
-            'payments' => static fn (HasMany $query): HasMany => $query
-                ->select('id', 'tenant_id', 'facility_branch_id', 'insurance_company_invoice_id', 'payment_date', 'receipt', 'paid_amount')
-                ->with(['allocations.claim:id,claim_reference'])
-                ->latest('payment_date'),
-        ]);
+        $invoice->loadCount(['claims'])
+            ->load([
+                'insuranceCompany:id,name',
+                'claims' => static fn (HasMany $query): HasMany => $query
+                    ->select('id', 'tenant_id', 'facility_branch_id', 'visit_billing_id', 'patient_visit_id', 'insurance_company_id', 'insurance_package_id', 'insurance_company_invoice_id', 'claim_reference', 'claimed_amount', 'approved_amount', 'rejected_amount', 'copay_amount', 'paid_amount', 'status', 'invoiced_at', 'paid_at')
+                    ->with([
+                        'visit' => static fn (BelongsTo $query): BelongsTo => $query
+                            ->select('id', 'patient_id', 'visit_number')
+                            ->with('patient:id,patient_number,first_name,last_name'),
+                    ])
+                    ->orderBy('claim_reference'),
+                'payments' => static fn (HasMany $query): HasMany => $query
+                    ->select('id', 'tenant_id', 'facility_branch_id', 'insurance_company_invoice_id', 'payment_date', 'receipt', 'paid_amount')
+                    ->with(['allocations.claim:id,claim_reference'])
+                    ->latest('payment_date'),
+            ]);
 
         return Inertia::render('finance/insurance-invoices/show', [
             'invoice' => $this->serializeInvoiceDetail($invoice),
@@ -186,7 +187,7 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
             'paid_amount' => round((float) $invoice->paid_amount, 2),
             'balance_amount' => round((float) $invoice->bill_amount - (float) $invoice->paid_amount, 2),
             'status' => $this->backedEnumValue($invoice->status, $invoice->getAttribute('status')),
-            'claims_count' => (int) $invoice->getAttribute('claims_count'),
+            'claims_count' => $invoice->claims_count,
             'created_at' => $invoice->created_at?->toISOString(),
         ];
     }

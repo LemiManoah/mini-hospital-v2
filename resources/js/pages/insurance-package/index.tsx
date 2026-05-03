@@ -139,6 +139,22 @@ export default function InsurancePackageIndex({
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             {hasPermission(
+                                                'insurance_packages.view',
+                                            ) ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                    className="h-8 cursor-pointer border-zinc-200 px-3 text-xs shadow-sm hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
+                                                >
+                                                    <Link
+                                                        href={`/insurance-packages/${insurancePackage.id}`}
+                                                    >
+                                                        Price List
+                                                    </Link>
+                                                </Button>
+                                            ) : null}
+                                            {hasPermission(
                                                 'insurance_packages.update',
                                             ) ? (
                                                 <Button

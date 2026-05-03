@@ -11,6 +11,33 @@ export interface InsurancePackage {
     insurance_company?: Pick<InsuranceCompany, 'id' | 'name'>;
 }
 
+export type BillableItemType =
+    | 'service'
+    | 'drug'
+    | 'test'
+    | 'imaging'
+    | 'procedure'
+    | 'bed_day'
+    | 'other';
+
+export interface InsurancePackagePrice {
+    id: string;
+    facility_branch_id: string;
+    billable_type: BillableItemType;
+    billable_id: string;
+    billable_name: string;
+    price: string;
+    effective_from: string | null;
+    effective_to: string | null;
+    status: 'active' | 'inactive';
+    branch: { id: string; name: string } | null;
+}
+
+export interface BillableItemOption {
+    value: string;
+    label: string;
+}
+
 export interface InsurancePackageIndexPageProps {
     insurancePackages:
         | {
@@ -38,4 +65,15 @@ export interface InsurancePackageCreatePageProps {
 
 export interface InsurancePackageEditPageProps extends InsurancePackageCreatePageProps {
     insurancePackage: InsurancePackage;
+}
+
+export interface InsurancePackageShowPageProps {
+    insurancePackage: InsurancePackage;
+    prices: InsurancePackagePrice[];
+    billableItems: {
+        service: BillableItemOption[];
+        drug: BillableItemOption[];
+        test: BillableItemOption[];
+    };
+    branches: BillableItemOption[];
 }

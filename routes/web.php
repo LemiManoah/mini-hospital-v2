@@ -37,6 +37,7 @@ use App\Http\Controllers\GoodsReceiptController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\InsuranceCompanyInvoiceController;
 use App\Http\Controllers\InsurancePackageController;
+use App\Http\Controllers\InsurancePackagePriceController;
 use App\Http\Controllers\InventoryDashboardController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\InventoryLocationController;
@@ -222,6 +223,10 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::resource('clinics', ClinicController::class)->except(['show']);
     Route::resource('insurance-companies', InsuranceCompanyController::class)->except(['show']);
     Route::resource('insurance-packages', InsurancePackageController::class)->except(['show']);
+    Route::get('insurance-packages/{insurance_package}', [InsurancePackageController::class, 'show'])->name('insurance-packages.show');
+    Route::post('insurance-packages/{insurance_package}/prices', [InsurancePackagePriceController::class, 'store'])->name('insurance-packages.prices.store');
+    Route::patch('insurance-packages/{insurance_package}/prices/{price}', [InsurancePackagePriceController::class, 'update'])->name('insurance-packages.prices.update');
+    Route::delete('insurance-packages/{insurance_package}/prices/{price}', [InsurancePackagePriceController::class, 'destroy'])->name('insurance-packages.prices.destroy');
     Route::resource('units', UnitController::class)->except(['show']);
     Route::get('patients/returning', [PatientController::class, 'returning'])->name('patients.returning');
     Route::get('visits', [PatientVisitController::class, 'index'])->name('visits.index');
