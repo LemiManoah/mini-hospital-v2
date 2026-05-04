@@ -50,7 +50,6 @@ final class Department extends Model
             ->useLogName('administration')
             ->logOnly(['department_code', 'department_name', 'is_clinical', 'is_active'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'department.'.$eventName);
     }
 

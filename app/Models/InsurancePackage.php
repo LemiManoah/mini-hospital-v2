@@ -68,7 +68,6 @@ final class InsurancePackage extends Model
             ->useLogName('administration')
             ->logOnly(['insurance_company_id', 'name', 'status'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'insurance_package.'.$eventName);
     }
 

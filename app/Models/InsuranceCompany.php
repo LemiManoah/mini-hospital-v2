@@ -75,7 +75,6 @@ final class InsuranceCompany extends Model
             ->useLogName('administration')
             ->logOnly(['name', 'email', 'main_contact', 'other_contact', 'status'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'insurance_company.'.$eventName);
     }
 

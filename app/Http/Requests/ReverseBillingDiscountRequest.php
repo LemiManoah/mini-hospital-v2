@@ -25,6 +25,8 @@ final class ReverseBillingDiscountRequest extends FormRequest
 
     public function reversalReason(): string
     {
-        return (string) $this->validated('reversal_reason');
+        $reason = $this->validated('reversal_reason');
+
+        return is_string($reason) ? $reason : '';
     }
 }

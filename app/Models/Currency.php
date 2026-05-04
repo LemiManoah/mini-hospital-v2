@@ -72,7 +72,6 @@ final class Currency extends Model
             ->useLogName('administration')
             ->logOnly(['code', 'name', 'symbol', 'decimal_places', 'symbol_position', 'modifiable'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'currency.'.$eventName);
     }
 

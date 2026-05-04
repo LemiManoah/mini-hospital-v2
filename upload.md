@@ -52,8 +52,18 @@ Accepted enum values currently exposed in the UI:
 - Invalid rows are skipped and reported back to the user instead of crashing the whole import.
 - The frontend uses the generated Wayfinder controller action for upload and template download.
 - Feature tests cover rendering, permissions, template download, successful import, validation failures, duplicate phone numbers, missing file validation, and displaying import results.
+- Patient and visit number generation now uses the active branch code prefix, so `QMC-MAIN` generates `QMC-PAT-*` and `QMC-VIS-*`.
+- Data upload now also supports separate inventory catalog imports for drugs and consumables.
 
 ## Corrections To Make First
+
+### 0. Use Branch Code For Patient Numbers
+
+Status: implemented.
+
+The `MBX-PAT-*` numbers came from using the branch name `Main Branch`: the previous generator used the initials `M` and `B`, then padded to three characters with `X`. Seeded Qroo patients were hardcoded as `QMC-PAT-*`, so they did not go through that branch-name generator.
+
+Patient and visit number generation now uses `branch_code` instead. For Qroo Medical Center's main branch, `QMC-MAIN` resolves to `QMC`, so new patients should continue from existing `QMC-PAT-*` records.
 
 ### 1. Require An Active Branch Before Importing
 
@@ -107,7 +117,7 @@ Recommended approach:
 2. Add a preview step before committing rows.
 3. Store an import audit record with uploaded filename, user, branch, imported count, skipped count, and timestamps.
 4. Add queue support for large imports.
-5. Add import pages for the other setup catalogs listed below.
+5. Add import pages for insurance price lists and the other setup catalogs listed below.
 
 ## Other Upload Areas To Build
 
@@ -161,31 +171,82 @@ Important checks:
 
 ### Inventory Items
 
-Useful for loading drugs, consumables, supplies, and pharmacy catalog items.
+Status: partially implemented.
 
-Suggested columns:
+Drug and consumable catalog uploads are now split into separate templates and import endpoints. This keeps drug-only validation such as `category`, `strength`, and `dosage_form` away from consumable items.
+
+Drug columns:
 
 ```text
-item_code
-name
 generic_name
 brand_name
-item_type
-dosage_form
-strength
 category
+strength
+dosage_form
 unit
+minimum_stock_level
+reorder_level
+default_purchase_price
 default_selling_price
+manufacturer
+expires
 is_controlled
+schedule_class
+therapeutic_classes
+description
+is_active
+```
+
+Consumable columns:
+
+```text
+name
+unit
+minimum_stock_level
+reorder_level
+default_purchase_price
+default_selling_price
+manufacturer
+expires
+description
 is_active
 ```
 
 Important checks:
 
-- Item code must be unique per tenant.
-- Item type, dosage form, category, and unit should use existing enums/lookups.
+- Drug duplicates are checked by `generic_name + strength + dosage_form` per tenant.
+- Consumable duplicates are checked by `name` per tenant.
+- Unit must resolve to an existing unit name or symbol.
 - Controlled items should require an explicit `true` or `false` value.
 - Do not create opening stock quantities in the catalog import. Stock balances should come from a separate opening stock import or goods receipt flow.
+
+### Insurance Price Lists
+
+Useful for loading negotiated service, drug, and lab prices for insurance packages. This should be its own upload flow because each row must resolve an insurance package plus a billable item.
+
+Suggested columns:
+
+```text
+insurance_company
+insurance_package
+branch
+billable_type
+item_code
+item_name
+negotiated_price
+effective_from
+effective_to
+status
+```
+
+Important checks:
+
+- Insurance company and package must belong to the current tenant.
+- Branch must resolve to an active branch.
+- `billable_type` should identify service, drug, lab test, or consultation tariff.
+- Prefer item code matching over name matching when possible.
+- Prevent overlapping effective date windows for the same package, branch, and billable item.
+- Do not silently update existing prices unless the import mode explicitly says update.
 
 ### Suppliers
 
@@ -286,13 +347,3 @@ Keep or add focused tests for:
 - Missing file, wrong file type, and oversized file are rejected.
 - Import result appears on the data upload page.
 - Failed rows can be downloaded as an error report once that feature is added.
-
-## CodeRabbit Status
-
-CodeRabbit could not be run from this local environment. The `coderabbit` command is not installed, and the installer command from the CodeRabbit workflow failed because `sh` is not available in this PowerShell session:
-
-```text
-sh : The term 'sh' is not recognized as the name of a cmdlet, function, script file, or operable program.
-```
-
-The review notes above are therefore based on local inspection of the patient upload implementation, not on CodeRabbit output.

@@ -12,11 +12,11 @@ final readonly class BranchScopedNumberGenerator
 {
     public function __construct(private TenantGeneralSettings $settings) {}
 
-    public function nextPatientNumber(?string $branchName, string $tenantId): string
+    public function nextPatientNumber(?string $branchIdentifier, string $tenantId): string
     {
         $rawPrefix = (string) ($this->settings->value($tenantId, 'patient_number_prefix') ?: 'PAT');
         $typePrefix = mb_strtoupper(mb_trim($rawPrefix)) ?: 'PAT';
-        $prefix = sprintf('%s-%s', $this->branchInitials($branchName, 'HSP'), $typePrefix);
+        $prefix = sprintf('%s-%s', $this->branchPrefix($branchIdentifier, 'HSP'), $typePrefix);
 
         $latestSequence = Patient::query()
             ->where('patient_number', 'like', sprintf('%s-%%', $prefix))
@@ -35,9 +35,9 @@ final readonly class BranchScopedNumberGenerator
         return sprintf('%s-%04d', $prefix, $latestSequence + 1);
     }
 
-    public function nextVisitNumber(?string $branchName): string
+    public function nextVisitNumber(?string $branchIdentifier): string
     {
-        $prefix = sprintf('%s-VIS', $this->branchInitials($branchName, 'HSP'));
+        $prefix = sprintf('%s-VIS', $this->branchPrefix($branchIdentifier, 'HSP'));
         $year = now()->format('Y');
 
         $latestSequence = PatientVisit::query()
@@ -66,14 +66,23 @@ final readonly class BranchScopedNumberGenerator
         return (int) ($matches[1] ?? 0);
     }
 
-    private function branchInitials(?string $branchName, string $fallback): string
+    private function branchPrefix(?string $branchIdentifier, string $fallback): string
     {
-        $name = mb_strtoupper(mb_trim((string) $branchName));
-        if ($name === '') {
+        $identifier = mb_strtoupper(mb_trim((string) $branchIdentifier));
+        if ($identifier === '') {
             return $fallback;
         }
 
-        $parts = preg_split('/\s+/', $name) ?: [];
+        $isLikelyCode = preg_match('/[-_]/', $identifier) === 1 || preg_match('/\s/', $identifier) !== 1;
+
+        $codeParts = preg_split('/[-_\s]+/', $identifier) ?: [];
+        $codePrefix = mb_trim((string) ($codeParts[0] ?? ''));
+
+        if ($isLikelyCode && mb_strlen($codePrefix) >= 2 && preg_match('/^[A-Z0-9]+$/', $codePrefix) === 1) {
+            return mb_str_pad(mb_substr($codePrefix, 0, 3), 3, 'X');
+        }
+
+        $parts = preg_split('/\s+/', $identifier) ?: [];
         $initials = '';
 
         foreach ($parts as $part) {

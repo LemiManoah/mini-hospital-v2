@@ -97,4 +97,52 @@ final class UpdateInsurancePackagePriceRequest extends FormRequest
             }
         });
     }
+
+    /**
+     * @return array{
+     *   facility_branch_id: string,
+     *   billable_type: string,
+     *   billable_id: string,
+     *   price: numeric-string,
+     *   effective_from: string,
+     *   effective_to?: string|null,
+     *   status: string
+     * }
+     */
+    public function priceData(): array
+    {
+        return [
+            'facility_branch_id' => $this->stringValue('facility_branch_id'),
+            'billable_type' => $this->stringValue('billable_type'),
+            'billable_id' => $this->stringValue('billable_id'),
+            'price' => $this->numericStringValue('price'),
+            'effective_from' => $this->stringValue('effective_from'),
+            'effective_to' => $this->nullableStringValue('effective_to'),
+            'status' => $this->stringValue('status'),
+        ];
+    }
+
+    private function stringValue(string $key): string
+    {
+        $value = $this->validated($key);
+
+        return is_string($value) ? $value : '';
+    }
+
+    /**
+     * @return numeric-string
+     */
+    private function numericStringValue(string $key): string
+    {
+        $value = $this->validated($key);
+
+        return is_numeric($value) ? (string) $value : '0';
+    }
+
+    private function nullableStringValue(string $key): ?string
+    {
+        $value = $this->validated($key);
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
 }

@@ -9,6 +9,7 @@ use Carbon\CarbonInterface;
 use Database\Factories\ReferralFacilityFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -41,6 +42,7 @@ final class ReferralFacility extends Model
     /** @use HasFactory<ReferralFacilityFactory> */
     use HasFactory;
 
+    use HasUuids;
     use SoftDeletes;
 
     /**
@@ -70,7 +72,6 @@ final class ReferralFacility extends Model
             ->useLogName('administration')
             ->logOnly(['name', 'facility_type', 'contact_person', 'phone', 'email', 'is_active'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'referral_facility.'.$eventName);
     }
 

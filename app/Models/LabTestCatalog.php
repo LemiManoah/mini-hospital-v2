@@ -97,7 +97,6 @@ final class LabTestCatalog extends Model
                 'is_active',
             ])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'lab_test_catalog.'.$eventName);
     }
 

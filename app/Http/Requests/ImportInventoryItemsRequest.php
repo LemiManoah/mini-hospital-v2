@@ -6,7 +6,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-final class ImportPatientsRequest extends FormRequest
+final class ImportInventoryItemsRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -19,13 +19,7 @@ final class ImportPatientsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => [
-                'required',
-                'file',
-                'extensions:csv,xlsx,xls',
-                'mimetypes:text/plain,text/csv,application/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'max:5120',
-            ],
+            'file' => ['required', 'file', 'mimes:csv,xlsx,xls', 'max:5120'],
         ];
     }
 
@@ -36,8 +30,7 @@ final class ImportPatientsRequest extends FormRequest
     {
         return [
             'file.required' => 'Please select a CSV or Excel file to upload.',
-            'file.extensions' => 'The file must be a CSV or Excel file (.csv, .xlsx, .xls).',
-            'file.mimetypes' => 'The file must be a CSV or Excel file (.csv, .xlsx, .xls).',
+            'file.mimes' => 'The file must be a CSV or Excel file (.csv, .xlsx, .xls).',
             'file.max' => 'The file must not exceed 5 MB.',
         ];
     }

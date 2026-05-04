@@ -66,7 +66,7 @@ final readonly class CheckInAppointment
                 'tenant_id' => $appointment->tenant_id,
                 'patient_id' => $appointment->patient_id,
                 'facility_branch_id' => $appointment->facility_branch_id ?? $activeBranch?->id,
-                'visit_number' => $this->numberGenerator->nextVisitNumber($activeBranch?->name),
+                'visit_number' => $this->numberGenerator->nextVisitNumber($activeBranch?->branch_code),
                 'visit_type' => $attributes['visit_type'] ?? VisitType::OPD_CONSULTATION->value,
                 'status' => VisitStatus::REGISTERED,
                 'clinic_id' => $appointment->clinic_id,

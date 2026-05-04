@@ -23,6 +23,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use Throwable;
 
 final class PatientImport implements SkipsOnFailure, ToModel, WithChunkReading, WithHeadingRow, WithValidation
 {
@@ -37,32 +38,35 @@ final class PatientImport implements SkipsOnFailure, ToModel, WithChunkReading, 
 
     public function __construct(
         private readonly string $tenantId,
-        private readonly string $branchName,
+        private readonly string $branchCode,
         private readonly string $userId,
         private readonly BranchScopedNumberGenerator $numberGenerator,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $row
+     */
     public function model(array $row): Patient
     {
         $this->importedCount++;
 
         return new Patient([
             'tenant_id' => $this->tenantId,
-            'patient_number' => $this->numberGenerator->nextPatientNumber($this->branchName, $this->tenantId),
+            'patient_number' => $this->numberGenerator->nextPatientNumber($this->branchCode, $this->tenantId),
             'first_name' => $this->str($row['first_name'] ?? null),
             'last_name' => $this->str($row['last_name'] ?? null),
             'middle_name' => $this->str($row['middle_name'] ?? null),
             'date_of_birth' => $this->date($row['date_of_birth'] ?? null),
             'gender' => $this->lower($row['gender'] ?? null),
-            'phone_number' => $this->str($row['phone_number'] ?? null),
-            'alternative_phone' => $this->str($row['alternative_phone'] ?? null),
+            'phone_number' => $this->phone($row['phone_number'] ?? null),
+            'alternative_phone' => $this->phone($row['alternative_phone'] ?? null),
             'email' => $this->lower($row['email'] ?? null),
             'marital_status' => $this->lower($row['marital_status'] ?? null),
             'blood_group' => $this->str($row['blood_group'] ?? null),
             'occupation' => $this->str($row['occupation'] ?? null),
             'religion' => $this->lower($row['religion'] ?? null),
             'next_of_kin_name' => $this->str($row['next_of_kin_name'] ?? null),
-            'next_of_kin_phone' => $this->str($row['next_of_kin_phone'] ?? null),
+            'next_of_kin_phone' => $this->phone($row['next_of_kin_phone'] ?? null),
             'next_of_kin_relationship' => $this->lower($row['next_of_kin_relationship'] ?? null),
             'created_by' => $this->userId,
             'updated_by' => $this->userId,
@@ -151,29 +155,29 @@ final class PatientImport implements SkipsOnFailure, ToModel, WithChunkReading, 
             'middle_name' => $this->str($row['middle_name'] ?? null),
             'date_of_birth' => $this->date($row['date_of_birth'] ?? null),
             'gender' => $this->lower($row['gender'] ?? null),
-            'phone_number' => $this->str($row['phone_number'] ?? null),
-            'alternative_phone' => $this->str($row['alternative_phone'] ?? null),
+            'phone_number' => $this->phone($row['phone_number'] ?? null),
+            'alternative_phone' => $this->phone($row['alternative_phone'] ?? null),
             'email' => $this->lower($row['email'] ?? null),
             'marital_status' => $this->lower($row['marital_status'] ?? null),
             'blood_group' => $this->str($row['blood_group'] ?? null),
             'occupation' => $this->str($row['occupation'] ?? null),
             'religion' => $this->lower($row['religion'] ?? null),
             'next_of_kin_name' => $this->str($row['next_of_kin_name'] ?? null),
-            'next_of_kin_phone' => $this->str($row['next_of_kin_phone'] ?? null),
+            'next_of_kin_phone' => $this->phone($row['next_of_kin_phone'] ?? null),
             'next_of_kin_relationship' => $this->lower($row['next_of_kin_relationship'] ?? null),
         ];
     }
 
     private function str(mixed $value): ?string
     {
-        $trimmed = mb_trim((string) ($value ?? ''));
+        $trimmed = is_scalar($value) ? mb_trim((string) $value) : '';
 
         return $trimmed !== '' ? $trimmed : null;
     }
 
     private function lower(mixed $value): ?string
     {
-        $trimmed = mb_strtolower(mb_trim((string) ($value ?? '')));
+        $trimmed = is_scalar($value) ? mb_strtolower(mb_trim((string) $value)) : '';
 
         return $trimmed !== '' ? $trimmed : null;
     }
@@ -192,13 +196,38 @@ final class PatientImport implements SkipsOnFailure, ToModel, WithChunkReading, 
             return CarbonImmutable::instance(ExcelDate::excelToDateTimeObject((float) $value))->format('Y-m-d');
         }
 
-        return $this->str($value);
+        $date = $this->str($value);
+
+        if ($date === null) {
+            return null;
+        }
+
+        try {
+            return CarbonImmutable::parse($date)->format('Y-m-d');
+        } catch (Throwable) {
+            return $date;
+        }
     }
 
     private function normalizedPhoneNumber(mixed $value): ?string
     {
-        $phoneNumber = $this->str($value);
+        $phoneNumber = $this->phone($value);
 
         return $phoneNumber !== null ? mb_strtolower($phoneNumber) : null;
+    }
+
+    private function phone(mixed $value): ?string
+    {
+        $phoneNumber = $this->str($value);
+
+        if ($phoneNumber === null || str_starts_with($phoneNumber, '+')) {
+            return $phoneNumber;
+        }
+
+        if (preg_match('/^[1-9]\d{8,14}$/', $phoneNumber) === 1) {
+            return '+'.$phoneNumber;
+        }
+
+        return $phoneNumber;
     }
 }

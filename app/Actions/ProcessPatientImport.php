@@ -25,30 +25,37 @@ final readonly class ProcessPatientImport
     public function handle(
         UploadedFile $file,
         string $tenantId,
-        string $branchName,
+        string $branchCode,
         string $userId,
     ): array {
         $import = new PatientImport(
             tenantId: $tenantId,
-            branchName: $branchName,
+            branchCode: $branchCode,
             userId: $userId,
             numberGenerator: $this->numberGenerator,
         );
 
         Excel::import($import, $file);
 
+        /** @var Collection<int, Failure> $failures */
         $failures = $import->failures();
 
         $errors = $failures
-            ->groupBy(fn (Failure $f): int => $f->row())
+            ->groupBy(static fn (Failure $failure): int => $failure->row())
             ->map(function (Collection $group, mixed $row): array {
+                /** @var Collection<int, Failure> $group */
                 /** @var Failure|null $failure */
                 $failure = $group->first();
+                $messages = $group
+                    ->flatMap(static fn (Failure $failure): array => $failure->errors())
+                    ->filter(static fn (mixed $message): bool => is_string($message))
+                    ->values()
+                    ->all();
 
                 return [
-                    'row' => (int) $row,
-                    'name' => $this->failureName($failure, (int) $row),
-                    'messages' => $group->flatMap(fn (Failure $f): array => $f->errors())->values()->all(),
+                    'row' => is_int($row) ? $row : 0,
+                    'name' => $this->failureName($failure, is_int($row) ? $row : 0),
+                    'messages' => array_values($messages),
                 ];
             })
             ->values()
@@ -56,8 +63,8 @@ final readonly class ProcessPatientImport
 
         return [
             'imported' => $import->getImportedCount(),
-            'skipped' => $failures->unique(fn (Failure $f): int => $f->row())->count(),
-            'errors' => $errors,
+            'skipped' => $failures->unique(static fn (Failure $failure): int => $failure->row())->count(),
+            'errors' => array_values($errors),
         ];
     }
 
@@ -70,10 +77,10 @@ final readonly class ProcessPatientImport
         $values = $failure->values();
         $name = mb_trim(sprintf(
             '%s %s',
-            (string) ($values['first_name'] ?? ''),
-            (string) ($values['last_name'] ?? ''),
+            $this->stringValue($values, 'first_name'),
+            $this->stringValue($values, 'last_name'),
         ));
-        $phoneNumber = mb_trim((string) ($values['phone_number'] ?? ''));
+        $phoneNumber = mb_trim($this->stringValue($values, 'phone_number'));
 
         if ($name !== '' && $phoneNumber !== '') {
             return sprintf('%s (%s)', $name, $phoneNumber);
@@ -88,5 +95,15 @@ final readonly class ProcessPatientImport
         }
 
         return 'Row '.$row;
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $values
+     */
+    private function stringValue(array $values, string $key): string
+    {
+        $value = $values[$key] ?? '';
+
+        return is_scalar($value) ? (string) $value : '';
     }
 }

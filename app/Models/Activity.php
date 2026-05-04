@@ -44,6 +44,19 @@ final class Activity extends SpatieActivity
         return $this->belongsTo(Staff::class);
     }
 
+    protected static function booted(): void
+    {
+        self::saving(function (self $activity): void {
+            if (
+                $activity->log_name === 'administration'
+                && in_array($activity->event, ['created', 'updated', 'deleted'], true)
+                && str_contains($activity->description, '.')
+            ) {
+                $activity->event = $activity->description;
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

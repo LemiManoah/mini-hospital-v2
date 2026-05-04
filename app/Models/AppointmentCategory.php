@@ -51,7 +51,6 @@ final class AppointmentCategory extends Model
             ->useLogName('administration')
             ->logOnly(['name', 'clinic_id', 'is_active'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'appointment_category.'.$eventName);
     }
 

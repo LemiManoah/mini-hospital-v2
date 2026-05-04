@@ -12,6 +12,7 @@ use App\Http\Requests\StoreInsuranceCompanyInvoiceBatchRequest;
 use App\Http\Requests\StoreInsuranceCompanyInvoicePaymentRequest;
 use App\Models\FacilityBranch;
 use App\Models\InsuranceClaimAllocation;
+use App\Models\InsuranceCompany;
 use App\Models\InsuranceCompanyInvoice;
 use App\Models\InsuranceCompanyInvoicePayment;
 use App\Models\InsuredVisitClaim;
@@ -19,7 +20,6 @@ use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
 use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -79,12 +79,16 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
             ->groupBy('insurance_company_id')
             ->orderByDesc('claim_total')
             ->get()
-            ->map(static fn (InsuredVisitClaim $claim): array => [
-                'insurance_company_id' => $claim->insurance_company_id,
-                'insurance_company_name' => $claim->insuranceCompany?->name ?? 'Unknown insurer',
-                'claims_count' => (int) $claim->getAttribute('claims_count'),
-                'claim_total' => round((float) $claim->getAttribute('claim_total'), 2),
-            ])
+            ->map(static function (InsuredVisitClaim $claim): array {
+                $insuranceCompany = $claim->getRelation('insuranceCompany');
+
+                return [
+                    'insurance_company_id' => $claim->insurance_company_id,
+                    'insurance_company_name' => $insuranceCompany instanceof InsuranceCompany ? $insuranceCompany->name : 'Unknown insurer',
+                    'claims_count' => self::intAttribute($claim, 'claims_count'),
+                    'claim_total' => self::floatAttribute($claim, 'claim_total'),
+                ];
+            })
             ->values()
             ->all();
 
@@ -130,14 +134,11 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
         $invoice->loadCount(['claims'])
             ->load([
                 'insuranceCompany:id,name',
-                'claims' => static fn (HasMany $query): HasMany => $query
-                    ->select('id', 'tenant_id', 'facility_branch_id', 'visit_billing_id', 'patient_visit_id', 'insurance_company_id', 'insurance_package_id', 'insurance_company_invoice_id', 'claim_reference', 'claimed_amount', 'approved_amount', 'rejected_amount', 'copay_amount', 'paid_amount', 'status', 'invoiced_at', 'paid_at')
-                    ->with([
-                        'visit' => static fn (BelongsTo $query): BelongsTo => $query
-                            ->select('id', 'patient_id', 'visit_number')
-                            ->with('patient:id,patient_number,first_name,last_name'),
-                    ])
-                    ->orderBy('claim_reference'),
+                'claims:id,tenant_id,facility_branch_id,visit_billing_id,patient_visit_id,insurance_company_id,insurance_package_id,insurance_company_invoice_id,claim_reference,claimed_amount,approved_amount,rejected_amount,copay_amount,paid_amount,status,invoiced_at,paid_at',
+                'claims.visit:id,patient_id,visit_number',
+                'claims.visit.patient:id,patient_number,first_name,last_name',
+            ])
+            ->load([
                 'payments' => static fn (HasMany $query): HasMany => $query
                     ->select('id', 'tenant_id', 'facility_branch_id', 'insurance_company_invoice_id', 'payment_date', 'receipt', 'paid_amount')
                     ->with(['allocations.claim:id,claim_reference'])
@@ -177,6 +178,23 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
             ->with('success', 'Insurer payment recorded successfully.');
     }
 
+    private static function floatAttribute(InsuredVisitClaim $claim, string $attribute): float
+    {
+        $value = $claim->getAttribute($attribute);
+
+        return round(is_numeric($value) ? (float) $value : 0.0, 2);
+    }
+
+    private static function intAttribute(InsuredVisitClaim $claim, string $attribute): int
+    {
+        $value = $claim->getAttribute($attribute);
+
+        return is_numeric($value) ? (int) $value : 0;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     private function serializeInvoiceRow(InsuranceCompanyInvoice $invoice): array
     {
         return [
@@ -194,6 +212,9 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function serializeInvoiceDetail(InsuranceCompanyInvoice $invoice): array
     {
         return [
@@ -205,7 +226,7 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
             'payments' => $invoice->payments
                 ->map(fn (InsuranceCompanyInvoicePayment $payment): array => [
                     'id' => $payment->id,
-                    'payment_date' => $payment->payment_date?->toDateString(),
+                    'payment_date' => $payment->payment_date->toDateString(),
                     'receipt' => $payment->receipt,
                     'paid_amount' => round((float) $payment->paid_amount, 2),
                     'allocations' => $payment->allocations
@@ -222,6 +243,9 @@ final readonly class InsuranceCompanyInvoiceController implements HasMiddleware
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function serializeClaim(InsuredVisitClaim $claim): array
     {
         $payableAmount = $this->claimPayableAmount($claim);

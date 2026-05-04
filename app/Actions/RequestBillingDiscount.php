@@ -78,7 +78,7 @@ final readonly class RequestBillingDiscount
                     'visit_billing_id' => $billing->id,
                     'patient_visit_id' => $billing->patient_visit_id,
                     'amount' => $amount,
-                    'status' => $discount->status->value,
+                    'status' => BillingDiscountStatus::PENDING->value,
                 ],
             );
 

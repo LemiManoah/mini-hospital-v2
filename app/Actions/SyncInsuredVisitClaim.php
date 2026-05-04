@@ -74,14 +74,14 @@ final readonly class SyncInsuredVisitClaim
                 'patient_visit_id' => $billing->patient_visit_id,
                 'insurance_company_id' => $billing->insurance_company_id,
                 'insurance_package_id' => $billing->insurance_package_id,
-                'claim_reference' => $claim?->claim_reference ?? $this->generateClaimReference(),
+                'claim_reference' => $claim instanceof InsuredVisitClaim ? $claim->claim_reference : $this->generateClaimReference(),
                 'claimed_amount' => $claimAmount,
-                'approved_amount' => $claim?->approved_amount ?? 0,
+                'approved_amount' => $claim instanceof InsuredVisitClaim ? $claim->approved_amount : 0,
                 'rejected_amount' => 0,
                 'copay_amount' => 0,
                 'status' => $targetStatus,
                 'updated_by' => $userId,
-                'created_by' => $claim?->created_by ?? $userId,
+                'created_by' => $claim instanceof InsuredVisitClaim ? $claim->created_by : $userId,
             ],
         );
 

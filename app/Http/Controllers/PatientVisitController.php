@@ -237,6 +237,7 @@ final readonly class PatientVisitController implements HasMiddleware
             'audit_activity' => $this->listAuditTimeline->handle(
                 subjects: [
                     $visit,
+                    $visit->patient,
                     $triage,
                     ...$vitalSigns,
                     $visit->consultation,
@@ -355,7 +356,7 @@ final readonly class PatientVisitController implements HasMiddleware
                 'tenant_id' => $patient->tenant_id,
                 'patient_id' => $patient->id,
                 'facility_branch_id' => $activeBranch?->id,
-                'visit_number' => $numberGenerator->nextVisitNumber($activeBranch?->name),
+                'visit_number' => $numberGenerator->nextVisitNumber($activeBranch?->branch_code),
                 'visit_type' => $validated['visit_type'],
                 'status' => VisitStatus::REGISTERED,
                 'clinic_id' => $validated['clinic_id'] ?? null,

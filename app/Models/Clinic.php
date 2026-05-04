@@ -58,7 +58,6 @@ final class Clinic extends Model
             ->useLogName('administration')
             ->logOnly(['clinic_code', 'clinic_name', 'department_id', 'status'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'clinic.'.$eventName);
     }
 

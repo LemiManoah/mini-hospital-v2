@@ -27,7 +27,9 @@ final class StoreInsuranceCompanyInvoiceBatchRequest extends FormRequest
 
     public function insuranceCompanyId(): string
     {
-        return (string) $this->validated('insurance_company_id');
+        $value = $this->validated('insurance_company_id');
+
+        return is_string($value) ? $value : '';
     }
 
     public function startDate(): ?string

@@ -24,6 +24,7 @@ function createPatientRegistrationContext(): array
         'tenant_id' => $tenantContext['tenant_id'],
         'currency_id' => $tenantContext['currency_id'],
         'name' => 'City General Hospital',
+        'branch_code' => 'CGH-MAIN',
         'status' => GeneralStatus::ACTIVE,
     ]);
 
@@ -118,6 +119,62 @@ it('registers a patient and opens the new visit page using the seeded numbering 
             ->component('visit/show')
             ->has('audit_activity', 2)
             ->where('audit_activity.0.title', 'Patient visit started.'));
+});
+
+it('continues qroo patient numbering from the branch code during registration', function (): void {
+    $tenantContext = seedTenantContext();
+
+    $branch = FacilityBranch::factory()->create([
+        'tenant_id' => $tenantContext['tenant_id'],
+        'currency_id' => $tenantContext['currency_id'],
+        'name' => 'Main Branch',
+        'branch_code' => 'QMC-MAIN',
+        'status' => GeneralStatus::ACTIVE,
+    ]);
+
+    $user = User::factory()->create([
+        'tenant_id' => $tenantContext['tenant_id'],
+        'email_verified_at' => now(),
+    ]);
+
+    $user->givePermissionTo(['patients.create', 'visits.view']);
+
+    Patient::query()->create([
+        'tenant_id' => $tenantContext['tenant_id'],
+        'patient_number' => 'QMC-PAT-1047',
+        'first_name' => 'Existing',
+        'last_name' => 'Patient',
+        'gender' => 'female',
+        'phone_number' => '+256700000001',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('patients.store'), [
+            'first_name' => 'Calvin',
+            'last_name' => 'Rush',
+            'age_input_mode' => 'dob',
+            'date_of_birth' => '1985-08-31',
+            'gender' => 'male',
+            'phone_number' => '+256700000010',
+            'visit_type' => VisitType::OPD_CONSULTATION->value,
+            'billing_type' => 'cash',
+            'redirect_to' => 'visit',
+        ]);
+
+    $newPatient = Patient::query()
+        ->where('first_name', 'Calvin')
+        ->where('last_name', 'Rush')
+        ->firstOrFail();
+
+    $newVisit = PatientVisit::query()
+        ->where('patient_id', $newPatient->id)
+        ->firstOrFail();
+
+    expect($newPatient->patient_number)->toBe('QMC-PAT-1048');
+    expect($newVisit->visit_number)->toBe('QMC-VIS-2026001');
 });
 
 it('rejects invalid dropdown values during patient registration', function (): void {

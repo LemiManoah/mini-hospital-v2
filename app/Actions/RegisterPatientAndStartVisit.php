@@ -56,7 +56,7 @@ final readonly class RegisterPatientAndStartVisit
                 'country_id' => $data->countryId,
                 'blood_group' => $data->bloodGroup,
                 'patient_number' => $this->numberGenerator->nextPatientNumber(
-                    $activeBranch?->name,
+                    $activeBranch?->branch_code,
                     is_string($authenticatedUser?->tenant_id) ? $authenticatedUser->tenant_id : '',
                 ),
                 'created_by' => $userId,
@@ -67,7 +67,7 @@ final readonly class RegisterPatientAndStartVisit
                 'tenant_id' => $patient->tenant_id,
                 'patient_id' => $patient->id,
                 'facility_branch_id' => $activeBranch?->id,
-                'visit_number' => $this->numberGenerator->nextVisitNumber($activeBranch?->name),
+                'visit_number' => $this->numberGenerator->nextVisitNumber($activeBranch?->branch_code),
                 'visit_type' => $data->visitType,
                 'status' => VisitStatus::REGISTERED,
                 'clinic_id' => $data->clinicId,

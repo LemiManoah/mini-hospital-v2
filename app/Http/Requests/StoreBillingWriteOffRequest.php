@@ -27,12 +27,16 @@ final class StoreBillingWriteOffRequest extends FormRequest
 
     public function amount(): float
     {
-        return round((float) $this->validated('amount'), 2);
+        $amount = $this->validated('amount');
+
+        return round(is_numeric($amount) ? (float) $amount : 0.0, 2);
     }
 
     public function reason(): string
     {
-        return (string) $this->validated('reason');
+        $reason = $this->validated('reason');
+
+        return is_string($reason) ? $reason : '';
     }
 
     public function notes(): ?string

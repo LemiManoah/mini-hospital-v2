@@ -13,6 +13,7 @@ use App\Models\VisitBilling;
 use App\Support\ActiveBranchWorkspace;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 final readonly class GenerateFinanceBillingSummary
@@ -85,9 +86,30 @@ final readonly class GenerateFinanceBillingSummary
         ];
     }
 
+    private static function floatAttribute(Model $model, string $attribute): float
+    {
+        $value = $model->getAttribute($attribute);
+
+        return round(is_numeric($value) ? (float) $value : 0.0, 2);
+    }
+
+    private static function intAttribute(Model $model, string $attribute): int
+    {
+        $value = $model->getAttribute($attribute);
+
+        return is_numeric($value) ? (int) $value : 0;
+    }
+
+    /**
+     * @template TModel of Model
+     *
+     * @param  Builder<TModel>  $query
+     */
     private function sumClone(Builder $query, string $column): float
     {
-        return round((float) (clone $query)->sum($column), 2);
+        $sum = (clone $query)->sum($column);
+
+        return round((float) $sum, 2);
     }
 
     /**
@@ -95,7 +117,11 @@ final readonly class GenerateFinanceBillingSummary
      */
     private function sumDepositHeld(Builder $query): float
     {
-        return round((float) (clone $query)->selectRaw('COALESCE(SUM(amount - applied_amount - refunded_amount), 0) as held_total')->value('held_total'), 2);
+        $heldTotal = (clone $query)
+            ->selectRaw('COALESCE(SUM(amount - applied_amount - refunded_amount), 0) as held_total')
+            ->value('held_total');
+
+        return round(is_numeric($heldTotal) ? (float) $heldTotal : 0.0, 2);
     }
 
     /**
@@ -104,7 +130,7 @@ final readonly class GenerateFinanceBillingSummary
      */
     private function paymentMethodBreakdown(Builder $query): array
     {
-        return (clone $query)
+        $breakdown = (clone $query)
             ->where('is_refund', false)
             ->select('payment_method', DB::raw('SUM(amount) as amount'), DB::raw('COUNT(*) as aggregate_count'))
             ->groupBy('payment_method')
@@ -112,11 +138,13 @@ final readonly class GenerateFinanceBillingSummary
             ->get()
             ->map(static fn (Payment $payment): array => [
                 'payment_method' => (string) ($payment->payment_method ?? 'unknown'),
-                'amount' => round((float) $payment->getAttribute('amount'), 2),
-                'count' => (int) $payment->getAttribute('aggregate_count'),
+                'amount' => self::floatAttribute($payment, 'amount'),
+                'count' => self::intAttribute($payment, 'aggregate_count'),
             ])
             ->values()
             ->all();
+
+        return array_values($breakdown);
     }
 
     /**
@@ -125,7 +153,7 @@ final readonly class GenerateFinanceBillingSummary
      */
     private function depositStatusBreakdown(Builder $query): array
     {
-        return (clone $query)
+        $breakdown = (clone $query)
             ->select(
                 'status',
                 DB::raw('SUM(amount) as amount'),
@@ -138,12 +166,14 @@ final readonly class GenerateFinanceBillingSummary
             ->get()
             ->map(static fn (BillingDeposit $deposit): array => [
                 'status' => is_string($deposit->getRawOriginal('status')) ? $deposit->getRawOriginal('status') : 'unknown',
-                'amount' => round((float) $deposit->getAttribute('amount'), 2),
-                'applied_amount' => round((float) $deposit->getAttribute('applied_amount'), 2),
-                'held_amount' => round((float) $deposit->getAttribute('held_amount'), 2),
-                'count' => (int) $deposit->getAttribute('aggregate_count'),
+                'amount' => self::floatAttribute($deposit, 'amount'),
+                'applied_amount' => self::floatAttribute($deposit, 'applied_amount'),
+                'held_amount' => self::floatAttribute($deposit, 'held_amount'),
+                'count' => self::intAttribute($deposit, 'aggregate_count'),
             ])
             ->values()
             ->all();
+
+        return array_values($breakdown);
     }
 }

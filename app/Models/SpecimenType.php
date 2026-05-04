@@ -54,7 +54,6 @@ final class SpecimenType extends Model
             ->useLogName('administration')
             ->logOnly(['name', 'description', 'is_active'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'specimen_type.'.$eventName);
     }
 

@@ -78,7 +78,7 @@ final readonly class RequestBillingWriteOff
                     'visit_billing_id' => $billing->id,
                     'patient_visit_id' => $billing->patient_visit_id,
                     'amount' => $amount,
-                    'status' => $writeOff->status->value,
+                    'status' => BillingWriteOffStatus::PENDING->value,
                 ],
             );
 

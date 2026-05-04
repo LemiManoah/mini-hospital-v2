@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Actions\ApplyBillingDeposit;
 use App\Actions\EnsureBranchPaymentMethods;
 use App\Actions\RecordBillingDeposit;
-use App\Enums\BillingDepositStatus;
 use App\Http\Requests\ApplyBillingDepositRequest;
 use App\Http\Requests\StoreBillingDepositRequest;
 use App\Models\BillingDeposit;
@@ -128,8 +127,8 @@ final readonly class BillingDepositController implements HasMiddleware
         $action->handle(
             patient: $patient,
             branchId: $branch->id,
-            amount: round((float) $request->validated('amount'), 2),
-            paymentMethodId: (string) $request->validated('payment_method_id'),
+            amount: round($this->validatedFloat($request, 'amount'), 2),
+            paymentMethodId: $this->validatedString($request, 'payment_method_id'),
             visit: $visit,
             referenceNumber: $request->string('reference_number')->toString() ?: null,
             notes: $request->string('notes')->toString() ?: null,
@@ -159,13 +158,16 @@ final readonly class BillingDepositController implements HasMiddleware
         $action->handle(
             deposit: $deposit,
             billing: $visit->billing,
-            amount: round((float) $request->validated('amount'), 2),
+            amount: round($this->validatedFloat($request, 'amount'), 2),
             notes: $request->string('notes')->toString() ?: null,
         );
 
         return to_route('finance.deposits.index')->with('success', 'Deposit applied successfully.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function serializeDeposit(BillingDeposit $deposit): array
     {
         $availableAmount = round((float) $deposit->amount - (float) $deposit->applied_amount - (float) $deposit->refunded_amount, 2);
@@ -194,10 +196,20 @@ final readonly class BillingDepositController implements HasMiddleware
             return (string) $value->value;
         }
 
-        if ($value instanceof BillingDepositStatus) {
-            return $value->value;
-        }
-
         return is_string($fallback) ? $fallback : '';
+    }
+
+    private function validatedFloat(StoreBillingDepositRequest|ApplyBillingDepositRequest $request, string $key): float
+    {
+        $value = $request->validated($key);
+
+        return is_numeric($value) ? (float) $value : 0.0;
+    }
+
+    private function validatedString(StoreBillingDepositRequest|ApplyBillingDepositRequest $request, string $key): string
+    {
+        $value = $request->validated($key);
+
+        return is_string($value) ? $value : '';
     }
 }

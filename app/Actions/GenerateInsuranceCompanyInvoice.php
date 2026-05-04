@@ -48,14 +48,16 @@ final readonly class GenerateInsuranceCompanyInvoice
             }
 
             $claimAmount = round($claims->sum(fn (InsuredVisitClaim $claim): float => (float) $claim->claimed_amount), 2);
+            $firstClaim = $claims->sortBy('created_at')->first();
+            $lastClaim = $claims->sortByDesc('created_at')->first();
             $userId = Auth::id();
             $invoice = InsuranceCompanyInvoice::query()->create([
                 'tenant_id' => $tenantId,
                 'facility_branch_id' => $branchId,
                 'insurance_company_id' => $insuranceCompanyId,
                 'code' => $this->documentNumber->handle(BillingDocumentType::InsuranceInvoice, $tenantId, $branchId),
-                'start_date' => $startDate ?? $claims->min('created_at')?->toDateString(),
-                'end_date' => $endDate ?? $claims->max('created_at')?->toDateString(),
+                'start_date' => $startDate ?? $firstClaim?->created_at?->toDateString(),
+                'end_date' => $endDate ?? $lastClaim?->created_at?->toDateString(),
                 'bill_amount' => $claimAmount,
                 'paid_amount' => 0,
                 'status' => BillingStatus::PENDING,

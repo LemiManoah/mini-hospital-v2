@@ -10,18 +10,19 @@ use Illuminate\Support\Facades\Auth;
 
 final readonly class CreateInsurancePackagePrice
 {
+    /**
+     * @param  array{
+     *   facility_branch_id: string,
+     *   billable_type: string,
+     *   billable_id: string,
+     *   price: numeric-string,
+     *   effective_from: string,
+     *   effective_to?: string|null,
+     *   status: string
+     * }  $data
+     */
     public function handle(InsurancePackage $package, array $data): InsurancePackagePrice
     {
-        /** @var array{
-         *   facility_branch_id: string,
-         *   billable_type: string,
-         *   billable_id: string,
-         *   price: numeric-string,
-         *   effective_from: string,
-         *   effective_to: string|null,
-         *   status: string
-         * } $data
-         */
         return InsurancePackagePrice::query()->create([
             'insurance_package_id' => $package->id,
             'facility_branch_id' => $data['facility_branch_id'],

@@ -23,7 +23,7 @@ final class ImagingRequestCreatedNotification extends Notification
     /** @return array<string, mixed> */
     public function toArray(object $notifiable): array
     {
-        $modality = $this->imagingRequest->modality?->value ?? 'imaging';
+        $modality = $this->imagingRequest->modality->value;
         $bodyPart = $this->imagingRequest->body_part ?: 'requested area';
 
         return [

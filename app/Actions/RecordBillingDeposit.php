@@ -27,7 +27,7 @@ final readonly class RecordBillingDeposit
         return DB::transaction(function () use ($patient, $branchId, $amount, $paymentMethodId, $visit, $referenceNumber, $notes): BillingDeposit {
             $tenantId = $patient->tenant_id;
 
-            if (! is_string($tenantId) || $tenantId === '') {
+            if ($tenantId === '') {
                 throw ValidationException::withMessages([
                     'patient' => 'The selected patient is missing tenant context.',
                 ]);

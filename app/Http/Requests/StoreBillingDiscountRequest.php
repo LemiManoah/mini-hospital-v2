@@ -27,12 +27,16 @@ final class StoreBillingDiscountRequest extends FormRequest
 
     public function amount(): float
     {
-        return (float) $this->validated('amount');
+        $amount = $this->validated('amount');
+
+        return is_numeric($amount) ? (float) $amount : 0.0;
     }
 
     public function reason(): string
     {
-        return (string) $this->validated('reason');
+        $reason = $this->validated('reason');
+
+        return is_string($reason) ? $reason : '';
     }
 
     public function notes(): ?string

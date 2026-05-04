@@ -17,7 +17,6 @@ use App\Models\VisitCharge;
 use App\Support\ActiveBranchWorkspace;
 use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,9 +51,8 @@ final readonly class FinanceDebtorController implements HasMiddleware
         $billings = $this->activeBranchWorkspace
             ->apply(VisitBilling::query())
             ->with([
-                'visit' => static fn (BelongsTo $query): BelongsTo => $query
-                    ->select('id', 'patient_id', 'visit_number', 'visit_type', 'status', 'registered_at')
-                    ->with('patient:id,patient_number,first_name,last_name,phone_number'),
+                'visit:id,patient_id,visit_number,visit_type,status,registered_at',
+                'visit.patient:id,patient_number,first_name,last_name,phone_number',
                 'visitPayer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
                 'visitPayer.insuranceCompany:id,name',
             ])
@@ -154,6 +152,9 @@ final readonly class FinanceDebtorController implements HasMiddleware
         return to_route('finance.debtors.show', $billing)->with('success', 'Write-off reversed successfully.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function serializeDebtorRow(VisitBilling $billing): array
     {
         return [
@@ -175,6 +176,9 @@ final readonly class FinanceDebtorController implements HasMiddleware
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function serializeDebtorDetail(VisitBilling $billing): array
     {
         return [

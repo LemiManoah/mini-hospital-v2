@@ -29,7 +29,7 @@ final readonly class InsurancePackagePriceController implements HasMiddleware
         InsurancePackage $insurancePackage,
         CreateInsurancePackagePrice $action
     ): RedirectResponse {
-        $action->handle($insurancePackage, $request->validated());
+        $action->handle($insurancePackage, $request->priceData());
 
         return to_route('insurance-packages.show', $insurancePackage)
             ->with('success', 'Price added successfully.');
@@ -41,7 +41,7 @@ final readonly class InsurancePackagePriceController implements HasMiddleware
         InsurancePackagePrice $price,
         UpdateInsurancePackagePrice $action
     ): RedirectResponse {
-        $action->handle($price, $request->validated());
+        $action->handle($price, $request->priceData());
 
         return to_route('insurance-packages.show', $insurancePackage)
             ->with('success', 'Price updated successfully.');

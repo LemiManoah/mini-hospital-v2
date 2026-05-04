@@ -61,7 +61,6 @@ final class Unit extends Model
             ->useLogName('administration')
             ->logOnly(['name', 'symbol', 'description', 'type'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'unit.'.$eventName);
     }
 

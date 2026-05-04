@@ -225,6 +225,10 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('data-upload', [DataUploadController::class, 'index'])->name('data-upload.index');
     Route::get('data-upload/patients/template', [DataUploadController::class, 'patientTemplate'])->name('data-upload.patients.template');
     Route::post('data-upload/patients/import', [DataUploadController::class, 'importPatients'])->name('data-upload.patients.import');
+    Route::get('data-upload/inventory/drugs/template', [DataUploadController::class, 'drugTemplate'])->name('data-upload.inventory.drugs.template');
+    Route::post('data-upload/inventory/drugs/import', [DataUploadController::class, 'importDrugs'])->name('data-upload.inventory.drugs.import');
+    Route::get('data-upload/inventory/consumables/template', [DataUploadController::class, 'consumableTemplate'])->name('data-upload.inventory.consumables.template');
+    Route::post('data-upload/inventory/consumables/import', [DataUploadController::class, 'importConsumables'])->name('data-upload.inventory.consumables.import');
 
     Route::resource('insurance-companies', InsuranceCompanyController::class)->except(['show']);
     Route::resource('insurance-packages', InsurancePackageController::class)->except(['show']);

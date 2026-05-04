@@ -17,6 +17,8 @@ enum DrugDosageForm: string
     case DROPS = 'drops';
     case INHALER = 'inhaler';
     case SUPPOSITORY = 'suppository';
+
+    case SOLUTION = 'solution';
     case OTHER = 'other';
 
     public function label(): string

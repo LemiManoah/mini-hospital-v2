@@ -39,7 +39,6 @@ final class LabResultType extends Model
             ->useLogName('administration')
             ->logOnly(['code', 'name', 'description', 'is_active'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'lab_result_type.'.$eventName);
     }
 

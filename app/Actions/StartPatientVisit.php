@@ -35,7 +35,7 @@ final readonly class StartPatientVisit
                 'tenant_id' => $patient->tenant_id,
                 'patient_id' => $patient->id,
                 'facility_branch_id' => $activeBranch?->id,
-                'visit_number' => $this->numberGenerator->nextVisitNumber($activeBranch?->name),
+                'visit_number' => $this->numberGenerator->nextVisitNumber($activeBranch?->branch_code),
                 'visit_type' => $data['visit_type'],
                 'status' => VisitStatus::REGISTERED,
                 'clinic_id' => $data['clinic_id'] ?? null,

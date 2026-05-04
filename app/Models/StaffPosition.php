@@ -41,7 +41,6 @@ final class StaffPosition extends Model
             ->useLogName('administration')
             ->logOnly(['name', 'description', 'is_active'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'staff_position.'.$eventName);
     }
 

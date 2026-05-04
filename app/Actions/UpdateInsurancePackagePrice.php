@@ -9,18 +9,19 @@ use Illuminate\Support\Facades\Auth;
 
 final readonly class UpdateInsurancePackagePrice
 {
+    /**
+     * @param  array{
+     *   facility_branch_id: string,
+     *   billable_type: string,
+     *   billable_id: string,
+     *   price: numeric-string,
+     *   effective_from: string,
+     *   effective_to?: string|null,
+     *   status: string
+     * }  $data
+     */
     public function handle(InsurancePackagePrice $price, array $data): InsurancePackagePrice
     {
-        /** @var array{
-         *   facility_branch_id: string,
-         *   billable_type: string,
-         *   billable_id: string,
-         *   price: numeric-string,
-         *   effective_from: string,
-         *   effective_to: string|null,
-         *   status: string
-         * } $data
-         */
         $price->update([
             'facility_branch_id' => $data['facility_branch_id'],
             'billable_type' => $data['billable_type'],

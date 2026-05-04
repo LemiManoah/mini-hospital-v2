@@ -17,7 +17,10 @@ use Throwable;
 
 final class ImportPatientsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public int $tries = 3;
 
@@ -26,29 +29,29 @@ final class ImportPatientsJob implements ShouldQueue
     public function __construct(
         private string $filePath,
         private string $tenantId,
-        private string $branchName,
+        private string $branchCode,
         private string $userId,
     ) {}
 
     public function handle(BranchScopedNumberGenerator $numberGenerator): void
     {
-        Log::info("Starting patient import for tenant: {$this->tenantId}");
+        Log::info('Starting patient import for tenant: '.$this->tenantId);
 
         Excel::import(
             new PatientImport(
                 tenantId: $this->tenantId,
-                branchName: $this->branchName,
+                branchCode: $this->branchCode,
                 userId: $this->userId,
                 numberGenerator: $numberGenerator,
             ),
             $this->filePath
         );
 
-        Log::info("Patient import completed for tenant: {$this->tenantId}");
+        Log::info('Patient import completed for tenant: '.$this->tenantId);
     }
 
     public function failed(Throwable $exception): void
     {
-        Log::error("Patient import failed for tenant {$this->tenantId}: {$exception->getMessage()}");
+        Log::error(sprintf('Patient import failed for tenant %s: %s', $this->tenantId, $exception->getMessage()));
     }
 }

@@ -33,7 +33,6 @@ final class AppointmentMode extends Model
             ->useLogName('administration')
             ->logOnly(['name', 'is_virtual', 'is_active'])
             ->logOnlyDirty()
-            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'appointment_mode.'.$eventName);
     }
 

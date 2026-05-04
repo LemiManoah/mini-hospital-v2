@@ -31,7 +31,9 @@ final class StoreInsuranceCompanyInvoicePaymentRequest extends FormRequest
 
     public function paidAmount(): float
     {
-        return round((float) $this->validated('paid_amount'), 2);
+        $amount = $this->validated('paid_amount');
+
+        return round(is_numeric($amount) ? (float) $amount : 0.0, 2);
     }
 
     public function paymentDate(): ?string
@@ -60,11 +62,20 @@ final class StoreInsuranceCompanyInvoicePaymentRequest extends FormRequest
         }
 
         return collect($allocations)
-            ->map(static fn (array $allocation): array => [
-                'insured_visit_claim_id' => (string) $allocation['insured_visit_claim_id'],
-                'allocated_amount' => $allocation['allocated_amount'],
-                'notes' => isset($allocation['notes']) && is_string($allocation['notes']) ? $allocation['notes'] : null,
-            ])
+            ->filter(static fn (mixed $allocation): bool => is_array($allocation))
+            ->map(static function (mixed $allocation): array {
+                $allocatedAmount = $allocation['allocated_amount'] ?? 0;
+
+                return [
+                    'insured_visit_claim_id' => isset($allocation['insured_visit_claim_id']) && is_string($allocation['insured_visit_claim_id'])
+                        ? $allocation['insured_visit_claim_id']
+                        : '',
+                    'allocated_amount' => is_int($allocatedAmount) || is_float($allocatedAmount) || is_string($allocatedAmount)
+                        ? $allocatedAmount
+                        : 0,
+                    'notes' => isset($allocation['notes']) && is_string($allocation['notes']) ? $allocation['notes'] : null,
+                ];
+            })
             ->values()
             ->all();
     }
