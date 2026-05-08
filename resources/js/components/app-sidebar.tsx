@@ -229,27 +229,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {
                         title: 'Dashboard',
                         url: '/laboratory/dashboard',
-                        permission: 'lab_requests.view',
+                        permission: 'lab_orders.view',
                     },
                     {
                         title: 'Incoming Lab Investigations Queue',
                         url: '/laboratory/incoming-investigations',
-                        permission: 'lab_requests.view',
+                        permission: 'lab_orders.view',
                     },
                     {
                         title: 'Enter Results',
                         url: '/laboratory/enter-results',
-                        permission: 'lab_requests.view',
+                        permission: 'lab_orders.view',
                     },
                     {
                         title: 'Reviewing Results',
                         url: '/laboratory/review-results',
-                        permission: 'lab_requests.view',
+                        permission: 'lab_orders.view',
                     },
                     {
                         title: 'View Results',
                         url: '/laboratory/view-results',
-                        permission: 'lab_requests.view',
+                        permission: 'lab_orders.view',
                     },
                     {
                         title: 'Lab Management',

@@ -91,7 +91,7 @@ export default function LaboratoryWorklist({
         return () => window.clearTimeout(timeoutId);
     }, [search, status, filters.search, filters.status]);
 
-    const queue = requests.data ?? [];
+    const queue = orders.data ?? [];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -259,7 +259,7 @@ function QueueCard({ request }: { request: LaboratoryQueueRequest }) {
                             <div className="flex flex-wrap gap-2">
                                 <Button variant="outline" asChild>
                                     <Link
-                                        href={`/laboratory/request-items/${item.id}`}
+                                        href={`/laboratory/order-items/${item.id}`}
                                     >
                                         {item.workflow_stage === 'pending'
                                             ? 'Receive and Open'

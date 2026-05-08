@@ -8,7 +8,7 @@ use App\Enums\StaffType;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
-use App\Models\LabRequestItem;
+use App\Models\LabOrderItem;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
 use App\Models\LabTestCategory;
@@ -163,9 +163,9 @@ function createLabIsolationContext(): array
     ]);
     $test->specimenTypes()->sync([$specimenType->id]);
 
-    // Create Lab Request in Branch A
+    // Create Lab Order in Branch A
     $requestAId = (string) Str::uuid();
-    DB::table('lab_requests')->insert([
+    DB::table('lab_orders')->insert([
         'id' => $requestAId,
         'tenant_id' => $tenant->id,
         'facility_branch_id' => $branchA->id,
@@ -179,18 +179,18 @@ function createLabIsolationContext(): array
         'updated_at' => now(),
     ]);
 
-    $requestItemA = LabRequestItem::query()->create([
-        'request_id' => $requestAId,
+    $orderItemA = LabOrderItem::query()->create([
+        'lab_order_id' => $requestAId,
         'test_id' => $test->id,
         'status' => 'pending',
         'price' => 1000,
     ]);
 
-    return [$tenant, $branchA, $branchB, $user, $requestItemA, $specimenType];
+    return [$tenant, $branchA, $branchB, $user, $orderItemA, $specimenType];
 }
 
-test('lab requests from Branch A are not visible when Branch B is active', function (): void {
-    [$tenant, $branchA, $branchB, $user, $requestItemA] = createLabIsolationContext();
+test('lab orders from Branch A are not visible when Branch B is active', function (): void {
+    [$tenant, $branchA, $branchB, $user, $orderItemA] = createLabIsolationContext();
 
     // Active Branch A: Should see the request
     $this->actingAs($user)
@@ -198,8 +198,8 @@ test('lab requests from Branch A are not visible when Branch B is active', funct
         ->get(route('laboratory.incoming.index'))
         ->assertStatus(200)
         ->assertInertia(fn ($page) => $page
-            ->has('requests.data', 1)
-            ->where('requests.data.0.id', $requestItemA->request_id)
+            ->has('orders.data', 1)
+            ->where('orders.data.0.id', $orderItemA->lab_order_id)
         );
 
     // Active Branch B: Should NOT see the request
@@ -208,63 +208,63 @@ test('lab requests from Branch A are not visible when Branch B is active', funct
         ->get(route('laboratory.incoming.index'))
         ->assertStatus(200)
         ->assertInertia(fn ($page) => $page
-            ->has('requests.data', 0)
+            ->has('orders.data', 0)
         );
 });
 
-test('lab request items from Branch A are not accessible when Branch B is active', function (): void {
-    [$tenant, $branchA, $branchB, $user, $requestItemA] = createLabIsolationContext();
+test('lab order items from Branch A are not accessible when Branch B is active', function (): void {
+    [$tenant, $branchA, $branchB, $user, $orderItemA] = createLabIsolationContext();
 
     // Active Branch A: Should be able to view details
     $this->actingAs($user)
         ->withSession(['active_branch_id' => $branchA->id])
-        ->get(route('laboratory.request-items.show', $requestItemA))
+        ->get(route('laboratory.order-items.show', $orderItemA))
         ->assertStatus(200);
 
     // Active Branch B: Should be forbidden
     $this->actingAs($user)
         ->withSession(['active_branch_id' => $branchB->id])
-        ->get(route('laboratory.request-items.show', $requestItemA))
+        ->get(route('laboratory.order-items.show', $orderItemA))
         ->assertStatus(403);
 });
 
 test('lab workflow actions from Branch A are not allowed when Branch B is active', function (): void {
-    [$tenant, $branchA, $branchB, $user, $requestItemA, $specimenType] = createLabIsolationContext();
+    [$tenant, $branchA, $branchB, $user, $orderItemA, $specimenType] = createLabIsolationContext();
 
     // Active Branch B: Attempt to collect sample for Branch A request
     $this->actingAs($user)
         ->withSession(['active_branch_id' => $branchB->id])
-        ->post(route('laboratory.request-items.collect-sample', $requestItemA), [
+        ->post(route('laboratory.order-items.collect-sample', $orderItemA), [
             'specimen_type_id' => $specimenType->id,
         ])
         ->assertStatus(403);
 });
 
-test('specimen and result records follow branch isolation of their lab request', function (): void {
-    [$tenant, $branchA, $branchB, $user, $requestItemA, $specimenType] = createLabIsolationContext();
+test('specimen and result records follow branch isolation of their lab order', function (): void {
+    [$tenant, $branchA, $branchB, $user, $orderItemA, $specimenType] = createLabIsolationContext();
 
     // 1. Collect sample in Branch A
     $this->actingAs($user)
         ->withSession(['active_branch_id' => $branchA->id])
-        ->post(route('laboratory.request-items.collect-sample', $requestItemA), [
+        ->post(route('laboratory.order-items.collect-sample', $orderItemA), [
             'specimen_type_id' => $specimenType->id,
         ])
         ->assertRedirect();
 
-    $requestItemA->refresh();
-    $specimen = $requestItemA->specimen;
+    $orderItemA->refresh();
+    $specimen = $orderItemA->specimen;
     expect($specimen)->not->toBeNull();
 
-    // 2. Try to access the request item (which now has specimen) from Branch B
+    // 2. Try to access the order item (which now has specimen) from Branch B
     $this->actingAs($user)
         ->withSession(['active_branch_id' => $branchB->id])
-        ->get(route('laboratory.request-items.show', $requestItemA))
+        ->get(route('laboratory.order-items.show', $orderItemA))
         ->assertStatus(403);
 
     // 3. Try to enter results from Branch B
     $this->actingAs($user)
         ->withSession(['active_branch_id' => $branchB->id])
-        ->post(route('laboratory.request-items.results.store', $requestItemA), [
+        ->post(route('laboratory.order-items.results.store', $orderItemA), [
             'result_notes' => 'Test result',
             'parameter_values' => [],
         ])

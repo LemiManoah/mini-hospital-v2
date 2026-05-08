@@ -59,7 +59,7 @@ interface FacilityRow {
         users: number;
         patients: number;
         visits: number;
-        lab_requests: number;
+        lab_orders: number;
         prescriptions: number;
     };
 }
@@ -341,7 +341,7 @@ export default function FacilityManagerIndex({
                                             {tenant.counts.visits}
                                         </TableCell>
                                         <TableCell>
-                                            {tenant.counts.lab_requests}
+                                            {tenant.counts.lab_orders}
                                         </TableCell>
                                         <TableCell>
                                             {tenant.counts.prescriptions}

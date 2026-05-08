@@ -29,8 +29,8 @@ import {
     type Consultation,
     type DoctorConsultationShowPageProps,
     type FacilityServiceOrder,
-    type ImagingRequest,
-    type LabRequest,
+    type ImagingOrder,
+    type LabOrder,
     type Prescription,
     type TriageRecord,
     type VitalSign,
@@ -207,9 +207,9 @@ export default function DoctorConsultationShow({
     const triage: TriageRecord | null | undefined = visit.triage;
     const consultation: Consultation | null | undefined = visit.consultation;
     const latestVital = (triage?.vitalSigns ?? triage?.vital_signs ?? [])[0];
-    const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
-    const imagingRequests =
-        visit.imagingRequests ?? visit.imaging_requests ?? [];
+    const labOrders = visit.labOrders ?? visit.lab_orders ?? [];
+    const imagingOrders =
+        visit.imagingOrders ?? visit.imaging_orders ?? [];
     const prescriptions = visit.prescriptions ?? [];
     const facilityServiceOrders =
         visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
@@ -251,12 +251,12 @@ export default function DoctorConsultationShow({
     const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
     const [allergenModalOpen, setAllergenModalOpen] = useState(false);
 
-    const [editingLabRequest, setEditingLabRequest] =
-        useState<LabRequest | null>(null);
+    const [editingLabOrder, setEditingLabOrder] =
+        useState<LabOrder | null>(null);
     const [editingPrescription, setEditingPrescription] =
         useState<Prescription | null>(null);
-    const [editingImagingRequest, setEditingImagingRequest] =
-        useState<ImagingRequest | null>(null);
+    const [editingImagingOrder, setEditingImagingOrder] =
+        useState<ImagingOrder | null>(null);
     const [editingServiceOrder, setEditingServiceOrder] =
         useState<FacilityServiceOrder | null>(null);
 
@@ -1120,12 +1120,12 @@ export default function DoctorConsultationShow({
                                         {canPlaceOrders && (
                                             <Button
                                                 onClick={() => {
-                                                    setEditingLabRequest(null);
+                                                    setEditingLabOrder(null);
                                                     setLabModalOpen(true);
                                                 }}
                                             >
                                                 <Plus className="mr-2 h-4 w-4" />
-                                                New Lab Request
+                                                New Lab Order
                                             </Button>
                                         )}
                                     </CardHeader>
@@ -1140,20 +1140,20 @@ export default function DoctorConsultationShow({
                                         )}
 
                                         <LabOrdersTable
-                                            labRequests={labRequests}
+                                            labOrders={labOrders}
                                             canManageOrders={canPlaceOrders}
                                             onEdit={(request) => {
-                                                setEditingLabRequest(request);
+                                                setEditingLabOrder(request);
                                                 setLabModalOpen(true);
                                             }}
                                             onDelete={(request) => {
                                                 if (
                                                     confirm(
-                                                        'Are you sure you want to remove this lab request?',
+                                                        'Are you sure you want to remove this lab order?',
                                                     )
                                                 ) {
                                                     router.delete(
-                                                        `/visits/${visit.id}/lab-requests/${request.id}`,
+                                                        `/visits/${visit.id}/lab-orders/${request.id}`,
                                                         {
                                                             data: {
                                                                 redirect_to:
@@ -1167,11 +1167,11 @@ export default function DoctorConsultationShow({
                                             onDeleteItem={(request, item) => {
                                                 if (
                                                     confirm(
-                                                        'Are you sure you want to remove this test from the lab request?',
+                                                        'Are you sure you want to remove this test from the lab order?',
                                                     )
                                                 ) {
                                                     router.delete(
-                                                        `/visits/${visit.id}/lab-requests/${request.id}/items/${item.id}`,
+                                                        `/visits/${visit.id}/lab-orders/${request.id}/items/${item.id}`,
                                                         {
                                                             data: {
                                                                 redirect_to:
@@ -1265,7 +1265,7 @@ export default function DoctorConsultationShow({
                                     <CardHeader className="flex flex-row items-center justify-between">
                                         <div>
                                             <CardTitle>
-                                                Imaging Requests
+                                                Imaging Orders
                                             </CardTitle>
                                             <p className="text-sm text-muted-foreground">
                                                 Capture radiology and scan
@@ -1277,14 +1277,14 @@ export default function DoctorConsultationShow({
                                         {canPlaceOrders && (
                                             <Button
                                                 onClick={() => {
-                                                    setEditingImagingRequest(
+                                                    setEditingImagingOrder(
                                                         null,
                                                     );
                                                     setImagingModalOpen(true);
                                                 }}
                                             >
                                                 <Plus className="mr-2 h-4 w-4" />
-                                                New Imaging Request
+                                                New Imaging Order
                                             </Button>
                                         )}
                                     </CardHeader>
@@ -1299,10 +1299,10 @@ export default function DoctorConsultationShow({
                                         )}
 
                                         <ImagingOrdersTable
-                                            imagingRequests={imagingRequests}
+                                            imagingOrders={imagingOrders}
                                             canManageOrders={canPlaceOrders}
                                             onEdit={(request) => {
-                                                setEditingImagingRequest(
+                                                setEditingImagingOrder(
                                                     request,
                                                 );
                                                 setImagingModalOpen(true);
@@ -1310,11 +1310,11 @@ export default function DoctorConsultationShow({
                                             onDelete={(request) => {
                                                 if (
                                                     confirm(
-                                                        'Are you sure you want to remove this imaging request?',
+                                                        'Are you sure you want to remove this imaging order?',
                                                     )
                                                 ) {
                                                     router.delete(
-                                                        `/visits/${visit.id}/imaging-requests/${request.id}`,
+                                                        `/visits/${visit.id}/imaging-orders/${request.id}`,
                                                         {
                                                             data: {
                                                                 redirect_to:
@@ -1406,7 +1406,7 @@ export default function DoctorConsultationShow({
                                     open={labModalOpen}
                                     onOpenChange={setLabModalOpen}
                                     visit={visit}
-                                    labRequest={editingLabRequest}
+                                    labOrder={editingLabOrder}
                                     labTestOptions={labTestOptions}
                                     labPriorities={labPriorities}
                                     redirectTo="consultation"
@@ -1423,7 +1423,7 @@ export default function DoctorConsultationShow({
                                     open={imagingModalOpen}
                                     onOpenChange={setImagingModalOpen}
                                     visit={visit}
-                                    imagingRequest={editingImagingRequest}
+                                    imagingOrder={editingImagingOrder}
                                     imagingModalities={imagingModalities}
                                     imagingPriorities={imagingPriorities}
                                     imagingLateralities={imagingLateralities}
@@ -1601,8 +1601,8 @@ export default function DoctorConsultationShow({
                                         Orders
                                     </p>
                                     <p className="font-medium">
-                                        {labRequests.length} lab |{' '}
-                                        {imagingRequests.length} imaging |{' '}
+                                        {labOrders.length} lab |{' '}
+                                        {imagingOrders.length} imaging |{' '}
                                         {prescriptions.length} prescription
                                         set(s) | {facilityServiceOrders.length}{' '}
                                         services

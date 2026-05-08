@@ -43,8 +43,8 @@ use Illuminate\Support\Carbon;
  * @property-read VisitPayer|null $payer
  * @property-read TriageRecord|null $triage
  * @property-read Consultation|null $consultation
- * @property-read Collection<int, LabRequest> $labRequests
- * @property-read Collection<int, ImagingRequest> $imagingRequests
+ * @property-read Collection<int, LabOrder> $labOrders
+ * @property-read Collection<int, ImagingOrder> $imagingOrders
  * @property-read Collection<int, Prescription> $prescriptions
  * @property-read Collection<int, FacilityServiceOrder> $facilityServiceOrders
  * @property-read VisitBilling|null $billing
@@ -134,16 +134,16 @@ final class PatientVisit extends Model
         return $this->hasOne(Consultation::class, 'visit_id');
     }
 
-    /** @return HasMany<LabRequest, $this> */
-    public function labRequests(): HasMany
+    /** @return HasMany<LabOrder, $this> */
+    public function labOrders(): HasMany
     {
-        return $this->hasMany(LabRequest::class, 'visit_id');
+        return $this->hasMany(LabOrder::class, 'visit_id');
     }
 
-    /** @return HasMany<ImagingRequest, $this> */
-    public function imagingRequests(): HasMany
+    /** @return HasMany<ImagingOrder, $this> */
+    public function imagingOrders(): HasMany
     {
-        return $this->hasMany(ImagingRequest::class, 'visit_id');
+        return $this->hasMany(ImagingOrder::class, 'visit_id');
     }
 
     /** @return HasMany<Prescription, $this> */

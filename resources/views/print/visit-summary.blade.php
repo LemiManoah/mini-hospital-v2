@@ -146,15 +146,15 @@
             <tbody>
                 <tr>
                     <td>Laboratory Requests</td>
-                    <td>{{ $visit->labRequests->count() }}</td>
+                    <td>{{ $visit->labOrders->count() }}</td>
                     <td>
-                        {{ $visit->labRequests->flatMap(fn ($request) => $request->items->map(fn ($item) => $item->test?->test_name))->filter()->take(3)->implode(', ') ?: '-' }}
+                        {{ $visit->labOrders->flatMap(fn ($request) => $request->items->map(fn ($item) => $item->test?->test_name))->filter()->take(3)->implode(', ') ?: '-' }}
                     </td>
                 </tr>
                 <tr>
-                    <td>Imaging Requests</td>
-                    <td>{{ $visit->imagingRequests->count() }}</td>
-                    <td>{{ $visit->imagingRequests->take(3)->map(fn ($item) => $item->modality.' '.$item->body_part)->implode(', ') ?: '-' }}</td>
+                    <td>Imaging Orders</td>
+                    <td>{{ $visit->imagingOrders->count() }}</td>
+                    <td>{{ $visit->imagingOrders->take(3)->map(fn ($item) => $item->modality.' '.$item->body_part)->implode(', ') ?: '-' }}</td>
                 </tr>
                 <tr>
                     <td>Prescriptions</td>

@@ -18,7 +18,7 @@ export interface LaboratoryVisitSummary {
     patient?: LaboratoryPatientSummary | null;
 }
 
-export interface LaboratoryRequestSummary {
+export interface LaboratoryOrderSummary {
     id: string;
     request_date: string;
     priority: string;
@@ -99,7 +99,7 @@ export interface LaboratorySpecimen {
     collectedBy?: { id: string; first_name: string; last_name: string } | null;
 }
 
-export interface LaboratoryRequestItem {
+export interface LaboratoryOrderItem {
     id: string;
     status: string;
     workflow_stage: string;
@@ -138,7 +138,7 @@ export interface LaboratoryRequestItem {
               }[]
             | null;
     } | null;
-    request?: LaboratoryRequestSummary | null;
+    order?: LaboratoryOrderSummary | null;
     consumables?: LaboratoryConsumableUsage[] | null;
     resultEntry?: LaboratoryResultEntry | null;
     result_entry?: LaboratoryResultEntry | null;
@@ -167,7 +167,7 @@ export interface LaboratoryQueueRequest {
     billing_status?: string | null;
     requestedBy?: { id: string; first_name: string; last_name: string } | null;
     visit?: LaboratoryVisitSummary | null;
-    items: LaboratoryRequestItem[];
+    items: LaboratoryOrderItem[];
 }
 
 export interface LaboratoryWorklistPageProps {
@@ -179,8 +179,8 @@ export interface LaboratoryWorklistPageProps {
     statuses: { value: string; label: string }[];
 }
 
-export interface LaboratoryRequestItemPageProps {
-    labRequestItem: LaboratoryRequestItem;
+export interface LaboratoryOrderItemPageProps {
+    labOrderItem: LaboratoryOrderItem;
     labReleasePolicy: {
         require_review_before_release: boolean;
         require_approval_before_release: boolean;
@@ -188,8 +188,8 @@ export interface LaboratoryRequestItemPageProps {
     paymentBlockMessage: string | null;
 }
 
-export interface LaboratoryRequestItemConsumablesPageProps {
-    labRequestItem: LaboratoryRequestItem;
+export interface LaboratoryOrderItemConsumablesPageProps {
+    labOrderItem: LaboratoryOrderItem;
     consumableOptions: LaboratoryConsumableOption[];
 }
 
@@ -204,7 +204,7 @@ export interface LaboratoryDashboardPageProps {
     stock_metrics: LaboratoryDashboardMetric[];
     request_status_counts: { label: string; value: string; count: number }[];
     workflow_stage_counts: { label: string; value: string; count: number }[];
-    recent_requests: LaboratoryQueueRequest[];
+    recent_orders: LaboratoryQueueRequest[];
 }
 
 export interface LaboratoryQueuePageMeta {

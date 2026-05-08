@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Data\Clinical\StoreLabResultEntryDTO;
-use App\Models\LabRequestItem;
+use App\Models\LabOrderItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -39,18 +39,18 @@ final class StoreLabResultEntryRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            $labRequestItem = $this->labRequestItem();
+            $labOrderItem = $this->labOrderItem();
 
-            if (! $labRequestItem instanceof LabRequestItem) {
+            if (! $labOrderItem instanceof LabOrderItem) {
                 return;
             }
 
-            $labRequestItem->loadMissing([
+            $labOrderItem->loadMissing([
                 'test.resultOptions:id,lab_test_catalog_id,label',
                 'test.resultParameters:id,lab_test_catalog_id,label,value_type',
             ]);
 
-            $test = $labRequestItem->test;
+            $test = $labOrderItem->test;
             $resultType = $test?->result_capture_type;
 
             if ($test === null) {
@@ -118,11 +118,11 @@ final class StoreLabResultEntryRequest extends FormRequest
         ]);
     }
 
-    private function labRequestItem(): ?LabRequestItem
+    private function labOrderItem(): ?LabOrderItem
     {
-        $labRequestItem = $this->route('labRequestItem') ?? $this->route('lab_request_item');
+        $labOrderItem = $this->route('labOrderItem') ?? $this->route('lab_order_item');
 
-        return $labRequestItem instanceof LabRequestItem ? $labRequestItem : null;
+        return $labOrderItem instanceof LabOrderItem ? $labOrderItem : null;
     }
 
     /**

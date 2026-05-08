@@ -8,7 +8,7 @@ use App\Enums\ConsciousLevel;
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Enums\InventoryItemType;
-use App\Enums\LabRequestStatus;
+use App\Enums\LabOrderStatus;
 use App\Enums\MobilityStatus;
 use App\Enums\Priority;
 use App\Enums\StaffType;
@@ -23,8 +23,8 @@ use App\Models\Department;
 use App\Models\FacilityBranch;
 use App\Models\FacilityService;
 use App\Models\InventoryItem;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
 use App\Models\LabTestCategory;
@@ -358,7 +358,7 @@ it('allows consultation lab orders even when payment-before-laboratory is enable
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($doctorUser)
-        ->post(route('doctors.consultations.lab-requests.store', $visit), [
+        ->post(route('doctors.consultations.lab-orders.store', $visit), [
             'test_ids' => [$labTest->id],
             'priority' => Priority::ROUTINE->value,
             'clinical_notes' => 'Check baseline labs',
@@ -431,13 +431,13 @@ it('shows payment block message on lab delivery page when payment-before-laborat
     $labTest = createGeneralSettingsWorkflowLabTest($tenant);
 
     $labUser = createGeneralSettingsWorkflowUser($tenant, $branch, StaffType::TECHNICAL);
-    $labUser->givePermissionTo('lab_requests.view');
+    $labUser->givePermissionTo('lab_orders.view');
 
     createGeneralSettingsWorkflowTriage($visit, $nurseUser->staff, $clinic);
     $consultation = createGeneralSettingsWorkflowConsultation($visit, $doctorUser->staff);
     storeGeneralSetting($tenant, 'payments.require_payment_before_laboratory', '1');
 
-    $labRequest = LabRequest::query()->create([
+    $labOrder = LabOrder::query()->create([
         'tenant_id' => $tenant->id,
         'facility_branch_id' => $branch->id,
         'visit_id' => $visit->id,
@@ -445,24 +445,24 @@ it('shows payment block message on lab delivery page when payment-before-laborat
         'requested_by' => $doctorUser->staff_id,
         'request_date' => now(),
         'priority' => Priority::ROUTINE->value,
-        'status' => LabRequestStatus::REQUESTED,
+        'status' => LabOrderStatus::REQUESTED,
         'clinical_notes' => 'Check baseline labs',
     ]);
 
-    $labRequestItem = LabRequestItem::query()->create([
-        'request_id' => $labRequest->id,
+    $labOrderItem = LabOrderItem::query()->create([
+        'lab_order_id' => $labOrder->id,
         'test_id' => $labTest->id,
         'status' => 'pending',
     ]);
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($labUser)
-        ->get(route('laboratory.request-items.show', $labRequestItem));
+        ->get(route('laboratory.order-items.show', $labOrderItem));
 
     $response->assertSuccessful();
     $response->assertInertia(
         fn (AssertableInertia $page): AssertableInertia => $page
-            ->component('laboratory/request-item')
+            ->component('laboratory/order-item')
             ->where(
                 'paymentBlockMessage',
                 'Laboratory orders are blocked until the visit is paid or allowed insurance cover is in place.',
@@ -487,13 +487,13 @@ it('does not show payment block message on lab delivery page when visit is paid'
     $labTest = createGeneralSettingsWorkflowLabTest($tenant);
 
     $labUser = createGeneralSettingsWorkflowUser($tenant, $branch, StaffType::TECHNICAL);
-    $labUser->givePermissionTo('lab_requests.view');
+    $labUser->givePermissionTo('lab_orders.view');
 
     createGeneralSettingsWorkflowTriage($visit, $nurseUser->staff, $clinic);
     $consultation = createGeneralSettingsWorkflowConsultation($visit, $doctorUser->staff);
     storeGeneralSetting($tenant, 'payments.require_payment_before_laboratory', '1');
 
-    $labRequest = LabRequest::query()->create([
+    $labOrder = LabOrder::query()->create([
         'tenant_id' => $tenant->id,
         'facility_branch_id' => $branch->id,
         'visit_id' => $visit->id,
@@ -501,24 +501,24 @@ it('does not show payment block message on lab delivery page when visit is paid'
         'requested_by' => $doctorUser->staff_id,
         'request_date' => now(),
         'priority' => Priority::ROUTINE->value,
-        'status' => LabRequestStatus::REQUESTED,
+        'status' => LabOrderStatus::REQUESTED,
         'clinical_notes' => 'Paid visit labs',
     ]);
 
-    $labRequestItem = LabRequestItem::query()->create([
-        'request_id' => $labRequest->id,
+    $labOrderItem = LabOrderItem::query()->create([
+        'lab_order_id' => $labOrder->id,
         'test_id' => $labTest->id,
         'status' => 'pending',
     ]);
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($labUser)
-        ->get(route('laboratory.request-items.show', $labRequestItem));
+        ->get(route('laboratory.order-items.show', $labOrderItem));
 
     $response->assertSuccessful();
     $response->assertInertia(
         fn (AssertableInertia $page): AssertableInertia => $page
-            ->component('laboratory/request-item')
+            ->component('laboratory/order-item')
             ->where('paymentBlockMessage', null),
     );
 });

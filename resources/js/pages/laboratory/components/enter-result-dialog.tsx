@@ -18,7 +18,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { type LaboratoryRequestItem } from '@/types/laboratory';
+import { type LaboratoryOrderItem } from '@/types/laboratory';
 import { useForm } from '@inertiajs/react';
 
 export function EnterResultDialog({
@@ -27,7 +27,7 @@ export function EnterResultDialog({
     onOpenChange,
     redirectTo,
 }: {
-    item: LaboratoryRequestItem;
+    item: LaboratoryOrderItem;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     redirectTo: string;
@@ -70,7 +70,7 @@ export function EnterResultDialog({
                     onSubmit={(event) => {
                         event.preventDefault();
                         form.post(
-                            `/laboratory/request-items/${item.id}/results`,
+                            `/laboratory/order-items/${item.id}/results`,
                             {
                                 preserveScroll: true,
                                 onSuccess: () => onOpenChange(false),

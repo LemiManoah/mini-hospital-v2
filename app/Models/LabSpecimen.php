@@ -14,7 +14,7 @@ final class LabSpecimen extends Model
     use HasUuids;
 
     protected $casts = [
-        'lab_request_item_id' => 'string',
+        'lab_order_item_id' => 'string',
         'specimen_type_id' => 'string',
         'status' => LabSpecimenStatus::class,
         'collected_by' => 'string',
@@ -25,11 +25,11 @@ final class LabSpecimen extends Model
     ];
 
     /**
-     * @return BelongsTo<LabRequestItem, $this>
+     * @return BelongsTo<LabOrderItem, $this>
      */
-    public function requestItem(): BelongsTo
+    public function orderItem(): BelongsTo
     {
-        return $this->belongsTo(LabRequestItem::class, 'lab_request_item_id');
+        return $this->belongsTo(LabOrderItem::class, 'lab_order_item_id');
     }
 
     /**

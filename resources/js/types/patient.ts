@@ -142,7 +142,7 @@ export interface LabResultEntry {
     values?: LabResultValue[] | null;
 }
 
-export interface LabRequestItem {
+export interface LabOrderItem {
     id: string;
     test_id: string;
     status: string;
@@ -157,7 +157,7 @@ export interface LabRequestItem {
     test?: LabTestOption | null;
 }
 
-export interface LabRequest {
+export interface LabOrder {
     id: string;
     visit_id: string;
     consultation_id: string | null;
@@ -171,7 +171,7 @@ export interface LabRequest {
     billing_status: string;
     completed_at: string | null;
     requestedBy?: { id: string; first_name: string; last_name: string } | null;
-    items: LabRequestItem[];
+    items: LabOrderItem[];
 }
 
 export interface DrugOption {
@@ -217,7 +217,7 @@ export interface Prescription {
     items: PrescriptionItem[];
 }
 
-export interface ImagingRequest {
+export interface ImagingOrder {
     id: string;
     visit_id: string;
     consultation_id: string | null;
@@ -430,10 +430,10 @@ export interface PatientVisit {
     payments?: VisitPayment[] | null;
     triage?: TriageRecord | null;
     consultation?: Consultation | null;
-    labRequests?: LabRequest[] | null;
-    lab_requests?: LabRequest[] | null;
-    imagingRequests?: ImagingRequest[] | null;
-    imaging_requests?: ImagingRequest[] | null;
+    labOrders?: LabOrder[] | null;
+    lab_orders?: LabOrder[] | null;
+    imagingOrders?: ImagingOrder[] | null;
+    imaging_orders?: ImagingOrder[] | null;
     prescriptions?: Prescription[] | null;
     facilityServiceOrders?: FacilityServiceOrder[] | null;
     facility_service_orders?: FacilityServiceOrder[] | null;

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { type LaboratoryRequestItem } from '@/types/laboratory';
+import { type LaboratoryOrderItem } from '@/types/laboratory';
 import { useForm } from '@inertiajs/react';
 import { resultValueDisplay } from './queue-utils';
 
@@ -21,7 +21,7 @@ export function ReviewResultDialog({
     redirectTo,
     labReleasePolicy,
 }: {
-    item: LaboratoryRequestItem;
+    item: LaboratoryOrderItem;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     redirectTo: string;
@@ -39,8 +39,8 @@ export function ReviewResultDialog({
     });
     const requiresApproval = labReleasePolicy.require_approval_before_release;
     const submitUrl = requiresApproval
-        ? `/laboratory/request-items/${item.id}/approve`
-        : `/laboratory/request-items/${item.id}/review`;
+        ? `/laboratory/order-items/${item.id}/approve`
+        : `/laboratory/order-items/${item.id}/review`;
     const dialogTitle = requiresApproval
         ? 'Review and Release Results'
         : 'Review Results';

@@ -47,7 +47,7 @@ export function QueueModal({
     ) : (
         <LabResultDialog
             item={activeModal.item}
-            request={activeModal.request}
+            request={activeModal.order}
             open
             onOpenChange={onOpenChange}
         />

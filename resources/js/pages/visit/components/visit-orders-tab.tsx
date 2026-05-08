@@ -14,8 +14,8 @@ import {
     type DrugOption,
     type FacilityServiceOption,
     type FacilityServiceOrder,
-    type ImagingRequest,
-    type LabRequest,
+    type ImagingOrder,
+    type LabOrder,
     type Prescription,
 } from '@/types/patient';
 import { router } from '@inertiajs/react';
@@ -26,11 +26,11 @@ type VisitOrdersTabProps = {
         id: string;
         patient?: { id: string } | null;
         consultation?: { completed_at?: string | null } | null;
-        labRequests?: LabRequest[] | null;
-        lab_requests?: LabRequest[] | null;
+        labOrders?: LabOrder[] | null;
+        lab_orders?: LabOrder[] | null;
         prescriptions?: Prescription[] | null;
-        imagingRequests?: ImagingRequest[] | null;
-        imaging_requests?: ImagingRequest[] | null;
+        imagingOrders?: ImagingOrder[] | null;
+        imaging_orders?: ImagingOrder[] | null;
         facilityServiceOrders?: FacilityServiceOrder[] | null;
         facility_service_orders?: FacilityServiceOrder[] | null;
     };
@@ -104,10 +104,10 @@ export function VisitOrdersTab({
     severityOptions,
     reactionOptions,
 }: VisitOrdersTabProps) {
-    const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
+    const labOrders = visit.labOrders ?? visit.lab_orders ?? [];
     const prescriptions = visit.prescriptions ?? [];
-    const imagingRequests =
-        visit.imagingRequests ?? visit.imaging_requests ?? [];
+    const imagingOrders =
+        visit.imagingOrders ?? visit.imaging_orders ?? [];
     const facilityServiceOrders =
         visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
     const isConsultationFinalized =
@@ -121,12 +121,12 @@ export function VisitOrdersTab({
     const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
     const [allergenModalOpen, setAllergenModalOpen] = useState(false);
 
-    const [editingLabRequest, setEditingLabRequest] =
-        useState<LabRequest | null>(null);
+    const [editingLabOrder, setEditingLabOrder] =
+        useState<LabOrder | null>(null);
     const [editingPrescription, setEditingPrescription] =
         useState<Prescription | null>(null);
-    const [editingImagingRequest, setEditingImagingRequest] =
-        useState<ImagingRequest | null>(null);
+    const [editingImagingOrder, setEditingImagingOrder] =
+        useState<ImagingOrder | null>(null);
     const [editingServiceOrder, setEditingServiceOrder] =
         useState<FacilityServiceOrder | null>(null);
 
@@ -206,12 +206,12 @@ export function VisitOrdersTab({
 
             <OrderSection
                 title="Laboratory Investigations"
-                description="Lab requests for this encounter."
+                description="Lab orders for this encounter."
                 action={
                     canEditOrders ? (
                         <Button
                             onClick={() => {
-                                setEditingLabRequest(null);
+                                setEditingLabOrder(null);
                                 setLabModalOpen(true);
                             }}
                         >
@@ -221,22 +221,22 @@ export function VisitOrdersTab({
                 }
             >
                 <LabOrdersTable
-                    labRequests={labRequests}
+                    labOrders={labOrders}
                     canManageOrders={canEditOrders}
                     onEdit={(request) => {
-                        setEditingLabRequest(request);
+                        setEditingLabOrder(request);
                         setLabModalOpen(true);
                     }}
                     onDelete={(request) =>
                         deleteVisitOrder(
-                            `/visits/${visit.id}/lab-requests/${request.id}`,
-                            'Are you sure you want to remove this lab request?',
+                            `/visits/${visit.id}/lab-orders/${request.id}`,
+                            'Are you sure you want to remove this lab order?',
                         )
                     }
                     onDeleteItem={(request, item) =>
                         deleteVisitOrder(
-                            `/visits/${visit.id}/lab-requests/${request.id}/items/${item.id}`,
-                            'Are you sure you want to remove this test from the lab request?',
+                            `/visits/${visit.id}/lab-orders/${request.id}/items/${item.id}`,
+                            'Are you sure you want to remove this test from the lab order?',
                         )
                     }
                 />
@@ -244,12 +244,12 @@ export function VisitOrdersTab({
 
             <OrderSection
                 title="Imaging"
-                description="Radiology and imaging requests for this visit."
+                description="Radiology and imaging orders for this visit."
                 action={
                     canEditOrders ? (
                         <Button
                             onClick={() => {
-                                setEditingImagingRequest(null);
+                                setEditingImagingOrder(null);
                                 setImagingModalOpen(true);
                             }}
                         >
@@ -259,16 +259,16 @@ export function VisitOrdersTab({
                 }
             >
                 <ImagingOrdersTable
-                    imagingRequests={imagingRequests}
+                    imagingOrders={imagingOrders}
                     canManageOrders={canEditOrders}
                     onEdit={(request) => {
-                        setEditingImagingRequest(request);
+                        setEditingImagingOrder(request);
                         setImagingModalOpen(true);
                     }}
                     onDelete={(request) =>
                         deleteVisitOrder(
-                            `/visits/${visit.id}/imaging-requests/${request.id}`,
-                            'Are you sure you want to remove this imaging request?',
+                            `/visits/${visit.id}/imaging-orders/${request.id}`,
+                            'Are you sure you want to remove this imaging order?',
                         )
                     }
                 />
@@ -310,7 +310,7 @@ export function VisitOrdersTab({
                 open={labModalOpen}
                 onOpenChange={setLabModalOpen}
                 visit={visit as any}
-                labRequest={editingLabRequest}
+                labOrder={editingLabOrder}
                 labTestOptions={labTestOptions}
                 labPriorities={labPriorities}
                 redirectTo="visit"
@@ -327,7 +327,7 @@ export function VisitOrdersTab({
                 open={imagingModalOpen}
                 onOpenChange={setImagingModalOpen}
                 visit={visit as any}
-                imagingRequest={editingImagingRequest}
+                imagingOrder={editingImagingOrder}
                 imagingModalities={imagingModalities}
                 imagingPriorities={imagingPriorities}
                 imagingLateralities={imagingLateralities}

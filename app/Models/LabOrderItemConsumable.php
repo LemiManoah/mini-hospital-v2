@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+final class LabOrderItemConsumable extends Model
+{
+    use BelongsToTenant;
+    use HasUuids;
+
+    protected $casts = [
+        'tenant_id' => 'string',
+        'facility_branch_id' => 'string',
+        'lab_order_item_id' => 'string',
+        'quantity' => 'float',
+        'unit_cost' => 'float',
+        'line_cost' => 'float',
+        'used_at' => 'datetime',
+        'recorded_by' => 'string',
+    ];
+
+    /**
+     * @return BelongsTo<LabOrderItem, $this>
+     */
+    public function orderItem(): BelongsTo
+    {
+        return $this->belongsTo(LabOrderItem::class, 'lab_order_item_id');
+    }
+
+    /**
+     * @return BelongsTo<Staff, $this>
+     */
+    public function recordedBy(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'recorded_by');
+    }
+}

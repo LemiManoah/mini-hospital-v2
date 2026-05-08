@@ -11,7 +11,7 @@ import { QueuePatientCard } from './components/queue-patient-card';
 import {
     groupIncomingRequests,
     modalModeForStage,
-    withRequestSummary,
+    withOrderSummary,
     type ActiveModal,
 } from './components/queue-utils';
 
@@ -54,9 +54,9 @@ export default function LaboratoryQueuePage({
     const queueRequests = useMemo(
         () =>
             page.stage === 'incoming'
-                ? groupIncomingRequests(requests.data)
-                : requests.data.map(withRequestSummary),
-        [page.stage, requests.data],
+                ? groupIncomingRequests(orders.data)
+                : orders.data.map(withOrderSummary),
+        [page.stage, orders.data],
     );
 
     return (
@@ -109,8 +109,8 @@ export default function LaboratoryQueuePage({
                                         setActiveModal({
                                             mode: modalModeForStage(page.stage),
                                             item,
-                                            request:
-                                                item.request ?? selectedRequest,
+                                            order:
+                                                item.order ?? selectedRequest,
                                         })
                                     }
                                 />

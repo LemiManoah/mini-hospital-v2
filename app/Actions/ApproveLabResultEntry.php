@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\LabRequestItemStatus;
+use App\Enums\LabOrderItemStatus;
 use App\Enums\LabSpecimenStatus;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\LabResultEntry;
 use App\Models\User;
 use App\Notifications\LabResultReleasedNotification;
@@ -18,18 +18,18 @@ use Illuminate\Validation\ValidationException;
 final readonly class ApproveLabResultEntry
 {
     public function __construct(
-        private SyncLabRequestProgress $syncLabRequestProgress,
+        private SyncLabOrderProgress $syncLabOrderProgress,
         private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     public function handle(
-        LabRequestItem $labRequestItem,
+        LabOrderItem $labOrderItem,
         string $staffId,
         ?string $reviewNotes,
         ?string $approvalNotes,
-    ): LabRequestItem {
+    ): LabOrderItem {
         /** @var LabResultEntry|null $resultEntry */
-        $resultEntry = $labRequestItem->resultEntry()->first();
+        $resultEntry = $labOrderItem->resultEntry()->first();
 
         if ($resultEntry === null || ! $resultEntry->values()->exists()) {
             throw ValidationException::withMessages([
@@ -37,16 +37,16 @@ final readonly class ApproveLabResultEntry
             ]);
         }
 
-        if ($labRequestItem->specimen()->where('status', LabSpecimenStatus::REJECTED->value)->exists()) {
+        if ($labOrderItem->specimen()->where('status', LabSpecimenStatus::REJECTED->value)->exists()) {
             throw ValidationException::withMessages([
                 'approve' => 'Rejected specimens cannot be released. Recollect the sample first.',
             ]);
         }
 
-        /** @var LabRequest|null $labRequest */
-        $labRequest = null;
+        /** @var LabOrder|null $labOrder */
+        $labOrder = null;
 
-        $labRequestItem = DB::transaction(function () use ($labRequestItem, $resultEntry, $staffId, $reviewNotes, $approvalNotes, &$labRequest): LabRequestItem {
+        $labOrderItem = DB::transaction(function () use ($labOrderItem, $resultEntry, $staffId, $reviewNotes, $approvalNotes, &$labOrder): LabOrderItem {
             $timestamp = now();
             $reviewTimestamp = $resultEntry->reviewed_at ?? $timestamp;
             $reviewerId = $resultEntry->reviewed_by ?? $staffId;
@@ -62,8 +62,8 @@ final readonly class ApproveLabResultEntry
                 'approval_notes' => $approvalNotes,
             ])->save();
 
-            $labRequestItem->forceFill([
-                'status' => LabRequestItemStatus::COMPLETED,
+            $labOrderItem->forceFill([
+                'status' => LabOrderItemStatus::COMPLETED,
                 'reviewed_by' => $reviewerId,
                 'reviewed_at' => $reviewTimestamp,
                 'approved_by' => $staffId,
@@ -71,11 +71,11 @@ final readonly class ApproveLabResultEntry
                 'completed_at' => $timestamp,
             ])->save();
 
-            /** @var LabRequest $resolvedRequest */
-            $resolvedRequest = $labRequestItem->request()->firstOrFail();
-            $labRequest = $resolvedRequest;
+            /** @var LabOrder $resolvedRequest */
+            $resolvedRequest = $labOrderItem->order()->firstOrFail();
+            $labOrder = $resolvedRequest;
 
-            $this->syncLabRequestProgress->handle($resolvedRequest);
+            $this->syncLabOrderProgress->handle($resolvedRequest);
 
             $this->recordAuditActivity->handle(
                 logName: 'laboratory',
@@ -86,8 +86,8 @@ final readonly class ApproveLabResultEntry
                 branchId: $resolvedRequest->facility_branch_id,
                 staffId: $staffId,
                 newValues: [
-                    'lab_request_id' => $resolvedRequest->id,
-                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_order_id' => $resolvedRequest->id,
+                    'lab_order_item_id' => $labOrderItem->id,
                     'lab_result_entry_id' => $resultEntry->id,
                     'reviewed_by' => $reviewerId,
                     'approved_by' => $staffId,
@@ -112,8 +112,8 @@ final readonly class ApproveLabResultEntry
                 branchId: $resolvedRequest->facility_branch_id,
                 staffId: $staffId,
                 newValues: [
-                    'lab_request_id' => $resolvedRequest->id,
-                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_order_id' => $resolvedRequest->id,
+                    'lab_order_item_id' => $labOrderItem->id,
                     'lab_result_entry_id' => $resultEntry->id,
                     'released_at' => $timestamp->toISOString(),
                 ],
@@ -123,23 +123,23 @@ final readonly class ApproveLabResultEntry
                 ],
             );
 
-            return $labRequestItem->refresh();
+            return $labOrderItem->refresh();
         });
 
-        if ($labRequest instanceof LabRequest) {
-            $this->notifyRequestingDoctor($labRequest, $labRequestItem);
+        if ($labOrder instanceof LabOrder) {
+            $this->notifyRequestingDoctor($labOrder, $labOrderItem);
         }
 
-        return $labRequestItem;
+        return $labOrderItem;
     }
 
-    private function notifyRequestingDoctor(LabRequest $labRequest, LabRequestItem $labRequestItem): void
+    private function notifyRequestingDoctor(LabOrder $labOrder, LabOrderItem $labOrderItem): void
     {
         $doctor = User::query()
-            ->where('staff_id', $labRequest->requested_by)
-            ->where('tenant_id', $labRequest->tenant_id)
+            ->where('staff_id', $labOrder->requested_by)
+            ->where('tenant_id', $labOrder->tenant_id)
             ->first();
 
-        $doctor?->notify(new LabResultReleasedNotification($labRequestItem));
+        $doctor?->notify(new LabResultReleasedNotification($labOrderItem));
     }
 }

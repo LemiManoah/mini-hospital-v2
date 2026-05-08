@@ -15,8 +15,8 @@ use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\UpdateConsultationRequest;
 use App\Models\Allergen;
 use App\Models\Department;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\PatientVisit;
 use App\Models\ReferralFacility;
 use App\Support\ActiveBranchWorkspace;
@@ -134,20 +134,20 @@ final readonly class DoctorConsultationController implements HasMiddleware
             },
             'consultation:id,visit_id,doctor_id,consultation_type,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code,outcome,follow_up_instructions,follow_up_days,is_referred,referred_to_department,referred_to_facility,referral_reason',
             'consultation.doctor:id,first_name,last_name',
-            'labRequests' => static function (HasMany $query): void {
+            'labOrders' => static function (HasMany $query): void {
                 $query->with([
                     'requestedBy:id,first_name,last_name',
                     'items.test:id,test_name,test_code,lab_test_category_id,result_type_id',
                     'items.test.labCategory:id,name',
                     'items.test.specimenTypes:id,name',
                     'items.test.resultTypeDefinition:id,code,name',
-                    'items.resultEntry:id,lab_request_item_id,approved_by,approved_at,released_at,result_notes',
+                    'items.resultEntry:id,lab_order_item_id,approved_by,approved_at,released_at,result_notes',
                     'items.resultEntry.approvedBy:id,first_name,last_name',
                     'items.resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,reference_range,sort_order',
                 ])
                     ->latest('request_date');
             },
-            'imagingRequests' => static function (HasMany $query): void {
+            'imagingOrders' => static function (HasMany $query): void {
                 $query->with([
                     'requestedBy:id,first_name,last_name',
                     'scheduledBy:id,first_name,last_name',
@@ -287,8 +287,8 @@ final readonly class DoctorConsultationController implements HasMiddleware
 
     private function hideUnreleasedLabResults(PatientVisit $visit): void
     {
-        $visit->labRequests->each(static function (LabRequest $labRequest): void {
-            $labRequest->items->each(static function (LabRequestItem $item): void {
+        $visit->labOrders->each(static function (LabOrder $labOrder): void {
+            $labOrder->items->each(static function (LabOrderItem $item): void {
                 if ($item->result_visible) {
                     return;
                 }

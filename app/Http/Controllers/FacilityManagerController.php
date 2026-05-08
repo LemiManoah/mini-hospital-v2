@@ -24,7 +24,7 @@ use App\Models\FacilityBranch;
 use App\Models\FacilityService;
 use App\Models\FacilityServiceOrder;
 use App\Models\InventoryLocation;
-use App\Models\LabRequest;
+use App\Models\LabOrder;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
 use App\Models\Prescription;
@@ -210,7 +210,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'Users',
                 'Patients',
                 'Visits',
-                'Lab Requests',
+                'Lab Orders',
                 'Prescriptions',
             ], escape: '\\');
 
@@ -235,7 +235,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                     $tenant->users_count ?? 0,
                     $tenant->patients_count ?? 0,
                     $tenant->visits_count ?? 0,
-                    $tenant->lab_requests_count ?? 0,
+                    $tenant->lab_orders_count ?? 0,
                     $tenant->prescriptions_count ?? 0,
                 ];
 
@@ -280,7 +280,7 @@ final readonly class FacilityManagerController implements HasMiddleware
             'staff as users_count',
             'patients',
             'visits',
-            'labRequests',
+            'labOrders',
             'supportNotes',
         ]);
 
@@ -306,14 +306,14 @@ final readonly class FacilityManagerController implements HasMiddleware
         $usage = [
             'patients' => $tenant->patients_count ?? 0,
             'visits' => $tenant->visits_count ?? 0,
-            'lab_requests' => $tenant->lab_requests_count ?? 0,
+            'lab_orders' => $tenant->lab_orders_count ?? 0,
             'prescriptions' => $prescriptionsCount,
             'verified_users' => $verifiedUsersCount,
             'support_notes' => $tenant->support_notes_count ?? 0,
             'last_visit_at' => PatientVisit::query()
                 ->where('tenant_id', $tenant->id)
                 ->max('registered_at'),
-            'last_lab_request_at' => LabRequest::query()
+            'last_lab_order_at' => LabOrder::query()
                 ->where('tenant_id', $tenant->id)
                 ->max('request_date'),
             'last_prescription_at' => $this->prescriptionsQueryForTenant($tenant->id)
@@ -676,8 +676,8 @@ final readonly class FacilityManagerController implements HasMiddleware
                     'hint' => 'Consultations started in the last 30 days.',
                 ],
                 [
-                    'label' => 'Lab Requests (30d)',
-                    'value' => LabRequest::query()
+                    'label' => 'Lab Orders (30d)',
+                    'value' => LabOrder::query()
                         ->where('tenant_id', $tenant->id)
                         ->where('request_date', '>=', $lastThirtyDays)
                         ->count(),
@@ -950,7 +950,7 @@ final readonly class FacilityManagerController implements HasMiddleware
             'staff as users_count',
             'patients',
             'visits',
-            'labRequests',
+            'labOrders',
         ])->selectSub(
             Prescription::query()
                 ->selectRaw('COUNT(*)')
@@ -986,7 +986,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'users' => $tenant->users_count ?? 0,
                 'patients' => $tenant->patients_count ?? 0,
                 'visits' => $tenant->visits_count ?? 0,
-                'lab_requests' => $tenant->lab_requests_count ?? 0,
+                'lab_orders' => $tenant->lab_orders_count ?? 0,
                 'prescriptions' => $tenant->prescriptions_count ?? 0,
             ],
         ];
@@ -1142,16 +1142,16 @@ final readonly class FacilityManagerController implements HasMiddleware
                 'timestamp' => $consultation->started_at->toISOString(),
             ]);
 
-        $labEvents = LabRequest::query()
+        $labEvents = LabOrder::query()
             ->where('tenant_id', $tenantId)
             ->with(['visit.patient'])
             ->withCount('items')
             ->latest('request_date')
             ->limit(5)
             ->get()
-            ->map(static fn (LabRequest $request): array => [
+            ->map(static fn (LabOrder $request): array => [
                 'type' => 'Laboratory',
-                'title' => sprintf('Lab request created (%d test%s)', $request->items_count ?? 0, ($request->items_count ?? 0) === 1 ? '' : 's'),
+                'title' => sprintf('Lab order created (%d test%s)', $request->items_count ?? 0, ($request->items_count ?? 0) === 1 ? '' : 's'),
                 'subject' => $request->visit?->patient?->fullname(),
                 'timestamp' => $request->request_date?->toISOString(),
             ]);
@@ -1470,7 +1470,7 @@ final readonly class FacilityManagerController implements HasMiddleware
             ->where('tenant_id', $tenant->id)
             ->where('registered_at', '>=', $thirtyDaysAgo)
             ->count()
-            + LabRequest::query()
+            + LabOrder::query()
                 ->where('tenant_id', $tenant->id)
                 ->where('request_date', '>=', $thirtyDaysAgo)
                 ->count()
@@ -1632,7 +1632,7 @@ final readonly class FacilityManagerController implements HasMiddleware
                 status: $recentOperationalActivity > 0 ? 'pass' : 'warning',
                 detail: $recentOperationalActivity > 0
                     ? sprintf('%d recent operational event%s recorded in the last 30 days.', $recentOperationalActivity, $recentOperationalActivity === 1 ? '' : 's')
-                    : 'No visits, lab requests, prescriptions, or service orders were recorded in the last 30 days.',
+                    : 'No visits, lab orders, prescriptions, or service orders were recorded in the last 30 days.',
                 recommendation: $recentOperationalActivity > 0
                     ? 'No action needed.'
                     : 'Confirm whether the facility is newly onboarded, inactive, or blocked by missing setup.',

@@ -1,8 +1,8 @@
 import {
     type LaboratoryQueuePageProps,
     type LaboratoryQueueRequest,
-    type LaboratoryRequestItem,
-    type LaboratoryRequestSummary,
+    type LaboratoryOrderItem,
+    type LaboratoryOrderSummary,
 } from '@/types/laboratory';
 
 type ResultActor = { first_name: string; last_name: string } | null | undefined;
@@ -97,12 +97,12 @@ export type ModalMode = 'collect' | 'enter' | 'review' | 'view';
 
 export type ActiveModal = {
     mode: ModalMode;
-    item: LaboratoryRequestItem;
-    request: LaboratoryRequestSummary | null;
+    item: LaboratoryOrderItem;
+    order: LaboratoryOrderSummary | null;
 } | null;
 
-export type QueueCardRequest = LaboratoryQueueRequest & {
-    request_count: number;
+export type QueueCardOrder = LaboratoryQueueRequest & {
+    order_count: number;
 };
 
 const priorityWeight = (priority: string): number =>
@@ -113,9 +113,9 @@ const priorityWeight = (priority: string): number =>
         routine: 3,
     })[priority] ?? 4;
 
-const toRequestSummary = (
+const toOrderSummary = (
     request: LaboratoryQueueRequest,
-): LaboratoryRequestSummary => ({
+): LaboratoryOrderSummary => ({
     id: request.id,
     request_date: request.request_date,
     priority: request.priority,
@@ -125,36 +125,36 @@ const toRequestSummary = (
     visit: request.visit,
 });
 
-export const withRequestSummary = (
+export const withOrderSummary = (
     request: LaboratoryQueueRequest,
-): QueueCardRequest => {
-    const summary = toRequestSummary(request);
+): QueueCardOrder => {
+    const summary = toOrderSummary(request);
 
     return {
         ...request,
-        request_count: 1,
+        order_count: 1,
         items: request.items.map((item) => ({
             ...item,
-            request: item.request ?? summary,
+            order: item.order ?? summary,
         })),
     };
 };
 
 export const groupIncomingRequests = (
     requests: LaboratoryQueueRequest[],
-): QueueCardRequest[] => {
-    const groupedRequests = new Map<string, QueueCardRequest>();
+): QueueCardOrder[] => {
+    const groupedRequests = new Map<string, QueueCardOrder>();
 
     requests.forEach((request) => {
         const visitId = request.visit?.id ?? `request:${request.id}`;
         const patientId = request.visit?.patient?.id ?? 'unknown-patient';
         const groupKey = `${visitId}:${patientId}`;
-        const normalizedRequest = withRequestSummary(request);
+        const normalizedOrder = withOrderSummary(request);
         const existing = groupedRequests.get(groupKey);
 
         if (!existing) {
             groupedRequests.set(groupKey, {
-                ...normalizedRequest,
+                ...normalizedOrder,
                 id: groupKey,
             });
             return;
@@ -163,27 +163,27 @@ export const groupIncomingRequests = (
         groupedRequests.set(groupKey, {
             ...existing,
             request_date:
-                new Date(normalizedRequest.request_date).getTime() >
+                new Date(normalizedOrder.request_date).getTime() >
                 new Date(existing.request_date).getTime()
-                    ? normalizedRequest.request_date
+                    ? normalizedOrder.request_date
                     : existing.request_date,
             priority:
-                priorityWeight(normalizedRequest.priority) <
+                priorityWeight(normalizedOrder.priority) <
                 priorityWeight(existing.priority)
-                    ? normalizedRequest.priority
+                    ? normalizedOrder.priority
                     : existing.priority,
-            items: [...existing.items, ...normalizedRequest.items].sort(
+            items: [...existing.items, ...normalizedOrder.items].sort(
                 (left, right) =>
                     new Date(
-                        right.request?.request_date ??
-                            normalizedRequest.request_date,
+                        right.order?.request_date ??
+                            normalizedOrder.request_date,
                     ).getTime() -
                     new Date(
-                        left.request?.request_date ??
-                            normalizedRequest.request_date,
+                        left.order?.request_date ??
+                            normalizedOrder.request_date,
                     ).getTime(),
             ),
-            request_count: existing.request_count + 1,
+            order_count: existing.order_count + 1,
         });
     });
 

@@ -249,7 +249,7 @@ export function VisitOrderDialog({
                             onSubmit={(event) => {
                                 event.preventDefault();
                                 labForm.post(
-                                    `/visits/${visit.id}/lab-requests`,
+                                    `/visits/${visit.id}/lab-orders`,
                                     {
                                         preserveScroll: true,
                                         onSuccess: () => {
@@ -802,7 +802,7 @@ export function VisitOrderDialog({
                             onSubmit={(event) => {
                                 event.preventDefault();
                                 imagingForm.post(
-                                    `/visits/${visit.id}/imaging-requests`,
+                                    `/visits/${visit.id}/imaging-orders`,
                                     {
                                         preserveScroll: true,
                                         onSuccess: () => {

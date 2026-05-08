@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\LabRequestItemStatus;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Enums\LabOrderItemStatus;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\LabResultEntry;
 use App\Models\LabResultValue;
 use App\Models\LabTestCatalog;
@@ -18,23 +18,23 @@ use Illuminate\Validation\ValidationException;
 final readonly class CorrectLabResultEntry
 {
     public function __construct(
-        private SyncLabRequestProgress $syncLabRequestProgress,
+        private SyncLabOrderProgress $syncLabOrderProgress,
         private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function handle(LabRequestItem $labRequestItem, array $payload, string $staffId): LabRequestItem
+    public function handle(LabOrderItem $labOrderItem, array $payload, string $staffId): LabOrderItem
     {
-        if ($labRequestItem->approved_at === null || $labRequestItem->status !== LabRequestItemStatus::COMPLETED) {
+        if ($labOrderItem->approved_at === null || $labOrderItem->status !== LabOrderItemStatus::COMPLETED) {
             throw ValidationException::withMessages([
                 'correction' => 'Only released results can be corrected from this workflow.',
             ]);
         }
 
         /** @var LabResultEntry|null $resultEntry */
-        $resultEntry = $labRequestItem->resultEntry()->first();
+        $resultEntry = $labOrderItem->resultEntry()->first();
 
         if ($resultEntry === null) {
             throw ValidationException::withMessages([
@@ -42,7 +42,7 @@ final readonly class CorrectLabResultEntry
             ]);
         }
 
-        return DB::transaction(function () use ($labRequestItem, $resultEntry, $payload, $staffId): LabRequestItem {
+        return DB::transaction(function () use ($labOrderItem, $resultEntry, $payload, $staffId): LabOrderItem {
             $timestamp = now();
             $oldValues = [
                 'result_notes' => $resultEntry->result_notes,
@@ -81,7 +81,7 @@ final readonly class CorrectLabResultEntry
             $resultEntry->values()->delete();
 
             /** @var LabTestCatalog $labTest */
-            $labTest = $labRequestItem->test()->with(['resultParameters', 'resultOptions'])->firstOrFail();
+            $labTest = $labOrderItem->test()->with(['resultParameters', 'resultOptions'])->firstOrFail();
             $resultType = $this->resultCaptureType($labTest);
 
             if ($resultType === 'parameter_panel') {
@@ -125,8 +125,8 @@ final readonly class CorrectLabResultEntry
                 ]);
             }
 
-            $labRequestItem->forceFill([
-                'status' => LabRequestItemStatus::IN_PROGRESS,
+            $labOrderItem->forceFill([
+                'status' => LabOrderItemStatus::IN_PROGRESS,
                 'result_entered_by' => $staffId,
                 'result_entered_at' => $timestamp,
                 'reviewed_by' => null,
@@ -136,26 +136,26 @@ final readonly class CorrectLabResultEntry
                 'completed_at' => null,
             ])->save();
 
-            /** @var LabRequest $labRequest */
-            $labRequest = $labRequestItem->request()->firstOrFail();
+            /** @var LabOrder $labOrder */
+            $labOrder = $labOrderItem->order()->firstOrFail();
 
-            $this->syncLabRequestProgress->handle($labRequest);
+            $this->syncLabOrderProgress->handle($labOrder);
 
             $this->recordAuditActivity->handle(
                 logName: 'laboratory',
                 event: 'lab_result.corrected',
                 subject: $resultEntry,
                 description: 'Lab result corrected and reopened for review.',
-                tenantId: $labRequest->tenant_id,
-                branchId: $labRequest->facility_branch_id,
+                tenantId: $labOrder->tenant_id,
+                branchId: $labOrder->facility_branch_id,
                 staffId: $staffId,
                 reason: $this->nullableText($payload['correction_reason'] ?? null),
                 oldValues: $oldValues,
                 newValues: [
-                    'lab_request_id' => $labRequest->id,
-                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_order_id' => $labOrder->id,
+                    'lab_order_item_id' => $labOrderItem->id,
                     'lab_result_entry_id' => $resultEntry->id,
-                    'status' => $labRequestItem->status->value,
+                    'status' => $labOrderItem->status->value,
                     'entered_by' => $staffId,
                     'entered_at' => $timestamp->toISOString(),
                     'corrected_by' => $staffId,
@@ -167,7 +167,7 @@ final readonly class CorrectLabResultEntry
                 ],
             );
 
-            return $labRequestItem->refresh();
+            return $labOrderItem->refresh();
         });
     }
 

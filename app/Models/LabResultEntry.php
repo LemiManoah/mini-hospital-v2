@@ -14,7 +14,7 @@ final class LabResultEntry extends Model
     use HasUuids;
 
     protected $casts = [
-        'lab_request_item_id' => 'string',
+        'lab_order_item_id' => 'string',
         'entered_by' => 'string',
         'entered_at' => 'datetime',
         'reviewed_by' => 'string',
@@ -27,10 +27,10 @@ final class LabResultEntry extends Model
         'corrected_at' => 'datetime',
     ];
 
-    /** @return BelongsTo<LabRequestItem, $this> */
-    public function requestItem(): BelongsTo
+    /** @return BelongsTo<LabOrderItem, $this> */
+    public function orderItem(): BelongsTo
     {
-        return $this->belongsTo(LabRequestItem::class, 'lab_request_item_id');
+        return $this->belongsTo(LabOrderItem::class, 'lab_order_item_id');
     }
 
     /** @return HasMany<LabResultValue, $this> */

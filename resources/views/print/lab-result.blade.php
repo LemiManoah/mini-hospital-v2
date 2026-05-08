@@ -47,7 +47,7 @@
             </td>
             <td>
                 <span class="label">Requested At</span>
-                <span class="value">{{ $labRequest?->request_date?->format('d M Y H:i') ?? 'N/A' }}</span>
+                <span class="value">{{ $labOrder?->request_date?->format('d M Y H:i') ?? 'N/A' }}</span>
             </td>
         </tr>
         <tr>
@@ -57,28 +57,28 @@
             </td>
             <td>
                 <span class="label">Priority</span>
-                <span class="value">{{ $labRequest?->priority?->label() ?? 'Normal' }}</span>
+                <span class="value">{{ $labOrder?->priority?->label() ?? 'Normal' }}</span>
             </td>
         </tr>
         <tr>
             <td>
                 <span class="label">Specimen</span>
-                <span class="value">{{ $labRequestItem->specimen?->specimen_type_name ?? 'N/A' }}</span>
+                <span class="value">{{ $labOrderItem->specimen?->specimen_type_name ?? 'N/A' }}</span>
             </td>
             <td>
                 <span class="label">Accession Number</span>
-                <span class="value">{{ $labRequestItem->specimen?->accession_number ?? 'N/A' }}</span>
+                <span class="value">{{ $labOrderItem->specimen?->accession_number ?? 'N/A' }}</span>
             </td>
         </tr>
         <tr>
             <td>
                 <span class="label">Released At</span>
-                <span class="value">{{ $labRequestItem->resultEntry?->released_at?->format('d M Y H:i') ?? ($labRequestItem->approved_at?->format('d M Y H:i') ?? 'N/A') }}</span>
+                <span class="value">{{ $labOrderItem->resultEntry?->released_at?->format('d M Y H:i') ?? ($labOrderItem->approved_at?->format('d M Y H:i') ?? 'N/A') }}</span>
             </td>
             <td>
                 <span class="label">Released By</span>
                 <span class="value">
-                    {{ $labRequestItem->resultEntry?->approvedBy ? trim($labRequestItem->resultEntry->approvedBy->first_name.' '.$labRequestItem->resultEntry->approvedBy->last_name) : 'N/A' }}
+                    {{ $labOrderItem->resultEntry?->approvedBy ? trim($labOrderItem->resultEntry->approvedBy->first_name.' '.$labOrderItem->resultEntry->approvedBy->last_name) : 'N/A' }}
                 </span>
             </td>
         </tr>
@@ -96,7 +96,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse(($labRequestItem->resultEntry?->values ?? []) as $value)
+                @forelse(($labOrderItem->resultEntry?->values ?? []) as $value)
                     <tr>
                         <td>{{ $value->label ?? 'Result' }}</td>
                         <td>{{ $value->display_value ?? $value->value_text ?? $value->value_numeric ?? 'N/A' }}</td>
@@ -112,40 +112,40 @@
         </table>
     </div>
 
-    @if($labRequestItem->resultEntry?->result_notes)
+    @if($labOrderItem->resultEntry?->result_notes)
         <div class="section">
             <h2 class="section-title">Bench Notes</h2>
-            <div class="note-box">{{ $labRequestItem->resultEntry->result_notes }}</div>
+            <div class="note-box">{{ $labOrderItem->resultEntry->result_notes }}</div>
         </div>
     @endif
 
-    @if($labRequestItem->resultEntry?->review_notes)
+    @if($labOrderItem->resultEntry?->review_notes)
         <div class="section">
             <h2 class="section-title">Review Notes</h2>
-            <div class="note-box">{{ $labRequestItem->resultEntry->review_notes }}</div>
+            <div class="note-box">{{ $labOrderItem->resultEntry->review_notes }}</div>
         </div>
     @endif
 
-    @if($labRequestItem->resultEntry?->approval_notes)
+    @if($labOrderItem->resultEntry?->approval_notes)
         <div class="section">
             <h2 class="section-title">Approval Notes</h2>
-            <div class="note-box">{{ $labRequestItem->resultEntry->approval_notes }}</div>
+            <div class="note-box">{{ $labOrderItem->resultEntry->approval_notes }}</div>
         </div>
     @endif
 
-    @if($labRequest?->clinical_notes)
+    @if($labOrder?->clinical_notes)
         <div class="section">
             <h2 class="section-title">Clinical Notes</h2>
-            <div class="note-box">{{ $labRequest->clinical_notes }}</div>
+            <div class="note-box">{{ $labOrder->clinical_notes }}</div>
         </div>
     @endif
 
     @php
-        $releasedBy = $labRequestItem->resultEntry?->releasedBy ?? $labRequestItem->resultEntry?->approvedBy;
+        $releasedBy = $labOrderItem->resultEntry?->releasedBy ?? $labOrderItem->resultEntry?->approvedBy;
         $releasedByName = $releasedBy
             ? trim($releasedBy->first_name.' '.$releasedBy->last_name)
             : 'Pending sign-off';
-        $releasedAt = $labRequestItem->resultEntry?->released_at ?? $labRequestItem->resultEntry?->approved_at;
+        $releasedAt = $labOrderItem->resultEntry?->released_at ?? $labOrderItem->resultEntry?->approved_at;
     @endphp
 
     <table class="signature-grid">

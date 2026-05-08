@@ -43,16 +43,16 @@ final class Consultation extends Model
         return $this->belongsTo(Staff::class, 'doctor_id');
     }
 
-    /** @return HasMany<LabRequest, $this> */
-    public function labRequests(): HasMany
+    /** @return HasMany<LabOrder, $this> */
+    public function labOrders(): HasMany
     {
-        return $this->hasMany(LabRequest::class, 'consultation_id');
+        return $this->hasMany(LabOrder::class, 'consultation_id');
     }
 
-    /** @return HasMany<ImagingRequest, $this> */
-    public function imagingRequests(): HasMany
+    /** @return HasMany<ImagingOrder, $this> */
+    public function imagingOrders(): HasMany
     {
-        return $this->hasMany(ImagingRequest::class, 'consultation_id');
+        return $this->hasMany(ImagingOrder::class, 'consultation_id');
     }
 
     /** @return HasMany<Prescription, $this> */

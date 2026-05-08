@@ -32,10 +32,10 @@ final class InventoryLocationAccess
             ->where('is_active', true)
             ->orderBy('name');
 
-        $normalizedRequestedTypes = $this->normalizeTypes($requestedTypes);
+        $normalizedOrderedTypes = $this->normalizeTypes($requestedTypes);
 
-        if ($normalizedRequestedTypes !== []) {
-            $query->whereIn('type', $normalizedRequestedTypes);
+        if ($normalizedOrderedTypes !== []) {
+            $query->whereIn('type', $normalizedOrderedTypes);
         }
 
         if ($this->hasBroadAccess($user)) {
@@ -82,10 +82,10 @@ final class InventoryLocationAccess
             ->where('is_active', true)
             ->orderBy('name');
 
-        $normalizedRequestedTypes = $this->normalizeTypes($requestedTypes);
+        $normalizedOrderedTypes = $this->normalizeTypes($requestedTypes);
 
-        if ($normalizedRequestedTypes !== []) {
-            $query->whereIn('type', $normalizedRequestedTypes);
+        if ($normalizedOrderedTypes !== []) {
+            $query->whereIn('type', $normalizedOrderedTypes);
         } elseif (! $this->hasBroadAccess($user) && $this->restrictedTypes($user) !== []) {
             $query->where('type', InventoryLocationType::MAIN_STORE);
         }
@@ -142,12 +142,12 @@ final class InventoryLocationAccess
             return false;
         }
 
-        $normalizedRequestingTypes = $this->normalizeTypes($requestingTypes);
+        $normalizedOrderingTypes = $this->normalizeTypes($requestingTypes);
 
-        $allowedFulfillingLocationIds = $normalizedRequestingTypes === []
+        $allowedFulfillingLocationIds = $normalizedOrderingTypes === []
             ? $this->requisitionFulfillingLocationIds($user, $branchId)
             : $this->requisitionFulfillingLocationIds($user, $branchId, [InventoryLocationType::MAIN_STORE]);
-        $allowedRequestingLocationIds = $this->accessibleLocationIds($user, $branchId, $normalizedRequestingTypes);
+        $allowedRequestingLocationIds = $this->accessibleLocationIds($user, $branchId, $normalizedOrderingTypes);
 
         return in_array($fulfillingLocationId, $allowedFulfillingLocationIds, true)
             && in_array($requestingLocationId, $allowedRequestingLocationIds, true);

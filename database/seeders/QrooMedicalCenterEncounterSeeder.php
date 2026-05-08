@@ -6,13 +6,13 @@ namespace Database\Seeders;
 
 use App\Actions\RecalculateVisitBilling;
 use App\Actions\SyncFacilityServiceOrderCharge;
-use App\Actions\SyncLabRequestCharge;
+use App\Actions\SyncLabOrderCharge;
 use App\Enums\BillingStatus;
 use App\Enums\ConsultationOutcome;
 use App\Enums\FacilityServiceOrderStatus;
 use App\Enums\LabBillingStatus;
-use App\Enums\LabRequestItemStatus;
-use App\Enums\LabRequestStatus;
+use App\Enums\LabOrderItemStatus;
+use App\Enums\LabOrderStatus;
 use App\Enums\PayerType;
 use App\Enums\Priority;
 use App\Enums\VisitStatus;
@@ -22,8 +22,8 @@ use App\Models\Consultation;
 use App\Models\FacilityBranch;
 use App\Models\FacilityService;
 use App\Models\FacilityServiceOrder;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\LabResultEntry;
 use App\Models\LabResultValue;
 use App\Models\LabTestCatalog;
@@ -66,15 +66,15 @@ use RuntimeException;
  * }
  * @phpstan-type LabTestRequestData array{
  *   test_code: string,
- *   status: LabRequestItemStatus,
+ *   status: LabOrderItemStatus,
  *   completed_at: CarbonInterface|null,
  *   result: LabResultData|null
  * }
- * @phpstan-type LabRequestData array{
+ * @phpstan-type LabOrderData array{
  *   request_date: CarbonInterface,
  *   clinical_notes: string,
  *   priority: Priority,
- *   status: LabRequestStatus,
+ *   status: LabOrderStatus,
  *   billing_status: LabBillingStatus,
  *   workflow_staff_email: string,
  *   tests: list<LabTestRequestData>
@@ -108,7 +108,7 @@ use RuntimeException;
  *   started_at: CarbonInterface|null,
  *   completed_at: CarbonInterface|null,
  *   consultation: ConsultationData|null,
- *   lab_request: LabRequestData|null,
+ *   lab_order: LabOrderData|null,
  *   service_orders: list<FacilityServiceOrderData>,
  *   payment: PaymentData|null
  * }
@@ -278,16 +278,16 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
 
             $consultation = $this->syncConsultation($tenant->id, $visit, $doctor, $branch->id, $scenario['consultation']);
 
-            if ($scenario['lab_request'] !== null) {
-                $this->syncLabRequest(
+            if ($scenario['lab_order'] !== null) {
+                $this->syncLabOrder(
                     $tenant->id,
                     $visit,
                     $consultation,
                     $branch->id,
                     $doctor,
-                    $this->requireStaff($staff, $scenario['lab_request']['workflow_staff_email']),
+                    $this->requireStaff($staff, $scenario['lab_order']['workflow_staff_email']),
                     $tests,
-                    $scenario['lab_request'],
+                    $scenario['lab_order'],
                 );
             }
 
@@ -391,9 +391,9 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
 
     /**
      * @param  Collection<string, LabTestCatalog>  $tests
-     * @param  LabRequestData  $requestData
+     * @param  LabOrderData  $requestData
      */
-    private function syncLabRequest(
+    private function syncLabOrder(
         string $tenantId,
         PatientVisit $visit,
         ?Consultation $consultation,
@@ -403,7 +403,7 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
         Collection $tests,
         array $requestData,
     ): void {
-        $labRequest = LabRequest::query()->updateOrCreate(
+        $labOrder = LabOrder::query()->updateOrCreate(
             [
                 'visit_id' => $visit->id,
                 'consultation_id' => $consultation?->id,
@@ -419,7 +419,7 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
                 'diagnosis_code' => $consultation?->primary_icd10_code,
                 'is_stat' => $requestData['priority'] === Priority::STAT,
                 'billing_status' => $requestData['billing_status']->value,
-                'completed_at' => $requestData['status'] === LabRequestStatus::COMPLETED
+                'completed_at' => $requestData['status'] === LabOrderStatus::COMPLETED
                     ? collect($requestData['tests'])->pluck('completed_at')->filter()->max()
                     : null,
             ],
@@ -428,17 +428,17 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
         foreach ($requestData['tests'] as $testData) {
             $test = $this->requireTest($tests, $testData['test_code']);
 
-            $item = LabRequestItem::query()->updateOrCreate(
+            $item = LabOrderItem::query()->updateOrCreate(
                 [
-                    'request_id' => $labRequest->id,
+                    'lab_order_id' => $labOrder->id,
                     'test_id' => $test->id,
                 ],
                 [
                     'status' => $testData['status']->value,
                     'price' => $test->base_price,
                     'is_external' => false,
-                    'received_by' => $testData['status'] !== LabRequestItemStatus::PENDING ? $workflowStaff->id : null,
-                    'received_at' => $testData['status'] !== LabRequestItemStatus::PENDING ? $requestData['request_date']->addMinutes(20) : null,
+                    'received_by' => $testData['status'] !== LabOrderItemStatus::PENDING ? $workflowStaff->id : null,
+                    'received_at' => $testData['status'] !== LabOrderItemStatus::PENDING ? $requestData['request_date']->addMinutes(20) : null,
                     'result_entered_by' => $testData['result'] !== null ? $workflowStaff->id : null,
                     'result_entered_at' => $testData['result'] !== null ? $testData['completed_at']?->subMinutes(20) : null,
                     'reviewed_by' => $testData['result'] !== null ? $workflowStaff->id : null,
@@ -454,18 +454,18 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
             }
         }
 
-        resolve(SyncLabRequestCharge::class)->handle($labRequest->fresh(['items.test', 'visit.payer']) ?? $labRequest);
+        resolve(SyncLabOrderCharge::class)->handle($labOrder->fresh(['items.test', 'visit.payer']) ?? $labOrder);
     }
 
     /**
      * @param  LabResultData  $resultData
      */
-    private function syncLabResultEntry(LabRequestItem $item, Staff $workflowStaff, array $resultData): void
+    private function syncLabResultEntry(LabOrderItem $item, Staff $workflowStaff, array $resultData): void
     {
         $item->loadMissing('test.resultParameters');
 
         $entry = LabResultEntry::query()->updateOrCreate(
-            ['lab_request_item_id' => $item->id],
+            ['lab_order_item_id' => $item->id],
             [
                 'entered_by' => $workflowStaff->id,
                 'entered_at' => $item->result_entered_at,
@@ -607,17 +607,17 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
                     'follow_up_instructions' => 'Return in 48 hours if fever persists or earlier if symptoms worsen.',
                     'follow_up_days' => 2,
                 ],
-                'lab_request' => [
+                'lab_order' => [
                     'request_date' => now()->subDays(4)->setTime(9, 0),
                     'clinical_notes' => 'Rule out malaria and assess baseline blood count before outpatient treatment.',
                     'priority' => Priority::URGENT,
-                    'status' => LabRequestStatus::COMPLETED,
+                    'status' => LabOrderStatus::COMPLETED,
                     'billing_status' => LabBillingStatus::PAID,
                     'workflow_staff_email' => 'lillian.nabukeera@qroomedical.ug',
                     'tests' => [
                         [
                             'test_code' => 'QMC-LAB-MAL',
-                            'status' => LabRequestItemStatus::COMPLETED,
+                            'status' => LabOrderItemStatus::COMPLETED,
                             'completed_at' => now()->subDays(4)->setTime(10, 5),
                             'result' => [
                                 'notes' => 'Antigen detected.',
@@ -628,7 +628,7 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
                         ],
                         [
                             'test_code' => 'QMC-LAB-CBC',
-                            'status' => LabRequestItemStatus::COMPLETED,
+                            'status' => LabOrderItemStatus::COMPLETED,
                             'completed_at' => now()->subDays(4)->setTime(10, 15),
                             'result' => [
                                 'notes' => 'Mild thrombocytopenia noted.',
@@ -686,23 +686,23 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
                     'follow_up_instructions' => 'Continue observation in outpatient bay.',
                     'follow_up_days' => 1,
                 ],
-                'lab_request' => [
+                'lab_order' => [
                     'request_date' => now()->subDays(1)->setTime(15, 0),
                     'clinical_notes' => 'Check inflammatory markers if symptoms fail to settle after nebulization.',
                     'priority' => Priority::ROUTINE,
-                    'status' => LabRequestStatus::IN_PROGRESS,
+                    'status' => LabOrderStatus::IN_PROGRESS,
                     'billing_status' => LabBillingStatus::PENDING,
                     'workflow_staff_email' => 'lillian.nabukeera@qroomedical.ug',
                     'tests' => [
                         [
                             'test_code' => 'QMC-LAB-CBC',
-                            'status' => LabRequestItemStatus::IN_PROGRESS,
+                            'status' => LabOrderItemStatus::IN_PROGRESS,
                             'completed_at' => null,
                             'result' => null,
                         ],
                         [
                             'test_code' => 'QMC-LAB-CRP',
-                            'status' => LabRequestItemStatus::PENDING,
+                            'status' => LabOrderItemStatus::PENDING,
                             'completed_at' => null,
                             'result' => null,
                         ],
@@ -747,17 +747,17 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
                     'follow_up_instructions' => 'Increase fluids and return if symptoms fail to improve in 72 hours.',
                     'follow_up_days' => 3,
                 ],
-                'lab_request' => [
+                'lab_order' => [
                     'request_date' => now()->subDays(2)->setTime(10, 45),
                     'clinical_notes' => 'Evaluate for pyuria and urinary glucose or protein abnormalities.',
                     'priority' => Priority::ROUTINE,
-                    'status' => LabRequestStatus::COMPLETED,
+                    'status' => LabOrderStatus::COMPLETED,
                     'billing_status' => LabBillingStatus::PAID,
                     'workflow_staff_email' => 'lillian.nabukeera@qroomedical.ug',
                     'tests' => [
                         [
                             'test_code' => 'QMC-LAB-UA',
-                            'status' => LabRequestItemStatus::COMPLETED,
+                            'status' => LabOrderItemStatus::COMPLETED,
                             'completed_at' => now()->subDays(2)->setTime(11, 35),
                             'result' => [
                                 'notes' => 'Findings support uncomplicated UTI.',
@@ -807,7 +807,7 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
                     'follow_up_instructions' => 'Return in 4 days for final review.',
                     'follow_up_days' => 4,
                 ],
-                'lab_request' => null,
+                'lab_order' => null,
                 'service_orders' => [
                     [
                         'service_code' => 'QMC-SVC-DRESS',
@@ -840,7 +840,7 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
                 'started_at' => null,
                 'completed_at' => null,
                 'consultation' => null,
-                'lab_request' => null,
+                'lab_order' => null,
                 'service_orders' => [],
                 'payment' => null,
             ],

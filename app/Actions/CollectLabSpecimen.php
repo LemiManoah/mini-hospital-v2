@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\LabRequestItemStatus;
+use App\Enums\LabOrderItemStatus;
 use App\Enums\LabSpecimenStatus;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\LabSpecimen;
 use App\Models\LabTestCatalog;
 use App\Models\SpecimenType;
@@ -19,29 +19,29 @@ use Illuminate\Validation\ValidationException;
 final readonly class CollectLabSpecimen
 {
     public function __construct(
-        private SyncLabRequestProgress $syncLabRequestProgress,
+        private SyncLabOrderProgress $syncLabOrderProgress,
         private RecordAuditActivity $recordAuditActivity,
     ) {}
 
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function handle(LabRequestItem $labRequestItem, array $payload, string $staffId): LabRequestItem
+    public function handle(LabOrderItem $labOrderItem, array $payload, string $staffId): LabOrderItem
     {
-        if ($labRequestItem->status === LabRequestItemStatus::CANCELLED) {
+        if ($labOrderItem->status === LabOrderItemStatus::CANCELLED) {
             throw ValidationException::withMessages([
                 'specimen_type_id' => 'Cancelled lab items cannot have samples picked.',
             ]);
         }
 
-        if ($labRequestItem->approved_at !== null || $labRequestItem->status === LabRequestItemStatus::COMPLETED) {
+        if ($labOrderItem->approved_at !== null || $labOrderItem->status === LabOrderItemStatus::COMPLETED) {
             throw ValidationException::withMessages([
                 'specimen_type_id' => 'Released lab items cannot have their sample picking changed.',
             ]);
         }
 
         /** @var LabTestCatalog|null $labTest */
-        $labTest = $labRequestItem->test()->first();
+        $labTest = $labOrderItem->test()->first();
 
         /** @var SpecimenType|null $specimenType */
         $specimenType = $labTest instanceof LabTestCatalog
@@ -56,9 +56,9 @@ final readonly class CollectLabSpecimen
             ]);
         }
 
-        return DB::transaction(function () use ($labRequestItem, $payload, $staffId, $specimenType): LabRequestItem {
+        return DB::transaction(function () use ($labOrderItem, $payload, $staffId, $specimenType): LabOrderItem {
             /** @var LabSpecimen|null $existingSpecimen */
-            $existingSpecimen = $labRequestItem->specimen()->first();
+            $existingSpecimen = $labOrderItem->specimen()->first();
             $collectedAt = $existingSpecimen instanceof LabSpecimen
                 ? $existingSpecimen->collected_at ?? now()
                 : now();
@@ -66,7 +66,7 @@ final readonly class CollectLabSpecimen
                 ? $existingSpecimen->accession_number ?? $this->generateAccessionNumber()
                 : $this->generateAccessionNumber();
 
-            $labRequestItem->specimen()->updateOrCreate(
+            $labOrderItem->specimen()->updateOrCreate(
                 [],
                 [
                     'accession_number' => $accessionNumber,
@@ -81,29 +81,29 @@ final readonly class CollectLabSpecimen
                 ],
             );
 
-            $labRequestItem->forceFill([
+            $labOrderItem->forceFill([
                 'received_by' => $staffId,
-                'received_at' => $labRequestItem->received_at ?? $collectedAt,
+                'received_at' => $labOrderItem->received_at ?? $collectedAt,
             ])->save();
 
-            /** @var LabRequest $labRequest */
-            $labRequest = $labRequestItem->request()->firstOrFail();
+            /** @var LabOrder $labOrder */
+            $labOrder = $labOrderItem->order()->firstOrFail();
 
-            $this->syncLabRequestProgress->handle($labRequest);
+            $this->syncLabOrderProgress->handle($labOrder);
 
-            $specimen = $labRequestItem->specimen()->firstOrFail();
+            $specimen = $labOrderItem->specimen()->firstOrFail();
 
             $this->recordAuditActivity->handle(
                 logName: 'laboratory',
                 event: 'lab_specimen.collected',
-                subject: $labRequestItem,
+                subject: $labOrderItem,
                 description: 'Lab specimen collected.',
-                tenantId: $labRequest->tenant_id,
-                branchId: $labRequest->facility_branch_id,
+                tenantId: $labOrder->tenant_id,
+                branchId: $labOrder->facility_branch_id,
                 staffId: $staffId,
                 newValues: [
-                    'lab_request_id' => $labRequest->id,
-                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_order_id' => $labOrder->id,
+                    'lab_order_item_id' => $labOrderItem->id,
                     'lab_specimen_id' => $specimen->id,
                     'specimen_type_id' => $specimen->specimen_type_id,
                     'collected_at' => $specimen->collected_at?->toISOString(),
@@ -117,7 +117,7 @@ final readonly class CollectLabSpecimen
                 ],
             );
 
-            return $labRequestItem->refresh()->loadMissing([
+            return $labOrderItem->refresh()->loadMissing([
                 'specimen',
                 'specimen.specimenType',
                 'specimen.collectedBy',

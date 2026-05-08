@@ -9,7 +9,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { type ImagingRequest } from '@/types/patient';
+import { type ImagingOrder } from '@/types/patient';
 import { Edit2, Trash2 } from 'lucide-react';
 import { formatDateTime, labelize, staffName } from '../visit-ordering';
 
@@ -25,20 +25,20 @@ const statusBadgeClasses = (status: string): string =>
     })[status] ?? 'bg-zinc-100 text-zinc-800';
 
 export function ImagingOrdersTable({
-    imagingRequests,
+    imagingOrders,
     onEdit,
     onDelete,
     canManageOrders,
 }: {
-    imagingRequests: ImagingRequest[];
-    onEdit?: (request: ImagingRequest) => void;
-    onDelete?: (request: ImagingRequest) => void;
+    imagingOrders: ImagingOrder[];
+    onEdit?: (request: ImagingOrder) => void;
+    onDelete?: (request: ImagingOrder) => void;
     canManageOrders: boolean;
 }) {
-    if (imagingRequests.length === 0) {
+    if (imagingOrders.length === 0) {
         return (
             <div className="rounded-lg border border-dashed px-4 py-12 text-center text-sm text-muted-foreground">
-                No imaging requests found for this visit.
+                No imaging orders found for this visit.
             </div>
         );
     }
@@ -61,7 +61,7 @@ export function ImagingOrdersTable({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {imagingRequests.map((request) => (
+                    {imagingOrders.map((request) => (
                         <TableRow key={request.id}>
                             <TableCell className="font-medium">
                                 {labelize(request.modality)} {request.body_part}

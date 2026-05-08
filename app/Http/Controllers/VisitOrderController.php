@@ -5,24 +5,24 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\CreateFacilityServiceOrder;
-use App\Actions\CreateImagingRequest;
-use App\Actions\CreateLabRequest;
+use App\Actions\CreateImagingOrder;
+use App\Actions\CreateLabOrder;
 use App\Actions\CreatePrescription;
 use App\Actions\DeletePendingFacilityServiceOrder;
-use App\Actions\DeletePendingLabRequest;
-use App\Actions\DeletePendingLabRequestItem;
+use App\Actions\DeletePendingLabOrder;
+use App\Actions\DeletePendingLabOrderItem;
 use App\Actions\UpdateFacilityServiceOrder;
-use App\Actions\UpdateLabRequest;
+use App\Actions\UpdateLabOrder;
 use App\Enums\FacilityServiceOrderStatus;
-use App\Enums\LabRequestItemStatus;
-use App\Enums\LabRequestStatus;
+use App\Enums\LabOrderItemStatus;
+use App\Enums\LabOrderStatus;
 use App\Http\Requests\StoreConsultationFacilityServiceOrderRequest;
-use App\Http\Requests\StoreConsultationImagingRequest;
-use App\Http\Requests\StoreConsultationLabRequest;
+use App\Http\Requests\StoreConsultationImagingOrder;
+use App\Http\Requests\StoreConsultationLabOrder;
 use App\Http\Requests\StoreConsultationPrescriptionRequest;
 use App\Models\FacilityServiceOrder;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\PatientVisit;
 use App\Support\DoctorConsultationAccess;
 use Illuminate\Http\RedirectResponse;
@@ -37,11 +37,11 @@ final readonly class VisitOrderController implements HasMiddleware
     {
         return [
             new Middleware('permission:consultations.update', only: [
-                'storeLabRequest',
-                'updateLabRequest',
-                'destroyLabRequest',
-                'destroyLabRequestItem',
-                'storeImagingRequest',
+                'storeLabOrder',
+                'updateLabOrder',
+                'destroyLabOrder',
+                'destroyLabOrderItem',
+                'storeImagingOrder',
                 'storePrescription',
                 'storeFacilityServiceOrder',
                 'updateFacilityServiceOrder',
@@ -50,11 +50,11 @@ final readonly class VisitOrderController implements HasMiddleware
         ];
     }
 
-    public function storeLabRequest(
-        StoreConsultationLabRequest $request,
+    public function storeLabOrder(
+        StoreConsultationLabOrder $request,
         PatientVisit $visit,
         DoctorConsultationAccess $consultationAccess,
-        CreateLabRequest $createLabRequest,
+        CreateLabOrder $createLabOrder,
     ): RedirectResponse {
         $staffId = $this->resolveStaffId($visit, $consultationAccess, $request->input('redirect_to'));
         if (! is_string($staffId) || $staffId === '') {
@@ -67,18 +67,18 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'This visit already has a finalized consultation and can no longer accept new orders.');
         }
 
-        $createLabRequest->handle($visit, $request->createDto(), $staffId);
+        $createLabOrder->handle($visit, $request->createDto(), $staffId);
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
             ->with('success', 'Laboratory request created successfully.');
     }
 
-    public function updateLabRequest(
-        StoreConsultationLabRequest $request,
+    public function updateLabOrder(
+        StoreConsultationLabOrder $request,
         PatientVisit $visit,
-        LabRequest $labRequest,
+        LabOrder $labOrder,
         DoctorConsultationAccess $consultationAccess,
-        UpdateLabRequest $updateLabRequest,
+        UpdateLabOrder $updateLabOrder,
     ): RedirectResponse {
         $staffId = $this->resolveStaffId($visit, $consultationAccess, $request->input('redirect_to'));
         if (! is_string($staffId) || $staffId === '') {
@@ -86,30 +86,30 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'Clinical lab orders require a linked staff profile for audit tracking.');
         }
 
-        abort_unless($labRequest->visit_id === $visit->id, 404);
+        abort_unless($labOrder->visit_id === $visit->id, 404);
 
         if ($this->consultationIsFinalized($visit)) {
             return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
                 ->with('error', 'This visit already has a finalized consultation and can no longer accept order changes.');
         }
 
-        if (! $this->labRequestIsEditable($labRequest)) {
+        if (! $this->labOrderIsEditable($labOrder)) {
             return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
-                ->with('error', 'Only pending lab requests can be updated.');
+                ->with('error', 'Only pending lab orders can be updated.');
         }
 
-        $updateLabRequest->handle($labRequest, $request->updateDto());
+        $updateLabOrder->handle($labOrder, $request->updateDto());
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
             ->with('success', 'Laboratory request updated successfully.');
     }
 
-    public function destroyLabRequest(
+    public function destroyLabOrder(
         Request $request,
         PatientVisit $visit,
-        LabRequest $labRequest,
+        LabOrder $labOrder,
         DoctorConsultationAccess $consultationAccess,
-        DeletePendingLabRequest $deletePendingLabRequest,
+        DeletePendingLabOrder $deletePendingLabOrder,
     ): RedirectResponse {
         $staffId = $this->resolveStaffId($visit, $consultationAccess, $request->input('redirect_to'));
         if (! is_string($staffId) || $staffId === '') {
@@ -117,26 +117,26 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'Clinical lab orders require a linked staff profile for audit tracking.');
         }
 
-        abort_unless($labRequest->visit_id === $visit->id, 404);
+        abort_unless($labOrder->visit_id === $visit->id, 404);
 
-        if (! $this->labRequestIsEditable($labRequest)) {
+        if (! $this->labOrderIsEditable($labOrder)) {
             return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
-                ->with('error', 'Only pending lab requests can be removed.');
+                ->with('error', 'Only pending lab orders can be removed.');
         }
 
-        $deletePendingLabRequest->handle($labRequest);
+        $deletePendingLabOrder->handle($labOrder);
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
             ->with('success', 'Laboratory request removed successfully.');
     }
 
-    public function destroyLabRequestItem(
+    public function destroyLabOrderItem(
         Request $request,
         PatientVisit $visit,
-        LabRequest $labRequest,
-        LabRequestItem $labRequestItem,
+        LabOrder $labOrder,
+        LabOrderItem $labOrderItem,
         DoctorConsultationAccess $consultationAccess,
-        DeletePendingLabRequestItem $deletePendingLabRequestItem,
+        DeletePendingLabOrderItem $deletePendingLabOrderItem,
     ): RedirectResponse {
         $staffId = $this->resolveStaffId($visit, $consultationAccess, $request->input('redirect_to'));
         if (! is_string($staffId) || $staffId === '') {
@@ -144,25 +144,25 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'Clinical lab orders require a linked staff profile for audit tracking.');
         }
 
-        abort_unless($labRequest->visit_id === $visit->id, 404);
-        abort_unless($labRequestItem->request_id === $labRequest->id, 404);
+        abort_unless($labOrder->visit_id === $visit->id, 404);
+        abort_unless($labOrderItem->lab_order_id === $labOrder->id, 404);
 
-        if (! $this->labRequestIsEditable($labRequest) || $labRequestItem->status !== LabRequestItemStatus::PENDING) {
+        if (! $this->labOrderIsEditable($labOrder) || $labOrderItem->status !== LabOrderItemStatus::PENDING) {
             return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
                 ->with('error', 'Only pending lab tests can be removed one by one.');
         }
 
-        $deletePendingLabRequestItem->handle($labRequestItem);
+        $deletePendingLabOrderItem->handle($labOrderItem);
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'lab')
             ->with('success', 'Laboratory test removed successfully.');
     }
 
-    public function storeImagingRequest(
-        StoreConsultationImagingRequest $request,
+    public function storeImagingOrder(
+        StoreConsultationImagingOrder $request,
         PatientVisit $visit,
         DoctorConsultationAccess $consultationAccess,
-        CreateImagingRequest $createImagingRequest,
+        CreateImagingOrder $createImagingOrder,
     ): RedirectResponse {
         $staffId = $this->resolveStaffId($visit, $consultationAccess, $request->input('redirect_to'));
         if (! is_string($staffId) || $staffId === '') {
@@ -175,10 +175,10 @@ final readonly class VisitOrderController implements HasMiddleware
                 ->with('error', 'This visit already has a finalized consultation and can no longer accept new orders.');
         }
 
-        $createImagingRequest->handle($visit, $request->createDto(), $staffId);
+        $createImagingOrder->handle($visit, $request->createDto(), $staffId);
 
         return $this->redirectWithTab($visit, $request->input('redirect_to'), 'imaging')
-            ->with('success', 'Imaging request created successfully.');
+            ->with('success', 'Imaging order created successfully.');
     }
 
     public function storePrescription(
@@ -309,10 +309,10 @@ final readonly class VisitOrderController implements HasMiddleware
         )->validate();
     }
 
-    private function labRequestIsEditable(LabRequest $labRequest): bool
+    private function labOrderIsEditable(LabOrder $labOrder): bool
     {
-        return $labRequest->status === LabRequestStatus::REQUESTED
-            && $labRequest->items()->where('status', '!=', 'pending')->doesntExist();
+        return $labOrder->status === LabOrderStatus::REQUESTED
+            && $labOrder->items()->where('status', '!=', 'pending')->doesntExist();
     }
 
     private function redirectWithTab(PatientVisit $visit, mixed $redirectTo, string $tab): RedirectResponse

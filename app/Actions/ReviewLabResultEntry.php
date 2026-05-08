@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\LabRequestItemStatus;
+use App\Enums\LabOrderItemStatus;
 use App\Enums\LabSpecimenStatus;
-use App\Models\LabRequestItem;
+use App\Models\LabOrderItem;
 use App\Support\VisitWorkflowGuard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,14 +15,14 @@ use Illuminate\Validation\ValidationException;
 final readonly class ReviewLabResultEntry
 {
     public function __construct(
-        private SyncLabRequestProgress $syncLabRequestProgress,
+        private SyncLabOrderProgress $syncLabOrderProgress,
         private VisitWorkflowGuard $visitWorkflowGuard,
         private RecordAuditActivity $recordAuditActivity,
     ) {}
 
-    public function handle(LabRequestItem $labRequestItem, string $staffId, ?string $reviewNotes): LabRequestItem
+    public function handle(LabOrderItem $labOrderItem, string $staffId, ?string $reviewNotes): LabOrderItem
     {
-        $resultEntry = $labRequestItem->resultEntry()->first();
+        $resultEntry = $labOrderItem->resultEntry()->first();
 
         if ($resultEntry === null || ! $resultEntry->values()->exists()) {
             throw ValidationException::withMessages([
@@ -30,19 +30,19 @@ final readonly class ReviewLabResultEntry
             ]);
         }
 
-        if ($labRequestItem->approved_at !== null || $labRequestItem->status === LabRequestItemStatus::COMPLETED) {
+        if ($labOrderItem->approved_at !== null || $labOrderItem->status === LabOrderItemStatus::COMPLETED) {
             throw ValidationException::withMessages([
                 'review' => 'Approved results cannot be reviewed again.',
             ]);
         }
 
-        if ($labRequestItem->specimen()->where('status', LabSpecimenStatus::REJECTED->value)->exists()) {
+        if ($labOrderItem->specimen()->where('status', LabSpecimenStatus::REJECTED->value)->exists()) {
             throw ValidationException::withMessages([
                 'review' => 'Rejected specimens cannot move into review until a new sample is collected.',
             ]);
         }
 
-        $tenantId = $labRequestItem->request()->value('tenant_id');
+        $tenantId = $labOrderItem->order()->value('tenant_id');
         $releasePolicy = is_string($tenantId) && $tenantId !== ''
             ? $this->visitWorkflowGuard->labReleasePolicy($tenantId)
             : [
@@ -50,7 +50,7 @@ final readonly class ReviewLabResultEntry
                 'require_approval_before_release' => true,
             ];
 
-        return DB::transaction(function () use ($labRequestItem, $resultEntry, $staffId, $reviewNotes, $releasePolicy): LabRequestItem {
+        return DB::transaction(function () use ($labOrderItem, $resultEntry, $staffId, $reviewNotes, $releasePolicy): LabOrderItem {
             $timestamp = now();
             $shouldAutoRelease = ! $releasePolicy['require_approval_before_release'];
 
@@ -64,8 +64,8 @@ final readonly class ReviewLabResultEntry
                 'released_at' => $shouldAutoRelease ? $timestamp : null,
             ])->save();
 
-            $labRequestItem->forceFill([
-                'status' => $shouldAutoRelease ? LabRequestItemStatus::COMPLETED : LabRequestItemStatus::IN_PROGRESS,
+            $labOrderItem->forceFill([
+                'status' => $shouldAutoRelease ? LabOrderItemStatus::COMPLETED : LabOrderItemStatus::IN_PROGRESS,
                 'reviewed_by' => $staffId,
                 'reviewed_at' => $timestamp,
                 'approved_by' => $shouldAutoRelease ? $staffId : null,
@@ -73,8 +73,8 @@ final readonly class ReviewLabResultEntry
                 'completed_at' => $shouldAutoRelease ? $timestamp : null,
             ])->save();
 
-            $labRequest = $labRequestItem->request()->firstOrFail();
-            $this->syncLabRequestProgress->handle($labRequest);
+            $labOrder = $labOrderItem->order()->firstOrFail();
+            $this->syncLabOrderProgress->handle($labOrder);
 
             $this->recordAuditActivity->handle(
                 logName: 'laboratory',
@@ -83,12 +83,12 @@ final readonly class ReviewLabResultEntry
                 description: $shouldAutoRelease
                     ? 'Lab result reviewed and released.'
                     : 'Lab result reviewed.',
-                tenantId: $labRequest->tenant_id,
-                branchId: $labRequest->facility_branch_id,
+                tenantId: $labOrder->tenant_id,
+                branchId: $labOrder->facility_branch_id,
                 staffId: $staffId,
                 newValues: [
-                    'lab_request_id' => $labRequest->id,
-                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_order_id' => $labOrder->id,
+                    'lab_order_item_id' => $labOrderItem->id,
                     'lab_result_entry_id' => $resultEntry->id,
                     'reviewed_by' => $staffId,
                     'reviewed_at' => $timestamp->toISOString(),
@@ -107,12 +107,12 @@ final readonly class ReviewLabResultEntry
                     event: 'lab_result.released',
                     subject: $resultEntry,
                     description: 'Lab result released.',
-                    tenantId: $labRequest->tenant_id,
-                    branchId: $labRequest->facility_branch_id,
+                    tenantId: $labOrder->tenant_id,
+                    branchId: $labOrder->facility_branch_id,
                     staffId: $staffId,
                     newValues: [
-                        'lab_request_id' => $labRequest->id,
-                        'lab_request_item_id' => $labRequestItem->id,
+                        'lab_order_id' => $labOrder->id,
+                        'lab_order_item_id' => $labOrderItem->id,
                         'lab_result_entry_id' => $resultEntry->id,
                         'released_at' => $timestamp->toISOString(),
                     ],
@@ -123,7 +123,7 @@ final readonly class ReviewLabResultEntry
                 );
             }
 
-            return $labRequestItem->refresh();
+            return $labOrderItem->refresh();
         });
     }
 }

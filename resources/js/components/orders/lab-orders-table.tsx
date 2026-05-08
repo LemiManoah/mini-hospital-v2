@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { LabResultDialog } from '@/pages/laboratory/components/lab-result-dialog';
-import { type LabRequest, type LabRequestItem } from '@/types/patient';
+import { type LabOrder, type LabOrderItem } from '@/types/patient';
 import { Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { formatDateTime, labelize, staffName } from '../visit-ordering';
@@ -27,24 +27,24 @@ const statusBadgeClasses = (status: string): string =>
     })[status] ?? 'bg-zinc-100 text-zinc-800';
 
 export function LabOrdersTable({
-    labRequests,
+    labOrders,
     onEdit,
     onDelete,
     onDeleteItem,
     canManageOrders,
 }: {
-    labRequests: LabRequest[];
-    onEdit?: (request: LabRequest) => void;
-    onDelete?: (request: LabRequest) => void;
-    onDeleteItem?: (request: LabRequest, item: LabRequestItem) => void;
+    labOrders: LabOrder[];
+    onEdit?: (request: LabOrder) => void;
+    onDelete?: (request: LabOrder) => void;
+    onDeleteItem?: (request: LabOrder, item: LabOrderItem) => void;
     canManageOrders: boolean;
 }) {
     const [selectedResult, setSelectedResult] = useState<{
-        request: LabRequest;
-        item: LabRequestItem;
+        request: LabOrder;
+        item: LabOrderItem;
     } | null>(null);
 
-    if (labRequests.length === 0) {
+    if (labOrders.length === 0) {
         return (
             <div className="rounded-lg border border-dashed px-4 py-12 text-center text-sm text-muted-foreground">
                 No laboratory requests found for this visit.
@@ -52,7 +52,7 @@ export function LabOrdersTable({
         );
     }
 
-    const hasReleasedResults = labRequests.some((request) =>
+    const hasReleasedResults = labOrders.some((request) =>
         request.items.some((item) => item.result_visible),
     );
     const showActions = canManageOrders || hasReleasedResults;
@@ -76,7 +76,7 @@ export function LabOrdersTable({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {labRequests.flatMap((request) =>
+                        {labOrders.flatMap((request) =>
                             request.items.map((item) => {
                                 const itemStatus =
                                     item.workflow_stage ??
@@ -89,7 +89,7 @@ export function LabOrdersTable({
                                             <div className="flex flex-col gap-1">
                                                 <span className="truncate">
                                                     {item.test?.test_name ??
-                                                        'Lab request'}
+                                                        'Lab order'}
                                                 </span>
                                                 <span className="text-xs text-muted-foreground">
                                                     {item.test?.test_code ??

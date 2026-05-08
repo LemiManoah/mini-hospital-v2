@@ -33,7 +33,7 @@ function seedNotification(User $user, bool $read = false): DatabaseNotification
             'message' => '"CBC" result is approved and ready for review.',
             'action_url' => '/visits/123',
             'resource_id' => Str::uuid()->toString(),
-            'resource_type' => 'lab_request_item',
+            'resource_type' => 'lab_order_item',
             'occurred_at' => now()->toISOString(),
         ],
         'read_at' => $read ? now() : null,

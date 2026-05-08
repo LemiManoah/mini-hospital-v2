@@ -128,11 +128,11 @@ final class Tenant extends Model
     }
 
     /**
-     * @return HasMany<LabRequest, $this>
+     * @return HasMany<LabOrder, $this>
      */
-    public function labRequests(): HasMany
+    public function labOrders(): HasMany
     {
-        return $this->hasMany(LabRequest::class);
+        return $this->hasMany(LabOrder::class);
     }
 
     /**

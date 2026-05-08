@@ -8,7 +8,7 @@ use App\Enums\StaffType;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
-use App\Models\LabRequestItem;
+use App\Models\LabOrderItem;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
 use App\Models\LabTestCategory;
@@ -147,7 +147,7 @@ function createLabResultPrintContext(): array
     ]);
 
     $requestId = (string) Str::uuid();
-    DB::table('lab_requests')->insert([
+    DB::table('lab_orders')->insert([
         'id' => $requestId,
         'tenant_id' => $tenant->id,
         'facility_branch_id' => $branch->id,
@@ -162,8 +162,8 @@ function createLabResultPrintContext(): array
         'updated_at' => now(),
     ]);
 
-    $requestItem = LabRequestItem::query()->create([
-        'request_id' => $requestId,
+    $orderItem = LabOrderItem::query()->create([
+        'lab_order_id' => $requestId,
         'test_id' => $test->id,
         'status' => 'pending',
         'price' => 35000,
@@ -173,24 +173,24 @@ function createLabResultPrintContext(): array
 
     $sequence++;
 
-    return [$branch, $user, $requestItem, $parameter, $specimenType];
+    return [$branch, $user, $orderItem, $parameter, $specimenType];
 }
 
 it('streams a pdf for a released laboratory result', function (): void {
-    [$branch, $user, $requestItem, $parameter, $specimenType] = createLabResultPrintContext();
+    [$branch, $user, $orderItem, $parameter, $specimenType] = createLabResultPrintContext();
 
-    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
+    $user->givePermissionTo(['lab_orders.view', 'lab_orders.update']);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+        ->post(route('laboratory.order-items.collect-sample', $orderItem), [
             'specimen_type_id' => $specimenType->id,
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.results.store', $requestItem), [
+        ->post(route('laboratory.order-items.results.store', $orderItem), [
             'result_notes' => 'Printable result note.',
             'parameter_values' => [
                 [
@@ -199,25 +199,25 @@ it('streams a pdf for a released laboratory result', function (): void {
                 ],
             ],
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.review', $requestItem), [
+        ->post(route('laboratory.order-items.review', $orderItem), [
             'review_notes' => 'Reviewed for print.',
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.approve', $requestItem), [
+        ->post(route('laboratory.order-items.approve', $orderItem), [
             'approval_notes' => 'Released for print.',
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->get(route('laboratory.request-items.print', $requestItem));
+        ->get(route('laboratory.order-items.print', $orderItem));
 
     $response->assertOk();
 
@@ -226,12 +226,12 @@ it('streams a pdf for a released laboratory result', function (): void {
 });
 
 it('does not allow printing an unreleased laboratory result', function (): void {
-    [$branch, $user, $requestItem] = createLabResultPrintContext();
+    [$branch, $user, $orderItem] = createLabResultPrintContext();
 
-    $user->givePermissionTo('lab_requests.view');
+    $user->givePermissionTo('lab_orders.view');
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->get(route('laboratory.request-items.print', $requestItem))
+        ->get(route('laboratory.order-items.print', $orderItem))
         ->assertForbidden();
 });

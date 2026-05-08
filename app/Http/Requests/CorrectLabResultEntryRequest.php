@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Models\LabRequestItem;
+use App\Models\LabOrderItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -34,13 +34,13 @@ final class CorrectLabResultEntryRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            $labRequestItem = $this->labRequestItem();
+            $labOrderItem = $this->labOrderItem();
 
-            if (! $labRequestItem instanceof LabRequestItem) {
+            if (! $labOrderItem instanceof LabOrderItem) {
                 return;
             }
 
-            $labRequestItem->loadMissing([
+            $labOrderItem->loadMissing([
                 'test.resultOptions:id,lab_test_catalog_id,label',
                 'test.resultParameters:id,lab_test_catalog_id,label,value_type',
             ]);
@@ -49,7 +49,7 @@ final class CorrectLabResultEntryRequest extends FormRequest
                 $validator->errors()->add('correction_reason', 'Enter the reason for correcting this released result.');
             }
 
-            $resultType = $labRequestItem->test?->result_capture_type;
+            $resultType = $labOrderItem->test?->result_capture_type;
 
             if ($resultType === 'free_entry') {
                 if (mb_trim($this->string('free_entry_value')->toString()) === '') {
@@ -61,7 +61,7 @@ final class CorrectLabResultEntryRequest extends FormRequest
 
             if ($resultType === 'defined_option') {
                 $selectedOption = mb_trim($this->string('selected_option_label')->toString());
-                $allowedOptions = $labRequestItem->test->resultOptions->pluck('label')->all();
+                $allowedOptions = $labOrderItem->test->resultOptions->pluck('label')->all();
 
                 if ($selectedOption === '' || ! in_array($selectedOption, $allowedOptions, true)) {
                     $validator->errors()->add('selected_option_label', 'Choose a valid result option for this test.');
@@ -86,7 +86,7 @@ final class CorrectLabResultEntryRequest extends FormRequest
                     is_string($item['lab_test_result_parameter_id'] ?? null) ? $item['lab_test_result_parameter_id'] : '' => $item,
                 ]);
 
-            foreach ($labRequestItem->test->resultParameters as $parameter) {
+            foreach ($labOrderItem->test->resultParameters as $parameter) {
                 $submitted = $submittedValues->get($parameter->id);
                 $submittedValue = is_array($submitted) ? ($submitted['value'] ?? '') : '';
                 $value = is_string($submittedValue) || is_numeric($submittedValue)
@@ -123,8 +123,8 @@ final class CorrectLabResultEntryRequest extends FormRequest
         ]);
     }
 
-    private function labRequestItem(): mixed
+    private function labOrderItem(): mixed
     {
-        return $this->route('labRequestItem') ?? $this->route('lab_request_item');
+        return $this->route('labOrderItem') ?? $this->route('lab_order_item');
     }
 }

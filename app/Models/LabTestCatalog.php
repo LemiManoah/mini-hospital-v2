@@ -61,10 +61,10 @@ final class LabTestCatalog extends Model
         return $this->belongsTo(LabResultType::class, 'result_type_id');
     }
 
-    /** @return HasMany<LabRequestItem, $this> */
-    public function requestItems(): HasMany
+    /** @return HasMany<LabOrderItem, $this> */
+    public function orderItems(): HasMany
     {
-        return $this->hasMany(LabRequestItem::class, 'test_id');
+        return $this->hasMany(LabOrderItem::class, 'test_id');
     }
 
     /** @return HasMany<LabTestResultOption, $this> */

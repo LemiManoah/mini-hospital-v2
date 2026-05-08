@@ -7,7 +7,7 @@ namespace App\Http\Controllers;
 use App\Enums\AppointmentStatus;
 use App\Enums\VisitStatus;
 use App\Models\Appointment;
-use App\Models\LabRequest;
+use App\Models\LabOrder;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Support\ActiveBranchWorkspace;
@@ -35,7 +35,7 @@ final readonly class DashboardController implements HasMiddleware
 
         $visitQuery = $this->activeBranchWorkspace->apply(PatientVisit::query());
         $appointmentQuery = $this->activeBranchWorkspace->apply(Appointment::query());
-        $labRequestQuery = $this->activeBranchWorkspace->apply(LabRequest::query());
+        $labOrderQuery = $this->activeBranchWorkspace->apply(LabOrder::query());
         $patientQuery = Patient::query();
 
         $metrics = [
@@ -68,10 +68,10 @@ final readonly class DashboardController implements HasMiddleware
             ],
             [
                 'label' => 'Pending Lab Results',
-                'value' => (clone $labRequestQuery)
+                'value' => (clone $labOrderQuery)
                     ->whereNotIn('status', ['completed', 'cancelled'])
                     ->count(),
-                'hint' => 'Lab requests awaiting completion',
+                'hint' => 'Lab orders awaiting completion',
                 'icon' => 'flask',
                 'color' => 'orange',
             ],

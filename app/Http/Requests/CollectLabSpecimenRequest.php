@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Models\LabRequestItem;
+use App\Models\LabOrderItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -32,14 +32,14 @@ final class CollectLabSpecimenRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            $labRequestItem = $this->labRequestItem();
+            $labOrderItem = $this->labOrderItem();
 
-            if (! $labRequestItem instanceof LabRequestItem) {
+            if (! $labOrderItem instanceof LabOrderItem) {
                 return;
             }
 
             $specimenTypeId = $this->string('specimen_type_id')->toString();
-            $labTest = $labRequestItem->test()->first();
+            $labTest = $labOrderItem->test()->first();
             $isAllowedSpecimenType = $specimenTypeId !== ''
                 && $labTest?->specimenTypes()->whereKey($specimenTypeId)->exists();
 
@@ -63,8 +63,8 @@ final class CollectLabSpecimenRequest extends FormRequest
         ]);
     }
 
-    private function labRequestItem(): mixed
+    private function labOrderItem(): mixed
     {
-        return $this->route('labRequestItem') ?? $this->route('lab_request_item');
+        return $this->route('labOrderItem') ?? $this->route('lab_order_item');
     }
 }

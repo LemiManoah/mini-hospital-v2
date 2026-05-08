@@ -15,8 +15,8 @@ use App\Enums\AllergySeverity;
 use App\Enums\AttendanceType;
 use App\Enums\ConsciousLevel;
 use App\Enums\FacilityServiceOrderStatus;
-use App\Enums\ImagingRequestStatus;
-use App\Enums\LabRequestStatus;
+use App\Enums\ImagingOrderStatus;
+use App\Enums\LabOrderStatus;
 use App\Enums\MobilityStatus;
 use App\Enums\PayerType;
 use App\Enums\PrescriptionStatus;
@@ -24,8 +24,8 @@ use App\Enums\TriageGrade;
 use App\Enums\VisitStatus;
 use App\Models\Allergen;
 use App\Models\Clinic;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\LabResultEntry;
 use App\Models\Patient;
 use App\Models\PatientVisit;
@@ -88,14 +88,14 @@ final readonly class PatientVisitController implements HasMiddleware
                 'consultation:id,visit_id,completed_at',
             ])
             ->withCount([
-                'labRequests as pending_lab_requests_count' => static fn (Builder $query) => $query->whereNotIn('status', [
-                    LabRequestStatus::COMPLETED->value,
-                    LabRequestStatus::CANCELLED->value,
-                    LabRequestStatus::REJECTED->value,
+                'labOrders as pending_lab_orders_count' => static fn (Builder $query) => $query->whereNotIn('status', [
+                    LabOrderStatus::COMPLETED->value,
+                    LabOrderStatus::CANCELLED->value,
+                    LabOrderStatus::REJECTED->value,
                 ]),
-                'imagingRequests as pending_imaging_requests_count' => static fn (Builder $query) => $query->whereNotIn('status', [
-                    ImagingRequestStatus::COMPLETED->value,
-                    ImagingRequestStatus::CANCELLED->value,
+                'imagingOrders as pending_imaging_orders_count' => static fn (Builder $query) => $query->whereNotIn('status', [
+                    ImagingOrderStatus::COMPLETED->value,
+                    ImagingOrderStatus::CANCELLED->value,
                 ]),
                 'prescriptions as pending_prescriptions_count' => static fn (Builder $query) => $query->whereNotIn('status', [
                     PrescriptionStatus::FULLY_DISPENSED->value,
@@ -176,19 +176,19 @@ final readonly class PatientVisitController implements HasMiddleware
                 ->latest('recorded_at'),
             'consultation:id,visit_id,doctor_id,consultation_type,started_at,completed_at,chief_complaint,history_of_present_illness,review_of_systems,past_medical_history_summary,family_history,social_history,subjective_notes,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code',
             'consultation.doctor:id,first_name,last_name',
-            'labRequests' => static fn (HasMany $query): HasMany => $query
+            'labOrders' => static fn (HasMany $query): HasMany => $query
                 ->with([
                     'requestedBy:id,first_name,last_name',
                     'items.test:id,test_name,test_code,lab_test_category_id,result_type_id',
                     'items.test.labCategory:id,name',
                     'items.test.specimenTypes:id,name',
                     'items.test.resultTypeDefinition:id,code,name',
-                    'items.resultEntry:id,lab_request_item_id,approved_by,approved_at,released_at,result_notes',
+                    'items.resultEntry:id,lab_order_item_id,approved_by,approved_at,released_at,result_notes',
                     'items.resultEntry.approvedBy:id,first_name,last_name',
                     'items.resultEntry.values:id,lab_result_entry_id,lab_test_result_parameter_id,label,value_numeric,value_text,unit,reference_range,sort_order',
                 ])
                 ->latest('request_date'),
-            'imagingRequests' => static fn (HasMany $query): HasMany => $query
+            'imagingOrders' => static fn (HasMany $query): HasMany => $query
                 ->with([
                     'requestedBy:id,first_name,last_name',
                     'scheduledBy:id,first_name,last_name',
@@ -215,18 +215,18 @@ final readonly class PatientVisitController implements HasMiddleware
 
         $this->hideUnreleasedLabResults($visit);
 
-        /** @var Collection<int, LabRequest> $labRequests */
-        $labRequests = $visit->labRequests;
+        /** @var Collection<int, LabOrder> $labOrders */
+        $labOrders = $visit->labOrders;
         $triage = $visit->triage;
         $vitalSigns = $triage instanceof TriageRecord ? $triage->vitalSigns->all() : [];
-        /** @var list<LabRequestItem> $labRequestItems */
-        $labRequestItems = $labRequests
-            ->flatMap(static fn (LabRequest $labRequest): Collection => $labRequest->items)
+        /** @var list<LabOrderItem> $labOrderItems */
+        $labOrderItems = $labOrders
+            ->flatMap(static fn (LabOrder $labOrder): Collection => $labOrder->items)
             ->all();
         /** @var list<LabResultEntry> $labResultEntries */
-        $labResultEntries = $labRequests
-            ->flatMap(static fn (LabRequest $labRequest): Collection => $labRequest->items
-                ->map(static fn (LabRequestItem $item) => $item->resultEntry)
+        $labResultEntries = $labOrders
+            ->flatMap(static fn (LabOrder $labOrder): Collection => $labOrder->items
+                ->map(static fn (LabOrderItem $item) => $item->resultEntry)
                 ->filter())
             ->all();
 
@@ -241,10 +241,10 @@ final readonly class PatientVisitController implements HasMiddleware
                     $triage,
                     ...$vitalSigns,
                     $visit->consultation,
-                    ...$labRequests->all(),
-                    ...$labRequestItems,
+                    ...$labOrders->all(),
+                    ...$labOrderItems,
                     ...$labResultEntries,
-                    ...$visit->imagingRequests->all(),
+                    ...$visit->imagingOrders->all(),
                     ...$visit->prescriptions->all(),
                     ...$visit->facilityServiceOrders->all(),
                     $visit->appointment,
@@ -521,8 +521,8 @@ final readonly class PatientVisitController implements HasMiddleware
 
     private function hideUnreleasedLabResults(PatientVisit $visit): void
     {
-        $visit->labRequests->each(function (LabRequest $labRequest): void {
-            $labRequest->items->each(function (LabRequestItem $item): void {
+        $visit->labOrders->each(function (LabOrder $labOrder): void {
+            $labOrder->items->each(function (LabOrderItem $item): void {
                 if ($item->result_visible) {
                     return;
                 }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Data\Clinical\StoreLabResultEntryDTO;
-use App\Enums\LabRequestItemStatus;
+use App\Enums\LabOrderItemStatus;
 use App\Enums\LabSpecimenStatus;
-use App\Models\LabRequestItem;
+use App\Models\LabOrderItem;
 use App\Models\LabTestResultParameter;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,32 +16,32 @@ use Illuminate\Validation\ValidationException;
 final readonly class StoreLabResultEntry
 {
     public function __construct(
-        private SyncLabRequestProgress $syncLabRequestProgress,
+        private SyncLabOrderProgress $syncLabOrderProgress,
         private RecordAuditActivity $recordAuditActivity,
     ) {}
 
-    public function handle(LabRequestItem $labRequestItem, StoreLabResultEntryDTO $payload, string $staffId): LabRequestItem
+    public function handle(LabOrderItem $labOrderItem, StoreLabResultEntryDTO $payload, string $staffId): LabOrderItem
     {
-        if ($labRequestItem->approved_at !== null || $labRequestItem->status === LabRequestItemStatus::COMPLETED) {
+        if ($labOrderItem->approved_at !== null || $labOrderItem->status === LabOrderItemStatus::COMPLETED) {
             throw ValidationException::withMessages([
                 'result' => 'Approved results cannot be changed from this workspace.',
             ]);
         }
 
-        if ($labRequestItem->received_at === null && ! $labRequestItem->specimen()->exists()) {
+        if ($labOrderItem->received_at === null && ! $labOrderItem->specimen()->exists()) {
             throw ValidationException::withMessages([
                 'result' => 'Pick a sample before entering results.',
             ]);
         }
 
-        if ($labRequestItem->specimen()->where('status', LabSpecimenStatus::REJECTED->value)->exists()) {
+        if ($labOrderItem->specimen()->where('status', LabSpecimenStatus::REJECTED->value)->exists()) {
             throw ValidationException::withMessages([
                 'result' => 'Rejected specimens must be recollected before entering results.',
             ]);
         }
 
-        return DB::transaction(function () use ($labRequestItem, $payload, $staffId): LabRequestItem {
-            $resultEntry = $labRequestItem->resultEntry()->firstOrCreate([]);
+        return DB::transaction(function () use ($labOrderItem, $payload, $staffId): LabOrderItem {
+            $resultEntry = $labOrderItem->resultEntry()->firstOrCreate([]);
             $resultEntry->forceFill([
                 'entered_by' => $staffId,
                 'entered_at' => now(),
@@ -58,7 +58,7 @@ final readonly class StoreLabResultEntry
 
             $resultEntry->values()->delete();
 
-            $resultType = $labRequestItem->test()->with(['resultParameters', 'resultOptions'])->firstOrFail()->result_capture_type;
+            $resultType = $labOrderItem->test()->with(['resultParameters', 'resultOptions'])->firstOrFail()->result_capture_type;
 
             if ($resultType === 'parameter_panel') {
                 foreach ($payload->parameterValues as $index => $parameterValue) {
@@ -94,10 +94,10 @@ final readonly class StoreLabResultEntry
                 ]);
             }
 
-            $labRequestItem->forceFill([
-                'status' => LabRequestItemStatus::IN_PROGRESS,
-                'received_by' => $labRequestItem->received_by ?? $staffId,
-                'received_at' => $labRequestItem->received_at ?? now(),
+            $labOrderItem->forceFill([
+                'status' => LabOrderItemStatus::IN_PROGRESS,
+                'received_by' => $labOrderItem->received_by ?? $staffId,
+                'received_at' => $labOrderItem->received_at ?? now(),
                 'result_entered_by' => $staffId,
                 'result_entered_at' => now(),
                 'reviewed_by' => null,
@@ -107,24 +107,24 @@ final readonly class StoreLabResultEntry
                 'completed_at' => null,
             ])->save();
 
-            $this->syncLabRequestProgress->handle($labRequestItem->request()->firstOrFail());
+            $this->syncLabOrderProgress->handle($labOrderItem->order()->firstOrFail());
 
-            $labRequest = $labRequestItem->request()->firstOrFail();
+            $labOrder = $labOrderItem->order()->firstOrFail();
 
             $this->recordAuditActivity->handle(
                 logName: 'laboratory',
                 event: 'lab_result.entered',
                 subject: $resultEntry,
                 description: 'Lab result entered.',
-                tenantId: $labRequest->tenant_id,
-                branchId: $labRequest->facility_branch_id,
+                tenantId: $labOrder->tenant_id,
+                branchId: $labOrder->facility_branch_id,
                 staffId: $staffId,
                 newValues: [
-                    'lab_request_id' => $labRequest->id,
-                    'lab_request_item_id' => $labRequestItem->id,
+                    'lab_order_id' => $labOrder->id,
+                    'lab_order_item_id' => $labOrderItem->id,
                     'lab_result_entry_id' => $resultEntry->id,
                     'entered_at' => $resultEntry->entered_at?->toISOString(),
-                    'result_entered_at' => $labRequestItem->result_entered_at?->toISOString(),
+                    'result_entered_at' => $labOrderItem->result_entered_at?->toISOString(),
                 ],
                 metadata: [
                     'result_notes' => $payload->resultNotes,
@@ -132,7 +132,7 @@ final readonly class StoreLabResultEntry
                 ],
             );
 
-            return $labRequestItem->refresh();
+            return $labOrderItem->refresh();
         });
     }
 }

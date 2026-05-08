@@ -13,8 +13,8 @@ import {
 import { OrderAccessMessage } from '@/components/visit-ordering';
 import {
     type FacilityServiceOrder,
-    type ImagingRequest,
-    type LabRequest,
+    type ImagingOrder,
+    type LabOrder,
     type Prescription,
 } from '@/types/patient';
 import { type ReactNode } from 'react';
@@ -53,21 +53,21 @@ type VisitOrderCenterModalProps = {
     onOpenChange: (open: boolean) => void;
     canManageOrders: boolean;
     isConsultationFinalized: boolean;
-    labRequests: LabRequest[];
+    labOrders: LabOrder[];
     prescriptions: Prescription[];
-    imagingRequests: ImagingRequest[];
+    imagingOrders: ImagingOrder[];
     serviceOrders: FacilityServiceOrder[];
     onRecordAllergy: () => void;
     onOrderLab: () => void;
     onOrderPrescription: () => void;
     onOrderImaging: () => void;
     onOrderService: () => void;
-    onEditLabRequest: (request: LabRequest) => void;
-    onDeleteLabRequest: (request: LabRequest) => void;
+    onEditLabOrder: (request: LabOrder) => void;
+    onDeleteLabOrder: (request: LabOrder) => void;
     onEditPrescription: (prescription: Prescription) => void;
     onDeletePrescription: (prescription: Prescription) => void;
-    onEditImagingRequest: (request: ImagingRequest) => void;
-    onDeleteImagingRequest: (request: ImagingRequest) => void;
+    onEditImagingOrder: (request: ImagingOrder) => void;
+    onDeleteImagingOrder: (request: ImagingOrder) => void;
     onEditServiceOrder: (order: FacilityServiceOrder) => void;
     onDeleteServiceOrder: (order: FacilityServiceOrder) => void;
 };
@@ -77,21 +77,21 @@ export function VisitOrderCenterModal({
     onOpenChange,
     canManageOrders,
     isConsultationFinalized,
-    labRequests,
+    labOrders,
     prescriptions,
-    imagingRequests,
+    imagingOrders,
     serviceOrders,
     onRecordAllergy,
     onOrderLab,
     onOrderPrescription,
     onOrderImaging,
     onOrderService,
-    onEditLabRequest,
-    onDeleteLabRequest,
+    onEditLabOrder,
+    onDeleteLabOrder,
     onEditPrescription,
     onDeletePrescription,
-    onEditImagingRequest,
-    onDeleteImagingRequest,
+    onEditImagingOrder,
+    onDeleteImagingOrder,
     onEditServiceOrder,
     onDeleteServiceOrder,
 }: VisitOrderCenterModalProps) {
@@ -157,16 +157,16 @@ export function VisitOrderCenterModal({
                         }
                     >
                         <LabOrdersTable
-                            labRequests={labRequests}
+                            labOrders={labOrders}
                             canManageOrders={canEditOrders}
-                            onEdit={onEditLabRequest}
-                            onDelete={onDeleteLabRequest}
+                            onEdit={onEditLabOrder}
+                            onDelete={onDeleteLabOrder}
                         />
                     </OrderSection>
 
                     <OrderSection
                         title="Imaging"
-                        description="Radiology and other imaging requests."
+                        description="Radiology and other imaging orders."
                         action={
                             canEditOrders ? (
                                 <Button
@@ -179,10 +179,10 @@ export function VisitOrderCenterModal({
                         }
                     >
                         <ImagingOrdersTable
-                            imagingRequests={imagingRequests}
+                            imagingOrders={imagingOrders}
                             canManageOrders={canEditOrders}
-                            onEdit={onEditImagingRequest}
-                            onDelete={onDeleteImagingRequest}
+                            onEdit={onEditImagingOrder}
+                            onDelete={onDeleteImagingOrder}
                         />
                     </OrderSection>
 

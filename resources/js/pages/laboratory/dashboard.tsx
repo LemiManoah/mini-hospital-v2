@@ -161,7 +161,7 @@ export default function LaboratoryDashboard({
     stock_metrics,
     request_status_counts,
     workflow_stage_counts,
-    recent_requests,
+    recent_orders,
 }: LaboratoryDashboardPageProps) {
     const statusData = request_status_counts
         .filter((status) => status.count > 0)
@@ -345,9 +345,9 @@ export default function LaboratoryDashboard({
                         </Button>
                     </CardHeader>
                     <CardContent>
-                        {recent_requests.length === 0 ? (
+                        {recent_orders.length === 0 ? (
                             <div className="rounded-lg border border-dashed px-4 py-12 text-center text-sm text-muted-foreground">
-                                No lab requests are available in the active
+                                No lab orders are available in the active
                                 branch yet.
                             </div>
                         ) : (
@@ -363,8 +363,8 @@ export default function LaboratoryDashboard({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {recent_requests.map((request) => (
-                                        <RecentRequestRow
+                                    {recent_orders.map((request) => (
+                                        <RecentOrderRow
                                             key={request.id}
                                             request={request}
                                         />
@@ -404,7 +404,7 @@ function MetricCard({ metric }: { metric: LaboratoryDashboardMetric }) {
     );
 }
 
-function RecentRequestRow({ request }: { request: LaboratoryQueueRequest }) {
+function RecentOrderRow({ request }: { request: LaboratoryQueueRequest }) {
     const patient = request.visit?.patient ?? null;
     const queue = queueMetaForRequest(request);
 

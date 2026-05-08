@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { type ImagingRequest, type PatientVisit } from '@/types/patient';
+import { type ImagingOrder, type PatientVisit } from '@/types/patient';
 import { useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
 
@@ -19,7 +19,7 @@ export function ImagingOrderModal({
     open,
     onOpenChange,
     visit,
-    imagingRequest,
+    imagingOrder,
     imagingModalities,
     imagingPriorities,
     imagingLateralities,
@@ -29,7 +29,7 @@ export function ImagingOrderModal({
     open: boolean;
     onOpenChange: (open: boolean) => void;
     visit: Pick<PatientVisit, 'id' | 'consultation' | 'triage'>;
-    imagingRequest?: ImagingRequest | null;
+    imagingOrder?: ImagingOrder | null;
     imagingModalities: { value: string; label: string }[];
     imagingPriorities: { value: string; label: string }[];
     imagingLateralities: { value: string; label: string }[];
@@ -56,31 +56,31 @@ export function ImagingOrderModal({
     });
 
     useEffect(() => {
-        if (open && imagingRequest) {
+        if (open && imagingOrder) {
             form.setData({
-                modality: imagingRequest.modality ?? 'xray',
-                body_part: imagingRequest.body_part ?? '',
-                laterality: imagingRequest.laterality ?? 'na',
-                clinical_history: imagingRequest.clinical_history ?? '',
-                indication: imagingRequest.indication ?? '',
-                priority: imagingRequest.priority ?? 'routine',
-                requires_contrast: imagingRequest.requires_contrast ?? false,
+                modality: imagingOrder.modality ?? 'xray',
+                body_part: imagingOrder.body_part ?? '',
+                laterality: imagingOrder.laterality ?? 'na',
+                clinical_history: imagingOrder.clinical_history ?? '',
+                indication: imagingOrder.indication ?? '',
+                priority: imagingOrder.priority ?? 'routine',
+                requires_contrast: imagingOrder.requires_contrast ?? false,
                 contrast_allergy_status:
-                    imagingRequest.contrast_allergy_status ?? '',
-                pregnancy_status: imagingRequest.pregnancy_status ?? 'unknown',
+                    imagingOrder.contrast_allergy_status ?? '',
+                pregnancy_status: imagingOrder.pregnancy_status ?? 'unknown',
                 redirect_to: redirectTo,
             });
-        } else if (open && !imagingRequest) {
+        } else if (open && !imagingOrder) {
             form.reset();
         }
-    }, [open, imagingRequest]);
+    }, [open, imagingOrder]);
 
     const onSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        if (imagingRequest) {
+        if (imagingOrder) {
             // Edit logic
         } else {
-            form.post(`/visits/${visit.id}/imaging-requests`, {
+            form.post(`/visits/${visit.id}/imaging-orders`, {
                 preserveScroll: true,
                 onSuccess: () => {
                     form.reset();
@@ -95,13 +95,13 @@ export function ImagingOrderModal({
             <DialogContent className="max-h-[90vh] overflow-y-auto border-none bg-white shadow-2xl sm:max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {imagingRequest
-                            ? 'Edit Imaging Request'
-                            : 'New Imaging Request'}
+                        {imagingOrder
+                            ? 'Edit Imaging Order'
+                            : 'New Imaging Order'}
                     </DialogTitle>
                     <DialogDescription>
-                        {imagingRequest
-                            ? 'Update the details of this imaging request.'
+                        {imagingOrder
+                            ? 'Update the details of this imaging order.'
                             : 'Request a new imaging study for this patient.'}
                     </DialogDescription>
                 </DialogHeader>
@@ -246,7 +246,7 @@ export function ImagingOrderModal({
                             Cancel
                         </Button>
                         <Button type="submit" disabled={form.processing}>
-                            {imagingRequest
+                            {imagingOrder
                                 ? 'Update Imaging'
                                 : 'Request Imaging'}
                         </Button>

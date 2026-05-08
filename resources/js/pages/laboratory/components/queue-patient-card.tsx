@@ -10,14 +10,14 @@ import {
 } from '@/components/ui/table';
 import {
     type LaboratoryQueuePageProps,
-    type LaboratoryRequestItem,
+    type LaboratoryOrderItem,
 } from '@/types/laboratory';
 import {
     formatDateTime,
     formatPatientAge,
     labelize,
     priorityVariant,
-    type QueueCardRequest,
+    type QueueCardOrder,
     workflowVariant,
 } from './queue-utils';
 
@@ -29,8 +29,8 @@ export function QueuePatientCard({
 }: {
     pageStage: LaboratoryQueuePageProps['page']['stage'];
     actionLabel: string;
-    request: QueueCardRequest;
-    onAction: (item: LaboratoryRequestItem, request: QueueCardRequest) => void;
+    request: QueueCardOrder;
+    onAction: (item: LaboratoryOrderItem, request: QueueCardOrder) => void;
 }) {
     const patient = request.visit?.patient;
 
@@ -69,12 +69,12 @@ export function QueuePatientCard({
                                         ? 'test'
                                         : 'tests'}
                                 </Badge>
-                                {request.request_count > 1 ? (
+                                {request.order_count > 1 ? (
                                     <Badge
                                         variant="outline"
                                         className="px-2 py-0.5 text-[11px]"
                                     >
-                                        {request.request_count} batches
+                                        {request.order_count} batches
                                     </Badge>
                                 ) : null}
                             </>
@@ -164,7 +164,7 @@ export function QueuePatientCard({
                                             </span>
                                             <span>
                                                 {formatDateTime(
-                                                    item.request
+                                                    item.order
                                                         ?.request_date ??
                                                         request.request_date,
                                                 )}
@@ -224,7 +224,7 @@ export function QueuePatientCard({
                                                 asChild
                                             >
                                                 <a
-                                                    href={`/laboratory/request-items/${item.id}/consumables`}
+                                                    href={`/laboratory/order-items/${item.id}/consumables`}
                                                 >
                                                     Consumables
                                                 </a>
@@ -239,7 +239,7 @@ export function QueuePatientCard({
                                                 asChild
                                             >
                                                 <a
-                                                    href={`/laboratory/request-items/${item.id}/consumables`}
+                                                    href={`/laboratory/order-items/${item.id}/consumables`}
                                                 >
                                                     Consumables
                                                 </a>
@@ -254,7 +254,7 @@ export function QueuePatientCard({
                                                 asChild
                                             >
                                                 <a
-                                                    href={`/laboratory/request-items/${item.id}`}
+                                                    href={`/laboratory/order-items/${item.id}`}
                                                 >
                                                     Result Correction
                                                 </a>
@@ -268,7 +268,7 @@ export function QueuePatientCard({
                                                 asChild
                                             >
                                                 <a
-                                                    href={`/laboratory/request-items/${item.id}/print`}
+                                                    href={`/laboratory/order-items/${item.id}/print`}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                 >

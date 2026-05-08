@@ -20,7 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { type LabRequest, type PatientVisit } from '@/types/patient';
+import { type LabOrder, type PatientVisit } from '@/types/patient';
 import { useForm } from '@inertiajs/react';
 import { Search, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -30,7 +30,7 @@ export function LabOrderModal({
     open,
     onOpenChange,
     visit,
-    labRequest, // If provided, we are editing
+    labOrder, // If provided, we are editing
     labTestOptions,
     labPriorities,
     redirectTo,
@@ -39,9 +39,9 @@ export function LabOrderModal({
     onOpenChange: (open: boolean) => void;
     visit: Pick<
         PatientVisit,
-        'id' | 'consultation' | 'triage' | 'labRequests' | 'lab_requests'
+        'id' | 'consultation' | 'triage' | 'labOrders' | 'lab_orders'
     >;
-    labRequest?: LabRequest | null;
+    labOrder?: LabOrder | null;
     labTestOptions: Array<{
         id: string;
         test_code: string;
@@ -56,7 +56,7 @@ export function LabOrderModal({
 }) {
     const consultation = visit.consultation as any;
     const triage = visit.triage as any;
-    const labRequests = visit.labRequests ?? visit.lab_requests ?? [];
+    const labOrders = visit.labOrders ?? visit.lab_orders ?? [];
     const [searchTerm, setSearchTerm] = useState('');
 
     const form = useForm({
@@ -72,19 +72,19 @@ export function LabOrderModal({
     });
 
     useEffect(() => {
-        if (open && labRequest) {
+        if (open && labOrder) {
             form.setData({
-                test_ids: labRequest.items.map((item) => item.test_id),
-                clinical_notes: labRequest.clinical_notes ?? '',
-                priority: labRequest.priority ?? 'routine',
-                diagnosis_code: '', // Not stored on LabRequest model currently
-                is_stat: labRequest.is_stat ?? false,
+                test_ids: labOrder.items.map((item) => item.test_id),
+                clinical_notes: labOrder.clinical_notes ?? '',
+                priority: labOrder.priority ?? 'routine',
+                diagnosis_code: '', // Not stored on LabOrder model currently
+                is_stat: labOrder.is_stat ?? false,
                 redirect_to: redirectTo,
             });
-        } else if (open && !labRequest) {
+        } else if (open && !labOrder) {
             form.reset();
         }
-    }, [open, labRequest]);
+    }, [open, labOrder]);
 
     const filteredTests = useMemo(() => {
         if (!searchTerm) return labTestOptions;
@@ -115,8 +115,8 @@ export function LabOrderModal({
     const pendingLabTestIds = useMemo(
         () =>
             new Set(
-                labRequests.flatMap((request) =>
-                    request.id === labRequest?.id
+                labOrders.flatMap((request) =>
+                    request.id === labOrder?.id
                         ? []
                         : request.items
                               .filter((item) => item.status === 'pending')
@@ -124,7 +124,7 @@ export function LabOrderModal({
                               .filter((id): id is string => Boolean(id)),
                 ),
             ),
-        [labRequest?.id, labRequests],
+        [labOrder?.id, labOrders],
     );
     const hasPendingSelectedTests = form.data.test_ids.some((testId) =>
         pendingLabTestIds.has(testId),
@@ -147,8 +147,8 @@ export function LabOrderModal({
 
     const onSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        if (labRequest) {
-            form.patch(`/visits/${visit.id}/lab-requests/${labRequest.id}`, {
+        if (labOrder) {
+            form.patch(`/visits/${visit.id}/lab-orders/${labOrder.id}`, {
                 preserveScroll: true,
                 onSuccess: () => {
                     form.reset();
@@ -156,7 +156,7 @@ export function LabOrderModal({
                 },
             });
         } else {
-            form.post(`/visits/${visit.id}/lab-requests`, {
+            form.post(`/visits/${visit.id}/lab-orders`, {
                 preserveScroll: true,
                 onSuccess: () => {
                     form.reset();
@@ -171,10 +171,10 @@ export function LabOrderModal({
             <DialogContent className="max-h-[95vh] overflow-y-auto border-none bg-white p-0 shadow-2xl sm:max-w-5xl">
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle className="text-xl font-bold">
-                        {labRequest ? 'Edit Lab Request' : 'New Lab Request'}
+                        {labOrder ? 'Edit Lab Order' : 'New Lab Order'}
                     </DialogTitle>
                     <DialogDescription>
-                        {labRequest
+                        {labOrder
                             ? 'Update the details of this laboratory request.'
                             : 'Search and select laboratory tests for this patient.'}
                     </DialogDescription>
@@ -453,7 +453,7 @@ export function LabOrderModal({
                                             hasPendingSelectedTests
                                         }
                                     >
-                                        {labRequest
+                                        {labOrder
                                             ? 'Update Request'
                                             : 'Create Request'}
                                     </Button>

@@ -69,12 +69,12 @@ interface SubscriptionHistoryItem {
 interface UsageSummary {
     patients: number;
     visits: number;
-    lab_requests: number;
+    lab_orders: number;
     prescriptions: number;
     verified_users: number;
     support_notes: number;
     last_visit_at: string | null;
-    last_lab_request_at: string | null;
+    last_lab_order_at: string | null;
     last_prescription_at: string | null;
     last_support_note_at: string | null;
 }
@@ -141,8 +141,8 @@ export default function FacilityManagerShow({
         },
         {
             label: 'Lab / Pharmacy',
-            value: usage.lab_requests + usage.prescriptions,
-            hint: `${usage.lab_requests} lab requests, ${usage.prescriptions} prescriptions`,
+            value: usage.lab_orders + usage.prescriptions,
+            hint: `${usage.lab_orders} lab orders, ${usage.prescriptions} prescriptions`,
         },
         {
             label: 'Health Alerts',

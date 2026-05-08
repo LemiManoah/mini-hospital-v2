@@ -83,7 +83,7 @@ type ResultItem = {
         test_name?: string | null;
         specimen_type?: string | null;
     } | null;
-    request?: ResultRequest;
+    order?: ResultRequest;
     resultEntry?: ResultEntry | null;
     result_entry?: ResultEntry | null;
 } | null;
@@ -121,8 +121,8 @@ export function LabResultDialog({
 }) {
     const resultEntry = item?.resultEntry ?? item?.result_entry ?? null;
     const values = resultEntry?.values ?? [];
-    const patient = request?.visit?.patient ?? item?.request?.visit?.patient;
-    const visit = request?.visit ?? item?.request?.visit;
+    const patient = request?.visit?.patient ?? item?.order?.visit?.patient;
+    const visit = request?.visit ?? item?.order?.visit;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -283,7 +283,7 @@ export function LabResultDialog({
                         <a
                             href={
                                 item
-                                    ? `/laboratory/request-items/${item.id}/print`
+                                    ? `/laboratory/order-items/${item.id}/print`
                                     : '#'
                             }
                             target="_blank"

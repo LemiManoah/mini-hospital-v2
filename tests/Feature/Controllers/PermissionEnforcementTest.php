@@ -713,7 +713,7 @@ describe('Consultation workflow permissions', function (): void {
         ]);
     });
 
-    it('forbids and allows lab request creation based on consultations.update permission', function (): void {
+    it('forbids and allows lab order creation based on consultations.update permission', function (): void {
         [$tenant, $branch, $department, $clinic] = createPermissionTenant(withBranch: true);
         $doctorUser = createPermissionUser($tenant, withStaff: true, branch: $branch);
         $nurseUser = createPermissionUser($tenant, withStaff: true, branch: $branch, staffType: StaffType::NURSING);
@@ -738,13 +738,13 @@ describe('Consultation workflow permissions', function (): void {
         ];
 
         $this->actingAs($doctorUser)
-            ->post(route('doctors.consultations.lab-requests.store', $visit), $payload)
+            ->post(route('doctors.consultations.lab-orders.store', $visit), $payload)
             ->assertForbidden();
 
         $doctorUser->givePermissionTo('consultations.update');
 
         $response = $this->actingAs($doctorUser)
-            ->post(route('doctors.consultations.lab-requests.store', $visit), $payload);
+            ->post(route('doctors.consultations.lab-orders.store', $visit), $payload);
 
         $response->assertRedirect(route('doctors.consultations.show', ['visit' => $visit, 'tab' => 'lab']));
         $response->assertSessionHas('success', 'Laboratory request created successfully.');
@@ -752,7 +752,7 @@ describe('Consultation workflow permissions', function (): void {
             'tenant_id' => $tenant->id,
             'branch_id' => $branch->id,
             'log_name' => 'laboratory',
-            'event' => 'lab_request.created',
+            'event' => 'lab_order.created',
         ]);
     });
 

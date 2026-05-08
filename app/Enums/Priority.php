@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Enums;
 
 /**
- * Priority levels used across modules (e.g. lab requests, imaging).
+ * Priority levels used across modules (e.g. lab orders, imaging).
  */
 enum Priority: string
 {

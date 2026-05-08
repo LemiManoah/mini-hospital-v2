@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\FacilityServiceOrderStatus;
-use App\Enums\ImagingRequestStatus;
-use App\Enums\LabRequestStatus;
+use App\Enums\ImagingOrderStatus;
+use App\Enums\LabOrderStatus;
 use App\Enums\PrescriptionStatus;
 use App\Models\PatientVisit;
 use App\Models\VisitBilling;
@@ -107,8 +107,8 @@ final readonly class AssessPatientVisitCompletion
 
     private function pendingServicesCountFromLoaded(PatientVisit $visit): int
     {
-        return $this->intValue($visit->pending_lab_requests_count ?? 0)
-            + $this->intValue($visit->pending_imaging_requests_count ?? 0)
+        return $this->intValue($visit->pending_lab_orders_count ?? 0)
+            + $this->intValue($visit->pending_imaging_orders_count ?? 0)
             + $this->intValue($visit->pending_prescriptions_count ?? 0)
             + $this->intValue($visit->pending_facility_service_orders_count ?? 0);
     }
@@ -149,18 +149,18 @@ final readonly class AssessPatientVisitCompletion
 
     private function pendingServicesCount(PatientVisit $visit): int
     {
-        $pendingLabRequests = $visit->labRequests()
+        $pendingLabOrders = $visit->labOrders()
             ->whereNotIn('status', [
-                LabRequestStatus::COMPLETED->value,
-                LabRequestStatus::CANCELLED->value,
-                LabRequestStatus::REJECTED->value,
+                LabOrderStatus::COMPLETED->value,
+                LabOrderStatus::CANCELLED->value,
+                LabOrderStatus::REJECTED->value,
             ])
             ->count();
 
-        $pendingImagingRequests = $visit->imagingRequests()
+        $pendingImagingOrders = $visit->imagingOrders()
             ->whereNotIn('status', [
-                ImagingRequestStatus::COMPLETED->value,
-                ImagingRequestStatus::CANCELLED->value,
+                ImagingOrderStatus::COMPLETED->value,
+                ImagingOrderStatus::CANCELLED->value,
             ])
             ->count();
 
@@ -178,7 +178,7 @@ final readonly class AssessPatientVisitCompletion
             ])
             ->count();
 
-        return $pendingLabRequests + $pendingImagingRequests + $pendingPrescriptions + $pendingFacilityServiceOrders;
+        return $pendingLabOrders + $pendingImagingOrders + $pendingPrescriptions + $pendingFacilityServiceOrders;
     }
 
     private function unpaidBalance(PatientVisit $visit): float

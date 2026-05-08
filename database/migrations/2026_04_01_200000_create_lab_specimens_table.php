@@ -14,7 +14,7 @@ return new class extends Migration
         if (! Schema::hasTable('lab_specimens')) {
             Schema::create('lab_specimens', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
-                $table->foreignUuid('lab_request_item_id')->constrained('lab_request_items')->onDelete('cascade');
+                $table->foreignUuid('lab_order_item_id')->constrained('lab_order_items')->onDelete('cascade');
                 $table->string('accession_number', 40)->unique();
                 $table->foreignUuid('specimen_type_id')->constrained('specimen_types')->restrictOnDelete();
                 $table->string('specimen_type_name', 100);
@@ -26,7 +26,7 @@ return new class extends Migration
                 $table->text('notes')->nullable();
                 $table->timestamps();
 
-                $table->unique('lab_request_item_id');
+                $table->unique('lab_order_item_id');
             });
         }
     }

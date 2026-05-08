@@ -105,7 +105,7 @@ it('blocks visit completion when downstream consultation orders are still pendin
     $patientId = (string) Str::uuid();
     $visitId = (string) Str::uuid();
     $consultationId = (string) Str::uuid();
-    $labRequestId = (string) Str::uuid();
+    $labOrderId = (string) Str::uuid();
 
     seedTenantContext($tenantId);
     seedPatientRecord($patientId, $tenantId);
@@ -173,8 +173,8 @@ it('blocks visit completion when downstream consultation orders are still pendin
         'updated_at' => now(),
     ]);
 
-    DB::table('lab_requests')->insert([
-        'id' => $labRequestId,
+    DB::table('lab_orders')->insert([
+        'id' => $labOrderId,
         'tenant_id' => $tenantId,
         'visit_id' => $visitId,
         'consultation_id' => $consultationId,

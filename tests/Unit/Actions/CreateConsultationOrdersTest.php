@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 use App\Actions\CreateFacilityServiceOrder;
-use App\Actions\CreateImagingRequest;
-use App\Actions\CreateLabRequest;
+use App\Actions\CreateImagingOrder;
+use App\Actions\CreateLabOrder;
 use App\Actions\CreatePrescription;
 use App\Actions\DeletePendingFacilityServiceOrder;
 use App\Data\Clinical\CreateFacilityServiceOrderDTO;
-use App\Data\Clinical\CreateImagingRequestDTO;
-use App\Data\Clinical\CreateLabRequestDTO;
+use App\Data\Clinical\CreateImagingOrderDTO;
+use App\Data\Clinical\CreateLabOrderDTO;
 use App\Data\Clinical\CreatePrescriptionDTO;
 use App\Enums\DrugCategory;
 use App\Enums\DrugDosageForm;
@@ -177,8 +177,8 @@ if (! function_exists('createFacilityServiceOrderRequest')) {
     }
 }
 
-if (! function_exists('createLabRequestDtoRequest')) {
-    function createLabRequestDtoRequest(array $validated): FormRequest
+if (! function_exists('createLabOrderDtoRequest')) {
+    function createLabOrderDtoRequest(array $validated): FormRequest
     {
         return new class($validated) extends FormRequest
         {
@@ -213,8 +213,8 @@ if (! function_exists('createPrescriptionDtoRequest')) {
     }
 }
 
-if (! function_exists('createImagingRequestDtoRequest')) {
-    function createImagingRequestDtoRequest(array $validated): FormRequest
+if (! function_exists('createImagingOrderDtoRequest')) {
+    function createImagingOrderDtoRequest(array $validated): FormRequest
     {
         return new class($validated) extends FormRequest
         {
@@ -251,9 +251,9 @@ function createOrderNotificationRecipient(string $tenantId, array $permissions):
     return $user;
 }
 
-it('creates a lab request with priced items from the consultation context and syncs a visit charge', function (): void {
+it('creates a lab order with priced items from the consultation context and syncs a visit charge', function (): void {
     $context = seedConsultationContext();
-    $recipient = createOrderNotificationRecipient($context['tenant_id'], ['lab_requests.view']);
+    $recipient = createOrderNotificationRecipient($context['tenant_id'], ['lab_orders.view']);
     $testId = (string) Str::uuid();
     [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
 
@@ -276,7 +276,7 @@ it('creates a lab request with priced items from the consultation context and sy
         'updated_at' => now(),
     ]);
 
-    $request = resolve(CreateLabRequest::class)->handle($context['consultation'], CreateLabRequestDTO::fromRequest(createLabRequestDtoRequest([
+    $request = resolve(CreateLabOrder::class)->handle($context['consultation'], CreateLabOrderDTO::fromRequest(createLabOrderDtoRequest([
         'test_ids' => [$testId],
         'clinical_notes' => 'Rule out infection',
         'priority' => 'urgent',
@@ -301,7 +301,7 @@ it('creates a lab request with priced items from the consultation context and sy
 
     expect(Activity::query()
         ->where('log_name', 'laboratory')
-        ->where('event', 'lab_request.created')
+        ->where('event', 'lab_order.created')
         ->where('subject_type', $request->getMorphClass())
         ->where('subject_id', $request->id)
         ->exists())->toBeTrue();
@@ -309,11 +309,11 @@ it('creates a lab request with priced items from the consultation context and sy
     $notification = $recipient->notifications()->first();
 
     expect($notification)->not()->toBeNull()
-        ->and($notification?->data['type'] ?? null)->toBe('lab_request_created')
+        ->and($notification?->data['type'] ?? null)->toBe('lab_order_created')
         ->and($notification?->data['resource_id'] ?? null)->toBe($request->id);
 });
 
-it('moves a registered visit into progress when a visit-level lab request is created', function (): void {
+it('moves a registered visit into progress when a visit-level lab order is created', function (): void {
     $context = seedConsultationContext();
     $testId = (string) Str::uuid();
     [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
@@ -346,7 +346,7 @@ it('moves a registered visit into progress when a visit-level lab request is cre
 
     $visit = PatientVisit::query()->findOrFail($context['visit_id']);
 
-    resolve(CreateLabRequest::class)->handle($visit, CreateLabRequestDTO::fromRequest(createLabRequestDtoRequest([
+    resolve(CreateLabOrder::class)->handle($visit, CreateLabOrderDTO::fromRequest(createLabOrderDtoRequest([
         'test_ids' => [$testId],
         'clinical_notes' => 'Inflammatory marker',
         'priority' => 'routine',
@@ -358,7 +358,7 @@ it('moves a registered visit into progress when a visit-level lab request is cre
         ->and($visit->fresh()->started_at)->not->toBeNull();
 });
 
-it('uses insurance package prices when syncing lab request charges', function (): void {
+it('uses insurance package prices when syncing lab order charges', function (): void {
     $context = seedConsultationContext('insurance');
     $testId = (string) Str::uuid();
     [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
@@ -395,7 +395,7 @@ it('uses insurance package prices when syncing lab request charges', function ()
         'updated_at' => now(),
     ]);
 
-    $request = resolve(CreateLabRequest::class)->handle($context['consultation'], CreateLabRequestDTO::fromRequest(createLabRequestDtoRequest([
+    $request = resolve(CreateLabOrder::class)->handle($context['consultation'], CreateLabOrderDTO::fromRequest(createLabOrderDtoRequest([
         'test_ids' => [$testId],
         'clinical_notes' => 'Confirm malaria',
         'priority' => 'routine',
@@ -542,11 +542,11 @@ it('uses insurance package prices when syncing prescription charges', function (
         ->and((float) $charge->line_total)->toBe(16800.0);
 });
 
-it('creates an imaging request linked to the consultation', function (): void {
+it('creates an imaging order linked to the consultation', function (): void {
     $context = seedConsultationContext();
-    $recipient = createOrderNotificationRecipient($context['tenant_id'], ['lab_requests.view']);
+    $recipient = createOrderNotificationRecipient($context['tenant_id'], ['imaging_orders.view']);
 
-    $request = resolve(CreateImagingRequest::class)->handle($context['consultation'], CreateImagingRequestDTO::fromRequest(createImagingRequestDtoRequest([
+    $request = resolve(CreateImagingOrder::class)->handle($context['consultation'], CreateImagingOrderDTO::fromRequest(createImagingOrderDtoRequest([
         'modality' => 'xray',
         'body_part' => 'Chest',
         'laterality' => 'na',
@@ -564,7 +564,7 @@ it('creates an imaging request linked to the consultation', function (): void {
 
     expect(Activity::query()
         ->where('log_name', 'clinical')
-        ->where('event', 'imaging_request.created')
+        ->where('event', 'imaging_order.created')
         ->where('subject_type', $request->getMorphClass())
         ->where('subject_id', $request->id)
         ->exists())->toBeTrue();
@@ -572,7 +572,7 @@ it('creates an imaging request linked to the consultation', function (): void {
     $notification = $recipient->notifications()->first();
 
     expect($notification)->not()->toBeNull()
-        ->and($notification?->data['type'] ?? null)->toBe('imaging_request_created')
+        ->and($notification?->data['type'] ?? null)->toBe('imaging_order_created')
         ->and($notification?->data['resource_id'] ?? null)->toBe($request->id);
 });
 

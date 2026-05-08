@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\VisitWorkflowGuard;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,7 +27,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:lab_requests.view', only: ['incoming', 'enterResults', 'reviewResults', 'viewResults']),
+            new Middleware('permission:lab_orders.view', only: ['incoming', 'enterResults', 'reviewResults', 'viewResults']),
         ];
     }
 
@@ -55,7 +55,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
     {
         $search = mb_trim((string) $request->query('search', ''));
 
-        $requests = $this->activeBranchWorkspace->apply(LabRequest::query())
+        $requests = $this->activeBranchWorkspace->apply(LabOrder::query())
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $searchQuery) use ($search): void {
                     $searchQuery
@@ -94,9 +94,9 @@ final readonly class LaboratoryQueueController implements HasMiddleware
                             'test.resultTypeDefinition:id,code,name',
                             'test.resultOptions:id,lab_test_catalog_id,label,sort_order',
                             'test.resultParameters:id,lab_test_catalog_id,label,unit,gender,age_min,age_max,reference_range,value_type,sort_order',
-                            'specimen:id,lab_request_item_id,accession_number,specimen_type_id,specimen_type_name,status,collected_by,collected_at,outside_sample,outside_sample_origin,notes',
+                            'specimen:id,lab_order_item_id,accession_number,specimen_type_id,specimen_type_name,status,collected_by,collected_at,outside_sample,outside_sample_origin,notes',
                             'specimen.collectedBy:id,first_name,last_name',
-                            'resultEntry:id,lab_request_item_id,entered_by,entered_at,reviewed_by,reviewed_at,approved_by,approved_at,released_by,released_at,result_notes,review_notes,approval_notes',
+                            'resultEntry:id,lab_order_item_id,entered_by,entered_at,reviewed_by,reviewed_at,approved_by,approved_at,released_by,released_at,result_notes,review_notes,approval_notes',
                             'resultEntry.enteredBy:id,first_name,last_name',
                             'resultEntry.reviewedBy:id,first_name,last_name',
                             'resultEntry.approvedBy:id,first_name,last_name',
@@ -127,8 +127,8 @@ final readonly class LaboratoryQueueController implements HasMiddleware
     }
 
     /**
-     * @param  Builder<Model>|HasMany<LabRequestItem, LabRequest>  $query
-     * @return Builder<Model>|HasMany<LabRequestItem, LabRequest>
+     * @param  Builder<Model>|HasMany<LabOrderItem, LabOrder>  $query
+     * @return Builder<Model>|HasMany<LabOrderItem, LabOrder>
      */
     private function applyStageFilter(Builder|HasMany $query, string $stage): Builder|HasMany
     {

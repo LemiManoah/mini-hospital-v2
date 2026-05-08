@@ -4,8 +4,8 @@ import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import {
     type FacilityServiceOrder,
-    type ImagingRequest,
-    type LabRequest,
+    type ImagingOrder,
+    type LabOrder,
     type Prescription,
 } from '@/types/patient';
 import { Trash2 } from 'lucide-react';
@@ -136,26 +136,26 @@ export function OrderAccessMessage({
 }
 
 export function LabOrdersList({
-    labRequests,
+    labOrders,
     emptyMessage,
 }: {
-    labRequests: LabRequest[];
+    labOrders: LabOrder[];
     emptyMessage: string;
 }) {
-    if (labRequests.length === 0) {
+    if (labOrders.length === 0) {
         return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
     }
 
     return (
         <div className="flex flex-col gap-4">
-            {labRequests.map((request) => (
+            {labOrders.map((request) => (
                 <div key={request.id} className="rounded-lg border p-4">
                     <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-medium">
                             {request.items
                                 .map((item) => item.test?.test_name)
                                 .filter(Boolean)
-                                .join(', ') || 'Lab request'}
+                                .join(', ') || 'Lab order'}
                         </h3>
                         <Badge
                             className={cn(
@@ -309,19 +309,19 @@ export function PrescriptionOrdersList({
 }
 
 export function ImagingOrdersList({
-    imagingRequests,
+    imagingOrders,
     emptyMessage,
 }: {
-    imagingRequests: ImagingRequest[];
+    imagingOrders: ImagingOrder[];
     emptyMessage: string;
 }) {
-    if (imagingRequests.length === 0) {
+    if (imagingOrders.length === 0) {
         return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
     }
 
     return (
         <div className="flex flex-col gap-4">
-            {imagingRequests.map((request) => (
+            {imagingOrders.map((request) => (
                 <div key={request.id} className="rounded-lg border p-4">
                     <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-medium">

@@ -14,7 +14,7 @@ use App\Models\Consultation;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
-use App\Models\LabRequestItem;
+use App\Models\LabOrderItem;
 use App\Models\LabResultType;
 use App\Models\LabTestCatalog;
 use App\Models\LabTestCategory;
@@ -157,7 +157,7 @@ function createLabResultWorkflowContext(): array
     ]);
 
     $requestId = (string) Str::uuid();
-    DB::table('lab_requests')->insert([
+    DB::table('lab_orders')->insert([
         'id' => $requestId,
         'tenant_id' => $tenant->id,
         'facility_branch_id' => $branch->id,
@@ -172,8 +172,8 @@ function createLabResultWorkflowContext(): array
         'updated_at' => now(),
     ]);
 
-    $requestItem = LabRequestItem::query()->create([
-        'request_id' => $requestId,
+    $orderItem = LabOrderItem::query()->create([
+        'lab_order_id' => $requestId,
         'test_id' => $test->id,
         'status' => 'pending',
         'price' => 35000,
@@ -183,32 +183,32 @@ function createLabResultWorkflowContext(): array
 
     $sequence++;
 
-    return [$branch, $user, $requestItem, $parameter];
+    return [$branch, $user, $orderItem, $parameter];
 }
 
-function collectWorkflowSample(FacilityBranch $branch, User $user, LabRequestItem $requestItem): void
+function collectWorkflowSample(FacilityBranch $branch, User $user, LabOrderItem $orderItem): void
 {
-    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+    $specimenType = $orderItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
 
     test()->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+        ->post(route('laboratory.order-items.collect-sample', $orderItem), [
             'specimen_type_id' => $specimenType->id,
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 }
 
 function storeWorkflowResult(
     FacilityBranch $branch,
     User $user,
-    LabRequestItem $requestItem,
+    LabOrderItem $orderItem,
     LabTestResultParameter $parameter,
     string $value,
     string $notes = 'Sample quality acceptable.',
 ): void {
     test()->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.results.store', $requestItem), [
+        ->post(route('laboratory.order-items.results.store', $orderItem), [
             'result_notes' => $notes,
             'parameter_values' => [
                 [
@@ -217,28 +217,28 @@ function storeWorkflowResult(
                 ],
             ],
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 }
 
 function approveWorkflowResult(
     FacilityBranch $branch,
     User $user,
-    LabRequestItem $requestItem,
+    LabOrderItem $orderItem,
     string $reviewNotes = 'Reviewed against analyzer output.',
     string $approvalNotes = 'Released to clinician.',
 ): void {
     test()->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.approve', $requestItem), [
+        ->post(route('laboratory.order-items.approve', $orderItem), [
             'review_notes' => $reviewNotes,
             'approval_notes' => $approvalNotes,
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 }
 
-function prepareClinicianWorkspaceContext(LabRequestItem $requestItem, User $user): PatientVisit
+function prepareClinicianWorkspaceContext(LabOrderItem $orderItem, User $user): PatientVisit
 {
-    $request = $requestItem->request()->firstOrFail();
+    $request = $orderItem->order()->firstOrFail();
     $visit = $request->visit()->firstOrFail();
 
     $visit->forceFill([
@@ -286,81 +286,81 @@ function prepareClinicianWorkspaceContext(LabRequestItem $requestItem, User $use
     return $visit->refresh();
 }
 
-it('picks a sample for a laboratory request item from the incoming queue', function (): void {
-    [$branch, $user, $requestItem] = createLabResultWorkflowContext();
+it('picks a sample for a laboratory order item from the incoming queue', function (): void {
+    [$branch, $user, $orderItem] = createLabResultWorkflowContext();
 
-    $user->givePermissionTo('lab_requests.update');
-    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+    $user->givePermissionTo('lab_orders.update');
+    $specimenType = $orderItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+        ->post(route('laboratory.order-items.collect-sample', $orderItem), [
             'specimen_type_id' => $specimenType->id,
             'outside_sample_origin' => 'Referral clinic',
         ]);
 
-    $response->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+    $response->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
     $response->assertSessionHas('success', 'Sample picked successfully.');
 
-    $requestItem->refresh();
+    $orderItem->refresh();
 
-    expect($requestItem->status->value)->toBe('pending')
-        ->and($requestItem->received_at)->not()->toBeNull()
-        ->and(DB::table('lab_specimens')->where('lab_request_item_id', $requestItem->id)->value('outside_sample'))->toBe(1)
-        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('sample_collected')
+    expect($orderItem->status->value)->toBe('pending')
+        ->and($orderItem->received_at)->not()->toBeNull()
+        ->and(DB::table('lab_specimens')->where('lab_order_item_id', $orderItem->id)->value('outside_sample'))->toBe(1)
+        ->and(DB::table('lab_orders')->where('id', $orderItem->lab_order_id)->value('status'))->toBe('sample_collected')
         ->and(Activity::query()
             ->where('event', 'lab_specimen.collected')
-            ->where('subject_id', $requestItem->id)
+            ->where('subject_id', $orderItem->id)
             ->exists())->toBeTrue();
 });
 
-it('marks a collected sample as received and moves the request item into processing', function (): void {
-    [$branch, $user, $requestItem] = createLabResultWorkflowContext();
+it('marks a collected sample as received and moves the order item into processing', function (): void {
+    [$branch, $user, $orderItem] = createLabResultWorkflowContext();
 
-    $user->givePermissionTo('lab_requests.update');
-    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+    $user->givePermissionTo('lab_orders.update');
+    $specimenType = $orderItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+        ->post(route('laboratory.order-items.collect-sample', $orderItem), [
             'specimen_type_id' => $specimenType->id,
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.receive', $requestItem));
+        ->post(route('laboratory.order-items.receive', $orderItem));
 
-    $response->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
-    $response->assertSessionHas('success', 'Lab request item received successfully.');
+    $response->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
+    $response->assertSessionHas('success', 'Lab order item received successfully.');
 
-    $requestItem->refresh();
+    $orderItem->refresh();
 
-    expect($requestItem->status->value)->toBe('in_progress')
-        ->and($requestItem->received_at)->not()->toBeNull()
-        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('in_progress')
+    expect($orderItem->status->value)->toBe('in_progress')
+        ->and($orderItem->received_at)->not()->toBeNull()
+        ->and(DB::table('lab_orders')->where('id', $orderItem->lab_order_id)->value('status'))->toBe('in_progress')
         ->and(Activity::query()
-            ->where('event', 'lab_request_item.received')
-            ->where('subject_id', $requestItem->id)
+            ->where('event', 'lab_order_item.received')
+            ->where('subject_id', $orderItem->id)
             ->exists())->toBeTrue();
 });
 
 it('stores reviews and approves parameter-panel lab results', function (): void {
-    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+    [$branch, $user, $orderItem, $parameter] = createLabResultWorkflowContext();
 
-    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
-    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+    $user->givePermissionTo(['lab_orders.view', 'lab_orders.update']);
+    $specimenType = $orderItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+        ->post(route('laboratory.order-items.collect-sample', $orderItem), [
             'specimen_type_id' => $specimenType->id,
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.results.store', $requestItem), [
+        ->post(route('laboratory.order-items.results.store', $orderItem), [
             'result_notes' => 'Sample quality acceptable.',
             'parameter_values' => [
                 [
@@ -369,34 +369,34 @@ it('stores reviews and approves parameter-panel lab results', function (): void 
                 ],
             ],
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
-    $requestItem->refresh();
+    $orderItem->refresh();
 
-    expect($requestItem->result_entered_at)->not()->toBeNull()
-        ->and($requestItem->workflow_stage)->toBe('result_entered');
+    expect($orderItem->result_entered_at)->not()->toBeNull()
+        ->and($orderItem->workflow_stage)->toBe('result_entered');
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.review', $requestItem), [
+        ->post(route('laboratory.order-items.review', $orderItem), [
             'review_notes' => 'Reviewed against analyzer output.',
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.approve', $requestItem), [
+        ->post(route('laboratory.order-items.approve', $orderItem), [
             'approval_notes' => 'Released to clinician.',
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
-    $requestItem->refresh();
-    $resultEntry = $requestItem->resultEntry()->firstOrFail();
+    $orderItem->refresh();
+    $resultEntry = $orderItem->resultEntry()->firstOrFail();
 
-    expect($requestItem->status->value)->toBe('completed')
-        ->and($requestItem->approved_at)->not()->toBeNull()
-        ->and($requestItem->result_visible)->toBeTrue()
-        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('completed');
+    expect($orderItem->status->value)->toBe('completed')
+        ->and($orderItem->approved_at)->not()->toBeNull()
+        ->and($orderItem->result_visible)->toBeTrue()
+        ->and(DB::table('lab_orders')->where('id', $orderItem->lab_order_id)->value('status'))->toBe('completed');
 
     expect(Activity::query()
         ->where('event', 'lab_result.entered')
@@ -413,31 +413,31 @@ it('stores reviews and approves parameter-panel lab results', function (): void 
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->get(route('laboratory.request-items.show', $requestItem))
+        ->get(route('laboratory.order-items.show', $orderItem))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('laboratory/request-item')
-            ->where('labRequestItem.result_visible', true)
-            ->where('labRequestItem.workflow_stage', 'approved')
-            ->has('labRequestItem.result_entry.values', 1));
+            ->component('laboratory/order-item')
+            ->where('labOrderItem.result_visible', true)
+            ->where('labOrderItem.workflow_stage', 'approved')
+            ->has('labOrderItem.result_entry.values', 1));
 });
 
 it('can review and release parameter-panel lab results in one approval step', function (): void {
-    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+    [$branch, $user, $orderItem, $parameter] = createLabResultWorkflowContext();
 
-    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
-    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+    $user->givePermissionTo(['lab_orders.view', 'lab_orders.update']);
+    $specimenType = $orderItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+        ->post(route('laboratory.order-items.collect-sample', $orderItem), [
             'specimen_type_id' => $specimenType->id,
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.results.store', $requestItem), [
+        ->post(route('laboratory.order-items.results.store', $orderItem), [
             'result_notes' => 'Sample quality acceptable.',
             'parameter_values' => [
                 [
@@ -446,33 +446,33 @@ it('can review and release parameter-panel lab results in one approval step', fu
                 ],
             ],
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.approve', $requestItem), [
+        ->post(route('laboratory.order-items.approve', $orderItem), [
             'review_notes' => 'Reviewed against analyzer output.',
             'approval_notes' => 'Released to clinician.',
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem)
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem)
         ->assertSessionHas(
             'success',
             'Lab results reviewed, approved, and released successfully.',
         );
 
-    $requestItem->refresh();
+    $orderItem->refresh();
     $resultEntry = DB::table('lab_result_entries')
-        ->where('lab_request_item_id', $requestItem->id)
+        ->where('lab_order_item_id', $orderItem->id)
         ->first();
     $activity = Activity::query()
         ->where('event', 'lab_result.approved')
         ->where('subject_id', $resultEntry?->id)
         ->first();
 
-    expect($requestItem->reviewed_at)->not()->toBeNull()
-        ->and($requestItem->approved_at)->not()->toBeNull()
-        ->and($requestItem->status->value)->toBe('completed')
-        ->and($requestItem->result_visible)->toBeTrue()
+    expect($orderItem->reviewed_at)->not()->toBeNull()
+        ->and($orderItem->approved_at)->not()->toBeNull()
+        ->and($orderItem->status->value)->toBe('completed')
+        ->and($orderItem->result_visible)->toBeTrue()
         ->and($activity)->not()->toBeNull()
         ->and($activity?->log_name)->toBe('laboratory')
         ->and($activity?->tenant_id)->toBe($branch->tenant_id)
@@ -484,9 +484,9 @@ it('can review and release parameter-panel lab results in one approval step', fu
 });
 
 it('auto releases reviewed results when approval is not required by general settings', function (): void {
-    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+    [$branch, $user, $orderItem, $parameter] = createLabResultWorkflowContext();
 
-    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
+    $user->givePermissionTo(['lab_orders.view', 'lab_orders.update']);
 
     TenantGeneralSetting::query()->updateOrCreate(
         [
@@ -498,24 +498,24 @@ it('auto releases reviewed results when approval is not required by general sett
         ],
     );
 
-    collectWorkflowSample($branch, $user, $requestItem);
-    storeWorkflowResult($branch, $user, $requestItem, $parameter, '13.4');
+    collectWorkflowSample($branch, $user, $orderItem);
+    storeWorkflowResult($branch, $user, $orderItem, $parameter, '13.4');
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.review', $requestItem), [
+        ->post(route('laboratory.order-items.review', $orderItem), [
             'review_notes' => 'Reviewed and released from the review step.',
         ]);
 
-    $response->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+    $response->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
     $response->assertSessionHas('success', 'Lab results reviewed and released successfully.');
 
-    $requestItem->refresh();
-    $resultEntry = $requestItem->resultEntry()->firstOrFail();
+    $orderItem->refresh();
+    $resultEntry = $orderItem->resultEntry()->firstOrFail();
 
-    expect($requestItem->status->value)->toBe('completed')
-        ->and($requestItem->approved_at)->not()->toBeNull()
-        ->and($requestItem->result_visible)->toBeTrue()
+    expect($orderItem->status->value)->toBe('completed')
+        ->and($orderItem->approved_at)->not()->toBeNull()
+        ->and($orderItem->result_visible)->toBeTrue()
         ->and($resultEntry->approved_at)->not()->toBeNull()
         ->and($resultEntry->released_at)->not()->toBeNull()
         ->and(Activity::query()
@@ -528,11 +528,11 @@ it('auto releases reviewed results when approval is not required by general sett
             ->exists())->toBeTrue();
 });
 
-it('moves a request item between the incoming and enter-results queues after sample picking', function (): void {
-    [$branch, $user, $requestItem] = createLabResultWorkflowContext();
+it('moves a order item between the incoming and enter-results queues after sample picking', function (): void {
+    [$branch, $user, $orderItem] = createLabResultWorkflowContext();
 
-    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
-    $specimenType = $requestItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
+    $user->givePermissionTo(['lab_orders.view', 'lab_orders.update']);
+    $specimenType = $orderItem->test()->firstOrFail()->specimenTypes()->firstOrFail();
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -541,15 +541,15 @@ it('moves a request item between the incoming and enter-results queues after sam
         ->assertInertia(fn ($page) => $page
             ->component('laboratory/queue')
             ->where('page.stage', 'incoming')
-            ->has('requests.data', 1)
-            ->has('requests.data.0.items', 1));
+            ->has('orders.data', 1)
+            ->has('orders.data.0.items', 1));
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.collect-sample', $requestItem), [
+        ->post(route('laboratory.order-items.collect-sample', $orderItem), [
             'specimen_type_id' => $specimenType->id,
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -558,22 +558,22 @@ it('moves a request item between the incoming and enter-results queues after sam
         ->assertInertia(fn ($page) => $page
             ->component('laboratory/queue')
             ->where('page.stage', 'enter_results')
-            ->has('requests.data', 1)
-            ->has('requests.data.0.items', 1));
+            ->has('orders.data', 1)
+            ->has('orders.data.0.items', 1));
 });
 
 it('corrects a released result, records the audit reason, and requires release again', function (): void {
-    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+    [$branch, $user, $orderItem, $parameter] = createLabResultWorkflowContext();
 
-    $user->givePermissionTo(['lab_requests.view', 'lab_requests.update']);
+    $user->givePermissionTo(['lab_orders.view', 'lab_orders.update']);
 
-    collectWorkflowSample($branch, $user, $requestItem);
-    storeWorkflowResult($branch, $user, $requestItem, $parameter, '13.4');
-    approveWorkflowResult($branch, $user, $requestItem);
+    collectWorkflowSample($branch, $user, $orderItem);
+    storeWorkflowResult($branch, $user, $orderItem, $parameter, '13.4');
+    approveWorkflowResult($branch, $user, $orderItem);
 
     $response = $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.correct', $requestItem), [
+        ->post(route('laboratory.order-items.correct', $orderItem), [
             'correction_reason' => 'Analyzer decimal point was entered incorrectly.',
             'result_notes' => 'Corrected after bench reconciliation.',
             'parameter_values' => [
@@ -584,29 +584,29 @@ it('corrects a released result, records the audit reason, and requires release a
             ],
         ]);
 
-    $response->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+    $response->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
     $response->assertSessionHas(
         'success',
         'Lab result correction saved. Review and release it again before clinicians can see it.',
     );
 
-    $requestItem->refresh();
-    $resultEntry = $requestItem->resultEntry()->with('values')->firstOrFail();
+    $orderItem->refresh();
+    $resultEntry = $orderItem->resultEntry()->with('values')->firstOrFail();
     $activity = Activity::query()
         ->where('event', 'lab_result.corrected')
         ->where('subject_id', $resultEntry->id)
         ->latest('id')
         ->first();
 
-    expect($requestItem->status->value)->toBe('in_progress')
-        ->and($requestItem->workflow_stage)->toBe('result_entered')
-        ->and($requestItem->approved_at)->toBeNull()
-        ->and($requestItem->completed_at)->toBeNull()
-        ->and($requestItem->result_visible)->toBeFalse()
+    expect($orderItem->status->value)->toBe('in_progress')
+        ->and($orderItem->workflow_stage)->toBe('result_entered')
+        ->and($orderItem->approved_at)->toBeNull()
+        ->and($orderItem->completed_at)->toBeNull()
+        ->and($orderItem->result_visible)->toBeFalse()
         ->and($resultEntry->corrected_at)->not->toBeNull()
         ->and($resultEntry->correction_reason)->toBe('Analyzer decimal point was entered incorrectly.')
         ->and($resultEntry->values->first()?->value_numeric)->toBe(11.4)
-        ->and(DB::table('lab_requests')->where('id', $requestItem->request_id)->value('status'))->toBe('in_progress')
+        ->and(DB::table('lab_orders')->where('id', $orderItem->lab_order_id)->value('status'))->toBe('in_progress')
         ->and($activity)->not()->toBeNull()
         ->and($activity?->log_name)->toBe('laboratory')
         ->and($activity?->tenant_id)->toBe($branch->tenant_id)
@@ -618,37 +618,26 @@ it('corrects a released result, records the audit reason, and requires release a
     approveWorkflowResult(
         $branch,
         $user,
-        $requestItem,
+        $orderItem,
         reviewNotes: 'Correction reviewed against analyzer rerun.',
         approvalNotes: 'Corrected result released.',
     );
 
-    $requestItem->refresh();
+    $orderItem->refresh();
 
-    expect($requestItem->status->value)->toBe('completed')
-        ->and($requestItem->approved_at)->not->toBeNull()
-        ->and($requestItem->result_visible)->toBeTrue();
+    expect($orderItem->status->value)->toBe('completed')
+        ->and($orderItem->approved_at)->not->toBeNull()
+        ->and($orderItem->result_visible)->toBeTrue();
 });
 
 it('hides unreleased and corrected-again results from the visit workspace until release', function (): void {
-    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+    [$branch, $user, $orderItem, $parameter] = createLabResultWorkflowContext();
 
-    $user->givePermissionTo(['visits.view', 'lab_requests.update']);
-    $visit = prepareClinicianWorkspaceContext($requestItem, $user);
+    $user->givePermissionTo(['visits.view', 'lab_orders.update']);
+    $visit = prepareClinicianWorkspaceContext($orderItem, $user);
 
-    collectWorkflowSample($branch, $user, $requestItem);
-    storeWorkflowResult($branch, $user, $requestItem, $parameter, '13.4');
-
-    $this->withSession(['active_branch_id' => $branch->id])
-        ->actingAs($user)
-        ->get(route('visits.show', $visit))
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
-            ->component('visit/show')
-            ->where('visit.lab_requests.0.items.0.result_visible', false)
-            ->where('visit.lab_requests.0.items.0.result_entry', null));
-
-    approveWorkflowResult($branch, $user, $requestItem);
+    collectWorkflowSample($branch, $user, $orderItem);
+    storeWorkflowResult($branch, $user, $orderItem, $parameter, '13.4');
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -656,12 +645,23 @@ it('hides unreleased and corrected-again results from the visit workspace until 
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('visit/show')
-            ->where('visit.lab_requests.0.items.0.result_visible', true)
-            ->has('visit.lab_requests.0.items.0.result_entry.values', 1));
+            ->where('visit.lab_orders.0.items.0.result_visible', false)
+            ->where('visit.lab_orders.0.items.0.result_entry', null));
+
+    approveWorkflowResult($branch, $user, $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.correct', $requestItem), [
+        ->get(route('visits.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('visit/show')
+            ->where('visit.lab_orders.0.items.0.result_visible', true)
+            ->has('visit.lab_orders.0.items.0.result_entry.values', 1));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.order-items.correct', $orderItem), [
             'correction_reason' => 'Reference sample confirmed a different value.',
             'result_notes' => 'Corrected after quality control review.',
             'parameter_values' => [
@@ -671,7 +671,7 @@ it('hides unreleased and corrected-again results from the visit workspace until 
                 ],
             ],
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -679,29 +679,18 @@ it('hides unreleased and corrected-again results from the visit workspace until 
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('visit/show')
-            ->where('visit.lab_requests.0.items.0.result_visible', false)
-            ->where('visit.lab_requests.0.items.0.result_entry', null));
+            ->where('visit.lab_orders.0.items.0.result_visible', false)
+            ->where('visit.lab_orders.0.items.0.result_entry', null));
 });
 
 it('hides unreleased and corrected-again results from the consultation workspace until release', function (): void {
-    [$branch, $user, $requestItem, $parameter] = createLabResultWorkflowContext();
+    [$branch, $user, $orderItem, $parameter] = createLabResultWorkflowContext();
 
-    $user->givePermissionTo(['consultations.view', 'lab_requests.update']);
-    $visit = prepareClinicianWorkspaceContext($requestItem, $user);
+    $user->givePermissionTo(['consultations.view', 'lab_orders.update']);
+    $visit = prepareClinicianWorkspaceContext($orderItem, $user);
 
-    collectWorkflowSample($branch, $user, $requestItem);
-    storeWorkflowResult($branch, $user, $requestItem, $parameter, '13.4');
-
-    $this->withSession(['active_branch_id' => $branch->id])
-        ->actingAs($user)
-        ->get(route('doctors.consultations.show', $visit))
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
-            ->component('doctor/consultations/show')
-            ->where('visit.lab_requests.0.items.0.result_visible', false)
-            ->where('visit.lab_requests.0.items.0.result_entry', null));
-
-    approveWorkflowResult($branch, $user, $requestItem);
+    collectWorkflowSample($branch, $user, $orderItem);
+    storeWorkflowResult($branch, $user, $orderItem, $parameter, '13.4');
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -709,12 +698,23 @@ it('hides unreleased and corrected-again results from the consultation workspace
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('doctor/consultations/show')
-            ->where('visit.lab_requests.0.items.0.result_visible', true)
-            ->has('visit.lab_requests.0.items.0.result_entry.values', 1));
+            ->where('visit.lab_orders.0.items.0.result_visible', false)
+            ->where('visit.lab_orders.0.items.0.result_entry', null));
+
+    approveWorkflowResult($branch, $user, $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
-        ->post(route('laboratory.request-items.correct', $requestItem), [
+        ->get(route('doctors.consultations.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('doctor/consultations/show')
+            ->where('visit.lab_orders.0.items.0.result_visible', true)
+            ->has('visit.lab_orders.0.items.0.result_entry.values', 1));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('laboratory.order-items.correct', $orderItem), [
             'correction_reason' => 'Quality control repeat required a corrected value.',
             'result_notes' => 'Corrected before final clinician release.',
             'parameter_values' => [
@@ -724,7 +724,7 @@ it('hides unreleased and corrected-again results from the consultation workspace
                 ],
             ],
         ])
-        ->assertRedirectToRoute('laboratory.request-items.show', $requestItem);
+        ->assertRedirectToRoute('laboratory.order-items.show', $orderItem);
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -732,6 +732,6 @@ it('hides unreleased and corrected-again results from the consultation workspace
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('doctor/consultations/show')
-            ->where('visit.lab_requests.0.items.0.result_visible', false)
-            ->where('visit.lab_requests.0.items.0.result_entry', null));
+            ->where('visit.lab_orders.0.items.0.result_visible', false)
+            ->where('visit.lab_orders.0.items.0.result_entry', null));
 });

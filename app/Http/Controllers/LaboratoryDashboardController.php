@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\InventoryLocationType;
-use App\Enums\LabRequestStatus;
+use App\Enums\LabOrderStatus;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLocationItem;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
+use App\Models\LabOrder;
+use App\Models\LabOrderItem;
 use App\Models\StockMovement;
 use App\Support\ActiveBranchWorkspace;
 use App\Support\BranchContext;
@@ -33,7 +33,7 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:lab_requests.view', only: ['index']),
+            new Middleware('permission:lab_orders.view', only: ['index']),
         ];
     }
 
@@ -42,7 +42,7 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
         $today = now()->toDateString();
         $activeBranchId = BranchContext::getActiveBranchId();
 
-        $requestQuery = $this->activeBranchWorkspace->apply(LabRequest::query());
+        $requestQuery = $this->activeBranchWorkspace->apply(LabOrder::query());
         $labLocationIds = $this->inventoryLocationAccess
             ->accessibleLocationIds(Auth::user(), $activeBranchId, [InventoryLocationType::LABORATORY]);
 
@@ -163,8 +163,8 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
             ],
         ];
 
-        $requestStatusCounts = collect(LabRequestStatus::cases())
-            ->map(fn (LabRequestStatus $status): array => [
+        $requestStatusCounts = collect(LabOrderStatus::cases())
+            ->map(fn (LabOrderStatus $status): array => [
                 'label' => $status->label(),
                 'value' => $status->value,
                 'count' => (clone $requestQuery)->where('status', $status->value)->count(),
@@ -210,7 +210,7 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
             ],
         ];
 
-        $recentRequests = $this->activeBranchWorkspace->apply(LabRequest::query())
+        $recentRequests = $this->activeBranchWorkspace->apply(LabOrder::query())
             ->with([
                 'requestedBy:id,first_name,last_name',
                 'visit:id,visit_number,patient_id',
@@ -238,16 +238,16 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
             'stock_metrics' => $stockMetrics,
             'request_status_counts' => $requestStatusCounts,
             'workflow_stage_counts' => $workflowStageCounts,
-            'recent_requests' => $recentRequests,
+            'recent_orders' => $recentRequests,
         ]);
     }
 
     /**
-     * @return Builder<LabRequestItem>
+     * @return Builder<LabOrderItem>
      */
     private function itemQuery(): Builder
     {
-        return LabRequestItem::query()->whereHas(
+        return LabOrderItem::query()->whereHas(
             'request',
             fn (Builder $query): Builder => $this->activeBranchWorkspace->apply($query),
         );

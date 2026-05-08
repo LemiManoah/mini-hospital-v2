@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Print;
 
 use App\Enums\FacilityServiceOrderStatus;
-use App\Enums\ImagingRequestStatus;
-use App\Enums\LabRequestStatus;
+use App\Enums\ImagingOrderStatus;
+use App\Enums\LabOrderStatus;
 use App\Enums\PrescriptionStatus;
 use App\Models\PatientVisit;
 use App\Support\ActiveBranchWorkspace;
@@ -52,16 +52,16 @@ final readonly class VisitSummaryPrintController implements HasMiddleware
                 ->latest('recorded_at'),
             'consultation:id,visit_id,doctor_id,started_at,completed_at,chief_complaint,history_of_present_illness,objective_findings,assessment,plan,primary_diagnosis,primary_icd10_code',
             'consultation.doctor:id,first_name,last_name',
-            'labRequests' => static fn (HasMany $query): HasMany => $query
+            'labOrders' => static fn (HasMany $query): HasMany => $query
                 ->with(['items.test:id,test_name,test_code'])
                 ->whereNotIn('status', [
-                    LabRequestStatus::CANCELLED->value,
-                    LabRequestStatus::REJECTED->value,
+                    LabOrderStatus::CANCELLED->value,
+                    LabOrderStatus::REJECTED->value,
                 ])
                 ->latest('request_date'),
-            'imagingRequests' => static fn (HasMany $query): HasMany => $query
+            'imagingOrders' => static fn (HasMany $query): HasMany => $query
                 ->whereNotIn('status', [
-                    ImagingRequestStatus::CANCELLED->value,
+                    ImagingOrderStatus::CANCELLED->value,
                 ])
                 ->latest(),
             'prescriptions' => static fn (HasMany $query): HasMany => $query

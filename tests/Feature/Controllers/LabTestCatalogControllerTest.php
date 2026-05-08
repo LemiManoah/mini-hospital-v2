@@ -170,7 +170,7 @@ function createReferencedLabTestWorkflow(
 
     $requestId = (string) Str::uuid();
 
-    DB::table('lab_requests')->insert([
+    DB::table('lab_orders')->insert([
         'id' => $requestId,
         'tenant_id' => $tenant->id,
         'facility_branch_id' => $branch->id,
@@ -185,9 +185,9 @@ function createReferencedLabTestWorkflow(
         'updated_at' => now(),
     ]);
 
-    DB::table('lab_request_items')->insert([
+    DB::table('lab_order_items')->insert([
         'id' => (string) Str::uuid(),
-        'request_id' => $requestId,
+        'lab_order_id' => $requestId,
         'test_id' => $labTestCatalog->id,
         'status' => 'pending',
         'price' => $labTestCatalog->base_price,
@@ -395,6 +395,6 @@ it('blocks deleting a referenced lab test catalog entry', function (): void {
         ->delete(route('lab-test-catalogs.destroy', $labTest));
 
     $response->assertRedirectToRoute('lab-test-catalogs.index');
-    $response->assertSessionHas('error', 'This lab test cannot be deleted because it has existing lab requests.');
+    $response->assertSessionHas('error', 'This lab test cannot be deleted because it has existing lab orders.');
     $this->assertDatabaseHas('lab_test_catalogs', ['id' => $labTest->id]);
 });
