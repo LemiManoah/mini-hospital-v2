@@ -223,6 +223,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::resource('facility-branches', FacilityBranchController::class)->except(['show']);
     Route::resource('clinics', ClinicController::class)->except(['show']);
     Route::get('data-upload', [DataUploadController::class, 'index'])->name('data-upload.index');
+    Route::get('data-upload/error-report', [DataUploadController::class, 'downloadErrorReport'])->name('data-upload.error-report');
     Route::get('data-upload/patients/template', [DataUploadController::class, 'patientTemplate'])->name('data-upload.patients.template');
     Route::post('data-upload/patients/import', [DataUploadController::class, 'importPatients'])->name('data-upload.patients.import');
     Route::get('data-upload/inventory/drugs/template', [DataUploadController::class, 'drugTemplate'])->name('data-upload.inventory.drugs.template');

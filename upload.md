@@ -53,7 +53,7 @@ Accepted enum values currently exposed in the UI:
 - The frontend uses the generated Wayfinder controller action for upload and template download.
 - Feature tests cover rendering, permissions, template download, successful import, validation failures, duplicate phone numbers, missing file validation, and displaying import results.
 - Patient and visit number generation now uses the active branch code prefix, so `QMC-MAIN` generates `QMC-PAT-*` and `QMC-VIS-*`.
-- Data upload now also supports separate inventory catalog imports for drugs and consumables.
+- Data upload now also supports separate inventory opening stock imports for drugs and consumables.
 
 ## Corrections To Make First
 
@@ -113,7 +113,7 @@ Recommended approach:
 
 ## Suggested Next Implementation Steps
 
-1. Add an error report CSV download for failed rows.
+1. Add an error report CSV download for failed rows. Status: implemented for the latest import result.
 2. Add a preview step before committing rows.
 3. Store an import audit record with uploaded filename, user, branch, imported count, skipped count, and timestamps.
 4. Add queue support for large imports.
@@ -169,11 +169,18 @@ Important checks:
 - Base price must be numeric and non-negative.
 - Existing test orders/results must not be affected by catalog imports.
 
-### Inventory Items
+### Inventory Opening Stock
 
-Status: partially implemented.
+Status: implemented as a queued opening-stock import.
 
-Drug and consumable catalog uploads are now split into separate templates and import endpoints. This keeps drug-only validation such as `category`, `strength`, and `dosage_form` away from consumable items.
+Drug and consumable uploads are split into separate templates and import endpoints. Each row now represents opening stock for one item at one inventory location. This lets the same drug appear multiple times when the batches are different.
+
+The import should populate these tables:
+
+- `inventory_items`: the reusable catalog item. Drugs are resolved by `generic_name + strength + dosage_form` per tenant; consumables are resolved by `name` per tenant.
+- `inventory_location_items`: the per-location stock setup, including minimum stock, reorder level, default selling price, and active status.
+- `inventory_batches`: the batch/expiry/cost record for the item at that location.
+- `stock_movements`: the ledger entry using `opening_balance`, so stock reports can calculate balances from the same source as receipts, requisitions, dispensing, POS, and reconciliations.
 
 Drug columns:
 
@@ -184,9 +191,13 @@ category
 strength
 dosage_form
 unit
+inventory_location
+quantity_on_hand
+batch_number
+expiry_date
+unit_cost
 minimum_stock_level
 reorder_level
-default_purchase_price
 default_selling_price
 manufacturer
 expires
@@ -202,9 +213,13 @@ Consumable columns:
 ```text
 name
 unit
+inventory_location
+quantity_on_hand
+batch_number
+expiry_date
+unit_cost
 minimum_stock_level
 reorder_level
-default_purchase_price
 default_selling_price
 manufacturer
 expires
@@ -214,11 +229,28 @@ is_active
 
 Important checks:
 
-- Drug duplicates are checked by `generic_name + strength + dosage_form` per tenant.
-- Consumable duplicates are checked by `name` per tenant.
+- Drug catalog items can repeat in the file if the row has a different `inventory_location + batch_number + expiry_date`.
+- Consumable catalog items can repeat in the file if the row has a different `inventory_location + batch_number + expiry_date`.
+- If `expires` is true, `batch_number` and `expiry_date` are required.
+- If `expiry_date` is supplied, the item is treated as expirable. A batch number without an expiry date is allowed for non-expiring tracked stock.
 - Unit must resolve to an existing unit name or symbol.
+- Inventory location must resolve to an active location name or code for the selected branch.
+- Quantity and unit cost must be numeric and non-negative.
 - Controlled items should require an explicit `true` or `false` value.
-- Do not create opening stock quantities in the catalog import. Stock balances should come from a separate opening stock import or goods receipt flow.
+- Do not write stock quantity directly on `inventory_items`; stock quantity belongs in `stock_movements`, optionally tied to `inventory_batches`.
+
+Recommended next correction:
+
+- The importer now limits spreadsheet reading to the first 1000 rows and skips blank rows, which prevents small files with oversized worksheet metadata from timing out while PhpSpreadsheet opens them.
+- Inventory imports now dispatch `ImportInventoryItemsJob` instead of processing inside the upload request. Keep a queue worker running so database-backed jobs are processed:
+
+```bash
+php artisan queue:work --queue=default --tries=2 --timeout=600
+```
+
+- The upload request only stores the file and queues the job; the actual row processing happens in the worker. After the worker finishes, refresh the data upload page to see the cached import result or download the error report.
+- Add an import audit table so each queued import has a status, file name, row counts, failure report, tenant, branch, user, and timestamps.
+- Add preview mode before committing stock, because opening balances are financially meaningful and hard to undo casually.
 
 ### Insurance Price Lists
 
@@ -328,7 +360,7 @@ The safest long-term healthcare import flow is:
 7. Server commits valid rows and stores an import audit record.
 8. User can download an error report for failed rows.
 
-The current implementation is a solid first version of steps 1, 2, 3, 6, and partial 8. The next major improvement should be the validate-and-preview step before records are created.
+The current implementation is a solid first version of steps 1, 2, 3, 6, and 8. The next major improvement should be the validate-and-preview step before records are created.
 
 ## Testing Checklist
 
@@ -346,4 +378,4 @@ Keep or add focused tests for:
 - Cross-tenant duplicate email behavior matches the chosen product rule.
 - Missing file, wrong file type, and oversized file are rejected.
 - Import result appears on the data upload page.
-- Failed rows can be downloaded as an error report once that feature is added.
+- Failed rows can be downloaded as an error report.

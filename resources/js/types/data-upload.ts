@@ -12,4 +12,6 @@ export interface ImportResult {
 
 export interface DataUploadIndexPageProps {
     importResult: ImportResult | null;
+    hasErrorReport: boolean;
+    queuedImportMessage: string | null;
 }

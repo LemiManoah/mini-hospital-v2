@@ -39,6 +39,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function DataUploadIndex({
     importResult,
+    hasErrorReport,
+    queuedImportMessage,
 }: DataUploadIndexPageProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -101,18 +103,20 @@ export default function DataUploadIndex({
                 </UploadCard>
 
                 <UploadCard
-                    title="Drug Catalog Import"
-                    description="Load pharmacy drug catalog items separately from stock quantities."
+                    title="Drug Opening Stock Import"
+                    description="Load medicines, batches, expiry dates, and opening stock quantities."
                     instructionsTitle="How to import drugs"
                     templateUrl={DataUploadController.drugTemplate.url()}
                     templateLabel="Download Drug Template"
                     importUrl={DataUploadController.importDrugs.url()}
                     submitLabel="Import Drugs"
+                    extraErrorKeys={['branch']}
                 >
                     <li>Use this for medicines only.</li>
                     <li>
-                        Required columns: generic_name, category, strength, and
-                        dosage_form.
+                        Required columns include generic_name, category,
+                        strength, dosage_form, inventory_location,
+                        quantity_on_hand, and unit_cost.
                     </li>
                     <li>
                         Accepted categories include analgesic, antibiotic,
@@ -124,24 +128,29 @@ export default function DataUploadIndex({
                         tab, cap, ml, g, or sachet.
                     </li>
                     <li>
-                        The import creates catalog items only. It does not
-                        create stock balances.
+                        Expiring drugs require both batch_number and
+                        expiry_date. The same drug can appear again when the
+                        batch is different.
                     </li>
                 </UploadCard>
 
                 <UploadCard
-                    title="Consumable Catalog Import"
-                    description="Load disposable and consumable inventory catalog items without mixing them with drugs."
+                    title="Consumable Opening Stock Import"
+                    description="Load consumables, batch references, and opening stock quantities."
                     instructionsTitle="How to import consumables"
                     templateUrl={DataUploadController.consumableTemplate.url()}
                     templateLabel="Download Consumable Template"
                     importUrl={DataUploadController.importConsumables.url()}
                     submitLabel="Import Consumables"
+                    extraErrorKeys={['branch']}
                 >
                     <li>
                         Use this for consumables such as gloves and syringes.
                     </li>
-                    <li>Required column: name.</li>
+                    <li>
+                        Required columns include name, inventory_location,
+                        quantity_on_hand, and unit_cost.
+                    </li>
                     <li>
                         Unit must match an existing unit name or symbol such as
                         sachet, ml, g, or tab.
@@ -151,11 +160,16 @@ export default function DataUploadIndex({
                         sold to patients.
                     </li>
                     <li>
-                        The import creates catalog items only. Opening balances
-                        should be handled through stock receiving or stock
-                        setup.
+                        Expiry dates are optional. If an expiry date is
+                        supplied, batch_number is required too.
                     </li>
                 </UploadCard>
+
+                {queuedImportMessage && (
+                    <div className="rounded border border-blue-200 bg-blue-50 px-6 py-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+                        {queuedImportMessage}
+                    </div>
+                )}
 
                 {importResult && (
                     <div className="rounded border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -185,9 +199,25 @@ export default function DataUploadIndex({
 
                             {importResult.errors.length > 0 && (
                                 <div className="space-y-2">
-                                    <h3 className="text-sm font-medium text-red-600 dark:text-red-400">
-                                        Rows with errors
-                                    </h3>
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <h3 className="text-sm font-medium text-red-600 dark:text-red-400">
+                                            Rows with errors
+                                        </h3>
+                                        {hasErrorReport && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                asChild
+                                            >
+                                                <a
+                                                    href={DataUploadController.downloadErrorReport.url()}
+                                                >
+                                                    <Download className="mr-2 h-4 w-4" />
+                                                    Download Error Report
+                                                </a>
+                                            </Button>
+                                        )}
+                                    </div>
                                     <div className="overflow-hidden rounded border border-zinc-200 dark:border-zinc-800">
                                         <Table>
                                             <TableHeader>

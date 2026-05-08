@@ -2,17 +2,23 @@
 
 declare(strict_types=1);
 
+use App\Actions\ProcessInventoryItemImport;
 use App\Enums\GeneralStatus;
 use App\Enums\InventoryItemType;
+use App\Enums\InventoryLocationType;
 use App\Enums\UnitType;
+use App\Jobs\ImportInventoryItemsJob;
 use App\Models\FacilityBranch;
+use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
+use App\Models\InventoryLocation;
 use App\Models\Patient;
 use App\Models\Unit;
 use App\Models\User;
 use App\Support\BranchContext;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -88,6 +94,19 @@ function createInventoryUnit(string $tenantId, string $name = 'Tablet', string $
     ]);
 }
 
+function createInventoryLocation(string $tenantId, FacilityBranch $branch): InventoryLocation
+{
+    return InventoryLocation::query()->create([
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'name' => 'Main Store',
+        'location_code' => 'CGH-MAIN-STORE',
+        'type' => InventoryLocationType::MAIN_STORE,
+        'is_dispensing_point' => false,
+        'is_active' => true,
+    ]);
+}
+
 it('renders the data upload index page', function (): void {
     [, , $user] = createDataUploadContext();
 
@@ -96,7 +115,8 @@ it('renders the data upload index page', function (): void {
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('data-upload/index')
-            ->where('importResult', null),
+            ->where('importResult', null)
+            ->where('hasErrorReport', false),
         );
 });
 
@@ -158,72 +178,78 @@ it('imports valid patients from a csv file', function (): void {
     expect(Patient::query()->where('phone_number', '+254712345678')->first()?->patient_number)->toBe('CGH-PAT-1001');
 });
 
-it('imports valid drugs from a csv file', function (): void {
-    [$tenantId, , $user] = createDataUploadContext();
+it('queues valid drug imports from a csv file', function (): void {
+    [$tenantId, $branch, $user] = createDataUploadContext();
     $user->givePermissionTo('inventory_items.create');
     createInventoryUnit($tenantId);
+    createInventoryLocation($tenantId, $branch);
+    Queue::fake();
 
     $csv = implode("\n", [
-        'generic_name,brand_name,category,strength,dosage_form,unit,minimum_stock_level,reorder_level,default_purchase_price,default_selling_price,manufacturer,expires,is_controlled,schedule_class,therapeutic_classes,description,is_active',
-        'Paracetamol,Panadol,analgesic,500mg,tablet,tab,800,1200,120,300,GSK,true,false,,Analgesic,Analgesic and antipyretic,true',
-        'Amoxicillin,Amoxil,antibiotic,500mg,capsule,tab,500,900,180,500,GSK,true,false,,Antibiotic,Common oral antibiotic,true',
+        'generic_name,brand_name,category,strength,dosage_form,unit,inventory_location,quantity_on_hand,batch_number,expiry_date,unit_cost,minimum_stock_level,reorder_level,default_selling_price,manufacturer,expires,is_controlled,schedule_class,therapeutic_classes,description,is_active',
+        'Paracetamol,Panadol,analgesic,500mg,tablet,tab,CGH-MAIN-STORE,1500,PCM-001,2027-12-31,120,800,1200,300,GSK,true,false,,Analgesic,Analgesic and antipyretic,true',
+        'Amoxicillin,Amoxil,antibiotic,500mg,capsule,tab,CGH-MAIN-STORE,900,AMX-001,2027-11-30,180,500,900,500,GSK,true,false,,Antibiotic,Common oral antibiotic,true',
     ]);
 
-    $response = $this->actingAs($user)
+    $this->actingAs($user)
+        ->withSession([BranchContext::SESSION_KEY => $branch->id])
         ->post('/data-upload/inventory/drugs/import', ['file' => makeCsvUpload($csv)])
-        ->assertRedirect('/data-upload');
+        ->assertRedirect('/data-upload')
+        ->assertSessionHas('queued_import_message');
 
-    $result = $response->getSession()->get('import_result');
-
-    expect($result['imported'])->toBe(2);
-    expect($result['skipped'])->toBe(0);
-    expect(InventoryItem::query()->where('tenant_id', $tenantId)->where('item_type', InventoryItemType::DRUG->value)->count())->toBe(2);
-    expect(InventoryItem::query()->where('generic_name', 'Paracetamol')->first()?->unit?->symbol)->toBe('tab');
+    Queue::assertPushed(ImportInventoryItemsJob::class);
+    expect(InventoryItem::query()->where('tenant_id', $tenantId)->count())->toBe(0);
 });
 
-it('imports valid consumables from a csv file', function (): void {
-    [$tenantId, , $user] = createDataUploadContext();
+it('queues valid consumable imports from a csv file', function (): void {
+    [$tenantId, $branch, $user] = createDataUploadContext();
     $user->givePermissionTo('inventory_items.create');
-    createInventoryUnit($tenantId, 'Sachet', 'sachet');
+    createInventoryUnit($tenantId, 'Box', 'box');
+    createInventoryLocation($tenantId, $branch);
+    Queue::fake();
 
     $csv = implode("\n", [
-        'name,unit,minimum_stock_level,reorder_level,default_purchase_price,default_selling_price,manufacturer,expires,description,is_active',
-        'Examination Gloves,sachet,120,200,18000,,SafeTouch,true,Single-use gloves,true',
-        '5ml Syringe,sachet,200,350,250,,Becton Dickinson,true,Routine disposable syringe,true',
+        'name,unit,inventory_location,quantity_on_hand,batch_number,expiry_date,unit_cost,minimum_stock_level,reorder_level,default_selling_price,manufacturer,expires,description,is_active',
+        'Examination Gloves,box,CGH-MAIN-STORE,50,GLV-001,,18000,120,200,,SafeTouch,false,Single-use gloves,true',
+        '5ml Syringe,box,CGH-MAIN-STORE,300,SYR-001,,250,200,350,,Becton Dickinson,false,Routine disposable syringe,true',
     ]);
 
-    $response = $this->actingAs($user)
+    $this->actingAs($user)
+        ->withSession([BranchContext::SESSION_KEY => $branch->id])
         ->post('/data-upload/inventory/consumables/import', ['file' => makeCsvUpload($csv)])
-        ->assertRedirect('/data-upload');
+        ->assertRedirect('/data-upload')
+        ->assertSessionHas('queued_import_message');
 
-    $result = $response->getSession()->get('import_result');
-
-    expect($result['imported'])->toBe(2);
-    expect($result['skipped'])->toBe(0);
-    expect(InventoryItem::query()->where('tenant_id', $tenantId)->where('item_type', InventoryItemType::CONSUMABLE->value)->count())->toBe(2);
+    Queue::assertPushed(ImportInventoryItemsJob::class);
+    expect(InventoryItem::query()->where('tenant_id', $tenantId)->count())->toBe(0);
 });
 
-it('skips duplicate inventory items in the uploaded file', function (): void {
-    [$tenantId, , $user] = createDataUploadContext();
+it('allows the same drug in different batches and skips repeated opening stock rows', function (): void {
+    [$tenantId, $branch, $user] = createDataUploadContext();
     $user->givePermissionTo('inventory_items.create');
     createInventoryUnit($tenantId);
+    createInventoryLocation($tenantId, $branch);
 
     $csv = implode("\n", [
-        'generic_name,brand_name,category,strength,dosage_form,unit,minimum_stock_level,reorder_level,default_purchase_price,default_selling_price,manufacturer,expires,is_controlled,schedule_class,therapeutic_classes,description,is_active',
-        'Paracetamol,Panadol,analgesic,500mg,tablet,tab,800,1200,120,300,GSK,true,false,,Analgesic,Analgesic and antipyretic,true',
-        'Paracetamol,Panadol,analgesic,500mg,tablet,tab,800,1200,120,300,GSK,true,false,,Analgesic,Duplicate,true',
+        'generic_name,brand_name,category,strength,dosage_form,unit,inventory_location,quantity_on_hand,batch_number,expiry_date,unit_cost,minimum_stock_level,reorder_level,default_selling_price,manufacturer,expires,is_controlled,schedule_class,therapeutic_classes,description,is_active',
+        'Paracetamol,Panadol,analgesic,500mg,tablet,tab,CGH-MAIN-STORE,1500,PCM-001,2027-12-31,120,800,1200,300,GSK,true,false,,Analgesic,Analgesic and antipyretic,true',
+        'Paracetamol,Panadol,analgesic,500mg,tablet,tab,CGH-MAIN-STORE,900,PCM-002,2028-01-31,120,800,1200,300,GSK,true,false,,Analgesic,Second batch,true',
+        'Paracetamol,Panadol,analgesic,500mg,tablet,tab,CGH-MAIN-STORE,300,PCM-002,2028-01-31,120,800,1200,300,GSK,true,false,,Analgesic,Duplicate batch,true',
     ]);
 
-    $response = $this->actingAs($user)
-        ->post('/data-upload/inventory/drugs/import', ['file' => makeCsvUpload($csv)])
-        ->assertRedirect('/data-upload');
+    $result = resolve(ProcessInventoryItemImport::class)->handle(
+        file: makeCsvUpload($csv),
+        itemType: InventoryItemType::DRUG,
+        tenantId: $tenantId,
+        branchId: $branch->id,
+        userId: (string) $user->id,
+    );
 
-    $result = $response->getSession()->get('import_result');
-
-    expect($result['imported'])->toBe(1);
+    expect($result['imported'])->toBe(2);
     expect($result['skipped'])->toBe(1);
-    expect($result['errors'][0]['messages'])->toContain('This item appears more than once in the uploaded file.');
+    expect($result['errors'][0]['messages'])->toContain('This opening stock row appears more than once in the uploaded file.');
     expect(InventoryItem::query()->where('tenant_id', $tenantId)->where('generic_name', 'Paracetamol')->count())->toBe(1);
+    expect(InventoryBatch::query()->where('tenant_id', $tenantId)->count())->toBe(2);
 });
 
 it('continues qroo patient numbering from the branch code during import', function (): void {
@@ -343,6 +369,27 @@ it('skips rows with validation errors and reports them', function (): void {
     expect($result['errors'])->toHaveCount(2);
 
     expect(Patient::query()->where('tenant_id', $tenantId)->count())->toBe(1);
+});
+
+it('downloads the latest import error report as csv', function (): void {
+    [, , $user] = createDataUploadContext();
+
+    $this->actingAs($user)
+        ->withSession([
+            'data_upload_import_error_report' => [
+                [
+                    'row' => 3,
+                    'name' => 'Jane Doe +254712345678',
+                    'messages' => ['The phone number has already been taken.'],
+                ],
+            ],
+        ])
+        ->get('/data-upload/error-report')
+        ->assertOk()
+        ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+        ->assertSee('row,name,errors')
+        ->assertSee('Jane Doe +254712345678')
+        ->assertSee('The phone number has already been taken.');
 });
 
 it('rejects patient import when no active branch is selected', function (): void {

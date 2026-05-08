@@ -19,18 +19,21 @@ final readonly class ProcessInventoryItemImport
      * }
      */
     public function handle(
-        UploadedFile $file,
+        UploadedFile|string $file,
         InventoryItemType $itemType,
         string $tenantId,
+        string $branchId,
         string $userId,
+        ?string $disk = null,
     ): array {
         $import = new InventoryItemImport(
             itemType: $itemType,
             tenantId: $tenantId,
+            branchId: $branchId,
             userId: $userId,
         );
 
-        Excel::import($import, $file);
+        Excel::import($import, $file, $disk);
 
         $errors = $import->errors();
 
