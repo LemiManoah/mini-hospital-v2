@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Actions\ProcessInventoryItemImport;
+use App\Enums\DataImportStatus;
 use App\Enums\InventoryItemType;
+use App\Models\DataImport;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,10 +35,13 @@ final class ImportInventoryItemsJob implements ShouldQueue
         private readonly string $tenantId,
         private readonly string $branchId,
         private readonly string $userId,
+        private readonly string $dataImportId,
     ) {}
 
     public function handle(ProcessInventoryItemImport $processInventoryItemImport): void
     {
+        $this->markImportProcessing();
+
         Log::info('Starting inventory import.', [
             'tenant_id' => $this->tenantId,
             'branch_id' => $this->branchId,
@@ -54,6 +59,7 @@ final class ImportInventoryItemsJob implements ShouldQueue
         );
 
         Cache::put($this->cacheKey(), $result, now()->addDay());
+        $this->markImportCompleted($result);
         Storage::disk('local')->delete($this->filePath);
 
         Log::info('Inventory import completed.', [
@@ -69,7 +75,7 @@ final class ImportInventoryItemsJob implements ShouldQueue
     {
         Storage::disk('local')->delete($this->filePath);
 
-        Cache::put($this->cacheKey(), [
+        $result = [
             'imported' => 0,
             'skipped' => 1,
             'errors' => [
@@ -79,7 +85,10 @@ final class ImportInventoryItemsJob implements ShouldQueue
                     'messages' => [$exception->getMessage()],
                 ],
             ],
-        ], now()->addDay());
+        ];
+
+        Cache::put($this->cacheKey(), $result, now()->addDay());
+        $this->markImportFailed($exception, $result);
 
         Log::error('Inventory import failed.', [
             'tenant_id' => $this->tenantId,
@@ -88,6 +97,60 @@ final class ImportInventoryItemsJob implements ShouldQueue
             'file_path' => $this->filePath,
             'exception' => $exception->getMessage(),
         ]);
+    }
+
+    private function markImportProcessing(): void
+    {
+        DataImport::query()
+            ->whereKey($this->dataImportId)
+            ->update([
+                'status' => DataImportStatus::Processing->value,
+                'started_at' => now(),
+                'updated_at' => now(),
+            ]);
+    }
+
+    /**
+     * @param  array{
+     *     imported: int,
+     *     skipped: int,
+     *     errors: list<array{row: int, name: string, messages: list<string>}>
+     * }  $result
+     */
+    private function markImportCompleted(array $result): void
+    {
+        DataImport::query()
+            ->whereKey($this->dataImportId)
+            ->update([
+                'status' => DataImportStatus::Completed->value,
+                'imported_count' => $result['imported'],
+                'skipped_count' => $result['skipped'],
+                'error_report' => json_encode($result['errors'], JSON_THROW_ON_ERROR),
+                'completed_at' => now(),
+                'updated_at' => now(),
+            ]);
+    }
+
+    /**
+     * @param  array{
+     *     imported: int,
+     *     skipped: int,
+     *     errors: list<array{row: int, name: string, messages: list<string>}>
+     * }  $result
+     */
+    private function markImportFailed(Throwable $exception, array $result): void
+    {
+        DataImport::query()
+            ->whereKey($this->dataImportId)
+            ->update([
+                'status' => DataImportStatus::Failed->value,
+                'imported_count' => $result['imported'],
+                'skipped_count' => $result['skipped'],
+                'error_report' => json_encode($result['errors'], JSON_THROW_ON_ERROR),
+                'failure_message' => $exception->getMessage(),
+                'failed_at' => now(),
+                'updated_at' => now(),
+            ]);
     }
 
     private function cacheKey(): string

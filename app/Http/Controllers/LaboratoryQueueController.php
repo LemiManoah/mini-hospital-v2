@@ -113,7 +113,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
 
         return Inertia::render('laboratory/queue', [
             'page' => $this->pageMeta($stage),
-            'requests' => $requests,
+            'orders' => $requests,
             'filters' => [
                 'search' => $search,
             ],

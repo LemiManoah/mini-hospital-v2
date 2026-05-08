@@ -57,11 +57,25 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
      */
     private array $errors = [];
 
+    /**
+     * @var list<array{
+     *     row: int,
+     *     name: string,
+     *     location: string,
+     *     quantity: float,
+     *     batchNumber: string|null,
+     *     expiryDate: string|null,
+     *     unitCost: float
+     * }>
+     */
+    private array $previewRows = [];
+
     public function __construct(
         private readonly InventoryItemType $itemType,
         private readonly string $tenantId,
         private readonly string $branchId,
         private readonly string $userId,
+        private readonly bool $preview = false,
     ) {}
 
     /**
@@ -85,6 +99,13 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
 
             if ($validator->fails()) {
                 $this->recordError($prepared, array_values($validator->errors()->all()));
+                $this->rowNumber++;
+
+                continue;
+            }
+
+            if ($this->preview) {
+                $this->previewOpeningBalance($prepared);
                 $this->rowNumber++;
 
                 continue;
@@ -116,6 +137,22 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
     public function errors(): array
     {
         return $this->errors;
+    }
+
+    /**
+     * @return list<array{
+     *     row: int,
+     *     name: string,
+     *     location: string,
+     *     quantity: float,
+     *     batchNumber: string|null,
+     *     expiryDate: string|null,
+     *     unitCost: float
+     * }>
+     */
+    public function previewRows(): array
+    {
+        return $this->previewRows;
     }
 
     /**
@@ -323,6 +360,39 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
     /**
      * @param  array<string, mixed>  $row
      */
+    private function previewOpeningBalance(array $row): void
+    {
+        $inventoryItem = $this->findExistingInventoryItem($row);
+        $locationId = $this->resolveInventoryLocationId($row['inventory_location'] ?? null);
+
+        if ($locationId === null) {
+            $this->recordError($row, ['The inventory location could not be resolved.']);
+
+            return;
+        }
+
+        if ($inventoryItem instanceof InventoryItem && $this->batchExists($inventoryItem, $locationId, $row)) {
+            $this->recordError($row, ['This batch already has opening stock for the selected location.']);
+
+            return;
+        }
+
+        $this->previewRows[] = [
+            'row' => $this->rowNumber,
+            'name' => $this->rowName($row),
+            'location' => $this->str($row['inventory_location'] ?? null) ?? '',
+            'quantity' => $this->number($row['quantity_on_hand'] ?? null, 0),
+            'batchNumber' => $this->str($row['batch_number'] ?? null),
+            'expiryDate' => $this->date($row['expiry_date'] ?? null),
+            'unitCost' => $this->number($row['unit_cost'] ?? null, 0),
+        ];
+
+        $this->importedCount++;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
     private function findOrCreateInventoryItem(array $row): InventoryItem
     {
         $attributes = $this->catalogLookup($row);
@@ -347,6 +417,19 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
 
             $inventoryItem->update($updates);
         }
+
+        return $inventoryItem;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function findExistingInventoryItem(array $row): ?InventoryItem
+    {
+        /** @var InventoryItem|null $inventoryItem */
+        $inventoryItem = InventoryItem::query()
+            ->where($this->catalogLookup($row))
+            ->first();
 
         return $inventoryItem;
     }

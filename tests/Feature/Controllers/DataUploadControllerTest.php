@@ -3,11 +3,15 @@
 declare(strict_types=1);
 
 use App\Actions\ProcessInventoryItemImport;
+use App\Actions\ProcessPatientImport;
+use App\Enums\DataImportStatus;
 use App\Enums\GeneralStatus;
 use App\Enums\InventoryItemType;
 use App\Enums\InventoryLocationType;
 use App\Enums\UnitType;
 use App\Jobs\ImportInventoryItemsJob;
+use App\Jobs\ImportPatientsJob;
+use App\Models\DataImport;
 use App\Models\FacilityBranch;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
@@ -156,10 +160,8 @@ it('downloads inventory item import templates', function (): void {
         ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 });
 
-it('imports valid patients from a csv file', function (): void {
+it('previews valid patients from a csv file', function (): void {
     [$tenantId, $branch, $user] = createDataUploadContext();
-
-    $this->actingAs($user)->withSession([BranchContext::SESSION_KEY => $branch->id]);
 
     $csv = implode("\n", [
         'first_name,last_name,middle_name,date_of_birth,gender,phone_number,alternative_phone,email,marital_status,blood_group,occupation,religion,next_of_kin_name,next_of_kin_phone,next_of_kin_relationship',
@@ -172,13 +174,13 @@ it('imports valid patients from a csv file', function (): void {
         ->post('/data-upload/patients/import', ['file' => makeCsvUpload($csv)])
         ->assertRedirect('/data-upload');
 
-    expect(Patient::query()->where('tenant_id', $tenantId)->count())->toBe(2);
-    expect(Patient::query()->where('phone_number', '+254712345678')->exists())->toBeTrue();
-    expect(Patient::query()->where('phone_number', '+254798000001')->exists())->toBeTrue();
-    expect(Patient::query()->where('phone_number', '+254712345678')->first()?->patient_number)->toBe('CGH-PAT-1001');
+    expect(Patient::query()->where('tenant_id', $tenantId)->count())->toBe(0);
+    $dataImport = DataImport::query()->where('tenant_id', $tenantId)->where('import_type', 'patients')->first();
+    expect($dataImport?->status)->toBe(DataImportStatus::Previewed);
+    expect($dataImport?->preview_count)->toBe(2);
 });
 
-it('queues valid drug imports from a csv file', function (): void {
+it('previews valid drug imports from a csv file', function (): void {
     [$tenantId, $branch, $user] = createDataUploadContext();
     $user->givePermissionTo('inventory_items.create');
     createInventoryUnit($tenantId);
@@ -195,13 +197,16 @@ it('queues valid drug imports from a csv file', function (): void {
         ->withSession([BranchContext::SESSION_KEY => $branch->id])
         ->post('/data-upload/inventory/drugs/import', ['file' => makeCsvUpload($csv)])
         ->assertRedirect('/data-upload')
-        ->assertSessionHas('queued_import_message');
+        ->assertSessionHas('import_result');
 
-    Queue::assertPushed(ImportInventoryItemsJob::class);
+    Queue::assertNothingPushed();
     expect(InventoryItem::query()->where('tenant_id', $tenantId)->count())->toBe(0);
+    $dataImport = DataImport::query()->where('tenant_id', $tenantId)->where('import_type', 'inventory_drug')->first();
+    expect($dataImport?->status)->toBe(DataImportStatus::Previewed);
+    expect($dataImport?->preview_count)->toBe(2);
 });
 
-it('queues valid consumable imports from a csv file', function (): void {
+it('previews valid consumable imports from a csv file', function (): void {
     [$tenantId, $branch, $user] = createDataUploadContext();
     $user->givePermissionTo('inventory_items.create');
     createInventoryUnit($tenantId, 'Box', 'box');
@@ -218,10 +223,64 @@ it('queues valid consumable imports from a csv file', function (): void {
         ->withSession([BranchContext::SESSION_KEY => $branch->id])
         ->post('/data-upload/inventory/consumables/import', ['file' => makeCsvUpload($csv)])
         ->assertRedirect('/data-upload')
+        ->assertSessionHas('import_result');
+
+    Queue::assertNothingPushed();
+    expect(InventoryItem::query()->where('tenant_id', $tenantId)->count())->toBe(0);
+    $dataImport = DataImport::query()->where('tenant_id', $tenantId)->where('import_type', 'inventory_consumable')->first();
+    expect($dataImport?->status)->toBe(DataImportStatus::Previewed);
+    expect($dataImport?->preview_count)->toBe(2);
+});
+
+it('queues a previewed inventory import after confirmation', function (): void {
+    [$tenantId, $branch, $user] = createDataUploadContext();
+    $user->givePermissionTo('inventory_items.create');
+    Queue::fake();
+
+    $dataImport = DataImport::query()->create([
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'user_id' => $user->id,
+        'import_type' => 'inventory_drug',
+        'source_filename' => 'drugs.csv',
+        'stored_path' => 'imports/inventory/drugs.csv',
+        'status' => DataImportStatus::Previewed,
+        'preview_count' => 2,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession([BranchContext::SESSION_KEY => $branch->id])
+        ->post("/data-upload/inventory-imports/{$dataImport->id}/confirm")
+        ->assertRedirect('/data-upload')
         ->assertSessionHas('queued_import_message');
 
     Queue::assertPushed(ImportInventoryItemsJob::class);
-    expect(InventoryItem::query()->where('tenant_id', $tenantId)->count())->toBe(0);
+    expect($dataImport->refresh()->status)->toBe(DataImportStatus::Queued);
+});
+
+it('queues a previewed patient import after confirmation', function (): void {
+    [$tenantId, $branch, $user] = createDataUploadContext();
+    Queue::fake();
+
+    $dataImport = DataImport::query()->create([
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'user_id' => $user->id,
+        'import_type' => 'patients',
+        'source_filename' => 'patients.csv',
+        'stored_path' => 'imports/patients/patients.csv',
+        'status' => DataImportStatus::Previewed,
+        'preview_count' => 2,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession([BranchContext::SESSION_KEY => $branch->id])
+        ->post("/data-upload/patient-imports/{$dataImport->id}/confirm")
+        ->assertRedirect('/data-upload')
+        ->assertSessionHas('queued_import_message');
+
+    Queue::assertPushed(ImportPatientsJob::class);
+    expect($dataImport->refresh()->status)->toBe(DataImportStatus::Queued);
 });
 
 it('allows the same drug in different batches and skips repeated opening stock rows', function (): void {
@@ -286,10 +345,12 @@ it('continues qroo patient numbering from the branch code during import', functi
         'Jane,Doe,,1990-05-15,female,+254712345678,,,,,,,,, ',
     ]);
 
-    $this->actingAs($user)
-        ->withSession([BranchContext::SESSION_KEY => $branch->id])
-        ->post('/data-upload/patients/import', ['file' => makeCsvUpload($csv)])
-        ->assertRedirect('/data-upload');
+    resolve(ProcessPatientImport::class)->handle(
+        file: makeCsvUpload($csv),
+        tenantId: $tenantContext['tenant_id'],
+        branchCode: $branch->branch_code,
+        userId: (string) $user->id,
+    );
 
     expect(Patient::query()->where('phone_number', '+254712345678')->first()?->patient_number)->toBe('QMC-PAT-1048');
 });
@@ -334,10 +395,12 @@ it('imports valid patients from an xlsx file with excel date cells', function ()
         ],
     ]);
 
-    $this->actingAs($user)
-        ->withSession([BranchContext::SESSION_KEY => $branch->id])
-        ->post('/data-upload/patients/import', ['file' => $upload])
-        ->assertRedirect('/data-upload');
+    resolve(ProcessPatientImport::class)->handle(
+        file: $upload,
+        tenantId: $tenantId,
+        branchCode: $branch->branch_code,
+        userId: (string) $user->id,
+    );
 
     $patient = Patient::query()
         ->where('tenant_id', $tenantId)
@@ -368,7 +431,8 @@ it('skips rows with validation errors and reports them', function (): void {
     expect($result['skipped'])->toBe(2);
     expect($result['errors'])->toHaveCount(2);
 
-    expect(Patient::query()->where('tenant_id', $tenantId)->count())->toBe(1);
+    expect(Patient::query()->where('tenant_id', $tenantId)->count())->toBe(0);
+    expect(DataImport::query()->where('tenant_id', $tenantId)->where('import_type', 'patients')->first()?->status)->toBe(DataImportStatus::Previewed);
 });
 
 it('downloads the latest import error report as csv', function (): void {

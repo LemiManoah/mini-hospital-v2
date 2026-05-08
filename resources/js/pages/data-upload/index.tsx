@@ -1,5 +1,6 @@
 import DataUploadController from '@/actions/App/Http/Controllers/DataUploadController';
 import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,9 +13,13 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
-import { type DataUploadIndexPageProps } from '@/types/data-upload';
-import { Head, useForm } from '@inertiajs/react';
+import {
+    type DataImportSummary,
+    type DataUploadIndexPageProps,
+} from '@/types/data-upload';
+import { Head, router, useForm } from '@inertiajs/react';
 import {
     CheckCircle2,
     Download,
@@ -39,8 +44,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function DataUploadIndex({
     importResult,
+    importResultMode,
     hasErrorReport,
     queuedImportMessage,
+    dataImports,
 }: DataUploadIndexPageProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -61,7 +68,7 @@ export default function DataUploadIndex({
                     templateUrl={DataUploadController.patientTemplate.url()}
                     templateLabel="Download Patient Template"
                     importUrl={DataUploadController.importPatients.url()}
-                    submitLabel="Import Patients"
+                    submitLabel="Preview Patients"
                     extraErrorKeys={['branch']}
                 >
                     <li>Download the template file below.</li>
@@ -98,7 +105,8 @@ export default function DataUploadIndex({
                     </li>
                     <li>Save as .csv or .xlsx and upload the file.</li>
                     <li>
-                        Rows with errors are skipped; the rest are imported.
+                        Valid rows are previewed first. Confirm the preview to
+                        queue the actual import.
                     </li>
                 </UploadCard>
 
@@ -109,7 +117,7 @@ export default function DataUploadIndex({
                     templateUrl={DataUploadController.drugTemplate.url()}
                     templateLabel="Download Drug Template"
                     importUrl={DataUploadController.importDrugs.url()}
-                    submitLabel="Import Drugs"
+                    submitLabel="Preview Drugs"
                     extraErrorKeys={['branch']}
                 >
                     <li>Use this for medicines only.</li>
@@ -141,7 +149,7 @@ export default function DataUploadIndex({
                     templateUrl={DataUploadController.consumableTemplate.url()}
                     templateLabel="Download Consumable Template"
                     importUrl={DataUploadController.importConsumables.url()}
-                    submitLabel="Import Consumables"
+                    submitLabel="Preview Consumables"
                     extraErrorKeys={['branch']}
                 >
                     <li>
@@ -171,11 +179,104 @@ export default function DataUploadIndex({
                     </div>
                 )}
 
+                {dataImports.length > 0 && (
+                    <div className="rounded border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                        <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+                            <h2 className="text-lg font-semibold">
+                                Recent Imports
+                            </h2>
+                        </div>
+
+                        <div className="overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>File</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Preview</TableHead>
+                                        <TableHead>Imported</TableHead>
+                                        <TableHead>Skipped</TableHead>
+                                        <TableHead>Updated</TableHead>
+                                        <TableHead className="text-right">
+                                            Action
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {dataImports.map((dataImport) => (
+                                        <TableRow key={dataImport.id}>
+                                            <TableCell className="font-medium">
+                                                {formatImportType(
+                                                    dataImport.importType,
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="max-w-64 truncate">
+                                                {dataImport.sourceFilename}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={cn(
+                                                        'capitalize',
+                                                        statusBadgeClass(
+                                                            dataImport.status,
+                                                        ),
+                                                    )}
+                                                >
+                                                    {dataImport.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                {dataImport.previewCount}
+                                            </TableCell>
+                                            <TableCell>
+                                                {dataImport.importedCount}
+                                            </TableCell>
+                                            <TableCell>
+                                                {dataImport.skippedCount}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {dataImport.completedAt ??
+                                                    dataImport.failedAt ??
+                                                    dataImport.startedAt ??
+                                                    dataImport.createdAt ??
+                                                    'Pending'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {dataImport.status ===
+                                                    'previewed' &&
+                                                dataImport.previewCount > 0 ? (
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            router.post(
+                                                                confirmImportUrl(
+                                                                    dataImport,
+                                                                ),
+                                                            )
+                                                        }
+                                                    >
+                                                        Confirm
+                                                    </Button>
+                                                ) : null}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+                )}
+
                 {importResult && (
                     <div className="rounded border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
                             <h2 className="text-lg font-semibold">
-                                Import Results
+                                {importResultMode === 'preview'
+                                    ? 'Preview Results'
+                                    : 'Import Results'}
                             </h2>
                         </div>
 
@@ -184,7 +285,10 @@ export default function DataUploadIndex({
                                 <div className="flex items-center gap-2">
                                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                                     <span className="text-sm font-medium">
-                                        {importResult.imported} imported
+                                        {importResult.imported}{' '}
+                                        {importResultMode === 'preview'
+                                            ? 'valid rows'
+                                            : 'imported'}
                                     </span>
                                 </div>
                                 {importResult.skipped > 0 && (
@@ -247,7 +351,7 @@ export default function DataUploadIndex({
                                                                 <ul className="list-disc space-y-0.5 pl-4">
                                                                     {error.messages.map(
                                                                         (
-                                                                            msg,
+                                                                            message,
                                                                             index,
                                                                         ) => (
                                                                             <li
@@ -257,7 +361,7 @@ export default function DataUploadIndex({
                                                                                 className="text-sm text-red-600 dark:text-red-400"
                                                                             >
                                                                                 {
-                                                                                    msg
+                                                                                    message
                                                                                 }
                                                                             </li>
                                                                         ),
@@ -278,6 +382,45 @@ export default function DataUploadIndex({
             </div>
         </AppLayout>
     );
+}
+
+function confirmImportUrl(dataImport: DataImportSummary): string {
+    if (dataImport.importType === 'patients') {
+        return DataUploadController.confirmPatientImport.url({
+            dataImport: dataImport.id,
+        });
+    }
+
+    return DataUploadController.confirmInventoryImport.url({
+        dataImport: dataImport.id,
+    });
+}
+
+function formatImportType(importType: string): string {
+    return importType
+        .split('_')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+}
+
+function statusBadgeClass(status: DataImportSummary['status']): string {
+    if (status === 'completed') {
+        return 'border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-300';
+    }
+
+    if (status === 'failed') {
+        return 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300';
+    }
+
+    if (status === 'queued' || status === 'processing') {
+        return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300';
+    }
+
+    if (status === 'previewed') {
+        return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300';
+    }
+
+    return 'border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300';
 }
 
 interface UploadCardProps {
@@ -382,7 +525,7 @@ function UploadCard({
                         {processing ? (
                             <>
                                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                                Importing...
+                                Processing...
                             </>
                         ) : (
                             <>

@@ -226,10 +226,12 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('data-upload/error-report', [DataUploadController::class, 'downloadErrorReport'])->name('data-upload.error-report');
     Route::get('data-upload/patients/template', [DataUploadController::class, 'patientTemplate'])->name('data-upload.patients.template');
     Route::post('data-upload/patients/import', [DataUploadController::class, 'importPatients'])->name('data-upload.patients.import');
+    Route::post('data-upload/patient-imports/{dataImport}/confirm', [DataUploadController::class, 'confirmPatientImport'])->name('data-upload.patient-imports.confirm');
     Route::get('data-upload/inventory/drugs/template', [DataUploadController::class, 'drugTemplate'])->name('data-upload.inventory.drugs.template');
     Route::post('data-upload/inventory/drugs/import', [DataUploadController::class, 'importDrugs'])->name('data-upload.inventory.drugs.import');
     Route::get('data-upload/inventory/consumables/template', [DataUploadController::class, 'consumableTemplate'])->name('data-upload.inventory.consumables.template');
     Route::post('data-upload/inventory/consumables/import', [DataUploadController::class, 'importConsumables'])->name('data-upload.inventory.consumables.import');
+    Route::post('data-upload/inventory-imports/{dataImport}/confirm', [DataUploadController::class, 'confirmInventoryImport'])->name('data-upload.inventory-imports.confirm');
 
     Route::resource('insurance-companies', InsuranceCompanyController::class)->except(['show']);
     Route::resource('insurance-packages', InsurancePackageController::class)->except(['show']);

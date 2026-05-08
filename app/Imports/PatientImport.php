@@ -16,6 +16,7 @@ use Closure;
 use DateTimeInterface;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
+use Maatwebsite\Excel\Concerns\RemembersRowNumber;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -27,9 +28,15 @@ use Throwable;
 
 final class PatientImport implements SkipsOnFailure, ToModel, WithChunkReading, WithHeadingRow, WithValidation
 {
+    use RemembersRowNumber;
     use SkipsFailures;
 
     private int $importedCount = 0;
+
+    /**
+     * @var list<array{row: int, name: string, phoneNumber: string|null, email: string|null}>
+     */
+    private array $previewRows = [];
 
     /**
      * @var array<string, true>
@@ -41,14 +48,30 @@ final class PatientImport implements SkipsOnFailure, ToModel, WithChunkReading, 
         private readonly string $branchCode,
         private readonly string $userId,
         private readonly BranchScopedNumberGenerator $numberGenerator,
+        private readonly bool $preview = false,
     ) {}
 
     /**
      * @param  array<string, mixed>  $row
      */
-    public function model(array $row): Patient
+    public function model(array $row): ?Patient
     {
         $this->importedCount++;
+
+        if ($this->preview) {
+            $firstName = $this->str($row['first_name'] ?? null);
+            $lastName = $this->str($row['last_name'] ?? null);
+            $phoneNumber = $this->phone($row['phone_number'] ?? null);
+
+            $this->previewRows[] = [
+                'row' => $this->getRowNumber() ?? 0,
+                'name' => mb_trim(sprintf('%s %s', $firstName ?? '', $lastName ?? '')),
+                'phoneNumber' => $phoneNumber,
+                'email' => $this->lower($row['email'] ?? null),
+            ];
+
+            return null;
+        }
 
         return new Patient([
             'tenant_id' => $this->tenantId,
@@ -140,6 +163,14 @@ final class PatientImport implements SkipsOnFailure, ToModel, WithChunkReading, 
     public function getImportedCount(): int
     {
         return $this->importedCount;
+    }
+
+    /**
+     * @return list<array{row: int, name: string, phoneNumber: string|null, email: string|null}>
+     */
+    public function previewRows(): array
+    {
+        return $this->previewRows;
     }
 
     /**

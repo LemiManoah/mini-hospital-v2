@@ -19,23 +19,27 @@ final readonly class ProcessPatientImport
      * @return array{
      *   imported: int,
      *   skipped: int,
-     *   errors: list<array{row: int, name: string, messages: list<string>}>
+     *   errors: list<array{row: int, name: string, messages: list<string>}>,
+     *   previewRows: list<array{row: int, name: string, phoneNumber: string|null, email: string|null}>
      * }
      */
     public function handle(
-        UploadedFile $file,
+        UploadedFile|string $file,
         string $tenantId,
         string $branchCode,
         string $userId,
+        ?string $disk = null,
+        bool $preview = false,
     ): array {
         $import = new PatientImport(
             tenantId: $tenantId,
             branchCode: $branchCode,
             userId: $userId,
             numberGenerator: $this->numberGenerator,
+            preview: $preview,
         );
 
-        Excel::import($import, $file);
+        Excel::import($import, $file, $disk);
 
         /** @var Collection<int, Failure> $failures */
         $failures = $import->failures();
@@ -65,6 +69,7 @@ final readonly class ProcessPatientImport
             'imported' => $import->getImportedCount(),
             'skipped' => $failures->unique(static fn (Failure $failure): int => $failure->row())->count(),
             'errors' => array_values($errors),
+            'previewRows' => $import->previewRows(),
         ];
     }
 

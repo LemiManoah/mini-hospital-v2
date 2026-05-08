@@ -15,7 +15,8 @@ final readonly class ProcessInventoryItemImport
      * @return array{
      *   imported: int,
      *   skipped: int,
-     *   errors: list<array{row: int, name: string, messages: list<string>}>
+     *   errors: list<array{row: int, name: string, messages: list<string>}>,
+     *   previewRows: list<array{row: int, name: string, location: string, quantity: float, batchNumber: string|null, expiryDate: string|null, unitCost: float}>
      * }
      */
     public function handle(
@@ -25,12 +26,14 @@ final readonly class ProcessInventoryItemImport
         string $branchId,
         string $userId,
         ?string $disk = null,
+        bool $preview = false,
     ): array {
         $import = new InventoryItemImport(
             itemType: $itemType,
             tenantId: $tenantId,
             branchId: $branchId,
             userId: $userId,
+            preview: $preview,
         );
 
         Excel::import($import, $file, $disk);
@@ -41,6 +44,7 @@ final readonly class ProcessInventoryItemImport
             'imported' => $import->getImportedCount(),
             'skipped' => count($errors),
             'errors' => $errors,
+            'previewRows' => $import->previewRows(),
         ];
     }
 }

@@ -17,7 +17,7 @@ import {
 
 export default function LaboratoryQueuePage({
     page,
-    requests,
+    orders,
     filters,
     labReleasePolicy,
 }: LaboratoryQueuePageProps) {
@@ -38,7 +38,7 @@ export default function LaboratoryQueuePage({
                     preserveState: true,
                     preserveScroll: true,
                     replace: true,
-                    only: ['requests', 'filters'],
+                    only: ['orders', 'filters'],
                 },
             );
         }, 300);
@@ -119,16 +119,16 @@ export default function LaboratoryQueuePage({
                     )}
                 </div>
 
-                {(requests.prev_page_url ?? requests.next_page_url) ? (
+                {(orders.prev_page_url ?? orders.next_page_url) ? (
                     <div className="flex items-center justify-between">
                         <Button
                             type="button"
                             variant="outline"
-                            asChild={Boolean(requests.prev_page_url)}
-                            disabled={!requests.prev_page_url}
+                            asChild={Boolean(orders.prev_page_url)}
+                            disabled={!orders.prev_page_url}
                         >
-                            {requests.prev_page_url ? (
-                                <Link href={requests.prev_page_url}>
+                            {orders.prev_page_url ? (
+                                <Link href={orders.prev_page_url}>
                                     Previous
                                 </Link>
                             ) : (
@@ -138,11 +138,11 @@ export default function LaboratoryQueuePage({
                         <Button
                             type="button"
                             variant="outline"
-                            asChild={Boolean(requests.next_page_url)}
-                            disabled={!requests.next_page_url}
+                            asChild={Boolean(orders.next_page_url)}
+                            disabled={!orders.next_page_url}
                         >
-                            {requests.next_page_url ? (
-                                <Link href={requests.next_page_url}>Next</Link>
+                            {orders.next_page_url ? (
+                                <Link href={orders.next_page_url}>Next</Link>
                             ) : (
                                 <span>Next</span>
                             )}

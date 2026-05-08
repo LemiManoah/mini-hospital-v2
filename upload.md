@@ -114,9 +114,9 @@ Recommended approach:
 ## Suggested Next Implementation Steps
 
 1. Add an error report CSV download for failed rows. Status: implemented for the latest import result.
-2. Add a preview step before committing rows.
-3. Store an import audit record with uploaded filename, user, branch, imported count, skipped count, and timestamps.
-4. Add queue support for large imports.
+2. Add a preview step before committing rows. Status: implemented for patient and inventory opening stock imports.
+3. Store an import audit record with uploaded filename, user, branch, imported count, skipped count, and timestamps. Status: implemented for patient and inventory imports.
+4. Add queue support for large imports. Status: implemented for patient and inventory opening stock imports after preview confirmation.
 5. Add import pages for insurance price lists and the other setup catalogs listed below.
 
 ## Other Upload Areas To Build
@@ -249,8 +249,8 @@ php artisan queue:work --queue=default --tries=2 --timeout=600
 ```
 
 - The upload request only stores the file and queues the job; the actual row processing happens in the worker. After the worker finishes, refresh the data upload page to see the cached import result or download the error report.
-- Add an import audit table so each queued import has a status, file name, row counts, failure report, tenant, branch, user, and timestamps.
-- Add preview mode before committing stock, because opening balances are financially meaningful and hard to undo casually.
+- Add an import audit table so each queued import has a status, file name, row counts, failure report, tenant, branch, user, and timestamps. Status: implemented.
+- Add preview mode before committing stock, because opening balances are financially meaningful and hard to undo casually. Status: implemented.
 
 ### Insurance Price Lists
 
@@ -360,7 +360,7 @@ The safest long-term healthcare import flow is:
 7. Server commits valid rows and stores an import audit record.
 8. User can download an error report for failed rows.
 
-The current implementation is a solid first version of steps 1, 2, 3, 6, and 8. The next major improvement should be the validate-and-preview step before records are created.
+The current implementation is a solid first version of steps 1, 2, 3, 4, 5, 6, 7, and 8 for patient imports and inventory opening stock. Insurance price lists, services, lab tests, suppliers, staff/users, departments, and units should follow the same preview/confirm/audit/queue pattern as they are added.
 
 ## Testing Checklist
 

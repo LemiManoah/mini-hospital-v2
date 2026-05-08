@@ -217,7 +217,7 @@ export interface LaboratoryQueuePageMeta {
 
 export interface LaboratoryQueuePageProps {
     page: LaboratoryQueuePageMeta;
-    requests: PaginatedLaboratoryItemList<LaboratoryQueueRequest>;
+    orders: PaginatedLaboratoryItemList<LaboratoryQueueRequest>;
     filters: {
         search: string | null;
     };
