@@ -84,12 +84,15 @@ final class StoreInsurancePolicyRequest extends FormRequest
                 if (! is_int($index) && ! is_string($index)) {
                     continue;
                 }
+
                 if (! is_array($item)) {
                     continue;
                 }
+
                 if (! is_string($item['item_id'] ?? null)) {
                     continue;
                 }
+
                 if (! $this->itemExists($policyType, $item['item_id'])) {
                     $validator->errors()->add(sprintf('items.%s.item_id', (string) $index), 'The selected item does not match the selected policy type.');
                 }
@@ -203,9 +206,7 @@ final class StoreInsurancePolicyRequest extends FormRequest
     private function numericStringValue(mixed $value): string
     {
         if (is_int($value) || is_float($value)) {
-            $numericString = (string) $value;
-
-            return $numericString;
+            return (string) $value;
         }
 
         if (is_string($value) && is_numeric($value)) {
