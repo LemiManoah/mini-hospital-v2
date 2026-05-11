@@ -8,6 +8,7 @@ use App\Models\PharmacyPosCart;
 use App\Models\PharmacyPosCartItem;
 use App\Models\PharmacyPosSale;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Inertia\Testing\AssertableInertia;
 
 require_once __DIR__.'/Controllers/PharmacyTestHelpers.php';
@@ -71,6 +72,42 @@ it('resumes a held cart', function (): void {
     $cart->refresh();
     expect($cart->status)->toBe(PharmacyPosCartStatus::Active)
         ->and($cart->held_at)->toBeNull();
+});
+
+it('updates checkout customer details without clearing existing notes', function (): void {
+    [
+        $branch,
+        ,
+        $user,
+        ,
+        $pharmacyLocation,
+    ] = createPharmacyModuleContext();
+
+    $cart = PharmacyPosCart::query()->create([
+        'tenant_id' => $branch->tenant_id,
+        'branch_id' => $branch->id,
+        'inventory_location_id' => $pharmacyLocation->id,
+        'user_id' => $user->id,
+        'cart_number' => 'CART-P4-002B',
+        'status' => PharmacyPosCartStatus::Active,
+        'notes' => 'Needs review before pickup',
+    ]);
+
+    $this->withoutMiddleware(ValidateCsrfToken::class);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->put(route('pharmacy.pos.carts.update', $cart), [
+            'customer_name' => 'Amina Nakanwagi',
+            'customer_phone' => '+256700000555',
+        ])
+        ->assertRedirect();
+
+    $cart->refresh();
+
+    expect($cart->customer_name)->toBe('Amina Nakanwagi')
+        ->and($cart->customer_phone)->toBe('+256700000555')
+        ->and($cart->notes)->toBe('Needs review before pickup');
 });
 
 it('rejects resuming a held cart when user already has an active cart', function (): void {

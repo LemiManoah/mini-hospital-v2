@@ -10,6 +10,7 @@ use App\Actions\UpdatePharmacyPosCartItemAction;
 use App\Enums\PharmacyPosCartStatus;
 use App\Http\Requests\StorePharmacyPosCartItemRequest;
 use App\Http\Requests\UpdatePharmacyPosCartItemRequest;
+use App\Http\Requests\UpdatePharmacyPosCartRequest;
 use App\Models\PharmacyPosCart;
 use App\Models\PharmacyPosCartItem;
 use App\Support\BranchContext;
@@ -37,6 +38,19 @@ final readonly class PharmacyPosCartController implements HasMiddleware
         $action->handle($cart, $request->itemAttributes());
 
         return back()->with('success', 'Item added to cart.');
+    }
+
+    public function updateCart(
+        UpdatePharmacyPosCartRequest $request,
+        PharmacyPosCart $cart,
+    ): RedirectResponse {
+        abort_unless($cart->branch_id === BranchContext::getActiveBranchId(), 404);
+        abort_unless($cart->status === PharmacyPosCartStatus::Active, 403, 'This cart is no longer active.');
+
+        $cart->fill($request->cartAttributes());
+        $cart->save();
+
+        return back()->with('success', 'Sale details updated.');
     }
 
     public function update(

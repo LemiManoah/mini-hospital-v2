@@ -92,6 +92,25 @@ final readonly class DashboardController implements HasMiddleware
                 'icon' => 'check-circle',
                 'color' => 'emerald',
             ],
+            [
+                'label' => 'Awaiting Payment',
+                'value' => (clone $visitQuery)
+                    ->where('status', VisitStatus::AWAITING_PAYMENT->value)
+                    ->count(),
+                'hint' => 'Visits pending payment',
+                'icon' => 'banknote',
+                'color' => 'amber',
+            ],
+            [
+                'label' => 'Checked In Today',
+                'value' => (clone $appointmentQuery)
+                    ->where('status', AppointmentStatus::CHECKED_IN->value)
+                    ->whereDate('appointment_date', $today)
+                    ->count(),
+                'hint' => 'Appointments checked in today',
+                'icon' => 'badge-check',
+                'color' => 'indigo',
+            ],
         ];
 
         $visitStatusCounts = [

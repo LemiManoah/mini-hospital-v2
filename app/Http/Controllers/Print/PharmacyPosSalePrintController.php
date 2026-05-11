@@ -25,7 +25,8 @@ final readonly class PharmacyPosSalePrintController implements HasMiddleware
             'branch:id,name,branch_code,currency_id',
             'branch.currency:id,code,symbol',
             'inventoryLocation:id,name',
-            'createdBy:id,name',
+            'createdBy:id,email,staff_id',
+            'createdBy.staff:id,first_name,last_name',
             'items.inventoryItem:id,name,generic_name',
             'payments',
         ]);
@@ -33,7 +34,7 @@ final readonly class PharmacyPosSalePrintController implements HasMiddleware
         $pdf = Pdf::loadView('print.pharmacy-pos-receipt', [
             'sale' => $sale,
             'printedAt' => now(),
-        ])->setPaper([0, 0, 226.77, 566.93]); // 80mm receipt paper
+        ])->setPaper('a4');
 
         return $pdf->stream(sprintf('pos-receipt-%s.pdf', $sale->sale_number));
     }

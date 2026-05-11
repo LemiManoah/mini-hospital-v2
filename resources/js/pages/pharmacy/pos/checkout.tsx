@@ -21,6 +21,8 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryNavigationContext } from '@/types/inventory-navigation';
 import { Head, useForm } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import { CheckoutCustomerDialog } from './components/checkout-customer-dialog';
 
 interface CartItem {
     id: string;
@@ -72,25 +74,56 @@ export default function PharmacyPosCheckout({
     navigation,
     cart,
 }: PharmacyPosCheckoutProps) {
+    const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
     const form = useForm({
         paid_amount: cart.total_amount.toFixed(2),
         payment_method: 'cash',
         reference_number: '',
-        notes: '',
     });
+    const customerNameError = (
+        form.errors as Record<string, string | undefined>
+    ).customer_name;
+    const customerPhoneError = (
+        form.errors as Record<string, string | undefined>
+    ).customer_phone;
 
     const paidAmount = parseFloat(form.data.paid_amount) || 0;
     const change = Math.max(0, paidAmount - cart.total_amount);
     const balance = Math.max(0, cart.total_amount - paidAmount);
+    const missingCustomerDetails =
+        cart.customer_name === null ||
+        cart.customer_name.trim() === '' ||
+        cart.customer_phone === null ||
+        cart.customer_phone.trim() === '';
+
+    useEffect(() => {
+        if (customerNameError || customerPhoneError) {
+            setCustomerDialogOpen(true);
+        }
+    }, [customerNameError, customerPhoneError]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (balance > 0 && missingCustomerDetails) {
+            setCustomerDialogOpen(true);
+
+            return;
+        }
+
         form.post(`/pharmacy/pos/carts/${cart.id}/finalize`);
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs(navigation, cart)}>
             <Head title="Checkout" />
+            <CheckoutCustomerDialog
+                cartId={cart.id}
+                customerName={cart.customer_name}
+                customerPhone={cart.customer_phone}
+                open={customerDialogOpen}
+                onOpenChange={setCustomerDialogOpen}
+            />
 
             <div className="flex h-full flex-col gap-6 p-6">
                 <div>
@@ -167,6 +200,52 @@ export default function PharmacyPosCheckout({
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-4">
+                                <div className="rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-medium">
+                                                Customer
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {cart.customer_name?.trim()
+                                                    ? cart.customer_name
+                                                    : 'Walk-in customer'}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {cart.customer_phone?.trim()
+                                                    ? cart.customer_phone
+                                                    : 'No phone saved'}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() =>
+                                                setCustomerDialogOpen(true)
+                                            }
+                                        >
+                                            {cart.customer_name ||
+                                            cart.customer_phone
+                                                ? 'Edit details'
+                                                : 'Add details'}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {(customerNameError || customerPhoneError) && (
+                                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                                        <p className="font-medium">
+                                            Customer details are required for
+                                            partial payments.
+                                        </p>
+                                        <p className="mt-1">
+                                            Add the client name and phone number
+                                            here before completing this sale
+                                            with an outstanding balance.
+                                        </p>
+                                    </div>
+                                )}
+
                                 <div className="flex flex-col gap-2">
                                     <Label htmlFor="payment_method">
                                         Payment Method
@@ -251,6 +330,11 @@ export default function PharmacyPosCheckout({
                                                 )
                                             }
                                             placeholder="Transaction reference..."
+                                        />
+                                        <InputError
+                                            message={
+                                                form.errors.reference_number
+                                            }
                                         />
                                     </div>
                                 )}

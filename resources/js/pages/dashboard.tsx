@@ -15,18 +15,26 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from '@/components/ui/chart';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Activity,
+    BadgeCheck,
+    Banknote,
     CalendarClock,
     CalendarPlus,
     CheckCircle2,
-    ClipboardList,
     FlaskConical,
-    LayoutDashboard,
     Stethoscope,
     UserPlus,
     Users,
@@ -115,6 +123,8 @@ const METRIC_ICONS: Record<string, typeof Activity> = {
     flask: FlaskConical,
     'user-check': UserPlus,
     'check-circle': CheckCircle2,
+    banknote: Banknote,
+    'badge-check': BadgeCheck,
 };
 
 const CHART_COLORS = [
@@ -258,7 +268,7 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                     {metrics.map((metric) => (
                         <MetricCard key={metric.label} metric={metric} />
                     ))}
@@ -361,186 +371,146 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3">
-                    <Card className="col-span-2 border-none shadow-sm ring-1 ring-border/50">
-                        <CardHeader className="flex flex-row items-center justify-between">
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <Card className="border-none shadow-sm ring-1 ring-border/50">
+                        <CardHeader className="flex flex-row items-center justify-between pb-3">
                             <div>
                                 <CardTitle>Recent Visits</CardTitle>
                                 <CardDescription>
-                                    Latest patient visits in the active branch
+                                    Latest patient visits
                                 </CardDescription>
                             </div>
                             <Button variant="ghost" size="sm" asChild>
                                 <Link href="/visits">View all</Link>
                             </Button>
                         </CardHeader>
-                        <CardContent className="flex flex-col gap-3">
+                        <CardContent className="p-0">
                             {recent_visits.length === 0 ? (
-                                <div className="rounded-lg border border-dashed px-4 py-12 text-center text-sm text-muted-foreground">
-                                    No visits yet in the active branch.
+                                <div className="px-6 py-10 text-center text-sm text-muted-foreground">
+                                    No visits yet.
                                 </div>
                             ) : (
-                                recent_visits.map((visit) => (
-                                    <Link
-                                        key={visit.id}
-                                        href={`/visits/${visit.id}`}
-                                        className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                                    >
-                                        <div className="flex flex-col gap-1">
-                                            <p className="font-medium">
-                                                {visit.patient
-                                                    ? `${visit.patient.first_name} ${visit.patient.last_name}`
-                                                    : 'Unknown Patient'}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Visit {visit.visit_number} |{' '}
-                                                {visit.doctor
-                                                    ? `Dr. ${visit.doctor.first_name} ${visit.doctor.last_name}`
-                                                    : 'No doctor assigned'}{' '}
-                                                |{' '}
-                                                {new Date(
-                                                    visit.created_at,
-                                                ).toLocaleString([], {
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                })}
-                                            </p>
-                                        </div>
-                                        <VisitStatusBadge
-                                            status={visit.status}
-                                        />
-                                    </Link>
-                                ))
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Patient</TableHead>
+                                            <TableHead>Doctor</TableHead>
+                                            <TableHead>Status</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {recent_visits.map((visit) => (
+                                            <TableRow
+                                                key={visit.id}
+                                                className="cursor-pointer"
+                                            >
+                                                <TableCell>
+                                                    <Link
+                                                        href={`/visits/${visit.id}`}
+                                                        className="block font-medium hover:underline"
+                                                    >
+                                                        {visit.patient
+                                                            ? `${visit.patient.first_name} ${visit.patient.last_name}`
+                                                            : 'Unknown'}
+                                                    </Link>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        #{visit.visit_number}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">
+                                                    {visit.doctor
+                                                        ? `Dr. ${visit.doctor.last_name}`
+                                                        : '—'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <VisitStatusBadge
+                                                        status={visit.status}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             )}
                         </CardContent>
                     </Card>
 
-                    <div className="flex flex-col gap-6">
-                        <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div>
-                                    <CardTitle className="text-lg">
-                                        Upcoming Today
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Appointments for today
-                                    </CardDescription>
+                    <Card className="border-none shadow-sm ring-1 ring-border/50">
+                        <CardHeader className="flex flex-row items-center justify-between pb-3">
+                            <div>
+                                <CardTitle>Upcoming Today</CardTitle>
+                                <CardDescription>
+                                    Appointments scheduled for today
+                                </CardDescription>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link href="/appointments">View all</Link>
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            {recent_appointments.length === 0 ? (
+                                <div className="px-6 py-10 text-center text-sm text-muted-foreground">
+                                    No appointments today.
                                 </div>
-                                <Button variant="ghost" size="sm" asChild>
-                                    <Link href="/appointments">All</Link>
-                                </Button>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-3">
-                                {recent_appointments.length === 0 ? (
-                                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                                        No appointments scheduled for today.
-                                    </div>
-                                ) : (
-                                    recent_appointments.map((appointment) => (
-                                        <Link
-                                            key={appointment.id}
-                                            href={`/appointments/${appointment.id}`}
-                                            className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                                        >
-                                            <div className="flex items-center justify-between gap-2">
-                                                <p className="truncate font-medium">
-                                                    {appointment.patient
-                                                        ? `${appointment.patient.first_name} ${appointment.patient.last_name}`
-                                                        : 'Unknown Patient'}
-                                                </p>
-                                                <AppointmentStatusBadge
-                                                    status={appointment.status}
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <span>
-                                                    {appointment.start_time
-                                                        ? new Date(
-                                                              `1970-01-01T${appointment.start_time}`,
-                                                          ).toLocaleTimeString(
-                                                              [],
-                                                              {
-                                                                  hour: '2-digit',
-                                                                  minute: '2-digit',
-                                                              },
-                                                          )
-                                                        : 'No time'}
-                                                </span>
-                                                <span>|</span>
-                                                <span className="truncate">
-                                                    {appointment.clinic
-                                                        ?.clinic_name ||
-                                                        'No clinic'}
-                                                </span>
-                                            </div>
-                                        </Link>
-                                    ))
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-none shadow-sm ring-1 ring-border/50">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-lg">
-                                    Quick Management
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid gap-3">
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/patients">
-                                        <Users className="mr-2 h-4 w-4" />
-                                        Patients
-                                    </Link>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/visits">
-                                        <ClipboardList className="mr-2 h-4 w-4" />
-                                        All Visits
-                                    </Link>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/appointments">
-                                        <CalendarClock className="mr-2 h-4 w-4" />
-                                        Appointments
-                                    </Link>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/laboratory/dashboard">
-                                        <FlaskConical className="mr-2 h-4 w-4" />
-                                        Laboratory
-                                    </Link>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="justify-start"
-                                    asChild
-                                >
-                                    <Link href="/inventory/dashboard">
-                                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                                        Inventory
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
+                            ) : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Patient</TableHead>
+                                            <TableHead>Time</TableHead>
+                                            <TableHead>Status</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {recent_appointments.map(
+                                            (appointment) => (
+                                                <TableRow
+                                                    key={appointment.id}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <TableCell>
+                                                        <Link
+                                                            href={`/appointments/${appointment.id}`}
+                                                            className="block font-medium hover:underline"
+                                                        >
+                                                            {appointment.patient
+                                                                ? `${appointment.patient.first_name} ${appointment.patient.last_name}`
+                                                                : 'Unknown'}
+                                                        </Link>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {appointment.clinic
+                                                                ?.clinic_name ||
+                                                                'No clinic'}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="text-sm text-muted-foreground">
+                                                        {appointment.start_time
+                                                            ? new Date(
+                                                                  `1970-01-01T${appointment.start_time}`,
+                                                              ).toLocaleTimeString(
+                                                                  [],
+                                                                  {
+                                                                      hour: '2-digit',
+                                                                      minute: '2-digit',
+                                                                  },
+                                                              )
+                                                            : '—'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <AppointmentStatusBadge
+                                                            status={
+                                                                appointment.status
+                                                            }
+                                                        />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ),
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </AppLayout>

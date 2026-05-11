@@ -73,6 +73,16 @@ final readonly class FinalizePharmacyPosSaleAction
             $changeAmount = max(0.0, round($paidAmount - $totalAmount, 2));
             $balanceAmount = max(0.0, round($totalAmount - $paidAmount, 2));
 
+            if (
+                $balanceAmount > 0
+                && (blank($cart->customer_name) || blank($cart->customer_phone))
+            ) {
+                throw ValidationException::withMessages([
+                    'customer_name' => 'Customer name is required when the sale is not paid in full.',
+                    'customer_phone' => 'Customer phone is required when the sale is not paid in full.',
+                ]);
+            }
+
             $availableBatches = $this->loadAvailableBatches($cart->branch_id, $cart->inventory_location_id);
 
             /** @var Collection<string, float> $availableQuantities */

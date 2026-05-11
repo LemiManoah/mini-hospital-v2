@@ -397,6 +397,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::get('pharmacy/pos', [PharmacyPosController::class, 'index'])->name('pharmacy.pos.index');
     Route::post('pharmacy/pos', [PharmacyPosController::class, 'store'])->name('pharmacy.pos.store');
     Route::get('pharmacy/pos/history', [PharmacyPosSaleController::class, 'index'])->name('pharmacy.pos.history');
+    Route::put('pharmacy/pos/carts/{cart}', [PharmacyPosCartController::class, 'updateCart'])->name('pharmacy.pos.carts.update');
     Route::post('pharmacy/pos/carts/{cart}/items', [PharmacyPosCartController::class, 'store'])->name('pharmacy.pos.carts.items.store');
     Route::put('pharmacy/pos/carts/{cart}/items/{item}', [PharmacyPosCartController::class, 'update'])->name('pharmacy.pos.carts.items.update');
     Route::delete('pharmacy/pos/carts/{cart}/items/{item}', [PharmacyPosCartController::class, 'destroy'])->name('pharmacy.pos.carts.items.destroy');
