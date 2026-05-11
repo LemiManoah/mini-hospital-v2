@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\GeneralStatus;
+use App\Enums\InsuranceCopayType;
 use App\Models\InsurancePolicy;
 use App\Models\InsurancePolicyItem;
 use App\Rules\NoOverlappingInsurancePriceWindow;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -45,6 +47,17 @@ final class UpdateInsurancePolicyItemRequest extends FormRequest
                     ignoreId: $item->id,
                 ),
             ],
+            'copay_type' => ['required', new Enum(InsuranceCopayType::class)],
+            'copay_value' => [
+                'required',
+                'numeric',
+                'min:0',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if ($this->string('copay_type')->toString() === InsuranceCopayType::PERCENTAGE->value && is_numeric($value) && (float) $value > 100) {
+                        $fail('Percentage copay cannot be greater than 100.');
+                    }
+                },
+            ],
             'effective_from' => ['required', 'date'],
             'effective_to' => ['nullable', 'date', 'after_or_equal:effective_from'],
             'status' => ['required', new Enum(GeneralStatus::class)],
@@ -52,12 +65,14 @@ final class UpdateInsurancePolicyItemRequest extends FormRequest
     }
 
     /**
-     * @return array{price: numeric-string, effective_from: string, effective_to?: string|null, status: string}
+     * @return array{price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from: string, effective_to?: string|null, status: string}
      */
     public function itemData(): array
     {
         return [
             'price' => $this->numericStringValue('price'),
+            'copay_type' => $this->stringValue('copay_type'),
+            'copay_value' => $this->numericStringValue('copay_value'),
             'effective_from' => $this->stringValue('effective_from'),
             'effective_to' => $this->nullableStringValue('effective_to'),
             'status' => $this->stringValue('status'),

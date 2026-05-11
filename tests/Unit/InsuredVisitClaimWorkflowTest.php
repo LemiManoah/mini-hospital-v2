@@ -157,6 +157,22 @@ it('updates claim amount while the claim is still ready for invoice', function (
         ->and(Activity::query()->where('event', 'insurance_claim.synced')->exists())->toBeTrue();
 });
 
+it('syncs active visit charge copays onto insured visit claims', function (): void {
+    [, , , , $user, $billing] = seedInsuranceClaimBilling();
+
+    actingAs($user);
+
+    DB::table('visit_charges')
+        ->where('visit_billing_id', $billing->id)
+        ->update(['copay_amount' => 20]);
+
+    resolve(RecalculateVisitBilling::class)->handle($billing);
+    $claim = InsuredVisitClaim::query()->where('visit_billing_id', $billing->id)->firstOrFail();
+
+    expect((float) $claim->claimed_amount)->toBe(100.0)
+        ->and((float) $claim->copay_amount)->toBe(20.0);
+});
+
 it('does not rewrite an invoiced claim when visit billing later changes', function (): void {
     [, , , , $user, $billing] = seedInsuranceClaimBilling();
 

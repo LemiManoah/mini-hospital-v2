@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\InsuredVisitClaimStatus;
 use App\Enums\PayerType;
+use App\Enums\VisitChargeStatus;
 use App\Models\InsuredVisitClaim;
 use App\Models\User;
 use App\Models\VisitBilling;
@@ -35,6 +36,10 @@ final readonly class SyncInsuredVisitClaim
             ]);
         }
 
+        $copayAmount = min(
+            max(0.0, round((float) $billing->charges()->where('status', VisitChargeStatus::ACTIVE->value)->sum('copay_amount'), 2)),
+            max(0.0, round((float) $billing->gross_amount - (float) $billing->discount_amount, 2)),
+        );
         $claimAmount = max(0.0, round((float) $billing->gross_amount - (float) $billing->discount_amount, 2));
         $targetStatus = $claimAmount > 0
             ? InsuredVisitClaimStatus::READY_FOR_INVOICE
@@ -59,6 +64,7 @@ final readonly class SyncInsuredVisitClaim
         if (
             $claim instanceof InsuredVisitClaim
             && round((float) $claim->claimed_amount, 2) === $claimAmount
+            && round((float) $claim->copay_amount, 2) === $copayAmount
             && $claim->status === $targetStatus
             && $claim->insurance_company_id === $billing->insurance_company_id
             && $claim->insurance_package_id === $billing->insurance_package_id
@@ -78,7 +84,7 @@ final readonly class SyncInsuredVisitClaim
                 'claimed_amount' => $claimAmount,
                 'approved_amount' => $claim instanceof InsuredVisitClaim ? $claim->approved_amount : 0,
                 'rejected_amount' => 0,
-                'copay_amount' => 0,
+                'copay_amount' => $copayAmount,
                 'status' => $targetStatus,
                 'updated_by' => $userId,
                 'created_by' => $claim instanceof InsuredVisitClaim ? $claim->created_by : $userId,
@@ -104,6 +110,7 @@ final readonly class SyncInsuredVisitClaim
                 'insurance_company_id' => $billing->insurance_company_id,
                 'insurance_package_id' => $billing->insurance_package_id,
                 'claimed_amount' => $claimAmount,
+                'copay_amount' => $copayAmount,
                 'status' => $claim->status?->value,
             ],
         );

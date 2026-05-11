@@ -26,6 +26,7 @@ final readonly class UpsertVisitCharge
         ?string $chargeCode = null,
         ?string $chargeMasterId = null,
         ?string $notes = null,
+        float $copayAmount = 0.0,
     ): VisitCharge {
         $billing = $this->ensureVisitBilling->handle($visit);
         $userId = Auth::id();
@@ -47,6 +48,7 @@ final readonly class UpsertVisitCharge
                 'quantity' => round($quantity, 2),
                 'unit_price' => round($unitPrice, 2),
                 'line_total' => $lineTotal,
+                'copay_amount' => min($lineTotal, max(0.0, round($copayAmount, 2))),
                 'status' => VisitChargeStatus::ACTIVE,
                 'charged_at' => now(),
                 'notes' => $notes,

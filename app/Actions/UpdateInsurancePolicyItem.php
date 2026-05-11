@@ -12,6 +12,8 @@ final readonly class UpdateInsurancePolicyItem
     /**
      * @param  array{
      *     price: numeric-string,
+     *     copay_type: string,
+     *     copay_value: numeric-string,
      *     effective_from?: string|null,
      *     effective_to?: string|null,
      *     status: string
@@ -21,6 +23,8 @@ final readonly class UpdateInsurancePolicyItem
     {
         $item->update([
             'price' => $data['price'],
+            'copay_type' => $data['copay_type'],
+            'copay_value' => $data['copay_value'],
             'effective_from' => $data['effective_from'] ?? null,
             'effective_to' => $data['effective_to'] ?? null,
             'status' => $data['status'],

@@ -8,6 +8,7 @@ use App\Enums\BillableItemType;
 use App\Models\LabOrder;
 use App\Models\LabOrderItem;
 use App\Models\PatientVisit;
+use App\ValueObjects\VisitChargePricing;
 
 final readonly class SyncLabOrderCharge
 {
@@ -24,15 +25,22 @@ final readonly class SyncLabOrderCharge
             return;
         }
 
-        $total = $request->items->sum(function (LabOrderItem $item) use ($visit): float {
-            $resolved = $this->resolveVisitChargeAmount->handle(
+        $copayAmount = 0.0;
+        $total = $request->items->sum(function (LabOrderItem $item) use ($visit, &$copayAmount): float {
+            $pricing = $this->resolveVisitChargeAmount->resolve(
                 $visit,
                 BillableItemType::TEST,
                 $item->test_id,
                 (float) $item->price,
             );
 
-            return $resolved ?? 0.0;
+            if (! $pricing instanceof VisitChargePricing) {
+                return 0.0;
+            }
+
+            $copayAmount += $pricing->copayAmount;
+
+            return $pricing->unitPrice;
         });
 
         $testCount = $request->items->count();
@@ -47,6 +55,7 @@ final readonly class SyncLabOrderCharge
             $total,
             1,
             'LAB-REQUEST',
+            copayAmount: $copayAmount,
         );
     }
 }

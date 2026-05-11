@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read numeric-string|null $quantity
  * @property-read numeric-string|null $unit_price
  * @property-read numeric-string|null $line_total
+ * @property-read numeric-string|null $copay_amount
  * @property-read VisitChargeStatus|null $status
  * @property-read CarbonInterface|null $charged_at
  * @property-read CarbonInterface|null $deleted_at
@@ -52,6 +53,7 @@ final class VisitCharge extends Model
         'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
         'line_total' => 'decimal:2',
+        'copay_amount' => 'decimal:2',
         'status' => VisitChargeStatus::class,
         'charged_at' => 'datetime',
     ];

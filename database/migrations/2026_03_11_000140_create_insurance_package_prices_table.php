@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
+use App\Enums\InsuranceCopayType;
 use App\Enums\InsurancePolicyType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -51,6 +52,8 @@ return new class extends Migration
                 $table->enum('item_type', array_column(BillableItemType::cases(), 'value'))->index();
                 $table->uuid('item_id')->index();
                 $table->decimal('price', 14, 2)->default(0);
+                $table->enum('copay_type', array_column(InsuranceCopayType::cases(), 'value'))->default(InsuranceCopayType::NONE->value);
+                $table->decimal('copay_value', 14, 2)->default(0);
                 $table->date('effective_from')->nullable()->index();
                 $table->date('effective_to')->nullable()->index();
                 $table->enum('status', array_column(GeneralStatus::cases(), 'value'))->default(GeneralStatus::ACTIVE->value)->index();

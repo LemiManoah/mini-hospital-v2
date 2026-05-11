@@ -9,6 +9,7 @@ use App\Models\InventoryItem;
 use App\Models\PatientVisit;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
+use App\ValueObjects\VisitChargePricing;
 
 final readonly class SyncPrescriptionCharge
 {
@@ -38,25 +39,29 @@ final readonly class SyncPrescriptionCharge
             return;
         }
 
-        $total = $chargeableItems->sum(function (PrescriptionItem $item) use ($visit): float {
+        $copayAmount = 0.0;
+        $total = $chargeableItems->sum(function (PrescriptionItem $item) use ($visit, &$copayAmount): float {
             $inventoryItem = $item->inventoryItem;
 
             if (! $inventoryItem instanceof InventoryItem) {
                 return 0.0;
             }
 
-            $unitPrice = $this->resolveVisitChargeAmount->handle(
+            $pricing = $this->resolveVisitChargeAmount->resolve(
                 $visit,
                 BillableItemType::DRUG,
                 $inventoryItem->id,
                 $inventoryItem->default_selling_price === null ? null : (float) $inventoryItem->default_selling_price,
+                (float) $item->quantity,
             );
 
-            if ($unitPrice === null) {
+            if (! $pricing instanceof VisitChargePricing) {
                 return 0.0;
             }
 
-            return round($unitPrice * (float) $item->quantity, 2);
+            $copayAmount += $pricing->copayAmount;
+
+            return round($pricing->unitPrice * (float) $item->quantity, 2);
         });
 
         if ($total <= 0) {
@@ -74,6 +79,7 @@ final readonly class SyncPrescriptionCharge
             $total,
             1,
             'PRESCRIPTION',
+            copayAmount: $copayAmount,
         );
     }
 }

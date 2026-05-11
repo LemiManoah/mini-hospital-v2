@@ -9,6 +9,7 @@ use App\Models\Consultation;
 use App\Models\ConsultationTariff;
 use App\Models\PatientVisit;
 use App\Models\VisitCharge;
+use App\ValueObjects\VisitChargePricing;
 
 final readonly class SyncConsultationCharge
 {
@@ -38,14 +39,14 @@ final readonly class SyncConsultationCharge
             return;
         }
 
-        $amount = $this->resolveVisitChargeAmount->handle(
+        $pricing = $this->resolveVisitChargeAmount->resolve(
             $visit,
             BillableItemType::SERVICE,
             $service->id,
             $service->selling_price === null ? null : (float) $service->selling_price,
         );
 
-        if ($amount === null) {
+        if (! $pricing instanceof VisitChargePricing) {
             $this->removeExistingCharge($consultation, $visit);
 
             return;
@@ -55,10 +56,11 @@ final readonly class SyncConsultationCharge
             $visit,
             $consultation,
             sprintf('Consultation fee: %s', $service->name),
-            $amount,
+            $pricing->unitPrice,
             1,
             $service->service_code,
             $service->charge_master_id,
+            copayAmount: $pricing->copayAmount,
         );
     }
 

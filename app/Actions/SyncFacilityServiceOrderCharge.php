@@ -8,6 +8,7 @@ use App\Enums\BillableItemType;
 use App\Models\FacilityService;
 use App\Models\FacilityServiceOrder;
 use App\Models\PatientVisit;
+use App\ValueObjects\VisitChargePricing;
 
 final readonly class SyncFacilityServiceOrderCharge
 {
@@ -26,14 +27,14 @@ final readonly class SyncFacilityServiceOrderCharge
             return;
         }
 
-        $amount = $this->resolveVisitChargeAmount->handle(
+        $pricing = $this->resolveVisitChargeAmount->resolve(
             $visit,
             BillableItemType::SERVICE,
             $service->id,
             $service->selling_price === null ? null : (float) $service->selling_price,
         );
 
-        if ($amount === null) {
+        if (! $pricing instanceof VisitChargePricing) {
             return;
         }
 
@@ -41,10 +42,11 @@ final readonly class SyncFacilityServiceOrderCharge
             $visit,
             $order,
             sprintf('Facility service: %s', $service->name),
-            $amount,
+            $pricing->unitPrice,
             1,
             $service->service_code,
             $service->charge_master_id,
+            copayAmount: $pricing->copayAmount,
         );
     }
 }

@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import {
     type BillableItemOption,
+    type InsuranceCopayType,
     type InsurancePackageShowPageProps,
     type InsurancePolicy,
     type InsurancePolicyItem,
@@ -78,6 +79,12 @@ const POLICY_ITEM_TYPE: Record<
     services: 'service',
 };
 
+const COPAY_TYPE_OPTIONS: { value: InsuranceCopayType; label: string }[] = [
+    { value: 'none', label: 'None' },
+    { value: 'fixed', label: 'Fixed amount' },
+    { value: 'percentage', label: 'Percentage' },
+];
+
 type PolicyFormData = {
     name: string;
     policy_type: InsurancePolicyType;
@@ -87,6 +94,8 @@ type PolicyFormData = {
     items: {
         item_id: string;
         price: string;
+        copay_type: InsuranceCopayType;
+        copay_value: string;
         effective_from: string;
         effective_to: string;
         status: 'active' | 'inactive';
@@ -96,6 +105,8 @@ type PolicyFormData = {
 type PolicyItemFormData = {
     item_id: string;
     price: string;
+    copay_type: InsuranceCopayType;
+    copay_value: string;
     effective_from: string;
     effective_to: string;
     status: 'active' | 'inactive';
@@ -151,6 +162,8 @@ export default function InsurancePackageShow({
             {
                 item_id: '',
                 price: '',
+                copay_type: 'none',
+                copay_value: '0',
                 effective_from: '',
                 effective_to: '',
                 status: 'active',
@@ -161,6 +174,8 @@ export default function InsurancePackageShow({
     const itemForm = useForm<PolicyItemFormData>({
         item_id: '',
         price: '',
+        copay_type: 'none',
+        copay_value: '0',
         effective_from: '',
         effective_to: '',
         status: 'active',
@@ -187,6 +202,8 @@ export default function InsurancePackageShow({
                 {
                     item_id: '',
                     price: '',
+                    copay_type: 'none',
+                    copay_value: '0',
                     effective_from: '',
                     effective_to: '',
                     status: 'active',
@@ -210,6 +227,8 @@ export default function InsurancePackageShow({
                 {
                     item_id: '',
                     price: '',
+                    copay_type: 'none',
+                    copay_value: '0',
                     effective_from: '',
                     effective_to: '',
                     status: 'active',
@@ -280,6 +299,8 @@ export default function InsurancePackageShow({
         itemForm.setData({
             item_id: '',
             price: '',
+            copay_type: 'none',
+            copay_value: '0',
             effective_from: '',
             effective_to: '',
             status: 'active',
@@ -294,6 +315,8 @@ export default function InsurancePackageShow({
         itemForm.setData({
             item_id: item.itemId,
             price: item.price,
+            copay_type: item.copayType,
+            copay_value: item.copayValue,
             effective_from: item.effectiveFrom ?? '',
             effective_to: item.effectiveTo ?? '',
             status: item.status,
@@ -705,6 +728,80 @@ export default function InsurancePackageShow({
                                             />
                                         </div>
                                         <div className="grid gap-2">
+                                            <Label>Copay Type</Label>
+                                            <Select
+                                                value={
+                                                    policyForm.data.items[0]
+                                                        ?.copay_type ?? 'none'
+                                                }
+                                                onValueChange={(value) =>
+                                                    setInitialItemField(
+                                                        policyForm,
+                                                        'copay_type',
+                                                        value,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {COPAY_TYPE_OPTIONS.map(
+                                                        (option) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    option.value
+                                                                }
+                                                                value={
+                                                                    option.value
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError
+                                                message={nestedError(
+                                                    policyForm.errors,
+                                                    'items.0.copay_type',
+                                                )}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Copay Value</Label>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max={
+                                                    policyForm.data.items[0]
+                                                        ?.copay_type ===
+                                                    'percentage'
+                                                        ? '100'
+                                                        : undefined
+                                                }
+                                                step="0.01"
+                                                value={
+                                                    policyForm.data.items[0]
+                                                        ?.copay_value ?? '0'
+                                                }
+                                                onChange={(event) =>
+                                                    setInitialItemField(
+                                                        policyForm,
+                                                        'copay_value',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <InputError
+                                                message={nestedError(
+                                                    policyForm.errors,
+                                                    'items.0.copay_value',
+                                                )}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
                                             <Label>Effective From</Label>
                                             <Input
                                                 type="date"
@@ -817,6 +914,67 @@ export default function InsurancePackageShow({
                                 }
                             />
                             <InputError message={itemForm.errors.price} />
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-2">
+                                <Label htmlFor="item_copay_type">
+                                    Copay Type
+                                </Label>
+                                <Select
+                                    value={itemForm.data.copay_type}
+                                    onValueChange={(value) =>
+                                        itemForm.setData(
+                                            'copay_type',
+                                            value as InsuranceCopayType,
+                                        )
+                                    }
+                                >
+                                    <SelectTrigger id="item_copay_type">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {COPAY_TYPE_OPTIONS.map((option) => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError
+                                    message={itemForm.errors.copay_type}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="item_copay_value">
+                                    Copay Value
+                                </Label>
+                                <Input
+                                    id="item_copay_value"
+                                    type="number"
+                                    min="0"
+                                    max={
+                                        itemForm.data.copay_type ===
+                                        'percentage'
+                                            ? '100'
+                                            : undefined
+                                    }
+                                    step="0.01"
+                                    value={itemForm.data.copay_value}
+                                    onChange={(event) =>
+                                        itemForm.setData(
+                                            'copay_value',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                                <InputError
+                                    message={itemForm.errors.copay_value}
+                                />
+                            </div>
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -1005,6 +1163,7 @@ function PolicyItemsTable({
                         <TableRow>
                             <TableHead>Item</TableHead>
                             <TableHead>Price</TableHead>
+                            <TableHead>Copay</TableHead>
                             <TableHead>Effective From</TableHead>
                             <TableHead>Effective To</TableHead>
                             <TableHead>Status</TableHead>
@@ -1030,6 +1189,9 @@ function PolicyItemsTable({
                                                 maximumFractionDigits: 2,
                                             },
                                         )}
+                                    </TableCell>
+                                    <TableCell className="text-sm">
+                                        {formatCopay(item)}
                                     </TableCell>
                                     <TableCell className="text-sm text-zinc-500 dark:text-zinc-400">
                                         {item.effectiveFrom ?? '-'}
@@ -1081,7 +1243,7 @@ function PolicyItemsTable({
                         ) : (
                             <TableRow>
                                 <TableCell
-                                    colSpan={canManage ? 6 : 5}
+                                    colSpan={canManage ? 7 : 6}
                                     className="py-12 text-center text-zinc-500 italic"
                                 >
                                     No items attached to this policy yet.
@@ -1336,6 +1498,8 @@ function setInitialItemField(
                 ...(data.items[0] ?? {
                     item_id: '',
                     price: '',
+                    copay_type: 'none',
+                    copay_value: '0',
                     effective_from: '',
                     effective_to: '',
                     status: 'active',
@@ -1351,6 +1515,23 @@ function nestedError(
     key: string,
 ): string | undefined {
     return (errors as Record<string, string | undefined>)[key];
+}
+
+function formatCopay(item: InsurancePolicyItem): string {
+    if (item.copayType === 'none') {
+        return 'None';
+    }
+
+    if (item.copayType === 'percentage') {
+        return `${Number(item.copayValue).toLocaleString(undefined, {
+            maximumFractionDigits: 2,
+        })}%`;
+    }
+
+    return Number(item.copayValue).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 }
 
 function statusBadgeClass(status: string): string {

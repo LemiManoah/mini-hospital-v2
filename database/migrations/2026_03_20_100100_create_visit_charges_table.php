@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('quantity', 12, 2)->default(1);
             $table->decimal('unit_price', 15, 2);
             $table->decimal('line_total', 15, 2);
+            $table->decimal('copay_amount', 15, 2)->default(0);
             $table->enum('status', array_column(VisitChargeStatus::cases(), 'value'))->default(VisitChargeStatus::ACTIVE->value);
             $table->timestamp('charged_at')->nullable();
             $table->text('notes')->nullable();

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
+use App\Enums\InsuranceCopayType;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,8 @@ final class InsurancePolicyItem extends Model
         'item_id' => 'string',
         'item_type' => BillableItemType::class,
         'price' => 'decimal:2',
+        'copay_type' => InsuranceCopayType::class,
+        'copay_value' => 'decimal:2',
         'effective_from' => 'date',
         'effective_to' => 'date',
         'status' => GeneralStatus::class,

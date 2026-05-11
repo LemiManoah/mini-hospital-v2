@@ -6,6 +6,7 @@ namespace App\Imports;
 
 use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
+use App\Enums\InsuranceCopayType;
 use App\Enums\InventoryItemType;
 use App\Models\FacilityService;
 use App\Models\InsurancePolicyItem;
@@ -44,7 +45,7 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
     private array $errors = [];
 
     /**
-     * @var list<array{row: int, name: string, branch: string, itemType: string, price: float, effectiveFrom: string}>
+     * @var list<array{row: int, name: string, branch: string, itemType: string, price: float, copayType: string, copayValue: float, effectiveFrom: string}>
      */
     private array $previewRows = [];
 
@@ -108,7 +109,7 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
     }
 
     /**
-     * @return list<array{row: int, name: string, branch: string, itemType: string, price: float, effectiveFrom: string}>
+     * @return list<array{row: int, name: string, branch: string, itemType: string, price: float, copayType: string, copayValue: float, effectiveFrom: string}>
      */
     public function previewRows(): array
     {
@@ -134,6 +135,8 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
             'dosage_form' => $this->lower($row['dosage_form'] ?? null),
             'brand_name' => $this->str($row['brand_name'] ?? null),
             'price' => $this->nullableNumber($row['price'] ?? null),
+            'copay_type' => $this->lower($row['copay_type'] ?? InsuranceCopayType::NONE->value),
+            'copay_value' => $this->nullableNumber($row['copay_value'] ?? 0),
             'effective_from' => $this->date($row['effective_from'] ?? null),
             'effective_to' => $this->date($row['effective_to'] ?? null),
             'status' => $this->lower($row['status'] ?? GeneralStatus::ACTIVE->value),
@@ -149,6 +152,8 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
         return [
             ...$this->itemRules($row),
             'price' => ['required', 'numeric', 'min:0'],
+            'copay_type' => ['required', new Enum(InsuranceCopayType::class)],
+            'copay_value' => ['required', 'numeric', 'min:0', $this->copayValueRule($row)],
             'effective_from' => ['required', 'date', $this->duplicatePriceRule($row), $this->noOverlapRule($row)],
             'effective_to' => ['nullable', 'date', 'after_or_equal:effective_from'],
             'status' => ['required', new Enum(GeneralStatus::class)],
@@ -201,6 +206,8 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
             'branch' => $this->branchName,
             'itemType' => $this->itemType->value,
             'price' => $this->nullableNumber($row['price'] ?? null) ?? 0.0,
+            'copayType' => $this->lower($row['copay_type'] ?? null) ?? InsuranceCopayType::NONE->value,
+            'copayValue' => $this->nullableNumber($row['copay_value'] ?? null) ?? 0.0,
             'effectiveFrom' => $this->date($row['effective_from'] ?? null) ?? '',
         ];
 
@@ -226,6 +233,8 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
             'item_type' => $this->itemType->value,
             'item_id' => $billableId,
             'price' => $this->nullableNumber($row['price'] ?? null) ?? 0,
+            'copay_type' => $this->lower($row['copay_type'] ?? null) ?? InsuranceCopayType::NONE->value,
+            'copay_value' => $this->nullableNumber($row['copay_value'] ?? null) ?? 0,
             'effective_from' => $this->date($row['effective_from'] ?? null),
             'effective_to' => $this->date($row['effective_to'] ?? null),
             'status' => $this->lower($row['status'] ?? null) ?? GeneralStatus::ACTIVE->value,
@@ -234,6 +243,23 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
         ]);
 
         $this->importedCount++;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function copayValueRule(array $row): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($row): void {
+            $copayValue = $this->nullableNumber($value);
+
+            if (($this->lower($row['copay_type'] ?? null) ?? InsuranceCopayType::NONE->value) === InsuranceCopayType::PERCENTAGE->value
+                && $copayValue !== null
+                && $copayValue > 100
+            ) {
+                $fail('Percentage copay cannot be greater than 100.');
+            }
+        };
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\GeneralStatus;
+use App\Enums\InsuranceCopayType;
 use App\Enums\InsurancePolicyType;
 use App\Enums\InventoryItemType;
 use App\Models\FacilityBranch;
@@ -59,6 +60,8 @@ final class StoreInsurancePolicyRequest extends FormRequest
             'items' => ['nullable', 'array', 'max:100'],
             'items.*.item_id' => ['required_with:items', 'uuid'],
             'items.*.price' => ['required_with:items', 'numeric', 'min:0'],
+            'items.*.copay_type' => ['required_with:items', new Enum(InsuranceCopayType::class)],
+            'items.*.copay_value' => ['required_with:items', 'numeric', 'min:0', 'max:999999999999.99'],
             'items.*.effective_from' => ['nullable', 'date'],
             'items.*.effective_to' => ['nullable', 'date'],
             'items.*.status' => ['required_with:items', new Enum(GeneralStatus::class)],
@@ -96,6 +99,10 @@ final class StoreInsurancePolicyRequest extends FormRequest
                 if (! $this->itemExists($policyType, $item['item_id'])) {
                     $validator->errors()->add(sprintf('items.%s.item_id', (string) $index), 'The selected item does not match the selected policy type.');
                 }
+
+                if (($item['copay_type'] ?? null) === InsuranceCopayType::PERCENTAGE->value && is_numeric($item['copay_value'] ?? null) && (float) $item['copay_value'] > 100) {
+                    $validator->errors()->add(sprintf('items.%s.copay_value', (string) $index), 'Percentage copay cannot be greater than 100.');
+                }
             }
         });
     }
@@ -108,7 +115,7 @@ final class StoreInsurancePolicyRequest extends FormRequest
      *     effective_from?: string|null,
      *     effective_to?: string|null,
      *     status: string,
-     *     items: list<array{item_id: string, price: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
+     *     items: list<array{item_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
      * }
      */
     public function policyData(string $facilityBranchId): array
@@ -157,7 +164,7 @@ final class StoreInsurancePolicyRequest extends FormRequest
     }
 
     /**
-     * @return list<array{item_id: string, price: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
+     * @return list<array{item_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
      */
     private function itemsData(): array
     {
@@ -177,6 +184,8 @@ final class StoreInsurancePolicyRequest extends FormRequest
             $itemsData[] = [
                 'item_id' => is_string($item['item_id'] ?? null) ? $item['item_id'] : '',
                 'price' => $this->numericStringValue($item['price'] ?? null),
+                'copay_type' => is_string($item['copay_type'] ?? null) ? $item['copay_type'] : InsuranceCopayType::NONE->value,
+                'copay_value' => $this->numericStringValue($item['copay_value'] ?? null),
                 'effective_from' => is_string($item['effective_from'] ?? null) && $item['effective_from'] !== '' ? $item['effective_from'] : null,
                 'effective_to' => is_string($item['effective_to'] ?? null) && $item['effective_to'] !== '' ? $item['effective_to'] : null,
                 'status' => is_string($item['status'] ?? null) ? $item['status'] : GeneralStatus::ACTIVE->value,

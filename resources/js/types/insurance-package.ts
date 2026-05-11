@@ -22,6 +22,7 @@ export type BillableItemType =
     | 'other';
 
 export type InsurancePolicyType = 'pharmacy' | 'lab' | 'services';
+export type InsuranceCopayType = 'none' | 'fixed' | 'percentage';
 
 export interface InsurancePolicyItem {
     id: string;
@@ -29,6 +30,9 @@ export interface InsurancePolicyItem {
     itemId: string;
     itemName: string;
     price: string;
+    copayType: InsuranceCopayType;
+    copayTypeLabel: string;
+    copayValue: string;
     effectiveFrom: string | null;
     effectiveTo: string | null;
     status: 'active' | 'inactive';

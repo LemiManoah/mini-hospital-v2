@@ -382,7 +382,7 @@ it('uses insurance policy prices when syncing lab order charges', function (): v
         'updated_at' => now(),
     ]);
 
-    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'lab', 'test', $testId, 12000);
+    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'lab', 'test', $testId, 12000, 'fixed', 2000);
 
     $request = resolve(CreateLabOrder::class)->handle($context['consultation'], CreateLabOrderDTO::fromRequest(createLabOrderDtoRequest([
         'test_ids' => [$testId],
@@ -400,7 +400,8 @@ it('uses insurance policy prices when syncing lab order charges', function (): v
 
     expect($charge)->not()->toBeNull()
         ->and((float) $charge->unit_price)->toBe(12000.0)
-        ->and((float) $charge->line_total)->toBe(12000.0);
+        ->and((float) $charge->line_total)->toBe(12000.0)
+        ->and((float) $charge->copay_amount)->toBe(2000.0);
 });
 
 it('creates a prescription with multiple drug items', function (): void {

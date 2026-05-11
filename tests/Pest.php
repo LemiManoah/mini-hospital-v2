@@ -167,6 +167,8 @@ function seedInsurancePolicyItem(
     string $itemType,
     string $itemId,
     float $price,
+    string $copayType = 'none',
+    float $copayValue = 0.0,
 ): string {
     $policyId = (string) Str::uuid();
 
@@ -189,6 +191,8 @@ function seedInsurancePolicyItem(
         'item_type' => $itemType,
         'item_id' => $itemId,
         'price' => $price,
+        'copay_type' => $copayType,
+        'copay_value' => $copayValue,
         'status' => 'active',
         'created_at' => now(),
         'updated_at' => now(),

@@ -68,7 +68,7 @@ final class Tenant extends Model
      */
     public function currentSubscription(): HasOne
     {
-        return $this->hasOne(TenantSubscription::class)->latestOfMany('created_at');
+        return $this->hasOne(TenantSubscription::class)->latest('created_at');
     }
 
     /**

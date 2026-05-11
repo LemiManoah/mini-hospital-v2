@@ -6,10 +6,12 @@ namespace App\Actions;
 
 use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
+use App\Enums\InsuranceCopayType;
 use App\Enums\InsurancePolicyType;
 use App\Enums\PayerType;
 use App\Models\InsurancePolicyItem;
 use App\Models\PatientVisit;
+use App\ValueObjects\VisitChargePricing;
 use Illuminate\Database\Eloquent\Builder;
 
 final class ResolveVisitChargeAmount
@@ -20,6 +22,16 @@ final class ResolveVisitChargeAmount
         string $billableId,
         ?float $fallbackAmount = null,
     ): ?float {
+        return $this->resolve($visit, $billableType, $billableId, $fallbackAmount)?->unitPrice;
+    }
+
+    public function resolve(
+        PatientVisit $visit,
+        BillableItemType $billableType,
+        string $billableId,
+        ?float $fallbackAmount = null,
+        float $quantity = 1.0,
+    ): ?VisitChargePricing {
         $visit->loadMissing('payer');
 
         $payer = $visit->payer;
@@ -31,10 +43,10 @@ final class ResolveVisitChargeAmount
             $policyType = InsurancePolicyType::fromBillableItemType($billableType);
 
             if (! $policyType instanceof InsurancePolicyType) {
-                return $fallbackAmount === null ? null : round($fallbackAmount, 2);
+                return $fallbackAmount === null ? null : new VisitChargePricing(round($fallbackAmount, 2));
             }
 
-            $packagePrice = InsurancePolicyItem::query()
+            $policyItem = InsurancePolicyItem::query()
                 ->where('tenant_id', $visit->tenant_id)
                 ->where('item_type', $billableType->value)
                 ->where('item_id', $billableId)
@@ -69,14 +81,34 @@ final class ResolveVisitChargeAmount
                         ->orWhere('effective_to', '>=', $today);
                 })
                 ->latest('effective_from')
-                ->value('price');
+                ->first(['id', 'price', 'copay_type', 'copay_value']);
 
-            if ($packagePrice !== null) {
-                return round($this->floatValue($packagePrice), 2);
+            if ($policyItem instanceof InsurancePolicyItem) {
+                $unitPrice = round($this->floatValue($policyItem->price), 2);
+
+                return new VisitChargePricing(
+                    unitPrice: $unitPrice,
+                    copayAmount: $this->copayAmount($policyItem, $unitPrice, $quantity),
+                    insurancePolicyItemId: $policyItem->id,
+                );
             }
         }
 
-        return $fallbackAmount === null ? null : round($fallbackAmount, 2);
+        return $fallbackAmount === null ? null : new VisitChargePricing(round($fallbackAmount, 2));
+    }
+
+    private function copayAmount(InsurancePolicyItem $policyItem, float $unitPrice, float $quantity): float
+    {
+        $lineTotal = round($unitPrice * $quantity, 2);
+        $copayValue = max(0.0, $this->floatValue($policyItem->copay_value));
+
+        $amount = match ($policyItem->copay_type) {
+            InsuranceCopayType::FIXED => $copayValue,
+            InsuranceCopayType::PERCENTAGE => round($lineTotal * min($copayValue, 100.0) / 100, 2),
+            default => 0.0,
+        };
+
+        return min($lineTotal, round($amount, 2));
     }
 
     private function floatValue(mixed $value): float

@@ -47,7 +47,9 @@ final readonly class GenerateInsuranceCompanyInvoice
                 ]);
             }
 
-            $claimAmount = round($claims->sum(fn (InsuredVisitClaim $claim): float => (float) $claim->claimed_amount), 2);
+            $claimAmount = round($claims->sum(
+                fn (InsuredVisitClaim $claim): float => max(0.0, (float) $claim->claimed_amount - (float) $claim->rejected_amount - (float) $claim->copay_amount)
+            ), 2);
             $firstClaim = $claims->sortBy('created_at')->first();
             $lastClaim = $claims->sortByDesc('created_at')->first();
             $userId = Auth::id();
