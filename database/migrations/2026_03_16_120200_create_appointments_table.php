@@ -34,7 +34,7 @@ return new class extends Migration
             $table->timestamp('completed_at')->nullable();
             $table->text('cancellation_reason')->nullable();
             $table->foreignUuid('cancelled_by')->nullable()->constrained('staff')->nullOnDelete();
-            $table->foreignUuid('rescheduled_from_appointment_id')->nullable()->constrained('appointments')->nullOnDelete();
+            $table->uuid('rescheduled_from_appointment_id')->nullable()->index();
             $table->text('notes')->nullable();
             $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
