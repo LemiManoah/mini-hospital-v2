@@ -6,6 +6,7 @@ use App\Enums\PharmacyPosCartStatus;
 use App\Enums\PharmacyPosSaleStatus;
 use App\Models\PharmacyPosCart;
 use App\Models\PharmacyPosCartItem;
+use App\Models\PharmacyPosPayment;
 use App\Models\PharmacyPosSale;
 use Database\Seeders\PermissionSeeder;
 use Inertia\Testing\AssertableInertia;
@@ -225,43 +226,44 @@ it('records an additional payment on a completed sale', function (): void {
         $user,
         ,
         $pharmacyLocation,
-        ,
-        ,
-        $drug,
     ] = createPharmacyModuleContext();
 
-    $cart = PharmacyPosCart::query()->create([
+    $sale = PharmacyPosSale::query()->create([
         'tenant_id' => $branch->tenant_id,
         'branch_id' => $branch->id,
         'inventory_location_id' => $pharmacyLocation->id,
-        'user_id' => $user->id,
-        'cart_number' => 'CART-P2-006',
-        'status' => PharmacyPosCartStatus::Active,
-    ]);
-
-    PharmacyPosCartItem::query()->create([
-        'pharmacy_pos_cart_id' => $cart->id,
-        'inventory_item_id' => $drug->id,
-        'quantity' => 2,
-        'unit_price' => 20.00,
+        'sale_number' => 'POS-P2-006',
+        'sale_type' => 'walk_in',
+        'customer_name' => 'Amina Nakanwagi',
+        'customer_phone' => '+256700000555',
+        'gross_amount' => 40.00,
         'discount_amount' => 0,
+        'paid_amount' => 30.00,
+        'balance_amount' => 10.00,
+        'change_amount' => 0.00,
+        'status' => PharmacyPosSaleStatus::Completed,
+        'sold_at' => now(),
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
     ]);
 
-    $this->withSession(['active_branch_id' => $branch->id])
-        ->actingAs($user)
-        ->post(route('pharmacy.pos.carts.finalize', $cart), [
-            'paid_amount' => '30.00',
-            'payment_method' => 'cash',
-        ]);
+    PharmacyPosPayment::query()->create([
+        'pharmacy_pos_sale_id' => $sale->id,
+        'amount' => 30.00,
+        'payment_method' => 'cash',
+        'payment_date' => now(),
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+    $csrfToken = 'pharmacy-pos-payment-test-token';
 
-    $sale = PharmacyPosSale::query()
-        ->where('branch_id', $branch->id)
-        ->latest()
-        ->first();
-
-    $this->withSession(['active_branch_id' => $branch->id])
+    $this->withSession([
+        'active_branch_id' => $branch->id,
+        '_token' => $csrfToken,
+    ])
         ->actingAs($user)
         ->post(route('pharmacy.pos.sales.payments.store', $sale), [
+            '_token' => $csrfToken,
             'amount' => '10.00',
             'payment_method' => 'mobile_money',
             'reference_number' => 'TXN-12345',
