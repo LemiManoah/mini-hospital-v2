@@ -171,14 +171,10 @@ export default function LaboratoryOrderItemShow({
                                             labOrderItem.workflow_stage,
                                         )}
                                     >
-                                        {labelize(
-                                            labOrderItem.workflow_stage,
-                                        )}
+                                        {labelize(labOrderItem.workflow_stage)}
                                     </Badge>
                                     <Badge variant="outline">
-                                        {labelize(
-                                            labOrderItem.order?.priority,
-                                        )}
+                                        {labelize(labOrderItem.order?.priority)}
                                     </Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground">

@@ -248,7 +248,7 @@ final readonly class LaboratoryDashboardController implements HasMiddleware
     private function itemQuery(): Builder
     {
         return LabOrderItem::query()->whereHas(
-            'request',
+            'order',
             fn (Builder $query): Builder => $this->activeBranchWorkspace->apply($query),
         );
     }

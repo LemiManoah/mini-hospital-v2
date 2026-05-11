@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
+use App\Enums\InsurancePolicyType;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-final class InsurancePackagePrice extends Model
+final class InsurancePolicy extends Model
 {
     use BelongsToTenant;
     use HasUuids;
@@ -22,20 +23,13 @@ final class InsurancePackagePrice extends Model
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',
         'insurance_package_id' => 'string',
-        'billable_type' => BillableItemType::class,
-        'price' => 'decimal:2',
+        'policy_type' => InsurancePolicyType::class,
         'effective_from' => 'date',
         'effective_to' => 'date',
         'status' => GeneralStatus::class,
+        'created_by' => 'string',
+        'updated_by' => 'string',
     ];
-
-    /**
-     * @return BelongsTo<Tenant, $this>
-     */
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
-    }
 
     /**
      * @return BelongsTo<FacilityBranch, $this>
@@ -51,5 +45,13 @@ final class InsurancePackagePrice extends Model
     public function insurancePackage(): BelongsTo
     {
         return $this->belongsTo(InsurancePackage::class);
+    }
+
+    /**
+     * @return HasMany<InsurancePolicyItem, $this>
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(InsurancePolicyItem::class);
     }
 }

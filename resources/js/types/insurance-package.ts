@@ -1,3 +1,4 @@
+import { type DataImportSummary, type ImportResult } from './data-upload';
 import { type InsuranceCompany } from './insurance-company';
 
 export interface InsurancePackage {
@@ -20,17 +21,30 @@ export type BillableItemType =
     | 'bed_day'
     | 'other';
 
-export interface InsurancePackagePrice {
+export type InsurancePolicyType = 'pharmacy' | 'lab' | 'services';
+
+export interface InsurancePolicyItem {
     id: string;
-    facility_branch_id: string;
-    billable_type: BillableItemType;
-    billable_id: string;
-    billable_name: string;
+    itemType: BillableItemType;
+    itemId: string;
+    itemName: string;
     price: string;
-    effective_from: string | null;
-    effective_to: string | null;
+    effectiveFrom: string | null;
+    effectiveTo: string | null;
     status: 'active' | 'inactive';
-    branch: { id: string; name: string } | null;
+}
+
+export interface InsurancePolicy {
+    id: string;
+    name: string;
+    policyType: InsurancePolicyType;
+    policyTypeLabel: string;
+    facilityBranchId: string;
+    effectiveFrom: string | null;
+    effectiveTo: string | null;
+    status: 'active' | 'inactive';
+    branch: { id: string; name: string; branchCode: string } | null;
+    items: InsurancePolicyItem[];
 }
 
 export interface BillableItemOption {
@@ -69,11 +83,17 @@ export interface InsurancePackageEditPageProps extends InsurancePackageCreatePag
 
 export interface InsurancePackageShowPageProps {
     insurancePackage: InsurancePackage;
-    prices: InsurancePackagePrice[];
+    policies: InsurancePolicy[];
+    activeBranch: { id: string; name: string; branchCode: string } | null;
     billableItems: {
         service: BillableItemOption[];
         drug: BillableItemOption[];
         test: BillableItemOption[];
     };
     branches: BillableItemOption[];
+    policyImports: DataImportSummary[];
+    importResult: ImportResult | null;
+    importResultMode: 'import' | 'preview';
+    queuedImportMessage: string | null;
+    selectedPolicyId: string | null;
 }

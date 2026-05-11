@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Rules;
 
 use App\Enums\GeneralStatus;
-use App\Models\InsurancePackagePrice;
+use App\Models\InsurancePolicyItem;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,10 +15,9 @@ final readonly class NoOverlappingInsurancePriceWindow implements ValidationRule
 {
     public function __construct(
         private string $tenantId,
-        private string $facilityBranchId,
-        private string $insurancePackageId,
-        private string $billableType,
-        private string $billableId,
+        private string $insurancePolicyId,
+        private string $itemType,
+        private string $itemId,
         private string $effectiveFrom,
         private ?string $effectiveTo = null,
         private ?string $ignoreId = null,
@@ -29,12 +28,11 @@ final readonly class NoOverlappingInsurancePriceWindow implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $query = InsurancePackagePrice::query()
+        $query = InsurancePolicyItem::query()
             ->where('tenant_id', $this->tenantId)
-            ->where('facility_branch_id', $this->facilityBranchId)
-            ->where('insurance_package_id', $this->insurancePackageId)
-            ->where('billable_type', $this->billableType)
-            ->where('billable_id', $this->billableId)
+            ->where('insurance_policy_id', $this->insurancePolicyId)
+            ->where('item_type', $this->itemType)
+            ->where('item_id', $this->itemId)
             ->where('status', GeneralStatus::ACTIVE->value)
             ->when(
                 $this->ignoreId !== null && $this->ignoreId !== '',
@@ -61,7 +59,7 @@ final readonly class NoOverlappingInsurancePriceWindow implements ValidationRule
             });
 
         if ($query->exists()) {
-            $fail('The selected effective date range overlaps an existing active insurance package price.');
+            $fail('The selected effective date range overlaps an existing active policy price.');
         }
     }
 }

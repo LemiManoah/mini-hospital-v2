@@ -8,18 +8,24 @@ use App\Actions\CreateInsurancePackage;
 use App\Actions\DeleteInsurancePackage;
 use App\Actions\UpdateInsurancePackage;
 use App\Enums\BillableItemType;
+use App\Enums\DataImportStatus;
 use App\Enums\InventoryItemType;
 use App\Http\Requests\DeleteInsurancePackageRequest;
 use App\Http\Requests\StoreInsurancePackageRequest;
 use App\Http\Requests\UpdateInsurancePackageRequest;
+use App\Models\DataImport;
 use App\Models\FacilityBranch;
 use App\Models\FacilityService;
 use App\Models\InsuranceCompany;
 use App\Models\InsurancePackage;
-use App\Models\InsurancePackagePrice;
+use App\Models\InsurancePolicy;
+use App\Models\InsurancePolicyItem;
 use App\Models\InventoryItem;
 use App\Models\LabTestCatalog;
+use App\Models\User;
+use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -72,41 +78,70 @@ final readonly class InsurancePackageController implements HasMiddleware
 
     public function show(InsurancePackage $insurancePackage): Response
     {
-        $tenantId = (string) Auth::user()?->tenant_id;
+        /** @var User|null $user */
+        $user = Auth::user();
+        $tenantId = (string) $user?->tenant_id;
+        $activeBranch = $user instanceof User ? BranchContext::getActiveBranch($user) : null;
+        $activeBranchId = $activeBranch instanceof FacilityBranch ? $activeBranch->id : null;
 
         $insurancePackage->load(['insuranceCompany:id,name']);
 
-        $prices = InsurancePackagePrice::query()
+        $policies = InsurancePolicy::query()
             ->where('insurance_package_id', $insurancePackage->id)
-            ->with('branch:id,name')
-            ->orderBy('billable_type')
-            ->orderBy('effective_from')
+            ->when(
+                is_string($activeBranchId),
+                static fn (Builder $query): Builder => $query->where('facility_branch_id', $activeBranchId),
+            )
+            ->with([
+                'branch:id,name,branch_code',
+                'items' => static function (Relation $query): Relation {
+                    $query->getQuery()->orderBy('effective_from');
+
+                    return $query;
+                },
+            ])
+            ->orderBy('policy_type')
+            ->orderBy('name')
             ->get();
 
-        $serviceIds = $prices->where('billable_type', BillableItemType::SERVICE)->pluck('billable_id');
-        $drugIds = $prices->where('billable_type', BillableItemType::DRUG)->pluck('billable_id');
-        $testIds = $prices->where('billable_type', BillableItemType::TEST)->pluck('billable_id');
+        $policyItems = $policies->flatMap(static fn (InsurancePolicy $policy) => $policy->items);
+        $serviceIds = $policyItems->where('item_type', BillableItemType::SERVICE)->pluck('item_id');
+        $drugIds = $policyItems->where('item_type', BillableItemType::DRUG)->pluck('item_id');
+        $testIds = $policyItems->where('item_type', BillableItemType::TEST)->pluck('item_id');
 
         $serviceNames = FacilityService::query()->whereIn('id', $serviceIds)->pluck('name', 'id');
         $drugNames = InventoryItem::query()->whereIn('id', $drugIds)->pluck('name', 'id');
         $testNames = LabTestCatalog::query()->whereIn('id', $testIds)->pluck('test_name', 'id');
 
-        $pricesForView = $prices->map(static fn (InsurancePackagePrice $price): array => [
-            'id' => $price->id,
-            'facility_branch_id' => $price->facility_branch_id,
-            'billable_type' => $price->billable_type->value,
-            'billable_id' => $price->billable_id,
-            'billable_name' => match ($price->billable_type) {
-                BillableItemType::SERVICE => $serviceNames->get($price->billable_id, 'Unknown'),
-                BillableItemType::DRUG => $drugNames->get($price->billable_id, 'Unknown'),
-                BillableItemType::TEST => $testNames->get($price->billable_id, 'Unknown'),
-                default => '-',
-            },
-            'price' => $price->price,
-            'effective_from' => $price->effective_from?->toDateString(),
-            'effective_to' => $price->effective_to?->toDateString(),
-            'status' => $price->status->value,
-            'branch' => $price->branch ? ['id' => $price->branch->id, 'name' => $price->branch->name] : null,
+        $policiesForView = $policies->map(static fn (InsurancePolicy $policy): array => [
+            'id' => $policy->id,
+            'name' => $policy->name,
+            'policyType' => $policy->policy_type->value,
+            'policyTypeLabel' => $policy->policy_type->label(),
+            'facilityBranchId' => $policy->facility_branch_id,
+            'effectiveFrom' => $policy->effective_from?->toDateString(),
+            'effectiveTo' => $policy->effective_to?->toDateString(),
+            'status' => $policy->status->value,
+            'branch' => $policy->branch ? [
+                'id' => $policy->branch->id,
+                'name' => $policy->branch->name,
+                'branchCode' => $policy->branch->branch_code,
+            ] : null,
+            'items' => $policy->items->map(static fn (InsurancePolicyItem $item): array => [
+                'id' => $item->id,
+                'itemType' => $item->item_type->value,
+                'itemId' => $item->item_id,
+                'itemName' => match ($item->item_type) {
+                    BillableItemType::SERVICE => $serviceNames->get($item->item_id, 'Unknown'),
+                    BillableItemType::DRUG => $drugNames->get($item->item_id, 'Unknown'),
+                    BillableItemType::TEST => $testNames->get($item->item_id, 'Unknown'),
+                    default => '-',
+                },
+                'price' => $item->price,
+                'effectiveFrom' => $item->effective_from?->toDateString(),
+                'effectiveTo' => $item->effective_to?->toDateString(),
+                'status' => $item->status->value,
+            ])->values(),
         ])->values();
 
         $serviceOptions = FacilityService::query()
@@ -157,13 +192,27 @@ final readonly class InsurancePackageController implements HasMiddleware
 
         return Inertia::render('insurance-package/show', [
             'insurancePackage' => $insurancePackage,
-            'prices' => $pricesForView,
+            'policies' => $policiesForView,
+            'activeBranch' => $activeBranch instanceof FacilityBranch
+                ? [
+                    'id' => $activeBranch->id,
+                    'name' => $activeBranch->name,
+                    'branchCode' => $activeBranch->branch_code,
+                ]
+                : null,
             'billableItems' => [
                 'service' => $serviceOptions,
                 'drug' => $drugOptions,
                 'test' => $testOptions,
             ],
             'branches' => $branches,
+            'policyImports' => $this->latestPolicyImports($insurancePackage, $activeBranch),
+            'importResult' => $this->normalizeImportResult(session('insurance_import_result')) ?? $this->latestPolicyImportResult($insurancePackage, $activeBranch),
+            'importResultMode' => session('insurance_import_result_mode') === 'preview'
+                ? 'preview'
+                : $this->latestPolicyImportResultMode($insurancePackage, $activeBranch),
+            'queuedImportMessage' => session('insurance_queued_import_message'),
+            'selectedPolicyId' => session('insurance_import_policy_id'),
         ]);
     }
 
@@ -217,5 +266,168 @@ final readonly class InsurancePackageController implements HasMiddleware
         $action->handle($insurancePackage);
 
         return to_route('insurance-packages.index')->with('success', 'Insurance package deleted successfully.');
+    }
+
+    /**
+     * @return list<array{
+     *     id: string,
+     *     importType: string,
+     *     sourceFilename: string,
+     *     status: string,
+     *     importedCount: int,
+     *     skippedCount: int,
+     *     previewCount: int,
+     *     failureMessage: string|null,
+     *     policyId: string|null,
+     *     policyName: string|null,
+     *     createdAt: string|null,
+     *     startedAt: string|null,
+     *     completedAt: string|null,
+     *     failedAt: string|null
+     * }>
+     */
+    private function latestPolicyImports(InsurancePackage $insurancePackage, ?FacilityBranch $activeBranch): array
+    {
+        if (! $activeBranch instanceof FacilityBranch) {
+            return [];
+        }
+
+        $policyImports = DataImport::query()
+            ->where('tenant_id', $insurancePackage->tenant_id)
+            ->where('branch_id', $activeBranch->id)
+            ->where('import_type', 'insurance_policy_items')
+            ->where('context->insurance_package_id', $insurancePackage->id)
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (DataImport $dataImport): array => [
+                'id' => $dataImport->id,
+                'importType' => $dataImport->import_type,
+                'sourceFilename' => $dataImport->source_filename,
+                'status' => $dataImport->status->value,
+                'importedCount' => $dataImport->imported_count,
+                'skippedCount' => $dataImport->skipped_count,
+                'previewCount' => $dataImport->preview_count,
+                'failureMessage' => $dataImport->failure_message,
+                'policyId' => is_array($dataImport->context) && is_string($dataImport->context['insurance_policy_id'] ?? null)
+                    ? $dataImport->context['insurance_policy_id']
+                    : null,
+                'policyName' => is_array($dataImport->context) && is_string($dataImport->context['insurance_policy_name'] ?? null)
+                    ? $dataImport->context['insurance_policy_name']
+                    : null,
+                'createdAt' => $dataImport->created_at?->toDateTimeString(),
+                'startedAt' => $dataImport->started_at?->toDateTimeString(),
+                'completedAt' => $dataImport->completed_at?->toDateTimeString(),
+                'failedAt' => $dataImport->failed_at?->toDateTimeString(),
+            ])
+            ->values()
+            ->all();
+
+        return array_values($policyImports);
+    }
+
+    /**
+     * @return array{imported: int, skipped: int, errors: list<array{row: int, name: string, messages: list<string>}>}|null
+     */
+    private function latestPolicyImportResult(InsurancePackage $insurancePackage, ?FacilityBranch $activeBranch): ?array
+    {
+        if (! $activeBranch instanceof FacilityBranch) {
+            return null;
+        }
+
+        $dataImport = DataImport::query()
+            ->where('tenant_id', $insurancePackage->tenant_id)
+            ->where('branch_id', $activeBranch->id)
+            ->where('import_type', 'insurance_policy_items')
+            ->where('context->insurance_package_id', $insurancePackage->id)
+            ->whereIn('status', [
+                DataImportStatus::Previewed->value,
+                DataImportStatus::Completed->value,
+                DataImportStatus::Failed->value,
+            ])
+            ->latest()
+            ->first();
+
+        if (! $dataImport instanceof DataImport) {
+            return null;
+        }
+
+        return $this->normalizeImportResult([
+            'imported' => $dataImport->status === DataImportStatus::Previewed
+                ? $dataImport->preview_count
+                : $dataImport->imported_count,
+            'skipped' => $dataImport->skipped_count,
+            'errors' => $dataImport->error_report ?? [],
+        ]);
+    }
+
+    private function latestPolicyImportResultMode(InsurancePackage $insurancePackage, ?FacilityBranch $activeBranch): string
+    {
+        if (! $activeBranch instanceof FacilityBranch) {
+            return 'import';
+        }
+
+        $status = DataImport::query()
+            ->where('tenant_id', $insurancePackage->tenant_id)
+            ->where('branch_id', $activeBranch->id)
+            ->where('import_type', 'insurance_policy_items')
+            ->where('context->insurance_package_id', $insurancePackage->id)
+            ->whereIn('status', [
+                DataImportStatus::Previewed->value,
+                DataImportStatus::Completed->value,
+                DataImportStatus::Failed->value,
+            ])
+            ->latest()
+            ->value('status');
+
+        return $status === DataImportStatus::Previewed->value ? 'preview' : 'import';
+    }
+
+    /**
+     * @return array{imported: int, skipped: int, errors: list<array{row: int, name: string, messages: list<string>}>}|null
+     */
+    private function normalizeImportResult(mixed $result): ?array
+    {
+        if (! is_array($result)
+            || ! is_int($result['imported'] ?? null)
+            || ! is_int($result['skipped'] ?? null)
+            || ! is_array($result['errors'] ?? null)
+        ) {
+            return null;
+        }
+
+        $errors = [];
+
+        foreach ($result['errors'] as $error) {
+            if (! is_array($error)
+                || ! is_int($error['row'] ?? null)
+                || ! is_string($error['name'] ?? null)
+                || ! is_array($error['messages'] ?? null)
+            ) {
+                return null;
+            }
+
+            $messages = [];
+
+            foreach ($error['messages'] as $message) {
+                if (! is_string($message)) {
+                    return null;
+                }
+
+                $messages[] = $message;
+            }
+
+            $errors[] = [
+                'row' => $error['row'],
+                'name' => $error['name'],
+                'messages' => $messages,
+            ];
+        }
+
+        return [
+            'imported' => $result['imported'],
+            'skipped' => $result['skipped'],
+            'errors' => $errors,
+        ];
     }
 }

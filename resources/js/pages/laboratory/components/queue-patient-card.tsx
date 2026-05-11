@@ -9,8 +9,8 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import {
-    type LaboratoryQueuePageProps,
     type LaboratoryOrderItem,
+    type LaboratoryQueuePageProps,
 } from '@/types/laboratory';
 import {
     formatDateTime,
@@ -164,8 +164,7 @@ export function QueuePatientCard({
                                             </span>
                                             <span>
                                                 {formatDateTime(
-                                                    item.order
-                                                        ?.request_date ??
+                                                    item.order?.request_date ??
                                                         request.request_date,
                                                 )}
                                             </span>

@@ -47,11 +47,11 @@ final class InsurancePackage extends Model
     }
 
     /**
-     * @return HasMany<InsurancePackagePrice, $this>
+     * @return HasMany<InsurancePolicy, $this>
      */
-    public function prices(): HasMany
+    public function policies(): HasMany
     {
-        return $this->hasMany(InsurancePackagePrice::class);
+        return $this->hasMany(InsurancePolicy::class);
     }
 
     /**

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Enums\ImagingLaterality;
 use App\Enums\ImagingModality;
-use App\Enums\ImagingPriority;
 use App\Enums\ImagingOrderStatus;
+use App\Enums\ImagingPriority;
 use App\Enums\PregnancyStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

@@ -248,16 +248,13 @@ export function VisitOrderDialog({
                             className="flex flex-col gap-4"
                             onSubmit={(event) => {
                                 event.preventDefault();
-                                labForm.post(
-                                    `/visits/${visit.id}/lab-orders`,
-                                    {
-                                        preserveScroll: true,
-                                        onSuccess: () => {
-                                            labForm.reset('test_ids');
-                                            closeDialog();
-                                        },
+                                labForm.post(`/visits/${visit.id}/lab-orders`, {
+                                    preserveScroll: true,
+                                    onSuccess: () => {
+                                        labForm.reset('test_ids');
+                                        closeDialog();
                                     },
-                                );
+                                });
                             }}
                         >
                             <div className="flex flex-col gap-3">

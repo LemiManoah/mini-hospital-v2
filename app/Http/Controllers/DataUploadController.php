@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\ProcessFacilityServiceImport;
 use App\Actions\ProcessInventoryItemImport;
 use App\Actions\ProcessPatientImport;
 use App\Enums\DataImportStatus;
 use App\Enums\InventoryItemType;
+use App\Exports\FacilityServiceImportTemplate;
 use App\Exports\InventoryItemImportTemplate;
 use App\Exports\PatientImportTemplate;
 use App\Http\Requests\ImportInventoryItemsRequest;
 use App\Http\Requests\ImportPatientsRequest;
+use App\Jobs\ImportFacilityServicesJob;
 use App\Jobs\ImportInventoryItemsJob;
 use App\Jobs\ImportPatientsJob;
 use App\Models\DataImport;
@@ -19,6 +22,7 @@ use App\Models\FacilityBranch;
 use App\Models\User;
 use App\Support\BranchContext;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -27,7 +31,6 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 final readonly class DataUploadController implements HasMiddleware
@@ -44,6 +47,11 @@ final readonly class DataUploadController implements HasMiddleware
                 'importDrugs',
                 'importConsumables',
                 'confirmInventoryImport',
+            ]),
+            new Middleware('permission:facility_services.create', only: [
+                'facilityServiceTemplate',
+                'importFacilityServices',
+                'confirmFacilityServiceImport',
             ]),
         ];
     }
@@ -87,7 +95,14 @@ final readonly class DataUploadController implements HasMiddleware
         return Excel::download(new InventoryItemImportTemplate(InventoryItemType::CONSUMABLE), $filename);
     }
 
-    public function downloadErrorReport(): RedirectResponse|StreamedResponse
+    public function facilityServiceTemplate(): BinaryFileResponse
+    {
+        $filename = sprintf('facility-service-import-template-%s.xlsx', now()->format('Y-m-d'));
+
+        return Excel::download(new FacilityServiceImportTemplate(), $filename);
+    }
+
+    public function downloadErrorReport(): RedirectResponse|HttpResponse
     {
         /** @var list<array{row: int, name: string, messages: list<string>}> $errors */
         $errors = session(self::IMPORT_ERROR_REPORT_SESSION_KEY, []);
@@ -108,29 +123,34 @@ final readonly class DataUploadController implements HasMiddleware
 
         $filename = sprintf('data-upload-error-report-%s.csv', now()->format('Y-m-d'));
 
-        return response()->streamDownload(function () use ($errors): void {
-            $handle = fopen('php://output', 'w');
+        $handle = fopen('php://temp', 'r+');
 
-            if ($handle === false) {
-                return;
-            }
+        if ($handle === false) {
+            return to_route('data-upload.index');
+        }
 
-            fputcsv($handle, ['row', 'name', 'errors'], escape: '\\');
+        fputcsv($handle, ['row', 'name', 'errors'], escape: '\\');
 
-            foreach ($errors as $error) {
-                fputcsv(
-                    $handle,
-                    [
-                        (string) $error['row'],
-                        $error['name'],
-                        implode('; ', $error['messages']),
-                    ],
-                    escape: '\\',
-                );
-            }
+        foreach ($errors as $error) {
+            fputcsv(
+                $handle,
+                [
+                    (string) $error['row'],
+                    $error['name'],
+                    implode('; ', $error['messages']),
+                ],
+                escape: '\\',
+            );
+        }
 
-            fclose($handle);
-        }, $filename, ['Content-Type' => 'text/csv']);
+        rewind($handle);
+        $contents = stream_get_contents($handle);
+        fclose($handle);
+
+        return response((string) $contents, 200, [
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function importPatients(ImportPatientsRequest $request, ProcessPatientImport $processPatientImport): RedirectResponse
@@ -178,14 +198,14 @@ final readonly class DataUploadController implements HasMiddleware
                 disk: 'local',
                 preview: true,
             );
-        } catch (Throwable $exception) {
+        } catch (Throwable $throwable) {
             $dataImport->forceFill([
                 'status' => DataImportStatus::Failed->value,
-                'failure_message' => $exception->getMessage(),
+                'failure_message' => $throwable->getMessage(),
                 'failed_at' => now(),
             ])->save();
 
-            throw $exception;
+            throw $throwable;
         }
 
         $dataImport->forceFill([
@@ -218,19 +238,89 @@ final readonly class DataUploadController implements HasMiddleware
         return $this->importInventoryItems($request, InventoryItemType::CONSUMABLE, $processInventoryItemImport);
     }
 
+    public function importFacilityServices(ImportPatientsRequest $request, ProcessFacilityServiceImport $processFacilityServiceImport): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $tenantId = (string) $user->tenant_id;
+        $userId = (string) $user->id;
+        $activeBranch = BranchContext::getActiveBranch($user);
+
+        if (! $activeBranch instanceof FacilityBranch) {
+            return back()->withErrors([
+                'branch' => 'Please select an active branch before importing facility services.',
+            ]);
+        }
+
+        /** @var UploadedFile $file */
+        $file = $request->file('file');
+        $path = $file->store('imports/facility-services');
+
+        if (! is_string($path)) {
+            return back()->withErrors([
+                'file' => 'The uploaded file could not be stored for background processing.',
+            ]);
+        }
+
+        $dataImport = DataImport::query()->create([
+            'tenant_id' => $tenantId,
+            'branch_id' => $activeBranch->id,
+            'user_id' => $userId,
+            'import_type' => 'facility_services',
+            'source_filename' => $file->getClientOriginalName(),
+            'stored_path' => $path,
+            'status' => DataImportStatus::Processing->value,
+            'started_at' => now(),
+        ]);
+
+        try {
+            $result = $processFacilityServiceImport->handle(
+                file: $path,
+                tenantId: $tenantId,
+                userId: $userId,
+                disk: 'local',
+                preview: true,
+            );
+        } catch (Throwable $throwable) {
+            $dataImport->forceFill([
+                'status' => DataImportStatus::Failed->value,
+                'failure_message' => $throwable->getMessage(),
+                'failed_at' => now(),
+            ])->save();
+
+            throw $throwable;
+        }
+
+        $dataImport->forceFill([
+            'status' => DataImportStatus::Previewed->value,
+            'preview_count' => $result['imported'],
+            'skipped_count' => $result['skipped'],
+            'preview_rows' => $result['previewRows'],
+            'error_report' => $result['errors'],
+            'completed_at' => now(),
+        ])->save();
+
+        $this->rememberImportErrorReport($result);
+
+        return to_route('data-upload.index')->with(
+            'import_result',
+            $result,
+        )->with(
+            'import_result_mode',
+            'preview',
+        );
+    }
+
     public function confirmInventoryImport(DataImport $dataImport): RedirectResponse
     {
         /** @var User $user */
         $user = request()->user();
         $activeBranch = BranchContext::getActiveBranch($user);
 
-        if (! $activeBranch instanceof FacilityBranch
+        abort_if(! $activeBranch instanceof FacilityBranch
             || $dataImport->tenant_id !== (string) $user->tenant_id
             || $dataImport->branch_id !== $activeBranch->id
-            || ! str_starts_with($dataImport->import_type, 'inventory_')
-        ) {
-            abort(404);
-        }
+            || ! str_starts_with($dataImport->import_type, 'inventory_'), 404);
 
         if ($dataImport->status !== DataImportStatus::Previewed) {
             return to_route('data-upload.index')->withErrors([
@@ -289,13 +379,10 @@ final readonly class DataUploadController implements HasMiddleware
         $user = request()->user();
         $activeBranch = BranchContext::getActiveBranch($user);
 
-        if (! $activeBranch instanceof FacilityBranch
+        abort_if(! $activeBranch instanceof FacilityBranch
             || $dataImport->tenant_id !== (string) $user->tenant_id
             || $dataImport->branch_id !== $activeBranch->id
-            || $dataImport->import_type !== 'patients'
-        ) {
-            abort(404);
-        }
+            || $dataImport->import_type !== 'patients', 404);
 
         if ($dataImport->status !== DataImportStatus::Previewed) {
             return to_route('data-upload.index')->withErrors([
@@ -340,6 +427,62 @@ final readonly class DataUploadController implements HasMiddleware
         return to_route('data-upload.index')->with(
             'queued_import_message',
             'Patient import confirmed and queued. Keep the queue worker running, then refresh this page to see the latest result.',
+        );
+    }
+
+    public function confirmFacilityServiceImport(DataImport $dataImport): RedirectResponse
+    {
+        /** @var User $user */
+        $user = request()->user();
+        $activeBranch = BranchContext::getActiveBranch($user);
+
+        abort_if(! $activeBranch instanceof FacilityBranch
+            || $dataImport->tenant_id !== (string) $user->tenant_id
+            || $dataImport->branch_id !== $activeBranch->id
+            || $dataImport->import_type !== 'facility_services', 404);
+
+        if ($dataImport->status !== DataImportStatus::Previewed) {
+            return to_route('data-upload.index')->withErrors([
+                'import' => 'Only previewed facility service imports can be confirmed.',
+            ]);
+        }
+
+        if ($dataImport->preview_count < 1) {
+            return to_route('data-upload.index')->withErrors([
+                'import' => 'This facility service import has no valid rows to commit.',
+            ]);
+        }
+
+        $storedPath = $dataImport->stored_path;
+
+        if (! is_string($storedPath) || $storedPath === '') {
+            return to_route('data-upload.index')->withErrors([
+                'import' => 'The stored import file is missing.',
+            ]);
+        }
+
+        $dataImport->forceFill([
+            'status' => DataImportStatus::Queued->value,
+            'imported_count' => 0,
+            'skipped_count' => 0,
+            'failure_message' => null,
+            'started_at' => null,
+            'completed_at' => null,
+            'failed_at' => null,
+        ])->save();
+
+        dispatch(new ImportFacilityServicesJob(
+            $storedPath,
+            (string) $dataImport->tenant_id,
+            (string) $user->id,
+            $dataImport->id,
+        ));
+
+        session()->forget(self::IMPORT_ERROR_REPORT_SESSION_KEY);
+
+        return to_route('data-upload.index')->with(
+            'queued_import_message',
+            'Facility service import confirmed and queued. Keep the queue worker running, then refresh this page to see the latest result.',
         );
     }
 
@@ -393,14 +536,14 @@ final readonly class DataUploadController implements HasMiddleware
                 disk: 'local',
                 preview: true,
             );
-        } catch (Throwable $exception) {
+        } catch (Throwable $throwable) {
             $dataImport->forceFill([
                 'status' => DataImportStatus::Failed->value,
-                'failure_message' => $exception->getMessage(),
+                'failure_message' => $throwable->getMessage(),
                 'failed_at' => now(),
             ])->save();
 
-            throw $exception;
+            throw $throwable;
         }
 
         $dataImport->forceFill([
@@ -577,7 +720,7 @@ final readonly class DataUploadController implements HasMiddleware
             return [];
         }
 
-        return DataImport::query()
+        $dataImports = DataImport::query()
             ->where('tenant_id', (string) $user->tenant_id)
             ->where('branch_id', $activeBranch->id)
             ->latest()
@@ -597,7 +740,10 @@ final readonly class DataUploadController implements HasMiddleware
                 'completedAt' => $dataImport->completed_at?->toDateTimeString(),
                 'failedAt' => $dataImport->failed_at?->toDateTimeString(),
             ])
+            ->values()
             ->all();
+
+        return array_values($dataImports);
     }
 
     /**

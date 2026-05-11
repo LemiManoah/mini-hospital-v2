@@ -6,8 +6,8 @@ namespace App\Models;
 
 use App\Enums\ImagingLaterality;
 use App\Enums\ImagingModality;
-use App\Enums\ImagingPriority;
 use App\Enums\ImagingOrderStatus;
+use App\Enums\ImagingPriority;
 use App\Enums\PregnancyStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;

@@ -9,10 +9,11 @@ use App\Enums\GeneralStatus;
 use App\Enums\ImagingLaterality;
 use App\Enums\ImagingModality;
 use App\Enums\ImagingPriority;
+use App\Enums\InsurancePolicyType;
 use App\Enums\PregnancyStatus;
 use App\Enums\Priority;
 use App\Models\FacilityService;
-use App\Models\InsurancePackagePrice;
+use App\Models\InsurancePolicyItem;
 use App\Models\InventoryItem;
 use App\Models\LabTestCatalog;
 use App\Models\PatientVisit;
@@ -129,20 +130,34 @@ final readonly class VisitOrderOptions
     {
         $insurancePackageId = $visit->payer?->insurance_package_id;
         $branchId = $visit->facility_branch_id;
+        $policyType = InsurancePolicyType::fromBillableItemType($type);
 
-        if ($insurancePackageId === null || $billableIds === []) {
+        if ($insurancePackageId === null || $billableIds === [] || ! $policyType instanceof InsurancePolicyType) {
             return [];
         }
 
         $today = now()->toDateString();
 
-        return InsurancePackagePrice::query()
+        return InsurancePolicyItem::query()
             ->where('tenant_id', $visit->tenant_id)
-            ->where('facility_branch_id', $branchId)
-            ->where('insurance_package_id', $insurancePackageId)
-            ->where('billable_type', $type->value)
-            ->whereIn('billable_id', $billableIds)
+            ->where('item_type', $type->value)
+            ->whereIn('item_id', $billableIds)
             ->where('status', GeneralStatus::ACTIVE->value)
+            ->whereHas('policy', function (Builder $query) use ($branchId, $insurancePackageId, $policyType, $today): void {
+                $query
+                    ->where('facility_branch_id', $branchId)
+                    ->where('insurance_package_id', $insurancePackageId)
+                    ->where('policy_type', $policyType->value)
+                    ->where('status', GeneralStatus::ACTIVE->value)
+                    ->where(function (Builder $rangeQuery) use ($today): void {
+                        $rangeQuery->whereNull('effective_from')
+                            ->orWhere('effective_from', '<=', $today);
+                    })
+                    ->where(function (Builder $rangeQuery) use ($today): void {
+                        $rangeQuery->whereNull('effective_to')
+                            ->orWhere('effective_to', '>=', $today);
+                    });
+            })
             ->where(function (Builder $query) use ($today): void {
                 $query->whereNull('effective_from')
                     ->orWhere('effective_from', '<=', $today);
@@ -152,10 +167,10 @@ final readonly class VisitOrderOptions
                     ->orWhere('effective_to', '>=', $today);
             })
             ->orderByDesc('effective_from')
-            ->get(['billable_id', 'price'])
-            ->unique('billable_id')
-            ->mapWithKeys(static fn (InsurancePackagePrice $price): array => [
-                $price->billable_id => (float) $price->price,
+            ->get(['item_id', 'price'])
+            ->unique('item_id')
+            ->mapWithKeys(static fn (InsurancePolicyItem $price): array => [
+                $price->item_id => (float) $price->price,
             ])
             ->all();
     }

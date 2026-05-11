@@ -173,6 +173,35 @@ export default function DataUploadIndex({
                     </li>
                 </UploadCard>
 
+                <UploadCard
+                    title="Facility Service Import"
+                    description="Load billable services such as consultations, procedures, ward fees, and nursing services."
+                    instructionsTitle="How to import facility services"
+                    templateUrl={DataUploadController.facilityServiceTemplate.url()}
+                    templateLabel="Download Service Template"
+                    importUrl={DataUploadController.importFacilityServices.url()}
+                    submitLabel="Preview Services"
+                    extraErrorKeys={['branch']}
+                >
+                    <li>Use this for the facility service catalog.</li>
+                    <li>
+                        Required columns are service_code, name, category,
+                        is_billable, and is_active.
+                    </li>
+                    <li>
+                        Supported categories include dressing, physiotherapy,
+                        procedure, dental, nursing, transport, and other.
+                    </li>
+                    <li>
+                        Billable services must have a selling_price. Cost price
+                        can be left blank.
+                    </li>
+                    <li>
+                        Existing service codes are skipped and reported; this
+                        import does not update existing services.
+                    </li>
+                </UploadCard>
+
                 {queuedImportMessage && (
                     <div className="rounded border border-blue-200 bg-blue-50 px-6 py-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
                         {queuedImportMessage}
@@ -387,6 +416,12 @@ export default function DataUploadIndex({
 function confirmImportUrl(dataImport: DataImportSummary): string {
     if (dataImport.importType === 'patients') {
         return DataUploadController.confirmPatientImport.url({
+            dataImport: dataImport.id,
+        });
+    }
+
+    if (dataImport.importType === 'facility_services') {
+        return DataUploadController.confirmFacilityServiceImport.url({
             dataImport: dataImport.id,
         });
     }

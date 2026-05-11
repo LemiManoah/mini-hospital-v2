@@ -250,7 +250,7 @@ it('queues a previewed inventory import after confirmation', function (): void {
 
     $this->actingAs($user)
         ->withSession([BranchContext::SESSION_KEY => $branch->id])
-        ->post("/data-upload/inventory-imports/{$dataImport->id}/confirm")
+        ->post(sprintf('/data-upload/inventory-imports/%s/confirm', $dataImport->id))
         ->assertRedirect('/data-upload')
         ->assertSessionHas('queued_import_message');
 
@@ -275,7 +275,7 @@ it('queues a previewed patient import after confirmation', function (): void {
 
     $this->actingAs($user)
         ->withSession([BranchContext::SESSION_KEY => $branch->id])
-        ->post("/data-upload/patient-imports/{$dataImport->id}/confirm")
+        ->post(sprintf('/data-upload/patient-imports/%s/confirm', $dataImport->id))
         ->assertRedirect('/data-upload')
         ->assertSessionHas('queued_import_message');
 
@@ -457,7 +457,12 @@ it('downloads the latest import error report as csv', function (): void {
 });
 
 it('rejects patient import when no active branch is selected', function (): void {
-    [, , $user] = createDataUploadContext();
+    $tenantContext = seedTenantContext();
+    $user = User::factory()->create([
+        'tenant_id' => $tenantContext['tenant_id'],
+        'email_verified_at' => now(),
+    ]);
+    $user->givePermissionTo('patients.create');
 
     $csv = implode("\n", [
         'first_name,last_name,middle_name,date_of_birth,gender,phone_number,alternative_phone,email,marital_status,blood_group,occupation,religion,next_of_kin_name,next_of_kin_phone,next_of_kin_relationship',
@@ -523,7 +528,9 @@ it('skips duplicate phone numbers within the same uploaded file', function (): v
     expect($result['imported'])->toBe(1);
     expect($result['skipped'])->toBe(1);
     expect($result['errors'][0]['messages'])->toContain('This phone number appears more than once in the uploaded file.');
-    expect(Patient::query()->where('tenant_id', $tenantId)->where('phone_number', '+254712345678')->count())->toBe(1);
+    expect($result['previewRows'])->toHaveCount(1);
+    expect($result['previewRows'][0]['phoneNumber'])->toBe('+254712345678');
+    expect(Patient::query()->where('tenant_id', $tenantId)->where('phone_number', '+254712345678')->count())->toBe(0);
 });
 
 it('allows duplicate patient emails across different tenants', function (): void {
@@ -556,7 +563,9 @@ it('allows duplicate patient emails across different tenants', function (): void
 
     expect($result['imported'])->toBe(1);
     expect($result['skipped'])->toBe(0);
-    expect(Patient::query()->where('tenant_id', $tenantId)->where('email', 'shared@example.com')->exists())->toBeTrue();
+    expect($result['previewRows'])->toHaveCount(1);
+    expect($result['previewRows'][0]['email'])->toBe('shared@example.com');
+    expect(Patient::query()->where('tenant_id', $tenantId)->where('email', 'shared@example.com')->exists())->toBeFalse();
 });
 
 it('rejects an upload without a file', function (): void {

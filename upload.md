@@ -117,13 +117,15 @@ Recommended approach:
 2. Add a preview step before committing rows. Status: implemented for patient and inventory opening stock imports.
 3. Store an import audit record with uploaded filename, user, branch, imported count, skipped count, and timestamps. Status: implemented for patient and inventory imports.
 4. Add queue support for large imports. Status: implemented for patient and inventory opening stock imports after preview confirmation.
-5. Add import pages for insurance price lists and the other setup catalogs listed below.
+5. Add import pages for insurance policy prices and the other setup catalogs listed below.
 
 ## Other Upload Areas To Build
 
 Patient import is only one part of the setup story. These modules should eventually get their own templates, validation rules, preview screens, and import actions.
 
 ### Facility Services
+
+Status: implemented as a previewed and queued setup import.
 
 Useful for loading the hospital charge master: consultations, procedures, ward fees, theatre charges, nursing services, and other billable services.
 
@@ -145,6 +147,7 @@ Important checks:
 - Category must match the existing service category enum.
 - Prices must be numeric and non-negative.
 - Existing services should be updated only through an explicit update mode.
+- Confirmed imports create `facility_services` rows and sync billable services into `charge_masters`.
 
 ### Lab Tests
 
@@ -252,20 +255,16 @@ php artisan queue:work --queue=default --tries=2 --timeout=600
 - Add an import audit table so each queued import has a status, file name, row counts, failure report, tenant, branch, user, and timestamps. Status: implemented.
 - Add preview mode before committing stock, because opening balances are financially meaningful and hard to undo casually. Status: implemented.
 
-### Insurance Price Lists
+### Insurance Policy Prices
 
-Useful for loading negotiated service, drug, and lab prices for insurance packages. This should be its own upload flow because each row must resolve an insurance package plus a billable item.
+Status: moved into the insurance package policy tabs as a previewed and queued import.
 
-Suggested columns:
+Useful for loading service, drug, and lab prices for insurance packages. This is now a policy-level upload flow because each row is imported into a selected package policy.
+
+Suggested policy-specific columns:
 
 ```text
-insurance_company
-insurance_package
-branch
-billable_type
-item_code
-item_name
-negotiated_price
+price
 effective_from
 effective_to
 status
@@ -274,10 +273,10 @@ status
 Important checks:
 
 - Insurance company and package must belong to the current tenant.
-- Branch must resolve to an active branch.
-- `billable_type` should identify service, drug, lab test, or consultation tariff.
+- Branch comes from the active branch context.
+- The selected policy identifies whether rows resolve to services, drugs, or lab tests.
 - Prefer item code matching over name matching when possible.
-- Prevent overlapping effective date windows for the same package, branch, and billable item.
+- Prevent overlapping effective date windows for the same policy and attached item.
 - Do not silently update existing prices unless the import mode explicitly says update.
 
 ### Suppliers
@@ -360,7 +359,7 @@ The safest long-term healthcare import flow is:
 7. Server commits valid rows and stores an import audit record.
 8. User can download an error report for failed rows.
 
-The current implementation is a solid first version of steps 1, 2, 3, 4, 5, 6, 7, and 8 for patient imports and inventory opening stock. Insurance price lists, services, lab tests, suppliers, staff/users, departments, and units should follow the same preview/confirm/audit/queue pattern as they are added.
+The current implementation is a solid first version of steps 1, 2, 3, 4, 5, 6, 7, and 8 for patient imports, inventory opening stock, facility services, and insurance policy prices. Lab tests, suppliers, staff/users, departments, and units should follow the same preview/confirm/audit/queue pattern as they are added.
 
 ## Testing Checklist
 

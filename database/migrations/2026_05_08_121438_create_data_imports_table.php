@@ -25,6 +25,7 @@ return new class extends Migration
             $table->unsignedInteger('preview_count')->default(0);
             $table->json('preview_rows')->nullable();
             $table->json('error_report')->nullable();
+            $table->json('context')->nullable();
             $table->text('failure_message')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();

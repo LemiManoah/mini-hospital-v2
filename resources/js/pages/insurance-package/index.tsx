@@ -150,7 +150,7 @@ export default function InsurancePackageIndex({
                                                     <Link
                                                         href={`/insurance-packages/${insurancePackage.id}`}
                                                     >
-                                                        Price List
+                                                        Policies
                                                     </Link>
                                                 </Button>
                                             ) : null}

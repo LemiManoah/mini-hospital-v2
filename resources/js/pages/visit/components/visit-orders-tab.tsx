@@ -106,8 +106,7 @@ export function VisitOrdersTab({
 }: VisitOrdersTabProps) {
     const labOrders = visit.labOrders ?? visit.lab_orders ?? [];
     const prescriptions = visit.prescriptions ?? [];
-    const imagingOrders =
-        visit.imagingOrders ?? visit.imaging_orders ?? [];
+    const imagingOrders = visit.imagingOrders ?? visit.imaging_orders ?? [];
     const facilityServiceOrders =
         visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
     const isConsultationFinalized =
@@ -121,8 +120,9 @@ export function VisitOrdersTab({
     const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
     const [allergenModalOpen, setAllergenModalOpen] = useState(false);
 
-    const [editingLabOrder, setEditingLabOrder] =
-        useState<LabOrder | null>(null);
+    const [editingLabOrder, setEditingLabOrder] = useState<LabOrder | null>(
+        null,
+    );
     const [editingPrescription, setEditingPrescription] =
         useState<Prescription | null>(null);
     const [editingImagingOrder, setEditingImagingOrder] =

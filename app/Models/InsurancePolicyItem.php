@@ -1,0 +1,41 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\BillableItemType;
+use App\Enums\GeneralStatus;
+use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+final class InsurancePolicyItem extends Model
+{
+    use BelongsToTenant;
+    use HasUuids;
+    use SoftDeletes;
+
+    protected $casts = [
+        'tenant_id' => 'string',
+        'insurance_policy_id' => 'string',
+        'item_id' => 'string',
+        'item_type' => BillableItemType::class,
+        'price' => 'decimal:2',
+        'effective_from' => 'date',
+        'effective_to' => 'date',
+        'status' => GeneralStatus::class,
+        'created_by' => 'string',
+        'updated_by' => 'string',
+    ];
+
+    /**
+     * @return BelongsTo<InsurancePolicy, $this>
+     */
+    public function policy(): BelongsTo
+    {
+        return $this->belongsTo(InsurancePolicy::class, 'insurance_policy_id');
+    }
+}

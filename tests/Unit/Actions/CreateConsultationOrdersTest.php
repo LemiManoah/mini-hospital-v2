@@ -358,7 +358,7 @@ it('moves a registered visit into progress when a visit-level lab order is creat
         ->and($visit->fresh()->started_at)->not->toBeNull();
 });
 
-it('uses insurance package prices when syncing lab order charges', function (): void {
+it('uses insurance policy prices when syncing lab order charges', function (): void {
     $context = seedConsultationContext('insurance');
     $testId = (string) Str::uuid();
     [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
@@ -382,18 +382,7 @@ it('uses insurance package prices when syncing lab order charges', function (): 
         'updated_at' => now(),
     ]);
 
-    DB::table('insurance_package_prices')->insert([
-        'id' => (string) Str::uuid(),
-        'tenant_id' => $context['tenant_id'],
-        'facility_branch_id' => $context['branch_id'],
-        'insurance_package_id' => $context['insurance_package_id'],
-        'billable_type' => 'test',
-        'billable_id' => $testId,
-        'price' => 12000,
-        'status' => 'active',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'lab', 'test', $testId, 12000);
 
     $request = resolve(CreateLabOrder::class)->handle($context['consultation'], CreateLabOrderDTO::fromRequest(createLabOrderDtoRequest([
         'test_ids' => [$testId],
@@ -477,7 +466,7 @@ it('creates a prescription with multiple drug items', function (): void {
         ->and($notification?->data['resource_id'] ?? null)->toBe($prescription->id);
 });
 
-it('uses insurance package prices when syncing prescription charges', function (): void {
+it('uses insurance policy prices when syncing prescription charges', function (): void {
     $context = seedConsultationContext('insurance');
     $drugId = (string) Str::uuid();
 
@@ -499,18 +488,7 @@ it('uses insurance package prices when syncing prescription charges', function (
         'updated_at' => now(),
     ]);
 
-    DB::table('insurance_package_prices')->insert([
-        'id' => (string) Str::uuid(),
-        'tenant_id' => $context['tenant_id'],
-        'facility_branch_id' => $context['branch_id'],
-        'insurance_package_id' => $context['insurance_package_id'],
-        'billable_type' => 'drug',
-        'billable_id' => $drugId,
-        'price' => 1200,
-        'status' => 'active',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'pharmacy', 'drug', $drugId, 1200);
 
     $prescription = resolve(CreatePrescription::class)->handle($context['consultation'], CreatePrescriptionDTO::fromRequest(createPrescriptionDtoRequest([
         'primary_diagnosis' => 'Bacterial infection',
@@ -594,18 +572,7 @@ it('creates a facility service order with consultation context and syncs an insu
         'updated_at' => now(),
     ]);
 
-    DB::table('insurance_package_prices')->insert([
-        'id' => (string) Str::uuid(),
-        'tenant_id' => $context['tenant_id'],
-        'facility_branch_id' => $context['branch_id'],
-        'insurance_package_id' => $context['insurance_package_id'],
-        'billable_type' => 'service',
-        'billable_id' => $serviceId,
-        'price' => 9500,
-        'status' => 'active',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'services', 'service', $serviceId, 9500);
 
     $order = resolve(CreateFacilityServiceOrder::class)->handle(
         $context['consultation'],

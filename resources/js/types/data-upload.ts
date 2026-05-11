@@ -19,6 +19,9 @@ export interface DataImportSummary {
     skippedCount: number;
     previewCount: number;
     failureMessage: string | null;
+    policy?: string | null;
+    policyId?: string | null;
+    policyName?: string | null;
     createdAt: string | null;
     startedAt: string | null;
     completedAt: string | null;

@@ -208,8 +208,7 @@ export default function DoctorConsultationShow({
     const consultation: Consultation | null | undefined = visit.consultation;
     const latestVital = (triage?.vitalSigns ?? triage?.vital_signs ?? [])[0];
     const labOrders = visit.labOrders ?? visit.lab_orders ?? [];
-    const imagingOrders =
-        visit.imagingOrders ?? visit.imaging_orders ?? [];
+    const imagingOrders = visit.imagingOrders ?? visit.imaging_orders ?? [];
     const prescriptions = visit.prescriptions ?? [];
     const facilityServiceOrders =
         visit.facilityServiceOrders ?? visit.facility_service_orders ?? [];
@@ -251,8 +250,9 @@ export default function DoctorConsultationShow({
     const [serviceOrderModalOpen, setServiceOrderModalOpen] = useState(false);
     const [allergenModalOpen, setAllergenModalOpen] = useState(false);
 
-    const [editingLabOrder, setEditingLabOrder] =
-        useState<LabOrder | null>(null);
+    const [editingLabOrder, setEditingLabOrder] = useState<LabOrder | null>(
+        null,
+    );
     const [editingPrescription, setEditingPrescription] =
         useState<Prescription | null>(null);
     const [editingImagingOrder, setEditingImagingOrder] =
@@ -1302,9 +1302,7 @@ export default function DoctorConsultationShow({
                                             imagingOrders={imagingOrders}
                                             canManageOrders={canPlaceOrders}
                                             onEdit={(request) => {
-                                                setEditingImagingOrder(
-                                                    request,
-                                                );
+                                                setEditingImagingOrder(request);
                                                 setImagingModalOpen(true);
                                             }}
                                             onDelete={(request) => {

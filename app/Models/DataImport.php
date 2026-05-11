@@ -33,6 +33,7 @@ final class DataImport extends Model
         'preview_count' => 'integer',
         'preview_rows' => 'array',
         'error_report' => 'array',
+        'context' => 'array',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'failed_at' => 'datetime',

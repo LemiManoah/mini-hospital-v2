@@ -91,7 +91,7 @@ export default function LaboratoryWorklist({
         return () => window.clearTimeout(timeoutId);
     }, [search, status, filters.search, filters.status]);
 
-    const queue = orders.data ?? [];
+    const queue: LaboratoryQueueRequest[] = requests.data ?? [];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

@@ -158,3 +158,41 @@ function seedInsuranceCoverage(string $tenantId, string $insuranceCompanyId, str
         'insurance_package_id' => $insurancePackageId,
     ];
 }
+
+function seedInsurancePolicyItem(
+    string $tenantId,
+    string $branchId,
+    string $insurancePackageId,
+    string $policyType,
+    string $itemType,
+    string $itemId,
+    float $price,
+): string {
+    $policyId = (string) Str::uuid();
+
+    DB::table('insurance_policies')->insert([
+        'id' => $policyId,
+        'tenant_id' => $tenantId,
+        'facility_branch_id' => $branchId,
+        'insurance_package_id' => $insurancePackageId,
+        'name' => sprintf('%s Policy %s', Str::title($policyType), Str::upper(Str::random(6))),
+        'policy_type' => $policyType,
+        'status' => 'active',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('insurance_policy_items')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $tenantId,
+        'insurance_policy_id' => $policyId,
+        'item_type' => $itemType,
+        'item_id' => $itemId,
+        'price' => $price,
+        'status' => 'active',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return $policyId;
+}

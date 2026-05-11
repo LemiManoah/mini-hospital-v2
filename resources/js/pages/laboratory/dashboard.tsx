@@ -347,8 +347,8 @@ export default function LaboratoryDashboard({
                     <CardContent>
                         {recent_orders.length === 0 ? (
                             <div className="rounded-lg border border-dashed px-4 py-12 text-center text-sm text-muted-foreground">
-                                No lab orders are available in the active
-                                branch yet.
+                                No lab orders are available in the active branch
+                                yet.
                             </div>
                         ) : (
                             <Table>

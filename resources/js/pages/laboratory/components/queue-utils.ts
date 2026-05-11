@@ -1,8 +1,8 @@
 import {
-    type LaboratoryQueuePageProps,
-    type LaboratoryQueueRequest,
     type LaboratoryOrderItem,
     type LaboratoryOrderSummary,
+    type LaboratoryQueuePageProps,
+    type LaboratoryQueueRequest,
 } from '@/types/laboratory';
 
 type ResultActor = { first_name: string; last_name: string } | null | undefined;
