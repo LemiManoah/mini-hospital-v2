@@ -1,7 +1,8 @@
 'use client';
 
-import { Link, usePage, type InertiaLinkProps } from '@inertiajs/react';
+import { Link, router, usePage, type InertiaLinkProps } from '@inertiajs/react';
 import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { type MouseEvent } from 'react';
 
 import {
     Collapsible,
@@ -17,6 +18,7 @@ import {
     SidebarMenuSub,
     SidebarMenuSubButton,
     SidebarMenuSubItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 
 type NavHref = NonNullable<InertiaLinkProps['href']>;
@@ -31,6 +33,7 @@ export interface NavMainItem {
 
 export function NavMain({ items }: { items: NavMainItem[] }) {
     const page = usePage();
+    const { state } = useSidebar();
 
     const normalizeHref = (href: NavHref): string => {
         if (typeof href === 'string') {
@@ -95,6 +98,16 @@ export function NavMain({ items }: { items: NavMainItem[] }) {
                                     <SidebarMenuButton
                                         tooltip={item.title}
                                         isActive={active}
+                                        onClick={(
+                                            event: MouseEvent<HTMLButtonElement>,
+                                        ) => {
+                                            if (state === 'collapsed') {
+                                                event.preventDefault();
+                                                router.visit(
+                                                    normalizeHref(item.url),
+                                                );
+                                            }
+                                        }}
                                     >
                                         {item.icon && <item.icon />}
                                         <span>{item.title}</span>

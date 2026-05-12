@@ -68,7 +68,12 @@ function filterNavItems(
             return [];
         }
 
-        const { permission, permissions, items, ...navItem } = item;
+        const navItem: NavMainItem = {
+            title: item.title,
+            url: item.url,
+            icon: item.icon,
+            isActive: item.isActive,
+        };
 
         return [
             {
@@ -266,25 +271,73 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'lab_orders.view',
                     },
                     {
-                        title: 'Management',
+                        title: 'Lab Management',
                         url: '/laboratory/management',
                         items: [
                             {
-                                title: 'Lab Management',
+                                title: 'Overview',
                                 url: '/laboratory/management',
                                 permissions: [
+                                    'lab_test_categories.view',
+                                    'lab_test_catalogs.view',
                                     'specimen_types.view',
                                     'result_types.view',
                                 ],
                             },
                             {
-                                title: 'Lab Stock Management',
+                                title: 'Service Categories',
+                                url: '/lab-test-categories',
+                                permission: 'lab_test_categories.view',
+                            },
+                            {
+                                title: 'Laboratory Services',
+                                url: '/lab-test-catalogs',
+                                permission: 'lab_test_catalogs.view',
+                            },
+                            {
+                                title: 'Specimen Types',
+                                url: '/specimen-types',
+                                permission: 'specimen_types.view',
+                            },
+                            {
+                                title: 'Result Types',
+                                url: '/result-types',
+                                permission: 'result_types.view',
+                            },
+                        ],
+                    },
+                    {
+                        title: 'Lab Stock Management',
+                        url: '/laboratory/stock-management',
+                        items: [
+                            {
+                                title: 'Overview',
                                 url: '/laboratory/stock-management',
                                 permissions: [
                                     'inventory_items.view',
                                     'inventory_requisitions.view',
                                     'goods_receipts.view',
                                 ],
+                            },
+                            {
+                                title: 'Lab Stock',
+                                url: '/laboratory/stock',
+                                permission: 'inventory_items.view',
+                            },
+                            {
+                                title: 'Lab Requisitions',
+                                url: '/laboratory/requisitions',
+                                permission: 'inventory_requisitions.view',
+                            },
+                            {
+                                title: 'Lab Movements',
+                                url: '/laboratory/movements',
+                                permission: 'inventory_items.view',
+                            },
+                            {
+                                title: 'Lab Receipts',
+                                url: '/laboratory/receipts',
+                                permission: 'goods_receipts.view',
                             },
                         ],
                     },

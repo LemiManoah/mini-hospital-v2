@@ -1,6 +1,5 @@
 import InputError from '@/components/input-error';
 import { SearchableSelect } from '@/components/searchable-select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,11 +13,13 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryReconciliationFormPageProps } from '@/types/inventory-reconciliation';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { AlertTriangle, LoaderCircle, PlusCircle, Trash2 } from 'lucide-react';
+import { ChevronDown, LoaderCircle, PlusCircle, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '/inventory/dashboard' },
@@ -59,6 +60,20 @@ export default function InventoryReconciliationCreate({
         notes: '',
         items: [emptyLine()],
     });
+
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+    const toggleExpand = (index: number) => {
+        setExpandedRows((prev) => {
+            const next = new Set(prev);
+            if (next.has(index)) {
+                next.delete(index);
+            } else {
+                next.add(index);
+            }
+            return next;
+        });
+    };
 
     const locationOptions = inventoryLocations.map((location) => ({
         value: location.id,
@@ -120,7 +135,7 @@ export default function InventoryReconciliationCreate({
     const removeLine = (index: number) => {
         if (form.data.items.length === 1) {
             form.setData('items', [emptyLine()]);
-
+            setExpandedRows(new Set());
             return;
         }
 
@@ -128,6 +143,14 @@ export default function InventoryReconciliationCreate({
             'items',
             form.data.items.filter((_, itemIndex) => itemIndex !== index),
         );
+        setExpandedRows((prev) => {
+            const next = new Set<number>();
+            prev.forEach((i) => {
+                if (i < index) next.add(i);
+                if (i > index) next.add(i - 1);
+            });
+            return next;
+        });
     };
 
     const submit = (event: FormEvent) => {
@@ -141,35 +164,13 @@ export default function InventoryReconciliationCreate({
 
             <div className="m-4 max-w-7xl space-y-6">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold">
-                            Create Reconciliation
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Record the actual quantity found for each item in
-                            one location. The system will calculate the variance
-                            for review, approval, and posting.
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                            The reconciliation number will be generated
-                            automatically when you save.
-                        </p>
-                    </div>
+                    <h1 className="text-2xl font-semibold">
+                        New Reconciliation
+                    </h1>
                     <Button variant="outline" asChild>
                         <Link href="/reconciliations">Back</Link>
                     </Button>
                 </div>
-
-                <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>How to use this form</AlertTitle>
-                    <AlertDescription>
-                        Enter the actual quantity you found. If the actual
-                        quantity is lower than the system quantity, choose the
-                        batch to reduce. If it is higher, you can capture new
-                        batch details for the stock being added.
-                    </AlertDescription>
-                </Alert>
 
                 <form onSubmit={submit} className="space-y-6">
                     <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -195,7 +196,7 @@ export default function InventoryReconciliationCreate({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="reconciliation_date">
-                                    Reconciliation Date
+                                    Date
                                 </Label>
                                 <Input
                                     id="reconciliation_date"
@@ -225,7 +226,7 @@ export default function InventoryReconciliationCreate({
                                             event.target.value,
                                         )
                                     }
-                                    placeholder="Cycle count, damage, expiry, shelf verification, opening balance..."
+                                    placeholder="Cycle count, damage, expiry, shelf verification..."
                                     required
                                 />
                                 <InputError message={form.errors.reason} />
@@ -251,19 +252,11 @@ export default function InventoryReconciliationCreate({
 
                     <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <div className="mb-4 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-lg font-medium">
-                                    Reconciliation Lines
-                                </h2>
-                                <p className="text-sm text-muted-foreground">
-                                    Each line compares one item&apos;s system
-                                    quantity with what you actually found in the
-                                    selected location.
-                                </p>
-                            </div>
+                            <h2 className="text-lg font-medium">Lines</h2>
                             <Button
                                 type="button"
                                 variant="outline"
+                                size="sm"
                                 onClick={addLine}
                             >
                                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -274,7 +267,7 @@ export default function InventoryReconciliationCreate({
                         <InputError message={form.errors.items} />
 
                         <div className="overflow-x-auto">
-                            <Table className="min-w-[1280px]">
+                            <Table className="min-w-[860px]">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-56">
@@ -290,19 +283,13 @@ export default function InventoryReconciliationCreate({
                                             Variance
                                         </TableHead>
                                         <TableHead className="w-48">
-                                            Batch To Reconcile
+                                            Batch
                                         </TableHead>
                                         <TableHead className="w-28">
                                             Unit Cost
                                         </TableHead>
-                                        <TableHead className="w-36">
-                                            New Batch #
-                                        </TableHead>
-                                        <TableHead className="w-36">
-                                            Expiry Date
-                                        </TableHead>
-                                        <TableHead>Notes</TableHead>
-                                        <TableHead className="w-16" />
+                                        <TableHead className="w-10" />
+                                        <TableHead className="w-10" />
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -315,243 +302,342 @@ export default function InventoryReconciliationCreate({
                                         );
                                         const variance = actualQty - systemQty;
                                         const isLoss = variance < 0;
+                                        const isGain = variance > 0;
                                         const availableBatchOptions =
                                             batchOptionsFor(
                                                 line.inventory_item_id,
                                             );
+                                        const isExpanded =
+                                            isGain || expandedRows.has(index);
 
                                         return (
-                                            <TableRow key={index}>
-                                                <TableCell className="align-top">
-                                                    <SearchableSelect
-                                                        options={itemOptions}
-                                                        value={
-                                                            line.inventory_item_id
-                                                        }
-                                                        onValueChange={(
-                                                            value,
-                                                        ) =>
-                                                            replaceLine(
-                                                                index,
-                                                                (
-                                                                    currentLine,
-                                                                ) => {
-                                                                    const item =
-                                                                        inventoryItems.find(
-                                                                            (
-                                                                                inventoryItem,
-                                                                            ) =>
-                                                                                inventoryItem.id ===
+                                            <>
+                                                <TableRow key={`row-${index}`}>
+                                                    <TableCell className="align-top">
+                                                        <SearchableSelect
+                                                            options={
+                                                                itemOptions
+                                                            }
+                                                            value={
+                                                                line.inventory_item_id
+                                                            }
+                                                            onValueChange={(
+                                                                value,
+                                                            ) =>
+                                                                replaceLine(
+                                                                    index,
+                                                                    (
+                                                                        currentLine,
+                                                                    ) => {
+                                                                        const item =
+                                                                            inventoryItems.find(
+                                                                                (
+                                                                                    inventoryItem,
+                                                                                ) =>
+                                                                                    inventoryItem.id ===
+                                                                                    value,
+                                                                            );
+                                                                        const currentBalance =
+                                                                            locationBalanceFor(
                                                                                 value,
-                                                                        );
-                                                                    const currentBalance =
-                                                                        locationBalanceFor(
-                                                                            value,
-                                                                        );
+                                                                            );
 
-                                                                    return {
-                                                                        ...currentLine,
-                                                                        inventory_item_id:
-                                                                            value,
-                                                                        inventory_batch_id:
-                                                                            '',
-                                                                        actual_quantity:
-                                                                            currentBalance.toFixed(
-                                                                                3,
-                                                                            ),
-                                                                        unit_cost:
-                                                                            currentLine.unit_cost ||
-                                                                            item?.default_purchase_price ||
-                                                                            '',
-                                                                    };
-                                                                },
-                                                            )
-                                                        }
-                                                        placeholder="Select item"
-                                                        emptyMessage="No items found."
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            form.errors[
-                                                                `items.${index}.inventory_item_id` as keyof typeof form.errors
-                                                            ]
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="text-right align-top font-medium">
-                                                    {systemQty.toFixed(3)}
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    <Input
-                                                        type="number"
-                                                        step="any"
-                                                        min="0"
-                                                        value={
-                                                            line.actual_quantity
-                                                        }
-                                                        onChange={(event) =>
-                                                            updateLine(
-                                                                index,
-                                                                'actual_quantity',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                        placeholder="Actual quantity"
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            form.errors[
-                                                                `items.${index}.actual_quantity` as keyof typeof form.errors
-                                                            ]
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="text-right align-top font-medium">
-                                                    {variance.toFixed(3)}
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    {isLoss ? (
-                                                        <>
-                                                            <SearchableSelect
-                                                                options={
-                                                                    availableBatchOptions
-                                                                }
-                                                                value={
-                                                                    line.inventory_batch_id
-                                                                }
-                                                                onValueChange={(
-                                                                    value,
-                                                                ) =>
-                                                                    updateLine(
-                                                                        index,
-                                                                        'inventory_batch_id',
-                                                                        value,
-                                                                    )
-                                                                }
-                                                                placeholder="Select batch for loss"
-                                                                emptyMessage="No matching batches."
-                                                                allowClear
-                                                            />
-                                                            <InputError
-                                                                message={
-                                                                    form.errors[
-                                                                        `items.${index}.inventory_batch_id` as keyof typeof form.errors
-                                                                    ]
-                                                                }
-                                                            />
-                                                        </>
-                                                    ) : (
-                                                        <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
-                                                            Only needed when
-                                                            actual quantity is
-                                                            lower than system
-                                                            quantity.
-                                                        </div>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    <Input
-                                                        type="number"
-                                                        step="any"
-                                                        min="0"
-                                                        value={line.unit_cost}
-                                                        onChange={(event) =>
-                                                            updateLine(
-                                                                index,
-                                                                'unit_cost',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            form.errors[
-                                                                `items.${index}.unit_cost` as keyof typeof form.errors
-                                                            ]
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    <Input
-                                                        value={
-                                                            line.batch_number
-                                                        }
-                                                        onChange={(event) =>
-                                                            updateLine(
-                                                                index,
-                                                                'batch_number',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                        placeholder="Optional for gains"
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            form.errors[
-                                                                `items.${index}.batch_number` as keyof typeof form.errors
-                                                            ]
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    <Input
-                                                        type="date"
-                                                        value={line.expiry_date}
-                                                        onChange={(event) =>
-                                                            updateLine(
-                                                                index,
-                                                                'expiry_date',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            form.errors[
-                                                                `items.${index}.expiry_date` as keyof typeof form.errors
-                                                            ]
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    <Textarea
-                                                        rows={2}
-                                                        value={line.notes}
-                                                        onChange={(event) =>
-                                                            updateLine(
-                                                                index,
-                                                                'notes',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                        placeholder="Optional line note"
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            form.errors[
-                                                                `items.${index}.notes` as keyof typeof form.errors
-                                                            ]
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="text-right align-top">
-                                                    <Button
-                                                        type="button"
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        onClick={() =>
-                                                            removeLine(index)
-                                                        }
+                                                                        return {
+                                                                            ...currentLine,
+                                                                            inventory_item_id:
+                                                                                value,
+                                                                            inventory_batch_id:
+                                                                                '',
+                                                                            actual_quantity:
+                                                                                currentBalance.toFixed(
+                                                                                    3,
+                                                                                ),
+                                                                            unit_cost:
+                                                                                currentLine.unit_cost ||
+                                                                                item?.default_purchase_price ||
+                                                                                '',
+                                                                        };
+                                                                    },
+                                                                )
+                                                            }
+                                                            placeholder="Select item"
+                                                            emptyMessage="No items found."
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                form.errors[
+                                                                    `items.${index}.inventory_item_id` as keyof typeof form.errors
+                                                                ]
+                                                            }
+                                                        />
+                                                    </TableCell>
+
+                                                    <TableCell className="text-right align-top font-medium">
+                                                        {systemQty.toFixed(3)}
+                                                    </TableCell>
+
+                                                    <TableCell className="align-top">
+                                                        <Input
+                                                            type="number"
+                                                            step="any"
+                                                            min="0"
+                                                            value={
+                                                                line.actual_quantity
+                                                            }
+                                                            onChange={(event) =>
+                                                                updateLine(
+                                                                    index,
+                                                                    'actual_quantity',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            placeholder="0.000"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                form.errors[
+                                                                    `items.${index}.actual_quantity` as keyof typeof form.errors
+                                                                ]
+                                                            }
+                                                        />
+                                                    </TableCell>
+
+                                                    <TableCell
+                                                        className={cn(
+                                                            'text-right align-top font-medium',
+                                                            isLoss &&
+                                                                'text-red-600 dark:text-red-400',
+                                                            isGain &&
+                                                                'text-green-600 dark:text-green-400',
+                                                        )}
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
+                                                        {variance !== 0
+                                                            ? (variance > 0
+                                                                  ? '+'
+                                                                  : '') +
+                                                              variance.toFixed(
+                                                                  3,
+                                                              )
+                                                            : '—'}
+                                                    </TableCell>
+
+                                                    <TableCell className="align-top">
+                                                        {isLoss ? (
+                                                            <>
+                                                                <SearchableSelect
+                                                                    options={
+                                                                        availableBatchOptions
+                                                                    }
+                                                                    value={
+                                                                        line.inventory_batch_id
+                                                                    }
+                                                                    onValueChange={(
+                                                                        value,
+                                                                    ) =>
+                                                                        updateLine(
+                                                                            index,
+                                                                            'inventory_batch_id',
+                                                                            value,
+                                                                        )
+                                                                    }
+                                                                    placeholder="Select batch"
+                                                                    emptyMessage="No batches."
+                                                                    allowClear
+                                                                />
+                                                                <InputError
+                                                                    message={
+                                                                        form
+                                                                            .errors[
+                                                                            `items.${index}.inventory_batch_id` as keyof typeof form.errors
+                                                                        ]
+                                                                    }
+                                                                />
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-sm text-muted-foreground">
+                                                                —
+                                                            </span>
+                                                        )}
+                                                    </TableCell>
+
+                                                    <TableCell className="align-top">
+                                                        <Input
+                                                            type="number"
+                                                            step="any"
+                                                            min="0"
+                                                            value={
+                                                                line.unit_cost
+                                                            }
+                                                            onChange={(event) =>
+                                                                updateLine(
+                                                                    index,
+                                                                    'unit_cost',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            placeholder="0.00"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                form.errors[
+                                                                    `items.${index}.unit_cost` as keyof typeof form.errors
+                                                                ]
+                                                            }
+                                                        />
+                                                    </TableCell>
+
+                                                    <TableCell className="align-top">
+                                                        <Button
+                                                            type="button"
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                toggleExpand(
+                                                                    index,
+                                                                )
+                                                            }
+                                                            title={
+                                                                isExpanded
+                                                                    ? 'Collapse'
+                                                                    : 'Expand'
+                                                            }
+                                                        >
+                                                            <ChevronDown
+                                                                className={cn(
+                                                                    'h-4 w-4 transition-transform',
+                                                                    isExpanded &&
+                                                                        'rotate-180',
+                                                                )}
+                                                            />
+                                                        </Button>
+                                                    </TableCell>
+
+                                                    <TableCell className="align-top">
+                                                        <Button
+                                                            type="button"
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                removeLine(
+                                                                    index,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+
+                                                {isExpanded ? (
+                                                    <TableRow
+                                                        key={`expand-${index}`}
+                                                        className="bg-zinc-50 dark:bg-zinc-800/50"
+                                                    >
+                                                        <TableCell
+                                                            colSpan={8}
+                                                            className="px-4 py-3"
+                                                        >
+                                                            <div className="grid grid-cols-3 gap-4">
+                                                                <div className="grid gap-1.5">
+                                                                    <Label className="text-xs">
+                                                                        New
+                                                                        Batch #
+                                                                    </Label>
+                                                                    <Input
+                                                                        value={
+                                                                            line.batch_number
+                                                                        }
+                                                                        onChange={(
+                                                                            event,
+                                                                        ) =>
+                                                                            updateLine(
+                                                                                index,
+                                                                                'batch_number',
+                                                                                event
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        placeholder="Optional for gains"
+                                                                    />
+                                                                    <InputError
+                                                                        message={
+                                                                            form
+                                                                                .errors[
+                                                                                `items.${index}.batch_number` as keyof typeof form.errors
+                                                                            ]
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                                <div className="grid gap-1.5">
+                                                                    <Label className="text-xs">
+                                                                        Expiry
+                                                                        Date
+                                                                    </Label>
+                                                                    <Input
+                                                                        type="date"
+                                                                        value={
+                                                                            line.expiry_date
+                                                                        }
+                                                                        onChange={(
+                                                                            event,
+                                                                        ) =>
+                                                                            updateLine(
+                                                                                index,
+                                                                                'expiry_date',
+                                                                                event
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                    <InputError
+                                                                        message={
+                                                                            form
+                                                                                .errors[
+                                                                                `items.${index}.expiry_date` as keyof typeof form.errors
+                                                                            ]
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                                <div className="grid gap-1.5">
+                                                                    <Label className="text-xs">
+                                                                        Notes
+                                                                    </Label>
+                                                                    <Textarea
+                                                                        rows={2}
+                                                                        value={
+                                                                            line.notes
+                                                                        }
+                                                                        onChange={(
+                                                                            event,
+                                                                        ) =>
+                                                                            updateLine(
+                                                                                index,
+                                                                                'notes',
+                                                                                event
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        placeholder="Optional note"
+                                                                    />
+                                                                    <InputError
+                                                                        message={
+                                                                            form
+                                                                                .errors[
+                                                                                `items.${index}.notes` as keyof typeof form.errors
+                                                                            ]
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ) : null}
+                                            </>
                                         );
                                     })}
                                 </TableBody>
@@ -568,10 +654,8 @@ export default function InventoryReconciliationCreate({
                         >
                             {form.processing ? (
                                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                            )}
-                            Create Reconciliation
+                            ) : null}
+                            Save Reconciliation
                         </Button>
                         <Button variant="ghost" type="button" asChild>
                             <Link href="/reconciliations">Cancel</Link>

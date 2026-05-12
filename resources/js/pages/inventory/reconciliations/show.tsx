@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -21,11 +20,13 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
-import { formatDate, formatDateTime } from '@/lib/date';
+import { formatDate } from '@/lib/date';
 import { usePermissions } from '@/lib/permissions';
+import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { type InventoryReconciliationShowPageProps } from '@/types/inventory-reconciliation';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { CheckCircle2, Circle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const labelize = (value: string): string =>
@@ -41,6 +42,60 @@ const badgeVariant = (
         : status === 'rejected'
           ? 'destructive'
           : 'secondary';
+
+type WorkflowStepProps = {
+    label: string;
+    date?: string | null;
+    completed: boolean;
+    rejected?: boolean;
+};
+
+function WorkflowStep({ label, date, completed, rejected }: WorkflowStepProps) {
+    const Icon = rejected ? XCircle : completed ? CheckCircle2 : Circle;
+
+    return (
+        <div className="flex flex-col items-center gap-1">
+            <Icon
+                className={cn(
+                    'h-5 w-5',
+                    rejected
+                        ? 'text-red-500'
+                        : completed
+                          ? 'text-primary'
+                          : 'text-zinc-300 dark:text-zinc-600',
+                )}
+            />
+            <span
+                className={cn(
+                    'text-xs font-medium',
+                    rejected
+                        ? 'text-red-500'
+                        : completed
+                          ? 'text-foreground'
+                          : 'text-muted-foreground',
+                )}
+            >
+                {label}
+            </span>
+            {date ? (
+                <span className="text-xs text-muted-foreground">
+                    {formatDate(date)}
+                </span>
+            ) : null}
+        </div>
+    );
+}
+
+function StepConnector({ completed }: { completed: boolean }) {
+    return (
+        <div
+            className={cn(
+                'mb-5 h-0.5 flex-1',
+                completed ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-700',
+            )}
+        />
+    );
+}
 
 export default function InventoryReconciliationShow({
     reconciliation,
@@ -60,6 +115,7 @@ export default function InventoryReconciliationShow({
     });
     const submitForm = useForm({});
     const postForm = useForm({});
+
     const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
     const [postDialogOpen, setPostDialogOpen] = useState(false);
 
@@ -73,6 +129,7 @@ export default function InventoryReconciliationShow({
     ];
 
     const canUpdate = hasPermission('stock_adjustments.update');
+    const lineRows = reconciliation.items ?? [];
 
     useEffect(() => {
         if (flash?.reconciliationPrompt === 'submit') {
@@ -84,7 +141,62 @@ export default function InventoryReconciliationShow({
         }
     }, [flash?.reconciliationPrompt]);
 
-    const lineRows = reconciliation.items ?? [];
+    const isRejected = !!reconciliation.rejected_at;
+
+    const confirmationTable = (
+        <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead className="text-right">System Qty</TableHead>
+                        <TableHead className="text-right">Actual Qty</TableHead>
+                        <TableHead className="text-right">Variance</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {lineRows.map((item) => {
+                        const variance = Number(
+                            item.variance_quantity ?? item.quantity_delta,
+                        );
+                        return (
+                            <TableRow key={item.id}>
+                                <TableCell className="font-medium">
+                                    {item.inventory_item?.generic_name ??
+                                        item.inventory_item?.name ??
+                                        '-'}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    {Number(
+                                        item.expected_quantity ?? 0,
+                                    ).toFixed(3)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    {Number(
+                                        item.actual_quantity ??
+                                            item.expected_quantity ??
+                                            0,
+                                    ).toFixed(3)}
+                                </TableCell>
+                                <TableCell
+                                    className={cn(
+                                        'text-right font-medium',
+                                        variance < 0 &&
+                                            'text-red-600 dark:text-red-400',
+                                        variance > 0 &&
+                                            'text-green-600 dark:text-green-400',
+                                    )}
+                                >
+                                    {variance > 0 ? '+' : ''}
+                                    {variance.toFixed(3)}
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
+                </TableBody>
+            </Table>
+        </div>
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -92,317 +204,212 @@ export default function InventoryReconciliationShow({
                 title={`Reconciliation: ${reconciliation.adjustment_number}`}
             />
 
+            {/* Submit dialog */}
+            <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+                <DialogContent className="sm:max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Submit for Review?</DialogTitle>
+                    </DialogHeader>
+                    {confirmationTable}
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setSubmitDialogOpen(false)}
+                        >
+                            Keep Draft
+                        </Button>
+                        <Button
+                            type="button"
+                            disabled={submitForm.processing}
+                            onClick={() =>
+                                submitForm.post(
+                                    `/reconciliations/${reconciliation.id}/submit`,
+                                )
+                            }
+                        >
+                            Submit For Review
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Post dialog */}
+            <Dialog open={postDialogOpen} onOpenChange={setPostDialogOpen}>
+                <DialogContent className="sm:max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Post Reconciliation?</DialogTitle>
+                    </DialogHeader>
+                    {confirmationTable}
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setPostDialogOpen(false)}
+                        >
+                            Not Yet
+                        </Button>
+                        <Button
+                            type="button"
+                            disabled={postForm.processing}
+                            onClick={() =>
+                                postForm.post(
+                                    `/reconciliations/${reconciliation.id}/post`,
+                                )
+                            }
+                        >
+                            Post Reconciliation
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <div className="m-4 max-w-7xl space-y-6">
-                <Dialog
-                    open={submitDialogOpen}
-                    onOpenChange={setSubmitDialogOpen}
-                >
-                    <DialogContent className="sm:max-w-3xl">
-                        <DialogHeader>
-                            <DialogTitle>
-                                Submit Reconciliation For Review?
-                            </DialogTitle>
-                            <DialogDescription>
-                                Review the old and new quantities below, then
-                                submit this reconciliation. Submitting does not
-                                change stock yet. It sends the record into the
-                                review and approval workflow so another user can
-                                confirm it before posting.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Item</TableHead>
-                                        <TableHead className="text-right">
-                                            Old Qty
-                                        </TableHead>
-                                        <TableHead className="text-right">
-                                            New Qty
-                                        </TableHead>
-                                        <TableHead className="text-right">
-                                            Variance
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {lineRows.map((item) => (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="font-medium">
-                                                {item.inventory_item
-                                                    ?.generic_name ??
-                                                    item.inventory_item?.name ??
-                                                    '-'}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {Number(
-                                                    item.expected_quantity ?? 0,
-                                                ).toFixed(3)}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {Number(
-                                                    item.actual_quantity ??
-                                                        item.expected_quantity ??
-                                                        0,
-                                                ).toFixed(3)}
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium">
-                                                {Number(
-                                                    item.variance_quantity ??
-                                                        item.quantity_delta,
-                                                ).toFixed(3)}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                {/* Header strip */}
+                <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-0.5">
+                        <div className="flex items-center gap-3">
+                            <h1 className="font-mono text-2xl font-semibold">
+                                {reconciliation.adjustment_number}
+                            </h1>
+                            <Badge
+                                variant={badgeVariant(
+                                    reconciliation.workflow_status,
+                                )}
+                            >
+                                {labelize(reconciliation.workflow_status)}
+                            </Badge>
                         </div>
-
-                        <DialogFooter>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setSubmitDialogOpen(false)}
-                            >
-                                Keep Draft
-                            </Button>
-                            <Button
-                                type="button"
-                                disabled={submitForm.processing}
-                                onClick={() =>
-                                    submitForm.post(
-                                        `/reconciliations/${reconciliation.id}/submit`,
-                                    )
-                                }
-                            >
+                        <p className="text-sm text-muted-foreground">
+                            {reconciliation.inventory_location?.name ?? '-'} ·{' '}
+                            {formatDate(reconciliation.adjustment_date)}
+                        </p>
+                        <p className="text-sm">{reconciliation.reason}</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                        {canUpdate && reconciliation.can_submit ? (
+                            <Button onClick={() => setSubmitDialogOpen(true)}>
                                 Submit For Review
                             </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <Dialog open={postDialogOpen} onOpenChange={setPostDialogOpen}>
-                    <DialogContent className="sm:max-w-3xl">
-                        <DialogHeader>
-                            <DialogTitle>
-                                Post Approved Reconciliation?
-                            </DialogTitle>
-                            <DialogDescription>
-                                Posting will create the final stock movements
-                                for the variances below and immediately update
-                                balances for this location. Only post when the
-                                approval is fully confirmed.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Item</TableHead>
-                                        <TableHead className="text-right">
-                                            Old Qty
-                                        </TableHead>
-                                        <TableHead className="text-right">
-                                            New Qty
-                                        </TableHead>
-                                        <TableHead className="text-right">
-                                            Variance
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {lineRows.map((item) => (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="font-medium">
-                                                {item.inventory_item
-                                                    ?.generic_name ??
-                                                    item.inventory_item?.name ??
-                                                    '-'}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {Number(
-                                                    item.expected_quantity ?? 0,
-                                                ).toFixed(3)}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {Number(
-                                                    item.actual_quantity ??
-                                                        item.expected_quantity ??
-                                                        0,
-                                                ).toFixed(3)}
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium">
-                                                {Number(
-                                                    item.variance_quantity ??
-                                                        item.quantity_delta,
-                                                ).toFixed(3)}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-
-                        <DialogFooter>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setPostDialogOpen(false)}
-                            >
-                                Not Yet
-                            </Button>
-                            <Button
-                                type="button"
-                                disabled={postForm.processing}
-                                onClick={() =>
-                                    postForm.post(
-                                        `/reconciliations/${reconciliation.id}/post`,
-                                    )
-                                }
-                            >
+                        ) : null}
+                        {canUpdate && reconciliation.can_post ? (
+                            <Button onClick={() => setPostDialogOpen(true)}>
                                 Post Reconciliation
                             </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold">
-                            {reconciliation.adjustment_number}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            {reconciliation.inventory_location?.name ?? '-'} |{' '}
-                            {reconciliation.reason}
-                        </p>
+                        ) : null}
+                        <Button variant="outline" asChild>
+                            <Link href="/reconciliations">Back</Link>
+                        </Button>
                     </div>
-                    <Button variant="outline" asChild>
-                        <Link href="/reconciliations">Back</Link>
-                    </Button>
                 </div>
 
-                <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="grid gap-4 md:grid-cols-4">
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Status
-                            </span>
-                            <div className="mt-1">
-                                <Badge
-                                    variant={badgeVariant(
-                                        reconciliation.workflow_status,
-                                    )}
-                                >
-                                    {labelize(reconciliation.workflow_status)}
-                                </Badge>
-                            </div>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Date
-                            </span>
-                            <p className="mt-1 font-medium">
-                                {formatDate(reconciliation.adjustment_date)}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Posted At
-                            </span>
-                            <p className="mt-1 font-medium">
-                                {formatDateTime(reconciliation.posted_at)}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Location
-                            </span>
-                            <p className="mt-1 font-medium">
-                                {reconciliation.inventory_location?.name ?? '-'}
-                            </p>
-                        </div>
+                {/* Workflow progress bar */}
+                <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="flex items-center gap-2">
+                        <WorkflowStep label="Draft" completed={true} />
+                        <StepConnector
+                            completed={!!reconciliation.submitted_at}
+                        />
+                        <WorkflowStep
+                            label="Submitted"
+                            date={reconciliation.submitted_at}
+                            completed={!!reconciliation.submitted_at}
+                        />
+                        <StepConnector
+                            completed={
+                                !!reconciliation.reviewed_at || isRejected
+                            }
+                        />
+                        {isRejected ? (
+                            <WorkflowStep
+                                label="Rejected"
+                                date={reconciliation.rejected_at}
+                                completed={true}
+                                rejected={true}
+                            />
+                        ) : (
+                            <>
+                                <WorkflowStep
+                                    label="Reviewed"
+                                    date={reconciliation.reviewed_at}
+                                    completed={!!reconciliation.reviewed_at}
+                                />
+                                <StepConnector
+                                    completed={!!reconciliation.approved_at}
+                                />
+                                <WorkflowStep
+                                    label="Approved"
+                                    date={reconciliation.approved_at}
+                                    completed={!!reconciliation.approved_at}
+                                />
+                                <StepConnector
+                                    completed={!!reconciliation.posted_at}
+                                />
+                                <WorkflowStep
+                                    label="Posted"
+                                    date={reconciliation.posted_at}
+                                    completed={!!reconciliation.posted_at}
+                                />
+                            </>
+                        )}
                     </div>
+                </div>
 
-                    <div className="mt-4 grid gap-4 border-t pt-4 md:grid-cols-2">
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Notes
-                            </span>
-                            <p className="mt-1">
-                                {reconciliation.notes ?? '-'}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Workflow
-                            </span>
-                            <div className="mt-1 space-y-1 text-sm">
-                                <p>
-                                    Submitted:{' '}
-                                    {formatDateTime(
-                                        reconciliation.submitted_at,
-                                    )}
-                                </p>
-                                <p>
-                                    Reviewed:{' '}
-                                    {formatDateTime(reconciliation.reviewed_at)}
-                                </p>
-                                <p>
-                                    Approved:{' '}
-                                    {formatDateTime(reconciliation.approved_at)}
-                                </p>
-                                <p>
-                                    Rejected:{' '}
-                                    {formatDateTime(reconciliation.rejected_at)}
-                                </p>
-                            </div>
-                        </div>
+                {/* Conditional notes — only the relevant one */}
+                {reconciliation.rejection_reason ? (
+                    <div className="rounded border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
+                        <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                            Rejection Reason
+                        </p>
+                        <p className="mt-1 text-sm text-red-600 dark:text-red-300">
+                            {reconciliation.rejection_reason}
+                        </p>
                     </div>
+                ) : null}
 
-                    <div className="mt-4 grid gap-4 border-t pt-4 md:grid-cols-3">
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Review Notes
-                            </span>
-                            <p className="mt-1">
-                                {reconciliation.review_notes ?? '-'}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Approval Notes
-                            </span>
-                            <p className="mt-1">
-                                {reconciliation.approval_notes ?? '-'}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Rejection Reason
-                            </span>
-                            <p className="mt-1">
-                                {reconciliation.rejection_reason ?? '-'}
-                            </p>
-                        </div>
+                {!reconciliation.rejection_reason &&
+                reconciliation.review_notes ? (
+                    <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                        <p className="text-sm font-medium text-muted-foreground">
+                            Review Notes
+                        </p>
+                        <p className="mt-1 text-sm">
+                            {reconciliation.review_notes}
+                        </p>
                     </div>
+                ) : null}
 
-                    {canUpdate ? (
-                        <div className="mt-4 space-y-4 border-t pt-4">
-                            {reconciliation.can_submit ? (
-                                <Button
-                                    size="sm"
-                                    onClick={() => setSubmitDialogOpen(true)}
-                                >
-                                    Submit For Review
-                                </Button>
-                            ) : null}
+                {!reconciliation.rejection_reason &&
+                reconciliation.approval_notes ? (
+                    <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                        <p className="text-sm font-medium text-muted-foreground">
+                            Approval Notes
+                        </p>
+                        <p className="mt-1 text-sm">
+                            {reconciliation.approval_notes}
+                        </p>
+                    </div>
+                ) : null}
 
-                            {reconciliation.can_review ? (
+                {reconciliation.notes ? (
+                    <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                        <p className="text-sm font-medium text-muted-foreground">
+                            Notes
+                        </p>
+                        <p className="mt-1 text-sm">{reconciliation.notes}</p>
+                    </div>
+                ) : null}
+
+                {/* Action panel — one section at a time */}
+                {canUpdate ? (
+                    <>
+                        {reconciliation.can_review ? (
+                            <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                                <p className="mb-3 text-sm font-medium">
+                                    Mark as Reviewed
+                                </p>
                                 <form
-                                    className="grid gap-2"
+                                    className="grid gap-3"
                                     onSubmit={(event) => {
                                         event.preventDefault();
                                         reviewForm.post(
@@ -410,113 +417,135 @@ export default function InventoryReconciliationShow({
                                         );
                                     }}
                                 >
-                                    <Label htmlFor="review_notes">
-                                        Review Notes
-                                    </Label>
-                                    <Textarea
-                                        id="review_notes"
-                                        value={reviewForm.data.review_notes}
-                                        onChange={(event) =>
-                                            reviewForm.setData(
-                                                'review_notes',
-                                                event.target.value,
-                                            )
-                                        }
-                                        rows={3}
-                                    />
-                                    <div className="flex gap-2">
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="review_notes">
+                                            Review Notes
+                                        </Label>
+                                        <Textarea
+                                            id="review_notes"
+                                            value={reviewForm.data.review_notes}
+                                            onChange={(event) =>
+                                                reviewForm.setData(
+                                                    'review_notes',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={3}
+                                        />
+                                    </div>
+                                    <div>
                                         <Button size="sm" type="submit">
                                             Mark Reviewed
                                         </Button>
                                     </div>
                                 </form>
-                            ) : null}
+                            </div>
+                        ) : null}
 
-                            {reconciliation.can_approve ? (
-                                <form
-                                    className="grid gap-2"
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        approvalForm.post(
-                                            `/reconciliations/${reconciliation.id}/approve`,
-                                        );
-                                    }}
-                                >
-                                    <Label htmlFor="approval_notes">
-                                        Approval Notes
-                                    </Label>
-                                    <Textarea
-                                        id="approval_notes"
-                                        value={approvalForm.data.approval_notes}
-                                        onChange={(event) =>
-                                            approvalForm.setData(
-                                                'approval_notes',
-                                                event.target.value,
-                                            )
-                                        }
-                                        rows={3}
-                                    />
-                                    <div className="flex gap-2">
-                                        <Button size="sm" type="submit">
+                        {reconciliation.can_approve ||
+                        reconciliation.can_reject ? (
+                            <div
+                                className={cn(
+                                    'grid gap-4',
+                                    reconciliation.can_approve &&
+                                        reconciliation.can_reject &&
+                                        'md:grid-cols-2',
+                                )}
+                            >
+                                {reconciliation.can_approve ? (
+                                    <div className="rounded border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                                        <p className="mb-3 text-sm font-medium">
                                             Approve
-                                        </Button>
-                                    </div>
-                                </form>
-                            ) : null}
-
-                            {reconciliation.can_reject ? (
-                                <form
-                                    className="grid gap-2"
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        rejectionForm.post(
-                                            `/reconciliations/${reconciliation.id}/reject`,
-                                        );
-                                    }}
-                                >
-                                    <Label htmlFor="rejection_reason">
-                                        Rejection Reason
-                                    </Label>
-                                    <Input
-                                        id="rejection_reason"
-                                        value={
-                                            rejectionForm.data.rejection_reason
-                                        }
-                                        onChange={(event) =>
-                                            rejectionForm.setData(
-                                                'rejection_reason',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <div className="flex gap-2">
-                                        <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            type="submit"
+                                        </p>
+                                        <form
+                                            className="grid gap-3"
+                                            onSubmit={(event) => {
+                                                event.preventDefault();
+                                                approvalForm.post(
+                                                    `/reconciliations/${reconciliation.id}/approve`,
+                                                );
+                                            }}
                                         >
-                                            Reject
-                                        </Button>
+                                            <div className="grid gap-1.5">
+                                                <Label htmlFor="approval_notes">
+                                                    Approval Notes
+                                                </Label>
+                                                <Textarea
+                                                    id="approval_notes"
+                                                    value={
+                                                        approvalForm.data
+                                                            .approval_notes
+                                                    }
+                                                    onChange={(event) =>
+                                                        approvalForm.setData(
+                                                            'approval_notes',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    rows={3}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Button size="sm" type="submit">
+                                                    Approve
+                                                </Button>
+                                            </div>
+                                        </form>
                                     </div>
-                                </form>
-                            ) : null}
+                                ) : null}
 
-                            {reconciliation.can_post ? (
-                                <Button
-                                    size="sm"
-                                    onClick={() => setPostDialogOpen(true)}
-                                >
-                                    Post Reconciliation
-                                </Button>
-                            ) : null}
-                        </div>
-                    ) : null}
-                </div>
+                                {reconciliation.can_reject ? (
+                                    <div className="rounded border border-red-100 bg-white p-4 shadow-sm dark:border-red-900/40 dark:bg-zinc-900">
+                                        <p className="mb-3 text-sm font-medium text-red-600 dark:text-red-400">
+                                            Reject
+                                        </p>
+                                        <form
+                                            className="grid gap-3"
+                                            onSubmit={(event) => {
+                                                event.preventDefault();
+                                                rejectionForm.post(
+                                                    `/reconciliations/${reconciliation.id}/reject`,
+                                                );
+                                            }}
+                                        >
+                                            <div className="grid gap-1.5">
+                                                <Label htmlFor="rejection_reason">
+                                                    Rejection Reason
+                                                </Label>
+                                                <Input
+                                                    id="rejection_reason"
+                                                    value={
+                                                        rejectionForm.data
+                                                            .rejection_reason
+                                                    }
+                                                    onChange={(event) =>
+                                                        rejectionForm.setData(
+                                                            'rejection_reason',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+                                            <div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    type="submit"
+                                                >
+                                                    Reject
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                ) : null}
+                            </div>
+                        ) : null}
+                    </>
+                ) : null}
 
+                {/* Reconciliation lines */}
                 <div className="rounded border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <h2 className="mb-4 text-lg font-medium">
-                        Reconciliation Lines
-                    </h2>
+                    <h2 className="mb-4 text-base font-medium">Lines</h2>
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
@@ -539,61 +568,81 @@ export default function InventoryReconciliationShow({
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {lineRows.map((item) => (
-                                    <TableRow key={item.id}>
-                                        <TableCell className="font-medium">
-                                            {item.inventory_item
-                                                ?.generic_name ??
-                                                item.inventory_item?.name ??
-                                                '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {item.inventory_batch
-                                                ?.batch_number ??
-                                                item.batch_number ??
-                                                '-'}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {Number(
-                                                item.expected_quantity ?? 0,
-                                            ).toFixed(3)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {Number(
-                                                item.actual_quantity ??
-                                                    item.expected_quantity ??
-                                                    0,
-                                            ).toFixed(3)}
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium">
-                                            {Number(
-                                                item.variance_quantity ??
-                                                    item.quantity_delta,
-                                            ).toFixed(3)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {item.unit_cost !== null
-                                                ? Number(
-                                                      item.unit_cost,
-                                                  ).toLocaleString(undefined, {
-                                                      minimumFractionDigits: 2,
-                                                  })
-                                                : '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {item.notes ?? '-'}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                {lineRows.map((item) => {
+                                    const variance = Number(
+                                        item.variance_quantity ??
+                                            item.quantity_delta,
+                                    );
+
+                                    return (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="font-medium">
+                                                {item.inventory_item
+                                                    ?.generic_name ??
+                                                    item.inventory_item?.name ??
+                                                    '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {item.inventory_batch
+                                                    ?.batch_number ??
+                                                    item.batch_number ??
+                                                    '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {Number(
+                                                    item.expected_quantity ?? 0,
+                                                ).toFixed(3)}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {Number(
+                                                    item.actual_quantity ??
+                                                        item.expected_quantity ??
+                                                        0,
+                                                ).toFixed(3)}
+                                            </TableCell>
+                                            <TableCell
+                                                className={cn(
+                                                    'text-right font-medium',
+                                                    variance < 0 &&
+                                                        'text-red-600 dark:text-red-400',
+                                                    variance > 0 &&
+                                                        'text-green-600 dark:text-green-400',
+                                                )}
+                                            >
+                                                {variance !== 0
+                                                    ? (variance > 0
+                                                          ? '+'
+                                                          : '') +
+                                                      variance.toFixed(3)
+                                                    : '—'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {item.unit_cost !== null
+                                                    ? Number(
+                                                          item.unit_cost,
+                                                      ).toLocaleString(
+                                                          undefined,
+                                                          {
+                                                              minimumFractionDigits: 2,
+                                                          },
+                                                      )
+                                                    : '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {item.notes ?? '-'}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </div>
                 </div>
 
                 <AuditTimelineCard
-                    title="Reconciliation Audit Log"
+                    title="Audit Log"
                     entries={audit_activity}
-                    emptyMessage="No reconciliation audit activity recorded yet."
+                    emptyMessage="No audit activity recorded yet."
                 />
             </div>
         </AppLayout>

@@ -95,7 +95,11 @@ final readonly class InventoryItemController implements HasMiddleware
                         ->oldest('expiry_date');
                 },
                 'stockMovements' => static function (HasMany $query) use ($locationIds): void {
-                    $query->with(['inventoryLocation:id,name', 'user:id,name']);
+                    $query->with([
+                        'inventoryLocation:id,name',
+                        'user:id,staff_id,email',
+                        'user.staff:id,first_name,last_name',
+                    ]);
 
                     if ($locationIds === []) {
                         $query->whereRaw('1 = 0');

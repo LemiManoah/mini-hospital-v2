@@ -20,7 +20,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { formatDate, formatDateTime } from '@/lib/date';
+import { formatDate } from '@/lib/date';
 import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type InventoryReconciliationIndexPageProps } from '@/types/inventory-reconciliation';
@@ -92,7 +92,7 @@ export default function InventoryReconciliationsIndex({
                     <div className="flex flex-1 flex-col gap-3 md:flex-row">
                         <div className="w-full md:max-w-sm">
                             <Input
-                                placeholder="Search by reconciliation number or reason..."
+                                placeholder="Search by number or reason..."
                                 value={search}
                                 onChange={(event) =>
                                     setSearch(event.target.value)
@@ -121,24 +121,32 @@ export default function InventoryReconciliationsIndex({
                     ) : null}
                 </div>
 
-                <div className="overflow-x-auto rounded border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="overflow-x-auto rounded border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>Number</TableHead>
                                 <TableHead>Location</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Reason</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Posted At</TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {rows.length > 0 ? (
                                 rows.map((reconciliation) => (
-                                    <TableRow key={reconciliation.id}>
+                                    <TableRow
+                                        key={reconciliation.id}
+                                        className="cursor-pointer"
+                                        onClick={() =>
+                                            router.visit(
+                                                `/reconciliations/${reconciliation.id}`,
+                                            )
+                                        }
+                                    >
+                                        <TableCell className="font-mono font-medium">
+                                            {reconciliation.adjustment_number}
+                                        </TableCell>
                                         <TableCell>
                                             {reconciliation.inventory_location
                                                 ?.name ?? '-'}
@@ -162,30 +170,12 @@ export default function InventoryReconciliationsIndex({
                                                 )}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>
-                                            {formatDateTime(
-                                                reconciliation.posted_at,
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={`/reconciliations/${reconciliation.id}`}
-                                                >
-                                                    View
-                                                </Link>
-                                            </Button>
-                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={7}
+                                        colSpan={5}
                                         className="py-10 text-center text-muted-foreground"
                                     >
                                         No reconciliations found.
@@ -196,7 +186,7 @@ export default function InventoryReconciliationsIndex({
                     </Table>
 
                     {reconciliations.links?.length > 3 ? (
-                        <div className="mt-4">
+                        <div className="mt-4 px-4 pb-4">
                             <Pagination>
                                 <PaginationContent>
                                     <PaginationItem>
