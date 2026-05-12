@@ -369,7 +369,7 @@ final readonly class DataUploadController implements HasMiddleware
 
         return to_route('data-upload.index')->with(
             'queued_import_message',
-            ucfirst($itemType->value).' import confirmed and queued. Keep the queue worker running, then refresh this page to see the latest result.',
+            ucfirst($itemType->value).' import confirmed and queued. This page will update automatically as the queue runs.',
         );
     }
 
@@ -426,7 +426,7 @@ final readonly class DataUploadController implements HasMiddleware
 
         return to_route('data-upload.index')->with(
             'queued_import_message',
-            'Patient import confirmed and queued. Keep the queue worker running, then refresh this page to see the latest result.',
+            'Patient import confirmed and queued. This page will update automatically as the queue runs.',
         );
     }
 
@@ -482,7 +482,7 @@ final readonly class DataUploadController implements HasMiddleware
 
         return to_route('data-upload.index')->with(
             'queued_import_message',
-            'Facility service import confirmed and queued. Keep the queue worker running, then refresh this page to see the latest result.',
+            'Facility service import confirmed and queued. This page will update automatically as the queue runs.',
         );
     }
 

@@ -21,15 +21,12 @@ import {
 
 type NavHref = NonNullable<InertiaLinkProps['href']>;
 
-interface NavMainItem {
+export interface NavMainItem {
     title: string;
     url: NavHref;
     icon?: LucideIcon;
     isActive?: boolean;
-    items?: {
-        title: string;
-        url: NavHref;
-    }[];
+    items?: NavMainItem[];
 }
 
 export function NavMain({ items }: { items: NavMainItem[] }) {
@@ -56,20 +53,18 @@ export function NavMain({ items }: { items: NavMainItem[] }) {
         return page.url === url || page.url.startsWith(`${url}/`);
     };
 
+    const isItemActive = (item: NavMainItem): boolean =>
+        item.isActive ??
+        (isActive(item.url) ||
+            Boolean(item.items?.some((child) => isItemActive(child))));
+
     return (
         <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => {
                     const hasChildren = (item.items?.length ?? 0) > 0;
-                    const active =
-                        item.isActive ??
-                        (isActive(item.url) ||
-                            Boolean(
-                                item.items?.some((subItem) =>
-                                    isActive(subItem.url),
-                                ),
-                            ));
+                    const active = isItemActive(item);
 
                     if (!hasChildren) {
                         return (
@@ -109,26 +104,12 @@ export function NavMain({ items }: { items: NavMainItem[] }) {
                                 <CollapsibleContent>
                                     <SidebarMenuSub>
                                         {item.items?.map((subItem) => (
-                                            <SidebarMenuSubItem
+                                            <NavSubItem
                                                 key={subItem.title}
-                                            >
-                                                <SidebarMenuSubButton
-                                                    asChild
-                                                    isActive={isActive(
-                                                        subItem.url,
-                                                    )}
-                                                >
-                                                    <Link
-                                                        href={subItem.url}
-                                                        prefetch
-                                                        className="truncate"
-                                                    >
-                                                        <span>
-                                                            {subItem.title}
-                                                        </span>
-                                                    </Link>
-                                                </SidebarMenuSubButton>
-                                            </SidebarMenuSubItem>
+                                                item={subItem}
+                                                isActive={isActive}
+                                                isItemActive={isItemActive}
+                                            />
                                         ))}
                                     </SidebarMenuSub>
                                 </CollapsibleContent>
@@ -138,5 +119,69 @@ export function NavMain({ items }: { items: NavMainItem[] }) {
                 })}
             </SidebarMenu>
         </SidebarGroup>
+    );
+}
+
+function NavSubItem({
+    item,
+    isActive,
+    isItemActive,
+}: {
+    item: NavMainItem;
+    isActive: (href: NavHref) => boolean;
+    isItemActive: (item: NavMainItem) => boolean;
+}) {
+    const hasChildren = (item.items?.length ?? 0) > 0;
+
+    if (!hasChildren) {
+        return (
+            <SidebarMenuSubItem>
+                <SidebarMenuSubButton asChild isActive={isActive(item.url)}>
+                    <Link href={item.url} prefetch className="truncate">
+                        <span>{item.title}</span>
+                    </Link>
+                </SidebarMenuSubButton>
+            </SidebarMenuSubItem>
+        );
+    }
+
+    const active = isItemActive(item);
+
+    return (
+        <Collapsible
+            asChild
+            defaultOpen={active}
+            className="group/sub-collapsible"
+        >
+            <SidebarMenuSubItem>
+                <CollapsibleTrigger asChild>
+                    <SidebarMenuSubButton isActive={active}>
+                        <span className="truncate">{item.title}</span>
+                        <ChevronRight className="ml-auto size-3 transition-transform duration-200 group-data-[state=open]/sub-collapsible:rotate-90" />
+                    </SidebarMenuSubButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <SidebarMenuSub className="mx-2.5 mt-1 px-2">
+                        {item.items?.map((child) => (
+                            <SidebarMenuSubItem key={child.title}>
+                                <SidebarMenuSubButton
+                                    asChild
+                                    size="sm"
+                                    isActive={isActive(child.url)}
+                                >
+                                    <Link
+                                        href={child.url}
+                                        prefetch
+                                        className="truncate"
+                                    >
+                                        <span>{child.title}</span>
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                        ))}
+                    </SidebarMenuSub>
+                </CollapsibleContent>
+            </SidebarMenuSubItem>
+        </Collapsible>
     );
 }

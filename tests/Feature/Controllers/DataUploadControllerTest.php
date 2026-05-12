@@ -598,3 +598,51 @@ it('shows import results from session flash on the index page', function (): voi
             ->where('importResult.skipped', 1),
         );
 });
+
+it('exposes queued import rows and completed results for automatic status refreshes', function (): void {
+    [$tenantId, $branch, $user] = createDataUploadContext();
+
+    DataImport::query()->create([
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'user_id' => $user->id,
+        'import_type' => 'patients',
+        'source_filename' => 'patients-queued.csv',
+        'stored_path' => 'imports/patients/patients-queued.csv',
+        'status' => DataImportStatus::Queued,
+        'created_at' => now()->subMinute(),
+        'updated_at' => now()->subMinute(),
+    ]);
+
+    DataImport::query()->create([
+        'tenant_id' => $tenantId,
+        'branch_id' => $branch->id,
+        'user_id' => $user->id,
+        'import_type' => 'patients',
+        'source_filename' => 'patients-complete.csv',
+        'stored_path' => 'imports/patients/patients-complete.csv',
+        'status' => DataImportStatus::Completed,
+        'imported_count' => 7,
+        'skipped_count' => 2,
+        'error_report' => [
+            ['row' => 4, 'name' => 'Skipped Patient', 'messages' => ['Duplicate phone number.']],
+        ],
+        'completed_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->withSession([BranchContext::SESSION_KEY => $branch->id])
+        ->get('/data-upload')
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('data-upload/index')
+            ->where('dataImports.0.status', 'completed')
+            ->where('dataImports.1.status', 'queued')
+            ->where('importResult.imported', 7)
+            ->where('importResult.skipped', 2)
+            ->where('importResultMode', 'import')
+            ->where('hasErrorReport', true),
+        );
+});

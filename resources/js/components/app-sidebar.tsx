@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
-import { NavMain } from '@/components/nav-main';
+import { NavMain, type NavMainItem } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
@@ -44,30 +44,40 @@ import { create as createUsers, index as indexUsers } from '@/routes/users';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 
-type NavChild = {
-    title: string;
-    url: string;
+type SidebarNavItem = Omit<NavMainItem, 'items'> & {
     permission?: string;
     permissions?: string[];
+    items?: SidebarNavItem[];
 };
 
-function filterItems(
-    items: NavChild[],
+function filterNavItems(
+    items: SidebarNavItem[],
     hasPermission: (permission: string) => boolean,
-): Array<{ title: string; url: string }> {
-    return items
-        .filter((item) => {
-            if (item.permission) {
-                return hasPermission(item.permission);
-            }
+): NavMainItem[] {
+    return items.flatMap((item): NavMainItem[] => {
+        const filteredChildren = item.items
+            ? filterNavItems(item.items, hasPermission)
+            : [];
+        const canViewItem = item.permission
+            ? hasPermission(item.permission)
+            : item.permissions
+              ? item.permissions.some(hasPermission)
+              : item.items === undefined;
 
-            if (item.permissions) {
-                return item.permissions.some(hasPermission);
-            }
+        if (!canViewItem && filteredChildren.length === 0) {
+            return [];
+        }
 
-            return true;
-        })
-        .map(({ title, url }) => ({ title, url }));
+        const { permission, permissions, items, ...navItem } = item;
+
+        return [
+            {
+                ...navItem,
+                items:
+                    filteredChildren.length > 0 ? filteredChildren : undefined,
+            },
+        ];
+    });
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -83,8 +93,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const activeBranchName = (
         user.active_branch as { name?: string } | null | undefined
     )?.name;
-    const canSwitchFacility =
-        Boolean(user.is_support) || hasRole('super_admin');
     const canAccessFacilityManager =
         hasPermission('tenants.view') &&
         (Boolean(user.is_support) || hasRole('super_admin'));
@@ -102,7 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Dashboard',
             url: dashboard(),
             icon: LayoutGrid,
-            items: filterItems(
+            items: filterNavItems(
                 [{ title: 'Overview', url: dashboard().url }],
                 hasPermission,
             ),
@@ -125,7 +133,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Outpatient',
             url: dashboard(),
             icon: Bot,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'Register Patient',
@@ -155,7 +163,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Appointments',
             url: '/appointments',
             icon: CalendarDays,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'Bookings',
@@ -178,19 +186,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'doctor_schedules.view',
                     },
                     {
-                        title: 'Schedule Exceptions',
+                        title: 'Configuration',
                         url: '/appointments/exceptions',
-                        permission: 'doctor_schedule_exceptions.view',
-                    },
-                    {
-                        title: 'Categories',
-                        url: '/appointment-categories',
-                        permission: 'appointment_categories.view',
-                    },
-                    {
-                        title: 'Modes',
-                        url: '/appointment-modes',
-                        permission: 'appointment_modes.view',
+                        items: [
+                            {
+                                title: 'Schedule Exceptions',
+                                url: '/appointments/exceptions',
+                                permission: 'doctor_schedule_exceptions.view',
+                            },
+                            {
+                                title: 'Categories',
+                                url: '/appointment-categories',
+                                permission: 'appointment_categories.view',
+                            },
+                            {
+                                title: 'Modes',
+                                url: '/appointment-modes',
+                                permission: 'appointment_modes.view',
+                            },
+                        ],
                     },
                 ],
                 hasPermission,
@@ -200,7 +214,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Triage',
             url: '/triage',
             icon: HeartPulse,
-            items: filterItems(
+            items: filterNavItems(
                 [{ title: 'Queue', url: '/triage', permission: 'triage.view' }],
                 hasPermission,
             ),
@@ -209,7 +223,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Doctors',
             url: '/doctors/consultations',
             icon: UserRoundSearch,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'Consultation',
@@ -224,7 +238,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Laboratory',
             url: '/laboratory/dashboard',
             icon: FlaskConical,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'Dashboard',
@@ -252,20 +266,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'lab_orders.view',
                     },
                     {
-                        title: 'Lab Management',
+                        title: 'Management',
                         url: '/laboratory/management',
-                        permissions: [
-                            'specimen_types.view',
-                            'result_types.view',
-                        ],
-                    },
-                    {
-                        title: 'Lab Stock Management',
-                        url: '/laboratory/stock-management',
-                        permissions: [
-                            'inventory_items.view',
-                            'inventory_requisitions.view',
-                            'goods_receipts.view',
+                        items: [
+                            {
+                                title: 'Lab Management',
+                                url: '/laboratory/management',
+                                permissions: [
+                                    'specimen_types.view',
+                                    'result_types.view',
+                                ],
+                            },
+                            {
+                                title: 'Lab Stock Management',
+                                url: '/laboratory/stock-management',
+                                permissions: [
+                                    'inventory_items.view',
+                                    'inventory_requisitions.view',
+                                    'goods_receipts.view',
+                                ],
+                            },
                         ],
                     },
                 ],
@@ -276,11 +296,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Pharmacy',
             url: '/pharmacy/queue',
             icon: PillBottle,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'Pharmacy Queue',
                         url: '/pharmacy/queue',
+                        permission: 'visits.view',
+                    },
+                    {
+                        title: 'Dispense History',
+                        url: '/pharmacy/dispenses',
                         permission: 'visits.view',
                     },
                     {
@@ -294,29 +319,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'pharmacy_pos.view_history',
                     },
                     {
-                        title: 'Pharmacy Stock',
+                        title: 'Stock',
                         url: '/pharmacy/stock',
-                        permission: 'inventory_items.view',
-                    },
-                    {
-                        title: 'Pharmacy Requisitions',
-                        url: '/pharmacy/requisitions',
-                        permission: 'inventory_requisitions.view',
-                    },
-                    {
-                        title: 'Pharmacy Movements',
-                        url: '/pharmacy/movements',
-                        permission: 'inventory_items.view',
-                    },
-                    {
-                        title: 'Pharmacy Receipts',
-                        url: '/pharmacy/receipts',
-                        permission: 'goods_receipts.view',
-                    },
-                    {
-                        title: 'Dispense History',
-                        url: '/pharmacy/dispenses',
-                        permission: 'visits.view',
+                        items: [
+                            {
+                                title: 'Pharmacy Stock',
+                                url: '/pharmacy/stock',
+                                permission: 'inventory_items.view',
+                            },
+                            {
+                                title: 'Pharmacy Requisitions',
+                                url: '/pharmacy/requisitions',
+                                permission: 'inventory_requisitions.view',
+                            },
+                            {
+                                title: 'Pharmacy Movements',
+                                url: '/pharmacy/movements',
+                                permission: 'inventory_items.view',
+                            },
+                            {
+                                title: 'Pharmacy Receipts',
+                                url: '/pharmacy/receipts',
+                                permission: 'goods_receipts.view',
+                            },
+                        ],
                     },
                 ],
                 hasPermission,
@@ -326,7 +352,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Inventory',
             url: '/inventory/dashboard',
             icon: Boxes,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'Dashboard',
@@ -334,52 +360,68 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'inventory_items.view',
                     },
                     {
-                        title: 'Items',
+                        title: 'Stock',
                         url: '/inventory-items',
-                        permission: 'inventory_items.view',
+                        items: [
+                            {
+                                title: 'Items',
+                                url: '/inventory-items',
+                                permission: 'inventory_items.view',
+                            },
+                            {
+                                title: 'Locations',
+                                url: '/inventory-locations',
+                                permission: 'inventory_locations.view',
+                            },
+                            {
+                                title: 'Stock By Location',
+                                url: '/inventory/stock-by-location',
+                                permission: 'inventory_items.view',
+                            },
+                            {
+                                title: 'Stock Movements',
+                                url: '/inventory/reports/movements',
+                                permission: 'inventory_items.view',
+                            },
+                        ],
                     },
                     {
-                        title: 'Locations',
-                        url: '/inventory-locations',
-                        permission: 'inventory_locations.view',
-                    },
-                    {
-                        title: 'Suppliers',
-                        url: '/suppliers',
-                        permission: 'suppliers.view',
-                    },
-                    {
-                        title: 'Purchase Orders',
+                        title: 'Procurement',
                         url: '/purchase-orders',
-                        permission: 'purchase_orders.view',
+                        items: [
+                            {
+                                title: 'Suppliers',
+                                url: '/suppliers',
+                                permission: 'suppliers.view',
+                            },
+                            {
+                                title: 'Purchase Orders',
+                                url: '/purchase-orders',
+                                permission: 'purchase_orders.view',
+                            },
+                            {
+                                title: 'Goods Receipts',
+                                url: '/goods-receipts',
+                                permission: 'goods_receipts.view',
+                            },
+                        ],
                     },
                     {
-                        title: 'Goods Receipts',
-                        url: '/goods-receipts',
-                        permission: 'goods_receipts.view',
+                        title: 'Requisitions',
+                        url: '/inventory-requisitions',
+                        items: canAccessIncomingRequisitions
+                            ? [
+                                  {
+                                      title: 'Incoming Requisitions',
+                                      url: '/inventory-requisitions',
+                                  },
+                              ]
+                            : [],
                     },
-                    ...(canAccessIncomingRequisitions
-                        ? [
-                              {
-                                  title: 'Incoming Requisitions',
-                                  url: '/inventory-requisitions',
-                              },
-                          ]
-                        : []),
                     {
                         title: 'Reconciliations',
                         url: '/reconciliations',
                         permission: 'stock_adjustments.view',
-                    },
-                    {
-                        title: 'Stock By Location',
-                        url: '/inventory/stock-by-location',
-                        permission: 'inventory_items.view',
-                    },
-                    {
-                        title: 'Stock Movements',
-                        url: '/inventory/reports/movements',
-                        permission: 'inventory_items.view',
                     },
                 ],
                 hasPermission,
@@ -389,7 +431,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Finance & Accounting',
             url: '/finance/opd-payments',
             icon: CircleDollarSign,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'Incoming OPD Payments',
@@ -397,29 +439,47 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         permission: 'payments.view',
                     },
                     {
-                        title: 'Insurance Invoices',
+                        title: 'Insurance',
                         url: '/finance/insurance-invoices',
-                        permission: 'insurance_claims.view',
+                        items: [
+                            {
+                                title: 'Insurance Invoices',
+                                url: '/finance/insurance-invoices',
+                                permission: 'insurance_claims.view',
+                            },
+                        ],
                     },
                     {
-                        title: 'Deposits',
+                        title: 'Accounts',
                         url: '/finance/deposits',
-                        permission: 'billing_deposits.view',
+                        items: [
+                            {
+                                title: 'Deposits',
+                                url: '/finance/deposits',
+                                permission: 'billing_deposits.view',
+                            },
+                            {
+                                title: 'Debtors',
+                                url: '/finance/debtors',
+                                permission: 'visit_billings.view',
+                            },
+                        ],
                     },
                     {
-                        title: 'Debtors',
-                        url: '/finance/debtors',
-                        permission: 'visit_billings.view',
-                    },
-                    {
-                        title: 'Billing Summary',
+                        title: 'Reports',
                         url: '/finance/billing-summary',
-                        permission: 'reports.view',
-                    },
-                    {
-                        title: 'Daily Revenue',
-                        url: '/reports/daily-revenue',
-                        permission: 'reports.view',
+                        items: [
+                            {
+                                title: 'Billing Summary',
+                                url: '/finance/billing-summary',
+                                permission: 'reports.view',
+                            },
+                            {
+                                title: 'Daily Revenue',
+                                url: '/reports/daily-revenue',
+                                permission: 'reports.view',
+                            },
+                        ],
                     },
                 ],
                 hasPermission,
@@ -429,7 +489,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'User Management',
             url: indexUsers(),
             icon: UserCog,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'View Users',
@@ -454,7 +514,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Staff Management',
             url: indexStaff(),
             icon: Users,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'View Staff',
@@ -479,7 +539,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: 'Administration',
             url: '/administration/general-settings',
             icon: Shield,
-            items: filterItems(
+            items: filterNavItems(
                 [
                     {
                         title: 'General Settings',
@@ -519,22 +579,63 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {
                         title: 'Insurance Setup',
                         url: '/administration/insurance-setup',
-                        permissions: [
-                            'insurance_companies.view',
-                            'insurance_packages.view',
+                        items: [
+                            {
+                                title: 'Companies',
+                                url: '/insurance-companies',
+                                permission: 'insurance_companies.view',
+                            },
+                            {
+                                title: 'Packages',
+                                url: '/insurance-packages',
+                                permission: 'insurance_packages.view',
+                            },
                         ],
                     },
                     {
                         title: 'Master Data',
                         url: '/administration/master-data',
-                        permissions: [
-                            'addresses.view',
-                            'allergens.view',
-                            'currencies.view',
-                            'units.view',
-                            'clinics.view',
-                            'departments.view',
-                            'facility_services.view',
+                        items: [
+                            {
+                                title: 'Branches',
+                                url: '/facility-branches',
+                                permission: 'facility_branches.view',
+                            },
+                            {
+                                title: 'Clinics',
+                                url: '/clinics',
+                                permission: 'clinics.view',
+                            },
+                            {
+                                title: 'Departments',
+                                url: indexDepartments().url,
+                                permission: 'departments.view',
+                            },
+                            {
+                                title: 'Facility Services',
+                                url: '/facility-services',
+                                permission: 'facility_services.view',
+                            },
+                            {
+                                title: 'Addresses',
+                                url: '/addresses',
+                                permission: 'addresses.view',
+                            },
+                            {
+                                title: 'Allergens',
+                                url: '/allergens',
+                                permission: 'allergens.view',
+                            },
+                            {
+                                title: 'Currencies',
+                                url: '/currencies',
+                                permission: 'currencies.view',
+                            },
+                            {
+                                title: 'Units',
+                                url: '/units',
+                                permission: 'units.view',
+                            },
                         ],
                     },
                     {
@@ -542,16 +643,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         url: '/data-upload',
                         permission: 'patients.create',
                     },
-                    ...(canSwitchFacility ||
-                    hasPermission('subscription_packages.view') ||
-                    hasPermission('facility_branches.view')
-                        ? [
-                              {
-                                  title: 'Platform',
-                                  url: '/administration/platform',
-                              },
-                          ]
-                        : []),
                 ],
                 hasPermission,
             ),
@@ -562,7 +653,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       title: 'Facility Manager',
                       url: '/facility-manager/dashboard',
                       icon: Building,
-                      items: filterItems(
+                      items: filterNavItems(
                           [
                               {
                                   title: 'Dashboard',

@@ -58,6 +58,7 @@ import {
 import {
     type ChangeEvent,
     type FormEvent,
+    useEffect,
     useMemo,
     useRef,
     useState,
@@ -151,6 +152,47 @@ export default function InsurancePackageShow({
     );
     const [itemPolicy, setItemPolicy] = useState<InsurancePolicy | null>(null);
     const [includeInitialItem, setIncludeInitialItem] = useState(false);
+    const shouldRefreshImportStatus = policyImports.some((dataImport) =>
+        ['queued', 'processing'].includes(dataImport.status),
+    );
+
+    useEffect(() => {
+        if (!shouldRefreshImportStatus) {
+            return;
+        }
+
+        let cancelled = false;
+        let timeoutId: number | undefined;
+
+        const refreshImportStatus = () => {
+            router.reload({
+                only: [
+                    'policies',
+                    'policyImports',
+                    'importResult',
+                    'importResultMode',
+                ],
+                onFinish: () => {
+                    if (!cancelled) {
+                        timeoutId = window.setTimeout(
+                            refreshImportStatus,
+                            4000,
+                        );
+                    }
+                },
+            });
+        };
+
+        timeoutId = window.setTimeout(refreshImportStatus, 4000);
+
+        return () => {
+            cancelled = true;
+
+            if (timeoutId !== undefined) {
+                window.clearTimeout(timeoutId);
+            }
+        };
+    }, [shouldRefreshImportStatus]);
 
     const policyForm = useForm<PolicyFormData>({
         name: '',
@@ -188,6 +230,12 @@ export default function InsurancePackageShow({
     const activeItemOptions = itemPolicy
         ? itemOptionsForPolicy(itemPolicy.policyType, billableItems)
         : [];
+    const importResultPolicyId =
+        selectedPolicyId ??
+        policyImports.find((dataImport) =>
+            ['previewed', 'completed', 'failed'].includes(dataImport.status),
+        )?.policyId ??
+        null;
 
     function openCreatePolicy() {
         policyForm.reset();
@@ -463,7 +511,7 @@ export default function InsurancePackageShow({
                                             dataImport.policyId === policy.id,
                                     )}
                                     importResult={
-                                        selectedPolicyId === policy.id
+                                        importResultPolicyId === policy.id
                                             ? importResult
                                             : null
                                     }

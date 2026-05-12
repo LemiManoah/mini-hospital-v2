@@ -31,6 +31,7 @@ import {
     type ChangeEvent,
     type FormEvent,
     type ReactNode,
+    useEffect,
     useRef,
 } from 'react';
 
@@ -49,6 +50,48 @@ export default function DataUploadIndex({
     queuedImportMessage,
     dataImports,
 }: DataUploadIndexPageProps) {
+    const shouldRefreshImportStatus = dataImports.some((dataImport) =>
+        ['queued', 'processing'].includes(dataImport.status),
+    );
+
+    useEffect(() => {
+        if (!shouldRefreshImportStatus) {
+            return;
+        }
+
+        let cancelled = false;
+        let timeoutId: number | undefined;
+
+        const refreshImportStatus = () => {
+            router.reload({
+                only: [
+                    'dataImports',
+                    'importResult',
+                    'importResultMode',
+                    'hasErrorReport',
+                ],
+                onFinish: () => {
+                    if (!cancelled) {
+                        timeoutId = window.setTimeout(
+                            refreshImportStatus,
+                            4000,
+                        );
+                    }
+                },
+            });
+        };
+
+        timeoutId = window.setTimeout(refreshImportStatus, 4000);
+
+        return () => {
+            cancelled = true;
+
+            if (timeoutId !== undefined) {
+                window.clearTimeout(timeoutId);
+            }
+        };
+    }, [shouldRefreshImportStatus]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Data Upload" />

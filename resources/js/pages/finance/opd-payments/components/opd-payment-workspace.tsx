@@ -1,7 +1,12 @@
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -11,10 +16,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissions } from '@/lib/permissions';
 import {
-    billingStatusClasses,
     formatDateTime,
     formatMoney,
 } from '@/pages/visit/components/visit-show-utils';
@@ -23,25 +35,9 @@ import {
     type FinanceOpdVisitBilling,
 } from '@/types/finance';
 import { type VisitCharge, type VisitPayment } from '@/types/patient';
-import { Receipt } from 'lucide-react';
-
-type PaymentFormState = {
-    amount: string;
-    payment_method_id: string;
-    payment_date: string;
-    reference_number: string;
-    notes: string;
-};
-
-type PaymentFormErrors = Partial<Record<keyof PaymentFormState, string>>;
-
-type DiscountFormState = {
-    amount: string;
-    reason: string;
-    notes: string;
-};
-
-type DiscountFormErrors = Partial<Record<keyof DiscountFormState, string>>;
+import { router, useForm } from '@inertiajs/react';
+import { Printer, Tag } from 'lucide-react';
+import { useState } from 'react';
 
 type OpdPaymentWorkspaceProps = {
     visitId: string;
@@ -50,21 +46,9 @@ type OpdPaymentWorkspaceProps = {
     payments: VisitPayment[];
     discounts: BillingDiscount[];
     paymentMethods: { value: string; label: string }[];
-    paymentForm: PaymentFormState;
-    paymentErrors: PaymentFormErrors;
-    paymentProcessing: boolean;
-    discountForm: DiscountFormState;
-    discountErrors: DiscountFormErrors;
-    discountProcessing: boolean;
-    reversalReasons: Record<string, string>;
-    onPaymentChange: (field: keyof PaymentFormState, value: string) => void;
-    onPaymentSubmit: () => void;
-    onDiscountChange: (field: keyof DiscountFormState, value: string) => void;
-    onDiscountSubmit: () => void;
-    onApproveDiscount: (discountId: string) => void;
-    onReverseReasonChange: (discountId: string, value: string) => void;
-    onReverseDiscount: (discountId: string) => void;
 };
+
+type PaymentModalState = { label: string; prefillAmount: string } | null;
 
 export function OpdPaymentWorkspace({
     visitId,
@@ -73,549 +57,569 @@ export function OpdPaymentWorkspace({
     payments,
     discounts,
     paymentMethods,
-    paymentForm,
-    paymentErrors,
-    paymentProcessing,
-    discountForm,
-    discountErrors,
-    discountProcessing,
-    reversalReasons,
-    onPaymentChange,
-    onPaymentSubmit,
-    onDiscountChange,
-    onDiscountSubmit,
-    onApproveDiscount,
-    onReverseReasonChange,
-    onReverseDiscount,
 }: OpdPaymentWorkspaceProps) {
     const { hasPermission } = usePermissions();
     const canRequestDiscount = hasPermission('billing_discounts.create');
     const canApproveDiscount = hasPermission('billing_discounts.approve');
     const canReverseDiscount = hasPermission('billing_discounts.reverse');
 
+    const [paymentModal, setPaymentModal] = useState<PaymentModalState>(null);
+    const [discountModal, setDiscountModal] = useState(false);
+    const [reversalReasons, setReversalReasons] = useState<
+        Record<string, string>
+    >({});
+
+    const paymentForm = useForm({
+        amount: '',
+        payment_method_id: paymentMethods[0]?.value ?? '',
+        payment_date: '',
+        reference_number: '',
+        notes: '',
+    });
+
+    const discountForm = useForm({
+        amount: '',
+        reason: '',
+        notes: '',
+    });
+
+    const hasBalance = (billing?.balance_amount ?? 0) > 0;
+
+    function openPaymentModal(label: string, prefillAmount: string) {
+        paymentForm.setData('amount', prefillAmount);
+        setPaymentModal({ label, prefillAmount });
+    }
+
+    function closePaymentModal() {
+        setPaymentModal(null);
+        paymentForm.reset();
+    }
+
+    function submitPayment() {
+        paymentForm.post(`/finance/opd-payments/${visitId}/payments`, {
+            onSuccess: closePaymentModal,
+        });
+    }
+
+    function submitDiscount() {
+        discountForm.post(`/finance/opd-payments/${visitId}/discounts`, {
+            onSuccess: () => {
+                setDiscountModal(false);
+                discountForm.reset('amount', 'reason', 'notes');
+            },
+        });
+    }
+
     return (
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Service Charges</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    {charges.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                            No charge lines have been added to this visit yet.
-                        </p>
-                    ) : (
-                        charges.map((charge) => (
-                            <div
-                                key={charge.id}
-                                className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[2fr_1fr_1fr]"
+        <div className="space-y-8">
+            {/* Service Charges */}
+            <div>
+                <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-base font-semibold">Service Charges</h2>
+                    {hasBalance && (
+                        <div className="flex gap-2">
+                            {canRequestDiscount && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setDiscountModal(true)}
+                                >
+                                    <Tag className="mr-1.5 h-3.5 w-3.5" />
+                                    Apply Discount
+                                </Button>
+                            )}
+                            <Button
+                                size="sm"
+                                onClick={() =>
+                                    openPaymentModal(
+                                        'All Outstanding',
+                                        String(billing?.balance_amount ?? ''),
+                                    )
+                                }
                             >
-                                <div>
-                                    <p className="font-medium">
-                                        {charge.description}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {charge.charge_code ?? 'No charge code'}{' '}
-                                        {' | '}{' '}
-                                        {charge.status.replaceAll('_', ' ')}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Quantity x Unit Price
-                                    </p>
-                                    <p className="font-medium">
-                                        {formatMoney(charge.quantity)} x{' '}
-                                        {formatMoney(charge.unit_price)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Line Total
-                                    </p>
-                                    <p className="font-medium">
-                                        {formatMoney(charge.line_total)}
-                                    </p>
-                                </div>
-                            </div>
-                        ))
+                                Pay All Outstanding
+                            </Button>
+                        </div>
                     )}
-                </CardContent>
-            </Card>
+                </div>
 
-            <div className="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Payment Desk</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between gap-3 rounded-lg border p-4">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
-                                    <Receipt className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Billing Status
-                                    </p>
-                                    <p className="font-medium">
-                                        {billing?.status
-                                            ? billing.status.replaceAll(
-                                                  '_',
-                                                  ' ',
-                                              )
-                                            : 'Not started'}
-                                    </p>
-                                </div>
-                            </div>
-                            {billing?.status ? (
-                                <span
-                                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${billingStatusClasses(billing.status)}`}
-                                >
-                                    {billing.status.replaceAll('_', ' ')}
-                                </span>
-                            ) : null}
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                            <div className="rounded-lg border p-3">
-                                <p className="text-sm text-muted-foreground">
-                                    Gross
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {formatMoney(billing?.gross_amount ?? 0)}
-                                </p>
-                            </div>
-                            <div className="rounded-lg border p-3">
-                                <p className="text-sm text-muted-foreground">
-                                    Paid
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {formatMoney(billing?.paid_amount ?? 0)}
-                                </p>
-                            </div>
-                            <div className="rounded-lg border p-3">
-                                <p className="text-sm text-muted-foreground">
-                                    Discount
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {formatMoney(billing?.discount_amount ?? 0)}
-                                </p>
-                            </div>
-                            <div className="rounded-lg border p-3">
-                                <p className="text-sm text-muted-foreground">
-                                    Balance
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {formatMoney(billing?.balance_amount ?? 0)}
-                                </p>
-                            </div>
-                        </div>
-
-                        {(billing?.balance_amount ?? 0) <= 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                This visit does not currently have an
-                                outstanding balance to settle.
-                            </p>
-                        ) : (
-                            <form
-                                className="space-y-4"
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    onPaymentSubmit();
-                                }}
-                            >
-                                <div className="space-y-2">
-                                    <Label htmlFor="payment_amount">
-                                        Amount
-                                    </Label>
-                                    <Input
-                                        id="payment_amount"
-                                        type="number"
-                                        step="0.01"
-                                        min="0.01"
-                                        max={String(
-                                            billing?.balance_amount ?? '',
-                                        )}
-                                        value={paymentForm.amount}
-                                        onChange={(event) =>
-                                            onPaymentChange(
-                                                'amount',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={paymentErrors.amount}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label
-                                        htmlFor={`payment_method_${visitId}`}
-                                    >
-                                        Payment Method
-                                    </Label>
-                                    <Select
-                                        value={paymentForm.payment_method_id}
-                                        onValueChange={(value) =>
-                                            onPaymentChange(
-                                                'payment_method_id',
-                                                value,
-                                            )
-                                        }
-                                    >
-                                        <SelectTrigger
-                                            id={`payment_method_${visitId}`}
-                                        >
-                                            <SelectValue placeholder="Select payment method" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {paymentMethods.map((method) => (
-                                                <SelectItem
-                                                    key={method.value}
-                                                    value={method.value}
+                {charges.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                        No charge lines have been added to this visit yet.
+                    </p>
+                ) : (
+                    <div className="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Service</TableHead>
+                                    <TableHead>Code</TableHead>
+                                    <TableHead className="text-right">
+                                        Qty × Unit
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                        Total
+                                    </TableHead>
+                                    <TableHead>Status</TableHead>
+                                    {hasBalance && <TableHead />}
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {charges.map((charge) => (
+                                    <TableRow key={charge.id}>
+                                        <TableCell className="font-medium">
+                                            {charge.description}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {charge.charge_code ?? '—'}
+                                        </TableCell>
+                                        <TableCell className="text-right text-sm">
+                                            {charge.quantity} &times;{' '}
+                                            {formatMoney(charge.unit_price)}
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium">
+                                            {formatMoney(charge.line_total)}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                variant="outline"
+                                                className="capitalize"
+                                            >
+                                                {charge.status.replaceAll(
+                                                    '_',
+                                                    ' ',
+                                                )}
+                                            </Badge>
+                                        </TableCell>
+                                        {hasBalance && (
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        openPaymentModal(
+                                                            charge.description,
+                                                            String(
+                                                                charge.line_total,
+                                                            ),
+                                                        )
+                                                    }
                                                 >
-                                                    {method.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError
-                                        message={
-                                            paymentErrors.payment_method_id
-                                        }
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="payment_date">
-                                        Payment Date
-                                    </Label>
-                                    <Input
-                                        id="payment_date"
-                                        type="datetime-local"
-                                        value={paymentForm.payment_date}
-                                        onChange={(event) =>
-                                            onPaymentChange(
-                                                'payment_date',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={paymentErrors.payment_date}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="reference_number">
-                                        Reference Number
-                                    </Label>
-                                    <Input
-                                        id="reference_number"
-                                        value={paymentForm.reference_number}
-                                        onChange={(event) =>
-                                            onPaymentChange(
-                                                'reference_number',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={paymentErrors.reference_number}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="payment_notes">Notes</Label>
-                                    <Textarea
-                                        id="payment_notes"
-                                        value={paymentForm.notes}
-                                        onChange={(event) =>
-                                            onPaymentChange(
-                                                'notes',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError message={paymentErrors.notes} />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    className="w-full"
-                                    disabled={paymentProcessing}
-                                >
-                                    Receive Payment
-                                </Button>
-                            </form>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Discount Governance</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {(billing?.balance_amount ?? 0) <= 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                This visit does not currently have an
-                                outstanding balance for a discount.
-                            </p>
-                        ) : canRequestDiscount ? (
-                            <form
-                                className="space-y-4"
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    onDiscountSubmit();
-                                }}
-                            >
-                                <div className="space-y-2">
-                                    <Label htmlFor="discount_amount">
-                                        Amount
-                                    </Label>
-                                    <Input
-                                        id="discount_amount"
-                                        type="number"
-                                        step="0.01"
-                                        min="0.01"
-                                        max={String(
-                                            billing?.balance_amount ?? '',
+                                                    Pay
+                                                </Button>
+                                            </TableCell>
                                         )}
-                                        value={discountForm.amount}
-                                        onChange={(event) =>
-                                            onDiscountChange(
-                                                'amount',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={discountErrors.amount}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="discount_reason">
-                                        Reason
-                                    </Label>
-                                    <Input
-                                        id="discount_reason"
-                                        value={discountForm.reason}
-                                        onChange={(event) =>
-                                            onDiscountChange(
-                                                'reason',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={discountErrors.reason}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="discount_notes">
-                                        Notes
-                                    </Label>
-                                    <Textarea
-                                        id="discount_notes"
-                                        value={discountForm.notes}
-                                        onChange={(event) =>
-                                            onDiscountChange(
-                                                'notes',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={discountErrors.notes}
-                                    />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    className="w-full"
-                                    disabled={discountProcessing}
-                                >
-                                    Request Discount
-                                </Button>
-                            </form>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">
-                                You do not have permission to request billing
-                                discounts.
-                            </p>
-                        )}
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
+            </div>
 
-                        {discounts.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                No discounts have been requested for this visit
-                                yet.
-                            </p>
-                        ) : (
-                            discounts.map((discount) => (
-                                <div
-                                    key={discount.id}
-                                    className="rounded-lg border p-3"
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div>
-                                            <p className="font-medium">
-                                                {formatMoney(discount.amount)}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {discount.reason}
-                                            </p>
-                                        </div>
-                                        <Badge variant="secondary">
-                                            {discount.status.replaceAll(
+            {/* Payment History */}
+            <div>
+                <h2 className="mb-3 text-base font-semibold">
+                    Payment History
+                </h2>
+                {payments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                        No payments recorded yet.
+                    </p>
+                ) : (
+                    <div className="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Method</TableHead>
+                                    <TableHead>Reference</TableHead>
+                                    <TableHead>Receipt</TableHead>
+                                    <TableHead className="text-right">
+                                        Amount
+                                    </TableHead>
+                                    <TableHead />
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {payments.map((payment) => (
+                                    <TableRow key={payment.id}>
+                                        <TableCell className="text-sm">
+                                            {formatDateTime(
+                                                payment.payment_date,
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-sm capitalize">
+                                            {payment.payment_method?.replaceAll(
                                                 '_',
                                                 ' ',
+                                            ) ?? '—'}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {payment.reference_number ?? '—'}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {payment.receipt_number ?? '—'}
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium">
+                                            {payment.is_refund ? (
+                                                <span className="text-destructive">
+                                                    &minus;
+                                                    {formatMoney(
+                                                        payment.amount,
+                                                    )}
+                                                </span>
+                                            ) : (
+                                                formatMoney(payment.amount)
                                             )}
-                                        </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {!payment.is_refund && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={`/visits/${visitId}/payments/${payment.id}/print`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        <Printer className="h-3.5 w-3.5" />
+                                                    </a>
+                                                </Button>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
+            </div>
+
+            {/* Discounts */}
+            {discounts.length > 0 && (
+                <div>
+                    <h2 className="mb-3 text-base font-semibold">Discounts</h2>
+                    <div className="space-y-2">
+                        {discounts.map((discount) => (
+                            <div
+                                key={discount.id}
+                                className="flex flex-col gap-3 rounded-lg border px-4 py-3"
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="font-medium">
+                                            {formatMoney(discount.amount)}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {discount.reason}
+                                        </p>
+                                        {discount.notes ? (
+                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                {discount.notes}
+                                            </p>
+                                        ) : null}
+                                        {discount.reversal_reason ? (
+                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                Reversal:{' '}
+                                                {discount.reversal_reason}
+                                            </p>
+                                        ) : null}
                                     </div>
-                                    {discount.notes ? (
-                                        <p className="mt-2 text-sm text-muted-foreground">
-                                            {discount.notes}
-                                        </p>
-                                    ) : null}
-                                    {discount.reversal_reason ? (
-                                        <p className="mt-2 text-sm text-muted-foreground">
-                                            Reversal: {discount.reversal_reason}
-                                        </p>
-                                    ) : null}
-                                    {discount.status === 'pending' &&
-                                    canApproveDiscount ? (
-                                        <div className="mt-3 flex justify-end">
+                                    <Badge
+                                        variant="secondary"
+                                        className="shrink-0 capitalize"
+                                    >
+                                        {discount.status.replaceAll('_', ' ')}
+                                    </Badge>
+                                </div>
+
+                                {discount.status === 'pending' &&
+                                    canApproveDiscount && (
+                                        <div className="flex justify-end">
                                             <Button
-                                                type="button"
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() =>
-                                                    onApproveDiscount(
-                                                        discount.id,
+                                                    router.post(
+                                                        `/finance/opd-payments/${visitId}/discounts/${discount.id}/approve`,
                                                     )
                                                 }
                                             >
                                                 Approve
                                             </Button>
                                         </div>
-                                    ) : null}
-                                    {discount.status === 'approved' &&
-                                    canReverseDiscount ? (
+                                    )}
+
+                                {discount.status === 'approved' &&
+                                    canReverseDiscount && (
                                         <form
-                                            className="mt-3 flex flex-col gap-3"
-                                            onSubmit={(event) => {
-                                                event.preventDefault();
-                                                onReverseDiscount(discount.id);
+                                            className="flex gap-2"
+                                            onSubmit={(e) => {
+                                                e.preventDefault();
+                                                router.post(
+                                                    `/finance/opd-payments/${visitId}/discounts/${discount.id}/reverse`,
+                                                    {
+                                                        reversal_reason:
+                                                            reversalReasons[
+                                                                discount.id
+                                                            ] ?? '',
+                                                    },
+                                                    {
+                                                        onSuccess: () =>
+                                                            setReversalReasons(
+                                                                (cur) => ({
+                                                                    ...cur,
+                                                                    [discount.id]:
+                                                                        '',
+                                                                }),
+                                                            ),
+                                                    },
+                                                );
                                             }}
                                         >
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor={`reversal_reason_${discount.id}`}
-                                                >
-                                                    Reversal Reason
-                                                </Label>
-                                                <Input
-                                                    id={`reversal_reason_${discount.id}`}
-                                                    value={
-                                                        reversalReasons[
-                                                            discount.id
-                                                        ] ?? ''
-                                                    }
-                                                    onChange={(event) =>
-                                                        onReverseReasonChange(
-                                                            discount.id,
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                            </div>
+                                            <Input
+                                                placeholder="Reversal reason"
+                                                value={
+                                                    reversalReasons[
+                                                        discount.id
+                                                    ] ?? ''
+                                                }
+                                                onChange={(e) =>
+                                                    setReversalReasons(
+                                                        (cur) => ({
+                                                            ...cur,
+                                                            [discount.id]:
+                                                                e.target.value,
+                                                        }),
+                                                    )
+                                                }
+                                            />
                                             <Button
                                                 type="submit"
                                                 variant="outline"
                                                 size="sm"
-                                                className="self-end"
+                                                className="shrink-0"
                                             >
                                                 Reverse
                                             </Button>
                                         </form>
-                                    ) : null}
-                                </div>
-                            ))
-                        )}
-                    </CardContent>
-                </Card>
+                                    )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Payment History</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {payments.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                No payments have been recorded for this visit
-                                yet.
-                            </p>
-                        ) : (
-                            payments.map((payment) => (
-                                <div
-                                    key={payment.id}
-                                    className="rounded-lg border p-3"
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div>
-                                            <p className="font-medium">
-                                                {formatMoney(payment.amount)}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {payment.payment_method?.replaceAll(
-                                                    '_',
-                                                    ' ',
-                                                ) ?? 'Method not set'}
-                                            </p>
-                                        </div>
-                                        <div className="text-right text-sm text-muted-foreground">
-                                            <p>
-                                                {formatDateTime(
-                                                    payment.payment_date,
-                                                )}
-                                            </p>
-                                            <p>
-                                                {payment.receipt_number ??
-                                                    'No receipt'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {payment.reference_number ? (
-                                        <p className="mt-2 text-sm text-muted-foreground">
-                                            Ref: {payment.reference_number}
-                                        </p>
-                                    ) : null}
-                                    {payment.notes ? (
-                                        <p className="mt-2 text-sm text-muted-foreground">
-                                            {payment.notes}
-                                        </p>
-                                    ) : null}
-                                    {!payment.is_refund ? (
-                                        <div className="mt-3 flex justify-end">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <a
-                                                    href={`/visits/${visitId}/payments/${payment.id}/print`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                >
-                                                    Print Receipt
-                                                </a>
-                                            </Button>
-                                        </div>
-                                    ) : null}
-                                </div>
-                            ))
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+            {/* Payment Modal */}
+            <Dialog
+                open={paymentModal !== null}
+                onOpenChange={(open) => !open && closePaymentModal()}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            {paymentModal?.label
+                                ? `Pay — ${paymentModal.label}`
+                                : 'Record Payment'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <form
+                        className="space-y-4"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            submitPayment();
+                        }}
+                    >
+                        <div className="space-y-2">
+                            <Label htmlFor="pay_amount">Amount</Label>
+                            <Input
+                                id="pay_amount"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                max={String(billing?.balance_amount ?? '')}
+                                value={paymentForm.data.amount}
+                                onChange={(e) =>
+                                    paymentForm.setData(
+                                        'amount',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                            <InputError message={paymentForm.errors.amount} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pay_method">Payment Method</Label>
+                            <Select
+                                value={paymentForm.data.payment_method_id}
+                                onValueChange={(value) =>
+                                    paymentForm.setData(
+                                        'payment_method_id',
+                                        value,
+                                    )
+                                }
+                            >
+                                <SelectTrigger id="pay_method">
+                                    <SelectValue placeholder="Select method" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {paymentMethods.map((method) => (
+                                        <SelectItem
+                                            key={method.value}
+                                            value={method.value}
+                                        >
+                                            {method.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <InputError
+                                message={paymentForm.errors.payment_method_id}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pay_date">Payment Date</Label>
+                            <Input
+                                id="pay_date"
+                                type="datetime-local"
+                                value={paymentForm.data.payment_date}
+                                onChange={(e) =>
+                                    paymentForm.setData(
+                                        'payment_date',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                            <InputError
+                                message={paymentForm.errors.payment_date}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pay_ref">Reference Number</Label>
+                            <Input
+                                id="pay_ref"
+                                value={paymentForm.data.reference_number}
+                                onChange={(e) =>
+                                    paymentForm.setData(
+                                        'reference_number',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                            <InputError
+                                message={paymentForm.errors.reference_number}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pay_notes">Notes</Label>
+                            <Textarea
+                                id="pay_notes"
+                                value={paymentForm.data.notes}
+                                onChange={(e) =>
+                                    paymentForm.setData('notes', e.target.value)
+                                }
+                            />
+                            <InputError message={paymentForm.errors.notes} />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={closePaymentModal}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={paymentForm.processing}
+                            >
+                                Receive Payment
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Discount Modal */}
+            <Dialog open={discountModal} onOpenChange={setDiscountModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Apply Discount</DialogTitle>
+                    </DialogHeader>
+                    <form
+                        className="space-y-4"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            submitDiscount();
+                        }}
+                    >
+                        <div className="space-y-2">
+                            <Label htmlFor="disc_amount">Amount</Label>
+                            <Input
+                                id="disc_amount"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                max={String(billing?.balance_amount ?? '')}
+                                value={discountForm.data.amount}
+                                onChange={(e) =>
+                                    discountForm.setData(
+                                        'amount',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                            <InputError message={discountForm.errors.amount} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="disc_reason">Reason</Label>
+                            <Input
+                                id="disc_reason"
+                                value={discountForm.data.reason}
+                                onChange={(e) =>
+                                    discountForm.setData(
+                                        'reason',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                            <InputError message={discountForm.errors.reason} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="disc_notes">Notes</Label>
+                            <Textarea
+                                id="disc_notes"
+                                value={discountForm.data.notes}
+                                onChange={(e) =>
+                                    discountForm.setData(
+                                        'notes',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                            <InputError message={discountForm.errors.notes} />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setDiscountModal(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={discountForm.processing}
+                            >
+                                Request Discount
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

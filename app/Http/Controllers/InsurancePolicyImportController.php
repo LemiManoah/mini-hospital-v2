@@ -201,7 +201,7 @@ final readonly class InsurancePolicyImportController implements HasMiddleware
 
         return to_route('insurance-packages.show', $insurancePackageId)->with(
             'insurance_queued_import_message',
-            $insurancePolicyName.' import confirmed and queued. Keep the queue worker running, then refresh this package to see the latest result.',
+            $insurancePolicyName.' import confirmed and queued. This package will update automatically as the queue runs.',
         )->with(
             'insurance_import_policy_id',
             $insurancePolicyId,
