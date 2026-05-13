@@ -41,6 +41,7 @@ import { useState } from 'react';
 
 type OpdPaymentWorkspaceProps = {
     visitId: string;
+    payerType: 'cash' | 'insurance';
     billing?: FinanceOpdVisitBilling | null;
     charges: VisitCharge[];
     payments: VisitPayment[];
@@ -52,6 +53,7 @@ type PaymentModalState = { label: string; prefillAmount: string } | null;
 
 export function OpdPaymentWorkspace({
     visitId,
+    payerType,
     billing,
     charges,
     payments,
@@ -83,7 +85,24 @@ export function OpdPaymentWorkspace({
         notes: '',
     });
 
-    const hasBalance = (billing?.balance_amount ?? 0) > 0;
+    const isInsurancePayer = payerType === 'insurance';
+    const hasOutstanding = (billing?.balance_amount ?? 0) > 0;
+    const patientCopayBalance = billing?.split?.patient_balance_amount ?? 0;
+    const hasCashierBalance = isInsurancePayer
+        ? patientCopayBalance > 0
+        : hasOutstanding;
+    const primaryPaymentAmount =
+        isInsurancePayer && patientCopayBalance > 0
+            ? patientCopayBalance
+            : (billing?.balance_amount ?? 0);
+    const primaryPaymentLabel =
+        isInsurancePayer && patientCopayBalance > 0
+            ? 'Patient Copay'
+            : 'All Outstanding';
+    const primaryPaymentButton =
+        isInsurancePayer && patientCopayBalance > 0
+            ? 'Pay Patient Copay'
+            : 'Pay All Outstanding';
 
     function openPaymentModal(label: string, prefillAmount: string) {
         paymentForm.setData('amount', prefillAmount);
@@ -116,7 +135,7 @@ export function OpdPaymentWorkspace({
             <div>
                 <div className="mb-3 flex items-center justify-between">
                     <h2 className="text-base font-semibold">Service Charges</h2>
-                    {hasBalance && (
+                    {hasOutstanding && (
                         <div className="flex gap-2">
                             {canRequestDiscount && (
                                 <Button
@@ -128,17 +147,19 @@ export function OpdPaymentWorkspace({
                                     Apply Discount
                                 </Button>
                             )}
-                            <Button
-                                size="sm"
-                                onClick={() =>
-                                    openPaymentModal(
-                                        'All Outstanding',
-                                        String(billing?.balance_amount ?? ''),
-                                    )
-                                }
-                            >
-                                Pay All Outstanding
-                            </Button>
+                            {hasCashierBalance ? (
+                                <Button
+                                    size="sm"
+                                    onClick={() =>
+                                        openPaymentModal(
+                                            primaryPaymentLabel,
+                                            String(primaryPaymentAmount || ''),
+                                        )
+                                    }
+                                >
+                                    {primaryPaymentButton}
+                                </Button>
+                            ) : null}
                         </div>
                     )}
                 </div>
@@ -160,13 +181,32 @@ export function OpdPaymentWorkspace({
                                     <TableHead className="text-right">
                                         Total
                                     </TableHead>
+                                    {isInsurancePayer ? (
+                                        <>
+                                            <TableHead className="text-right">
+                                                Patient Copay
+                                            </TableHead>
+                                            <TableHead className="text-right">
+                                                Insurer
+                                            </TableHead>
+                                        </>
+                                    ) : null}
                                     <TableHead>Status</TableHead>
-                                    {hasBalance && <TableHead />}
+                                    {hasCashierBalance && <TableHead />}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {charges.map((charge) => (
-                                    <TableRow key={charge.id}>
+                                {charges.map((charge) => {
+                                    const chargeCashierAmount = isInsurancePayer
+                                        ? Math.min(
+                                              charge.copay_amount ?? 0,
+                                              patientCopayBalance ||
+                                                  charge.line_total,
+                                          )
+                                        : charge.line_total;
+
+                                    return (
+                                        <TableRow key={charge.id}>
                                         <TableCell className="font-medium">
                                             {charge.description}
                                         </TableCell>
@@ -180,6 +220,26 @@ export function OpdPaymentWorkspace({
                                         <TableCell className="text-right font-medium">
                                             {formatMoney(charge.line_total)}
                                         </TableCell>
+                                        {isInsurancePayer ? (
+                                            <>
+                                                <TableCell className="text-right font-medium">
+                                                    {formatMoney(
+                                                        charge.copay_amount ??
+                                                            0,
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right text-sm text-muted-foreground">
+                                                    {formatMoney(
+                                                        Math.max(
+                                                            0,
+                                                            charge.line_total -
+                                                                (charge.copay_amount ??
+                                                                    0),
+                                                        ),
+                                                    )}
+                                                </TableCell>
+                                            </>
+                                        ) : null}
                                         <TableCell>
                                             <Badge
                                                 variant="outline"
@@ -191,26 +251,29 @@ export function OpdPaymentWorkspace({
                                                 )}
                                             </Badge>
                                         </TableCell>
-                                        {hasBalance && (
+                                        {hasCashierBalance && (
                                             <TableCell className="text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        openPaymentModal(
-                                                            charge.description,
-                                                            String(
-                                                                charge.line_total,
-                                                            ),
-                                                        )
-                                                    }
-                                                >
-                                                    Pay
-                                                </Button>
+                                                {chargeCashierAmount > 0 ? (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            openPaymentModal(
+                                                                charge.description,
+                                                                String(
+                                                                    chargeCashierAmount,
+                                                                ),
+                                                            )
+                                                        }
+                                                    >
+                                                        Pay
+                                                    </Button>
+                                                ) : null}
                                             </TableCell>
                                         )}
-                                    </TableRow>
-                                ))}
+                                        </TableRow>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </div>
@@ -440,7 +503,7 @@ export function OpdPaymentWorkspace({
                                 type="number"
                                 step="0.01"
                                 min="0.01"
-                                max={String(billing?.balance_amount ?? '')}
+                                max={String(primaryPaymentAmount || '')}
                                 value={paymentForm.data.amount}
                                 onChange={(e) =>
                                     paymentForm.setData(

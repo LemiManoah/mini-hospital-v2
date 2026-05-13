@@ -20,7 +20,9 @@ use App\Models\User;
 use App\Models\VisitBilling;
 use App\Models\VisitPayer;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 beforeEach(function (): void {
     $this->seed(PermissionSeeder::class);
@@ -182,4 +184,66 @@ it('does not allow printing a refund transaction as a receipt', function (): voi
         ->actingAs($user)
         ->get(route('visits.payments.print', [$visit, $payment]))
         ->assertForbidden();
+});
+
+it('includes insurance copay split details in the receipt view', function (): void {
+    [$branch, , $visit, $payment] = createVisitPaymentPrintContext();
+    $insuranceCompanyId = (string) Str::uuid();
+    $insurancePackageId = (string) Str::uuid();
+
+    seedInsuranceCoverage($visit->tenant_id, $insuranceCompanyId, $insurancePackageId);
+
+    $visit->payer->forceFill([
+        'billing_type' => PayerType::INSURANCE,
+        'insurance_company_id' => $insuranceCompanyId,
+        'insurance_package_id' => $insurancePackageId,
+    ])->save();
+
+    $payment->billing->forceFill([
+        'payer_type' => PayerType::INSURANCE,
+        'insurance_company_id' => $insuranceCompanyId,
+        'insurance_package_id' => $insurancePackageId,
+    ])->save();
+
+    DB::table('visit_charges')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $visit->tenant_id,
+        'facility_branch_id' => $branch->id,
+        'visit_billing_id' => $payment->visit_billing_id,
+        'patient_visit_id' => $visit->id,
+        'source_type' => 'manual',
+        'source_id' => (string) Str::uuid(),
+        'description' => 'Insured consultation',
+        'quantity' => 1,
+        'unit_price' => 50000,
+        'line_total' => 50000,
+        'copay_amount' => 5000,
+        'status' => 'active',
+        'charged_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $payment->loadMissing([
+        'visit.patient',
+        'visit.branch.currency',
+        'visit.payer.insuranceCompany',
+        'billing.charges',
+    ]);
+
+    $receipt = view('print.payment-receipt', [
+        'payment' => $payment,
+        'visit' => $payment->visit,
+        'patient' => $payment->visit?->patient,
+        'branch' => $payment->visit?->branch,
+        'payer' => $payment->visit?->payer,
+        'billing' => $payment->billing,
+        'printedAt' => now(),
+    ])->render();
+
+    expect($receipt)
+        ->toContain('Patient copay responsibility')
+        ->toContain('USh 5,000.00')
+        ->toContain('Insurer responsibility')
+        ->toContain('USh 45,000.00');
 });

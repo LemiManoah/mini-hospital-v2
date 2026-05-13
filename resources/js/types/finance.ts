@@ -20,9 +20,11 @@ export interface FinanceQueueVisit {
     } | null;
     billing: {
         gross_amount: number;
+        discount_amount: number;
         paid_amount: number;
         balance_amount: number;
         status: string;
+        split: FinanceBillingSplit;
     } | null;
     charges_count: number;
 }
@@ -44,8 +46,18 @@ export interface FinanceOpdVisitBilling {
     paid_amount?: number | null;
     balance_amount?: number | null;
     status?: string | null;
+    split?: FinanceBillingSplit | null;
     payments?: VisitPayment[] | null;
     discounts?: BillingDiscount[] | null;
+}
+
+export interface FinanceBillingSplit {
+    patient_responsibility_amount: number;
+    insurer_responsibility_amount: number;
+    patient_paid_amount: number;
+    patient_balance_amount: number;
+    insurer_balance_amount: number;
+    copay_amount: number;
 }
 
 export interface BillingDiscount {
@@ -169,6 +181,7 @@ export interface FinanceDebtorRow {
     patient_number?: string | null;
     payer_type: string;
     insurance_company_name?: string | null;
+    insurance_package_name?: string | null;
     gross_amount: number;
     discount_amount: number;
     write_off_amount: number;

@@ -8,6 +8,17 @@
         $currencyCode = $branch?->currency?->code ?? 'UGX';
         $currencySymbol = $branch?->currency?->symbol ?? $currencyCode;
         $formatMoney = static fn ($amount): string => $currencySymbol.' '.number_format((float) ($amount ?? 0), 2);
+        $isInsurance = ($payer?->billing_type?->value ?? $payer?->billing_type) === 'insurance';
+        $copayAmount = $isInsurance
+            ? min((float) ($billing?->gross_amount ?? 0), max(0, (float) ($billing?->charges?->filter(
+                static fn ($charge): bool => ($charge->status?->value ?? $charge->getAttribute('status')) === 'active'
+            )->sum('copay_amount') ?? 0)))
+            : 0;
+        $patientResponsibility = max(0, $copayAmount);
+        $insurerResponsibility = $isInsurance ? max(0, (float) ($billing?->gross_amount ?? 0) - $copayAmount) : 0;
+        $patientPaid = min((float) ($billing?->paid_amount ?? 0), $patientResponsibility);
+        $patientBalance = max(0, $patientResponsibility - $patientPaid);
+        $insurerBalance = $isInsurance ? max(0, (float) ($billing?->balance_amount ?? 0) - $patientBalance) : 0;
     @endphp
 
     @include('print.partials.header', [
@@ -78,6 +89,24 @@
                     <td>Visit payment receipt</td>
                     <td>{{ $formatMoney($payment->amount) }}</td>
                 </tr>
+                @if($isInsurance)
+                    <tr>
+                        <td>Patient copay responsibility</td>
+                        <td>{{ $formatMoney($patientResponsibility) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Patient copay balance</td>
+                        <td>{{ $formatMoney($patientBalance) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Insurer responsibility</td>
+                        <td>{{ $formatMoney($insurerResponsibility) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Insurer balance</td>
+                        <td>{{ $formatMoney($insurerBalance) }}</td>
+                    </tr>
+                @endif
                 <tr>
                     <td>Billing paid to date</td>
                     <td>{{ $formatMoney($billing?->paid_amount) }}</td>

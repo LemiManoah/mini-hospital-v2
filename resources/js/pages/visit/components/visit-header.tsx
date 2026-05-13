@@ -1,4 +1,5 @@
 import { AllergyAlert } from '@/components/allergy-alert';
+import { PatientPayerIndicator } from '@/components/patient-payer-indicator';
 import { Button } from '@/components/ui/button';
 import { type PatientVisit } from '@/types/patient';
 import { Link } from '@inertiajs/react';
@@ -45,6 +46,12 @@ export function VisitHeader({
         severity: a.severity || 'unknown',
         reaction: a.reaction,
     }));
+    const insuranceCompanyName =
+        visit.payer?.insuranceCompany?.name ??
+        visit.payer?.insurance_company?.name;
+    const insurancePackageName =
+        visit.payer?.insurancePackage?.name ??
+        visit.payer?.insurance_package?.name;
 
     return (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -59,6 +66,11 @@ export function VisitHeader({
                                 {visit.visit_type.replaceAll('_', ' ')} for{' '}
                                 {patientName || 'Unknown patient'}
                             </span>
+                            <PatientPayerIndicator
+                                payerType={visit.payer?.billing_type}
+                                insuranceCompanyName={insuranceCompanyName}
+                                insurancePackageName={insurancePackageName}
+                            />
                             <AllergyAlert allergies={allergies} />
                         </div>
                     </div>

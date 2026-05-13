@@ -274,16 +274,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         title: 'Lab Management',
                         url: '/laboratory/management',
                         items: [
-                            {
-                                title: 'Overview',
-                                url: '/laboratory/management',
-                                permissions: [
-                                    'lab_test_categories.view',
-                                    'lab_test_catalogs.view',
-                                    'specimen_types.view',
-                                    'result_types.view',
-                                ],
-                            },
+                            // {
+                            //     title: 'Overview',
+                            //     url: '/laboratory/management',
+                            //     permissions: [
+                            //         'lab_test_categories.view',
+                            //         'lab_test_catalogs.view',
+                            //         'specimen_types.view',
+                            //         'result_types.view',
+                            //     ],
+                            // },
                             {
                                 title: 'Service Categories',
                                 url: '/lab-test-categories',
@@ -307,18 +307,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         ],
                     },
                     {
-                        title: 'Lab Stock Management',
+                        title: 'Stock Management',
                         url: '/laboratory/stock-management',
                         items: [
-                            {
-                                title: 'Overview',
-                                url: '/laboratory/stock-management',
-                                permissions: [
-                                    'inventory_items.view',
-                                    'inventory_requisitions.view',
-                                    'goods_receipts.view',
-                                ],
-                            },
+                            // {
+                            //     title: 'Overview',
+                            //     url: '/laboratory/stock-management',
+                            //     permissions: [
+                            //         'inventory_items.view',
+                            //         'inventory_requisitions.view',
+                            //         'goods_receipts.view',
+                            //     ],
+                            // },
                             {
                                 title: 'Lab Stock',
                                 url: '/laboratory/stock',

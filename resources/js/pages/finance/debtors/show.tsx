@@ -1,5 +1,6 @@
 import { AuditTimelineCard } from '@/components/audit-timeline-card';
 import InputError from '@/components/input-error';
+import { PatientPayerIndicator } from '@/components/patient-payer-indicator';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,6 +65,15 @@ export default function FinanceDebtorsShowPage({
                             <h1 className="text-2xl font-semibold">
                                 {billing.patient_name}
                             </h1>
+                            <PatientPayerIndicator
+                                payerType={billing.payer_type}
+                                insuranceCompanyName={
+                                    billing.insurance_company_name
+                                }
+                                insurancePackageName={
+                                    billing.insurance_package_name
+                                }
+                            />
                             <Badge
                                 variant="outline"
                                 className={billingStatusClasses(billing.status)}
@@ -73,8 +83,7 @@ export default function FinanceDebtorsShowPage({
                         </div>
                         <p className="text-sm text-muted-foreground">
                             {billing.patient_number ?? 'No MRN'} {' | '}
-                            {billing.visit_number ?? 'No visit'} {' | '}
-                            {billing.payer_type}
+                            {billing.visit_number ?? 'No visit'}
                         </p>
                     </div>
 

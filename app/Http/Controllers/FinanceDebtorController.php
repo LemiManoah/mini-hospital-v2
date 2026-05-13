@@ -55,6 +55,7 @@ final readonly class FinanceDebtorController implements HasMiddleware
                 'visit.patient:id,patient_number,first_name,last_name,phone_number',
                 'visitPayer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
                 'visitPayer.insuranceCompany:id,name',
+                'visitPayer.insurancePackage:id,name',
             ])
             ->where('balance_amount', '>', 0)
             ->when($search !== '', static fn (Builder $query): Builder => $query->whereHas('visit', static function (Builder $visitQuery) use ($search): void {
@@ -88,6 +89,7 @@ final readonly class FinanceDebtorController implements HasMiddleware
         $billing->load([
             'visit.patient:id,patient_number,first_name,last_name,phone_number',
             'visitPayer.insuranceCompany:id,name',
+            'visitPayer.insurancePackage:id,name',
             'charges' => static fn (HasMany $query): HasMany => $query
                 ->select('id', 'visit_billing_id', 'patient_visit_id', 'description', 'quantity', 'unit_price', 'line_total', 'status', 'charged_at')
                 ->latest('charged_at'),
@@ -167,6 +169,7 @@ final readonly class FinanceDebtorController implements HasMiddleware
             'patient_number' => $billing->visit?->patient?->patient_number,
             'payer_type' => $this->backedEnumValue($billing->payer_type, $billing->getAttribute('payer_type')),
             'insurance_company_name' => $billing->visitPayer?->insuranceCompany?->name,
+            'insurance_package_name' => $billing->visitPayer?->insurancePackage?->name,
             'gross_amount' => round((float) $billing->gross_amount, 2),
             'discount_amount' => round((float) $billing->discount_amount, 2),
             'write_off_amount' => round((float) $billing->write_off_amount, 2),

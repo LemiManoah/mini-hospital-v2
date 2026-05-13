@@ -288,6 +288,7 @@ export interface VisitCharge {
     quantity: number;
     unit_price: number;
     line_total: number;
+    copay_amount?: number | null;
     status: string;
     charged_at: string | null;
 }

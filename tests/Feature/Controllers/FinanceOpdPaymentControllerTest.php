@@ -150,6 +150,60 @@ it('shows payable opd visits in the finance queue', function (): void {
             ->where('visits.data.0.billing.balance_amount', 150));
 });
 
+it('exposes insurance copay splits for the finance cashiering flow', function (): void {
+    [$tenant, $branch, $user, $visit] = createFinancePaymentContext();
+    $insuranceCompanyId = (string) Str::uuid();
+    $insurancePackageId = (string) Str::uuid();
+
+    seedInsuranceCoverage($tenant->id, $insuranceCompanyId, $insurancePackageId);
+
+    DB::table('visit_payers')
+        ->where('patient_visit_id', $visit->id)
+        ->update([
+            'billing_type' => PayerType::INSURANCE->value,
+            'insurance_company_id' => $insuranceCompanyId,
+            'insurance_package_id' => $insurancePackageId,
+        ]);
+
+    DB::table('visit_billings')
+        ->where('patient_visit_id', $visit->id)
+        ->update([
+            'payer_type' => PayerType::INSURANCE->value,
+            'insurance_company_id' => $insuranceCompanyId,
+            'insurance_package_id' => $insurancePackageId,
+            'status' => 'insurance_pending',
+        ]);
+
+    DB::table('visit_charges')
+        ->where('patient_visit_id', $visit->id)
+        ->update(['copay_amount' => 50]);
+
+    $user->givePermissionTo('payments.view');
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('finance.opd-payments.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('finance/opd-payments/index')
+            ->where('visits.data.0.payer.billing_type', 'insurance')
+            ->where('visits.data.0.payer.insurance_company_name', fn (string $name): bool => str_starts_with($name, 'Test Insurance '))
+            ->where('visits.data.0.payer.insurance_package_name', fn (string $name): bool => str_starts_with($name, 'Test Cover '))
+            ->where('visits.data.0.billing.split.patient_responsibility_amount', 50.0)
+            ->where('visits.data.0.billing.split.patient_balance_amount', 50.0)
+            ->where('visits.data.0.billing.split.insurer_responsibility_amount', 100.0));
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('finance.opd-payments.show', $visit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('finance/opd-payments/show')
+            ->where('visit.billing.split.patient_balance_amount', 50.0)
+            ->where('visit.billing.split.insurer_balance_amount', 100.0)
+            ->where('visit.charges.0.copay_amount', '50.00'));
+});
+
 it('records payments from the finance opd payment desk', function (): void {
     [, $branch, $user, $visit, $paymentMethodId] = createFinancePaymentContext();
     $user->givePermissionTo(['payments.view', 'payments.create']);

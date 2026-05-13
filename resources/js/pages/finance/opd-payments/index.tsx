@@ -1,3 +1,4 @@
+import { PatientPayerIndicator } from '@/components/patient-payer-indicator';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -164,8 +165,8 @@ export default function FinanceOpdPaymentsIndexPage({
                                 <TableRow>
                                     <TableHead>Patient</TableHead>
                                     <TableHead>Visit</TableHead>
-                                    <TableHead>Payer</TableHead>
                                     <TableHead>Charges</TableHead>
+                                    <TableHead>Patient Due</TableHead>
                                     <TableHead>Collected</TableHead>
                                     <TableHead>Balance</TableHead>
                                     <TableHead>Status</TableHead>
@@ -179,10 +180,27 @@ export default function FinanceOpdPaymentsIndexPage({
                                     <TableRow key={visit.id}>
                                         <TableCell>
                                             <div className="flex flex-col gap-1">
-                                                <span className="font-medium">
-                                                    {visit.patient?.full_name ??
-                                                        'Unknown patient'}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium">
+                                                        {visit.patient
+                                                            ?.full_name ??
+                                                            'Unknown patient'}
+                                                    </span>
+                                                    <PatientPayerIndicator
+                                                        payerType={
+                                                            visit.payer
+                                                                ?.billing_type
+                                                        }
+                                                        insuranceCompanyName={
+                                                            visit.payer
+                                                                ?.insurance_company_name
+                                                        }
+                                                        insurancePackageName={
+                                                            visit.payer
+                                                                ?.insurance_package_name
+                                                        }
+                                                    />
+                                                </div>
                                                 <span className="text-xs text-muted-foreground">
                                                     {visit.patient
                                                         ?.patient_number ??
@@ -203,26 +221,18 @@ export default function FinanceOpdPaymentsIndexPage({
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex flex-col gap-1">
-                                                <span className="capitalize">
-                                                    {visit.payer
-                                                        ?.billing_type ??
-                                                        'cash'}
-                                                </span>
-                                                {visit.payer
-                                                    ?.insurance_company_name ? (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {
-                                                            visit.payer
-                                                                .insurance_company_name
-                                                        }
-                                                    </span>
-                                                ) : null}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
                                             {formatMoney(
                                                 visit.billing?.gross_amount,
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="font-medium">
+                                            {formatMoney(
+                                                visit.payer?.billing_type ===
+                                                    'insurance'
+                                                    ? visit.billing?.split
+                                                          ?.patient_balance_amount
+                                                    : visit.billing
+                                                          ?.balance_amount,
                                             )}
                                         </TableCell>
                                         <TableCell>

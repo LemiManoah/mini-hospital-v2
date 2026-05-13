@@ -1,6 +1,7 @@
 import { AllergenModal } from '@/components/allergen-modal';
 import { AllergyAlert } from '@/components/allergy-alert';
 import { AuditTimelineCard } from '@/components/audit-timeline-card';
+import { PatientPayerIndicator } from '@/components/patient-payer-indicator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import VisitStartDialog from '@/components/visit-start-dialog';
@@ -232,9 +233,24 @@ export default function PatientShow({
                                             >
                                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                                     <div className="space-y-1">
-                                                        <p className="font-medium">
-                                                            {visit.visit_number}
-                                                        </p>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-medium">
+                                                                {
+                                                                    visit.visit_number
+                                                                }
+                                                            </p>
+                                                            <PatientPayerIndicator
+                                                                payerType={
+                                                                    payer?.billing_type
+                                                                }
+                                                                insuranceCompanyName={
+                                                                    company
+                                                                }
+                                                                insurancePackageName={
+                                                                    packageName
+                                                                }
+                                                            />
+                                                        </div>
                                                         <p className="text-sm text-muted-foreground">
                                                             {visit.visit_type.replaceAll(
                                                                 '_',
@@ -259,20 +275,6 @@ export default function PatientShow({
                                                                     ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
                                                                     : 'Not assigned'}
                                                             </span>
-                                                            <span>
-                                                                Payer:{' '}
-                                                                {payer?.billing_type ??
-                                                                    'cash'}
-                                                            </span>
-                                                            {company ? (
-                                                                <span>
-                                                                    Insurance:{' '}
-                                                                    {company}
-                                                                    {packageName
-                                                                        ? ` / ${packageName}`
-                                                                        : ''}
-                                                                </span>
-                                                            ) : null}
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2">

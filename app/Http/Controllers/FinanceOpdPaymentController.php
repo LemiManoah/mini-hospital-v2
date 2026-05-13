@@ -7,14 +7,18 @@ namespace App\Http\Controllers;
 use App\Actions\EnsureBranchPaymentMethods;
 use App\Actions\ListAuditTimeline;
 use App\Actions\RecordVisitPayment;
+use App\Enums\PayerType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Http\Requests\StoreVisitPaymentRequest;
 use App\Models\PatientVisit;
 use App\Models\PaymentMethod;
+use App\Models\VisitBilling;
+use App\Models\VisitCharge;
 use App\Support\ActiveBranchWorkspace;
 use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,7 +58,7 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
                 'payer.insuranceCompany:id,name',
                 'payer.insurancePackage:id,name',
                 'billing:id,patient_visit_id,visit_payer_id,payer_type,gross_amount,discount_amount,paid_amount,balance_amount,status,billed_at,settled_at',
-                'charges:id,visit_billing_id,patient_visit_id,description,line_total,status',
+                'charges:id,visit_billing_id,patient_visit_id,description,line_total,copay_amount,status',
             ])
             ->whereIn('status', [
                 VisitStatus::REGISTERED->value,
@@ -124,9 +128,11 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
                 ],
                 'billing' => $visit->billing === null ? null : [
                     'gross_amount' => (float) ($visit->billing->gross_amount ?? 0),
+                    'discount_amount' => (float) ($visit->billing->discount_amount ?? 0),
                     'paid_amount' => (float) ($visit->billing->paid_amount ?? 0),
                     'balance_amount' => (float) ($visit->billing->balance_amount ?? 0),
                     'status' => self::backedEnumValue($visit->billing->status, $visit->billing->getAttribute('status')),
+                    'split' => self::billingSplit($visit->billing, $visit->charges),
                 ],
                 'charges_count' => $visit->charges->count(),
             ]);
@@ -172,9 +178,13 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
                 ->select('id', 'visit_billing_id', 'patient_visit_id', 'amount', 'reason', 'status', 'notes', 'requested_by', 'requested_at', 'approved_by', 'approved_at', 'reversed_by', 'reversed_at', 'reversal_reason')
                 ->latest(),
             'charges' => static fn (HasMany $query): HasMany => $query
-                ->select('id', 'visit_billing_id', 'patient_visit_id', 'source_type', 'source_id', 'charge_master_id', 'charge_code', 'description', 'quantity', 'unit_price', 'line_total', 'status', 'charged_at')
+                ->select('id', 'visit_billing_id', 'patient_visit_id', 'source_type', 'source_id', 'charge_master_id', 'charge_code', 'description', 'quantity', 'unit_price', 'line_total', 'copay_amount', 'status', 'charged_at')
                 ->latest('charged_at'),
         ]);
+
+        if ($visit->billing instanceof VisitBilling) {
+            $visit->billing->setAttribute('split', self::billingSplit($visit->billing, $visit->charges));
+        }
 
         return Inertia::render('finance/opd-payments/show', [
             'visit' => $visit,
@@ -217,5 +227,49 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
         }
 
         return is_string($fallback) ? $fallback : '';
+    }
+
+    /**
+     * @param  Collection<int, VisitCharge>  $charges
+     * @return array{patient_responsibility_amount: float, insurer_responsibility_amount: float, patient_paid_amount: float, patient_balance_amount: float, insurer_balance_amount: float, copay_amount: float}
+     */
+    private static function billingSplit(VisitBilling $billing, Collection $charges): array
+    {
+        $grossAmount = max(0.0, round((float) $billing->gross_amount, 2));
+        $discountAmount = max(0.0, round((float) $billing->discount_amount, 2));
+        $paidAmount = max(0.0, round((float) $billing->paid_amount, 2));
+        $balanceAmount = max(0.0, round((float) $billing->balance_amount, 2));
+        $copayAmount = min($grossAmount, max(0.0, round($charges->sum(
+            static fn ($charge): float => self::backedEnumValue($charge->status, $charge->getAttribute('status')) === 'active'
+                ? (float) $charge->copay_amount
+                : 0.0
+        ), 2)));
+
+        if ($billing->payer_type !== PayerType::INSURANCE) {
+            $patientResponsibility = max(0.0, round($grossAmount - $discountAmount, 2));
+
+            return [
+                'patient_responsibility_amount' => $patientResponsibility,
+                'insurer_responsibility_amount' => 0.0,
+                'patient_paid_amount' => min($paidAmount, $patientResponsibility),
+                'patient_balance_amount' => max(0.0, round($patientResponsibility - $paidAmount, 2)),
+                'insurer_balance_amount' => 0.0,
+                'copay_amount' => 0.0,
+            ];
+        }
+
+        $patientResponsibility = max(0.0, round($copayAmount - $discountAmount, 2));
+        $insurerResponsibility = max(0.0, round($grossAmount - $copayAmount, 2));
+        $patientPaidAmount = min($paidAmount, $patientResponsibility);
+        $patientBalanceAmount = max(0.0, round($patientResponsibility - $patientPaidAmount, 2));
+
+        return [
+            'patient_responsibility_amount' => $patientResponsibility,
+            'insurer_responsibility_amount' => $insurerResponsibility,
+            'patient_paid_amount' => $patientPaidAmount,
+            'patient_balance_amount' => $patientBalanceAmount,
+            'insurer_balance_amount' => max(0.0, round($balanceAmount - $patientBalanceAmount, 2)),
+            'copay_amount' => $copayAmount,
+        ];
     }
 }

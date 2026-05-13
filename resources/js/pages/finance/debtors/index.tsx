@@ -1,3 +1,4 @@
+import { PatientPayerIndicator } from '@/components/patient-payer-indicator';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -102,7 +103,6 @@ export default function FinanceDebtorsIndexPage({
                                 <TableRow>
                                     <TableHead>Patient</TableHead>
                                     <TableHead>Visit</TableHead>
-                                    <TableHead>Payer</TableHead>
                                     <TableHead>Gross</TableHead>
                                     <TableHead>Paid</TableHead>
                                     <TableHead>Written Off</TableHead>
@@ -118,9 +118,22 @@ export default function FinanceDebtorsIndexPage({
                                     <TableRow key={billing.id}>
                                         <TableCell>
                                             <div className="flex flex-col gap-1">
-                                                <span className="font-medium">
-                                                    {billing.patient_name}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium">
+                                                        {billing.patient_name}
+                                                    </span>
+                                                    <PatientPayerIndicator
+                                                        payerType={
+                                                            billing.payer_type
+                                                        }
+                                                        insuranceCompanyName={
+                                                            billing.insurance_company_name
+                                                        }
+                                                        insurancePackageName={
+                                                            billing.insurance_package_name
+                                                        }
+                                                    />
+                                                </div>
                                                 <span className="text-xs text-muted-foreground">
                                                     {billing.patient_number ??
                                                         'No MRN'}
@@ -138,20 +151,6 @@ export default function FinanceDebtorsIndexPage({
                                                         billing.registered_at,
                                                     )}
                                                 </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col gap-1">
-                                                <span className="capitalize">
-                                                    {billing.payer_type}
-                                                </span>
-                                                {billing.insurance_company_name ? (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {
-                                                            billing.insurance_company_name
-                                                        }
-                                                    </span>
-                                                ) : null}
                                             </div>
                                         </TableCell>
                                         <TableCell>

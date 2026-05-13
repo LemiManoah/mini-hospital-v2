@@ -1,3 +1,4 @@
+import { PatientPayerIndicator } from '@/components/patient-payer-indicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -121,7 +122,6 @@ export default function ActiveVisits({
                             <TableRow>
                                 <TableHead>Patient</TableHead>
                                 <TableHead>Clinic</TableHead>
-                                <TableHead>Payer</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Registered</TableHead>
                                 <TableHead>Actions</TableHead>
@@ -150,10 +150,24 @@ export default function ActiveVisits({
                                         <TableRow key={visit.id}>
                                             <TableCell>
                                                 <div>
-                                                    <p className="font-medium">
-                                                        {patientName ||
-                                                            'Unknown patient'}
-                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-medium">
+                                                            {patientName ||
+                                                                'Unknown patient'}
+                                                        </p>
+                                                        <PatientPayerIndicator
+                                                            payerType={
+                                                                visit.payer
+                                                                    ?.billing_type
+                                                            }
+                                                            insuranceCompanyName={
+                                                                company
+                                                            }
+                                                            insurancePackageName={
+                                                                packageName
+                                                            }
+                                                        />
+                                                    </div>
                                                     <p className="text-xs text-muted-foreground">
                                                         {
                                                             visit.patient
@@ -177,20 +191,6 @@ export default function ActiveVisits({
                                                         {visit.doctor
                                                             ? `${visit.doctor.first_name} ${visit.doctor.last_name}`
                                                             : 'Not assigned'}
-                                                    </p>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div>
-                                                    <p className="capitalize">
-                                                        {visit.payer
-                                                            ?.billing_type ??
-                                                            'cash'}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {company
-                                                            ? `${company}${packageName ? ` / ${packageName}` : ''}`
-                                                            : 'No insurer'}
                                                     </p>
                                                 </div>
                                             </TableCell>

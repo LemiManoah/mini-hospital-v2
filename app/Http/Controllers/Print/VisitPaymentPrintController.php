@@ -50,6 +50,7 @@ final readonly class VisitPaymentPrintController implements HasMiddleware
             'visit.payer.insuranceCompany:id,name',
             'visit.payer.insurancePackage:id,name',
             'billing:id,patient_visit_id,status,gross_amount,paid_amount,balance_amount',
+            'billing.charges:id,visit_billing_id,line_total,copay_amount,status',
         ]);
 
         $pdf = Pdf::loadView('print.payment-receipt', [

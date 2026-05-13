@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { type InventoryReconciliationShowPageProps } from '@/types/inventory-reconciliation';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, Circle, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, LoaderCircle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const labelize = (value: string): string =>
@@ -215,6 +215,7 @@ export default function InventoryReconciliationShow({
                         <Button
                             type="button"
                             variant="outline"
+                            disabled={submitForm.processing}
                             onClick={() => setSubmitDialogOpen(false)}
                         >
                             Keep Draft
@@ -225,10 +226,21 @@ export default function InventoryReconciliationShow({
                             onClick={() =>
                                 submitForm.post(
                                     `/reconciliations/${reconciliation.id}/submit`,
+                                    {
+                                        onSuccess: () =>
+                                            setSubmitDialogOpen(false),
+                                    },
                                 )
                             }
                         >
-                            Submit For Review
+                            {submitForm.processing ? (
+                                <>
+                                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                    Submitting…
+                                </>
+                            ) : (
+                                'Submit For Review'
+                            )}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -245,6 +257,7 @@ export default function InventoryReconciliationShow({
                         <Button
                             type="button"
                             variant="outline"
+                            disabled={postForm.processing}
                             onClick={() => setPostDialogOpen(false)}
                         >
                             Not Yet
@@ -255,10 +268,21 @@ export default function InventoryReconciliationShow({
                             onClick={() =>
                                 postForm.post(
                                     `/reconciliations/${reconciliation.id}/post`,
+                                    {
+                                        onSuccess: () =>
+                                            setPostDialogOpen(false),
+                                    },
                                 )
                             }
                         >
-                            Post Reconciliation
+                            {postForm.processing ? (
+                                <>
+                                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                    Posting…
+                                </>
+                            ) : (
+                                'Post Reconciliation'
+                            )}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
