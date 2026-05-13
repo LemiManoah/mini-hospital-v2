@@ -40,9 +40,9 @@ final readonly class AddressController implements HasMiddleware
             ->with('country')
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where('city', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('district', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('state', 'like', sprintf('%%%s%%', $search))
+                static fn (Builder $query) => $query->whereLike('city', sprintf('%%%s%%', $search))
+                    ->orWhereLike('district', sprintf('%%%s%%', $search))
+                    ->orWhereLike('state', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

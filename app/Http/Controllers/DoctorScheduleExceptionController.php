@@ -55,15 +55,15 @@ final readonly class DoctorScheduleExceptionController implements HasMiddleware
                 static function (Builder $query) use ($search): void {
                     $query->where(function (Builder $innerQuery) use ($search): void {
                         $innerQuery
-                            ->where('reason', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('type', 'like', sprintf('%%%s%%', $search))
+                            ->whereLike('reason', sprintf('%%%s%%', $search))
+                            ->orWhereLike('type', sprintf('%%%s%%', $search))
                             ->orWhereHas('doctor', static function (Builder $doctorQuery) use ($search): void {
                                 $doctorQuery
-                                    ->where('first_name', 'like', sprintf('%%%s%%', $search))
-                                    ->orWhere('last_name', 'like', sprintf('%%%s%%', $search));
+                                    ->whereLike('first_name', sprintf('%%%s%%', $search))
+                                    ->orWhereLike('last_name', sprintf('%%%s%%', $search));
                             })
                             ->orWhereHas('clinic', static function (Builder $clinicQuery) use ($search): void {
-                                $clinicQuery->where('clinic_name', 'like', sprintf('%%%s%%', $search));
+                                $clinicQuery->whereLike('clinic_name', sprintf('%%%s%%', $search));
                             });
                     });
                 }

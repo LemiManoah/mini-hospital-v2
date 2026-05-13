@@ -47,9 +47,9 @@ final readonly class StaffController implements HasMiddleware
             ->when(
                 $search !== '',
                 static fn (Builder $query) => $query
-                    ->where('first_name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('email', 'like', sprintf('%%%s%%', $search))
+                    ->whereLike('first_name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('last_name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('email', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

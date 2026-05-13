@@ -63,15 +63,15 @@ final readonly class FacilityImpersonationController implements HasMiddleware
 
                     $query->where(static function (Builder $userQuery) use ($search): void {
                         $userQuery
-                            ->where('email', 'like', sprintf('%%%s%%', $search))
+                            ->whereLike('email', sprintf('%%%s%%', $search))
                             ->orWhereHas('staff', static function (Builder $staffQuery) use ($search): void {
                                 $staffQuery
-                                    ->where('first_name', 'like', sprintf('%%%s%%', $search))
-                                    ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                                    ->orWhere('employee_number', 'like', sprintf('%%%s%%', $search));
+                                    ->whereLike('first_name', sprintf('%%%s%%', $search))
+                                    ->orWhereLike('last_name', sprintf('%%%s%%', $search))
+                                    ->orWhereLike('employee_number', sprintf('%%%s%%', $search));
                             })
                             ->orWhereHas('tenant', static function (Builder $tenantQuery) use ($search): void {
-                                $tenantQuery->where('name', 'like', sprintf('%%%s%%', $search));
+                                $tenantQuery->whereLike('name', sprintf('%%%s%%', $search));
                             });
                     });
                 },

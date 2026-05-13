@@ -38,8 +38,8 @@ final readonly class UnitController implements HasMiddleware
         $units = Unit::query()
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where('name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('symbol', 'like', sprintf('%%%s%%', $search))
+                static fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('symbol', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

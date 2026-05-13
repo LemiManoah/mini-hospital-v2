@@ -63,8 +63,8 @@ final readonly class GoodsReceiptController implements HasMiddleware
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
                     $inner
-                        ->where('receipt_number', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('supplier_invoice_number', 'like', sprintf('%%%s%%', $search));
+                        ->whereLike('receipt_number', sprintf('%%%s%%', $search))
+                        ->orWhereLike('supplier_invoice_number', sprintf('%%%s%%', $search));
                 });
             })
             ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))

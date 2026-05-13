@@ -82,13 +82,13 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
                 $search !== '',
                 static fn (Builder $query): Builder => $query->where(function (Builder $searchQuery) use ($search): void {
                     $searchQuery
-                        ->where('visit_number', 'like', sprintf('%%%s%%', $search))
+                        ->whereLike('visit_number', sprintf('%%%s%%', $search))
                         ->orWhereHas('patient', static function (Builder $patientQuery) use ($search): void {
                             $patientQuery
-                                ->where('patient_number', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('phone_number', 'like', sprintf('%%%s%%', $search));
+                                ->whereLike('patient_number', sprintf('%%%s%%', $search))
+                                ->orWhereLike('first_name', sprintf('%%%s%%', $search))
+                                ->orWhereLike('last_name', sprintf('%%%s%%', $search))
+                                ->orWhereLike('phone_number', sprintf('%%%s%%', $search));
                         });
                 })
             )
@@ -239,11 +239,14 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
         $discountAmount = max(0.0, round((float) $billing->discount_amount, 2));
         $paidAmount = max(0.0, round((float) $billing->paid_amount, 2));
         $balanceAmount = max(0.0, round((float) $billing->balance_amount, 2));
-        $copayAmount = min($grossAmount, max(0.0, round($charges->sum(
-            static fn ($charge): float => self::backedEnumValue($charge->status, $charge->getAttribute('status')) === 'active'
-                ? (float) $charge->copay_amount
-                : 0.0
-        ), 2)));
+        $activeCopayAmount = round($charges->sum(static function (VisitCharge $charge): float {
+            if (self::backedEnumValue($charge->status, $charge->getAttribute('status')) !== 'active') {
+                return 0.0;
+            }
+
+            return (float) $charge->copay_amount;
+        }), 2);
+        $copayAmount = min($grossAmount, max(0.0, $activeCopayAmount));
 
         if ($billing->payer_type !== PayerType::INSURANCE) {
             $patientResponsibility = max(0.0, round($grossAmount - $discountAmount, 2));

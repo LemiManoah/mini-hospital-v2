@@ -166,6 +166,10 @@ export default function ActiveVisits({
                                                             insurancePackageName={
                                                                 packageName
                                                             }
+                                                            unpaidBalance={
+                                                                visit.billing
+                                                                    ?.balance_amount
+                                                            }
                                                         />
                                                     </div>
                                                     <p className="text-xs text-muted-foreground">

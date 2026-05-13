@@ -38,10 +38,10 @@ final readonly class ReferralFacilityController implements HasMiddleware
         $referralFacilities = ReferralFacility::query()
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where('name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('facility_type', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('phone', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('email', 'like', sprintf('%%%s%%', $search))
+                static fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('facility_type', sprintf('%%%s%%', $search))
+                    ->orWhereLike('phone', sprintf('%%%s%%', $search))
+                    ->orWhereLike('email', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

@@ -19,7 +19,7 @@ final readonly class BranchScopedNumberGenerator
         $prefix = sprintf('%s-%s', $this->branchPrefix($branchIdentifier, 'HSP'), $typePrefix);
 
         $latestSequence = Patient::query()
-            ->where('patient_number', 'like', sprintf('%s-%%', $prefix))
+            ->whereLike('patient_number', sprintf('%s-%%', $prefix))
             ->pluck('patient_number')
             ->reduce(
                 fn (int $carry, mixed $patientNumber): int => max(
@@ -41,7 +41,7 @@ final readonly class BranchScopedNumberGenerator
         $year = now()->format('Y');
 
         $latestSequence = PatientVisit::query()
-            ->where('visit_number', 'like', sprintf('%s-%s%%', $prefix, $year))
+            ->whereLike('visit_number', sprintf('%s-%s%%', $prefix, $year))
             ->pluck('visit_number')
             ->reduce(
                 fn (int $carry, mixed $visitNumber): int => max(

@@ -38,9 +38,9 @@ final readonly class SupplierController implements HasMiddleware
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
                     $inner
-                        ->where('name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('contact_person', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('email', 'like', sprintf('%%%s%%', $search));
+                        ->whereLike('name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('contact_person', sprintf('%%%s%%', $search))
+                        ->orWhereLike('email', sprintf('%%%s%%', $search));
                 });
             })
             ->orderBy('name')

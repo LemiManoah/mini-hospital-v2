@@ -70,6 +70,7 @@ export function VisitHeader({
                                 payerType={visit.payer?.billing_type}
                                 insuranceCompanyName={insuranceCompanyName}
                                 insurancePackageName={insurancePackageName}
+                                unpaidBalance={visit.billing?.balance_amount}
                             />
                             <AllergyAlert allergies={allergies} />
                         </div>

@@ -61,6 +61,7 @@ export default function FinanceOpdPaymentsShowPage({
                                     visit.payer?.insurancePackage?.name ??
                                     visit.payer?.insurance_package?.name
                                 }
+                                unpaidBalance={visit.billing?.balance_amount}
                             />
                         </span>{' '}
                         &middot; {visit.patient?.patient_number ?? 'No MRN'}{' '}

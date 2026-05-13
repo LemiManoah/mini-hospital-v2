@@ -47,8 +47,8 @@ final readonly class ClinicController implements HasMiddleware
             ->with(['branch', 'department'])
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where('clinic_name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('clinic_code', 'like', sprintf('%%%s%%', $search))
+                static fn (Builder $query) => $query->whereLike('clinic_name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('clinic_code', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

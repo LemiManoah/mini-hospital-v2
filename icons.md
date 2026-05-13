@@ -7,9 +7,9 @@ Show a tiny payer icon beside patient names so staff can quickly distinguish cas
 ## Design
 
 - Use one reusable React component for the indicator.
-- Show a green wallet-style icon for cash patients and a blue shield-style icon for insured patients.
+- Show a green wallet-style icon for settled cash patients, a yellow wallet-style icon for cash patients with unpaid balances, and a blue shield-style icon for insured patients.
 - Keep the icon small, muted, and inline with the patient name.
-- Use a tooltip for every icon. Cash can read `Cash patient`; insurance should show the company and package when available.
+- Use a tooltip for every icon. Settled cash can read `Cash patient`; unpaid cash should include the unpaid balance; insurance should show the company and package when available.
 - Use accessible labels so the meaning is not color-dependent.
 - Replace payer columns where the payer column only repeats `cash` or insurer name and the patient name is already present.
 

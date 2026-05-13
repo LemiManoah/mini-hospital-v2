@@ -41,9 +41,9 @@ final readonly class InsuranceCompanyController implements HasMiddleware
                 $search !== '',
                 static fn (Builder $query) => $query->where(
                     static fn (Builder $searchQuery) => $searchQuery
-                        ->where('name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('email', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('main_contact', 'like', sprintf('%%%s%%', $search))
+                        ->whereLike('name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('email', sprintf('%%%s%%', $search))
+                        ->orWhereLike('main_contact', sprintf('%%%s%%', $search))
                 )
             )
             ->latest()

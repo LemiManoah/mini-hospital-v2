@@ -49,8 +49,8 @@ final readonly class ConsultationTariffController implements HasMiddleware
                 static fn (Builder $query): Builder => $query->whereHas(
                     'facilityService',
                     static fn (Builder $serviceQuery): Builder => $serviceQuery
-                        ->where('name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('service_code', 'like', sprintf('%%%s%%', $search)),
+                        ->whereLike('name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('service_code', sprintf('%%%s%%', $search)),
                 ),
             )
             ->orderBy('consultation_type')

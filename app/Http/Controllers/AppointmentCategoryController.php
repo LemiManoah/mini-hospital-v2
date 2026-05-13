@@ -45,10 +45,10 @@ final readonly class AppointmentCategoryController implements HasMiddleware
         $appointmentCategories = $this->activeBranchWorkspace->apply(AppointmentCategory::query())
             ->with('clinic:id,clinic_name')
             ->when($search !== '', static fn (Builder $query) => $query
-                ->where('name', 'like', sprintf('%%%s%%', $search))
-                ->orWhere('description', 'like', sprintf('%%%s%%', $search))
+                ->whereLike('name', sprintf('%%%s%%', $search))
+                ->orWhereLike('description', sprintf('%%%s%%', $search))
                 ->orWhereHas('clinic', static fn (Builder $clinicQuery) => $clinicQuery
-                    ->where('clinic_name', 'like', sprintf('%%%s%%', $search))))
+                    ->whereLike('clinic_name', sprintf('%%%s%%', $search))))
             ->latest()
             ->paginate(10)
             ->withQueryString();

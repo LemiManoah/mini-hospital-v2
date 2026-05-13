@@ -176,11 +176,11 @@ final readonly class DispensingHistoryController implements HasMiddleware
                 function (Builder $q) use ($request): void {
                     $search = $request->query('search');
                     $q->where(function (Builder $inner) use ($search): void {
-                        $inner->where('dispense_number', 'like', sprintf('%%%s%%', $search))
-                            ->orWhereHas('visit', static fn (Builder $v) => $v->where('visit_number', 'like', sprintf('%%%s%%', $search)))
-                            ->orWhereHas('visit.patient', static fn (Builder $p) => $p->where('first_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('patient_number', 'like', sprintf('%%%s%%', $search)));
+                        $inner->whereLike('dispense_number', sprintf('%%%s%%', $search))
+                            ->orWhereHas('visit', static fn (Builder $v) => $v->whereLike('visit_number', sprintf('%%%s%%', $search)))
+                            ->orWhereHas('visit.patient', static fn (Builder $p) => $p->whereLike('first_name', sprintf('%%%s%%', $search))
+                                ->orWhereLike('last_name', sprintf('%%%s%%', $search))
+                                ->orWhereLike('patient_number', sprintf('%%%s%%', $search)));
                     });
                 }
             )

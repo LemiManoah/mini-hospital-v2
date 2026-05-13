@@ -60,13 +60,13 @@ final readonly class FinanceDebtorController implements HasMiddleware
             ->where('balance_amount', '>', 0)
             ->when($search !== '', static fn (Builder $query): Builder => $query->whereHas('visit', static function (Builder $visitQuery) use ($search): void {
                 $visitQuery
-                    ->where('visit_number', 'like', sprintf('%%%s%%', $search))
+                    ->whereLike('visit_number', sprintf('%%%s%%', $search))
                     ->orWhereHas('patient', static function (Builder $patientQuery) use ($search): void {
                         $patientQuery
-                            ->where('patient_number', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('phone_number', 'like', sprintf('%%%s%%', $search));
+                            ->whereLike('patient_number', sprintf('%%%s%%', $search))
+                            ->orWhereLike('first_name', sprintf('%%%s%%', $search))
+                            ->orWhereLike('last_name', sprintf('%%%s%%', $search))
+                            ->orWhereLike('phone_number', sprintf('%%%s%%', $search));
                     });
             }))
             ->latest()

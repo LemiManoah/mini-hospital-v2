@@ -40,7 +40,7 @@ final readonly class RoleController implements HasMiddleware
             ->with('permissions')
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where('name', 'like', sprintf('%%%s%%', $search))
+                static fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search))
             )
             ->paginate(5)
             ->withQueryString();

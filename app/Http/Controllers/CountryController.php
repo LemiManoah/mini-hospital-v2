@@ -38,8 +38,8 @@ final readonly class CountryController implements HasMiddleware
         $countries = Country::query()
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where('country_name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('country_code', 'like', sprintf('%%%s%%', $search))
+                static fn (Builder $query) => $query->whereLike('country_name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('country_code', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

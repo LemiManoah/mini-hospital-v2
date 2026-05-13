@@ -10,6 +10,7 @@ type PatientPayerIndicatorProps = {
     payerType?: 'cash' | 'insurance' | string | null;
     insuranceCompanyName?: string | null;
     insurancePackageName?: string | null;
+    unpaidBalance?: number | null;
     className?: string;
 };
 
@@ -17,16 +18,20 @@ export function PatientPayerIndicator({
     payerType,
     insuranceCompanyName,
     insurancePackageName,
+    unpaidBalance,
     className,
 }: PatientPayerIndicatorProps) {
     const isInsurance = payerType === 'insurance';
+    const hasUnpaidCashBalance = !isInsurance && (unpaidBalance ?? 0) > 0;
     const label = isInsurance
         ? insuranceLabel(insuranceCompanyName, insurancePackageName)
-        : 'Cash patient';
+        : cashLabel(unpaidBalance);
     const Icon = isInsurance ? ShieldCheck : WalletCards;
     const colorClasses = isInsurance
         ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300'
-        : 'border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300';
+        : hasUnpaidCashBalance
+          ? 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-300'
+          : 'border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300';
 
     return (
         <Tooltip>
@@ -66,4 +71,19 @@ function insuranceLabel(
     }
 
     return 'Insurance patient';
+}
+
+function cashLabel(unpaidBalance?: number | null): string {
+    if ((unpaidBalance ?? 0) > 0) {
+        return `Cash patient - unpaid balance: ${formatAmount(unpaidBalance ?? 0)}`;
+    }
+
+    return 'Cash patient';
+}
+
+function formatAmount(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(amount);
 }

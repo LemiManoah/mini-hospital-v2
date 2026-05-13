@@ -63,10 +63,10 @@ final readonly class PatientController implements HasMiddleware
                 $search !== '',
                 static fn (Builder $query) => $query->where(
                     static fn (Builder $searchQuery) => $searchQuery
-                        ->where('patient_number', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('phone_number', 'like', sprintf('%%%s%%', $search))
+                        ->whereLike('patient_number', sprintf('%%%s%%', $search))
+                        ->orWhereLike('first_name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('last_name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('phone_number', sprintf('%%%s%%', $search))
                 )
             )
             ->latest()
@@ -98,10 +98,10 @@ final readonly class PatientController implements HasMiddleware
                 $search !== '',
                 static fn (Builder $query) => $query->where(
                     static fn (Builder $searchQuery) => $searchQuery
-                        ->where('patient_number', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('phone_number', 'like', sprintf('%%%s%%', $search))
+                        ->whereLike('patient_number', sprintf('%%%s%%', $search))
+                        ->orWhereLike('first_name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('last_name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('phone_number', sprintf('%%%s%%', $search))
                 )
             )
             ->latest()

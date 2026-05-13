@@ -51,8 +51,8 @@ final readonly class PurchaseOrderController implements HasMiddleware
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
                     $inner
-                        ->where('order_number', 'like', sprintf('%%%s%%', $search))
-                        ->orWhereHas('supplier', static fn (Builder $q) => $q->where('name', 'like', sprintf('%%%s%%', $search)));
+                        ->whereLike('order_number', sprintf('%%%s%%', $search))
+                        ->orWhereHas('supplier', static fn (Builder $q) => $q->whereLike('name', sprintf('%%%s%%', $search)));
                 });
             })
             ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))

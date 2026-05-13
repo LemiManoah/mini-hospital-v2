@@ -199,6 +199,10 @@ export default function FinanceOpdPaymentsIndexPage({
                                                             visit.payer
                                                                 ?.insurance_package_name
                                                         }
+                                                        unpaidBalance={
+                                                            visit.billing
+                                                                ?.balance_amount
+                                                        }
                                                     />
                                                 </div>
                                                 <span className="text-xs text-muted-foreground">

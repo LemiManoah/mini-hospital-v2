@@ -39,8 +39,8 @@ final readonly class FacilityServiceController implements HasMiddleware
 
         $facilityServices = FacilityService::query()
             ->when($search !== '', static fn (Builder $query) => $query
-                ->where('name', 'like', sprintf('%%%s%%', $search))
-                ->orWhere('service_code', 'like', sprintf('%%%s%%', $search)))
+                ->whereLike('name', sprintf('%%%s%%', $search))
+                ->orWhereLike('service_code', sprintf('%%%s%%', $search)))
             ->latest()
             ->paginate(10)
             ->withQueryString();

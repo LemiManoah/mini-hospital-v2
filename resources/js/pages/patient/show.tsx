@@ -249,6 +249,11 @@ export default function PatientShow({
                                                                 insurancePackageName={
                                                                     packageName
                                                                 }
+                                                                unpaidBalance={
+                                                                    visit
+                                                                        .billing
+                                                                        ?.balance_amount
+                                                                }
                                                             />
                                                         </div>
                                                         <p className="text-sm text-muted-foreground">

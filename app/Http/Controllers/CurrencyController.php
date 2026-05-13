@@ -38,8 +38,8 @@ final readonly class CurrencyController implements HasMiddleware
         $currencies = Currency::query()
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where('name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('code', 'like', sprintf('%%%s%%', $search))
+                static fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('code', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

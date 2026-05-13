@@ -26,9 +26,9 @@ final class PrescriptionDispenseProgress
         $query = DispensingRecordItem::query()
             ->selectRaw('dispensing_record_items.prescription_item_id')
             ->selectRaw('SUM(dispensing_record_items.dispensed_quantity) as dispensed_quantity')
-            ->selectRaw('SUM(CASE WHEN dispensing_record_items.external_pharmacy = 1 THEN dispensing_record_items.balance_quantity ELSE 0 END) as external_quantity')
+            ->selectRaw('SUM(CASE WHEN dispensing_record_items.external_pharmacy THEN dispensing_record_items.balance_quantity ELSE 0 END) as external_quantity')
             ->selectRaw('MAX(dispensing_records.dispensed_at) as latest_dispensed_at')
-            ->selectRaw('MAX(CASE WHEN dispensing_record_items.external_pharmacy = 1 THEN 1 ELSE 0 END) as external_pharmacy')
+            ->selectRaw('MAX(CASE WHEN dispensing_record_items.external_pharmacy THEN 1 ELSE 0 END) as external_pharmacy')
             ->join('dispensing_records', 'dispensing_records.id', '=', 'dispensing_record_items.dispensing_record_id')
             ->where('dispensing_records.prescription_id', $prescriptionId)
             ->where('dispensing_records.status', DispensingRecordStatus::POSTED->value);

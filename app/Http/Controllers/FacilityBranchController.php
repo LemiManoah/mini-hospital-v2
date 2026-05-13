@@ -47,9 +47,9 @@ final readonly class FacilityBranchController implements HasMiddleware
             ->when(
                 $search !== '',
                 static fn (Builder $query) => $query
-                    ->where('name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('branch_code', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('email', 'like', sprintf('%%%s%%', $search))
+                    ->whereLike('name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('branch_code', sprintf('%%%s%%', $search))
+                    ->orWhereLike('email', sprintf('%%%s%%', $search))
             )
             ->orderByDesc('is_main_branch')
             ->orderBy('name')

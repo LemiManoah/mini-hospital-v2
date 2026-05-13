@@ -41,7 +41,7 @@ final readonly class PatientAllergyController implements HasMiddleware
                     $query->where(
                         function (Builder $searchQuery) use ($search): void {
                             $searchQuery
-                                ->where('notes', 'like', sprintf('%%%s%%', $search))
+                                ->whereLike('notes', sprintf('%%%s%%', $search))
                                 ->orWhereRelation('allergen', 'name', 'like', sprintf('%%%s%%', $search));
                         }
                     );

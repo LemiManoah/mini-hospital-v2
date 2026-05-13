@@ -36,8 +36,8 @@ final readonly class LabTestCategoryController implements HasMiddleware
 
         $categories = LabTestCategory::query()
             ->when($search !== '', static fn (Builder $query) => $query
-                ->where('name', 'like', sprintf('%%%s%%', $search))
-                ->orWhere('description', 'like', sprintf('%%%s%%', $search)))
+                ->whereLike('name', sprintf('%%%s%%', $search))
+                ->orWhereLike('description', sprintf('%%%s%%', $search)))
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();

@@ -53,8 +53,8 @@ final readonly class PharmacyPosSaleController implements HasMiddleware
 
         if ($search !== '') {
             $query->where(static function (Builder $q) use ($search): void {
-                $q->where('sale_number', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('customer_name', 'like', sprintf('%%%s%%', $search));
+                $q->whereLike('sale_number', sprintf('%%%s%%', $search))
+                    ->orWhereLike('customer_name', sprintf('%%%s%%', $search));
             });
         }
 

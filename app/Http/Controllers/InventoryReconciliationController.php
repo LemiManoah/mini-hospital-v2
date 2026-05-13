@@ -65,8 +65,8 @@ final readonly class InventoryReconciliationController implements HasMiddleware
                 static function (Builder $query) use ($search): void {
                     $query->where(function (Builder $inner) use ($search): void {
                         $inner
-                            ->where('adjustment_number', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('reason', 'like', sprintf('%%%s%%', $search));
+                            ->whereLike('adjustment_number', sprintf('%%%s%%', $search))
+                            ->orWhereLike('reason', sprintf('%%%s%%', $search));
                     });
                 },
             )

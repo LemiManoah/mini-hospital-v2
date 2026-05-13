@@ -39,7 +39,7 @@ final readonly class AllergenController implements HasMiddleware
         $allergens = Allergen::query()
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where('name', 'like', sprintf('%%%s%%', $search))
+                static fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

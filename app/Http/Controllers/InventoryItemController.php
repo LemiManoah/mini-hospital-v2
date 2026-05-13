@@ -53,10 +53,10 @@ final readonly class InventoryItemController implements HasMiddleware
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
                     $inner
-                        ->where('name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('generic_name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('brand_name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('manufacturer', 'like', sprintf('%%%s%%', $search));
+                        ->whereLike('name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('generic_name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('brand_name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('manufacturer', sprintf('%%%s%%', $search));
                 });
             })
             ->when($type !== '', static fn (Builder $query) => $query->where('item_type', $type))

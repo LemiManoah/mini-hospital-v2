@@ -73,6 +73,7 @@ export default function FinanceDebtorsShowPage({
                                 insurancePackageName={
                                     billing.insurance_package_name
                                 }
+                                unpaidBalance={billing.balance_amount}
                             />
                             <Badge
                                 variant="outline"

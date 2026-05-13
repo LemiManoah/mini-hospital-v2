@@ -101,9 +101,9 @@ final readonly class InventoryRequisitionController implements HasMiddleware
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
                     $inner
-                        ->where('requisition_number', 'like', sprintf('%%%s%%', $search))
-                        ->orWhereHas('fulfillingLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)))
-                        ->orWhereHas('requestingLocation', static fn (Builder $locationQuery) => $locationQuery->where('name', 'like', sprintf('%%%s%%', $search)));
+                        ->whereLike('requisition_number', sprintf('%%%s%%', $search))
+                        ->orWhereHas('fulfillingLocation', static fn (Builder $locationQuery) => $locationQuery->whereLike('name', sprintf('%%%s%%', $search)))
+                        ->orWhereHas('requestingLocation', static fn (Builder $locationQuery) => $locationQuery->whereLike('name', sprintf('%%%s%%', $search)));
                 });
             })
             ->when($status !== '', static fn (Builder $query) => $query->where('status', $status))

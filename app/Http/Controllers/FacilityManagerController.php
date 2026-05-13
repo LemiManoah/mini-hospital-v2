@@ -384,10 +384,10 @@ final readonly class FacilityManagerController implements HasMiddleware
 
                     $query->where(function (Builder $inner) use ($search): void {
                         $inner
-                            ->where('description', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('event', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('subject_type', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('properties', 'like', sprintf('%%%s%%', $search));
+                            ->whereLike('description', sprintf('%%%s%%', $search))
+                            ->orWhereLike('event', sprintf('%%%s%%', $search))
+                            ->orWhereLike('subject_type', sprintf('%%%s%%', $search))
+                            ->orWhereLike('properties', sprintf('%%%s%%', $search));
                     });
                 },
             )
@@ -544,12 +544,12 @@ final readonly class FacilityManagerController implements HasMiddleware
                         $search = $filters['search'];
 
                         $userQuery
-                            ->where('email', 'like', sprintf('%%%s%%', $search))
+                            ->whereLike('email', sprintf('%%%s%%', $search))
                             ->orWhereHas('staff', static function (Builder $staffQuery) use ($search): void {
                                 $staffQuery
-                                    ->where('first_name', 'like', sprintf('%%%s%%', $search))
-                                    ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                                    ->orWhere('employee_number', 'like', sprintf('%%%s%%', $search));
+                                    ->whereLike('first_name', sprintf('%%%s%%', $search))
+                                    ->orWhereLike('last_name', sprintf('%%%s%%', $search))
+                                    ->orWhereLike('employee_number', sprintf('%%%s%%', $search));
                             });
                     },
                 ),
@@ -908,8 +908,8 @@ final readonly class FacilityManagerController implements HasMiddleware
                 static fn (Builder $query): Builder => $query->where(
                     static function (Builder $tenantQuery) use ($search): void {
                         $tenantQuery
-                            ->where('name', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('domain', 'like', sprintf('%%%s%%', $search));
+                            ->whereLike('name', sprintf('%%%s%%', $search))
+                            ->orWhereLike('domain', sprintf('%%%s%%', $search));
                     },
                 ),
             )

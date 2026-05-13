@@ -132,6 +132,9 @@ export default function FinanceDebtorsIndexPage({
                                                         insurancePackageName={
                                                             billing.insurance_package_name
                                                         }
+                                                        unpaidBalance={
+                                                            billing.balance_amount
+                                                        }
                                                     />
                                                 </div>
                                                 <span className="text-xs text-muted-foreground">

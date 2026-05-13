@@ -37,8 +37,8 @@ final readonly class AppointmentModeController implements HasMiddleware
 
         $appointmentModes = AppointmentMode::query()
             ->when($search !== '', static fn (Builder $query) => $query
-                ->where('name', 'like', sprintf('%%%s%%', $search))
-                ->orWhere('description', 'like', sprintf('%%%s%%', $search)))
+                ->whereLike('name', sprintf('%%%s%%', $search))
+                ->orWhereLike('description', sprintf('%%%s%%', $search)))
             ->latest()
             ->paginate(10)
             ->withQueryString();

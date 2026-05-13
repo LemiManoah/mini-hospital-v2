@@ -48,15 +48,15 @@ final readonly class LabTestCatalogController implements HasMiddleware
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $searchQuery) use ($search): void {
                     $searchQuery
-                        ->where('test_name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('test_code', 'like', sprintf('%%%s%%', $search))
+                        ->whereLike('test_name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('test_code', sprintf('%%%s%%', $search))
                         ->orWhereHas('labCategory', static fn (Builder $relationQuery) => $relationQuery
-                            ->where('name', 'like', sprintf('%%%s%%', $search)))
+                            ->whereLike('name', sprintf('%%%s%%', $search)))
                         ->orWhereHas('specimenTypes', static fn (Builder $relationQuery) => $relationQuery
-                            ->where('name', 'like', sprintf('%%%s%%', $search)))
+                            ->whereLike('name', sprintf('%%%s%%', $search)))
                         ->orWhereHas('resultTypeDefinition', static fn (Builder $relationQuery) => $relationQuery
-                            ->where('name', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('code', 'like', sprintf('%%%s%%', $search)));
+                            ->whereLike('name', sprintf('%%%s%%', $search))
+                            ->orWhereLike('code', sprintf('%%%s%%', $search)));
                 });
             })
             ->latest()

@@ -38,8 +38,8 @@ final readonly class DepartmentController implements HasMiddleware
         $departments = Department::query()
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where('department_name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('department_code', 'like', sprintf('%%%s%%', $search))
+                static fn (Builder $query) => $query->whereLike('department_name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('department_code', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

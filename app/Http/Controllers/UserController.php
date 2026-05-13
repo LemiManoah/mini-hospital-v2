@@ -54,8 +54,8 @@ final readonly class UserController implements HasMiddleware
             ->when(
                 $search !== '',
                 static fn (Builder $query) => $query
-                    ->where('name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('email', 'like', sprintf('%%%s%%', $search))
+                    ->whereLike('name', sprintf('%%%s%%', $search))
+                    ->orWhereLike('email', sprintf('%%%s%%', $search))
             )
             ->latest()
             ->paginate(10)

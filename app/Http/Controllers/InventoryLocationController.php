@@ -41,8 +41,8 @@ final readonly class InventoryLocationController implements HasMiddleware
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
                     $inner
-                        ->where('name', 'like', sprintf('%%%s%%', $search))
-                        ->orWhere('location_code', 'like', sprintf('%%%s%%', $search));
+                        ->whereLike('name', sprintf('%%%s%%', $search))
+                        ->orWhereLike('location_code', sprintf('%%%s%%', $search));
                 });
             })
             ->when($type !== '', static fn (Builder $query) => $query->where('type', $type))

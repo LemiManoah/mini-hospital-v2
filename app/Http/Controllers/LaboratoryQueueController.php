@@ -61,16 +61,16 @@ final readonly class LaboratoryQueueController implements HasMiddleware
                     $searchQuery
                         ->whereHas('visit.patient', static function (Builder $patientQuery) use ($search): void {
                             $patientQuery
-                                ->where('patient_number', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('last_name', 'like', sprintf('%%%s%%', $search));
+                                ->whereLike('patient_number', sprintf('%%%s%%', $search))
+                                ->orWhereLike('first_name', sprintf('%%%s%%', $search))
+                                ->orWhereLike('last_name', sprintf('%%%s%%', $search));
                         })
                         ->orWhereHas('visit', static fn (Builder $visitQuery) => $visitQuery
-                            ->where('visit_number', 'like', sprintf('%%%s%%', $search)))
+                            ->whereLike('visit_number', sprintf('%%%s%%', $search)))
                         ->orWhereHas('items.test', static function (Builder $testQuery) use ($search): void {
                             $testQuery
-                                ->where('test_name', 'like', sprintf('%%%s%%', $search))
-                                ->orWhere('test_code', 'like', sprintf('%%%s%%', $search));
+                                ->whereLike('test_name', sprintf('%%%s%%', $search))
+                                ->orWhereLike('test_code', sprintf('%%%s%%', $search));
                         });
                 });
             })

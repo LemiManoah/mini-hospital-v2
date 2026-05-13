@@ -67,12 +67,12 @@ final readonly class InventoryMovementReportController implements HasMiddleware
             $query->where(function (Builder $builder) use ($search): void {
                 $builder->whereHas('inventoryItem', function (Builder $itemQuery) use ($search): void {
                     $itemQuery
-                        ->where('name', 'like', '%'.$search.'%')
-                        ->orWhere('generic_name', 'like', '%'.$search.'%');
+                        ->whereLike('name', '%'.$search.'%')
+                        ->orWhereLike('generic_name', '%'.$search.'%');
                 })->orWhereHas('inventoryLocation', function (Builder $locationQuery) use ($search): void {
                     $locationQuery
-                        ->where('name', 'like', '%'.$search.'%')
-                        ->orWhere('location_code', 'like', '%'.$search.'%');
+                        ->whereLike('name', '%'.$search.'%')
+                        ->orWhereLike('location_code', '%'.$search.'%');
                 });
             });
         }

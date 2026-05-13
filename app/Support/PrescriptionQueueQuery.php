@@ -36,24 +36,24 @@ final readonly class PrescriptionQueueQuery
         if ($search !== '') {
             $query->where(function (Builder $searchQuery) use ($search): void {
                 $searchQuery
-                    ->where('primary_diagnosis', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('pharmacy_notes', 'like', sprintf('%%%s%%', $search))
+                    ->whereLike('primary_diagnosis', sprintf('%%%s%%', $search))
+                    ->orWhereLike('pharmacy_notes', sprintf('%%%s%%', $search))
                     ->orWhereHas('visit', static function (Builder $visitQuery) use ($search): void {
                         $visitQuery
-                            ->where('visit_number', 'like', sprintf('%%%s%%', $search))
+                            ->whereLike('visit_number', sprintf('%%%s%%', $search))
                             ->orWhereHas('patient', static function (Builder $patientQuery) use ($search): void {
                                 $patientQuery
-                                    ->where('patient_number', 'like', sprintf('%%%s%%', $search))
-                                    ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
-                                    ->orWhere('last_name', 'like', sprintf('%%%s%%', $search))
-                                    ->orWhere('phone_number', 'like', sprintf('%%%s%%', $search));
+                                    ->whereLike('patient_number', sprintf('%%%s%%', $search))
+                                    ->orWhereLike('first_name', sprintf('%%%s%%', $search))
+                                    ->orWhereLike('last_name', sprintf('%%%s%%', $search))
+                                    ->orWhereLike('phone_number', sprintf('%%%s%%', $search));
                             });
                     })
                     ->orWhereHas('items.inventoryItem', static function (Builder $itemQuery) use ($search): void {
                         $itemQuery
-                            ->where('name', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('generic_name', 'like', sprintf('%%%s%%', $search))
-                            ->orWhere('brand_name', 'like', sprintf('%%%s%%', $search));
+                            ->whereLike('name', sprintf('%%%s%%', $search))
+                            ->orWhereLike('generic_name', sprintf('%%%s%%', $search))
+                            ->orWhereLike('brand_name', sprintf('%%%s%%', $search));
                     });
             });
         }

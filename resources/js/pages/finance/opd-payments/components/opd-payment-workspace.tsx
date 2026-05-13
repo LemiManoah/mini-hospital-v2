@@ -207,70 +207,70 @@ export function OpdPaymentWorkspace({
 
                                     return (
                                         <TableRow key={charge.id}>
-                                        <TableCell className="font-medium">
-                                            {charge.description}
-                                        </TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">
-                                            {charge.charge_code ?? '—'}
-                                        </TableCell>
-                                        <TableCell className="text-right text-sm">
-                                            {charge.quantity} &times;{' '}
-                                            {formatMoney(charge.unit_price)}
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium">
-                                            {formatMoney(charge.line_total)}
-                                        </TableCell>
-                                        {isInsurancePayer ? (
-                                            <>
-                                                <TableCell className="text-right font-medium">
-                                                    {formatMoney(
-                                                        charge.copay_amount ??
-                                                            0,
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-right text-sm text-muted-foreground">
-                                                    {formatMoney(
-                                                        Math.max(
-                                                            0,
-                                                            charge.line_total -
-                                                                (charge.copay_amount ??
-                                                                    0),
-                                                        ),
-                                                    )}
-                                                </TableCell>
-                                            </>
-                                        ) : null}
-                                        <TableCell>
-                                            <Badge
-                                                variant="outline"
-                                                className="capitalize"
-                                            >
-                                                {charge.status.replaceAll(
-                                                    '_',
-                                                    ' ',
-                                                )}
-                                            </Badge>
-                                        </TableCell>
-                                        {hasCashierBalance && (
-                                            <TableCell className="text-right">
-                                                {chargeCashierAmount > 0 ? (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            openPaymentModal(
-                                                                charge.description,
-                                                                String(
-                                                                    chargeCashierAmount,
-                                                                ),
-                                                            )
-                                                        }
-                                                    >
-                                                        Pay
-                                                    </Button>
-                                                ) : null}
+                                            <TableCell className="font-medium">
+                                                {charge.description}
                                             </TableCell>
-                                        )}
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {charge.charge_code ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="text-right text-sm">
+                                                {charge.quantity} &times;{' '}
+                                                {formatMoney(charge.unit_price)}
+                                            </TableCell>
+                                            <TableCell className="text-right font-medium">
+                                                {formatMoney(charge.line_total)}
+                                            </TableCell>
+                                            {isInsurancePayer ? (
+                                                <>
+                                                    <TableCell className="text-right font-medium">
+                                                        {formatMoney(
+                                                            charge.copay_amount ??
+                                                                0,
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm text-muted-foreground">
+                                                        {formatMoney(
+                                                            Math.max(
+                                                                0,
+                                                                charge.line_total -
+                                                                    (charge.copay_amount ??
+                                                                        0),
+                                                            ),
+                                                        )}
+                                                    </TableCell>
+                                                </>
+                                            ) : null}
+                                            <TableCell>
+                                                <Badge
+                                                    variant="outline"
+                                                    className="capitalize"
+                                                >
+                                                    {charge.status.replaceAll(
+                                                        '_',
+                                                        ' ',
+                                                    )}
+                                                </Badge>
+                                            </TableCell>
+                                            {hasCashierBalance && (
+                                                <TableCell className="text-right">
+                                                    {chargeCashierAmount > 0 ? (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                openPaymentModal(
+                                                                    charge.description,
+                                                                    String(
+                                                                        chargeCashierAmount,
+                                                                    ),
+                                                                )
+                                                            }
+                                                        >
+                                                            Pay
+                                                        </Button>
+                                                    ) : null}
+                                                </TableCell>
+                                            )}
                                         </TableRow>
                                     );
                                 })}
