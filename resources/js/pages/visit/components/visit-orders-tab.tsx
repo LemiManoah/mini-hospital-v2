@@ -15,6 +15,7 @@ import {
     type FacilityServiceOption,
     type FacilityServiceOrder,
     type ImagingOrder,
+    type ImagingStudyOption,
     type LabOrder,
     type Prescription,
 } from '@/types/patient';
@@ -51,6 +52,7 @@ type VisitOrdersTabProps = {
     imagingPriorities: { value: string; label: string }[];
     imagingLateralities: { value: string; label: string }[];
     pregnancyStatuses: { value: string; label: string }[];
+    imagingStudyOptions: ImagingStudyOption[];
     facilityServiceOptions: FacilityServiceOption[];
     allergens: { id: string; name: string; type: string }[];
     severityOptions: { value: string; label: string }[];
@@ -99,6 +101,7 @@ export function VisitOrdersTab({
     imagingPriorities,
     imagingLateralities,
     pregnancyStatuses,
+    imagingStudyOptions,
     facilityServiceOptions,
     allergens,
     severityOptions,
@@ -332,6 +335,7 @@ export function VisitOrdersTab({
                 imagingPriorities={imagingPriorities}
                 imagingLateralities={imagingLateralities}
                 pregnancyStatuses={pregnancyStatuses}
+                imagingStudyOptions={imagingStudyOptions}
                 redirectTo="visit"
             />
             <ServiceOrderModal

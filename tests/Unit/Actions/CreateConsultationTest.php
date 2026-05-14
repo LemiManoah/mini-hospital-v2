@@ -126,7 +126,7 @@ it('creates a consultation using triage context and the authenticated clinician'
         ->exists())->toBeTrue();
 });
 
-it('syncs a consultation charge when a matching consultation tariff service is configured', function (): void {
+it('syncs a consultation charge when a matching consultation facility service is configured', function (): void {
     $tenantId = (string) Str::uuid();
     $branchId = (string) Str::uuid();
     $staffId = (string) Str::uuid();
@@ -207,29 +207,39 @@ it('syncs a consultation charge when a matching consultation tariff service is c
         'updated_at' => now(),
     ]);
 
-    $serviceId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
+    $facilityServiceId = (string) Str::uuid();
 
     DB::table('facility_services')->insert([
-        'id' => $serviceId,
+        'id' => $facilityServiceId,
         'tenant_id' => $tenantId,
         'service_code' => 'SVC-CONSULT-FOLLOW',
         'name' => 'Follow-up Consultation',
-        'category' => 'other',
-        'selling_price' => 18000,
+        'category' => 'consultation',
+        'description' => 'Follow-up Consultation',
+        'cost_price' => null,
+        'selling_price' => 21000,
         'is_billable' => true,
+        'is_consultation' => true,
+        'consultation_type' => 'follow_up',
+        'charge_master_id' => $chargeMasterId,
         'is_active' => true,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    DB::table('consultation_tariffs')->insert([
-        'id' => (string) Str::uuid(),
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
         'tenant_id' => $tenantId,
-        'facility_branch_id' => $branchId,
-        'visit_type' => 'follow_up',
-        'consultation_type' => 'follow_up',
-        'facility_service_id' => $serviceId,
+        'facility_branch_id' => null,
+        'item_code' => 'SVC-CONSULT-FOLLOW',
+        'description' => 'Follow-up Consultation',
+        'billable_type' => 'service',
+        'billable_id' => $facilityServiceId,
+        'unit_price' => 21000,
         'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -253,12 +263,13 @@ it('syncs a consultation charge when a matching consultation tariff service is c
     expect($charge)->not()->toBeNull()
         ->and($consultation->consultation_type)->toBe(ConsultationType::FOLLOW_UP)
         ->and($charge->charge_code)->toBe('SVC-CONSULT-FOLLOW')
-        ->and($charge->description)->toBe('Consultation fee: Follow-up Consultation')
-        ->and((float) $charge->unit_price)->toBe(18000.0)
-        ->and((float) $charge->line_total)->toBe(18000.0);
+        ->and($charge->charge_master_id)->toBe($chargeMasterId)
+        ->and($charge->description)->toBe('Consultation: Follow-up Consultation')
+        ->and((float) $charge->unit_price)->toBe(21000.0)
+        ->and((float) $charge->line_total)->toBe(21000.0);
 });
 
-it('uses an explicit consultation type to resolve the billing tariff', function (): void {
+it('uses an explicit consultation type to resolve the billing fee', function (): void {
     $tenantId = (string) Str::uuid();
     $branchId = (string) Str::uuid();
     $staffId = (string) Str::uuid();
@@ -339,29 +350,39 @@ it('uses an explicit consultation type to resolve the billing tariff', function 
         'updated_at' => now(),
     ]);
 
-    $serviceId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
+    $facilityServiceId = (string) Str::uuid();
 
     DB::table('facility_services')->insert([
-        'id' => $serviceId,
+        'id' => $facilityServiceId,
         'tenant_id' => $tenantId,
         'service_code' => 'SVC-CONSULT-REVIEW',
         'name' => 'Review Consultation',
-        'category' => 'other',
+        'category' => 'consultation',
+        'description' => 'Review Consultation',
+        'cost_price' => null,
         'selling_price' => 25000,
         'is_billable' => true,
+        'is_consultation' => true,
+        'consultation_type' => 'review',
+        'charge_master_id' => $chargeMasterId,
         'is_active' => true,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    DB::table('consultation_tariffs')->insert([
-        'id' => (string) Str::uuid(),
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
         'tenant_id' => $tenantId,
-        'facility_branch_id' => $branchId,
-        'visit_type' => 'new',
-        'consultation_type' => 'review',
-        'facility_service_id' => $serviceId,
+        'facility_branch_id' => null,
+        'item_code' => 'SVC-CONSULT-REVIEW',
+        'description' => 'Review Consultation',
+        'billable_type' => 'service',
+        'billable_id' => $facilityServiceId,
+        'unit_price' => 25000,
         'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
         'created_at' => now(),
         'updated_at' => now(),
     ]);

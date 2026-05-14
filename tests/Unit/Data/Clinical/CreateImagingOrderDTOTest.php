@@ -36,6 +36,7 @@ it('normalizes create imaging order input into a typed dto', function (): void {
     ]));
 
     expect($dto->modality)->toBe(ImagingModality::XRAY)
+        ->and($dto->imagingStudyCatalogId)->toBeNull()
         ->and($dto->bodyPart)->toBe('Chest')
         ->and($dto->laterality)->toBe(ImagingLaterality::LEFT)
         ->and($dto->clinicalHistory)->toBe('Fever and cough')

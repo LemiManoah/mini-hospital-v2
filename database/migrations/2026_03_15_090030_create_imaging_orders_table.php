@@ -15,11 +15,33 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('imaging_study_catalogs')) {
+            Schema::create('imaging_study_catalogs', function (Blueprint $table): void {
+                $table->uuid('id')->primary();
+                $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
+                $table->foreignUuid('facility_branch_id')->nullable()->constrained('facility_branches')->nullOnDelete();
+                $table->string('code', 50);
+                $table->string('name', 150)->index();
+                $table->enum('modality', array_column(ImagingModality::cases(), 'value'));
+                $table->string('body_part', 100)->nullable();
+                $table->decimal('base_price', 10, 2)->default(0);
+                $table->foreignUuid('charge_master_id')->nullable()->constrained('charge_masters')->nullOnDelete();
+                $table->boolean('is_active')->default(true)->index();
+                $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamps();
+
+                $table->unique(['tenant_id', 'code']);
+                $table->index(['modality', 'body_part']);
+            });
+        }
+
         if (! Schema::hasTable('imaging_orders')) {
             Schema::create('imaging_orders', function (Blueprint $table): void {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('visit_id')->constrained('patient_visits')->onDelete('cascade');
                 $table->foreignUuid('consultation_id')->nullable()->constrained('consultations')->nullOnDelete();
+                $table->foreignUuid('imaging_study_catalog_id')->nullable()->constrained('imaging_study_catalogs')->nullOnDelete();
                 $table->foreignUuid('requested_by')->constrained('staff')->onDelete('restrict');
                 $table->enum('modality', array_column(ImagingModality::cases(), 'value'));
                 $table->string('body_part', 100);
@@ -45,5 +67,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('imaging_orders');
+        Schema::dropIfExists('imaging_study_catalogs');
     }
 };

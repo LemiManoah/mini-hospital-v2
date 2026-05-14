@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use App\Models\ConsultationTariff;
+use App\Models\ChargeMaster;
 use App\Models\FacilityBranch;
 use App\Models\FacilityService;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\AddressSeeder;
 use Database\Seeders\AdminUserSeeder;
-use Database\Seeders\ConsultationTariffSeeder;
+use Database\Seeders\ConsultationFacilityServiceSeeder;
 use Database\Seeders\CountrySeeder;
 use Database\Seeders\CurrencySeeder;
 use Database\Seeders\DepartmentSeeder;
@@ -57,7 +57,7 @@ it('seeds qroo medical center as the default uganda facility with a single main 
         ->and($supportUser->tenant_id)->toBe($tenant->id);
 });
 
-it('seeds default consultation tariffs and sample role users for seeded facilities', function (): void {
+it('seeds default consultation facility services and sample role users for seeded facilities', function (): void {
     $this->seed([
         CountrySeeder::class,
         CurrencySeeder::class,
@@ -70,36 +70,33 @@ it('seeds default consultation tariffs and sample role users for seeded faciliti
         StaffPositionSeeder::class,
         QrooMedicalCenterSeeder::class,
         SupportUserSeeder::class,
-        ConsultationTariffSeeder::class,
+        ConsultationFacilityServiceSeeder::class,
         FacilityUserSeeder::class,
     ]);
 
     $qroo = Tenant::query()->where('domain', 'qroo')->firstOrFail();
-    $qrooBranch = FacilityBranch::query()
-        ->where('tenant_id', $qroo->id)
-        ->where('branch_code', 'QMC-MAIN')
-        ->firstOrFail();
 
     expect(
-        FacilityService::query()
+        ChargeMaster::query()
             ->where('tenant_id', $qroo->id)
-            ->whereIn('service_code', [
+            ->whereIn('item_code', [
                 'QROO-CONS-NEW',
                 'QROO-CONS-FUP',
                 'QROO-CONS-OPD',
                 'QROO-CONS-EMR',
                 'QROO-CONS-TEL',
+                'QROO-CONS-REV',
                 'QROO-CONS-GEN',
             ])
             ->count()
-    )->toBe(6);
+    )->toBe(7);
 
     expect(
-        ConsultationTariff::query()
+        FacilityService::query()
             ->where('tenant_id', $qroo->id)
-            ->where('facility_branch_id', $qrooBranch->id)
+            ->where('is_consultation', true)
             ->count()
-    )->toBeGreaterThanOrEqual(8);
+    )->toBeGreaterThanOrEqual(7);
 
     expect(User::query()->where('email', 'reception@qroomedical.ug')->exists())->toBeTrue()
         ->and(User::query()->where('email', 'cashier@qroomedical.ug')->exists())->toBeTrue()

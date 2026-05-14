@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\BillableItemType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -32,32 +31,6 @@ return new class extends Migration
             $table->unique(['tenant_id', 'facility_branch_id', 'item_code', 'effective_from'], 'charge_masters_item_code_effective_unique');
             $table->index(['tenant_id', 'facility_branch_id', 'billable_type', 'billable_id'], 'charge_masters_billable_lookup_idx');
         });
-
-        DB::table('facility_services')
-            ->where('is_billable', true)->oldest()
-            ->get()
-            ->each(function (object $service): void {
-                DB::table('charge_masters')->updateOrInsert(
-                    ['id' => $service->charge_master_id ?? $service->id],
-                    [
-                        'tenant_id' => $service->tenant_id,
-                        'facility_branch_id' => null,
-                        'item_code' => $service->service_code,
-                        'description' => $service->name,
-                        'billable_type' => BillableItemType::SERVICE->value,
-                        'billable_id' => $service->id,
-                        'unit_price' => $service->selling_price ?? 0,
-                        'is_active' => (bool) $service->is_active,
-                        'effective_from' => now()->toDateString(),
-                        'effective_to' => null,
-                        'created_by' => $service->created_by,
-                        'updated_by' => $service->updated_by,
-                        'created_at' => $service->created_at ?? now(),
-                        'updated_at' => $service->updated_at ?? now(),
-                        'deleted_at' => null,
-                    ],
-                );
-            });
     }
 
     public function down(): void

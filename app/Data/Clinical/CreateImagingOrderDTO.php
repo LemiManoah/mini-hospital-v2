@@ -13,6 +13,7 @@ use Illuminate\Foundation\Http\FormRequest;
 final readonly class CreateImagingOrderDTO
 {
     public function __construct(
+        public ?string $imagingStudyCatalogId,
         public ImagingModality $modality,
         public string $bodyPart,
         public ImagingLaterality $laterality,
@@ -27,6 +28,7 @@ final readonly class CreateImagingOrderDTO
     public static function fromRequest(FormRequest $request): self
     {
         /** @var array{
+         *   imaging_study_catalog_id?: string|null,
          *   modality: ImagingModality|string,
          *   body_part: string,
          *   laterality: ImagingLaterality|string,
@@ -41,6 +43,7 @@ final readonly class CreateImagingOrderDTO
         $validated = $request->validated();
 
         return new self(
+            imagingStudyCatalogId: self::nullableString($validated['imaging_study_catalog_id'] ?? null),
             modality: self::modality($validated['modality']),
             bodyPart: self::requiredString($validated['body_part']),
             laterality: self::laterality($validated['laterality']),

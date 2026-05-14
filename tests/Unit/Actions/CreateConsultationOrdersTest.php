@@ -255,7 +255,24 @@ it('creates a lab order with priced items from the consultation context and sync
     $context = seedConsultationContext();
     $recipient = createOrderNotificationRecipient($context['tenant_id'], ['lab_orders.view']);
     $testId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
     [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
+
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => null,
+        'item_code' => 'FBC',
+        'description' => 'Full Blood Count',
+        'billable_type' => 'test',
+        'billable_id' => $testId,
+        'unit_price' => 27500,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     DB::table('lab_test_catalogs')->insert([
         'id' => $testId,
@@ -265,6 +282,7 @@ it('creates a lab order with priced items from the consultation context and sync
         'lab_test_category_id' => $categoryId,
         'result_type_id' => $resultTypeId,
         'base_price' => 25000,
+        'charge_master_id' => $chargeMasterId,
         'is_active' => true,
         'created_at' => now(),
         'updated_at' => now(),
@@ -287,17 +305,17 @@ it('creates a lab order with priced items from the consultation context and sync
     expect($request->consultation_id)->toBe($context['consultation']->id)
         ->and($request->priority)->toBe(Priority::URGENT)
         ->and($request->items)->toHaveCount(1)
-        ->and($request->items->first()?->price)->toBe(25000.0);
+        ->and($request->items->first()?->price)->toBe(27500.0);
 
     $charge = VisitCharge::query()
         ->where('patient_visit_id', $context['visit_id'])
-        ->where('source_type', $request->getMorphClass())
-        ->where('source_id', $request->id)
+        ->where('source_type', $request->items->first()?->getMorphClass())
+        ->where('source_id', $request->items->first()?->id)
         ->first();
 
     expect($charge)->not()->toBeNull()
-        ->and((float) $charge->unit_price)->toBe(25000.0)
-        ->and((float) $charge->line_total)->toBe(25000.0);
+        ->and((float) $charge->unit_price)->toBe(27500.0)
+        ->and((float) $charge->line_total)->toBe(27500.0);
 
     expect(Activity::query()
         ->where('log_name', 'laboratory')
@@ -394,8 +412,8 @@ it('uses insurance policy prices when syncing lab order charges', function (): v
 
     $charge = VisitCharge::query()
         ->where('patient_visit_id', $context['visit_id'])
-        ->where('source_type', $request->getMorphClass())
-        ->where('source_id', $request->id)
+        ->where('source_type', $request->items->first()?->getMorphClass())
+        ->where('source_id', $request->items->first()?->id)
         ->first();
 
     expect($charge)->not()->toBeNull()
@@ -408,6 +426,23 @@ it('creates a prescription with multiple drug items', function (): void {
     $context = seedConsultationContext();
     $recipient = createOrderNotificationRecipient($context['tenant_id'], ['pharmacy_dispensing.view']);
     $drugId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
+
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => null,
+        'item_code' => 'DRUG-PARACETAMOL',
+        'description' => 'Paracetamol',
+        'billable_type' => 'drug',
+        'billable_id' => $drugId,
+        'unit_price' => 1750,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     DB::table('inventory_items')->insert([
         'id' => $drugId,
@@ -420,6 +455,7 @@ it('creates a prescription with multiple drug items', function (): void {
         'dosage_form' => DrugDosageForm::TABLET->value,
         'strength' => '500mg',
         'default_selling_price' => 1500,
+        'charge_master_id' => $chargeMasterId,
         'expires' => true,
         'is_controlled' => false,
         'is_active' => true,
@@ -455,10 +491,7 @@ it('creates a prescription with multiple drug items', function (): void {
         ->where('source_id', $prescription->id)
         ->first();
 
-    expect($charge)->not()->toBeNull()
-        ->and((float) $charge->unit_price)->toBe(22500.0)
-        ->and((float) $charge->line_total)->toBe(22500.0)
-        ->and($charge->description)->toBe('Prescription: 1 medication');
+    expect($charge)->toBeNull();
 
     $notification = $recipient->notifications()->first();
 
@@ -516,16 +549,48 @@ it('uses insurance policy prices when syncing prescription charges', function ()
         ->where('source_id', $prescription->id)
         ->first();
 
-    expect($charge)->not()->toBeNull()
-        ->and((float) $charge->unit_price)->toBe(16800.0)
-        ->and((float) $charge->line_total)->toBe(16800.0);
+    expect($charge)->toBeNull();
 });
 
 it('creates an imaging order linked to the consultation', function (): void {
     $context = seedConsultationContext();
     $recipient = createOrderNotificationRecipient($context['tenant_id'], ['imaging_orders.view']);
+    $studyCatalogId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
+
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => $context['branch_id'],
+        'item_code' => 'IMG-CXR',
+        'description' => 'Chest X-Ray',
+        'billable_type' => 'imaging',
+        'billable_id' => $studyCatalogId,
+        'unit_price' => 40000,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('imaging_study_catalogs')->insert([
+        'id' => $studyCatalogId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => $context['branch_id'],
+        'code' => 'IMG-CXR',
+        'name' => 'Chest X-Ray',
+        'modality' => 'xray',
+        'body_part' => 'Chest',
+        'base_price' => 35000,
+        'charge_master_id' => $chargeMasterId,
+        'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     $request = resolve(CreateImagingOrder::class)->handle($context['consultation'], CreateImagingOrderDTO::fromRequest(createImagingOrderDtoRequest([
+        'imaging_study_catalog_id' => $studyCatalogId,
         'modality' => 'xray',
         'body_part' => 'Chest',
         'laterality' => 'na',
@@ -538,8 +603,20 @@ it('creates an imaging order linked to the consultation', function (): void {
     ])), $context['staff_id']);
 
     expect($request->consultation_id)->toBe($context['consultation']->id)
+        ->and($request->imaging_study_catalog_id)->toBe($studyCatalogId)
         ->and($request->body_part)->toBe('Chest')
         ->and($request->modality)->toBe(ImagingModality::XRAY);
+
+    $charge = VisitCharge::query()
+        ->where('patient_visit_id', $context['visit_id'])
+        ->where('source_type', $request->getMorphClass())
+        ->where('source_id', $request->id)
+        ->first();
+
+    expect($charge)->not()->toBeNull()
+        ->and((float) $charge->unit_price)->toBe(40000.0)
+        ->and((float) $charge->line_total)->toBe(40000.0)
+        ->and($charge->charge_master_id)->toBe($chargeMasterId);
 
     expect(Activity::query()
         ->where('log_name', 'clinical')

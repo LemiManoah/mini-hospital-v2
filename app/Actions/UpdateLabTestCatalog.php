@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 final readonly class UpdateLabTestCatalog
 {
     public function __construct(
+        private SyncLabTestCatalogChargeMaster $syncLabTestCatalogChargeMaster,
         private SyncLabTestCatalogConfiguration $syncLabTestCatalogConfiguration,
     ) {}
 
@@ -19,6 +20,7 @@ final readonly class UpdateLabTestCatalog
         return DB::transaction(function () use ($labTestCatalog, $data): LabTestCatalog {
             $labTestCatalog->update($data->toAttributes());
 
+            $this->syncLabTestCatalogChargeMaster->handle($labTestCatalog->refresh());
             $this->syncLabTestCatalogConfiguration->handle($labTestCatalog, $data);
 
             return $labTestCatalog->refresh()->load([

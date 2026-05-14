@@ -7,6 +7,8 @@ export interface FacilityService {
     cost_price: number | null;
     selling_price: number | null;
     is_billable: boolean;
+    is_consultation: boolean;
+    consultation_type: string | null;
     charge_master_id: string | null;
     is_active: boolean;
     created_at: string;
@@ -43,6 +45,7 @@ export interface FacilityServiceIndexPageProps {
 
 export interface FacilityServiceFormPageProps {
     categories: FacilityServiceFormOption[];
+    consultationTypes: FacilityServiceFormOption[];
 }
 
 export interface FacilityServiceEditPageProps extends FacilityServiceFormPageProps {

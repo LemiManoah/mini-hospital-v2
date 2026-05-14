@@ -20,6 +20,7 @@ final class ImagingOrder extends Model
     protected $casts = [
         'visit_id' => 'string',
         'consultation_id' => 'string',
+        'imaging_study_catalog_id' => 'string',
         'requested_by' => 'string',
         'modality' => ImagingModality::class,
         'laterality' => ImagingLaterality::class,
@@ -46,6 +47,14 @@ final class ImagingOrder extends Model
     public function visit(): BelongsTo
     {
         return $this->belongsTo(PatientVisit::class, 'visit_id');
+    }
+
+    /**
+     * @return BelongsTo<ImagingStudyCatalog, $this>
+     */
+    public function studyCatalog(): BelongsTo
+    {
+        return $this->belongsTo(ImagingStudyCatalog::class, 'imaging_study_catalog_id');
     }
 
     /**

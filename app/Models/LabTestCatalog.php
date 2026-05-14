@@ -26,6 +26,7 @@ final class LabTestCatalog extends Model
         'lab_test_category_id' => 'string',
         'result_type_id' => 'string',
         'base_price' => 'float',
+        'charge_master_id' => 'string',
         'is_active' => 'boolean',
     ];
 
@@ -59,6 +60,12 @@ final class LabTestCatalog extends Model
     public function resultTypeDefinition(): BelongsTo
     {
         return $this->belongsTo(LabResultType::class, 'result_type_id');
+    }
+
+    /** @return BelongsTo<ChargeMaster, $this> */
+    public function chargeMaster(): BelongsTo
+    {
+        return $this->belongsTo(ChargeMaster::class);
     }
 
     /** @return HasMany<LabOrderItem, $this> */

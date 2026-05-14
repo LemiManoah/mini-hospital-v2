@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ConsultationType;
 use App\Enums\FacilityServiceCategory;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -26,6 +27,8 @@ final class FacilityService extends Model
         'cost_price' => 'decimal:2',
         'selling_price' => 'decimal:2',
         'is_billable' => 'boolean',
+        'is_consultation' => 'boolean',
+        'consultation_type' => ConsultationType::class,
         'charge_master_id' => 'string',
         'is_active' => 'boolean',
         'created_by' => 'string',
@@ -52,7 +55,7 @@ final class FacilityService extends Model
     {
         return LogOptions::defaults()
             ->useLogName('administration')
-            ->logOnly(['service_code', 'name', 'category', 'is_billable', 'is_active'])
+            ->logOnly(['service_code', 'name', 'category', 'is_billable', 'is_consultation', 'consultation_type', 'is_active'])
             ->logOnlyDirty()
             ->setDescriptionForEvent(static fn (string $eventName): string => 'facility_service.'.$eventName);
     }

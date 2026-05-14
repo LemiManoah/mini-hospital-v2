@@ -2,7 +2,11 @@
 
 ## Overview
 
-The system handles all clinical services a hospital provides through **five parallel, domain-specific tracks**, each with its own models, workflows, and billing integration. There is no single unified "service catalog" — instead, each service type (lab, imaging, consultation, facility services, pharmacy) has a dedicated set of models.
+This application handles clinical services through several domain-specific tracks rather than one unified service catalog. The main tracks are consultation, laboratory, imaging, facility services, and pharmacy. Most tracks eventually create or update `VisitCharge` rows through shared billing actions, but the depth of workflow and billing support is uneven.
+
+The overall design is understandable and mostly consistent with the app's Action pattern. The strongest areas are consultation, laboratory, facility service orders, pharmacy dispensing, and the shared billing pipeline. The weakest area is imaging, which currently behaves like a clinical order placeholder without tenant scoping, pricing, billing, reports, or a complete operational workflow.
+
+Note: this document uses the current code names. Earlier drafts used `LabRequest` and `ImagingRequest`; the implementation uses `LabOrder` and `ImagingOrder`.
 
 ---
 
@@ -10,252 +14,366 @@ The system handles all clinical services a hospital provides through **five para
 
 ### 1. Consultation (`Consultation`)
 
-A doctor sees a patient. This is the primary clinical entry point for most workflows.
+A doctor sees a patient. This is the primary clinical entry point for most OPD workflows.
 
 **Key models:**
-- `Consultation` — the encounter record (chief complaint, history, assessment, plan, diagnosis, outcome)
-- `ConsultationTariff` — maps `ConsultationType × VisitType × Branch` to a `FacilityService` for pricing
-- `ConsultationType` — new, follow-up, review, OPD, emergency, telemedicine, general
-- `ConsultationOutcome` — discharged, admitted, referred, follow-up required, etc.
 
-**Billing:** `SyncConsultationCharge` resolves the right `ConsultationTariff` → reads its linked `FacilityService` → calls `UpsertVisitCharge`.
+- `Consultation` - the encounter record: chief complaint, history, findings, assessment, plan, diagnosis, outcome, referral, and completion fields.
+- `ConsultationType` - new, follow-up, review, OPD, emergency, telemedicine, general.
+- `ConsultationOutcome` - discharged, admitted, referred, follow-up required, and related outcomes.
 
-**Notable:** A consultation fee is not priced directly. It must be set up as a `FacilityService` record and then linked via `ConsultationTariff`. There is no `price` field on `ConsultationTariff` itself.
+**Billing:**
+
+`SyncConsultationCharge` resolves the matching consultation `FacilityService`, reads its linked `ChargeMaster`, resolves insurance or cash pricing with `ResolveVisitChargeAmount`, then calls `UpsertVisitCharge`.
+
+**Important detail:**
+
+Consultation fees are represented as normal `FacilityService` rows with `is_consultation = true`, such as General OPD Consultation or Review Consultation. The billable type used for consultations is `BillableItemType::SERVICE`.
 
 ---
 
-### 2. Laboratory (`LabRequest` → `LabRequestItem`)
+### 2. Laboratory (`LabOrder` -> `LabOrderItem`)
 
-A doctor requests one or more lab tests in a single batch request. Each test has its own lifecycle.
+A doctor requests one or more lab tests in a single lab order. Each test is represented by a separate order item and can move through its own specimen/result lifecycle.
 
 **Key models:**
-- `LabRequest` — the batch (visit, consultation, priority, is_stat, billing_status)
-- `LabRequestItem` — one test per item (status, timestamps, price, workflow_stage computed attribute)
-- `LabSpecimen` — specimen for each item (collection, rejection tracking)
-- `LabResultEntry` — the result record (with enter → review → approve → release → correct lifecycle)
-- `LabResultValue` — individual values within a result
-- `LabTestCatalog` — the test directory (code, name, category, base_price, specimen types, result type)
-- `LabTestCategory`, `SpecimenType`, `LabResultType` — supporting lookup tables
-- `LabRequestItemConsumable` — consumables used per test
 
-**Workflow per item (tracked via `workflowStage` computed attribute on `LabRequestItem`):**
+- `LabOrder` - the batch order: visit, consultation, branch, requester, priority, STAT flag, billing status, and rollup status.
+- `LabOrderItem` - one test per item: status, price, actual cost, specimen/result timestamps, and computed workflow stage.
+- `LabSpecimen` - specimen collection and rejection tracking.
+- `LabResultEntry` - result entry, review, approval, release, and correction lifecycle.
+- `LabResultValue` - individual result values.
+- `LabTestCatalog` - test catalog: code, name, category, base price, specimen types, and result type.
+- `LabTestCategory`, `SpecimenType`, `LabResultType` - lookup/reference models.
+- `LabOrderItemConsumable` - consumables used per test.
+
+**Workflow per item:**
+
+```text
+pending -> sample_collected -> result_entered -> reviewed -> approved/completed
+              |
+              v
+          rejected
 ```
-pending → sample_collected → result_entered → reviewed → approved
-                  ↓
-             (specimen rejected)
-```
 
-**Billing:** `SyncLabRequestCharge` sums the price of all items into a single `VisitCharge` per `LabRequest`. The charge description is "Lab request: N tests".
+`LabOrderItem::workflowStage` derives a readable stage from specimen state and timestamps. `SyncLabOrderProgress` rolls item states up to the parent `LabOrder`.
 
-**Status rollup:** `SyncLabRequestProgress` derives `LabRequest.status` from the aggregate state of its items.
+**Billing:**
 
----
+`SyncLabOrderCharge` resolves pricing per `LabOrderItem`, including insurance policy pricing, but still creates one `VisitCharge` for the whole `LabOrder`. The description is `Lab order: N tests`, the quantity is `1`, and the charge code is the hard-coded `LAB-REQUEST`.
 
-### 3. Imaging (`ImagingRequest`)
+**Deletion/update behavior:**
 
-A doctor requests a radiology study.
-
-**Key models:**
-- `ImagingRequest` — the request record (modality, body_part, laterality, clinical_history, indication, priority, pregnancy_status, requires_contrast, radiation_dose_msv)
-- `ImagingModality` enum — xray, ct, mri, ultrasound, mammography, fluoroscopy, pet_ct
-- `ImagingRequestStatus` enum — requested, scheduled, in_progress, completed, cancelled
-
-**Billing:** None. There is no `SyncImagingCharge` action. `BillableItemType::IMAGING` is defined in the enum but is never referenced in any action.
-
-**Results:** None. There is no `ImagingReport` or `ImagingFinding` model. The request reaches `COMPLETED` status with no structured place to document radiologist findings.
-
-**Tenant scoping:** None. `ImagingRequest` does not use the `BelongsToTenant` trait and has no `tenant_id` column.
+Pending lab orders and pending lab order items can be removed. Deleting a pending lab order removes its matching `VisitCharge` and recalculates billing. Removing one pending item resyncs the single lab-order charge.
 
 ---
 
-### 4. Facility Services (`FacilityService` → `FacilityServiceOrder`)
+### 3. Imaging (`ImagingOrder`)
 
-General hospital services that don't fit into lab/imaging — dressings, physiotherapy, procedures, dental, nursing, transport.
+A doctor creates a radiology/imaging order.
 
-**Key models:**
-- `FacilityService` — the service catalog entry (service_code, name, category, selling_price, cost_price, is_billable, charge_master_id)
-- `FacilityServiceOrder` — an order to perform the service for a specific visit/consultation (ordered_by, performed_by, ordered_at, completed_at, status)
-- `FacilityServiceCategory` enum — dressing, physiotherapy, procedure, dental, nursing, transport, other
-- `FacilityServiceOrderStatus` enum — pending, in_progress, completed, cancelled
+**Key models/enums:**
 
-**Billing:** `SyncFacilityServiceOrderCharge` → checks `is_billable` → calls `ResolveVisitChargeAmount` → `UpsertVisitCharge`.
+- `ImagingOrder` - the order record: modality, body part, laterality, clinical history, indication, priority, scheduled date, contrast/pregnancy fields, and radiation dose.
+- `ImagingModality` - xray, CT, MRI, ultrasound, mammography, fluoroscopy, PET-CT.
+- `ImagingOrderStatus` - requested, scheduled, in progress, completed, cancelled.
 
-**Notable:** `FacilityService` is also what `ConsultationTariff` points to. A consultation fee is just a special facility service.
+**Billing:**
 
----
+None currently. `BillableItemType::IMAGING` exists but no `SyncImagingCharge` action uses it.
 
-### 5. Pharmacy / Drugs (`Prescription` → `PrescriptionItem`)
+**Results/reporting:**
 
-A doctor prescribes medications. Dispensing and charging are handled separately.
+None currently. There is no `ImagingReport`, `ImagingFinding`, radiologist report action, or structured findings/impression model.
 
-**Key models:**
-- `Prescription` — the prescription header (visit, consultation, prescribed_by, is_discharge_medication, is_long_term)
-- `PrescriptionItem` — each drug line (quantity, is_external_pharmacy)
-- `DispensingRecord` / `DispensingRecordItem` — pharmacy fulfillment
-- `InventoryItem` — links to drug inventory for pricing
+**Tenant scoping:**
 
-**Billing:** `SyncPrescriptionCharge` totals all non-external items using `ResolveVisitChargeAmount` (with `BillableItemType::DRUG`) and posts one `VisitCharge` per prescription.
+Missing. `ImagingOrder` does not use `BelongsToTenant`, and the `imaging_orders` table has no `tenant_id` column.
+
+**Operational workflow:**
+
+The model has statuses and scheduling fields, but the only clear Action found is `CreateImagingOrder`. There is no matching action for scheduling, starting, completing, cancelling, documenting, or billing the order.
 
 ---
 
-## The Billing Pipeline (Shared by All Tracks Except Imaging)
+### 4. Facility Services (`FacilityService` -> `FacilityServiceOrder`)
 
-Every service type feeds into the same pipeline:
+Facility services cover non-lab, non-imaging, non-drug services such as dressings, physiotherapy, procedures, dental, nursing, transport, and other general services.
 
-```
-Service created / updated
-       ↓
-Sync*Charge Action
-       ↓
+**Key models/enums:**
+
+- `FacilityService` - service catalog entry: service code, name, category, selling price, cost price, billable flag, consultation flag, active flag, and `charge_master_id`.
+- `FacilityServiceOrder` - an ordered service for a visit/consultation: ordered by, performed by, ordered/completed timestamps, and status.
+- `FacilityServiceCategory` - consultation, dressing, physiotherapy, procedure, dental, nursing, transport, other.
+- `FacilityServiceOrderStatus` - pending, in progress, completed, cancelled.
+
+**Billing:**
+
+`SyncFacilityServiceOrderCharge` checks whether the linked service is billable, resolves insurance/cash pricing via `ResolveVisitChargeAmount`, then calls `UpsertVisitCharge`.
+
+**Important detail:**
+
+`FacilityService` is also the pricing target for consultations. A consultation fee is simply a facility service marked as a consultation service.
+
+---
+
+### 5. Pharmacy / Drugs (`Prescription` -> `PrescriptionItem` -> `DispensingRecord`)
+
+A doctor prescribes medications. Pharmacy fulfillment is handled through dispensing records.
+
+**Key models/support classes:**
+
+- `Prescription` - prescription header: visit, consultation, prescriber, status, discharge/long-term flags.
+- `PrescriptionItem` - each drug line: inventory item, quantity, dose/frequency instructions, external pharmacy flag, and item status.
+- `DispensingRecord` / `DispensingRecordItem` - pharmacy fulfillment draft/post workflow.
+- `DispensingRecordItemAllocation` - batch allocations when batch tracking is enabled.
+- `InventoryItem`, `InventoryBatch`, `StockMovement` - inventory pricing, stock, batch, and ledger integration.
+- `PrescriptionDispenseProgress`, `PrescriptionDispenseStatusResolver` - status/progress calculation.
+
+**Billing:**
+
+`SyncPrescriptionCharge` runs when the prescription is created. It totals all non-external prescription items using `ResolveVisitChargeAmount` with `BillableItemType::DRUG`, then posts one `VisitCharge` per prescription.
+
+**Dispensing:**
+
+`DispensePrescription` creates a dispensing record and posts it. `PostDispense` handles stock movement, batch allocations, external outcomes, and prescription status synchronization. It does not currently resync prescription billing after actual dispensing outcomes are known.
+
+---
+
+## Shared Billing Pipeline
+
+Most billable tracks feed into the same pipeline:
+
+```text
+Service/order created or updated
+        |
+        v
+Sync*Charge action
+        |
+        v
 ResolveVisitChargeAmount
-  → insured patient? → look up InsurancePackagePrice (billable_type + billable_id + package_id)
-  → else: use base price / selling_price
-       ↓
-UpsertVisitCharge (polymorphic source: MorphTo)
-  → EnsureVisitBilling (creates VisitBilling if missing)
-  → RecalculateVisitBilling (recomputes gross/paid/balance/status)
-  → SyncInsuredVisitClaim
+        |
+        |-- insured patient: look up active InsurancePolicyItem
+        |-- cash/unmatched: use provided fallback price
+        v
+UpsertVisitCharge
+        |
+        |-- EnsureVisitBilling
+        |-- RecalculateVisitBilling
+        v
+VisitBilling totals updated
 ```
 
 **Key models in the pipeline:**
-- `ChargeMaster` — central price list (billable_type, billable_id, unit_price, effective dates)
-- `VisitCharge` — one charge line per service event, with polymorphic `source` (morphTo)
-- `VisitBilling` — the bill summary per visit (gross, discount, paid, balance, status)
-- `InsurancePackagePrice` — insurance-specific prices keyed by billable_type + billable_id
-- `VisitPayer` — identifies whether the payer is cash or insured (with which package)
+
+- `VisitCharge` - one charge line per service event, with polymorphic `source_type` and `source_id`.
+- `VisitBilling` - bill summary per visit: gross, discount, paid, balance, and status.
+- `InsurancePolicy` / `InsurancePolicyItem` - insurance package policy pricing by item type and item id.
+- `VisitPayer` - identifies whether the visit is cash or insurance and which package applies.
+- `ChargeMaster` - central price list used most clearly by `FacilityService`, but not yet the universal source of pricing truth.
+
+**Important nuance:**
+
+The app has both `ChargeMaster` and direct model-level/fallback prices. Many billing actions pass a fallback amount directly into `ResolveVisitChargeAmount`, so `ChargeMaster` is not yet the single source of truth for every billable service.
 
 ---
 
-## What's Good About This Design
+## What Is Good About This Design
 
-### 1. Action pattern with composable Sync actions
-Each service type has a dedicated `Sync*Charge` action that is called from multiple places (create, update, complete). Business logic is in single-responsibility, injectable, testable classes. This is correct.
+### 1. Action pattern is used consistently
 
-### 2. Polymorphic charge source
-`VisitCharge.source` is a `MorphTo` relationship. Any model (Consultation, LabRequest, FacilityServiceOrder, Prescription) can be a charge source without changing the `visit_charges` table schema. Adding a new service type only requires a new `Sync*Charge` action.
+Most business operations are captured in dedicated Actions such as `CreateConsultation`, `CreateLabOrder`, `SyncLabOrderCharge`, `SyncFacilityServiceOrderCharge`, `SyncPrescriptionCharge`, and `UpsertVisitCharge`. This keeps controllers thinner and makes business logic more reusable.
 
-### 3. Lab workflow is realistic and well-modeled
-The lab track has specimen collection, result entry, review, and approval — each with timestamps and responsible staff. The `workflowStage` computed attribute on `LabRequestItem` derives readable state from the timestamp trail. `SyncLabRequestProgress` rolls up item statuses to the request level. This is clinically accurate.
+### 2. Polymorphic charge source is flexible
 
-### 4. Insurance pricing is centrally resolved
-`ResolveVisitChargeAmount` is called by every `Sync*Charge` action with the same signature. It checks for an active `InsurancePackagePrice` record, then falls back to the base price. No service type needs its own insurance logic.
+`VisitCharge` uses a polymorphic source. A consultation, lab order, facility service order, or prescription can all create a charge without adding more columns to `visit_charges`.
 
-### 5. `ConsultationTariff` separates pricing from encounter
-The tariff lookup matches `ConsultationType × VisitType × Branch`, with a fallback when `visit_type` is null. Pricing is a configuration concern, not a clinical concern. The ordering (specific > generic) via `orderByRaw(CASE WHEN ...)` is sound.
+### 3. Laboratory workflow is comparatively strong
 
-### 6. Enum-driven statuses throughout
-All statuses, categories, modalities, and outcomes are typed PHP 8.1 enums with `label()` methods. No magic strings scattered in the application code.
+Lab has specimen collection, result entry, review, approval, result visibility, correction support, consumables, and rollup status. It is much more complete than imaging.
 
-### 7. Duplicate prevention at order creation
-Both `CreateLabRequest` and `CreateFacilityServiceOrder` query for pending duplicates before inserting, preventing double-ordering from the UI.
+### 4. Insurance pricing is centralized
+
+`ResolveVisitChargeAmount` centralizes the lookup of insurance policy item prices and copay calculation. The individual service tracks do not need to implement insurance rules themselves.
+
+### 5. Consultation tariffs are configurable
+
+Consultation pricing can vary by consultation type, visit type, and branch. The tariff resolver can fall back from visit-type-specific tariffs to generic tariffs.
+
+### 6. Duplicate prevention exists for common pending orders
+
+Lab and facility service creation/update check for pending duplicates, reducing accidental duplicate billing from repeated UI submissions.
+
+### 7. Pending order deletion keeps billing in sync
+
+Pending lab orders, lab order items, and facility service orders remove or update their matching visit charges when deleted.
 
 ---
 
-## What's Problematic
+## Weak Or Incomplete Parts
 
-### 1. Imaging has no billing, no results, and no tenant scope
-This is the largest gap. `BillableItemType::IMAGING` exists but is never applied. `ImagingRequest` has no `tenant_id`, no `BelongsToTenant` trait, no `SyncImagingCharge` action, and no `ImagingReport` model. An imaging service is trackable in status but invisible to billing and cross-tenant queries.
+### 1. Imaging is the largest service gap
+
+Imaging has no tenant scope, no catalog, no price, no billing action, no report model, and no complete operational workflow. It can block visit completion because pending imaging orders are counted, but there is no clear Action pathway for moving an imaging order through scheduling, completion, cancellation, or reporting.
 
 ### 2. There is no unified service catalog
-To see every service the facility offers:
-- Labs: query `LabTestCatalog`
-- Imaging: look at the `ImagingModality` enum (no catalog table)
-- Facility services: query `FacilityService`
-- Consultation: look at `ConsultationTariff → FacilityService`
-- Drugs: query `InventoryItem`
 
-There is no answer to "list all billable services" without joining five different sources. Reporting, pricing management, and insurance negotiations all become harder.
+To answer "what services does this facility offer?", the app must query several unrelated sources:
 
-### 3. Consultation pricing is indirect and confusing
-A consultation fee requires creating a `FacilityService` record (category: whatever fits), then creating a `ConsultationTariff` that points to it. The `FacilityService` then gets a `ChargeMaster` entry via `SyncFacilityServiceChargeMaster`. Three hops to price a consultation. `ConsultationTariff` has no `unit_price` field of its own.
+- Lab tests: `LabTestCatalog`
+- Facility services: `FacilityService`
+- Consultations: `FacilityService` rows marked `is_consultation`
+- Drugs: `InventoryItem`
+- Imaging: `ImagingModality` enum and free-text body part, with no study catalog
 
-### 4. Lab billing is coarse-grained
-`SyncLabRequestCharge` creates one `VisitCharge` for the entire `LabRequest` with a description of "Lab request: N tests". Each `LabRequestItem` has its own `price` field, but billing ignores that granularity. On the invoice a patient sees one line item, not per-test charges. This breaks down for insurance claims where specific test codes may be covered differently.
+This makes service search, price management, insurance negotiation, reporting, and imports harder than they need to be.
 
-### 5. Prescription billing fires at prescription creation, not dispensing
-`SyncPrescriptionCharge` is called when the prescription is created/updated. If a drug is not dispensed (stock issue, patient refusal), or is partially dispensed, the charge remains. The `DispensingRecord` exists for actual fulfillment but doesn't feed back into billing.
+### 3. Pricing sources are fragmented
 
-### 6. `FacilityServiceOrder` has no outcome or clinical notes field
-For a physiotherapy session or a procedure, there is no field to document what was performed, any observations, or a result. The order goes to `completed` status with only a `performed_by` and `completed_at`. This limits clinical documentation.
+`FacilityService.selling_price`, `ChargeMaster.unit_price`, `LabTestCatalog.base_price`, `LabOrderItem.price`, `InventoryItem.default_selling_price`, and `InsurancePolicyItem.price` all participate in pricing. Some are catalogs, some are snapshots, and some are fallbacks. The source-of-truth rules are implicit rather than explicit.
 
-### 7. `FacilityService.selling_price` and `ChargeMaster.unit_price` are redundant
-Both hold a price for the same thing. `SyncFacilityServiceChargeMaster` keeps them in sync, but it's a maintenance burden. The source of truth is ambiguous — `ResolveVisitChargeAmount` reads from `InsurancePackagePrice` first, then falls back to `FacilityService.selling_price` passed in by the caller, but `ChargeMaster.unit_price` is a third value that could diverge.
+### 4. `ChargeMaster` is not yet a universal charge master
 
-### 8. `LabRequestItem.price` is snapshotted at creation time
-The base price from `LabTestCatalog` is copied onto `LabRequestItem.price` at the moment the order is created. If the test's price changes, pending items do not update. This is sometimes intentional (price locking), but there is no explicit design decision documented — `actual_cost` exists alongside `price`, suggesting intended differentiation that isn't fully implemented.
+`FacilityService` syncs to `ChargeMaster`, but lab and pharmacy billing do not appear to use `ChargeMaster` as their primary source. Lab charges use item/test pricing and a hard-coded charge code. Prescription charges use inventory item fallback prices and do not pass a charge master id.
 
-### 9. `FacilityServiceCategory` and `BillableItemType` overlap inconsistently
-`FacilityServiceCategory` has `PROCEDURE` and `DENTAL`. `BillableItemType` has `PROCEDURE`. A procedure done as a facility service is billed as `BillableItemType::SERVICE`, not `BillableItemType::PROCEDURE`. The `PROCEDURE` billing type is never used by any `Sync*Charge` action.
+### 5. Consultation pricing is indirect
+
+Consultation pricing now uses the same facility service catalog as other services. Creating or changing a consultation price means creating or updating a consultation `FacilityService` and its linked `ChargeMaster`.
+
+### 6. Lab billing is too coarse for invoices and claims
+
+Lab pricing is resolved per test, but the result is posted as one aggregate `VisitCharge` for the whole lab order. That means invoices and insurance claims cannot naturally show separate test lines, test codes, or per-test coverage decisions.
+
+### 7. Lab item price snapshotting is undocumented
+
+`LabOrderItem.price` is copied from `LabTestCatalog.base_price` when the order is created or updated. That may be intentional price locking, but the design does not clearly state whether pending orders should keep old prices or follow catalog changes.
+
+### 8. Updating a lab order deletes and recreates items
+
+`UpdateLabOrder` replaces the order items wholesale. This is acceptable only while the order is still editable/pending, but it is a sharp edge because item-level specimen/result history would be lost if this action were ever exposed beyond the pending state.
+
+### 9. Prescription billing happens before fulfillment
+
+The current billing line is based on prescribed quantity, not posted dispensing records. If a drug is partially dispensed, not dispensed, substituted, or moved to external pharmacy during dispensing, the original prescription charge can become stale because `PostDispense` does not call `SyncPrescriptionCharge`.
+
+### 10. Prescription billing is also coarse-grained
+
+Like lab, prescription billing creates one charge line for the whole prescription. This hides individual drug lines, quantities, item codes, and per-drug insurance handling on the final bill.
+
+### 11. Facility service orders lack clinical documentation fields
+
+`FacilityServiceOrder` tracks what was ordered, who ordered it, who performed it, status, and timestamps. It does not have structured result, notes, findings, outcome, or procedure documentation fields.
+
+### 12. Facility service workflow is thin
+
+The model has `pending`, `in_progress`, `completed`, and `cancelled`, but the main update DTO only changes `facility_service_id`. A dedicated perform/complete/cancel workflow with authorization, audit, notes, and billing behavior would make this track more clinically useful.
+
+### 13. Procedure categorization overlaps
+
+`FacilityServiceCategory` has `PROCEDURE`, while `BillableItemType` also has `PROCEDURE`. Facility-service procedures are currently billed as `BillableItemType::SERVICE`, so `BillableItemType::PROCEDURE` appears unused in this service pipeline.
+
+### 14. Historical pricing/versioning needs clearer rules
+
+Charges store unit price and line total at the time of upsert, which is good. But catalog price changes, charge master changes, insurance policy item changes, and resync actions can all affect future upserts. The system should define when existing unpaid charges should be recalculated versus preserved.
+
+### 15. Imaging and facility services need stronger tenant and branch consistency checks
+
+Many Actions set tenant/branch from the visit, which is good. But imaging has no tenant field at all, and service/catalog lookups should consistently ensure that the selected service or test belongs to the same tenant/branch context as the visit.
 
 ---
 
 ## Suggested Improvements
 
-### A. Fix imaging immediately (critical gap)
+### A. Fix imaging first
 
-1. Add `tenant_id` to `imaging_requests` and apply `BelongsToTenant`.
-2. Create an `ImagingStudyCatalog` table (code, name, modality, base_price) that functions like `LabTestCatalog` does for lab.
-3. Add a `SyncImagingCharge` action that reads the study price and calls `UpsertVisitCharge` with `BillableItemType::IMAGING`.
-4. Add an `ImagingReport` model (linked to `ImagingRequest`) with fields: `findings`, `impression`, `radiologist_id`, `reported_at`.
+1. Add `tenant_id` and `facility_branch_id` to `imaging_orders` where appropriate, and apply `BelongsToTenant`.
+2. Add an imaging study catalog, for example `ImagingStudyCatalog`, with code, name, modality, body part/body system, base price, active flag, and tenant/branch scope.
+3. Add `SyncImagingCharge` using `BillableItemType::IMAGING`.
+4. Add `ImagingReport` with findings, impression, radiologist, reported timestamp, and optional attachments.
+5. Add Actions for scheduling, starting, completing, cancelling, and reporting imaging orders.
+6. Make visit completion rules align with the imaging workflow so orders do not become permanent blockers.
 
-### B. Introduce a unified service catalog
+### B. Decide the pricing source of truth
 
-Create a `ServiceDefinition` table that all billable items reference:
+Pick one clear model for default pricing. The cleanest direction is to make `ChargeMaster` or a new `ServiceDefinition` model the canonical pricing surface, then have lab tests, facility services, consultation services, imaging studies, and drugs reference it consistently.
 
-```
+### C. Consider a unified service definition layer
+
+A future `ServiceDefinition` could hold shared fields:
+
+```text
 service_definitions
-  id, tenant_id, code, name, category (enum covering all types), 
-  base_price, is_billable, is_active
+  id
+  tenant_id
+  facility_branch_id nullable
+  code
+  name
+  service_type
+  base_price
+  is_billable
+  is_active
 ```
 
-`LabTestCatalog`, `FacilityService`, and any future service type would either extend or reference this. `ChargeMaster` could point to `service_definitions` instead of managing separate `billable_type + billable_id` logic. Insurance pricing (`InsurancePackagePrice`) would reference `service_definition_id` directly.
+Domain-specific models could still exist for clinical workflow details, but pricing, insurance mapping, imports, and reporting would have one consistent service identity.
 
-This is a significant refactor but makes pricing management, insurance negotiation, and audit reporting far simpler.
+### D. Make lab and pharmacy charges line-level
 
-### C. Move consultation pricing onto `ConsultationTariff` directly
+Create one `VisitCharge` per `LabOrderItem` and one per chargeable `PrescriptionItem` or posted `DispensingRecordItem`. This would improve invoice clarity, insurance claim accuracy, cancellation handling, and reporting.
 
-Add a `unit_price` field to `ConsultationTariff`. Remove the mandatory dependency on `FacilityService`. Optionally keep the link for cases where a consultation is also a trackable facility service, but make it optional rather than required.
+### E. Move pharmacy billing to dispensing/posting
 
-### D. Charge per lab test item, not per request
+Billing should follow posted dispense outcomes rather than initial prescription intent. `PostDispense` is the natural place to create or adjust medication charges because that action knows actual dispensed quantity, external pharmacy outcomes, substitutions, and batch allocations.
 
-Change `SyncLabRequestCharge` to call `UpsertVisitCharge` once per `LabRequestItem` (not once per `LabRequest`). Use the item's own `price` as the unit amount. This:
-- Gives per-test line items on the invoice
-- Allows insurance to apply different coverage rules per test
-- Simplifies removing a charge when a single test is cancelled
+### F. Add clinical documentation to facility service orders
 
-### E. Sync prescription charge at dispensing, not at prescription creation
+Add fields such as `notes`, `findings`, `outcome`, or `performed_summary`, then introduce dedicated Actions for starting, completing, and cancelling service orders.
 
-Move `SyncPrescriptionCharge` to be called from the dispensing workflow (`DispensingRecord` completion) rather than from the prescription create/update actions. This aligns the charge with the actual service rendered.
+### G. Clarify price snapshot rules
 
-### F. Add clinical notes to `FacilityServiceOrder`
+Document when prices are locked:
 
-Add a `notes` text field (for procedure details/observations) and optionally an `outcome` field to `FacilityServiceOrder`. This makes it useful for clinical documentation, not just workflow tracking.
+- At order creation?
+- At service completion?
+- At invoice generation?
+- Until payment?
+- Until insurance claim submission?
 
-### G. Remove the `selling_price` / `ChargeMaster` duplication
+Then encode that rule consistently in the sync actions.
 
-Pick one source of truth. Since `ChargeMaster` already exists as the price catalog and is linked from `FacilityService`, remove `FacilityService.selling_price` and derive the price from `ChargeMaster` at billing time. This eliminates the sync action requirement and removes divergence risk.
+### H. Clean up unused or overlapping billing types
+
+Either use `BillableItemType::PROCEDURE`, `IMAGING`, `BED_DAY`, and `OTHER` in real workflows, or remove/park them until they are supported. This will reduce confusion for insurance policy item configuration.
 
 ---
 
 ## Entity Relationship Summary
 
-```
+```text
 PatientVisit
-  ├── Consultation
-  │     ├── LabRequest → LabRequestItem → LabSpecimen
-  │     │                              └── LabResultEntry → LabResultValue
-  │     ├── ImagingRequest                (no billing, no result model)
-  │     ├── Prescription → PrescriptionItem → DispensingRecord
-  │     └── FacilityServiceOrder → FacilityService
-  ├── VisitBilling
-  │     └── VisitCharge (source: MorphTo → any of the above)
-  └── VisitPayer → InsurancePackage
+  |-- Consultation
+  |     |-- LabOrder -> LabOrderItem -> LabSpecimen
+  |     |                         |-- LabResultEntry -> LabResultValue
+  |     |-- ImagingOrder          (currently no billing/report/catalog)
+  |     |-- Prescription -> PrescriptionItem -> DispensingRecord
+  |     |-- FacilityServiceOrder -> FacilityService
+  |
+  |-- VisitBilling
+  |     |-- VisitCharge (source: morphTo -> service event)
+  |
+  |-- VisitPayer -> InsurancePackage
 ```
 
-```
-ChargeMaster (price catalog)
-  └── referenced by FacilityService.charge_master_id
+```text
+FacilityService
+  |-- ChargeMaster
 
-InsurancePackagePrice (insurance overrides)
-  └── keyed by: insurance_package_id + billable_type + billable_id
+InsurancePolicy
+  |-- InsurancePolicyItem
+        keyed by item_type + item_id
 ```
+
+---
+
+## Bottom Line
+
+The service design makes sense as an incremental hospital workflow system, but it is not yet a fully unified service/pricing platform. The immediate priority should be imaging, because it is currently the least complete track and can affect visit completion without producing billing or clinical results. After imaging, the biggest architectural improvement would be clarifying pricing ownership and moving lab/pharmacy billing from aggregate headers to item-level charge lines.

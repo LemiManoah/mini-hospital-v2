@@ -20,7 +20,15 @@ final readonly class DeleteLabTestCatalog
         }
 
         try {
-            DB::transaction(fn () => $labTestCatalog->delete());
+            DB::transaction(function () use ($labTestCatalog): void {
+                $labTestCatalog->chargeMaster()
+                    ->update([
+                        'is_active' => false,
+                        'updated_at' => now(),
+                    ]);
+
+                $labTestCatalog->delete();
+            });
         } catch (QueryException $queryException) {
             if ($this->hasExistingOrderItems($labTestCatalog)) {
                 throw ValidationException::withMessages([

@@ -185,6 +185,17 @@ export interface DrugOption {
     price_source?: string | null;
 }
 
+export interface ImagingStudyOption {
+    id: string;
+    code: string;
+    name: string;
+    modality: string;
+    body_part: string | null;
+    base_price: number | null;
+    quoted_price?: number | null;
+    price_source?: string | null;
+}
+
 export interface PrescriptionItem {
     id: string;
     inventory_item_id: string;
@@ -221,6 +232,7 @@ export interface ImagingOrder {
     id: string;
     visit_id: string;
     consultation_id: string | null;
+    imaging_study_catalog_id: string | null;
     requested_by: string;
     created_at?: string | null;
     modality: string;
@@ -496,6 +508,7 @@ export interface VisitShowPageProps {
     imagingPriorities: { value: string; label: string }[];
     imagingLateralities: { value: string; label: string }[];
     pregnancyStatuses: { value: string; label: string }[];
+    imagingStudyOptions: ImagingStudyOption[];
     facilityServiceOptions: FacilityServiceOption[];
     allergens: { id: string; name: string; type: string }[];
     severityOptions: { value: string; label: string }[];
@@ -542,6 +555,7 @@ export interface DoctorConsultationShowPageProps {
     imagingPriorities: { value: string; label: string }[];
     imagingLateralities: { value: string; label: string }[];
     pregnancyStatuses: { value: string; label: string }[];
+    imagingStudyOptions: ImagingStudyOption[];
     facilityServiceOptions: FacilityServiceOption[];
     allergens: { id: string; name: string; type: string }[];
     severityOptions: { value: string; label: string }[];

@@ -25,8 +25,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function FacilityServiceCreate({
     categories,
+    consultationTypes,
 }: FacilityServiceFormPageProps) {
     const [category, setCategory] = useState(categories[0]?.value ?? '');
+    const [isConsultation, setIsConsultation] = useState(false);
+    const [consultationType, setConsultationType] = useState(
+        consultationTypes[0]?.value ?? '',
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -63,6 +68,13 @@ export default function FacilityServiceCreate({
                                     type="hidden"
                                     name="category"
                                     value={category}
+                                />
+                                <input
+                                    type="hidden"
+                                    name="consultation_type"
+                                    value={
+                                        isConsultation ? consultationType : ''
+                                    }
                                 />
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="grid gap-2">
@@ -158,6 +170,63 @@ export default function FacilityServiceCreate({
                                             configured.
                                         </div>
                                     </div>
+                                    <div className="flex items-center gap-2 pt-8">
+                                        <input
+                                            id="is_consultation"
+                                            name="is_consultation"
+                                            type="checkbox"
+                                            value="1"
+                                            checked={isConsultation}
+                                            onChange={(event) =>
+                                                setIsConsultation(
+                                                    event.target.checked,
+                                                )
+                                            }
+                                            className="h-4 w-4"
+                                        />
+                                        <Label
+                                            htmlFor="is_consultation"
+                                            className="font-normal"
+                                        >
+                                            Consultation service
+                                        </Label>
+                                    </div>
+                                    {isConsultation ? (
+                                        <div className="grid gap-2">
+                                            <Label>Consultation Type</Label>
+                                            <Select
+                                                value={consultationType}
+                                                onValueChange={
+                                                    setConsultationType
+                                                }
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select consultation type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {consultationTypes.map(
+                                                        (option) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    option.value
+                                                                }
+                                                                value={
+                                                                    option.value
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError
+                                                message={
+                                                    errors.consultation_type
+                                                }
+                                            />
+                                        </div>
+                                    ) : null}
                                     <div className="flex items-center gap-2 pt-8">
                                         <input
                                             id="is_billable"

@@ -57,7 +57,7 @@ final readonly class UpdateFacilityServiceOrder
             $order->unsetRelation('service');
             $order->loadMissing(['visit.payer']);
             $order->load([
-                'service:id,name,service_code,category,is_billable,selling_price,charge_master_id',
+                'service:id,tenant_id,name,service_code,category,is_billable,is_active,selling_price,charge_master_id,created_by',
                 'orderedBy:id,first_name,last_name',
             ]);
 
@@ -67,7 +67,7 @@ final readonly class UpdateFacilityServiceOrder
             $this->recalculateVisitBilling->handle($billing);
 
             $order = $order->refresh()->load([
-                'service:id,name,service_code,category,is_billable,selling_price,charge_master_id',
+                'service:id,tenant_id,name,service_code,category,is_billable,is_active,selling_price,charge_master_id,created_by',
                 'orderedBy:id,first_name,last_name',
             ]);
 

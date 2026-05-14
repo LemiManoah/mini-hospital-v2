@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\DB;
 final readonly class CreatePrescription
 {
     public function __construct(
-        private SyncPrescriptionCharge $syncPrescriptionCharge,
         private TransitionPatientVisitStatus $transitionStatus,
         private NotifyUsersWithPermission $notifyUsersWithPermission,
         private RecordAuditActivity $recordAuditActivity,
@@ -76,10 +75,10 @@ final readonly class CreatePrescription
 
             $prescription = $prescription->loadMissing([
                 'prescribedBy:id,first_name,last_name',
-                'items.inventoryItem:id,generic_name,brand_name,strength,dosage_form,default_selling_price',
+                'items.inventoryItem:id,tenant_id,item_type,name,generic_name,brand_name,strength,dosage_form,default_selling_price,charge_master_id,is_active,created_by',
+                'items.inventoryItem.chargeMaster',
             ]);
 
-            $this->syncPrescriptionCharge->handle($prescription);
             $this->ensureVisitInProgress($visit);
 
             return $prescription;

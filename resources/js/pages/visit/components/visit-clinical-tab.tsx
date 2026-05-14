@@ -1,5 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { type VitalSign } from '@/types/patient';
 import { Link } from '@inertiajs/react';
 import {
@@ -55,12 +61,16 @@ export function VisitClinicalTab({
     const latestVital = (triage?.vitalSigns ?? triage?.vital_signs ?? [])[0];
 
     return (
-        <div className="space-y-6">
+        <div className="grid gap-6 xl:grid-cols-2">
             <Card>
                 <CardHeader>
                     <CardTitle>Triage Snapshot</CardTitle>
+                    <CardDescription>
+                        Intake acuity, presenting complaint, and latest vital
+                        signs.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="flex flex-col gap-4">
                     {!triage ? (
                         <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
                             Triage is now managed in the dedicated triage
@@ -181,8 +191,12 @@ export function VisitClinicalTab({
             <Card>
                 <CardHeader>
                     <CardTitle>Consultation Snapshot</CardTitle>
+                    <CardDescription>
+                        Clinician progress and working diagnosis for this
+                        encounter.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm">
+                <CardContent className="flex flex-col gap-3 text-sm">
                     {consultation ? (
                         <>
                             <div>
@@ -223,7 +237,7 @@ export function VisitClinicalTab({
                             ) : null}
                         </>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="flex flex-col gap-3">
                             <p className="text-muted-foreground">
                                 Consultation has not been started yet. You can
                                 still place visit orders from here for test-only

@@ -42,6 +42,7 @@ final readonly class PostDispense
         private TenantGeneralSettings $tenantGeneralSettings,
         private PrescriptionDispenseProgress $prescriptionDispenseProgress,
         private PrescriptionDispenseStatusResolver $statusResolver,
+        private SyncDispensingRecordCharge $syncDispensingRecordCharge,
     ) {}
 
     public function handle(DispensingRecord $dispensingRecord, PostDispenseDTO $data): DispensingRecord
@@ -183,6 +184,7 @@ final readonly class PostDispense
             ]);
 
             $this->syncPrescriptionStatuses($dispensingRecord->prescription_id);
+            $this->syncDispensingRecordCharge->handle($dispensingRecord);
 
             return $dispensingRecord->refresh()->load([
                 'visit.patient',

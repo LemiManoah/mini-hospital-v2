@@ -31,7 +31,7 @@ final class DatabaseSeeder extends Seeder
             ClinicSeeder::class,
             PatientSeeder::class,
             QrooMedicalCenterSeeder::class,
-            ConsultationTariffSeeder::class,
+            ConsultationFacilityServiceSeeder::class,
             FacilityUserSeeder::class,
         ]);
     }

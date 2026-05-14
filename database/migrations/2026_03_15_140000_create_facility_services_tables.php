@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\ConsultationType;
 use App\Enums\FacilityServiceCategory;
 use App\Enums\FacilityServiceOrderStatus;
 use Illuminate\Database\Migrations\Migration;
@@ -22,6 +23,8 @@ return new class extends Migration
             $table->decimal('cost_price', 10, 2)->nullable();
             $table->decimal('selling_price', 10, 2)->nullable();
             $table->boolean('is_billable')->default(false);
+            $table->boolean('is_consultation')->default(false)->index();
+            $table->enum('consultation_type', array_column(ConsultationType::cases(), 'value'))->nullable()->index();
             $table->uuid('charge_master_id')->nullable()->index();
             $table->boolean('is_active')->default(true)->index();
             $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();

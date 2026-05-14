@@ -93,35 +93,35 @@ export function VisitHeader({
             </div>
 
             <div className="flex flex-wrap gap-2">
-                <Button variant="outline" asChild>
+                <Button variant="outline" size="sm" asChild>
                     <Link href="/visits">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Active Visits
+                        Active Visits
                     </Link>
                 </Button>
                 {canViewPatient ? (
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" size="sm" asChild>
                         <Link href={`/patients/${visit.patient?.id}`}>
                             Patient Profile
                         </Link>
                     </Button>
                 ) : null}
                 {canViewTriage ? (
-                    <Button asChild>
+                    <Button asChild size="sm">
                         <Link href={`/triage/${visit.id}`}>
                             {visit.triage ? 'Open Triage Page' : 'Start Triage'}
                         </Link>
                     </Button>
                 ) : null}
                 {visit.triage && canViewConsultation ? (
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" size="sm" asChild>
                         <Link href={`/doctors/consultations/${visit.id}`}>
                             Open Consultation
                         </Link>
                     </Button>
                 ) : null}
                 {canPrintSummary ? (
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" size="sm" asChild>
                         <a
                             href={`/visits/${visit.id}/summary/print`}
                             target="_blank"

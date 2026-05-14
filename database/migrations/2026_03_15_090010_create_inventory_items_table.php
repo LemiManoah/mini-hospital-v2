@@ -37,6 +37,7 @@ return new class extends Migration
                 $table->decimal('reorder_level', 14, 3)->default(0);
                 $table->decimal('default_purchase_price', 14, 2)->nullable();
                 $table->decimal('default_selling_price', 14, 2)->nullable();
+                $table->foreignUuid('charge_master_id')->nullable()->constrained('charge_masters')->nullOnDelete();
                 $table->boolean('is_active')->default(true);
                 $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();

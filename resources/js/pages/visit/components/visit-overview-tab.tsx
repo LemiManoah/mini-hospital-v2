@@ -1,13 +1,20 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import VisitCompletionModal from '@/components/visit-completion-modal';
 import { type VisitCompletionCheck } from '@/types/patient';
-import { CalendarClock } from 'lucide-react';
 import {
     formatAge,
     formatDate,
     formatDateTime,
     formatMoney,
+    statusClasses,
 } from './visit-show-utils';
 
 type VisitOverviewTabProps = {
@@ -48,7 +55,6 @@ type VisitOverviewTabProps = {
             blood_group?: string | null;
         } | null;
     };
-    timeline: { label: string; value: string }[];
     completionCheck?: VisitCompletionCheck;
     canUpdateVisit: boolean;
 };
@@ -66,7 +72,6 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
 
 export function VisitOverviewTab({
     visit,
-    timeline,
     completionCheck,
     canUpdateVisit,
 }: VisitOverviewTabProps) {
@@ -107,10 +112,19 @@ export function VisitOverviewTab({
         ['in_progress', 'awaiting_payment'].includes(visit.status);
 
     return (
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
             <Card className="bg-muted/20">
-                <CardHeader>
-                    <CardTitle>Patient Snapshot</CardTitle>
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <CardTitle>Patient Snapshot</CardTitle>
+                        <CardDescription>
+                            Identity, contact, and visit context for this
+                            encounter.
+                        </CardDescription>
+                    </div>
+                    <Badge className={statusClasses(visit.status)}>
+                        {visit.status.replaceAll('_', ' ')}
+                    </Badge>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                     <SummaryItem
@@ -151,6 +165,9 @@ export function VisitOverviewTab({
                 <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <CardTitle>Visit Summary</CardTitle>
+                        <CardDescription>
+                            Registration, payment, and completion readiness.
+                        </CardDescription>
                     </div>
                     {canCompleteVisit ? (
                         <VisitCompletionModal
@@ -161,7 +178,7 @@ export function VisitOverviewTab({
                         />
                     ) : null}
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="flex flex-col gap-6">
                     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                         <SummaryItem
                             label="Visit Number"
@@ -198,7 +215,7 @@ export function VisitOverviewTab({
                     {(completionCheck?.has_pending_services ||
                         completionCheck?.has_unpaid_balance ||
                         completionCheck?.blocking_reasons?.length) && (
-                        <div className="space-y-3 border-t pt-6">
+                        <div className="flex flex-col gap-3 border-t pt-6">
                             {completionCheck?.has_pending_services ? (
                                 <div className="rounded-lg border bg-muted/20 p-3 text-sm">
                                     Pending services:{' '}
@@ -214,7 +231,7 @@ export function VisitOverviewTab({
                                 </div>
                             ) : null}
                             {completionCheck?.blocking_reasons?.length ? (
-                                <div className="space-y-2">
+                                <div className="flex flex-col gap-2">
                                     {completionCheck.blocking_reasons.map(
                                         (reason) => (
                                             <div
@@ -229,27 +246,6 @@ export function VisitOverviewTab({
                             ) : null}
                         </div>
                     )}
-
-                    <div className="space-y-4 border-t pt-6">
-                        <div className="flex items-center gap-2">
-                            <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                            <h3 className="font-medium">Visit Timeline</h3>
-                        </div>
-                        <div className="space-y-4 border-l pl-4">
-                            {timeline.map((entry) => (
-                                <div
-                                    key={entry.label}
-                                    className="relative pl-3"
-                                >
-                                    <span className="absolute top-1.5 -left-[1.1875rem] h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
-                                    <p className="font-medium">{entry.label}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {entry.value}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </CardContent>
             </Card>
         </div>

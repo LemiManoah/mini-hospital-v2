@@ -48,7 +48,7 @@ final readonly class CreateFacilityServiceOrder
             'status' => FacilityServiceOrderStatus::PENDING,
             'ordered_at' => now(),
         ])->loadMissing([
-            'service:id,name,service_code,category,is_billable,selling_price,charge_master_id',
+            'service:id,tenant_id,name,service_code,category,is_billable,is_active,selling_price,charge_master_id,created_by',
             'orderedBy:id,first_name,last_name',
         ]);
 

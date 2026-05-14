@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 final readonly class CreateLabTestCatalog
 {
     public function __construct(
+        private SyncLabTestCatalogChargeMaster $syncLabTestCatalogChargeMaster,
         private SyncLabTestCatalogConfiguration $syncLabTestCatalogConfiguration,
     ) {}
 
@@ -19,6 +20,7 @@ final readonly class CreateLabTestCatalog
         return DB::transaction(function () use ($data): LabTestCatalog {
             $labTestCatalog = LabTestCatalog::query()->create($data->toAttributes());
 
+            $this->syncLabTestCatalogChargeMaster->handle($labTestCatalog);
             $this->syncLabTestCatalogConfiguration->handle($labTestCatalog, $data);
 
             return $labTestCatalog->load([

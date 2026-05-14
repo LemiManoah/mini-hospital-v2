@@ -1,4 +1,3 @@
-import { AuditTimelineCard } from '@/components/audit-timeline-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import { usePermissions } from '@/lib/permissions';
@@ -10,7 +9,7 @@ import { VisitClinicalTab } from './components/visit-clinical-tab';
 import { VisitHeader } from './components/visit-header';
 import { VisitOrdersTab } from './components/visit-orders-tab';
 import { VisitOverviewTab } from './components/visit-overview-tab';
-import { formatDateTime } from './components/visit-show-utils';
+import { VisitTimelineTable } from './components/visit-timeline-table';
 
 export default function VisitShow({
     visit,
@@ -23,6 +22,7 @@ export default function VisitShow({
     imagingPriorities,
     imagingLateralities,
     pregnancyStatuses,
+    imagingStudyOptions,
     facilityServiceOptions,
     completionCheck,
     triageGrades,
@@ -31,9 +31,10 @@ export default function VisitShow({
     reactionOptions,
 }: VisitShowPageProps) {
     const { hasPermission } = usePermissions();
-    const allowedTabs = ['overview', 'clinical', 'orders'];
+    const allowedTabs = ['overview', 'timeline', 'orders'];
+    const initialTab = activeTab === 'clinical' ? 'overview' : activeTab;
     const [selectedTab, setSelectedTab] = useState(
-        allowedTabs.includes(activeTab) ? activeTab : 'overview',
+        allowedTabs.includes(initialTab) ? initialTab : 'overview',
     );
     const canViewPatient = hasPermission('patients.view');
     const canViewTriage = hasPermission('triage.view');
@@ -45,20 +46,11 @@ export default function VisitShow({
         { title: visit.visit_number, href: `/visits/${visit.id}` },
     ];
 
-    const timeline = [
-        {
-            label: 'Registered',
-            value: formatDateTime(visit.registered_at ?? visit.created_at),
-        },
-        { label: 'In Progress', value: formatDateTime(visit.started_at) },
-        { label: 'Completed', value: formatDateTime(visit.completed_at) },
-    ];
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Visit ${visit.visit_number}`} />
 
-            <div className="m-4 space-y-6">
+            <div className="m-4 flex flex-col gap-6">
                 <VisitHeader
                     visit={visit}
                     canViewPatient={canViewPatient}
@@ -70,29 +62,25 @@ export default function VisitShow({
                 <Tabs
                     value={selectedTab}
                     onValueChange={setSelectedTab}
-                    className="space-y-4"
+                    className="flex flex-col gap-4"
                 >
                     <TabsList variant="line" className="w-full justify-start">
                         <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="clinical">Clinical</TabsTrigger>
                         <TabsTrigger value="orders">Visit Services</TabsTrigger>
+                        <TabsTrigger value="timeline">
+                            Visit Timeline
+                        </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="overview" className="space-y-6">
+                    <TabsContent
+                        value="overview"
+                        className="flex flex-col gap-6"
+                    >
                         <VisitOverviewTab
                             visit={visit}
-                            timeline={timeline}
                             completionCheck={completionCheck}
                             canUpdateVisit={canUpdateVisit}
                         />
-                        <AuditTimelineCard
-                            title="Visit Audit Log"
-                            entries={audit_activity}
-                            emptyMessage="No audit activity recorded for this visit yet."
-                        />
-                    </TabsContent>
-
-                    <TabsContent value="clinical" className="space-y-6">
                         <VisitClinicalTab
                             visit={visit}
                             triage={visit.triage}
@@ -103,7 +91,17 @@ export default function VisitShow({
                         />
                     </TabsContent>
 
-                    <TabsContent value="orders" className="space-y-6">
+                    <TabsContent
+                        value="timeline"
+                        className="flex flex-col gap-6"
+                    >
+                        <VisitTimelineTable
+                            entries={audit_activity}
+                            emptyMessage="No audit activity recorded for this visit yet."
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="orders" className="flex flex-col gap-6">
                         <VisitOrdersTab
                             visit={visit}
                             consultation={visit.consultation}
@@ -117,6 +115,7 @@ export default function VisitShow({
                             imagingPriorities={imagingPriorities}
                             imagingLateralities={imagingLateralities}
                             pregnancyStatuses={pregnancyStatuses}
+                            imagingStudyOptions={imagingStudyOptions}
                             facilityServiceOptions={facilityServiceOptions}
                             allergens={allergens}
                             severityOptions={severityOptions}

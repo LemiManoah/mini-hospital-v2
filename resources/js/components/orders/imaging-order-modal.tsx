@@ -11,7 +11,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { type ImagingOrder, type PatientVisit } from '@/types/patient';
+import {
+    type ImagingOrder,
+    type ImagingStudyOption,
+    type PatientVisit,
+} from '@/types/patient';
 import { useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
 
@@ -24,6 +28,7 @@ export function ImagingOrderModal({
     imagingPriorities,
     imagingLateralities,
     pregnancyStatuses,
+    imagingStudyOptions,
     redirectTo,
 }: {
     open: boolean;
@@ -34,12 +39,14 @@ export function ImagingOrderModal({
     imagingPriorities: { value: string; label: string }[];
     imagingLateralities: { value: string; label: string }[];
     pregnancyStatuses: { value: string; label: string }[];
+    imagingStudyOptions: ImagingStudyOption[];
     redirectTo: 'visit' | 'consultation';
 }) {
     const consultation = visit.consultation as any;
     const triage = visit.triage as any;
 
     const form = useForm({
+        imaging_study_catalog_id: '',
         modality: imagingModalities[0]?.value ?? 'xray',
         body_part: '',
         laterality: imagingLateralities[0]?.value ?? 'na',
@@ -55,9 +62,16 @@ export function ImagingOrderModal({
         redirect_to: redirectTo,
     });
 
+    const studyOptions = imagingStudyOptions.map((study) => ({
+        value: study.id,
+        label: `${study.code} - ${study.name}`,
+    }));
+
     useEffect(() => {
         if (open && imagingOrder) {
             form.setData({
+                imaging_study_catalog_id:
+                    imagingOrder.imaging_study_catalog_id ?? '',
                 modality: imagingOrder.modality ?? 'xray',
                 body_part: imagingOrder.body_part ?? '',
                 laterality: imagingOrder.laterality ?? 'na',
@@ -74,6 +88,19 @@ export function ImagingOrderModal({
             form.reset();
         }
     }, [open, imagingOrder]);
+
+    const onStudyChange = (studyId: string) => {
+        const study = imagingStudyOptions.find(
+            (option) => option.id === studyId,
+        );
+
+        form.setData({
+            ...form.data,
+            imaging_study_catalog_id: studyId,
+            modality: study?.modality ?? form.data.modality,
+            body_part: study?.body_part ?? form.data.body_part,
+        });
+    };
 
     const onSubmit = (event: React.FormEvent) => {
         event.preventDefault();
@@ -107,6 +134,19 @@ export function ImagingOrderModal({
                 </DialogHeader>
 
                 <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+                    {studyOptions.length > 0 ? (
+                        <div className="grid gap-2">
+                            <Label>Study</Label>
+                            <SearchableSelect
+                                inputId="imaging_study_catalog_id"
+                                options={studyOptions}
+                                value={form.data.imaging_study_catalog_id}
+                                onValueChange={onStudyChange}
+                                placeholder="Select study"
+                            />
+                        </div>
+                    ) : null}
+
                     <div className="grid gap-4 md:grid-cols-3">
                         <div className="grid gap-2">
                             <Label>Modality</Label>

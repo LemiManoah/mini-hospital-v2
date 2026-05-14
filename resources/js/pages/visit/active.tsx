@@ -254,7 +254,7 @@ export default function ActiveVisits({
                                                             <Link
                                                                 href={`/visits/${visit.id}`}
                                                             >
-                                                                Open Visit
+                                                                Open
                                                             </Link>
                                                         </Button>
                                                     ) : null}
@@ -276,7 +276,7 @@ export default function ActiveVisits({
                                                                 redirectTo="index"
                                                                 trigger={
                                                                     <Button size="sm">
-                                                                        Complete
+                                                                        Close
                                                                         Visit
                                                                     </Button>
                                                                 }

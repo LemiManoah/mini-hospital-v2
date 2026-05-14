@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\CreateFacilityService;
 use App\Actions\DeleteFacilityService;
 use App\Actions\UpdateFacilityService;
+use App\Enums\ConsultationType;
 use App\Enums\FacilityServiceCategory;
 use App\Http\Requests\DeleteFacilityServiceRequest;
 use App\Http\Requests\StoreFacilityServiceRequest;
@@ -91,7 +92,7 @@ final readonly class FacilityServiceController implements HasMiddleware
     }
 
     /**
-     * @return array{categories: list<array{value: string, label: string}>}
+     * @return array{categories: list<array{value: string, label: string}>, consultationTypes: list<array{value: string, label: string}>}
      */
     private function formOptions(): array
     {
@@ -100,6 +101,12 @@ final readonly class FacilityServiceController implements HasMiddleware
                 ->map(static fn (FacilityServiceCategory $category): array => [
                     'value' => $category->value,
                     'label' => $category->label(),
+                ])
+                ->all()),
+            'consultationTypes' => array_values(collect(ConsultationType::cases())
+                ->map(static fn (ConsultationType $type): array => [
+                    'value' => $type->value,
+                    'label' => $type->label(),
                 ])
                 ->all()),
         ];

@@ -235,10 +235,10 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
      */
     private static function billingSplit(VisitBilling $billing, Collection $charges): array
     {
-        $grossAmount = max(0.0, round((float) $billing->gross_amount, 2));
-        $discountAmount = max(0.0, round((float) $billing->discount_amount, 2));
-        $paidAmount = max(0.0, round((float) $billing->paid_amount, 2));
-        $balanceAmount = max(0.0, round((float) $billing->balance_amount, 2));
+        $grossAmount = self::moneyAmount($billing->gross_amount);
+        $discountAmount = self::moneyAmount($billing->discount_amount);
+        $paidAmount = self::moneyAmount($billing->paid_amount);
+        $balanceAmount = self::moneyAmount($billing->balance_amount);
         $activeCopayAmount = round($charges->sum(static function (VisitCharge $charge): float {
             if (self::backedEnumValue($charge->status, $charge->getAttribute('status')) !== 'active') {
                 return 0.0;
@@ -246,33 +246,38 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
 
             return (float) $charge->copay_amount;
         }), 2);
-        $copayAmount = min($grossAmount, max(0.0, $activeCopayAmount));
+        $copayAmount = self::moneyAmount(min($grossAmount, max(0.0, $activeCopayAmount)));
 
         if ($billing->payer_type !== PayerType::INSURANCE) {
-            $patientResponsibility = max(0.0, round($grossAmount - $discountAmount, 2));
+            $patientResponsibility = self::moneyAmount($grossAmount - $discountAmount);
 
             return [
                 'patient_responsibility_amount' => $patientResponsibility,
                 'insurer_responsibility_amount' => 0.0,
-                'patient_paid_amount' => min($paidAmount, $patientResponsibility),
-                'patient_balance_amount' => max(0.0, round($patientResponsibility - $paidAmount, 2)),
+                'patient_paid_amount' => self::moneyAmount(min($paidAmount, $patientResponsibility)),
+                'patient_balance_amount' => self::moneyAmount($patientResponsibility - $paidAmount),
                 'insurer_balance_amount' => 0.0,
                 'copay_amount' => 0.0,
             ];
         }
 
-        $patientResponsibility = max(0.0, round($copayAmount - $discountAmount, 2));
-        $insurerResponsibility = max(0.0, round($grossAmount - $copayAmount, 2));
-        $patientPaidAmount = min($paidAmount, $patientResponsibility);
-        $patientBalanceAmount = max(0.0, round($patientResponsibility - $patientPaidAmount, 2));
+        $patientResponsibility = self::moneyAmount($copayAmount - $discountAmount);
+        $insurerResponsibility = self::moneyAmount($grossAmount - $copayAmount);
+        $patientPaidAmount = self::moneyAmount(min($paidAmount, $patientResponsibility));
+        $patientBalanceAmount = self::moneyAmount($patientResponsibility - $patientPaidAmount);
 
         return [
             'patient_responsibility_amount' => $patientResponsibility,
             'insurer_responsibility_amount' => $insurerResponsibility,
             'patient_paid_amount' => $patientPaidAmount,
             'patient_balance_amount' => $patientBalanceAmount,
-            'insurer_balance_amount' => max(0.0, round($balanceAmount - $patientBalanceAmount, 2)),
+            'insurer_balance_amount' => self::moneyAmount($balanceAmount - $patientBalanceAmount),
             'copay_amount' => $copayAmount,
         ];
+    }
+
+    private static function moneyAmount(mixed $amount): float
+    {
+        return max(0.0, round((float) $amount, 2));
     }
 }

@@ -13,19 +13,21 @@ final class SyncFacilityServiceChargeMaster
 {
     public function handle(FacilityService $service): ?ChargeMaster
     {
+        $actorId = Auth::id() ?? $service->updated_by ?? $service->created_by;
+
         if (! $service->is_billable) {
             ChargeMaster::query()
                 ->whereKey($service->charge_master_id ?? $service->id)
                 ->update([
                     'is_active' => false,
-                    'updated_by' => Auth::id(),
+                    'updated_by' => $actorId,
                     'updated_at' => now(),
                 ]);
 
             if ($service->charge_master_id !== null) {
                 $service->forceFill([
                     'charge_master_id' => null,
-                    'updated_by' => Auth::id(),
+                    'updated_by' => $actorId,
                 ])->save();
             }
 
@@ -49,15 +51,15 @@ final class SyncFacilityServiceChargeMaster
                 'is_active' => $service->is_active,
                 'effective_from' => now()->toDateString(),
                 'effective_to' => null,
-                'created_by' => $service->created_by ?? Auth::id(),
-                'updated_by' => Auth::id(),
+                'created_by' => $service->created_by ?? $actorId,
+                'updated_by' => $actorId,
             ],
         );
 
         if ($service->charge_master_id !== $chargeMaster->id) {
             $service->forceFill([
                 'charge_master_id' => $chargeMaster->id,
-                'updated_by' => Auth::id(),
+                'updated_by' => $actorId,
             ])->save();
         }
 

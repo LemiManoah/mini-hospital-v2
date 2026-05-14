@@ -11,8 +11,8 @@ use App\Http\Controllers\AppointmentModeController;
 use App\Http\Controllers\BillingDepositController;
 use App\Http\Controllers\BillingDiscountController;
 use App\Http\Controllers\BranchSwitcherController;
+use App\Http\Controllers\ChargeMasterController;
 use App\Http\Controllers\ClinicController;
-use App\Http\Controllers\ConsultationTariffController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyExchangeRateController;
 use App\Http\Controllers\DashboardController;
@@ -330,7 +330,7 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::post('reconciliations/{reconciliation}/reject', [InventoryReconciliationController::class, 'reject'])->name('reconciliations.reject');
     Route::post('reconciliations/{reconciliation}/post', [InventoryReconciliationController::class, 'post'])->name('reconciliations.post');
     Route::resource('facility-services', FacilityServiceController::class)->except(['show']);
-    Route::resource('consultation-tariffs', ConsultationTariffController::class)->except(['show']);
+    Route::resource('charge-masters', ChargeMasterController::class)->only(['index', 'edit', 'update']);
     Route::resource('lab-test-categories', LabTestCategoryController::class)->except(['show']);
     Route::resource('specimen-types', SpecimenTypeController::class)->except(['show']);
     Route::resource('result-types', LabResultTypeController::class)->except(['show']);

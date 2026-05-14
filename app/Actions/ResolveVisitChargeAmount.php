@@ -9,6 +9,7 @@ use App\Enums\GeneralStatus;
 use App\Enums\InsuranceCopayType;
 use App\Enums\InsurancePolicyType;
 use App\Enums\PayerType;
+use App\Models\ChargeMaster;
 use App\Models\InsurancePolicyItem;
 use App\Models\PatientVisit;
 use App\ValueObjects\VisitChargePricing;
@@ -23,6 +24,28 @@ final class ResolveVisitChargeAmount
         ?float $fallbackAmount = null,
     ): ?float {
         return $this->resolve($visit, $billableType, $billableId, $fallbackAmount)?->unitPrice;
+    }
+
+    public function resolveChargeMaster(
+        PatientVisit $visit,
+        ChargeMaster $chargeMaster,
+        float $quantity = 1.0,
+    ): ?VisitChargePricing {
+        if (! $this->chargeMasterIsUsable($chargeMaster)) {
+            return null;
+        }
+
+        if (! $chargeMaster->billable_type instanceof BillableItemType || $chargeMaster->billable_id === null) {
+            return new VisitChargePricing(round((float) $chargeMaster->unit_price, 2));
+        }
+
+        return $this->resolve(
+            $visit,
+            $chargeMaster->billable_type,
+            $chargeMaster->billable_id,
+            (float) $chargeMaster->unit_price,
+            $quantity,
+        );
     }
 
     public function resolve(
@@ -109,6 +132,25 @@ final class ResolveVisitChargeAmount
         };
 
         return min($lineTotal, round($amount, 2));
+    }
+
+    private function chargeMasterIsUsable(ChargeMaster $chargeMaster): bool
+    {
+        if (! $chargeMaster->is_active) {
+            return false;
+        }
+
+        $today = now()->toDateString();
+
+        if ($chargeMaster->effective_from !== null && $chargeMaster->effective_from->toDateString() > $today) {
+            return false;
+        }
+
+        if ($chargeMaster->effective_to !== null && $chargeMaster->effective_to->toDateString() < $today) {
+            return false;
+        }
+
+        return true;
     }
 
     private function floatValue(mixed $value): float

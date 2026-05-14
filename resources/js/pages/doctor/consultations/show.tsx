@@ -191,6 +191,7 @@ export default function DoctorConsultationShow({
     imagingPriorities,
     imagingLateralities,
     pregnancyStatuses,
+    imagingStudyOptions,
     facilityServiceOptions,
     allergens,
     severityOptions,
@@ -1426,6 +1427,7 @@ export default function DoctorConsultationShow({
                                     imagingPriorities={imagingPriorities}
                                     imagingLateralities={imagingLateralities}
                                     pregnancyStatuses={pregnancyStatuses}
+                                    imagingStudyOptions={imagingStudyOptions}
                                     redirectTo="consultation"
                                 />
                                 <ServiceOrderModal

@@ -38,6 +38,7 @@ final class InventoryItem extends Model
         'reorder_level' => 'decimal:3',
         'default_purchase_price' => 'decimal:2',
         'default_selling_price' => 'decimal:2',
+        'charge_master_id' => 'string',
         'expires' => 'boolean',
         'is_controlled' => 'boolean',
         'therapeutic_classes' => 'array',
@@ -52,6 +53,14 @@ final class InventoryItem extends Model
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    /**
+     * @return BelongsTo<ChargeMaster, $this>
+     */
+    public function chargeMaster(): BelongsTo
+    {
+        return $this->belongsTo(ChargeMaster::class);
     }
 
     /**

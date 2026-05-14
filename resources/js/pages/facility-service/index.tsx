@@ -102,6 +102,7 @@ export default function FacilityServiceIndex({
                             <TableHead>Name</TableHead>
                             <TableHead>Code</TableHead>
                             <TableHead>Category</TableHead>
+                            <TableHead>Service Type</TableHead>
                             <TableHead>Selling Price</TableHead>
                             <TableHead>Billing</TableHead>
                             <TableHead>Billing Mapping</TableHead>
@@ -131,6 +132,17 @@ export default function FacilityServiceIndex({
                                     </TableCell>
                                     <TableCell>
                                         {labelize(facilityService.category)}
+                                    </TableCell>
+                                    <TableCell>
+                                        {facilityService.is_consultation ? (
+                                            <Badge variant="secondary">
+                                                Consultation
+                                            </Badge>
+                                        ) : (
+                                            <span className="text-sm text-muted-foreground">
+                                                Service
+                                            </span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         {facilityService.selling_price ===
@@ -212,7 +224,7 @@ export default function FacilityServiceIndex({
                         ) : (
                             <TableRow>
                                 <TableCell
-                                    colSpan={8}
+                                    colSpan={9}
                                     className="py-12 text-center text-zinc-500 italic"
                                 >
                                     No facility services found.

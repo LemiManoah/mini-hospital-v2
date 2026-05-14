@@ -11,11 +11,21 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class CreateInventoryItem
 {
+    public function __construct(
+        private SyncInventoryItemChargeMaster $syncInventoryItemChargeMaster,
+    ) {}
+
     public function handle(CreateInventoryItemDTO $data): InventoryItem
     {
-        return DB::transaction(fn (): InventoryItem => InventoryItem::query()->create([
-            ...$data->toAttributes(),
-            'created_by' => Auth::id(),
-        ]));
+        return DB::transaction(function () use ($data): InventoryItem {
+            $inventoryItem = InventoryItem::query()->create([
+                ...$data->toAttributes(),
+                'created_by' => Auth::id(),
+            ]);
+
+            $this->syncInventoryItemChargeMaster->handle($inventoryItem);
+
+            return $inventoryItem->refresh();
+        });
     }
 }

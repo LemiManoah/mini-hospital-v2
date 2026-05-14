@@ -125,6 +125,13 @@ it('links synced facility service visit charges to the governed charge master', 
         'is_active' => true,
     ]);
 
+    ChargeMaster::query()
+        ->whereKey($service->charge_master_id)
+        ->update([
+            'unit_price' => 80,
+            'updated_at' => now(),
+        ]);
+
     $order = FacilityServiceOrder::query()->create([
         'tenant_id' => $tenant->id,
         'facility_branch_id' => $branch->id,
@@ -143,5 +150,5 @@ it('links synced facility service visit charges to the governed charge master', 
     expect($charge)->not()->toBeNull()
         ->and($charge?->charge_master_id)->toBe($service->charge_master_id)
         ->and($charge?->charge_code)->toBe($service->service_code)
-        ->and($charge?->line_total)->toBe('55.00');
+        ->and($charge?->line_total)->toBe('80.00');
 });

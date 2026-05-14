@@ -6,6 +6,7 @@ namespace App\Enums;
 
 enum FacilityServiceCategory: string
 {
+    case CONSULTATION = 'consultation';
     case DRESSING = 'dressing';
     case PHYSIOTHERAPY = 'physiotherapy';
     case PROCEDURE = 'procedure';

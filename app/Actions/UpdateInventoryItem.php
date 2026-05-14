@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateInventoryItem
 {
+    public function __construct(
+        private SyncInventoryItemChargeMaster $syncInventoryItemChargeMaster,
+    ) {}
+
     public function handle(InventoryItem $inventoryItem, UpdateInventoryItemDTO $data): InventoryItem
     {
         return DB::transaction(function () use ($inventoryItem, $data): InventoryItem {
@@ -18,6 +22,8 @@ final readonly class UpdateInventoryItem
                 ...$data->toAttributes(),
                 'updated_by' => Auth::id(),
             ]);
+
+            $this->syncInventoryItemChargeMaster->handle($inventoryItem->refresh());
 
             return $inventoryItem->refresh();
         });

@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Data\Clinical\CreateLabOrderDTO;
 use App\Enums\VisitStatus;
+use App\Models\ChargeMaster;
 use App\Models\Consultation;
 use App\Models\LabOrder;
 use App\Models\LabOrderItem;
@@ -20,6 +21,7 @@ use Illuminate\Validation\ValidationException;
 final readonly class CreateLabOrder
 {
     public function __construct(
+        private SyncLabTestCatalogChargeMaster $syncLabTestCatalogChargeMaster,
         private SyncLabOrderCharge $syncLabOrderCharge,
         private TransitionPatientVisitStatus $transitionStatus,
         private RecordAuditActivity $recordAuditActivity,
@@ -32,9 +34,10 @@ final readonly class CreateLabOrder
 
         /** @var Collection<int, LabTestCatalog> $tests */
         $tests = LabTestCatalog::query()
+            ->with('chargeMaster')
             ->whereIn('id', $data->testIds)
             ->where('is_active', true)
-            ->get(['id', 'base_price']);
+            ->get(['id', 'tenant_id', 'test_code', 'test_name', 'base_price', 'charge_master_id', 'is_active']);
 
         $this->ensureNoPendingDuplicates($visit, $data->testIds);
 
@@ -58,7 +61,7 @@ final readonly class CreateLabOrder
                 $request->items()->create([
                     'test_id' => $test->id,
                     'status' => 'pending',
-                    'price' => $test->base_price ?? 0,
+                    'price' => $this->priceFor($test),
                     'is_external' => false,
                 ]);
             }
@@ -66,7 +69,8 @@ final readonly class CreateLabOrder
             $request = $request->loadMissing([
                 'visit.payer',
                 'requestedBy:id,first_name,last_name',
-                'items.test:id,test_name,test_code,lab_test_category_id,result_type_id',
+                'items.test:id,tenant_id,test_name,test_code,lab_test_category_id,result_type_id,base_price,charge_master_id,is_active',
+                'items.test.chargeMaster',
                 'items.test.labCategory:id,name',
                 'items.test.specimenTypes:id,name',
                 'items.test.resultTypeDefinition:id,code,name',
@@ -123,6 +127,19 @@ final readonly class CreateLabOrder
         if ($visit->status === VisitStatus::REGISTERED) {
             $this->transitionStatus->handle($visit, VisitStatus::IN_PROGRESS);
         }
+    }
+
+    private function priceFor(LabTestCatalog $test): float
+    {
+        $test->loadMissing('chargeMaster');
+
+        $chargeMaster = $test->chargeMaster instanceof ChargeMaster
+            ? $test->chargeMaster
+            : $this->syncLabTestCatalogChargeMaster->handle($test);
+
+        return $chargeMaster instanceof ChargeMaster
+            ? (float) $chargeMaster->unit_price
+            : (float) ($test->base_price ?? 0);
     }
 
     /**

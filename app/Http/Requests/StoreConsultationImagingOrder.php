@@ -25,6 +25,7 @@ final class StoreConsultationImagingOrder extends FormRequest
     public function rules(): array
     {
         return [
+            'imaging_study_catalog_id' => ['nullable', 'uuid', 'exists:imaging_study_catalogs,id'],
             'modality' => ['required', Rule::enum(ImagingModality::class)],
             'body_part' => ['required', 'string', 'max:100'],
             'laterality' => ['required', Rule::enum(ImagingLaterality::class)],

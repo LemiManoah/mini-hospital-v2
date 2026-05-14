@@ -613,9 +613,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         ],
                     },
                     {
-                        title: 'Consultation Tariffs',
-                        url: '/consultation-tariffs',
-                        permission: 'consultation_tariffs.view',
+                        title: 'Charge Master',
+                        url: '/charge-masters',
+                        permission: 'charge_masters.view',
                     },
                     {
                         title: 'Reports',

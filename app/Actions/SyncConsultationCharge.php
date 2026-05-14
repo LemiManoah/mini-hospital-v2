@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\BillableItemType;
+use App\Models\ChargeMaster;
 use App\Models\Consultation;
-use App\Models\ConsultationTariff;
+use App\Models\FacilityService;
 use App\Models\PatientVisit;
 use App\Models\VisitCharge;
 use App\ValueObjects\VisitChargePricing;
@@ -14,7 +14,7 @@ use App\ValueObjects\VisitChargePricing;
 final readonly class SyncConsultationCharge
 {
     public function __construct(
-        private ResolveConsultationTariff $resolveConsultationTariff,
+        private ResolveConsultationFacilityService $resolveConsultationFacilityService,
         private ResolveVisitChargeAmount $resolveVisitChargeAmount,
         private RecalculateVisitBilling $recalculateVisitBilling,
         private UpsertVisitCharge $upsertVisitCharge,
@@ -30,21 +30,16 @@ final readonly class SyncConsultationCharge
             return;
         }
 
-        $tariff = $this->resolveConsultationTariff->handle($consultation);
-        $service = $tariff?->facilityService;
+        $service = $this->resolveConsultationFacilityService->handle($consultation);
+        $chargeMaster = $service?->chargeMaster;
 
-        if (! $tariff instanceof ConsultationTariff || $service === null || ! $service->is_billable || ! $tariff->is_active) {
+        if (! $service instanceof FacilityService || ! $chargeMaster instanceof ChargeMaster) {
             $this->removeExistingCharge($consultation, $visit);
 
             return;
         }
 
-        $pricing = $this->resolveVisitChargeAmount->resolve(
-            $visit,
-            BillableItemType::SERVICE,
-            $service->id,
-            $service->selling_price === null ? null : (float) $service->selling_price,
-        );
+        $pricing = $this->resolveVisitChargeAmount->resolveChargeMaster($visit, $chargeMaster);
 
         if (! $pricing instanceof VisitChargePricing) {
             $this->removeExistingCharge($consultation, $visit);
@@ -55,11 +50,11 @@ final readonly class SyncConsultationCharge
         $this->upsertVisitCharge->handle(
             $visit,
             $consultation,
-            sprintf('Consultation fee: %s', $service->name),
+            sprintf('Consultation: %s', $chargeMaster->description),
             $pricing->unitPrice,
             1,
-            $service->service_code,
-            $service->charge_master_id,
+            $chargeMaster->item_code,
+            $chargeMaster->id,
             copayAmount: $pricing->copayAmount,
         );
     }

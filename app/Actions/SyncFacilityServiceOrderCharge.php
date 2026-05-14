@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\BillableItemType;
+use App\Models\ChargeMaster;
 use App\Models\FacilityService;
 use App\Models\FacilityServiceOrder;
 use App\Models\PatientVisit;
@@ -14,6 +14,7 @@ final readonly class SyncFacilityServiceOrderCharge
 {
     public function __construct(
         private ResolveVisitChargeAmount $resolveVisitChargeAmount,
+        private SyncFacilityServiceChargeMaster $syncFacilityServiceChargeMaster,
         private UpsertVisitCharge $upsertVisitCharge,
     ) {}
 
@@ -27,12 +28,13 @@ final readonly class SyncFacilityServiceOrderCharge
             return;
         }
 
-        $pricing = $this->resolveVisitChargeAmount->resolve(
-            $visit,
-            BillableItemType::SERVICE,
-            $service->id,
-            $service->selling_price === null ? null : (float) $service->selling_price,
-        );
+        $chargeMaster = $this->chargeMasterFor($service);
+
+        if (! $chargeMaster instanceof ChargeMaster) {
+            return;
+        }
+
+        $pricing = $this->resolveVisitChargeAmount->resolveChargeMaster($visit, $chargeMaster);
 
         if (! $pricing instanceof VisitChargePricing) {
             return;
@@ -44,9 +46,20 @@ final readonly class SyncFacilityServiceOrderCharge
             sprintf('Facility service: %s', $service->name),
             $pricing->unitPrice,
             1,
-            $service->service_code,
-            $service->charge_master_id,
+            $chargeMaster->item_code,
+            $chargeMaster->id,
             copayAmount: $pricing->copayAmount,
         );
+    }
+
+    private function chargeMasterFor(FacilityService $service): ?ChargeMaster
+    {
+        $service->loadMissing('chargeMaster');
+
+        if ($service->chargeMaster instanceof ChargeMaster) {
+            return $service->chargeMaster;
+        }
+
+        return $this->syncFacilityServiceChargeMaster->handle($service);
     }
 }
