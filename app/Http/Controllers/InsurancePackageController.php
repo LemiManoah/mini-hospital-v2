@@ -28,6 +28,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -51,12 +52,12 @@ final readonly class InsurancePackageController implements HasMiddleware
             ->with(['insuranceCompany:id,name'])
             ->when(
                 $search !== '',
-                static fn (Builder $query) => $query->where(
-                    static fn (Builder $searchQuery) => $searchQuery
+                static fn (Builder $query): Builder => $query->where(
+                    static fn (Builder $searchQuery): Builder => $searchQuery
                         ->whereLike('name', sprintf('%%%s%%', $search))
                         ->orWhereHas(
                             'insuranceCompany',
-                            static fn (Builder $companyQuery) => $companyQuery
+                            static fn (Builder $companyQuery): Builder => $companyQuery
                                 ->whereLike('name', sprintf('%%%s%%', $search))
                         )
                 )
@@ -152,7 +153,7 @@ final readonly class InsurancePackageController implements HasMiddleware
             ->groupBy(static fn (ChargeMaster $chargeMaster): string => $chargeMaster->billable_type instanceof BillableItemType
                 ? $chargeMaster->billable_type->value
                 : '')
-            ->map(static fn ($items): array => $items
+            ->map(static fn (Collection $items): array => $items
                 ->map(static fn (ChargeMaster $chargeMaster): array => [
                     'value' => $chargeMaster->id,
                     'label' => $chargeMaster->item_code !== ''
@@ -282,7 +283,7 @@ final readonly class InsurancePackageController implements HasMiddleware
             ->latest()
             ->limit(10)
             ->get()
-            ->map(fn (DataImport $dataImport): array => [
+            ->map(static fn (DataImport $dataImport): array => [
                 'id' => $dataImport->id,
                 'importType' => $dataImport->import_type,
                 'sourceFilename' => $dataImport->source_filename,
