@@ -286,20 +286,18 @@ export default function InventoryItemCreate({
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="default_selling_price">
-                                            Default Selling Price
+                                        <Label htmlFor="unit_price">
+                                            Unit Price
                                         </Label>
                                         <Input
-                                            id="default_selling_price"
-                                            name="default_selling_price"
+                                            id="unit_price"
+                                            name="unit_price"
                                             type="number"
                                             min="0"
                                             step="0.01"
                                         />
                                         <InputError
-                                            message={
-                                                errors.default_selling_price
-                                            }
+                                            message={errors.unit_price}
                                         />
                                     </div>
 

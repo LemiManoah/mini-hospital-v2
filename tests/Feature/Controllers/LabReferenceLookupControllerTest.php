@@ -220,7 +220,6 @@ it('blocks deleting a result type that is already used by a lab test', function 
         'test_name' => 'Narrative Panel',
         'lab_test_category_id' => $category->id,
         'result_type_id' => $resultType->id,
-        'base_price' => 12000,
         'is_active' => true,
     ]);
     $labTest->specimenTypes()->sync([$specimenType->id]);

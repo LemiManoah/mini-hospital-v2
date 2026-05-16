@@ -75,7 +75,6 @@ function createPharmacyPosPrintContext(): array
     $item = InventoryItem::factory()->drug()->create([
         'tenant_id' => $tenant->id,
         'name' => 'Amoxicillin 500mg',
-        'default_selling_price' => 1500,
         'created_by' => $user->id,
         'updated_by' => $user->id,
     ]);

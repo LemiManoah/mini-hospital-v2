@@ -96,7 +96,7 @@ export function VisitOrderDialog({
         test_code: string;
         test_name: string;
         category: string | null;
-        base_price: number | null;
+        unit_price: number | null;
         quoted_price?: number | null;
         price_source?: string | null;
     }>;
@@ -305,7 +305,7 @@ export function VisitOrderDialog({
                                                                 Quoted price:{' '}
                                                                 {formatMoney(
                                                                     test.quoted_price ??
-                                                                        test.base_price,
+                                                                        test.unit_price,
                                                                 )}
                                                                 {test.price_source ===
                                                                 'insurance_package'
@@ -1101,7 +1101,7 @@ export function VisitOrderDialog({
                                                     Quoted price:{' '}
                                                     {formatMoney(
                                                         selectedFacilityService.quoted_price ??
-                                                            selectedFacilityService.selling_price,
+                                                            selectedFacilityService.unit_price,
                                                     )}
                                                 </p>
                                                 <div className="mt-2 flex flex-wrap gap-2">

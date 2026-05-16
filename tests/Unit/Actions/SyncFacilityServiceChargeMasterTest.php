@@ -30,7 +30,7 @@ it('creates a charge master when a billable facility service is created', functi
         'category' => FacilityServiceCategory::OTHER,
         'description' => 'Ultrasound imaging service',
         'cost_price' => 40,
-        'selling_price' => 90,
+        'unit_price' => 90,
         'is_billable' => true,
         'is_active' => true,
     ]);
@@ -120,7 +120,7 @@ it('links synced facility service visit charges to the governed charge master', 
         'category' => FacilityServiceCategory::PROCEDURE,
         'description' => 'Ward procedure service',
         'cost_price' => 15,
-        'selling_price' => 55,
+        'unit_price' => 55,
         'is_billable' => true,
         'is_active' => true,
     ]);

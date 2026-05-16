@@ -103,7 +103,7 @@ export default function FacilityServiceIndex({
                             <TableHead>Code</TableHead>
                             <TableHead>Category</TableHead>
                             <TableHead>Service Type</TableHead>
-                            <TableHead>Selling Price</TableHead>
+                            <TableHead>Unit Price</TableHead>
                             <TableHead>Billing</TableHead>
                             <TableHead>Billing Mapping</TableHead>
                             <TableHead>Status</TableHead>
@@ -145,13 +145,16 @@ export default function FacilityServiceIndex({
                                         )}
                                     </TableCell>
                                     <TableCell>
-                                        {facilityService.selling_price ===
-                                        null ? (
+                                        {facilityService.charge_master
+                                            ?.unit_price === undefined ||
+                                        facilityService.charge_master
+                                            ?.unit_price === null ? (
                                             <span className="italic opacity-50">
                                                 Not set
                                             </span>
                                         ) : (
-                                            facilityService.selling_price
+                                            facilityService.charge_master
+                                                .unit_price
                                         )}
                                     </TableCell>
                                     <TableCell>

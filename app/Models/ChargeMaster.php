@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Enums\BillableItemType;
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,5 +47,23 @@ final class ChargeMaster extends Model
     public function visitCharges(): HasMany
     {
         return $this->hasMany(VisitCharge::class);
+    }
+
+    /**
+     * @param  Builder<$this>  $query
+     */
+    #[Scope]
+    protected function effectiveOn(Builder $query, string $date): void
+    {
+        $query
+            ->where('is_active', true)
+            ->where(function (Builder $rangeQuery) use ($date): void {
+                $rangeQuery->whereNull('effective_from')
+                    ->orWhere('effective_from', '<=', $date);
+            })
+            ->where(function (Builder $rangeQuery) use ($date): void {
+                $rangeQuery->whereNull('effective_to')
+                    ->orWhere('effective_to', '>=', $date);
+            });
     }
 }

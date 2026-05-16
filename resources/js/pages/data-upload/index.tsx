@@ -207,7 +207,7 @@ export default function DataUploadIndex({
                         sachet, ml, g, or tab.
                     </li>
                     <li>
-                        Leave selling price blank when the item is not directly
+                        Leave unit price blank when the item is not directly
                         sold to patients.
                     </li>
                     <li>
@@ -236,8 +236,8 @@ export default function DataUploadIndex({
                         procedure, dental, nursing, transport, and other.
                     </li>
                     <li>
-                        Billable services must have a selling_price. Cost price
-                        can be left blank.
+                        Billable services must have a unit_price. Cost price can
+                        be left blank.
                     </li>
                     <li>
                         Existing service codes are skipped and reported; this

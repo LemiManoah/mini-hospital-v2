@@ -179,10 +179,10 @@ export default function InventoryItemShow({
                             </div>
                             <div className="grid grid-cols-2 gap-1">
                                 <span className="text-sm font-medium text-muted-foreground">
-                                    Default Selling Price
+                                    Unit Price
                                 </span>
                                 <span>
-                                    {inventoryItem.default_selling_price ??
+                                    {inventoryItem.charge_master?.unit_price ??
                                         'N/A'}
                                 </span>
                             </div>

@@ -47,7 +47,7 @@ final readonly class LabOrderItemConsumableController implements HasMiddleware
             'order.requestedBy:id,first_name,last_name',
             'order.visit:id,visit_number,patient_id',
             'order.visit.patient:id,patient_number,first_name,last_name,gender,phone_number',
-            'test:id,test_code,test_name,description,lab_test_category_id,result_type_id,base_price',
+            'test:id,test_code,test_name,description,lab_test_category_id,result_type_id,charge_master_id',
             'test.labCategory:id,name',
             'test.resultTypeDefinition:id,code,name',
             'consumables' => static fn (HasMany $query): HasMany => $query

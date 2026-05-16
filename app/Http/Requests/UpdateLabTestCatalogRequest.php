@@ -68,7 +68,7 @@ final class UpdateLabTestCatalogRequest extends FormRequest
                 ),
             ],
             'description' => ['nullable', 'string'],
-            'base_price' => ['required', 'numeric', 'min:0'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'result_options' => ['nullable', 'array'],
             'result_options.*.label' => ['nullable', 'string', 'max:150'],

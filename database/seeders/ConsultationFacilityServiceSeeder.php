@@ -57,7 +57,6 @@ final class ConsultationFacilityServiceSeeder extends Seeder
                     'category' => FacilityServiceCategory::CONSULTATION,
                     'description' => $definition['type']->label(),
                     'cost_price' => null,
-                    'selling_price' => $definition['amount'],
                     'is_billable' => true,
                     'is_consultation' => true,
                     'consultation_type' => $definition['type'],
@@ -67,7 +66,7 @@ final class ConsultationFacilityServiceSeeder extends Seeder
                 ],
             );
 
-            $this->syncFacilityServiceChargeMaster->handle($service);
+            $this->syncFacilityServiceChargeMaster->handle($service, $definition['amount']);
         }
     }
 }

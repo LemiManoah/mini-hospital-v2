@@ -20,14 +20,22 @@ final readonly class UpdateFacilityService
     public function handle(FacilityService $service, array $attributes): FacilityService
     {
         return DB::transaction(function () use ($service, $attributes): FacilityService {
+            $unitPrice = $this->unitPrice($attributes['unit_price'] ?? null);
+            unset($attributes['unit_price']);
+
             $service->update([
                 ...$attributes,
                 'updated_by' => Auth::id(),
             ]);
 
-            $this->syncFacilityServiceChargeMaster->handle($service->refresh());
+            $this->syncFacilityServiceChargeMaster->handle($service->refresh(), $unitPrice);
 
             return $service->refresh();
         });
+    }
+
+    private function unitPrice(mixed $value): int|float|string|null
+    {
+        return is_int($value) || is_float($value) || is_string($value) ? $value : null;
     }
 }

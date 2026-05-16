@@ -45,7 +45,10 @@ export interface LabTestCatalog {
     result_options?: LabTestCatalogResultOption[];
     result_parameters?: LabTestCatalogResultParameter[];
     description: string | null;
-    base_price: number;
+    charge_master?: {
+        id: string;
+        unit_price: number | string;
+    } | null;
     is_active: boolean;
     created_at: string;
     updated_at: string;

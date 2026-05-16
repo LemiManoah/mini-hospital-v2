@@ -7,12 +7,9 @@ namespace App\Http\Requests;
 use App\Enums\GeneralStatus;
 use App\Enums\InsuranceCopayType;
 use App\Enums\InsurancePolicyType;
-use App\Enums\InventoryItemType;
+use App\Models\ChargeMaster;
 use App\Models\FacilityBranch;
-use App\Models\FacilityService;
 use App\Models\InsurancePackage;
-use App\Models\InventoryItem;
-use App\Models\LabTestCatalog;
 use App\Models\User;
 use App\Support\BranchContext;
 use Illuminate\Database\Query\Builder;
@@ -58,7 +55,7 @@ final class StoreInsurancePolicyRequest extends FormRequest
             'effective_to' => ['nullable', 'date', 'after_or_equal:effective_from'],
             'status' => ['required', new Enum(GeneralStatus::class)],
             'items' => ['nullable', 'array', 'max:100'],
-            'items.*.item_id' => ['required_with:items', 'uuid'],
+            'items.*.charge_master_id' => ['required_with:items', 'uuid'],
             'items.*.price' => ['required_with:items', 'numeric', 'min:0'],
             'items.*.copay_type' => ['required_with:items', new Enum(InsuranceCopayType::class)],
             'items.*.copay_value' => ['required_with:items', 'numeric', 'min:0', 'max:999999999999.99'],
@@ -92,12 +89,12 @@ final class StoreInsurancePolicyRequest extends FormRequest
                     continue;
                 }
 
-                if (! is_string($item['item_id'] ?? null)) {
+                if (! is_string($item['charge_master_id'] ?? null)) {
                     continue;
                 }
 
-                if (! $this->itemExists($policyType, $item['item_id'])) {
-                    $validator->errors()->add(sprintf('items.%s.item_id', (string) $index), 'The selected item does not match the selected policy type.');
+                if (! $this->chargeMasterMatchesPolicy($policyType, $item['charge_master_id'])) {
+                    $validator->errors()->add(sprintf('items.%s.charge_master_id', (string) $index), 'The selected charge master item does not match the selected policy type.');
                 }
 
                 if (($item['copay_type'] ?? null) === InsuranceCopayType::PERCENTAGE->value && is_numeric($item['copay_value'] ?? null) && (float) $item['copay_value'] > 100) {
@@ -115,7 +112,7 @@ final class StoreInsurancePolicyRequest extends FormRequest
      *     effective_from?: string|null,
      *     effective_to?: string|null,
      *     status: string,
-     *     items: list<array{item_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
+     *     items: list<array{charge_master_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
      * }
      */
     public function policyData(string $facilityBranchId): array
@@ -138,33 +135,21 @@ final class StoreInsurancePolicyRequest extends FormRequest
         return is_string($policyType) ? InsurancePolicyType::tryFrom($policyType) : null;
     }
 
-    private function itemExists(InsurancePolicyType $policyType, string $itemId): bool
+    private function chargeMasterMatchesPolicy(InsurancePolicyType $policyType, string $chargeMasterId): bool
     {
         $tenantId = (string) $this->user()?->tenant_id;
 
-        return match ($policyType) {
-            InsurancePolicyType::PHARMACY => InventoryItem::query()
-                ->where('tenant_id', $tenantId)
-                ->where('item_type', InventoryItemType::DRUG->value)
-                ->where('is_active', true)
-                ->whereKey($itemId)
-                ->exists(),
-            InsurancePolicyType::LAB => LabTestCatalog::query()
-                ->where('tenant_id', $tenantId)
-                ->where('is_active', true)
-                ->whereKey($itemId)
-                ->exists(),
-            InsurancePolicyType::SERVICES => FacilityService::query()
-                ->where('tenant_id', $tenantId)
-                ->where('is_billable', true)
-                ->where('is_active', true)
-                ->whereKey($itemId)
-                ->exists(),
-        };
+        return ChargeMaster::query()
+            ->where('tenant_id', $tenantId)
+            ->whereKey($chargeMasterId)
+            ->where('is_active', true)
+            ->where('billable_type', $policyType->itemType()->value)
+            ->effectiveOn(now()->toDateString())
+            ->exists();
     }
 
     /**
-     * @return list<array{item_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
+     * @return list<array{charge_master_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
      */
     private function itemsData(): array
     {
@@ -182,7 +167,7 @@ final class StoreInsurancePolicyRequest extends FormRequest
             }
 
             $itemsData[] = [
-                'item_id' => is_string($item['item_id'] ?? null) ? $item['item_id'] : '',
+                'charge_master_id' => is_string($item['charge_master_id'] ?? null) ? $item['charge_master_id'] : '',
                 'price' => $this->numericStringValue($item['price'] ?? null),
                 'copay_type' => is_string($item['copay_type'] ?? null) ? $item['copay_type'] : InsuranceCopayType::NONE->value,
                 'copay_value' => $this->numericStringValue($item['copay_value'] ?? null),

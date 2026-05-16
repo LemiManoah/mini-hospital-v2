@@ -39,7 +39,7 @@ type LabTestCatalogFormData = {
     specimen_type_ids: string[];
     result_type_id: string;
     description: string;
-    base_price: string;
+    unit_price: string;
     is_active: boolean;
     result_options: LabTestCatalogResultOption[];
     result_parameters: LabTestCatalogResultParameter[];
@@ -104,9 +104,9 @@ export default function LabTestCatalogForm({
         result_type_id:
             labTestCatalog?.result_type_id ?? resultTypes[0]?.value ?? '',
         description: labTestCatalog?.description ?? '',
-        base_price:
-            labTestCatalog?.base_price !== undefined
-                ? String(labTestCatalog.base_price)
+        unit_price:
+            labTestCatalog?.charge_master?.unit_price !== undefined
+                ? String(labTestCatalog.charge_master.unit_price)
                 : '0',
         is_active: labTestCatalog?.is_active ?? true,
         result_options:
@@ -289,19 +289,19 @@ export default function LabTestCatalogForm({
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="base_price">Base Price</Label>
+                        <Label htmlFor="unit_price">Unit Price</Label>
                         <Input
-                            id="base_price"
+                            id="unit_price"
                             type="number"
                             min="0"
                             step="0.01"
-                            value={form.data.base_price}
+                            value={form.data.unit_price}
                             onChange={(event) =>
-                                form.setData('base_price', event.target.value)
+                                form.setData('unit_price', event.target.value)
                             }
-                            aria-invalid={Boolean(form.errors.base_price)}
+                            aria-invalid={Boolean(form.errors.unit_price)}
                         />
-                        <InputError message={form.errors.base_price} />
+                        <InputError message={form.errors.unit_price} />
                     </div>
                     <div className="grid gap-2 md:col-span-2">
                         <Label htmlFor="description">Description</Label>

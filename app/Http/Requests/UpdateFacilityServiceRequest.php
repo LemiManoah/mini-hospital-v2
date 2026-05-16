@@ -27,7 +27,7 @@ final class UpdateFacilityServiceRequest extends FormRequest
             'category' => ['required', Rule::enum(FacilityServiceCategory::class)],
             'description' => ['nullable', 'string'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
-            'selling_price' => ['nullable', 'numeric', 'min:0'],
+            'unit_price' => ['nullable', 'numeric', 'min:0'],
             'is_billable' => ['nullable', 'boolean'],
             'is_consultation' => ['nullable', 'boolean'],
             'consultation_type' => ['nullable', Rule::enum(ConsultationType::class)],
@@ -38,8 +38,8 @@ final class UpdateFacilityServiceRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if (($this->boolean('is_billable') || $this->boolean('is_consultation')) && ! $this->filled('selling_price')) {
-                $validator->errors()->add('selling_price', 'Selling price is required for billable services.');
+            if (($this->boolean('is_billable') || $this->boolean('is_consultation')) && ! $this->filled('unit_price')) {
+                $validator->errors()->add('unit_price', 'Unit price is required for billable services.');
             }
 
             if ($this->boolean('is_consultation') && ! $this->filled('consultation_type')) {
@@ -52,7 +52,7 @@ final class UpdateFacilityServiceRequest extends FormRequest
     {
         $this->merge([
             'cost_price' => $this->filled('cost_price') ? $this->input('cost_price') : null,
-            'selling_price' => $this->filled('selling_price') ? $this->input('selling_price') : null,
+            'unit_price' => $this->filled('unit_price') ? $this->input('unit_price') : null,
             'is_billable' => $this->boolean('is_billable') || $this->boolean('is_consultation'),
             'is_consultation' => $this->boolean('is_consultation'),
             'consultation_type' => $this->boolean('is_consultation') ? $this->input('consultation_type') : null,

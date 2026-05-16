@@ -18,6 +18,7 @@ return new class extends Migration
             $table->uuid('visit_billing_id')->index();
             $table->uuid('patient_visit_id')->index();
             $table->uuidMorphs('source');
+            $table->foreignUuid('charge_master_id')->nullable()->constrained('charge_masters')->nullOnDelete();
             $table->string('charge_code', 50)->nullable()->index();
             $table->string('description');
             $table->decimal('quantity', 12, 2)->default(1);

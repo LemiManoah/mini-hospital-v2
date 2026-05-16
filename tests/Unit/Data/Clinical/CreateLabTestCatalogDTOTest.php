@@ -34,7 +34,7 @@ it('normalizes create lab test catalog input into a typed dto', function (): voi
         'lab_test_category_id' => 'category-1',
         'result_type_id' => 'result-type-1',
         'description' => ' Baseline hematology panel ',
-        'base_price' => '25000',
+        'unit_price' => '25000',
         'is_active' => true,
         'specimen_type_ids' => ['specimen-1', 'specimen-2'],
         'result_parameters' => [
@@ -49,6 +49,7 @@ it('normalizes create lab test catalog input into a typed dto', function (): voi
 
     expect($dto->testCode)->toBe('CBC-001')
         ->and($dto->description)->toBe('Baseline hematology panel')
+        ->and($dto->unitPrice)->toBe('25000')
         ->and($dto->specimenTypeIds)->toBe(['specimen-1', 'specimen-2'])
         ->and($dto->resultParameters)->toHaveCount(1)
         ->and($dto->resultParameters[0]->label)->toBe('WBC')

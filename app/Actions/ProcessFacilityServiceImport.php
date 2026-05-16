@@ -19,7 +19,7 @@ final readonly class ProcessFacilityServiceImport
      *   imported: int,
      *   skipped: int,
      *   errors: list<array{row: int, name: string, messages: list<string>}>,
-     *   previewRows: list<array{row: int, name: string, serviceCode: string, category: string, sellingPrice: float|null}>
+     *   previewRows: list<array{row: int, name: string, serviceCode: string, category: string, unitPrice: float|null}>
      * }
      */
     public function handle(

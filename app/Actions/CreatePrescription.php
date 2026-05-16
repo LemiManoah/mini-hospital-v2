@@ -75,8 +75,8 @@ final readonly class CreatePrescription
 
             $prescription = $prescription->loadMissing([
                 'prescribedBy:id,first_name,last_name',
-                'items.inventoryItem:id,tenant_id,item_type,name,generic_name,brand_name,strength,dosage_form,default_selling_price,charge_master_id,is_active,created_by',
-                'items.inventoryItem.chargeMaster',
+                'items.inventoryItem:id,tenant_id,item_type,name,generic_name,brand_name,strength,dosage_form,charge_master_id,is_active,created_by',
+                'items.inventoryItem.chargeMaster:id,unit_price',
             ]);
 
             $this->ensureVisitInProgress($visit);

@@ -32,11 +32,10 @@ it('creates and updates a charge master row for a lab test catalog item', functi
         'test_name' => 'Complete Blood Count',
         'lab_test_category_id' => $category->id,
         'result_type_id' => $resultType->id,
-        'base_price' => 25000,
         'is_active' => true,
     ]);
 
-    $chargeMaster = resolve(SyncLabTestCatalogChargeMaster::class)->handle($labTest);
+    $chargeMaster = resolve(SyncLabTestCatalogChargeMaster::class)->handle($labTest, 25000);
 
     expect($chargeMaster)->toBeInstanceOf(ChargeMaster::class)
         ->and($labTest->fresh()->charge_master_id)->toBe($chargeMaster?->id)
@@ -48,12 +47,13 @@ it('creates and updates a charge master row for a lab test catalog item', functi
 
     $labTest->forceFill([
         'test_name' => 'CBC Updated',
-        'base_price' => 30000,
     ])->save();
 
-    $updatedChargeMaster = resolve(SyncLabTestCatalogChargeMaster::class)->handle($labTest->fresh());
+    $updatedChargeMaster = resolve(SyncLabTestCatalogChargeMaster::class)->handle($labTest->fresh(), 30000);
 
-    expect($updatedChargeMaster?->id)->toBe($chargeMaster?->id)
+    expect($updatedChargeMaster?->id)->not()->toBe($chargeMaster?->id)
+        ->and($labTest->fresh()->charge_master_id)->toBe($updatedChargeMaster?->id)
+        ->and($chargeMaster?->fresh()?->is_active)->toBeFalse()
         ->and($updatedChargeMaster?->description)->toBe('CBC Updated')
         ->and((float) $updatedChargeMaster?->unit_price)->toBe(30000.0);
 });

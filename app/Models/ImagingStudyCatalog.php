@@ -19,7 +19,6 @@ final class ImagingStudyCatalog extends Model
         'tenant_id' => 'string',
         'facility_branch_id' => 'string',
         'modality' => ImagingModality::class,
-        'base_price' => 'float',
         'charge_master_id' => 'string',
         'is_active' => 'boolean',
         'created_by' => 'string',

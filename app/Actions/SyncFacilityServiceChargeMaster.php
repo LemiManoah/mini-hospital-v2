@@ -9,9 +9,11 @@ use App\Models\ChargeMaster;
 use App\Models\FacilityService;
 use Illuminate\Support\Facades\Auth;
 
-final class SyncFacilityServiceChargeMaster
+final readonly class SyncFacilityServiceChargeMaster
 {
-    public function handle(FacilityService $service): ?ChargeMaster
+    public function __construct(private UpsertChargeMasterVersion $upsertChargeMasterVersion) {}
+
+    public function handle(FacilityService $service, int|float|string|null $unitPrice = null): ?ChargeMaster
     {
         $actorId = Auth::id() ?? $service->updated_by ?? $service->created_by;
 
@@ -35,19 +37,20 @@ final class SyncFacilityServiceChargeMaster
         }
 
         $chargeMasterId = $service->charge_master_id ?? $service->id;
+        $currentChargeMaster = ChargeMaster::query()->find($chargeMasterId);
+        $resolvedUnitPrice = $unitPrice ?? $currentChargeMaster->unit_price ?? $service->chargeMaster->unit_price ?? 0;
 
-        $chargeMaster = ChargeMaster::query()->updateOrCreate(
+        $chargeMaster = $this->upsertChargeMasterVersion->handle(
+            $currentChargeMaster,
             [
                 'id' => $chargeMasterId,
-            ],
-            [
                 'tenant_id' => $service->tenant_id,
                 'facility_branch_id' => null,
                 'item_code' => $service->service_code,
                 'description' => $service->name,
                 'billable_type' => BillableItemType::SERVICE,
                 'billable_id' => $service->id,
-                'unit_price' => $service->selling_price ?? 0,
+                'unit_price' => $resolvedUnitPrice,
                 'is_active' => $service->is_active,
                 'effective_from' => now()->toDateString(),
                 'effective_to' => null,

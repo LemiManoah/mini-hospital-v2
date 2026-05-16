@@ -10,30 +10,36 @@ use App\Models\ChargeMaster;
 use App\Models\InventoryItem;
 use Illuminate\Support\Facades\Auth;
 
-final class SyncInventoryItemChargeMaster
+final readonly class SyncInventoryItemChargeMaster
 {
-    public function handle(InventoryItem $inventoryItem): ?ChargeMaster
+    public function __construct(private UpsertChargeMasterVersion $upsertChargeMasterVersion) {}
+
+    public function handle(InventoryItem $inventoryItem, int|float|string|null $unitPrice = null): ?ChargeMaster
     {
-        if (! $this->isBillableDrug($inventoryItem)) {
+        if (! $this->isBillableDrug($inventoryItem, $unitPrice)) {
             $this->deactivateChargeMaster($inventoryItem);
 
             return null;
         }
 
         $chargeMasterId = $inventoryItem->charge_master_id ?? $inventoryItem->id;
+        $currentChargeMaster = ChargeMaster::query()->find($chargeMasterId);
+        $resolvedUnitPrice = $unitPrice
+            ?? $currentChargeMaster->unit_price
+            ?? $inventoryItem->chargeMaster->unit_price
+            ?? 0;
 
-        $chargeMaster = ChargeMaster::query()->updateOrCreate(
+        $chargeMaster = $this->upsertChargeMasterVersion->handle(
+            $currentChargeMaster,
             [
                 'id' => $chargeMasterId,
-            ],
-            [
                 'tenant_id' => $inventoryItem->tenant_id,
                 'facility_branch_id' => null,
                 'item_code' => $this->itemCode($inventoryItem),
                 'description' => $this->description($inventoryItem),
                 'billable_type' => BillableItemType::DRUG,
                 'billable_id' => $inventoryItem->id,
-                'unit_price' => $inventoryItem->default_selling_price ?? 0,
+                'unit_price' => $resolvedUnitPrice,
                 'is_active' => $inventoryItem->is_active,
                 'effective_from' => now()->toDateString(),
                 'effective_to' => null,
@@ -52,11 +58,11 @@ final class SyncInventoryItemChargeMaster
         return $chargeMaster;
     }
 
-    private function isBillableDrug(InventoryItem $inventoryItem): bool
+    private function isBillableDrug(InventoryItem $inventoryItem, int|float|string|null $unitPrice = null): bool
     {
         return $inventoryItem->item_type === InventoryItemType::DRUG
             && $inventoryItem->is_active
-            && $inventoryItem->default_selling_price !== null;
+            && ($unitPrice !== null || $inventoryItem->charge_master_id !== null);
     }
 
     private function deactivateChargeMaster(InventoryItem $inventoryItem): void

@@ -23,7 +23,7 @@ final readonly class UpdateInventoryItem
                 'updated_by' => Auth::id(),
             ]);
 
-            $this->syncInventoryItemChargeMaster->handle($inventoryItem->refresh());
+            $this->syncInventoryItemChargeMaster->handle($inventoryItem->refresh(), $data->unitPrice);
 
             return $inventoryItem->refresh();
         });

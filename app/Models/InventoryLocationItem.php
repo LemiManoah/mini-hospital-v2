@@ -23,7 +23,6 @@ final class InventoryLocationItem extends Model
         'inventory_item_id' => 'string',
         'minimum_stock_level' => 'decimal:3',
         'reorder_level' => 'decimal:3',
-        'default_selling_price' => 'decimal:2',
         'is_active' => 'boolean',
         'created_by' => 'string',
         'updated_by' => 'string',

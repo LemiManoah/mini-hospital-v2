@@ -37,7 +37,7 @@ final readonly class CreateLabOrder
             ->with('chargeMaster')
             ->whereIn('id', $data->testIds)
             ->where('is_active', true)
-            ->get(['id', 'tenant_id', 'test_code', 'test_name', 'base_price', 'charge_master_id', 'is_active']);
+            ->get(['id', 'tenant_id', 'test_code', 'test_name', 'charge_master_id', 'is_active']);
 
         $this->ensureNoPendingDuplicates($visit, $data->testIds);
 
@@ -69,7 +69,7 @@ final readonly class CreateLabOrder
             $request = $request->loadMissing([
                 'visit.payer',
                 'requestedBy:id,first_name,last_name',
-                'items.test:id,tenant_id,test_name,test_code,lab_test_category_id,result_type_id,base_price,charge_master_id,is_active',
+                'items.test:id,tenant_id,test_name,test_code,lab_test_category_id,result_type_id,charge_master_id,is_active',
                 'items.test.chargeMaster',
                 'items.test.labCategory:id,name',
                 'items.test.specimenTypes:id,name',
@@ -139,7 +139,7 @@ final readonly class CreateLabOrder
 
         return $chargeMaster instanceof ChargeMaster
             ? (float) $chargeMaster->unit_price
-            : (float) ($test->base_price ?? 0);
+            : 0.0;
     }
 
     /**

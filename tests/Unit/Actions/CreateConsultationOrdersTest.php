@@ -281,7 +281,6 @@ it('creates a lab order with priced items from the consultation context and sync
         'test_name' => 'Full Blood Count',
         'lab_test_category_id' => $categoryId,
         'result_type_id' => $resultTypeId,
-        'base_price' => 25000,
         'charge_master_id' => $chargeMasterId,
         'is_active' => true,
         'created_at' => now(),
@@ -334,7 +333,24 @@ it('creates a lab order with priced items from the consultation context and sync
 it('moves a registered visit into progress when a visit-level lab order is created', function (): void {
     $context = seedConsultationContext();
     $testId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
     [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
+
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => null,
+        'item_code' => 'CRP',
+        'description' => 'C-Reactive Protein',
+        'billable_type' => 'test',
+        'billable_id' => $testId,
+        'unit_price' => 30000,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     DB::table('patient_visits')
         ->where('id', $context['visit_id'])
@@ -350,7 +366,7 @@ it('moves a registered visit into progress when a visit-level lab order is creat
         'test_name' => 'C-Reactive Protein',
         'lab_test_category_id' => $categoryId,
         'result_type_id' => $resultTypeId,
-        'base_price' => 30000,
+        'charge_master_id' => $chargeMasterId,
         'is_active' => true,
         'created_at' => now(),
         'updated_at' => now(),
@@ -379,7 +395,24 @@ it('moves a registered visit into progress when a visit-level lab order is creat
 it('uses insurance policy prices when syncing lab order charges', function (): void {
     $context = seedConsultationContext('insurance');
     $testId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
     [$categoryId, $specimenTypeId, $resultTypeId] = seedLabCatalogRefs();
+
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => null,
+        'item_code' => 'MPS',
+        'description' => 'Malaria Parasite Smear',
+        'billable_type' => 'test',
+        'billable_id' => $testId,
+        'unit_price' => 18000,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     DB::table('lab_test_catalogs')->insert([
         'id' => $testId,
@@ -388,7 +421,7 @@ it('uses insurance policy prices when syncing lab order charges', function (): v
         'test_name' => 'Malaria Parasite Smear',
         'lab_test_category_id' => $categoryId,
         'result_type_id' => $resultTypeId,
-        'base_price' => 18000,
+        'charge_master_id' => $chargeMasterId,
         'is_active' => true,
         'created_at' => now(),
         'updated_at' => now(),
@@ -400,7 +433,7 @@ it('uses insurance policy prices when syncing lab order charges', function (): v
         'updated_at' => now(),
     ]);
 
-    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'lab', 'test', $testId, 12000, 'fixed', 2000);
+    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'lab', $chargeMasterId, 12000, 'fixed', 2000);
 
     $request = resolve(CreateLabOrder::class)->handle($context['consultation'], CreateLabOrderDTO::fromRequest(createLabOrderDtoRequest([
         'test_ids' => [$testId],
@@ -454,7 +487,6 @@ it('creates a prescription with multiple drug items', function (): void {
         'category' => DrugCategory::ANALGESIC->value,
         'dosage_form' => DrugDosageForm::TABLET->value,
         'strength' => '500mg',
-        'default_selling_price' => 1500,
         'charge_master_id' => $chargeMasterId,
         'expires' => true,
         'is_controlled' => false,
@@ -503,6 +535,23 @@ it('creates a prescription with multiple drug items', function (): void {
 it('uses insurance policy prices when syncing prescription charges', function (): void {
     $context = seedConsultationContext('insurance');
     $drugId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
+
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => null,
+        'item_code' => 'DRUG-AMOXICILLIN',
+        'description' => 'Amoxicillin 500mg capsule',
+        'billable_type' => 'drug',
+        'billable_id' => $drugId,
+        'unit_price' => 1500,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     DB::table('inventory_items')->insert([
         'id' => $drugId,
@@ -514,7 +563,7 @@ it('uses insurance policy prices when syncing prescription charges', function ()
         'category' => DrugCategory::ANTIBIOTIC->value,
         'dosage_form' => DrugDosageForm::CAPSULE->value,
         'strength' => '500mg',
-        'default_selling_price' => 2000,
+        'charge_master_id' => $chargeMasterId,
         'expires' => true,
         'is_controlled' => false,
         'is_active' => true,
@@ -522,7 +571,7 @@ it('uses insurance policy prices when syncing prescription charges', function ()
         'updated_at' => now(),
     ]);
 
-    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'pharmacy', 'drug', $drugId, 1200);
+    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'pharmacy', $chargeMasterId, 1200);
 
     $prescription = resolve(CreatePrescription::class)->handle($context['consultation'], CreatePrescriptionDTO::fromRequest(createPrescriptionDtoRequest([
         'primary_diagnosis' => 'Bacterial infection',
@@ -582,7 +631,6 @@ it('creates an imaging order linked to the consultation', function (): void {
         'name' => 'Chest X-Ray',
         'modality' => 'xray',
         'body_part' => 'Chest',
-        'base_price' => 35000,
         'charge_master_id' => $chargeMasterId,
         'is_active' => true,
         'created_at' => now(),
@@ -636,6 +684,7 @@ it('creates a facility service order with consultation context and syncs an insu
     $context = seedConsultationContext('insurance');
     $recipient = createOrderNotificationRecipient($context['tenant_id'], ['facility_services.view']);
     $serviceId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
 
     DB::table('facility_services')->insert([
         'id' => $serviceId,
@@ -643,14 +692,30 @@ it('creates a facility service order with consultation context and syncs an insu
         'service_code' => 'SRV-100',
         'name' => 'Nebulization',
         'category' => 'other',
-        'selling_price' => 7000,
+        'charge_master_id' => $chargeMasterId,
         'is_billable' => true,
         'is_active' => true,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'services', 'service', $serviceId, 9500);
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => null,
+        'item_code' => 'SRV-100',
+        'description' => 'Nebulization',
+        'billable_type' => 'service',
+        'billable_id' => $serviceId,
+        'unit_price' => 7000,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    seedInsurancePolicyItem($context['tenant_id'], $context['branch_id'], $context['insurance_package_id'], 'services', $chargeMasterId, 9500);
 
     $order = resolve(CreateFacilityServiceOrder::class)->handle(
         $context['consultation'],
@@ -710,9 +775,10 @@ it('creates a facility service order with consultation context and syncs an insu
         ->and($notification?->data['resource_id'] ?? null)->toBe($order->id);
 });
 
-it('creates a facility service order with the service selling price for cash visits', function (): void {
+it('creates a facility service order with the charge master unit price for cash visits', function (): void {
     $context = seedConsultationContext('cash');
     $serviceId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
 
     DB::table('facility_services')->insert([
         'id' => $serviceId,
@@ -720,9 +786,25 @@ it('creates a facility service order with the service selling price for cash vis
         'service_code' => 'SRV-101',
         'name' => 'Oxygen Therapy',
         'category' => 'other',
-        'selling_price' => 12000,
+        'charge_master_id' => $chargeMasterId,
         'is_billable' => true,
         'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => null,
+        'item_code' => 'SRV-101',
+        'description' => 'Oxygen Therapy',
+        'billable_type' => 'service',
+        'billable_id' => $serviceId,
+        'unit_price' => 12000,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -757,7 +839,6 @@ it('creates a facility service order without syncing a charge for non-billable s
         'service_code' => 'SRV-102',
         'name' => 'Wound Review',
         'category' => 'other',
-        'selling_price' => 5000,
         'is_billable' => false,
         'is_active' => true,
         'created_at' => now(),
@@ -791,6 +872,7 @@ it('creates a facility service order without syncing a charge for non-billable s
 it('prevents duplicate pending facility service orders for the same visit', function (): void {
     $context = seedConsultationContext('cash');
     $serviceId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
 
     DB::table('facility_services')->insert([
         'id' => $serviceId,
@@ -798,9 +880,25 @@ it('prevents duplicate pending facility service orders for the same visit', func
         'service_code' => 'SRV-103',
         'name' => 'Nebulization',
         'category' => 'other',
-        'selling_price' => 7000,
+        'charge_master_id' => $chargeMasterId,
         'is_billable' => true,
         'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => null,
+        'item_code' => 'SRV-103',
+        'description' => 'Nebulization',
+        'billable_type' => 'service',
+        'billable_id' => $serviceId,
+        'unit_price' => 7000,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -830,6 +928,7 @@ it('prevents duplicate pending facility service orders for the same visit', func
 it('deletes a pending facility service order and its synced charge', function (): void {
     $context = seedConsultationContext('cash');
     $serviceId = (string) Str::uuid();
+    $chargeMasterId = (string) Str::uuid();
 
     DB::table('facility_services')->insert([
         'id' => $serviceId,
@@ -837,9 +936,25 @@ it('deletes a pending facility service order and its synced charge', function ()
         'service_code' => 'SRV-104',
         'name' => 'Wound Dressing',
         'category' => 'other',
-        'selling_price' => 8000,
+        'charge_master_id' => $chargeMasterId,
         'is_billable' => true,
         'is_active' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('charge_masters')->insert([
+        'id' => $chargeMasterId,
+        'tenant_id' => $context['tenant_id'],
+        'facility_branch_id' => null,
+        'item_code' => 'SRV-104',
+        'description' => 'Wound Dressing',
+        'billable_type' => 'service',
+        'billable_id' => $serviceId,
+        'unit_price' => 8000,
+        'is_active' => true,
+        'effective_from' => now()->toDateString(),
+        'effective_to' => null,
         'created_at' => now(),
         'updated_at' => now(),
     ]);

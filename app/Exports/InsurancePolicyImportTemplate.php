@@ -20,46 +20,31 @@ final readonly class InsurancePolicyImportTemplate implements FromArray, WithCol
      */
     public function array(): array
     {
-        return match ($this->policyType) {
-            BillableItemType::DRUG => [
-                [
-                    'Paracetamol',
-                    '500mg',
-                    'tablet',
-                    'Panadol',
-                    '120.00',
-                    'none',
-                    '0.00',
-                    now()->toDateString(),
-                    '',
-                    'active',
-                ],
-            ],
-            BillableItemType::TEST => [
-                [
-                    'FBC',
-                    'Full Blood Count',
-                    '25000.00',
-                    'percentage',
-                    '20.00',
-                    now()->toDateString(),
-                    '',
-                    'active',
-                ],
-            ],
-            default => [
-                [
-                    'CONS-GP',
-                    'General Consultation',
-                    '35000.00',
-                    'fixed',
-                    '10000.00',
-                    now()->toDateString(),
-                    '',
-                    'active',
-                ],
-            ],
+        $sampleCode = match ($this->policyType) {
+            BillableItemType::DRUG => 'DRUG-0001',
+            BillableItemType::TEST => 'FBC',
+            default => 'CONS-GP',
         };
+
+        $sampleDescription = match ($this->policyType) {
+            BillableItemType::DRUG => 'Paracetamol 500mg tablet',
+            BillableItemType::TEST => 'Full Blood Count',
+            default => 'General Consultation',
+        };
+
+        return [
+            [
+                '',
+                $sampleCode,
+                $sampleDescription,
+                '35000.00',
+                'fixed',
+                '10000.00',
+                now()->toDateString(),
+                '',
+                'active',
+            ],
+        ];
     }
 
     /**
@@ -67,40 +52,17 @@ final readonly class InsurancePolicyImportTemplate implements FromArray, WithCol
      */
     public function headings(): array
     {
-        return match ($this->policyType) {
-            BillableItemType::DRUG => [
-                'generic_name',
-                'strength',
-                'dosage_form',
-                'brand_name',
-                'price',
-                'copay_type',
-                'copay_value',
-                'effective_from',
-                'effective_to',
-                'status',
-            ],
-            BillableItemType::TEST => [
-                'test_code',
-                'test_name',
-                'price',
-                'copay_type',
-                'copay_value',
-                'effective_from',
-                'effective_to',
-                'status',
-            ],
-            default => [
-                'service_code',
-                'service_name',
-                'price',
-                'copay_type',
-                'copay_value',
-                'effective_from',
-                'effective_to',
-                'status',
-            ],
-        };
+        return [
+            'charge_master_id',
+            'charge_master_code',
+            'charge_master_description',
+            'price',
+            'copay_type',
+            'copay_value',
+            'effective_from',
+            'effective_to',
+            'status',
+        ];
     }
 
     /**
@@ -108,40 +70,17 @@ final readonly class InsurancePolicyImportTemplate implements FromArray, WithCol
      */
     public function columnWidths(): array
     {
-        return match ($this->policyType) {
-            BillableItemType::DRUG => [
-                'A' => 28,
-                'B' => 16,
-                'C' => 18,
-                'D' => 24,
-                'E' => 16,
-                'F' => 16,
-                'G' => 16,
-                'H' => 18,
-                'I' => 18,
-                'J' => 14,
-            ],
-            BillableItemType::TEST, BillableItemType::SERVICE => [
-                'A' => 18,
-                'B' => 34,
-                'C' => 16,
-                'D' => 16,
-                'E' => 16,
-                'F' => 18,
-                'G' => 18,
-                'H' => 14,
-            ],
-            default => [
-                'A' => 18,
-                'B' => 34,
-                'C' => 16,
-                'D' => 16,
-                'E' => 16,
-                'F' => 18,
-                'G' => 18,
-                'H' => 14,
-            ],
-        };
+        return [
+            'A' => 38,
+            'B' => 24,
+            'C' => 38,
+            'D' => 16,
+            'E' => 16,
+            'F' => 16,
+            'G' => 18,
+            'H' => 18,
+            'I' => 14,
+        ];
     }
 
     public function styles(Worksheet $sheet): void

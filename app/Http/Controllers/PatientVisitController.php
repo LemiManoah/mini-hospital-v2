@@ -205,7 +205,8 @@ final readonly class PatientVisitController implements HasMiddleware
             'facilityServiceOrders' => static function (HasMany $query): void {
                 $query
                     ->with([
-                        'service:id,name,service_code,category,selling_price,is_billable',
+                        'service:id,name,service_code,category,charge_master_id,is_billable',
+                        'service.chargeMaster:id,unit_price',
                         'orderedBy:id,first_name,last_name',
                         'performedBy:id,first_name,last_name',
                     ])

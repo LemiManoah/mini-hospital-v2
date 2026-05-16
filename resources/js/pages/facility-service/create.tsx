@@ -147,27 +147,27 @@ export default function FacilityServiceCreate({
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="selling_price">
-                                            Selling Price
+                                        <Label htmlFor="unit_price">
+                                            Unit Price
                                         </Label>
                                         <Input
-                                            id="selling_price"
-                                            name="selling_price"
+                                            id="unit_price"
+                                            name="unit_price"
                                             type="number"
                                             min="0"
                                             step="0.01"
                                             placeholder="Required if billable"
                                         />
                                         <InputError
-                                            message={errors.selling_price}
+                                            message={errors.unit_price}
                                         />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label>Billing Mapping</Label>
                                         <div className="rounded-md border bg-zinc-50 px-3 py-2 text-sm text-muted-foreground dark:bg-zinc-950">
-                                            Self-pay uses the selling price.
-                                            Insurance uses package pricing when
-                                            configured.
+                                            Self-pay uses the charge master
+                                            price. Insurance uses package
+                                            pricing when configured.
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 pt-8">

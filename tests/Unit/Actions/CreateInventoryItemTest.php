@@ -27,7 +27,7 @@ it('creates an inventory item from a typed dto', function (): void {
             minimumStockLevel: 10.0,
             reorderLevel: 20.0,
             defaultPurchasePrice: '5.50',
-            defaultSellingPrice: '7.00',
+            unitPrice: '7.00',
             manufacturer: 'Acme',
             expires: false,
             isControlled: false,

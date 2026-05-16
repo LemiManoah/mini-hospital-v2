@@ -18,11 +18,10 @@ it('creates and updates a charge master row for active imaging studies', functio
         'name' => 'Chest X-Ray',
         'modality' => ImagingModality::XRAY,
         'body_part' => 'Chest',
-        'base_price' => 35000,
         'is_active' => true,
     ]);
 
-    $chargeMaster = resolve(SyncImagingStudyCatalogChargeMaster::class)->handle($study);
+    $chargeMaster = resolve(SyncImagingStudyCatalogChargeMaster::class)->handle($study, 35000);
 
     expect($chargeMaster)->toBeInstanceOf(ChargeMaster::class)
         ->and($study->fresh()->charge_master_id)->toBe($chargeMaster?->id)
@@ -32,12 +31,13 @@ it('creates and updates a charge master row for active imaging studies', functio
 
     $study->forceFill([
         'name' => 'Chest X-Ray Updated',
-        'base_price' => 40000,
     ])->save();
 
-    $updatedChargeMaster = resolve(SyncImagingStudyCatalogChargeMaster::class)->handle($study->fresh());
+    $updatedChargeMaster = resolve(SyncImagingStudyCatalogChargeMaster::class)->handle($study->fresh(), 40000);
 
-    expect($updatedChargeMaster?->id)->toBe($chargeMaster?->id)
+    expect($updatedChargeMaster?->id)->not()->toBe($chargeMaster?->id)
+        ->and($study->fresh()->charge_master_id)->toBe($updatedChargeMaster?->id)
+        ->and($chargeMaster?->fresh()?->is_active)->toBeFalse()
         ->and($updatedChargeMaster?->description)->toBe('Chest X-Ray Updated')
         ->and((float) $updatedChargeMaster?->unit_price)->toBe(40000.0);
 });
@@ -51,11 +51,10 @@ it('deactivates the linked charge master row for inactive imaging studies', func
         'name' => 'Abdominal Ultrasound',
         'modality' => ImagingModality::ULTRASOUND,
         'body_part' => 'Abdomen',
-        'base_price' => 45000,
         'is_active' => true,
     ]);
 
-    $chargeMaster = resolve(SyncImagingStudyCatalogChargeMaster::class)->handle($study);
+    $chargeMaster = resolve(SyncImagingStudyCatalogChargeMaster::class)->handle($study, 45000);
 
     $study->forceFill(['is_active' => false])->save();
 

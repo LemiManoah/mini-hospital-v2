@@ -41,7 +41,6 @@ return new class extends Migration
                 $table->foreignUuid('inventory_item_id')->constrained('inventory_items')->onDelete('cascade');
                 $table->decimal('minimum_stock_level', 14, 3)->default(0);
                 $table->decimal('reorder_level', 14, 3)->default(0);
-                $table->decimal('default_selling_price', 14, 2)->nullable();
                 $table->boolean('is_active')->default(true)->index();
                 $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();

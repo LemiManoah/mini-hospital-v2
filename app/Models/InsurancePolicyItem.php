@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
 use App\Enums\InsuranceCopayType;
 use App\Traits\BelongsToTenant;
@@ -22,8 +21,7 @@ final class InsurancePolicyItem extends Model
     protected $casts = [
         'tenant_id' => 'string',
         'insurance_policy_id' => 'string',
-        'item_id' => 'string',
-        'item_type' => BillableItemType::class,
+        'charge_master_id' => 'string',
         'price' => 'decimal:2',
         'copay_type' => InsuranceCopayType::class,
         'copay_value' => 'decimal:2',
@@ -40,5 +38,13 @@ final class InsurancePolicyItem extends Model
     public function policy(): BelongsTo
     {
         return $this->belongsTo(InsurancePolicy::class, 'insurance_policy_id');
+    }
+
+    /**
+     * @return BelongsTo<ChargeMaster, $this>
+     */
+    public function chargeMaster(): BelongsTo
+    {
+        return $this->belongsTo(ChargeMaster::class);
     }
 }

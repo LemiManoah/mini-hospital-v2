@@ -9,19 +9,16 @@ use App\Actions\DeleteInsurancePackage;
 use App\Actions\UpdateInsurancePackage;
 use App\Enums\BillableItemType;
 use App\Enums\DataImportStatus;
-use App\Enums\InventoryItemType;
 use App\Http\Requests\DeleteInsurancePackageRequest;
 use App\Http\Requests\StoreInsurancePackageRequest;
 use App\Http\Requests\UpdateInsurancePackageRequest;
+use App\Models\ChargeMaster;
 use App\Models\DataImport;
 use App\Models\FacilityBranch;
-use App\Models\FacilityService;
 use App\Models\InsuranceCompany;
 use App\Models\InsurancePackage;
 use App\Models\InsurancePolicy;
 use App\Models\InsurancePolicyItem;
-use App\Models\InventoryItem;
-use App\Models\LabTestCatalog;
 use App\Models\User;
 use App\Support\BranchContext;
 use Illuminate\Database\Eloquent\Builder;
@@ -99,19 +96,11 @@ final readonly class InsurancePackageController implements HasMiddleware
 
                     return $query;
                 },
+                'items.chargeMaster:id,item_code,description,billable_type,unit_price',
             ])
             ->orderBy('policy_type')
             ->orderBy('name')
             ->get();
-
-        $policyItems = $policies->flatMap(static fn (InsurancePolicy $policy) => $policy->items);
-        $serviceIds = $policyItems->where('item_type', BillableItemType::SERVICE)->pluck('item_id');
-        $drugIds = $policyItems->where('item_type', BillableItemType::DRUG)->pluck('item_id');
-        $testIds = $policyItems->where('item_type', BillableItemType::TEST)->pluck('item_id');
-
-        $serviceNames = FacilityService::query()->whereIn('id', $serviceIds)->pluck('name', 'id');
-        $drugNames = InventoryItem::query()->whereIn('id', $drugIds)->pluck('name', 'id');
-        $testNames = LabTestCatalog::query()->whereIn('id', $testIds)->pluck('test_name', 'id');
 
         $policiesForView = $policies->map(static fn (InsurancePolicy $policy): array => [
             'id' => $policy->id,
@@ -127,62 +116,52 @@ final readonly class InsurancePackageController implements HasMiddleware
                 'name' => $policy->branch->name,
                 'branchCode' => $policy->branch->branch_code,
             ] : null,
-            'items' => $policy->items->map(static fn (InsurancePolicyItem $item): array => [
-                'id' => $item->id,
-                'itemType' => $item->item_type->value,
-                'itemId' => $item->item_id,
-                'itemName' => match ($item->item_type) {
-                    BillableItemType::SERVICE => $serviceNames->get($item->item_id, 'Unknown'),
-                    BillableItemType::DRUG => $drugNames->get($item->item_id, 'Unknown'),
-                    BillableItemType::TEST => $testNames->get($item->item_id, 'Unknown'),
-                    default => '-',
-                },
-                'price' => $item->price,
-                'copayType' => $item->copay_type->value,
-                'copayTypeLabel' => $item->copay_type->label(),
-                'copayValue' => $item->copay_value,
-                'effectiveFrom' => $item->effective_from?->toDateString(),
-                'effectiveTo' => $item->effective_to?->toDateString(),
-                'status' => $item->status->value,
-            ])->values(),
+            'items' => $policy->items->map(static function (InsurancePolicyItem $item): array {
+                $chargeMaster = $item->chargeMaster;
+
+                return [
+                    'id' => $item->id,
+                    'chargeMasterId' => $item->charge_master_id,
+                    'itemType' => $chargeMaster?->billable_type?->value,
+                    'itemCode' => $chargeMaster?->item_code,
+                    'itemName' => $chargeMaster?->description,
+                    'catalogPrice' => $chargeMaster?->unit_price,
+                    'price' => $item->price,
+                    'copayType' => $item->copay_type->value,
+                    'copayTypeLabel' => $item->copay_type->label(),
+                    'copayValue' => $item->copay_value,
+                    'effectiveFrom' => $item->effective_from?->toDateString(),
+                    'effectiveTo' => $item->effective_to?->toDateString(),
+                    'status' => $item->status->value,
+                ];
+            })->values(),
         ])->values();
 
-        $serviceOptions = FacilityService::query()
-            ->where('tenant_id', $tenantId)
-            ->where('is_billable', true)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'service_code'])
-            ->map(static fn (FacilityService $s): array => [
-                'value' => $s->id,
-                'label' => $s->name.($s->service_code !== '' ? ' ('.$s->service_code.')' : ''),
-            ])
-            ->values()
-            ->all();
-
-        $drugOptions = InventoryItem::query()
-            ->where('tenant_id', $tenantId)
-            ->where('item_type', InventoryItemType::DRUG)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'generic_name'])
-            ->map(static fn (InventoryItem $d): array => [
-                'value' => $d->id,
-                'label' => $d->name.($d->generic_name !== '' ? ' ('.$d->generic_name.')' : ''),
-            ])
-            ->values()
-            ->all();
-
-        $testOptions = LabTestCatalog::query()
+        $chargeMasterOptions = ChargeMaster::query()
             ->where('tenant_id', $tenantId)
             ->where('is_active', true)
-            ->orderBy('test_name')
-            ->get(['id', 'test_name', 'test_code'])
-            ->map(static fn (LabTestCatalog $t): array => [
-                'value' => $t->id,
-                'label' => $t->test_name.($t->test_code !== '' ? ' ('.$t->test_code.')' : ''),
+            ->effectiveOn(now()->toDateString())
+            ->whereIn('billable_type', [
+                BillableItemType::SERVICE->value,
+                BillableItemType::DRUG->value,
+                BillableItemType::TEST->value,
             ])
-            ->values()
+            ->orderBy('billable_type')
+            ->orderBy('description')
+            ->get(['id', 'item_code', 'description', 'billable_type', 'unit_price'])
+            ->groupBy(static fn (ChargeMaster $chargeMaster): string => $chargeMaster->billable_type instanceof BillableItemType
+                ? $chargeMaster->billable_type->value
+                : '')
+            ->map(static fn ($items): array => $items
+                ->map(static fn (ChargeMaster $chargeMaster): array => [
+                    'value' => $chargeMaster->id,
+                    'label' => $chargeMaster->item_code !== ''
+                        ? $chargeMaster->description.' ('.$chargeMaster->item_code.')'
+                        : $chargeMaster->description,
+                    'unitPrice' => $chargeMaster->unit_price,
+                ])
+                ->values()
+                ->all())
             ->all();
 
         $branches = FacilityBranch::query()
@@ -204,9 +183,9 @@ final readonly class InsurancePackageController implements HasMiddleware
                 ]
                 : null,
             'billableItems' => [
-                'service' => $serviceOptions,
-                'drug' => $drugOptions,
-                'test' => $testOptions,
+                'service' => $chargeMasterOptions[BillableItemType::SERVICE->value] ?? [],
+                'drug' => $chargeMasterOptions[BillableItemType::DRUG->value] ?? [],
+                'test' => $chargeMasterOptions[BillableItemType::TEST->value] ?? [],
             ],
             'branches' => $branches,
             'policyImports' => $this->latestPolicyImports($insurancePackage, $activeBranch),

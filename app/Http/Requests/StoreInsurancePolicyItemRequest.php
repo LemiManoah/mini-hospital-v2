@@ -7,11 +7,8 @@ namespace App\Http\Requests;
 use App\Enums\GeneralStatus;
 use App\Enums\InsuranceCopayType;
 use App\Enums\InsurancePolicyType;
-use App\Enums\InventoryItemType;
-use App\Models\FacilityService;
+use App\Models\ChargeMaster;
 use App\Models\InsurancePolicy;
-use App\Models\InventoryItem;
-use App\Models\LabTestCatalog;
 use App\Rules\NoOverlappingInsurancePriceWindow;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -32,13 +29,12 @@ final class StoreInsurancePolicyItemRequest extends FormRequest
     {
         /** @var InsurancePolicy $policy */
         $policy = $this->route('insurance_policy');
-        $itemType = $policy->policy_type->itemType()->value;
-        $itemId = $this->string('item_id')->toString();
+        $chargeMasterId = $this->string('charge_master_id')->toString();
         $effectiveFrom = $this->string('effective_from')->toString();
         $effectiveTo = $this->filled('effective_to') ? $this->string('effective_to')->toString() : null;
 
         return [
-            'item_id' => ['required', 'uuid'],
+            'charge_master_id' => ['required', 'uuid'],
             'price' => [
                 'required',
                 'numeric',
@@ -46,8 +42,7 @@ final class StoreInsurancePolicyItemRequest extends FormRequest
                 new NoOverlappingInsurancePriceWindow(
                     tenantId: (string) $this->user()?->tenant_id,
                     insurancePolicyId: $policy->id,
-                    itemType: $itemType,
-                    itemId: $itemId,
+                    chargeMasterId: $chargeMasterId,
                     effectiveFrom: $effectiveFrom,
                     effectiveTo: $effectiveTo,
                 ),
@@ -74,21 +69,21 @@ final class StoreInsurancePolicyItemRequest extends FormRequest
         $validator->after(function (Validator $validator): void {
             /** @var InsurancePolicy $policy */
             $policy = $this->route('insurance_policy');
-            $itemId = $this->string('item_id')->toString();
+            $chargeMasterId = $this->string('charge_master_id')->toString();
 
-            if ($itemId !== '' && ! $this->itemExists($policy->policy_type, $itemId)) {
-                $validator->errors()->add('item_id', 'The selected item does not match this policy type.');
+            if ($chargeMasterId !== '' && ! $this->chargeMasterMatchesPolicy($policy->policy_type, $chargeMasterId)) {
+                $validator->errors()->add('charge_master_id', 'The selected charge master item does not match this policy type.');
             }
         });
     }
 
     /**
-     * @return array{item_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from: string, effective_to?: string|null, status: string}
+     * @return array{charge_master_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from: string, effective_to?: string|null, status: string}
      */
     public function itemData(): array
     {
         return [
-            'item_id' => $this->stringValue('item_id'),
+            'charge_master_id' => $this->stringValue('charge_master_id'),
             'price' => $this->numericStringValue('price'),
             'copay_type' => $this->stringValue('copay_type'),
             'copay_value' => $this->numericStringValue('copay_value'),
@@ -122,28 +117,16 @@ final class StoreInsurancePolicyItemRequest extends FormRequest
         return is_string($value) && $value !== '' ? $value : null;
     }
 
-    private function itemExists(InsurancePolicyType $policyType, string $itemId): bool
+    private function chargeMasterMatchesPolicy(InsurancePolicyType $policyType, string $chargeMasterId): bool
     {
         $tenantId = (string) $this->user()?->tenant_id;
 
-        return match ($policyType) {
-            InsurancePolicyType::PHARMACY => InventoryItem::query()
-                ->where('tenant_id', $tenantId)
-                ->where('item_type', InventoryItemType::DRUG->value)
-                ->where('is_active', true)
-                ->whereKey($itemId)
-                ->exists(),
-            InsurancePolicyType::LAB => LabTestCatalog::query()
-                ->where('tenant_id', $tenantId)
-                ->where('is_active', true)
-                ->whereKey($itemId)
-                ->exists(),
-            InsurancePolicyType::SERVICES => FacilityService::query()
-                ->where('tenant_id', $tenantId)
-                ->where('is_billable', true)
-                ->where('is_active', true)
-                ->whereKey($itemId)
-                ->exists(),
-        };
+        return ChargeMaster::query()
+            ->where('tenant_id', $tenantId)
+            ->whereKey($chargeMasterId)
+            ->where('is_active', true)
+            ->where('billable_type', $policyType->itemType()->value)
+            ->effectiveOn(now()->toDateString())
+            ->exists();
     }
 }

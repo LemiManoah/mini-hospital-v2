@@ -60,7 +60,6 @@ function createPharmacyPosCartContext(): array
     $item = InventoryItem::factory()->drug()->create([
         'tenant_id' => $tenant->id,
         'name' => 'Cetrizine 10mg',
-        'default_selling_price' => 2000,
         'created_by' => $user->id,
         'updated_by' => $user->id,
     ]);

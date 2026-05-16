@@ -9,9 +9,11 @@ use App\Models\ChargeMaster;
 use App\Models\ImagingStudyCatalog;
 use Illuminate\Support\Facades\Auth;
 
-final class SyncImagingStudyCatalogChargeMaster
+final readonly class SyncImagingStudyCatalogChargeMaster
 {
-    public function handle(ImagingStudyCatalog $studyCatalog): ?ChargeMaster
+    public function __construct(private UpsertChargeMasterVersion $upsertChargeMasterVersion) {}
+
+    public function handle(ImagingStudyCatalog $studyCatalog, int|float|string|null $unitPrice = null): ?ChargeMaster
     {
         if (! $studyCatalog->is_active) {
             ChargeMaster::query()
@@ -26,19 +28,23 @@ final class SyncImagingStudyCatalogChargeMaster
         }
 
         $chargeMasterId = $studyCatalog->charge_master_id ?? $studyCatalog->id;
+        $currentChargeMaster = ChargeMaster::query()->find($chargeMasterId);
+        $resolvedUnitPrice = $unitPrice
+            ?? $currentChargeMaster->unit_price
+            ?? $studyCatalog->chargeMaster->unit_price
+            ?? 0;
 
-        $chargeMaster = ChargeMaster::query()->updateOrCreate(
+        $chargeMaster = $this->upsertChargeMasterVersion->handle(
+            $currentChargeMaster,
             [
                 'id' => $chargeMasterId,
-            ],
-            [
                 'tenant_id' => $studyCatalog->tenant_id,
                 'facility_branch_id' => $studyCatalog->facility_branch_id,
                 'item_code' => $studyCatalog->code,
                 'description' => $studyCatalog->name,
                 'billable_type' => BillableItemType::IMAGING,
                 'billable_id' => $studyCatalog->id,
-                'unit_price' => $studyCatalog->base_price ?? 0,
+                'unit_price' => $resolvedUnitPrice,
                 'is_active' => $studyCatalog->is_active,
                 'effective_from' => now()->toDateString(),
                 'effective_to' => null,

@@ -100,7 +100,7 @@ export default function LabTestCatalogIndex({
                             <TableHead>Category</TableHead>
                             <TableHead>Specimen</TableHead>
                             <TableHead>Capture Type</TableHead>
-                            <TableHead>Base Price</TableHead>
+                            <TableHead>Unit Price</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">
                                 Actions
@@ -128,7 +128,10 @@ export default function LabTestCatalogIndex({
                                         )}
                                     </TableCell>
                                     <TableCell>
-                                        {Number(labTest.base_price).toFixed(2)}
+                                        {Number(
+                                            labTest.charge_master?.unit_price ??
+                                                0,
+                                        ).toFixed(2)}
                                     </TableCell>
                                     <TableCell>
                                         {labTest.is_active

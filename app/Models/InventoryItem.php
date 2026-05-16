@@ -37,7 +37,6 @@ final class InventoryItem extends Model
         'minimum_stock_level' => 'decimal:3',
         'reorder_level' => 'decimal:3',
         'default_purchase_price' => 'decimal:2',
-        'default_selling_price' => 'decimal:2',
         'charge_master_id' => 'string',
         'expires' => 'boolean',
         'is_controlled' => 'boolean',

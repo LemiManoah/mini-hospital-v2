@@ -23,8 +23,8 @@ final readonly class SyncPrescriptionCharge
     {
         $prescription->loadMissing([
             'visit.payer',
-            'items.inventoryItem:id,tenant_id,item_type,name,generic_name,brand_name,default_selling_price,charge_master_id,is_active,created_by',
-            'items.inventoryItem.chargeMaster',
+            'items.inventoryItem:id,tenant_id,item_type,name,generic_name,brand_name,charge_master_id,is_active,created_by',
+            'items.inventoryItem.chargeMaster:id,unit_price',
         ]);
 
         $visit = $prescription->visit;

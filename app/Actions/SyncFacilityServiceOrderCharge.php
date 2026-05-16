@@ -57,7 +57,12 @@ final readonly class SyncFacilityServiceOrderCharge
         $service->loadMissing('chargeMaster');
 
         if ($service->chargeMaster instanceof ChargeMaster) {
-            return $service->chargeMaster;
+            /** @var ChargeMaster|null $chargeMaster */
+            $chargeMaster = ChargeMaster::query()
+                ->whereKey($service->chargeMaster->getKey())
+                ->first();
+
+            return $chargeMaster;
         }
 
         return $this->syncFacilityServiceChargeMaster->handle($service);

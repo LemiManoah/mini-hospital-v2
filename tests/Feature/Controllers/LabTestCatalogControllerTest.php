@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\SyncLabTestCatalogChargeMaster;
 use App\Enums\FacilityLevel;
 use App\Enums\GeneralStatus;
 use App\Enums\StaffType;
@@ -116,9 +117,10 @@ function createLabTestCatalogRecord(
         'lab_test_category_id' => $category->id,
         'result_type_id' => $resultType->id,
         'description' => $attributes['description'] ?? null,
-        'base_price' => $attributes['base_price'] ?? 10000,
         'is_active' => $attributes['is_active'] ?? true,
     ]);
+
+    resolve(SyncLabTestCatalogChargeMaster::class)->handle($labTest, $attributes['unit_price'] ?? 10000);
 
     $labTest->specimenTypes()->sync(
         collect($specimenTypes)->map(static fn (SpecimenType $specimenType): string => $specimenType->id)->all(),
@@ -190,7 +192,7 @@ function createReferencedLabTestWorkflow(
         'lab_order_id' => $requestId,
         'test_id' => $labTestCatalog->id,
         'status' => 'pending',
-        'price' => $labTestCatalog->base_price,
+        'price' => $labTestCatalog->chargeMaster?->unit_price ?? 0,
         'actual_cost' => 0,
         'is_external' => false,
         'created_at' => now(),
@@ -240,21 +242,21 @@ it('lists lab tests for authorized users and supports search', function (): void
     createLabTestCatalogRecord($tenant, $category, $resultType, [$specimenType], [
         'test_code' => 'LAB-001',
         'test_name' => 'Full Blood Count',
-        'base_price' => 20000,
+        'unit_price' => 20000,
         'is_active' => true,
     ]);
 
     createLabTestCatalogRecord($tenant, $category, $freeEntryResultType, [$specimenType], [
         'test_code' => 'LAB-002',
         'test_name' => 'Peripheral Smear',
-        'base_price' => 10000,
+        'unit_price' => 10000,
         'is_active' => true,
     ]);
 
     createLabTestCatalogRecord($otherTenant, $category, $freeEntryResultType, [$specimenType], [
         'test_code' => 'LAB-999',
         'test_name' => 'Foreign Test',
-        'base_price' => 0,
+        'unit_price' => 0,
         'is_active' => true,
     ]);
 
@@ -284,7 +286,7 @@ it('creates a lab test catalog entry with lookup-backed relationships', function
         'specimen_type_ids' => [$specimenType->id, $secondarySpecimenType->id],
         'result_type_id' => $resultType->id,
         'description' => 'Panel for baseline hematology assessment.',
-        'base_price' => 25000,
+        'unit_price' => 25000,
         'is_active' => true,
         'result_parameters' => [
             ['label' => 'WBC', 'unit' => 'x10^9/L', 'reference_range' => '4 - 11', 'value_type' => 'numeric'],
@@ -318,7 +320,7 @@ it('updates a lab test catalog entry', function (): void {
     $labTest = createLabTestCatalogRecord($tenant, $category, $freeEntryResultType, [$specimenType], [
         'test_code' => 'LAB-UPD-1',
         'test_name' => 'Malaria Test',
-        'base_price' => 15000,
+        'unit_price' => 15000,
         'is_active' => true,
     ]);
 
@@ -329,7 +331,7 @@ it('updates a lab test catalog entry', function (): void {
         'specimen_type_ids' => [$specimenType->id, $secondarySpecimenType->id],
         'result_type_id' => $definedOptionResultType->id,
         'description' => 'Updated malaria workflow.',
-        'base_price' => 18000,
+        'unit_price' => 18000,
         'is_active' => true,
         'result_options' => [
             ['label' => 'Positive'],
@@ -345,7 +347,7 @@ it('updates a lab test catalog entry', function (): void {
     $response->assertSessionHas('success', 'Lab test updated successfully.');
 
     expect($labTest->fresh()->test_name)->toBe('Malaria Microscopy')
-        ->and((float) $labTest->fresh()->base_price)->toBe(18000.0)
+        ->and((float) $labTest->fresh()->chargeMaster?->unit_price)->toBe(18000.0)
         ->and($labTest->fresh()->description)->toBe('Updated malaria workflow.')
         ->and($labTest->fresh()->result_capture_type)->toBe('defined_option')
         ->and($labTest->fresh()->specimenTypes()->count())->toBe(2)
@@ -362,7 +364,7 @@ it('deletes an unreferenced lab test catalog entry', function (): void {
     $labTest = createLabTestCatalogRecord($tenant, $category, $freeEntryResultType, [$specimenType], [
         'test_code' => 'LAB-DEL-1',
         'test_name' => 'ESR',
-        'base_price' => 5000,
+        'unit_price' => 5000,
         'is_active' => true,
     ]);
 
@@ -384,7 +386,7 @@ it('blocks deleting a referenced lab test catalog entry', function (): void {
     $labTest = createLabTestCatalogRecord($tenant, $category, $freeEntryResultType, [$specimenType], [
         'test_code' => 'LAB-DEL-2',
         'test_name' => 'Creatinine',
-        'base_price' => 8000,
+        'unit_price' => 8000,
         'is_active' => true,
     ]);
 

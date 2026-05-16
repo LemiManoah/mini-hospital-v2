@@ -55,13 +55,16 @@ export interface InventoryItem {
     minimum_stock_level: string;
     reorder_level: string;
     default_purchase_price: string | null;
-    default_selling_price: string | null;
     manufacturer: string | null;
     expires: boolean;
     is_active: boolean;
     created_at: string;
     updated_at: string;
     unit?: InventoryItemUnitLink | null;
+    charge_master?: {
+        id: string;
+        unit_price: number | string;
+    } | null;
     batches?: InventoryBatch[];
     stock_movements?: StockMovement[];
 }

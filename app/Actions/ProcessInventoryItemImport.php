@@ -11,6 +11,10 @@ use Maatwebsite\Excel\Facades\Excel;
 
 final readonly class ProcessInventoryItemImport
 {
+    public function __construct(
+        private SyncInventoryItemChargeMaster $syncInventoryItemChargeMaster,
+    ) {}
+
     /**
      * @return array{
      *   imported: int,
@@ -33,6 +37,7 @@ final readonly class ProcessInventoryItemImport
             tenantId: $tenantId,
             branchId: $branchId,
             userId: $userId,
+            syncInventoryItemChargeMaster: $this->syncInventoryItemChargeMaster,
             preview: $preview,
         );
 

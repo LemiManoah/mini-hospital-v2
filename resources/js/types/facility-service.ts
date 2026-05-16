@@ -5,11 +5,14 @@ export interface FacilityService {
     category: string;
     description: string | null;
     cost_price: number | null;
-    selling_price: number | null;
     is_billable: boolean;
     is_consultation: boolean;
     consultation_type: string | null;
     charge_master_id: string | null;
+    charge_master?: {
+        id: string;
+        unit_price: number | string;
+    } | null;
     is_active: boolean;
     created_at: string;
     updated_at: string;

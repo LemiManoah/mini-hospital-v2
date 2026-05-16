@@ -397,7 +397,7 @@ export function FacilityServiceOrdersList({
                         Quoted price:{' '}
                         {formatMoney(
                             order.service?.quoted_price ??
-                                order.service?.selling_price ??
+                                order.service?.unit_price ??
                                 null,
                         )}
                     </p>

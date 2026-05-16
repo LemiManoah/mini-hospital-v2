@@ -44,6 +44,7 @@ final readonly class LabTestCatalogController implements HasMiddleware
                 'labCategory:id,name',
                 'specimenTypes:id,name',
                 'resultTypeDefinition:id,code,name',
+                'chargeMaster:id,unit_price',
             ])
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $searchQuery) use ($search): void {
@@ -88,6 +89,7 @@ final readonly class LabTestCatalogController implements HasMiddleware
                 'labCategory:id,name',
                 'specimenTypes:id,name',
                 'resultTypeDefinition:id,code,name',
+                'chargeMaster:id,unit_price',
                 'resultOptions:id,lab_test_catalog_id,label,sort_order,is_active',
                 'resultParameters:id,lab_test_catalog_id,label,unit,reference_range,value_type,sort_order,is_active',
             ]),

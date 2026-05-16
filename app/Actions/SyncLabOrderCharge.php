@@ -50,7 +50,7 @@ final readonly class SyncLabOrderCharge
             $this->upsertVisitCharge->handle(
                 $visit,
                 $item,
-                sprintf('Lab test: %s', $item->test?->test_name ?? $chargeMaster->description),
+                sprintf('Lab test: %s', $item->test->test_name ?? $chargeMaster->description),
                 $pricing->unitPrice,
                 1,
                 $chargeMaster->item_code,

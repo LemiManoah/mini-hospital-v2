@@ -39,6 +39,7 @@ final readonly class FacilityServiceController implements HasMiddleware
         $search = mb_trim((string) $request->query('search', ''));
 
         $facilityServices = FacilityService::query()
+            ->with('chargeMaster:id,unit_price')
             ->when($search !== '', static fn (Builder $query) => $query
                 ->whereLike('name', sprintf('%%%s%%', $search))
                 ->orWhereLike('service_code', sprintf('%%%s%%', $search)))
@@ -66,6 +67,8 @@ final readonly class FacilityServiceController implements HasMiddleware
 
     public function edit(FacilityService $facilityService): Response
     {
+        $facilityService->load('chargeMaster:id,unit_price');
+
         return Inertia::render('facility-service/edit', [
             'facilityService' => $facilityService,
             ...$this->formOptions(),

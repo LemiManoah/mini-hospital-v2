@@ -159,22 +159,22 @@ export default function FacilityServiceEdit({
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="selling_price">
-                                            Selling Price
+                                        <Label htmlFor="unit_price">
+                                            Unit Price
                                         </Label>
                                         <Input
-                                            id="selling_price"
-                                            name="selling_price"
+                                            id="unit_price"
+                                            name="unit_price"
                                             type="number"
                                             min="0"
                                             step="0.01"
                                             defaultValue={
-                                                facilityService.selling_price ??
-                                                ''
+                                                facilityService.charge_master
+                                                    ?.unit_price ?? ''
                                             }
                                         />
                                         <InputError
-                                            message={errors.selling_price}
+                                            message={errors.unit_price}
                                         />
                                     </div>
                                     <div className="grid gap-2">

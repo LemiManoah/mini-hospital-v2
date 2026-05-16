@@ -181,6 +181,7 @@ final readonly class PharmacyPosController implements HasMiddleware
         }
 
         return InventoryItem::query()
+            ->with('chargeMaster:id,unit_price')
             ->whereIn('id', $balances->keys())
             ->where('is_active', true)
             ->get()
@@ -191,7 +192,7 @@ final readonly class PharmacyPosController implements HasMiddleware
                 'brand_name' => $item->brand_name,
                 'strength' => $item->strength,
                 'dosage_form' => $item->dosage_form?->value,
-                'unit_price' => round((float) ($item->default_selling_price ?? 0), 2),
+                'unit_price' => round((float) ($item->chargeMaster->unit_price ?? 0), 2),
                 'available_quantity' => round($balances->get($item->id, 0.0), 3),
             ])
             ->sortBy('name')

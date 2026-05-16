@@ -21,13 +21,16 @@ final readonly class CreateFacilityService
     public function handle(array $attributes): FacilityService
     {
         return DB::transaction(function () use ($attributes): FacilityService {
+            $unitPrice = $this->unitPrice($attributes['unit_price'] ?? null);
+            unset($attributes['unit_price']);
+
             $service = FacilityService::query()->create([
                 ...$attributes,
                 'service_code' => $this->generateServiceCode(),
                 'created_by' => Auth::id(),
             ]);
 
-            $this->syncFacilityServiceChargeMaster->handle($service);
+            $this->syncFacilityServiceChargeMaster->handle($service, $unitPrice);
 
             return $service->refresh();
         });
@@ -40,5 +43,10 @@ final readonly class CreateFacilityService
         } while (FacilityService::query()->where('service_code', $code)->exists());
 
         return $code;
+    }
+
+    private function unitPrice(mixed $value): int|float|string|null
+    {
+        return is_int($value) || is_float($value) || is_string($value) ? $value : null;
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Actions\SyncFacilityServiceChargeMaster;
+use App\Actions\SyncLabTestCatalogChargeMaster;
 use App\Enums\FacilityServiceCategory;
 use App\Enums\GeneralStatus;
 use App\Enums\StaffType;
@@ -292,7 +294,7 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                 'category' => FacilityServiceCategory::NURSING,
                 'description' => 'Short-stay nebulization with nursing monitoring.',
                 'cost_price' => 12000,
-                'selling_price' => 25000,
+                'unit_price' => 25000,
                 'is_billable' => true,
             ],
             [
@@ -301,7 +303,7 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                 'category' => FacilityServiceCategory::DRESSING,
                 'description' => 'Sterile wound cleaning and dressing change.',
                 'cost_price' => 15000,
-                'selling_price' => 35000,
+                'unit_price' => 35000,
                 'is_billable' => true,
             ],
             [
@@ -310,7 +312,7 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                 'category' => FacilityServiceCategory::NURSING,
                 'description' => 'Peripheral IV line placement and setup.',
                 'cost_price' => 8000,
-                'selling_price' => 18000,
+                'unit_price' => 18000,
                 'is_billable' => true,
             ],
             [
@@ -319,13 +321,13 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                 'category' => FacilityServiceCategory::PROCEDURE,
                 'description' => 'Consumables and setup for a simple outpatient procedure.',
                 'cost_price' => 30000,
-                'selling_price' => 60000,
+                'unit_price' => 60000,
                 'is_billable' => true,
             ],
         ];
 
         foreach ($services as $serviceData) {
-            FacilityService::query()->updateOrCreate(
+            $service = FacilityService::query()->updateOrCreate(
                 [
                     'tenant_id' => $tenantId,
                     'service_code' => $serviceData['service_code'],
@@ -335,13 +337,14 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                     'category' => $serviceData['category']->value,
                     'description' => $serviceData['description'],
                     'cost_price' => $serviceData['cost_price'],
-                    'selling_price' => $serviceData['selling_price'],
                     'is_billable' => $serviceData['is_billable'],
                     'is_active' => true,
                     'created_by' => $userId,
                     'updated_by' => $userId,
                 ],
             );
+
+            resolve(SyncFacilityServiceChargeMaster::class)->handle($service, $serviceData['unit_price']);
         }
     }
 
@@ -372,7 +375,7 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                 'category' => 'Hematology',
                 'result_type' => 'parameter_panel',
                 'description' => 'Basic full blood count panel for common outpatient workups.',
-                'base_price' => 45000,
+                'unit_price' => 45000,
                 'specimens' => ['Blood'],
                 'parameters' => [
                     ['label' => 'Hemoglobin', 'unit' => 'g/dL', 'reference_range' => '12.0 - 16.0', 'value_type' => 'numeric'],
@@ -387,7 +390,7 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                 'category' => 'Parasitology',
                 'result_type' => 'defined_option',
                 'description' => 'Rapid antigen test for uncomplicated malaria screening.',
-                'base_price' => 15000,
+                'unit_price' => 15000,
                 'specimens' => ['Blood'],
                 'parameters' => [],
                 'options' => ['Positive', 'Negative'],
@@ -398,7 +401,7 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                 'category' => 'Chemistry',
                 'result_type' => 'parameter_panel',
                 'description' => 'Routine urine dipstick and microscopy screening.',
-                'base_price' => 20000,
+                'unit_price' => 20000,
                 'specimens' => ['Urine'],
                 'parameters' => [
                     ['label' => 'Protein', 'unit' => null, 'reference_range' => 'Negative', 'value_type' => 'text'],
@@ -413,7 +416,7 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                 'category' => 'Chemistry',
                 'result_type' => 'free_entry',
                 'description' => 'Single-value inflammatory marker for acute infection assessment.',
-                'base_price' => 30000,
+                'unit_price' => 30000,
                 'specimens' => ['Serum'],
                 'parameters' => [],
                 'options' => [],
@@ -441,10 +444,11 @@ final class QrooMedicalCenterReferenceSeeder extends Seeder
                     'lab_test_category_id' => $category->id,
                     'result_type_id' => $resultType->id,
                     'description' => $testData['description'],
-                    'base_price' => $testData['base_price'],
                     'is_active' => true,
                 ],
             );
+
+            resolve(SyncLabTestCatalogChargeMaster::class)->handle($catalog, $testData['unit_price']);
 
             $catalog->specimenTypes()->sync(
                 collect($testData['specimens'])

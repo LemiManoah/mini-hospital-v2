@@ -49,7 +49,7 @@ final readonly class InventoryItemController implements HasMiddleware
         $type = mb_trim((string) $request->query('type', ''));
 
         $items = InventoryItem::query()
-            ->with(['unit:id,name,symbol'])
+            ->with(['unit:id,name,symbol', 'chargeMaster:id,unit_price'])
             ->when($search !== '', static function (Builder $query) use ($search): void {
                 $query->where(function (Builder $inner) use ($search): void {
                     $inner
@@ -80,6 +80,7 @@ final readonly class InventoryItemController implements HasMiddleware
 
         return Inertia::render('inventory/items/show', [
             'inventoryItem' => $inventoryItem->load([
+                'chargeMaster:id,unit_price',
                 'unit:id,name,symbol',
                 'batches' => static function (HasMany $query) use ($locationIds): void {
                     $query->with('inventoryLocation:id,name');
@@ -131,7 +132,7 @@ final readonly class InventoryItemController implements HasMiddleware
     public function edit(InventoryItem $inventoryItem): Response
     {
         return Inertia::render('inventory/items/edit', [
-            'inventoryItem' => $inventoryItem->loadMissing(['unit:id,name,symbol']),
+            'inventoryItem' => $inventoryItem->loadMissing(['unit:id,name,symbol', 'chargeMaster:id,unit_price']),
             ...$this->formOptions(),
         ]);
     }

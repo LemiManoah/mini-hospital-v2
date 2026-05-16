@@ -25,7 +25,6 @@ final class LabTestCatalog extends Model
         'tenant_id' => 'string',
         'lab_test_category_id' => 'string',
         'result_type_id' => 'string',
-        'base_price' => 'float',
         'charge_master_id' => 'string',
         'is_active' => 'boolean',
     ];
@@ -100,7 +99,6 @@ final class LabTestCatalog extends Model
                 'lab_test_category_id',
                 'result_type_id',
                 'description',
-                'base_price',
                 'is_active',
             ])
             ->logOnlyDirty()

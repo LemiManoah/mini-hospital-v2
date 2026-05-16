@@ -173,6 +173,7 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
 
         /** @var Collection<string, LabTestCatalog> $tests */
         $tests = LabTestCatalog::query()
+            ->with('chargeMaster:id,unit_price')
             ->where('tenant_id', $tenant->id)
             ->whereIn('test_code', [
                 'QMC-LAB-CBC',
@@ -435,7 +436,7 @@ final class QrooMedicalCenterEncounterSeeder extends Seeder
                 ],
                 [
                     'status' => $testData['status']->value,
-                    'price' => $test->base_price,
+                    'price' => $test->chargeMaster->unit_price ?? 0,
                     'is_external' => false,
                     'received_by' => $testData['status'] !== LabOrderItemStatus::PENDING ? $workflowStaff->id : null,
                     'received_at' => $testData['status'] !== LabOrderItemStatus::PENDING ? $requestData['request_date']->addMinutes(20) : null,

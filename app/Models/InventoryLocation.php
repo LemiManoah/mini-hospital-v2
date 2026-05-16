@@ -119,7 +119,6 @@ final class InventoryLocation extends Model
                 'branch_id',
                 'minimum_stock_level',
                 'reorder_level',
-                'default_selling_price',
                 'is_active',
                 'created_at',
                 'updated_at',

@@ -62,7 +62,7 @@ it('shows the charge master registry for the active branch', function (): void {
             ->where('billableTypeOptions.0.value', 'service'));
 });
 
-it('updates a charge master price directly', function (): void {
+it('versions a charge master price directly', function (): void {
     [, $branch, $user, $chargeMasterId] = createChargeMasterContext();
     $user->givePermissionTo('charge_masters.update');
 
@@ -79,9 +79,20 @@ it('updates a charge master price directly', function (): void {
 
     $this->assertDatabaseHas('charge_masters', [
         'id' => $chargeMasterId,
+        'unit_price' => 25000,
+        'is_active' => false,
+        'effective_to' => '2026-05-13',
+        'updated_by' => $user->id,
+    ]);
+
+    $this->assertDatabaseHas('charge_masters', [
+        'tenant_id' => $user->tenant_id,
+        'item_code' => 'LAB-CBC',
         'unit_price' => 30000,
+        'is_active' => true,
         'effective_from' => '2026-05-14',
         'effective_to' => null,
+        'created_by' => $user->id,
         'updated_by' => $user->id,
     ]);
 });

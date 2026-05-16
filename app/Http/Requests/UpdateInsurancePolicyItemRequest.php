@@ -40,8 +40,7 @@ final class UpdateInsurancePolicyItemRequest extends FormRequest
                 new NoOverlappingInsurancePriceWindow(
                     tenantId: (string) $this->user()?->tenant_id,
                     insurancePolicyId: $policy->id,
-                    itemType: $item->item_type->value,
-                    itemId: $item->item_id,
+                    chargeMasterId: $item->charge_master_id,
                     effectiveFrom: $effectiveFrom,
                     effectiveTo: $effectiveTo,
                     ignoreId: $item->id,

@@ -35,7 +35,7 @@ final class FacilityServiceImport implements ToCollection, WithChunkReading, Wit
     private array $errors = [];
 
     /**
-     * @var list<array{row: int, name: string, serviceCode: string, category: string, sellingPrice: float|null}>
+     * @var list<array{row: int, name: string, serviceCode: string, category: string, unitPrice: float|null}>
      */
     private array $previewRows = [];
 
@@ -97,7 +97,7 @@ final class FacilityServiceImport implements ToCollection, WithChunkReading, Wit
     }
 
     /**
-     * @return list<array{row: int, name: string, serviceCode: string, category: string, sellingPrice: float|null}>
+     * @return list<array{row: int, name: string, serviceCode: string, category: string, unitPrice: float|null}>
      */
     public function previewRows(): array
     {
@@ -119,7 +119,7 @@ final class FacilityServiceImport implements ToCollection, WithChunkReading, Wit
             'category' => $this->lower($row['category'] ?? FacilityServiceCategory::OTHER->value),
             'description' => $this->str($row['description'] ?? null),
             'cost_price' => $this->nullableNumber($row['cost_price'] ?? null),
-            'selling_price' => $this->nullableNumber($row['selling_price'] ?? null),
+            'unit_price' => $this->price($row),
             'is_billable' => $this->nullableBool($row['is_billable'] ?? true),
             'is_active' => $this->nullableBool($row['is_active'] ?? true),
         ];
@@ -143,7 +143,7 @@ final class FacilityServiceImport implements ToCollection, WithChunkReading, Wit
             'category' => ['required', Rule::enum(FacilityServiceCategory::class)],
             'description' => ['nullable', 'string'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
-            'selling_price' => ['nullable', 'numeric', 'min:0', $this->billableSellingPriceRule($row)],
+            'unit_price' => ['nullable', 'numeric', 'min:0', $this->billableUnitPriceRule($row)],
             'is_billable' => ['required', 'boolean'],
             'is_active' => ['required', 'boolean'],
         ];
@@ -170,7 +170,7 @@ final class FacilityServiceImport implements ToCollection, WithChunkReading, Wit
             'name' => $this->str($row['name'] ?? null) ?? 'Row '.$this->rowNumber,
             'serviceCode' => $this->code($row['service_code'] ?? null) ?? '',
             'category' => $this->lower($row['category'] ?? null) ?? '',
-            'sellingPrice' => $this->nullableNumber($row['selling_price'] ?? null),
+            'unitPrice' => $this->nullableNumber($row['unit_price'] ?? null),
         ];
 
         $this->importedCount++;
@@ -188,14 +188,13 @@ final class FacilityServiceImport implements ToCollection, WithChunkReading, Wit
             'category' => $this->lower($row['category'] ?? null) ?? FacilityServiceCategory::OTHER->value,
             'description' => $this->str($row['description'] ?? null),
             'cost_price' => $this->nullableNumber($row['cost_price'] ?? null),
-            'selling_price' => $this->nullableNumber($row['selling_price'] ?? null),
             'is_billable' => $this->nullableBool($row['is_billable'] ?? null) ?? true,
             'is_active' => $this->nullableBool($row['is_active'] ?? null) ?? true,
             'created_by' => $this->userId,
             'updated_by' => $this->userId,
         ]);
 
-        $this->syncFacilityServiceChargeMaster->handle($service);
+        $this->syncFacilityServiceChargeMaster->handle($service, $this->nullableNumber($row['unit_price'] ?? null));
         $this->importedCount++;
     }
 
@@ -224,11 +223,11 @@ final class FacilityServiceImport implements ToCollection, WithChunkReading, Wit
     /**
      * @param  array<string, mixed>  $row
      */
-    private function billableSellingPriceRule(array $row): Closure
+    private function billableUnitPriceRule(array $row): Closure
     {
         return function (string $attribute, mixed $value, Closure $fail) use ($row): void {
             if (($this->nullableBool($row['is_billable'] ?? null) ?? true) && $this->nullableNumber($value) === null) {
-                $fail('Selling price is required for billable services.');
+                $fail('Unit price is required for billable services.');
             }
         };
     }
@@ -290,6 +289,14 @@ final class FacilityServiceImport implements ToCollection, WithChunkReading, Wit
         }
 
         return is_numeric($value) ? (float) $value : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function price(array $row): ?float
+    {
+        return $this->nullableNumber($row['unit_price'] ?? null);
     }
 
     private function nullableBool(mixed $value): ?bool

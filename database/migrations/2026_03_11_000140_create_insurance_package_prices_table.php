@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
 use App\Enums\InsuranceCopayType;
 use App\Enums\InsurancePolicyType;
@@ -49,8 +48,7 @@ return new class extends Migration
                 $table->uuid('id')->primary();
                 $table->foreignUuid('tenant_id')->constrained('tenants')->onDelete('cascade');
                 $table->foreignUuid('insurance_policy_id')->constrained('insurance_policies')->onDelete('cascade');
-                $table->enum('item_type', array_column(BillableItemType::cases(), 'value'))->index();
-                $table->uuid('item_id')->index();
+                $table->foreignUuid('charge_master_id')->constrained('charge_masters')->onDelete('cascade');
                 $table->decimal('price', 14, 2)->default(0);
                 $table->enum('copay_type', array_column(InsuranceCopayType::cases(), 'value'))->default(InsuranceCopayType::NONE->value);
                 $table->decimal('copay_value', 14, 2)->default(0);
@@ -63,11 +61,11 @@ return new class extends Migration
                 $table->softDeletes();
 
                 $table->unique(
-                    ['tenant_id', 'insurance_policy_id', 'item_type', 'item_id', 'effective_from'],
+                    ['tenant_id', 'insurance_policy_id', 'charge_master_id', 'effective_from'],
                     'insurance_policy_items_unique_version'
                 );
                 $table->index(
-                    ['tenant_id', 'insurance_policy_id', 'item_type', 'item_id', 'status'],
+                    ['tenant_id', 'insurance_policy_id', 'charge_master_id', 'status'],
                     'insurance_policy_items_lookup_idx'
                 );
             });

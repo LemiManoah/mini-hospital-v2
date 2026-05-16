@@ -47,7 +47,7 @@ export function LabOrderModal({
         test_code: string;
         test_name: string;
         category: string | null;
-        base_price: number | null;
+        unit_price: number | null;
         quoted_price?: number | null;
         price_source?: string | null;
     }>;
@@ -269,7 +269,7 @@ export function LabOrderModal({
                                                                         <span className="font-semibold text-zinc-700">
                                                                             {formatMoney(
                                                                                 test.quoted_price ??
-                                                                                    test.base_price,
+                                                                                    test.unit_price,
                                                                             )}
                                                                         </span>
                                                                     </div>
@@ -428,7 +428,7 @@ export function LabOrderModal({
                                                 (sum, t) =>
                                                     sum +
                                                     (t.quoted_price ??
-                                                        t.base_price ??
+                                                        t.unit_price ??
                                                         0),
                                                 0,
                                             ),

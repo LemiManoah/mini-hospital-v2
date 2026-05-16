@@ -33,7 +33,7 @@ it('updates an inventory item from a typed dto', function (): void {
             minimumStockLevel: 12.0,
             reorderLevel: 24.0,
             defaultPurchasePrice: '6.00',
-            defaultSellingPrice: '8.00',
+            unitPrice: '8.00',
             manufacturer: 'Acme',
             expires: false,
             isControlled: false,

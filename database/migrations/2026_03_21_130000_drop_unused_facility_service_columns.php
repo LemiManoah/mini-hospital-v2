@@ -25,10 +25,6 @@ return new class extends Migration
             if (! Schema::hasColumn('facility_services', 'cost_price')) {
                 $table->decimal('cost_price', 10, 2)->nullable();
             }
-
-            if (! Schema::hasColumn('facility_services', 'selling_price')) {
-                $table->decimal('selling_price', 10, 2)->nullable();
-            }
         });
 
         if ($columnsToDrop !== []) {

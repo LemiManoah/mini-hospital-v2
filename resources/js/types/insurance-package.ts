@@ -26,9 +26,11 @@ export type InsuranceCopayType = 'none' | 'fixed' | 'percentage';
 
 export interface InsurancePolicyItem {
     id: string;
-    itemType: BillableItemType;
-    itemId: string;
+    chargeMasterId: string;
+    itemType: BillableItemType | null;
+    itemCode: string | null;
     itemName: string;
+    catalogPrice: string | null;
     price: string;
     copayType: InsuranceCopayType;
     copayTypeLabel: string;
@@ -54,6 +56,7 @@ export interface InsurancePolicy {
 export interface BillableItemOption {
     value: string;
     label: string;
+    unitPrice?: string | null;
 }
 
 export interface InsurancePackageIndexPageProps {

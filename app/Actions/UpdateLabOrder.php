@@ -31,7 +31,7 @@ final readonly class UpdateLabOrder
             ->with('chargeMaster')
             ->whereIn('id', $data->testIds)
             ->where('is_active', true)
-            ->get(['id', 'tenant_id', 'test_code', 'test_name', 'base_price', 'charge_master_id', 'is_active']);
+            ->get(['id', 'tenant_id', 'test_code', 'test_name', 'charge_master_id', 'is_active']);
 
         $this->ensureNoPendingDuplicates($labOrder, $data->testIds);
 
@@ -67,7 +67,7 @@ final readonly class UpdateLabOrder
             $labOrder->unsetRelation('items');
             $labOrder->load([
                 'requestedBy:id,first_name,last_name',
-                'items.test:id,tenant_id,test_name,test_code,lab_test_category_id,result_type_id,base_price,charge_master_id,is_active',
+                'items.test:id,tenant_id,test_name,test_code,lab_test_category_id,result_type_id,charge_master_id,is_active',
                 'items.test.chargeMaster',
                 'items.test.labCategory:id,name',
                 'items.test.specimenTypes:id,name',
@@ -78,7 +78,7 @@ final readonly class UpdateLabOrder
 
             $labOrder = $labOrder->refresh()->load([
                 'requestedBy:id,first_name,last_name',
-                'items.test:id,tenant_id,test_name,test_code,lab_test_category_id,result_type_id,base_price,charge_master_id,is_active',
+                'items.test:id,tenant_id,test_name,test_code,lab_test_category_id,result_type_id,charge_master_id,is_active',
                 'items.test.chargeMaster',
                 'items.test.labCategory:id,name',
                 'items.test.specimenTypes:id,name',
@@ -144,6 +144,6 @@ final readonly class UpdateLabOrder
 
         return $chargeMaster instanceof ChargeMaster
             ? (float) $chargeMaster->unit_price
-            : (float) ($test->base_price ?? 0);
+            : 0.0;
     }
 }

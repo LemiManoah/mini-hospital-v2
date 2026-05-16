@@ -21,7 +21,6 @@ return new class extends Migration
             $table->enum('category', array_column(FacilityServiceCategory::cases(), 'value'))->default(FacilityServiceCategory::OTHER->value);
             $table->text('description')->nullable();
             $table->decimal('cost_price', 10, 2)->nullable();
-            $table->decimal('selling_price', 10, 2)->nullable();
             $table->boolean('is_billable')->default(false);
             $table->boolean('is_consultation')->default(false)->index();
             $table->enum('consultation_type', array_column(ConsultationType::cases(), 'value'))->nullable()->index();

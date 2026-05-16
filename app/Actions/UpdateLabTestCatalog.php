@@ -20,13 +20,14 @@ final readonly class UpdateLabTestCatalog
         return DB::transaction(function () use ($labTestCatalog, $data): LabTestCatalog {
             $labTestCatalog->update($data->toAttributes());
 
-            $this->syncLabTestCatalogChargeMaster->handle($labTestCatalog->refresh());
+            $this->syncLabTestCatalogChargeMaster->handle($labTestCatalog->refresh(), $data->unitPrice);
             $this->syncLabTestCatalogConfiguration->handle($labTestCatalog, $data);
 
             return $labTestCatalog->refresh()->load([
                 'labCategory:id,name',
                 'specimenTypes:id,name',
                 'resultTypeDefinition:id,code,name',
+                'chargeMaster:id,unit_price',
                 'resultOptions:id,lab_test_catalog_id,label,sort_order,is_active',
                 'resultParameters:id,lab_test_catalog_id,label,unit,reference_range,value_type,sort_order,is_active',
             ]);

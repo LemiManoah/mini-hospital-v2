@@ -34,7 +34,7 @@ it('normalizes update lab test catalog input into a typed dto', function (): voi
         'lab_test_category_id' => 'category-1',
         'result_type_id' => 'result-type-2',
         'description' => ' Updated malaria workflow ',
-        'base_price' => 18000,
+        'unit_price' => 18000,
         'is_active' => true,
         'specimen_type_ids' => ['specimen-1'],
         'result_options' => [
@@ -45,6 +45,7 @@ it('normalizes update lab test catalog input into a typed dto', function (): voi
 
     expect($dto->testName)->toBe('Malaria Microscopy')
         ->and($dto->description)->toBe('Updated malaria workflow')
+        ->and($dto->unitPrice)->toBe(18000)
         ->and($dto->resultOptions)->toHaveCount(2)
         ->and($dto->resultOptions[0]->label)->toBe('Positive');
 });

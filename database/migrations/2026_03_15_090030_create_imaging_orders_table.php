@@ -24,7 +24,6 @@ return new class extends Migration
                 $table->string('name', 150)->index();
                 $table->enum('modality', array_column(ImagingModality::cases(), 'value'));
                 $table->string('body_part', 100)->nullable();
-                $table->decimal('base_price', 10, 2)->default(0);
                 $table->foreignUuid('charge_master_id')->nullable()->constrained('charge_masters')->nullOnDelete();
                 $table->boolean('is_active')->default(true)->index();
                 $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();

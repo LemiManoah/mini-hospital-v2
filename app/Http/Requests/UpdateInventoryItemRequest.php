@@ -44,7 +44,7 @@ final class UpdateInventoryItemRequest extends FormRequest
             'minimum_stock_level' => ['nullable', 'numeric', 'min:0'],
             'reorder_level' => ['nullable', 'numeric', 'gte:minimum_stock_level'],
             'default_purchase_price' => ['nullable', 'numeric', 'min:0'],
-            'default_selling_price' => ['nullable', 'numeric', 'min:0'],
+            'unit_price' => ['nullable', 'numeric', 'min:0'],
             'manufacturer' => ['nullable', 'string', 'max:100'],
             'expires' => ['nullable', 'boolean'],
             'is_controlled' => ['nullable', 'boolean'],
@@ -90,7 +90,7 @@ final class UpdateInventoryItemRequest extends FormRequest
             'minimum_stock_level' => $this->numericOrDefault('minimum_stock_level', 0),
             'reorder_level' => $this->numericOrDefault('reorder_level', 0),
             'default_purchase_price' => $this->nullableNumeric('default_purchase_price'),
-            'default_selling_price' => $this->nullableNumeric('default_selling_price'),
+            'unit_price' => $this->nullableNumeric('unit_price'),
             'therapeutic_classes' => $isDrug ? $this->therapeuticClasses() : null,
         ]);
     }

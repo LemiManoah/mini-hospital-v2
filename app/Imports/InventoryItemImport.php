@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Imports;
 
+use App\Actions\SyncInventoryItemChargeMaster;
 use App\Enums\DrugCategory;
 use App\Enums\DrugDosageForm;
 use App\Enums\InventoryItemType;
@@ -75,6 +76,7 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
         private readonly string $tenantId,
         private readonly string $branchId,
         private readonly string $userId,
+        private readonly SyncInventoryItemChargeMaster $syncInventoryItemChargeMaster,
         private readonly bool $preview = false,
     ) {}
 
@@ -182,7 +184,7 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
             'unit_cost' => $this->nullableNumber($row['unit_cost'] ?? null),
             'minimum_stock_level' => $this->nullableNumber($row['minimum_stock_level'] ?? null),
             'reorder_level' => $this->nullableNumber($row['reorder_level'] ?? null),
-            'default_selling_price' => $this->nullableNumber($row['default_selling_price'] ?? null),
+            'unit_price' => $this->price($row),
             'manufacturer' => $this->str($row['manufacturer'] ?? null),
             'expires' => $expires,
             'is_controlled' => $this->bool($row['is_controlled'] ?? null),
@@ -226,7 +228,7 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
             'unit_cost' => ['required', 'numeric', 'min:0'],
             'minimum_stock_level' => ['nullable', 'numeric', 'min:0'],
             'reorder_level' => ['nullable', 'numeric', 'gte:minimum_stock_level'],
-            'default_selling_price' => ['nullable', 'numeric', 'min:0'],
+            'unit_price' => ['nullable', 'numeric', 'min:0'],
             'manufacturer' => ['nullable', 'string', 'max:100'],
             'expires' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string'],
@@ -317,7 +319,6 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
                     'branch_id' => $this->branchId,
                     'minimum_stock_level' => $this->number($row['minimum_stock_level'] ?? null, 0),
                     'reorder_level' => $this->number($row['reorder_level'] ?? null, 0),
-                    'default_selling_price' => $this->nullableNumber($row['default_selling_price'] ?? null),
                     'is_active' => $this->bool($row['is_active'] ?? true, true),
                     'created_by' => $this->userId,
                     'updated_by' => $this->userId,
@@ -418,6 +419,11 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
             $inventoryItem->update($updates);
         }
 
+        $this->syncInventoryItemChargeMaster->handle(
+            $inventoryItem->refresh(),
+            $this->nullableNumber($row['unit_price'] ?? null),
+        );
+
         return $inventoryItem;
     }
 
@@ -473,7 +479,6 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
             'minimum_stock_level' => $this->number($row['minimum_stock_level'] ?? null, 0),
             'reorder_level' => $this->number($row['reorder_level'] ?? null, 0),
             'default_purchase_price' => $this->nullableNumber($row['unit_cost'] ?? null),
-            'default_selling_price' => $this->nullableNumber($row['default_selling_price'] ?? null),
             'manufacturer' => $this->str($row['manufacturer'] ?? null),
             'expires' => $this->bool($row['expires'] ?? null),
             'is_controlled' => $this->itemType === InventoryItemType::DRUG && $this->bool($row['is_controlled'] ?? null),
@@ -676,6 +681,14 @@ final class InventoryItemImport implements ToCollection, WithChunkReading, WithH
         }
 
         return is_numeric($value) ? (float) $value : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function price(array $row): ?float
+    {
+        return $this->nullableNumber($row['unit_price'] ?? null);
     }
 
     private function date(mixed $value): ?string

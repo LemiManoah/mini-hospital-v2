@@ -42,7 +42,7 @@ type VisitOrdersTabProps = {
         test_code: string;
         test_name: string;
         category: string | null;
-        base_price: number | null;
+        unit_price: number | null;
         quoted_price?: number | null;
         price_source?: string | null;
     }>;

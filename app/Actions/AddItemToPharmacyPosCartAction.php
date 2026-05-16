@@ -40,6 +40,7 @@ final readonly class AddItemToPharmacyPosCartAction
             }
 
             $inventoryItem = InventoryItem::query()
+                ->with('chargeMaster:id,unit_price')
                 ->where('is_active', true)
                 ->findOrFail($inventoryItemId);
 
@@ -51,7 +52,7 @@ final readonly class AddItemToPharmacyPosCartAction
                 ]);
             }
 
-            $unitPrice = max(0.0, round($this->toFloat($attributes['unit_price'] ?? $inventoryItem->default_selling_price ?? 0), 2));
+            $unitPrice = max(0.0, round($this->toFloat($attributes['unit_price'] ?? $inventoryItem->chargeMaster->unit_price ?? 0), 2));
             $discountAmount = max(0.0, round($this->toFloat($attributes['discount_amount'] ?? 0), 2));
             $availableQty = $this->inventoryStockLedger
                 ->summarizeByLocation($cart->branch_id)

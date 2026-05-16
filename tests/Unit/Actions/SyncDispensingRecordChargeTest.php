@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\SyncDispensingRecordCharge;
+use App\Actions\SyncInventoryItemChargeMaster;
 use App\Enums\DispensingRecordStatus;
 use App\Enums\PrescriptionItemStatus;
 use App\Models\DispensingRecord;
@@ -21,9 +22,7 @@ beforeEach(function (): void {
 it('creates one visit charge per dispensed record item', function (): void {
     [$branch, , $user, $staff, $pharmacyLocation, , , $readyDrug] = createPharmacyModuleContext();
 
-    $readyDrug->forceFill([
-        'default_selling_price' => 1500,
-    ])->save();
+    resolve(SyncInventoryItemChargeMaster::class)->handle($readyDrug, 1500);
 
     $prescription = createPharmacyPrescription(
         $branch,

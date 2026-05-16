@@ -141,7 +141,6 @@ function createLaboratoryWorklistContext(): array
         'test_name' => 'Full Blood Count '.$sequence,
         'lab_test_category_id' => $category->id,
         'result_type_id' => $resultType->id,
-        'base_price' => 25000,
         'is_active' => true,
     ]);
     $test->specimenTypes()->sync([$specimenType->id]);

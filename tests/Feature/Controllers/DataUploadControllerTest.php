@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Actions\ProcessFacilityServiceImport;
 use App\Actions\ProcessInventoryItemImport;
 use App\Actions\ProcessPatientImport;
+use App\Enums\BillableItemType;
 use App\Enums\DataImportStatus;
 use App\Enums\GeneralStatus;
 use App\Enums\InventoryItemType;
@@ -11,8 +13,10 @@ use App\Enums\InventoryLocationType;
 use App\Enums\UnitType;
 use App\Jobs\ImportInventoryItemsJob;
 use App\Jobs\ImportPatientsJob;
+use App\Models\ChargeMaster;
 use App\Models\DataImport;
 use App\Models\FacilityBranch;
+use App\Models\FacilityService;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
@@ -21,6 +25,7 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Support\BranchContext;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
@@ -28,6 +33,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 beforeEach(function (): void {
+    $this->withoutMiddleware(ValidateCsrfToken::class);
     $this->seed(PermissionSeeder::class);
 });
 
@@ -188,7 +194,7 @@ it('previews valid drug imports from a csv file', function (): void {
     Queue::fake();
 
     $csv = implode("\n", [
-        'generic_name,brand_name,category,strength,dosage_form,unit,inventory_location,quantity_on_hand,batch_number,expiry_date,unit_cost,minimum_stock_level,reorder_level,default_selling_price,manufacturer,expires,is_controlled,schedule_class,therapeutic_classes,description,is_active',
+        'generic_name,brand_name,category,strength,dosage_form,unit,inventory_location,quantity_on_hand,batch_number,expiry_date,unit_cost,minimum_stock_level,reorder_level,unit_price,manufacturer,expires,is_controlled,schedule_class,therapeutic_classes,description,is_active',
         'Paracetamol,Panadol,analgesic,500mg,tablet,tab,CGH-MAIN-STORE,1500,PCM-001,2027-12-31,120,800,1200,300,GSK,true,false,,Analgesic,Analgesic and antipyretic,true',
         'Amoxicillin,Amoxil,antibiotic,500mg,capsule,tab,CGH-MAIN-STORE,900,AMX-001,2027-11-30,180,500,900,500,GSK,true,false,,Antibiotic,Common oral antibiotic,true',
     ]);
@@ -214,7 +220,7 @@ it('previews valid consumable imports from a csv file', function (): void {
     Queue::fake();
 
     $csv = implode("\n", [
-        'name,unit,inventory_location,quantity_on_hand,batch_number,expiry_date,unit_cost,minimum_stock_level,reorder_level,default_selling_price,manufacturer,expires,description,is_active',
+        'name,unit,inventory_location,quantity_on_hand,batch_number,expiry_date,unit_cost,minimum_stock_level,reorder_level,unit_price,manufacturer,expires,description,is_active',
         'Examination Gloves,box,CGH-MAIN-STORE,50,GLV-001,,18000,120,200,,SafeTouch,false,Single-use gloves,true',
         '5ml Syringe,box,CGH-MAIN-STORE,300,SYR-001,,250,200,350,,Becton Dickinson,false,Routine disposable syringe,true',
     ]);
@@ -290,7 +296,7 @@ it('allows the same drug in different batches and skips repeated opening stock r
     createInventoryLocation($tenantId, $branch);
 
     $csv = implode("\n", [
-        'generic_name,brand_name,category,strength,dosage_form,unit,inventory_location,quantity_on_hand,batch_number,expiry_date,unit_cost,minimum_stock_level,reorder_level,default_selling_price,manufacturer,expires,is_controlled,schedule_class,therapeutic_classes,description,is_active',
+        'generic_name,brand_name,category,strength,dosage_form,unit,inventory_location,quantity_on_hand,batch_number,expiry_date,unit_cost,minimum_stock_level,reorder_level,unit_price,manufacturer,expires,is_controlled,schedule_class,therapeutic_classes,description,is_active',
         'Paracetamol,Panadol,analgesic,500mg,tablet,tab,CGH-MAIN-STORE,1500,PCM-001,2027-12-31,120,800,1200,300,GSK,true,false,,Analgesic,Analgesic and antipyretic,true',
         'Paracetamol,Panadol,analgesic,500mg,tablet,tab,CGH-MAIN-STORE,900,PCM-002,2028-01-31,120,800,1200,300,GSK,true,false,,Analgesic,Second batch,true',
         'Paracetamol,Panadol,analgesic,500mg,tablet,tab,CGH-MAIN-STORE,300,PCM-002,2028-01-31,120,800,1200,300,GSK,true,false,,Analgesic,Duplicate batch,true',
@@ -307,8 +313,45 @@ it('allows the same drug in different batches and skips repeated opening stock r
     expect($result['imported'])->toBe(2);
     expect($result['skipped'])->toBe(1);
     expect($result['errors'][0]['messages'])->toContain('This opening stock row appears more than once in the uploaded file.');
-    expect(InventoryItem::query()->where('tenant_id', $tenantId)->where('generic_name', 'Paracetamol')->count())->toBe(1);
+
+    $inventoryItem = InventoryItem::query()
+        ->where('tenant_id', $tenantId)
+        ->where('generic_name', 'Paracetamol')
+        ->firstOrFail();
+
+    expect($inventoryItem->charge_master_id)->not()->toBeNull()
+        ->and(ChargeMaster::query()->whereKey($inventoryItem->charge_master_id)->value('unit_price'))->toBe('300.00')
+        ->and(InventoryItem::query()->where('tenant_id', $tenantId)->where('generic_name', 'Paracetamol')->count())->toBe(1);
+
     expect(InventoryBatch::query()->where('tenant_id', $tenantId)->count())->toBe(2);
+});
+
+it('imports facility service prices into charge master unit prices', function (): void {
+    [$tenantId, , $user] = createDataUploadContext();
+
+    $csv = implode("\n", [
+        'service_code,name,category,description,cost_price,unit_price,is_billable,is_active',
+        'SVC-DRS-001,Dressing,dressing,Wound dressing,5000,25000,true,true',
+    ]);
+
+    $result = resolve(ProcessFacilityServiceImport::class)->handle(
+        file: makeCsvUpload($csv, 'facility-services.csv'),
+        tenantId: $tenantId,
+        userId: (string) $user->id,
+    );
+
+    $service = FacilityService::query()
+        ->where('tenant_id', $tenantId)
+        ->where('service_code', 'SVC-DRS-001')
+        ->firstOrFail();
+
+    $chargeMaster = ChargeMaster::query()->findOrFail($service->charge_master_id);
+
+    expect($result['imported'])->toBe(1)
+        ->and($result['skipped'])->toBe(0)
+        ->and($chargeMaster->billable_type)->toBe(BillableItemType::SERVICE)
+        ->and($chargeMaster->billable_id)->toBe($service->id)
+        ->and($chargeMaster->unit_price)->toBe('25000.00');
 });
 
 it('continues qroo patient numbering from the branch code during import', function (): void {

@@ -36,7 +36,7 @@ it('normalizes create inventory item input into a typed dto', function (): void 
         'minimum_stock_level' => 5.0,
         'reorder_level' => 10.0,
         'default_purchase_price' => '12.50',
-        'default_selling_price' => '15.00',
+        'unit_price' => '15.00',
         'expires' => true,
         'is_controlled' => false,
         'therapeutic_classes' => ['analgesic', 'antipyretic'],
@@ -47,5 +47,6 @@ it('normalizes create inventory item input into a typed dto', function (): void 
         ->and($dto->genericName)->toBe('Paracetamol')
         ->and($dto->minimumStockLevel)->toBe(5.0)
         ->and($dto->defaultPurchasePrice)->toBe('12.50')
+        ->and($dto->unitPrice)->toBe('15.00')
         ->and($dto->therapeuticClasses)->toBe(['analgesic', 'antipyretic']);
 });

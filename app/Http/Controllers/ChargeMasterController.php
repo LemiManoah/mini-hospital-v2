@@ -77,7 +77,7 @@ final readonly class ChargeMasterController implements HasMiddleware
     ): RedirectResponse {
         $this->authorizeChargeMaster($chargeMaster);
 
-        $action->handle($chargeMaster, $request->validated());
+        $action->handle($chargeMaster, $request->priceData());
 
         return to_route('charge-masters.index')->with('success', 'Charge master price updated successfully.');
     }

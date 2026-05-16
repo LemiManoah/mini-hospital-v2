@@ -7,11 +7,8 @@ namespace App\Imports;
 use App\Enums\BillableItemType;
 use App\Enums\GeneralStatus;
 use App\Enums\InsuranceCopayType;
-use App\Enums\InventoryItemType;
-use App\Models\FacilityService;
+use App\Models\ChargeMaster;
 use App\Models\InsurancePolicyItem;
-use App\Models\InventoryItem;
-use App\Models\LabTestCatalog;
 use Carbon\CarbonImmutable;
 use Closure;
 use DateTimeInterface;
@@ -126,14 +123,9 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
 
         return [
             ...$row,
-            'service_code' => $this->str($row['service_code'] ?? null),
-            'service_name' => $this->str($row['service_name'] ?? null),
-            'test_code' => $this->str($row['test_code'] ?? null),
-            'test_name' => $this->str($row['test_name'] ?? null),
-            'generic_name' => $this->str($row['generic_name'] ?? null),
-            'strength' => $this->str($row['strength'] ?? null),
-            'dosage_form' => $this->lower($row['dosage_form'] ?? null),
-            'brand_name' => $this->str($row['brand_name'] ?? null),
+            'charge_master_id' => $this->str($row['charge_master_id'] ?? null),
+            'charge_master_code' => $this->str($row['charge_master_code'] ?? null),
+            'charge_master_description' => $this->str($row['charge_master_description'] ?? null),
             'price' => $this->nullableNumber($row['price'] ?? null),
             'copay_type' => $this->lower($row['copay_type'] ?? InsuranceCopayType::NONE->value),
             'copay_value' => $this->nullableNumber($row['copay_value'] ?? 0),
@@ -150,7 +142,9 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
     private function rules(array $row): array
     {
         return [
-            ...$this->itemRules($row),
+            'charge_master_id' => ['nullable', 'string', 'max:36', $this->resolvesChargeMasterRule($row)],
+            'charge_master_code' => ['required_without_all:charge_master_id,charge_master_description', 'nullable', 'string', 'max:100', $this->resolvesChargeMasterRule($row)],
+            'charge_master_description' => ['required_without_all:charge_master_id,charge_master_code', 'nullable', 'string', 'max:255', $this->resolvesChargeMasterRule($row)],
             'price' => ['required', 'numeric', 'min:0'],
             'copay_type' => ['required', new Enum(InsuranceCopayType::class)],
             'copay_value' => ['required', 'numeric', 'min:0', $this->copayValueRule($row)],
@@ -158,31 +152,6 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
             'effective_to' => ['nullable', 'date', 'after_or_equal:effective_from'],
             'status' => ['required', new Enum(GeneralStatus::class)],
         ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $row
-     * @return array<string, mixed>
-     */
-    private function itemRules(array $row): array
-    {
-        return match ($this->itemType) {
-            BillableItemType::SERVICE => [
-                'service_code' => ['nullable', 'string', 'max:100'],
-                'service_name' => ['required_without:service_code', 'nullable', 'string', 'max:200', $this->resolvesBillableRule($row)],
-            ],
-            BillableItemType::TEST => [
-                'test_code' => ['nullable', 'string', 'max:100'],
-                'test_name' => ['required_without:test_code', 'nullable', 'string', 'max:200', $this->resolvesBillableRule($row)],
-            ],
-            BillableItemType::DRUG => [
-                'generic_name' => ['required', 'string', 'max:200', $this->resolvesBillableRule($row)],
-                'strength' => ['nullable', 'string', 'max:100'],
-                'dosage_form' => ['nullable', 'string', 'max:100'],
-                'brand_name' => ['nullable', 'string', 'max:200'],
-            ],
-            default => [],
-        };
     }
 
     /**
@@ -219,9 +188,9 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
      */
     private function importPrice(array $row): void
     {
-        $billableId = $this->resolveBillableId($row);
+        $chargeMasterId = $this->resolveChargeMasterId($row);
 
-        if ($billableId === null) {
+        if ($chargeMasterId === null) {
             $this->recordError($row, ['This row could not be resolved during import.']);
 
             return;
@@ -230,8 +199,7 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
         InsurancePolicyItem::query()->create([
             'tenant_id' => $this->tenantId,
             'insurance_policy_id' => $this->insurancePolicyId,
-            'item_type' => $this->itemType->value,
-            'item_id' => $billableId,
+            'charge_master_id' => $chargeMasterId,
             'price' => $this->nullableNumber($row['price'] ?? null) ?? 0,
             'copay_type' => $this->lower($row['copay_type'] ?? null) ?? InsuranceCopayType::NONE->value,
             'copay_value' => $this->nullableNumber($row['copay_value'] ?? null) ?? 0,
@@ -265,15 +233,15 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
     /**
      * @param  array<string, mixed>  $row
      */
-    private function resolvesBillableRule(array $row): Closure
+    private function resolvesChargeMasterRule(array $row): Closure
     {
         return function (string $attribute, mixed $value, Closure $fail) use ($row): void {
-            if ($this->resolveBillableId($row) === null) {
-                $fail(match ($this->itemType) {
-                    BillableItemType::DRUG => 'The drug must match one existing inventory item for this tenant.',
-                    BillableItemType::TEST => 'The lab test must match an existing active lab test for this tenant.',
-                    default => 'The service must match an existing active billable service for this tenant.',
-                });
+            if ($value === null || $value === '') {
+                return;
+            }
+
+            if ($this->resolveChargeMasterId($row) === null) {
+                $fail('The charge master item must match one active '.$this->itemType->value.' charge for this tenant.');
             }
         };
     }
@@ -306,10 +274,10 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
     private function noOverlapRule(array $row): Closure
     {
         return function (string $attribute, mixed $value, Closure $fail) use ($row): void {
-            $billableId = $this->resolveBillableId($row);
+            $chargeMasterId = $this->resolveChargeMasterId($row);
             $effectiveFrom = $this->date($row['effective_from'] ?? null);
 
-            if ($billableId === null || $effectiveFrom === null) {
+            if ($chargeMasterId === null || $effectiveFrom === null) {
                 return;
             }
 
@@ -318,8 +286,7 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
             $exists = InsurancePolicyItem::query()
                 ->where('tenant_id', $this->tenantId)
                 ->where('insurance_policy_id', $this->insurancePolicyId)
-                ->where('item_type', $this->itemType->value)
-                ->where('item_id', $billableId)
+                ->where('charge_master_id', $chargeMasterId)
                 ->where('status', GeneralStatus::ACTIVE->value)
                 ->where(function (Builder $query) use ($effectiveFrom, $effectiveTo): void {
                     $query
@@ -343,75 +310,28 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
     /**
      * @param  array<string, mixed>  $row
      */
-    private function resolveBillableId(array $row): ?string
+    private function resolveChargeMasterId(array $row): ?string
     {
-        return match ($this->itemType) {
-            BillableItemType::SERVICE => $this->resolveServiceId($row),
-            BillableItemType::DRUG => $this->resolveDrugId($row),
-            BillableItemType::TEST => $this->resolveTestId($row),
-            default => null,
-        };
-    }
+        $id = $this->str($row['charge_master_id'] ?? null);
+        $code = $this->str($row['charge_master_code'] ?? null);
+        $description = $this->str($row['charge_master_description'] ?? null);
 
-    /**
-     * @param  array<string, mixed>  $row
-     */
-    private function resolveServiceId(array $row): ?string
-    {
-        $code = $this->str($row['service_code'] ?? null);
-        $name = $this->str($row['service_name'] ?? null);
-
-        if ($code === null && $name === null) {
+        if ($id === null && $code === null && $description === null) {
             return null;
         }
 
-        /** @var FacilityService|null $service */
-        $service = FacilityService::query()
+        $query = ChargeMaster::query()
             ->where('tenant_id', $this->tenantId)
-            ->where('is_billable', true)
+            ->where('billable_type', $this->itemType->value)
             ->where('is_active', true)
-            ->where(static fn (Builder $query) => $query
-                ->when($code !== null, static fn (Builder $codeQuery) => $codeQuery->orWhere('service_code', $code))
-                ->when($name !== null, static fn (Builder $nameQuery) => $nameQuery->orWhere('name', $name)))
-            ->first();
+            ->effectiveOn(now()->toDateString());
 
-        return $service?->id;
-    }
-
-    /**
-     * @param  array<string, mixed>  $row
-     */
-    private function resolveDrugId(array $row): ?string
-    {
-        $genericName = $this->str($row['generic_name'] ?? null);
-        $strength = $this->str($row['strength'] ?? null);
-        $dosageForm = $this->lower($row['dosage_form'] ?? null);
-        $brandName = $this->str($row['brand_name'] ?? null);
-
-        if ($genericName === null) {
-            return null;
-        }
-
-        $query = InventoryItem::query()
-            ->where('tenant_id', $this->tenantId)
-            ->where('item_type', InventoryItemType::DRUG->value)
-            ->where('is_active', true)
-            ->where(static fn (Builder $itemQuery) => $itemQuery
-                ->where('generic_name', $genericName)
-                ->orWhere('name', $genericName));
-
-        if ($strength !== null) {
-            $query->where('strength', $strength);
-        }
-
-        if ($dosageForm !== null) {
-            $query->where('dosage_form', $dosageForm);
-        }
-
-        if ($brandName !== null) {
-            $query->where(static fn (Builder $brandQuery) => $brandQuery
-                ->where('brand_name', $brandName)
-                ->orWhere('name', $brandName));
+        if ($id !== null) {
+            $query->whereKey($id);
+        } else {
+            $query->where(static fn (Builder $chargeQuery) => $chargeQuery
+                ->when($code !== null, static fn (Builder $codeQuery) => $codeQuery->orWhere('item_code', $code))
+                ->when($description !== null, static fn (Builder $descriptionQuery) => $descriptionQuery->orWhere('description', $description)));
         }
 
         $matches = $query->limit(2)->get(['id']);
@@ -422,43 +342,18 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
     /**
      * @param  array<string, mixed>  $row
      */
-    private function resolveTestId(array $row): ?string
-    {
-        $code = $this->str($row['test_code'] ?? null);
-        $name = $this->str($row['test_name'] ?? null);
-
-        if ($code === null && $name === null) {
-            return null;
-        }
-
-        /** @var LabTestCatalog|null $test */
-        $test = LabTestCatalog::query()
-            ->where('tenant_id', $this->tenantId)
-            ->where('is_active', true)
-            ->where(static fn (Builder $query) => $query
-                ->when($code !== null, static fn (Builder $codeQuery) => $codeQuery->orWhere('test_code', $code))
-                ->when($name !== null, static fn (Builder $nameQuery) => $nameQuery->orWhere('test_name', $name)))
-            ->first();
-
-        return $test?->id;
-    }
-
-    /**
-     * @param  array<string, mixed>  $row
-     */
     private function priceKey(array $row): ?string
     {
-        $billableId = $this->resolveBillableId($row);
+        $chargeMasterId = $this->resolveChargeMasterId($row);
         $effectiveFrom = $this->date($row['effective_from'] ?? null);
 
-        if ($billableId === null || $effectiveFrom === null) {
+        if ($chargeMasterId === null || $effectiveFrom === null) {
             return null;
         }
 
         return implode('|', [
             $this->insurancePolicyId,
-            $this->itemType->value,
-            $billableId,
+            $chargeMasterId,
             $effectiveFrom,
         ]);
     }
@@ -481,16 +376,11 @@ final class InsurancePriceListImport implements ToCollection, WithChunkReading, 
      */
     private function rowName(array $row): string
     {
-        return match ($this->itemType) {
-            BillableItemType::DRUG => collect([
-                $this->str($row['generic_name'] ?? null),
-                $this->str($row['strength'] ?? null),
-                $this->str($row['dosage_form'] ?? null),
-                $this->str($row['brand_name'] ?? null),
-            ])->filter()->implode(' '),
-            BillableItemType::TEST => $this->str($row['test_code'] ?? null) ?? $this->str($row['test_name'] ?? null) ?? '',
-            default => $this->str($row['service_code'] ?? null) ?? $this->str($row['service_name'] ?? null) ?? '',
-        } ?: 'Row '.$this->rowNumber;
+        return collect([
+            $this->str($row['charge_master_code'] ?? null),
+            $this->str($row['charge_master_description'] ?? null),
+            $this->str($row['charge_master_id'] ?? null),
+        ])->filter()->implode(' - ') ?: 'Row '.$this->rowNumber;
     }
 
     /**

@@ -131,7 +131,6 @@ function createLabResultPrintContext(): array
         'test_name' => 'Lab Print CBC '.$sequence,
         'lab_test_category_id' => $category->id,
         'result_type_id' => $resultType->id,
-        'base_price' => 35000,
         'is_active' => true,
     ]);
     $test->specimenTypes()->sync([$specimenType->id]);

@@ -28,7 +28,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['tenant_id', 'facility_branch_id', 'item_code', 'effective_from'], 'charge_masters_item_code_effective_unique');
+            $table->index(['tenant_id', 'facility_branch_id', 'item_code', 'effective_from'], 'charge_masters_item_code_effective_idx');
             $table->index(['tenant_id', 'facility_branch_id', 'billable_type', 'billable_id'], 'charge_masters_billable_lookup_idx');
         });
     }

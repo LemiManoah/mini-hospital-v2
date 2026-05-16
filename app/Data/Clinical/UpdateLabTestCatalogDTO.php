@@ -19,7 +19,7 @@ final readonly class UpdateLabTestCatalogDTO
         public string $labTestCategoryId,
         public string $resultTypeId,
         public ?string $description,
-        public int|float|string $basePrice,
+        public int|float|string $unitPrice,
         public bool $isActive,
         public array $specimenTypeIds,
         public array $resultOptions,
@@ -35,7 +35,7 @@ final readonly class UpdateLabTestCatalogDTO
          *     lab_test_category_id: string,
          *     result_type_id: string,
          *     description?: string|null,
-         *     base_price: int|float|string,
+         *     unit_price: int|float|string,
          *     is_active?: bool,
          *     specimen_type_ids: list<string>,
          *     result_options?: list<array{label: string}>,
@@ -55,7 +55,7 @@ final readonly class UpdateLabTestCatalogDTO
             labTestCategoryId: $validated['lab_test_category_id'],
             resultTypeId: $validated['result_type_id'],
             description: self::nullableString($validated['description'] ?? null),
-            basePrice: $validated['base_price'],
+            unitPrice: $validated['unit_price'],
             isActive: $validated['is_active'] ?? true,
             specimenTypeIds: $validated['specimen_type_ids'],
             resultOptions: array_map(
@@ -76,7 +76,6 @@ final readonly class UpdateLabTestCatalogDTO
      *      lab_test_category_id: string,
      *      result_type_id: string,
      *      description: ?string,
-     *      base_price: int|float|string,
      *      is_active: bool
      *  }
      */
@@ -88,7 +87,6 @@ final readonly class UpdateLabTestCatalogDTO
             'lab_test_category_id' => $this->labTestCategoryId,
             'result_type_id' => $this->resultTypeId,
             'description' => $this->description,
-            'base_price' => $this->basePrice,
             'is_active' => $this->isActive,
         ];
     }

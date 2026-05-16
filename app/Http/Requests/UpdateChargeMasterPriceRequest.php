@@ -26,6 +26,22 @@ final class UpdateChargeMasterPriceRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array{unit_price: int|float|string, is_active: bool, effective_from: string|null, effective_to: string|null}
+     */
+    public function priceData(): array
+    {
+        $validated = $this->validated();
+        $unitPrice = $validated['unit_price'] ?? 0;
+
+        return [
+            'unit_price' => is_int($unitPrice) || is_float($unitPrice) || is_string($unitPrice) ? $unitPrice : 0,
+            'is_active' => (bool) ($validated['is_active'] ?? true),
+            'effective_from' => is_string($validated['effective_from'] ?? null) ? $validated['effective_from'] : null,
+            'effective_to' => is_string($validated['effective_to'] ?? null) ? $validated['effective_to'] : null,
+        ];
+    }
+
     protected function prepareForValidation(): void
     {
         $this->merge([

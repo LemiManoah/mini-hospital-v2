@@ -19,7 +19,7 @@ final readonly class CreateInsurancePolicy
      *     effective_from?: string|null,
      *     effective_to?: string|null,
      *     status: string,
-     *     items?: list<array{item_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
+     *     items?: list<array{charge_master_id: string, price: numeric-string, copay_type: string, copay_value: numeric-string, effective_from?: string|null, effective_to?: string|null, status: string}>
      * }  $data
      */
     public function handle(InsurancePackage $insurancePackage, array $data): InsurancePolicy
@@ -40,8 +40,7 @@ final readonly class CreateInsurancePolicy
             foreach ($data['items'] ?? [] as $item) {
                 $policy->items()->create([
                     'tenant_id' => $policy->tenant_id,
-                    'item_type' => $policy->policy_type->itemType()->value,
-                    'item_id' => $item['item_id'],
+                    'charge_master_id' => $item['charge_master_id'],
                     'price' => $item['price'],
                     'copay_type' => $item['copay_type'],
                     'copay_value' => $item['copay_value'],

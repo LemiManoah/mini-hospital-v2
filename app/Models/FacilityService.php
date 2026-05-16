@@ -25,7 +25,6 @@ final class FacilityService extends Model
         'tenant_id' => 'string',
         'category' => FacilityServiceCategory::class,
         'cost_price' => 'decimal:2',
-        'selling_price' => 'decimal:2',
         'is_billable' => 'boolean',
         'is_consultation' => 'boolean',
         'consultation_type' => ConsultationType::class,

@@ -268,7 +268,6 @@ function createGeneralSettingsWorkflowLabTest(Tenant $tenant): LabTestCatalog
         'test_name' => 'Workflow Lab Test '.$sequence,
         'lab_test_category_id' => $category->id,
         'result_type_id' => $resultType->id,
-        'base_price' => 0,
         'is_active' => true,
     ]);
 

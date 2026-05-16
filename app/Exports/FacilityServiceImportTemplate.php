@@ -40,7 +40,7 @@ final class FacilityServiceImportTemplate implements FromArray, WithColumnWidths
             'category',
             'description',
             'cost_price',
-            'selling_price',
+            'unit_price',
             'is_billable',
             'is_active',
         ];

@@ -112,7 +112,7 @@ export interface LabTestOption {
     specimen_type?: string | null;
     result_type_name?: string | null;
     result_capture_type?: string | null;
-    base_price: number | null;
+    unit_price: number | null;
     quoted_price?: number | null;
     price_source?: string | null;
 }
@@ -180,7 +180,7 @@ export interface DrugOption {
     brand_name: string | null;
     strength: string | null;
     dosage_form: string | null;
-    default_selling_price?: number | null;
+    unit_price?: number | null;
     quoted_price?: number | null;
     price_source?: string | null;
 }
@@ -191,7 +191,7 @@ export interface ImagingStudyOption {
     name: string;
     modality: string;
     body_part: string | null;
-    base_price: number | null;
+    unit_price: number | null;
     quoted_price?: number | null;
     price_source?: string | null;
 }
@@ -256,7 +256,7 @@ export interface FacilityServiceOption {
     service_code: string;
     name: string;
     category: string;
-    selling_price?: number | null;
+    unit_price?: number | null;
     quoted_price?: number | null;
     price_source?: string | null;
     is_billable: boolean;

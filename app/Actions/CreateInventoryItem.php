@@ -23,7 +23,7 @@ final readonly class CreateInventoryItem
                 'created_by' => Auth::id(),
             ]);
 
-            $this->syncInventoryItemChargeMaster->handle($inventoryItem);
+            $this->syncInventoryItemChargeMaster->handle($inventoryItem, $data->unitPrice);
 
             return $inventoryItem->refresh();
         });

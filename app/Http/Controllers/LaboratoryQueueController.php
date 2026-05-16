@@ -88,7 +88,7 @@ final readonly class LaboratoryQueueController implements HasMiddleware
 
                     $this->applyStageFilter($query, $stage)
                         ->with([
-                            'test:id,test_code,test_name,description,lab_test_category_id,result_type_id,base_price',
+                            'test:id,test_code,test_name,description,lab_test_category_id,result_type_id,charge_master_id',
                             'test.labCategory:id,name',
                             'test.specimenTypes:id,name',
                             'test.resultTypeDefinition:id,code,name',

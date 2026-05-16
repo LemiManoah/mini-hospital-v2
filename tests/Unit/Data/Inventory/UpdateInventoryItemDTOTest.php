@@ -36,7 +36,7 @@ it('normalizes update inventory item input into a typed dto', function (): void 
         'minimum_stock_level' => 20.0,
         'reorder_level' => 40.0,
         'default_purchase_price' => 2.5,
-        'default_selling_price' => null,
+        'unit_price' => null,
         'expires' => false,
         'is_controlled' => false,
         'is_active' => true,
@@ -45,5 +45,6 @@ it('normalizes update inventory item input into a typed dto', function (): void 
     expect($dto->itemType)->toBe(InventoryItemType::SUPPLY->value)
         ->and($dto->name)->toBe('Gloves')
         ->and($dto->minimumStockLevel)->toBe(20.0)
-        ->and($dto->defaultPurchasePrice)->toBe(2.5);
+        ->and($dto->defaultPurchasePrice)->toBe(2.5)
+        ->and($dto->unitPrice)->toBeNull();
 });

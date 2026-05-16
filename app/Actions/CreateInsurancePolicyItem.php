@@ -12,7 +12,7 @@ final readonly class CreateInsurancePolicyItem
 {
     /**
      * @param  array{
-     *     item_id: string,
+     *     charge_master_id: string,
      *     price: numeric-string,
      *     copay_type: string,
      *     copay_value: numeric-string,
@@ -25,8 +25,7 @@ final readonly class CreateInsurancePolicyItem
     {
         return $policy->items()->create([
             'tenant_id' => $policy->tenant_id,
-            'item_type' => $policy->policy_type->itemType()->value,
-            'item_id' => $data['item_id'],
+            'charge_master_id' => $data['charge_master_id'],
             'price' => $data['price'],
             'copay_type' => $data['copay_type'],
             'copay_value' => $data['copay_value'],

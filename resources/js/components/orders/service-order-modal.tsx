@@ -159,7 +159,7 @@ export function ServiceOrderModal({
                                             Quoted price:{' '}
                                             {formatMoney(
                                                 selectedFacilityService.quoted_price ??
-                                                    selectedFacilityService.selling_price,
+                                                    selectedFacilityService.unit_price,
                                             )}
                                         </p>
                                         <div className="mt-2 flex flex-wrap gap-2">

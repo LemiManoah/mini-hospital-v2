@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Actions\SyncInventoryItemChargeMaster;
 use App\Enums\DrugCategory;
 use App\Enums\DrugDosageForm;
 use App\Enums\InventoryItemType;
@@ -34,8 +35,10 @@ final class InventoryItemSeeder extends Seeder
             ->pluck('id', 'symbol')
             ->map(static fn (mixed $id): ?string => is_string($id) ? $id : null);
 
+        $syncChargeMaster = resolve(SyncInventoryItemChargeMaster::class);
+
         foreach ($this->drugItems() as $item) {
-            InventoryItem::query()->updateOrCreate(
+            $inventoryItem = InventoryItem::query()->updateOrCreate(
                 [
                     'tenant_id' => $tenant->id,
                     'item_type' => InventoryItemType::DRUG->value,
@@ -57,7 +60,6 @@ final class InventoryItemSeeder extends Seeder
                     'minimum_stock_level' => $item['minimum_stock_level'],
                     'reorder_level' => $item['reorder_level'],
                     'default_purchase_price' => $item['default_purchase_price'],
-                    'default_selling_price' => $item['default_selling_price'],
                     'expires' => $item['expires'],
                     'is_controlled' => false,
                     'is_active' => true,
@@ -65,6 +67,8 @@ final class InventoryItemSeeder extends Seeder
                     'updated_by' => $creator?->id,
                 ],
             );
+
+            $syncChargeMaster->handle($inventoryItem, $item['unit_price']);
         }
 
         foreach ($this->nonDrugItems() as $item) {
@@ -84,7 +88,6 @@ final class InventoryItemSeeder extends Seeder
                     'minimum_stock_level' => $item['minimum_stock_level'],
                     'reorder_level' => $item['reorder_level'],
                     'default_purchase_price' => $item['default_purchase_price'],
-                    'default_selling_price' => $item['default_selling_price'],
                     'expires' => $item['expires'],
                     'is_active' => true,
                     'created_by' => $creator?->id,
@@ -107,7 +110,7 @@ final class InventoryItemSeeder extends Seeder
      *     minimum_stock_level: int,
      *     reorder_level: int,
      *     default_purchase_price: int,
-     *     default_selling_price: int,
+     *     unit_price: int,
      *     expires: bool
      * }>
      */
@@ -126,7 +129,7 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 800,
                 'reorder_level' => 1200,
                 'default_purchase_price' => 120,
-                'default_selling_price' => 300,
+                'unit_price' => 300,
                 'expires' => true,
             ],
             [
@@ -141,7 +144,7 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 500,
                 'reorder_level' => 900,
                 'default_purchase_price' => 180,
-                'default_selling_price' => 500,
+                'unit_price' => 500,
                 'expires' => true,
             ],
             [
@@ -156,7 +159,7 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 240,
                 'reorder_level' => 480,
                 'default_purchase_price' => 350,
-                'default_selling_price' => 900,
+                'unit_price' => 900,
                 'expires' => true,
             ],
             [
@@ -171,7 +174,7 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 30,
                 'reorder_level' => 60,
                 'default_purchase_price' => 18000,
-                'default_selling_price' => 26000,
+                'unit_price' => 26000,
                 'expires' => true,
             ],
             [
@@ -186,7 +189,7 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 200,
                 'reorder_level' => 400,
                 'default_purchase_price' => 220,
-                'default_selling_price' => 650,
+                'unit_price' => 650,
                 'expires' => true,
             ],
             [
@@ -201,7 +204,7 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 80,
                 'reorder_level' => 150,
                 'default_purchase_price' => 2500,
-                'default_selling_price' => 6500,
+                'unit_price' => 6500,
                 'expires' => true,
             ],
         ];
@@ -217,7 +220,6 @@ final class InventoryItemSeeder extends Seeder
      *     minimum_stock_level: int,
      *     reorder_level: int,
      *     default_purchase_price: int,
-     *     default_selling_price: int|null,
      *     expires: bool
      * }>
      */
@@ -233,7 +235,6 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 120,
                 'reorder_level' => 200,
                 'default_purchase_price' => 18000,
-                'default_selling_price' => null,
                 'expires' => true,
             ],
             [
@@ -245,7 +246,6 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 200,
                 'reorder_level' => 350,
                 'default_purchase_price' => 250,
-                'default_selling_price' => null,
                 'expires' => true,
             ],
             [
@@ -257,7 +257,6 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 20,
                 'reorder_level' => 40,
                 'default_purchase_price' => 145000,
-                'default_selling_price' => null,
                 'expires' => true,
             ],
             [
@@ -269,7 +268,6 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 60,
                 'reorder_level' => 120,
                 'default_purchase_price' => 1200,
-                'default_selling_price' => null,
                 'expires' => true,
             ],
             [
@@ -281,7 +279,6 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 80,
                 'reorder_level' => 150,
                 'default_purchase_price' => 3500,
-                'default_selling_price' => null,
                 'expires' => true,
             ],
             [
@@ -293,7 +290,6 @@ final class InventoryItemSeeder extends Seeder
                 'minimum_stock_level' => 12,
                 'reorder_level' => 24,
                 'default_purchase_price' => 9500,
-                'default_selling_price' => null,
                 'expires' => false,
             ],
         ];

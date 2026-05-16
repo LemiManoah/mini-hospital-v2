@@ -12,6 +12,7 @@ use App\Enums\ImagingPriority;
 use App\Enums\InsurancePolicyType;
 use App\Enums\PregnancyStatus;
 use App\Enums\Priority;
+use App\Models\ChargeMaster;
 use App\Models\FacilityService;
 use App\Models\ImagingStudyCatalog;
 use App\Models\InsurancePolicyItem;
@@ -31,33 +32,33 @@ final readonly class VisitOrderOptions
             ->where('is_active', true)
             ->with(['chargeMaster', 'labCategory:id,name'])
             ->orderBy('test_name')
-            ->get(['id', 'test_code', 'test_name', 'lab_test_category_id', 'base_price', 'charge_master_id']);
+            ->get(['id', 'test_code', 'test_name', 'lab_test_category_id', 'charge_master_id']);
 
         $drugs = InventoryItem::query()
             ->drugs()
             ->where('is_active', true)
             ->with('chargeMaster')
             ->orderBy('generic_name')
-            ->get(['id', 'generic_name', 'brand_name', 'strength', 'dosage_form', 'default_selling_price', 'charge_master_id']);
+            ->get(['id', 'generic_name', 'brand_name', 'strength', 'dosage_form', 'charge_master_id']);
 
         $facilityServices = FacilityService::query()
             ->where('is_active', true)
             ->with('chargeMaster')
             ->orderBy('category')
             ->orderBy('name')
-            ->get(['id', 'service_code', 'name', 'category', 'selling_price', 'charge_master_id', 'is_billable']);
+            ->get(['id', 'service_code', 'name', 'category', 'charge_master_id', 'is_billable']);
 
         $imagingStudies = ImagingStudyCatalog::query()
             ->where('is_active', true)
             ->with('chargeMaster')
             ->orderBy('modality')
             ->orderBy('name')
-            ->get(['id', 'code', 'name', 'modality', 'body_part', 'base_price', 'charge_master_id']);
+            ->get(['id', 'code', 'name', 'modality', 'body_part', 'charge_master_id']);
 
-        $labPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::TEST, $this->normalizeStringIds($labTests->pluck('id')->all()));
-        $drugPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::DRUG, $this->normalizeStringIds($drugs->pluck('id')->all()));
-        $servicePriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::SERVICE, $this->normalizeStringIds($facilityServices->pluck('id')->all()));
-        $imagingPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::IMAGING, $this->normalizeStringIds($imagingStudies->pluck('id')->all()));
+        $labPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::TEST, $this->normalizeStringIds($labTests->pluck('charge_master_id')->all()));
+        $drugPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::DRUG, $this->normalizeStringIds($drugs->pluck('charge_master_id')->all()));
+        $servicePriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::SERVICE, $this->normalizeStringIds($facilityServices->pluck('charge_master_id')->all()));
+        $imagingPriceMap = $this->activeInsurancePriceMap($visit, BillableItemType::IMAGING, $this->normalizeStringIds($imagingStudies->pluck('charge_master_id')->all()));
 
         return [
             'labTestOptions' => $labTests
@@ -66,9 +67,9 @@ final readonly class VisitOrderOptions
                     'test_code' => $test->test_code,
                     'test_name' => $test->test_name,
                     'category' => $test->category,
-                    'base_price' => $test->base_price,
-                    'quoted_price' => $labPriceMap[$test->id] ?? $this->chargeMasterPrice($test) ?? $test->base_price,
-                    'price_source' => isset($labPriceMap[$test->id]) ? 'insurance_package' : 'catalog_base',
+                    'unit_price' => $this->chargeMasterPrice($test),
+                    'quoted_price' => $this->quotedPrice($labPriceMap, $test->charge_master_id, $this->chargeMasterPrice($test)),
+                    'price_source' => $this->hasInsurancePrice($labPriceMap, $test->charge_master_id) ? 'insurance_package' : 'catalog_base',
                 ])
                 ->all(),
             'drugOptions' => $drugs
@@ -78,9 +79,9 @@ final readonly class VisitOrderOptions
                     'brand_name' => $drug->brand_name,
                     'strength' => $drug->strength,
                     'dosage_form' => $drug->dosage_form?->value,
-                    'default_selling_price' => $drug->default_selling_price,
-                    'quoted_price' => $drugPriceMap[$drug->id] ?? $this->chargeMasterPrice($drug) ?? $drug->default_selling_price,
-                    'price_source' => isset($drugPriceMap[$drug->id]) ? 'insurance_package' : 'catalog_base',
+                    'unit_price' => $this->chargeMasterPrice($drug),
+                    'quoted_price' => $this->quotedPrice($drugPriceMap, $drug->charge_master_id, $this->chargeMasterPrice($drug)),
+                    'price_source' => $this->hasInsurancePrice($drugPriceMap, $drug->charge_master_id) ? 'insurance_package' : 'catalog_base',
                 ])
                 ->all(),
             'labPriorities' => collect(Priority::cases())
@@ -125,9 +126,9 @@ final readonly class VisitOrderOptions
                     'name' => $study->name,
                     'modality' => $study->modality->value,
                     'body_part' => $study->body_part,
-                    'base_price' => $study->base_price,
-                    'quoted_price' => $imagingPriceMap[$study->id] ?? $this->chargeMasterPrice($study) ?? $study->base_price,
-                    'price_source' => isset($imagingPriceMap[$study->id]) ? 'insurance_package' : 'catalog_base',
+                    'unit_price' => $this->chargeMasterPrice($study),
+                    'quoted_price' => $this->quotedPrice($imagingPriceMap, $study->charge_master_id, $this->chargeMasterPrice($study)),
+                    'price_source' => $this->hasInsurancePrice($imagingPriceMap, $study->charge_master_id) ? 'insurance_package' : 'catalog_base',
                 ])
                 ->all(),
             'facilityServiceOptions' => $facilityServices
@@ -136,9 +137,9 @@ final readonly class VisitOrderOptions
                     'service_code' => $service->service_code,
                     'name' => $service->name,
                     'category' => $service->category->value,
-                    'selling_price' => $service->selling_price,
-                    'quoted_price' => $servicePriceMap[$service->id] ?? $this->chargeMasterPrice($service) ?? $service->selling_price,
-                    'price_source' => isset($servicePriceMap[$service->id]) ? 'insurance_package' : 'catalog_base',
+                    'unit_price' => $this->chargeMasterPrice($service),
+                    'quoted_price' => $this->quotedPrice($servicePriceMap, $service->charge_master_id, $this->chargeMasterPrice($service)),
+                    'price_source' => $this->hasInsurancePrice($servicePriceMap, $service->charge_master_id) ? 'insurance_package' : 'catalog_base',
                     'is_billable' => $service->is_billable,
                 ])
                 ->all(),
@@ -146,16 +147,16 @@ final readonly class VisitOrderOptions
     }
 
     /**
-     * @param  array<int, string>  $billableIds
+     * @param  array<int, string>  $chargeMasterIds
      * @return array<string, float>
      */
-    private function activeInsurancePriceMap(PatientVisit $visit, BillableItemType $type, array $billableIds): array
+    private function activeInsurancePriceMap(PatientVisit $visit, BillableItemType $type, array $chargeMasterIds): array
     {
         $insurancePackageId = $visit->payer?->insurance_package_id;
         $branchId = $visit->facility_branch_id;
         $policyType = InsurancePolicyType::fromBillableItemType($type);
 
-        if ($insurancePackageId === null || $billableIds === [] || ! $policyType instanceof InsurancePolicyType) {
+        if ($insurancePackageId === null || $chargeMasterIds === [] || ! $policyType instanceof InsurancePolicyType) {
             return [];
         }
 
@@ -163,9 +164,9 @@ final readonly class VisitOrderOptions
 
         return InsurancePolicyItem::query()
             ->where('tenant_id', $visit->tenant_id)
-            ->where('item_type', $type->value)
-            ->whereIn('item_id', $billableIds)
+            ->whereIn('charge_master_id', $chargeMasterIds)
             ->where('status', GeneralStatus::ACTIVE->value)
+            ->whereHas('chargeMaster', static fn (Builder $query): Builder => $query->where('billable_type', $type->value))
             ->whereHas('policy', function (Builder $query) use ($branchId, $insurancePackageId, $policyType, $today): void {
                 $query
                     ->where('facility_branch_id', $branchId)
@@ -190,10 +191,10 @@ final readonly class VisitOrderOptions
                     ->orWhere('effective_to', '>=', $today);
             })
             ->orderByDesc('effective_from')
-            ->get(['item_id', 'price'])
-            ->unique('item_id')
+            ->get(['charge_master_id', 'price'])
+            ->unique('charge_master_id')
             ->mapWithKeys(static fn (InsurancePolicyItem $price): array => [
-                $price->item_id => (float) $price->price,
+                $price->charge_master_id => (float) $price->price,
             ])
             ->all();
     }
@@ -212,6 +213,45 @@ final readonly class VisitOrderOptions
 
     private function chargeMasterPrice(FacilityService|ImagingStudyCatalog|InventoryItem|LabTestCatalog $model): ?float
     {
-        return $model->chargeMaster === null ? null : (float) $model->chargeMaster->unit_price;
+        $chargeMaster = $model->chargeMaster;
+
+        if (! $chargeMaster instanceof ChargeMaster) {
+            return null;
+        }
+
+        if (! $chargeMaster->billable_type instanceof BillableItemType || $chargeMaster->billable_id === null) {
+            return (float) $chargeMaster->unit_price;
+        }
+
+        /** @var ChargeMaster|null $current */
+        $current = ChargeMaster::query()
+            ->where('tenant_id', $chargeMaster->tenant_id)
+            ->where('facility_branch_id', $chargeMaster->facility_branch_id)
+            ->where('billable_type', $chargeMaster->billable_type)
+            ->where('billable_id', $chargeMaster->billable_id)
+            ->effectiveOn(now()->toDateString())
+            ->orderByDesc('effective_from')
+            ->latest('created_at')
+            ->first();
+
+        return $current instanceof ChargeMaster ? (float) $current->unit_price : null;
+    }
+
+    /**
+     * @param  array<string, float>  $priceMap
+     */
+    private function quotedPrice(array $priceMap, ?string $chargeMasterId, ?float $fallback): ?float
+    {
+        return $chargeMasterId !== null && array_key_exists($chargeMasterId, $priceMap)
+            ? $priceMap[$chargeMasterId]
+            : $fallback;
+    }
+
+    /**
+     * @param  array<string, float>  $priceMap
+     */
+    private function hasInsurancePrice(array $priceMap, ?string $chargeMasterId): bool
+    {
+        return $chargeMasterId !== null && array_key_exists($chargeMasterId, $priceMap);
     }
 }

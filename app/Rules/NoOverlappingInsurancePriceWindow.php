@@ -16,8 +16,7 @@ final readonly class NoOverlappingInsurancePriceWindow implements ValidationRule
     public function __construct(
         private string $tenantId,
         private string $insurancePolicyId,
-        private string $itemType,
-        private string $itemId,
+        private string $chargeMasterId,
         private string $effectiveFrom,
         private ?string $effectiveTo = null,
         private ?string $ignoreId = null,
@@ -31,8 +30,7 @@ final readonly class NoOverlappingInsurancePriceWindow implements ValidationRule
         $query = InsurancePolicyItem::query()
             ->where('tenant_id', $this->tenantId)
             ->where('insurance_policy_id', $this->insurancePolicyId)
-            ->where('item_type', $this->itemType)
-            ->where('item_id', $this->itemId)
+            ->where('charge_master_id', $this->chargeMasterId)
             ->where('status', GeneralStatus::ACTIVE->value)
             ->when(
                 $this->ignoreId !== null && $this->ignoreId !== '',

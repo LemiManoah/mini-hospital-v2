@@ -31,6 +31,10 @@ final class ResolveVisitChargeAmount
         ChargeMaster $chargeMaster,
         float $quantity = 1.0,
     ): ?VisitChargePricing {
+        $chargeMaster = $this->currentChargeMaster($chargeMaster)
+            ?? $this->completeChargeMaster($chargeMaster)
+            ?? $chargeMaster;
+
         if (! $this->chargeMasterIsUsable($chargeMaster)) {
             return null;
         }
@@ -71,9 +75,12 @@ final class ResolveVisitChargeAmount
 
             $policyItem = InsurancePolicyItem::query()
                 ->where('tenant_id', $visit->tenant_id)
-                ->where('item_type', $billableType->value)
-                ->where('item_id', $billableId)
                 ->where('status', GeneralStatus::ACTIVE->value)
+                ->whereHas('chargeMaster', static function (Builder $query) use ($billableType, $billableId): void {
+                    $query
+                        ->where('billable_type', $billableType->value)
+                        ->where('billable_id', $billableId);
+                })
                 ->whereHas('policy', function (Builder $query) use ($payer, $policyType, $visit): void {
                     $today = now()->toDateString();
 
@@ -151,6 +158,53 @@ final class ResolveVisitChargeAmount
         }
 
         return true;
+    }
+
+    private function currentChargeMaster(ChargeMaster $chargeMaster): ?ChargeMaster
+    {
+        $chargeMaster = $this->completeChargeMaster($chargeMaster) ?? $chargeMaster;
+
+        if (! $chargeMaster->billable_type instanceof BillableItemType || $chargeMaster->billable_id === null) {
+            return null;
+        }
+
+        /** @var ChargeMaster|null $current */
+        $current = ChargeMaster::query()
+            ->where('tenant_id', $chargeMaster->tenant_id)
+            ->where('facility_branch_id', $chargeMaster->facility_branch_id)
+            ->where('billable_type', $chargeMaster->billable_type)
+            ->where('billable_id', $chargeMaster->billable_id)
+            ->effectiveOn(now()->toDateString())
+            ->orderByDesc('effective_from')
+            ->latest('created_at')
+            ->first();
+
+        return $current;
+    }
+
+    private function completeChargeMaster(ChargeMaster $chargeMaster): ?ChargeMaster
+    {
+        if ($this->hasChargeMasterPricingAttributes($chargeMaster)) {
+            return $chargeMaster;
+        }
+
+        /** @var ChargeMaster|null $complete */
+        $complete = ChargeMaster::query()->find($chargeMaster->getKey());
+
+        return $complete;
+    }
+
+    private function hasChargeMasterPricingAttributes(ChargeMaster $chargeMaster): bool
+    {
+        $attributes = $chargeMaster->getAttributes();
+
+        return array_key_exists('billable_type', $attributes)
+            && array_key_exists('billable_id', $attributes)
+            && array_key_exists('facility_branch_id', $attributes)
+            && array_key_exists('unit_price', $attributes)
+            && array_key_exists('is_active', $attributes)
+            && array_key_exists('effective_from', $attributes)
+            && array_key_exists('effective_to', $attributes);
     }
 
     private function floatValue(mixed $value): float

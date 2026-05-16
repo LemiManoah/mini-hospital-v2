@@ -93,7 +93,7 @@ type PolicyFormData = {
     effective_to: string;
     status: 'active' | 'inactive';
     items: {
-        item_id: string;
+        charge_master_id: string;
         price: string;
         copay_type: InsuranceCopayType;
         copay_value: string;
@@ -104,7 +104,7 @@ type PolicyFormData = {
 };
 
 type PolicyItemFormData = {
-    item_id: string;
+    charge_master_id: string;
     price: string;
     copay_type: InsuranceCopayType;
     copay_value: string;
@@ -202,7 +202,7 @@ export default function InsurancePackageShow({
         status: 'active',
         items: [
             {
-                item_id: '',
+                charge_master_id: '',
                 price: '',
                 copay_type: 'none',
                 copay_value: '0',
@@ -214,7 +214,7 @@ export default function InsurancePackageShow({
     });
 
     const itemForm = useForm<PolicyItemFormData>({
-        item_id: '',
+        charge_master_id: '',
         price: '',
         copay_type: 'none',
         copay_value: '0',
@@ -248,7 +248,7 @@ export default function InsurancePackageShow({
             status: 'active',
             items: [
                 {
-                    item_id: '',
+                    charge_master_id: '',
                     price: '',
                     copay_type: 'none',
                     copay_value: '0',
@@ -273,7 +273,7 @@ export default function InsurancePackageShow({
             status: policy.status,
             items: [
                 {
-                    item_id: '',
+                    charge_master_id: '',
                     price: '',
                     copay_type: 'none',
                     copay_value: '0',
@@ -330,7 +330,7 @@ export default function InsurancePackageShow({
             ...data,
             items:
                 includeInitialItem &&
-                data.items[0]?.item_id &&
+                data.items[0]?.charge_master_id &&
                 data.items[0]?.price
                     ? data.items
                     : [],
@@ -345,7 +345,7 @@ export default function InsurancePackageShow({
         itemForm.reset();
         itemForm.clearErrors();
         itemForm.setData({
-            item_id: '',
+            charge_master_id: '',
             price: '',
             copay_type: 'none',
             copay_value: '0',
@@ -361,7 +361,7 @@ export default function InsurancePackageShow({
     function openEditItem(policy: InsurancePolicy, item: InsurancePolicyItem) {
         itemForm.clearErrors();
         itemForm.setData({
-            item_id: item.itemId,
+            charge_master_id: item.chargeMasterId,
             price: item.price,
             copay_type: item.copayType,
             copay_value: item.copayValue,
@@ -596,7 +596,7 @@ export default function InsurancePackageShow({
                                                 value as InsurancePolicyType,
                                             items: data.items.map((item) => ({
                                                 ...item,
-                                                item_id: '',
+                                                charge_master_id: '',
                                             })),
                                         }));
                                     }}
@@ -713,12 +713,12 @@ export default function InsurancePackageShow({
                                             <Select
                                                 value={
                                                     policyForm.data.items[0]
-                                                        ?.item_id ?? ''
+                                                        ?.charge_master_id ?? ''
                                                 }
                                                 onValueChange={(value) =>
                                                     setInitialItemField(
                                                         policyForm,
-                                                        'item_id',
+                                                        'charge_master_id',
                                                         value,
                                                     )
                                                 }
@@ -746,7 +746,7 @@ export default function InsurancePackageShow({
                                             <InputError
                                                 message={nestedError(
                                                     policyForm.errors,
-                                                    'items.0.item_id',
+                                                    'items.0.charge_master_id',
                                                 )}
                                             />
                                         </div>
@@ -921,15 +921,17 @@ export default function InsurancePackageShow({
 
                     <form onSubmit={submitItem} className="space-y-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="item_id">Item</Label>
+                            <Label htmlFor="charge_master_id">
+                                Charge master item
+                            </Label>
                             <Select
-                                value={itemForm.data.item_id}
+                                value={itemForm.data.charge_master_id}
                                 onValueChange={(value) =>
-                                    itemForm.setData('item_id', value)
+                                    itemForm.setData('charge_master_id', value)
                                 }
                                 disabled={editingItem !== null}
                             >
-                                <SelectTrigger id="item_id">
+                                <SelectTrigger id="charge_master_id">
                                     <SelectValue placeholder="Select item" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -943,7 +945,9 @@ export default function InsurancePackageShow({
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <InputError message={itemForm.errors.item_id} />
+                            <InputError
+                                message={itemForm.errors.charge_master_id}
+                            />
                         </div>
 
                         <div className="grid gap-2">
@@ -1544,7 +1548,7 @@ function setInitialItemField(
         items: [
             {
                 ...(data.items[0] ?? {
-                    item_id: '',
+                    charge_master_id: '',
                     price: '',
                     copay_type: 'none',
                     copay_value: '0',

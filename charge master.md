@@ -4,7 +4,7 @@
 
 Make `ChargeMaster` the canonical pricing catalog for every billable clinical service in the system.
 
-Today, `ChargeMaster` exists, but it is mostly a mirror of `FacilityService` pricing. The actual billing actions still read fallback prices from domain tables such as `FacilityService.selling_price`, `LabOrderItem.price`, and `InventoryItem.default_selling_price`. The goal is to invert that relationship:
+Today, `ChargeMaster` exists and is now the default price source for the active billable catalogs. Earlier billing actions used to read fallback prices from domain tables such as old facility-service prices, lab catalog base prices, imaging catalog base prices, and inventory selling prices. The goal is to keep that relationship inverted:
 
 ```text
 ChargeMaster is the price source.
@@ -35,7 +35,7 @@ For `FacilityService`, `SyncFacilityServiceChargeMaster` creates or updates a ch
 The current facility-service flow is:
 
 ```text
-FacilityService.selling_price
+Facility service form/import unit_price
         |
         v
 SyncFacilityServiceChargeMaster
@@ -47,18 +47,18 @@ ChargeMaster.unit_price
 VisitCharge.charge_master_id
 ```
 
-But the billing price is still read from `FacilityService.selling_price`, not from `ChargeMaster.unit_price`.
+Facility-service billing now reads from `ChargeMaster.unit_price`.
 
 ### Where pricing currently lives
 
 - Consultations: `FacilityService` rows marked `is_consultation -> ChargeMaster`
-- Facility services: `FacilityService.selling_price`
-- Lab tests: `LabTestCatalog.base_price`, copied to `LabOrderItem.price`
-- Pharmacy: `InventoryItem.default_selling_price`
+- Facility services: `ChargeMaster.unit_price`
+- Lab tests: `ChargeMaster.unit_price`, copied to `LabOrderItem.price` as a snapshot
+- Pharmacy: `InventoryItem -> ChargeMaster.unit_price`
 - Insurance: `InsurancePolicyItem.price`
-- Imaging: no pricing path yet
+- Imaging: `ImagingStudyCatalog -> ChargeMaster.unit_price`
 
-This means `ChargeMaster` is not really the source of truth. It is only partially synchronized metadata.
+This means `ChargeMaster` is now the normal source of truth, with `InsurancePolicyItem.price` acting as a payer-specific override and `VisitCharge`/order item rows storing historical snapshots.
 
 ---
 
@@ -167,10 +167,6 @@ Keep:
 - `charge_master_id`
 - `is_active`
 
-Eventually remove or stop using:
-
-- `selling_price`
-
 `ChargeMaster.unit_price` should become the displayed and billed price.
 
 Consultation services are regular facility services with `is_consultation = true`.
@@ -200,11 +196,7 @@ Target billing:
 LabOrderItem -> LabTestCatalog -> ChargeMaster
 ```
 
-`LabOrderItem.price` can remain as a historical snapshot if needed, but it should be filled from `ChargeMaster.unit_price`, not directly from `LabTestCatalog.base_price`.
-
-Eventually remove or stop using:
-
-- `LabTestCatalog.base_price`
+`LabOrderItem.price` remains as a historical snapshot filled from `ChargeMaster.unit_price`.
 
 ### 4. `InventoryItem`
 
@@ -214,9 +206,7 @@ Add:
 
 Not every inventory item must be billable. Clinical drugs that can be dispensed and billed should have a charge master row.
 
-Eventually remove or stop using for billing:
-
-- `default_selling_price`
+The removed `default_selling_price` column is no longer used for billing or catalog management.
 
 ### 5. Imaging
 
@@ -249,7 +239,7 @@ This avoids billing from raw `modality + body_part` text.
 
 ### 1. Replace `SyncFacilityServiceChargeMaster`
 
-Current behavior mirrors `FacilityService.selling_price` into `ChargeMaster`.
+Current behavior writes facility service prices into `ChargeMaster`.
 
 Target behavior should be one of:
 
@@ -306,7 +296,7 @@ FacilityServiceOrder
   -> UpsertVisitCharge
 ```
 
-Avoid reading `FacilityService.selling_price`.
+Avoid reading facility-service model prices.
 
 ### 5. Update `SyncLabOrderCharge`
 
@@ -397,6 +387,21 @@ This requires imaging orders to reference an imaging study catalog row.
 - `SyncDispensingRecordCharge` creates one `VisitCharge` per posted `DispensingRecordItem`.
 - `PostDispense` now triggers dispensing-item charge sync after the record is posted.
 
+### Completed slice 6: import cleanup for charge master prices
+
+- Facility service imports now use `unit_price` as the charge-master-facing price column.
+- Drug and consumable opening stock imports now use `unit_price`.
+- Confirmed drug imports now sync `ChargeMaster` rows for imported or updated drug inventory items.
+- Facility service and inventory import templates now expose `unit_price`.
+
+### Completed slice 7: remove old lab and imaging catalog price fields
+
+- Lab test catalog forms now submit `unit_price`.
+- `CreateLabTestCatalog` and `UpdateLabTestCatalog` write prices through `SyncLabTestCatalogChargeMaster`.
+- `LabTestCatalog.base_price` has been removed from the base schema and application code.
+- Imaging study catalog prices now live only on `ChargeMaster.unit_price`.
+- `ImagingStudyCatalog.base_price` has been removed from the base schema and application code.
+
 ### Development migration policy
 
 Because the database can be refreshed during active development, schema changes should be folded into the original/base migrations instead of adding transitional migrations. Backfill steps are not required until the project has production data to preserve.
@@ -405,8 +410,7 @@ The `charge_masters` base migration now runs before lab and inventory catalogs s
 
 ### Remaining high-value slices
 
-- Move remaining imports so finance/catalog uploads write `ChargeMaster.unit_price` directly.
-- Decide and implement versioned charge master rows for price history.
+- Optional long-term cleanup: point insurance policy items directly to `charge_master_id` instead of matching by `item_type + item_id`.
 
 ## Migration Phases
 
@@ -427,7 +431,7 @@ Create charge master rows through normal create/update actions for:
 - imaging studies - done
 - consultation facility services - done
 
-Keep old price fields during this phase.
+Old catalog price fields have been removed from the active-development schema.
 
 ### Phase 2: Read prices from `ChargeMaster`
 
@@ -451,14 +455,7 @@ Completed:
 - Charge Master edit screen updates `ChargeMaster.unit_price`, active status, and effective dates directly.
 - Accountant role can view and update charge master prices.
 
-Affected areas likely include:
-
-- facility service forms/imports
-- lab test catalog forms/imports
-- inventory item forms/imports
-- consultation facility service setup
-- insurance policy item setup
-- future imaging catalog setup
+Completed areas include facility service forms/imports, lab test catalog forms, inventory item forms/imports, consultation facility service setup, and imaging catalog sync. Insurance policy item setup still uses payer-specific prices as overrides.
 
 ### Phase 4: Move to line-level billing where needed
 
@@ -471,11 +468,11 @@ This makes invoices, reversals, and insurance claims more accurate.
 
 ### Phase 5: Retire old price fields
 
-Once all reads and writes use `ChargeMaster`, remove or ignore:
+Because this project is still in active development and can use `migrate:fresh`, remove old price columns from base migrations and application code instead of keeping compatibility paths:
 
-- `FacilityService.selling_price`
-- `LabTestCatalog.base_price`
-- `InventoryItem.default_selling_price` for billable drugs
+- `LabTestCatalog.base_price` - done
+- `InventoryItem.default_selling_price` for billable drugs - done
+- `ImagingStudyCatalog.base_price` - done
 
 Keep historical price snapshots on service events and charges where needed.
 
@@ -524,9 +521,7 @@ New CBC test price:
 
 ### Decision 1: One row per billable item or versioned rows?
 
-Current code updates the same charge master row by id. For a true source of truth, versioned rows are better.
-
-Recommended:
+Implemented:
 
 - Use new charge master rows for new effective prices.
 - Keep `billable_type + billable_id` as the stable domain identity.
@@ -565,11 +560,11 @@ Only billable drugs need charge master rows. Non-sale supplies, consumables, and
 
 ### 1. Duplicate price sources during migration
 
-For a while, old fields and `ChargeMaster.unit_price` will both exist. The code must clearly prefer `ChargeMaster`.
+Old domain price fields have been removed during active development. This risk returns only if production data later needs transitional migrations.
 
 ### 2. Existing imports may write old fields
 
-Facility service and inventory imports may need to be updated so they do not silently bypass charge master pricing.
+Facility service and inventory imports now use `unit_price`. Any future catalog imports should follow the same pattern.
 
 ### 3. Repricing old charges could create billing disputes
 
@@ -593,7 +588,7 @@ Completed:
 
 1. Update `ResolveVisitChargeAmount` to accept a `ChargeMaster`.
 2. Update `SyncFacilityServiceOrderCharge` to use `service.chargeMaster.unit_price`.
-3. Update `SyncConsultationCharge` to use charge master pricing instead of `selling_price`.
+3. Update `SyncConsultationCharge` to use charge master pricing.
 4. Add tests proving that changing `ChargeMaster.unit_price` changes new facility-service/consultation charges.
 5. Add `charge_master_id` to lab tests.
 6. Add lab charge master sync.
@@ -607,8 +602,13 @@ Completed:
 14. Move lab billing to one charge per lab order item.
 15. Move pharmacy billing to one charge per posted dispensing record item.
 16. Add a finance/admin Charge Master registry for direct price editing.
+17. Move facility service and inventory upload templates/imports to `unit_price`.
+18. Remove `FacilityService.selling_price` from the base schema and facility-service admin flow.
+19. Remove `InventoryItem.default_selling_price` and unused location item selling-price columns from the base schema and inventory admin flow.
+20. Remove `LabTestCatalog.base_price` and `ImagingStudyCatalog.base_price` from the base schema and app flow.
+21. Implement versioned charge master rows for price changes and keep `VisitCharge` as the historical billing snapshot.
 
-Next move to import cleanup and charge master price versioning.
+Core source-of-truth work is complete. Optional future work is to point insurance policy items directly at charge master rows if stronger catalog identity becomes necessary.
 
 ---
 

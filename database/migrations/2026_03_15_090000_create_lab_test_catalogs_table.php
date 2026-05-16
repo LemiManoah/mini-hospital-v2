@@ -200,7 +200,6 @@ return new class extends Migration
                 $table->foreignUuid('lab_test_category_id')->constrained('lab_test_categories')->onDelete('cascade');
                 $table->foreignUuid('result_type_id')->constrained('result_types')->onDelete('cascade');
                 $table->text('description')->nullable();
-                $table->decimal('base_price', 10, 2)->default(0);
                 $table->foreignUuid('charge_master_id')->nullable()->constrained('charge_masters')->nullOnDelete();
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();

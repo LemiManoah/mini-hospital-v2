@@ -284,7 +284,6 @@ function createPermissionLabTest(Tenant $tenant, Department $department): LabTes
         'test_name' => 'Full Blood Count '.$sequence,
         'lab_test_category_id' => $category->id,
         'result_type_id' => $resultType->id,
-        'base_price' => 0,
         'is_active' => true,
     ]);
 

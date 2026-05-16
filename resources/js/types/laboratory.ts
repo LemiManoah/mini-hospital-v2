@@ -123,7 +123,7 @@ export interface LaboratoryOrderItem {
         result_capture_type?: string | null;
         result_type_name?: string | null;
         description?: string | null;
-        base_price?: number | null;
+        unit_price?: number | null;
         result_options?: { id?: string; label: string }[] | null;
         result_parameters?:
             | {

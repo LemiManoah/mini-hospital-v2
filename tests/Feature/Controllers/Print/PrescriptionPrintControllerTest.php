@@ -138,7 +138,6 @@ function createPrescriptionPrintContext(): array
         'brand_name' => 'Amoxil',
         'item_type' => InventoryItemType::DRUG,
         'strength' => '500mg',
-        'default_selling_price' => 1500,
         'is_active' => true,
         'created_by' => $user->id,
         'updated_by' => $user->id,

@@ -21,8 +21,7 @@ InsuranceCompany
 - **InsurancePackage** — an insurance product under a company (e.g. "Gold Plan", "Staff Cover").
 - **InsurancePolicy** — branch-specific and typed. One package can have three policies per branch: one for pharmacy items, one for lab tests, one for services. Each policy has active date windows and a status.
 - **InsurancePolicyItem** — the actual price list. One row per covered item. Stores:
-  - `item_type` — drug, test, service, imaging, procedure, bed\_day, other
-  - `item_id` — FK to the actual catalog item
+  - `charge_master_id` — FK to the charge master row for the covered item
   - `price` — what the insurer pays for this item
   - `copay_type` — NONE | FIXED | PERCENTAGE
   - `copay_value` — the copay amount or percentage (e.g. 10 means 10% or UGX 10,000)
@@ -82,14 +81,14 @@ When a charge is added to an insured visit:
    - Lab test → LAB policy
    - Facility service / procedure → SERVICES policy
 4. Find an active policy for that package + branch + type.
-5. Find an active `InsurancePolicyItem` for the specific item whose effective dates cover today.
+5. Find an active `InsurancePolicyItem` for the current `charge_master_id` whose effective dates cover today.
 6. Use the policy item price as the insurance rate.
 7. Calculate copay:
    - `NONE` → copay = 0
    - `FIXED` → copay = `copay_value`
    - `PERCENTAGE` → copay = `price × (copay_value / 100)`
 8. Store `copay_amount` on the `VisitCharge`.
-9. If no policy item is found, fall back to the normal catalog/default price.
+9. If no policy item is found, fall back to the current charge master price.
 
 ---
 
@@ -200,3 +199,88 @@ Preview-first is intentional: insurance prices directly affect billing and claim
 - Coverage rules beyond price: authorization requirement, claim codes, annual coverage limits.
 - Price change history: audit log showing which policy item price was in effect when a charge was created.
 - Policy comparison view: compare two packages side by side.
+
+---
+
+## Charge Master Cleanup Implementation Plan
+
+### Goal
+
+Make insurance policy prices point directly at `ChargeMaster` rows instead of carrying a parallel `item_type + item_id` catalog identity.
+
+After this cleanup:
+
+```text
+InsurancePolicyItem -> ChargeMaster
+ChargeMaster -> billable_type + billable_id
+VisitCharge -> charge_master_id + insurance_policy_item_id snapshot
+```
+
+There is no need to preserve legacy `item_type` or `item_id` columns because the project is still in active development and can use `migrate:fresh`.
+
+### Schema
+
+1. Update the base `insurance_policy_items` table.
+2. Remove:
+   - `item_type`
+   - `item_id`
+3. Add:
+   - `charge_master_id` constrained to `charge_masters`
+4. Make policy item uniqueness use:
+   - `tenant_id`
+   - `insurance_policy_id`
+   - `charge_master_id`
+   - `effective_from`
+5. Add a lookup index for:
+   - `tenant_id`
+   - `insurance_policy_id`
+   - `charge_master_id`
+   - `status`
+
+### Model
+
+1. Update `InsurancePolicyItem` casts.
+2. Remove `item_type` and `item_id`.
+3. Add `charge_master_id`.
+4. Add a `chargeMaster()` relationship.
+
+### Validation And Actions
+
+1. Replace policy item request input `item_id` with `charge_master_id`.
+2. Validate selected charge master:
+   - belongs to the same tenant
+   - is active/effective enough for selection
+   - has a `billable_type`
+   - matches the policy type via `InsurancePolicyType::fromBillableItemType`
+3. Update `CreateInsurancePolicy`, `CreateInsurancePolicyItem`, `UpdateInsurancePolicyItem`, and related request payloads to write `charge_master_id`.
+4. Update overlap validation to compare by `charge_master_id`.
+
+### Price Resolution
+
+1. Update `ResolveVisitChargeAmount` to find policy items by `charge_master_id`.
+2. Keep matching current/active insurance policies by branch, package, policy type, and date window.
+3. Preserve fallback to `ChargeMaster.unit_price` when no insurance policy item exists.
+4. Continue storing `insurance_policy_item_id`, `unit_price`, and `copay_amount` on `VisitCharge` as snapshots.
+
+### Options And UI
+
+1. Replace policy item option values with charge master ids.
+2. Display charge master code, description, type, and unit price in insurance screens.
+3. Keep policy creation grouped by policy type, but source options from active charge masters matching that type.
+4. Update import templates to use a `charge_master_code` or `charge_master_id` column instead of item ids.
+5. Resolve imports to charge master rows, then write `charge_master_id`.
+
+### Tests To Update
+
+1. Policy item create/update tests.
+2. Policy import tests.
+3. Visit charge price resolution tests.
+4. Visit order option price map tests.
+5. Any helper that seeds insurance prices.
+
+### Completion Criteria
+
+- `insurance_policy_items` has no `item_type` or `item_id`.
+- No app, database, resource, or test code writes insurance policy item legacy item keys.
+- Insured visit pricing resolves through `charge_master_id`.
+- Insurance import, policy screens, and helper seeders all use charge master identity.
