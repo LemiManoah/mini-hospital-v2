@@ -10,11 +10,13 @@ use App\Models\PatientVisit;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 
 beforeEach(function (): void {
+    $this->withoutMiddleware(ValidateCsrfToken::class);
     $this->seed(PermissionSeeder::class);
 });
 
@@ -189,9 +191,9 @@ it('exposes insurance copay splits for the finance cashiering flow', function ()
             ->where('visits.data.0.payer.billing_type', 'insurance')
             ->where('visits.data.0.payer.insurance_company_name', fn (string $name): bool => str_starts_with($name, 'Test Insurance '))
             ->where('visits.data.0.payer.insurance_package_name', fn (string $name): bool => str_starts_with($name, 'Test Cover '))
-            ->where('visits.data.0.billing.split.patient_responsibility_amount', 50.0)
-            ->where('visits.data.0.billing.split.patient_balance_amount', 50.0)
-            ->where('visits.data.0.billing.split.insurer_responsibility_amount', 100.0));
+            ->where('visits.data.0.billing.split.patient_responsibility_amount', fn (int|float $amount): bool => (float) $amount === 50.0)
+            ->where('visits.data.0.billing.split.patient_balance_amount', fn (int|float $amount): bool => (float) $amount === 50.0)
+            ->where('visits.data.0.billing.split.insurer_responsibility_amount', fn (int|float $amount): bool => (float) $amount === 100.0));
 
     $this->withSession(['active_branch_id' => $branch->id])
         ->actingAs($user)
@@ -199,8 +201,8 @@ it('exposes insurance copay splits for the finance cashiering flow', function ()
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('finance/opd-payments/show')
-            ->where('visit.billing.split.patient_balance_amount', 50.0)
-            ->where('visit.billing.split.insurer_balance_amount', 100.0)
+            ->where('visit.billing.split.patient_balance_amount', fn (int|float $amount): bool => (float) $amount === 50.0)
+            ->where('visit.billing.split.insurer_balance_amount', fn (int|float $amount): bool => (float) $amount === 100.0)
             ->where('visit.charges.0.copay_amount', '50.00'));
 });
 
