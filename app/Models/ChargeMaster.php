@@ -6,7 +6,10 @@ namespace App\Models;
 
 use App\Enums\BillableItemType;
 use App\Traits\BelongsToTenant;
+use Carbon\CarbonImmutable;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -50,6 +53,26 @@ final class ChargeMaster extends Model
     }
 
     /**
+     * @return Attribute<string|null, mixed>
+     */
+    protected function effectiveFrom(): Attribute
+    {
+        return Attribute::make(
+            set: static fn (mixed $value): ?string => self::dateString($value),
+        );
+    }
+
+    /**
+     * @return Attribute<string|null, mixed>
+     */
+    protected function effectiveTo(): Attribute
+    {
+        return Attribute::make(
+            set: static fn (mixed $value): ?string => self::dateString($value),
+        );
+    }
+
+    /**
      * @param  Builder<$this>  $query
      */
     #[Scope]
@@ -65,5 +88,18 @@ final class ChargeMaster extends Model
                 $rangeQuery->whereNull('effective_to')
                     ->orWhere('effective_to', '>=', $date);
             });
+    }
+
+    private static function dateString(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return CarbonImmutable::instance($value)->toDateString();
+        }
+
+        return is_scalar($value) ? CarbonImmutable::parse((string) $value)->toDateString() : null;
     }
 }

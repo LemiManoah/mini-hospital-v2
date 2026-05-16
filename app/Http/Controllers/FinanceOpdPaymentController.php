@@ -278,6 +278,6 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
 
     private static function moneyAmount(mixed $amount): float
     {
-        return max(0.0, round(is_numeric($amount) ? (float) $amount : 0.0, 2));
+        return (float) max(0.0, round(is_numeric($amount) ? (float) $amount : 0.0, 2));
     }
 }
