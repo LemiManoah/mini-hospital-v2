@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Reports;
 
 use App\Actions\Reports\GenerateDailyRevenueReportAction;
+use App\Models\Currency;
+use App\Models\FacilityBranch;
 use App\Models\Payment;
 use App\Models\User;
 use App\Support\BranchContext;
@@ -33,14 +35,16 @@ final readonly class DailyRevenueReportController implements HasMiddleware
     {
         $date = $request->date('date') ?? now();
         $branchId = BranchContext::getActiveBranchId() ?? '';
+        $currencyId = $this->currencyId($request);
 
         $report = $branchId !== ''
-            ? $this->report->handle($date, $branchId)
+            ? $this->report->handle($date, $branchId, $currencyId)
             : null;
 
         return Inertia::render('reports/daily-revenue', [
             'report' => $report,
-            'filters' => ['date' => $date->toDateString()],
+            'filters' => ['date' => $date->toDateString(), 'currency_id' => $currencyId],
+            'currencyOptions' => $this->currencyOptions($request),
         ]);
     }
 
@@ -48,6 +52,7 @@ final readonly class DailyRevenueReportController implements HasMiddleware
     {
         $request->validate([
             'date' => ['nullable', 'date'],
+            'currency_id' => ['nullable', 'uuid', 'exists:currencies,id'],
         ]);
 
         $dateInput = $request->input('date');
@@ -65,7 +70,7 @@ final readonly class DailyRevenueReportController implements HasMiddleware
         /**
          * @var array{date: string, branch_name: string|null, currency: string, total_amount: float, total_count: int, refund_amount: float, net_amount: float, by_method: array<string, float>, rows: Collection<int, Payment>} $data
          */
-        $data = $this->report->handle($date, $branchId);
+        $data = $this->report->handle($date, $branchId, $this->currencyId($request));
 
         $pdf = Pdf::loadView('reports.daily-revenue', array_merge($data, [
             'facilityName' => $data['branch_name'] ?? config('app.name'),
@@ -76,5 +81,38 @@ final readonly class DailyRevenueReportController implements HasMiddleware
         ]))->setPaper('a4');
 
         return $pdf->download(sprintf('daily-revenue-%s.pdf', $date->format('Y-m-d')));
+    }
+
+    private function currencyId(Request $request): ?string
+    {
+        $currencyId = $request->input('currency_id');
+
+        return is_string($currencyId) && $currencyId !== '' ? $currencyId : null;
+    }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    private function currencyOptions(Request $request): array
+    {
+        $user = $request->user();
+        $branch = $user instanceof User ? BranchContext::getActiveBranch($user) : null;
+
+        if (! $branch instanceof FacilityBranch || ! $branch->multi_currency_enabled) {
+            return [];
+        }
+
+        /** @var list<array{value: string, label: string}> $options */
+        $options = $branch->supportedCurrencies()
+            ->orderBy('code')
+            ->get(['currencies.id', 'currencies.code', 'currencies.name'])
+            ->map(static fn (Currency $currency): array => [
+                'value' => $currency->id,
+                'label' => sprintf('%s (%s)', $currency->name, $currency->code),
+            ])
+            ->values()
+            ->all();
+
+        return $options;
     }
 }

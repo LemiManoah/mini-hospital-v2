@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateGeneralSettingsRequest;
-use App\Models\Currency;
 use App\Models\TenantGeneralSetting;
 use App\Support\GeneralSettings\GeneralSettingsRegistry;
 use Illuminate\Http\RedirectResponse;
@@ -32,22 +31,6 @@ final readonly class AdministrationController
         return Inertia::render('administration/general-settings', [
             'sections' => GeneralSettingsRegistry::sections(),
             'values' => GeneralSettingsRegistry::resolveValues($storedValues),
-            'currencies' => Currency::query()
-                ->orderBy('name')
-                ->get(['id', 'code', 'name', 'symbol'])
-                ->map(static fn (Currency $currency): array => [
-                    'value' => $currency->id,
-                    'label' => sprintf(
-                        '%s (%s%s)',
-                        $currency->name,
-                        $currency->code,
-                        $currency->symbol !== ''
-                            ? ' - '.$currency->symbol
-                            : '',
-                    ),
-                ])
-                ->values()
-                ->all(),
         ]);
     }
 
@@ -119,8 +102,8 @@ final readonly class AdministrationController
                 ],
                 [
                     'title' => 'Currencies',
-                    'description' => 'Define supported currencies for the facility and its billing workflows.',
-                    'href' => '/currencies',
+                    'description' => 'Enable multi-currency, select accepted branch currencies, and maintain exchange rates.',
+                    'href' => '/administration/currencies',
                     'permission' => 'currencies.view',
                 ],
                 [

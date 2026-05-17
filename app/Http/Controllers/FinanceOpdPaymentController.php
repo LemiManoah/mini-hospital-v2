@@ -11,6 +11,8 @@ use App\Enums\PayerType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Http\Requests\StoreVisitPaymentRequest;
+use App\Models\Currency;
+use App\Models\FacilityBranch;
 use App\Models\PatientVisit;
 use App\Models\PaymentMethod;
 use App\Models\VisitBilling;
@@ -57,6 +59,9 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
                 'payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
                 'payer.insuranceCompany:id,name',
                 'payer.insurancePackage:id,name',
+                'branch:id,currency_id,multi_currency_enabled',
+                'branch.currency:id,code,name,symbol',
+                'branch.supportedCurrencies:id,code,name,symbol',
                 'billing:id,patient_visit_id,visit_payer_id,payer_type,gross_amount,discount_amount,paid_amount,balance_amount,status,billed_at,settled_at',
                 'charges:id,visit_billing_id,patient_visit_id,description,line_total,copay_amount,status',
             ])
@@ -170,9 +175,13 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
             'payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
             'payer.insuranceCompany:id,name',
             'payer.insurancePackage:id,name',
+            'branch:id,currency_id,multi_currency_enabled',
+            'branch.currency:id,code,name,symbol',
+            'branch.supportedCurrencies:id,code,name,symbol',
             'billing:id,patient_visit_id,visit_payer_id,payer_type,gross_amount,discount_amount,paid_amount,balance_amount,status,billed_at,settled_at',
             'billing.payments' => static fn (HasMany $query): HasMany => $query
-                ->select('id', 'visit_billing_id', 'patient_visit_id', 'payment_method_id', 'receipt_number', 'payment_date', 'amount', 'payment_method', 'reference_number', 'is_refund', 'notes')
+                ->select('id', 'visit_billing_id', 'patient_visit_id', 'payment_method_id', 'currency_id', 'receipt_number', 'payment_date', 'amount', 'tender_amount', 'exchange_rate', 'payment_method', 'reference_number', 'is_refund', 'notes')
+                ->with('currency:id,code,name,symbol')
                 ->latest('payment_date'),
             'billing.discounts' => static fn (HasMany $query): HasMany => $query
                 ->select('id', 'visit_billing_id', 'patient_visit_id', 'amount', 'reason', 'status', 'notes', 'requested_by', 'requested_at', 'approved_by', 'approved_at', 'reversed_by', 'reversed_at', 'reversal_reason')
@@ -196,6 +205,8 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
                 ])
                 ->values()
                 ->all(),
+            'currencyOptions' => $this->currencyOptions($visit),
+            'multiCurrencyEnabled' => $visit->branch instanceof FacilityBranch && (bool) $visit->branch->multi_currency_enabled,
             'audit_activity' => $this->listAuditTimeline->handle(
                 subjects: [
                     $visit->billing,
@@ -280,6 +291,38 @@ final readonly class FinanceOpdPaymentController implements HasMiddleware
     {
         $rounded = round(is_numeric($amount) ? (float) $amount : 0.0, 2);
 
-        return $rounded < 0 ? 0.0 : (float) $rounded;
+        return $rounded < 0 ? 0.0 : $rounded;
+    }
+
+    /**
+     * @return list<array{value: string, label: string, code: string, symbol: string|null, is_base: bool}>
+     */
+    private function currencyOptions(PatientVisit $visit): array
+    {
+        $branch = $visit->branch;
+
+        if ($branch === null || ! $branch->multi_currency_enabled) {
+            return [];
+        }
+
+        $currencies = $branch->supportedCurrencies;
+
+        if ($currencies->isEmpty() && $branch->currency instanceof Currency) {
+            $currencies = new Collection([$branch->currency]);
+        }
+
+        /** @var list<array{value: string, label: string, code: string, symbol: string|null, is_base: bool}> $options */
+        $options = $currencies
+            ->map(static fn (Currency $currency): array => [
+                'value' => $currency->id,
+                'label' => sprintf('%s (%s)', $currency->name, $currency->code),
+                'code' => $currency->code,
+                'symbol' => $currency->symbol,
+                'is_base' => $currency->id === $branch->currency_id,
+            ])
+            ->values()
+            ->all();
+
+        return $options;
     }
 }

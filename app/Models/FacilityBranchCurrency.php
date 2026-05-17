@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,35 +14,25 @@ use Illuminate\Support\Carbon;
  * @property-read string $id
  * @property-read string $tenant_id
  * @property-read string $facility_branch_id
- * @property-read string $from_currency_id
- * @property-read string $to_currency_id
- * @property-read float $rate
- * @property-read Carbon $effective_date
- * @property-read string|null $notes
+ * @property-read string $currency_id
+ * @property-read bool $is_default
  * @property-read string|null $created_by
  * @property-read string|null $updated_by
  * @property-read Carbon $created_at
  * @property-read Carbon $updated_at
- * @property-read Currency $fromCurrency
- * @property-read Currency $toCurrency
  * @property-read FacilityBranch $branch
+ * @property-read Currency $currency
  */
-final class CurrencyExchangeRate extends Model
+final class FacilityBranchCurrency extends Model
 {
+    use BelongsToTenant;
     use HasUuids;
-
-    public $incrementing = false;
-
-    protected $keyType = 'string';
 
     protected $fillable = [
         'tenant_id',
         'facility_branch_id',
-        'from_currency_id',
-        'to_currency_id',
-        'rate',
-        'effective_date',
-        'notes',
+        'currency_id',
+        'is_default',
         'created_by',
         'updated_by',
     ];
@@ -52,9 +43,12 @@ final class CurrencyExchangeRate extends Model
     public function casts(): array
     {
         return [
-            'rate' => 'float',
-            'effective_date' => 'date:Y-m-d',
+            'tenant_id' => 'string',
             'facility_branch_id' => 'string',
+            'currency_id' => 'string',
+            'is_default' => 'boolean',
+            'created_by' => 'string',
+            'updated_by' => 'string',
         ];
     }
 
@@ -65,14 +59,8 @@ final class CurrencyExchangeRate extends Model
     }
 
     /** @return BelongsTo<Currency, $this> */
-    public function fromCurrency(): BelongsTo
+    public function currency(): BelongsTo
     {
-        return $this->belongsTo(Currency::class, 'from_currency_id');
-    }
-
-    /** @return BelongsTo<Currency, $this> */
-    public function toCurrency(): BelongsTo
-    {
-        return $this->belongsTo(Currency::class, 'to_currency_id');
+        return $this->belongsTo(Currency::class);
     }
 }

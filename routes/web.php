@@ -28,6 +28,7 @@ use App\Http\Controllers\DoctorConsultationPrescriptionController;
 use App\Http\Controllers\DoctorScheduleController;
 use App\Http\Controllers\DoctorScheduleExceptionController;
 use App\Http\Controllers\FacilityBranchController;
+use App\Http\Controllers\FacilityCurrencyController;
 use App\Http\Controllers\FacilityImpersonationController;
 use App\Http\Controllers\FacilityManagerController;
 use App\Http\Controllers\FacilityServiceController;
@@ -211,6 +212,10 @@ Route::middleware(['auth', 'verified', 'ensure.active.branch'])->group(function 
     Route::resource('addresses', AddressController::class)->except(['show']);
     Route::get('administration/general-settings', [AdministrationController::class, 'generalSettings'])->name('administration.general-settings');
     Route::patch('administration/general-settings', [AdministrationController::class, 'updateGeneralSettings'])->name('administration.general-settings.update');
+    Route::get('administration/currencies', [FacilityCurrencyController::class, 'index'])->name('administration.currencies.index');
+    Route::patch('administration/currencies/multi-currency', [FacilityCurrencyController::class, 'updateMultiCurrency'])->name('administration.currencies.multi-currency.update');
+    Route::post('administration/currencies/selected', [FacilityCurrencyController::class, 'storeCurrency'])->name('administration.currencies.selected.store');
+    Route::delete('administration/currencies/selected/{currency}', [FacilityCurrencyController::class, 'destroyCurrency'])->name('administration.currencies.selected.destroy');
     Route::get('administration/insurance-setup', [AdministrationController::class, 'insuranceSetup'])->name('administration.insurance-setup');
     Route::get('administration/master-data', [AdministrationController::class, 'masterData'])->name('administration.master-data');
     Route::get('administration/platform', [AdministrationController::class, 'platform'])->name('administration.platform');

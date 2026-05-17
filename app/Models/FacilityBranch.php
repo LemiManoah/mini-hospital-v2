@@ -28,6 +28,7 @@ final class FacilityBranch extends Model
         'status' => GeneralStatus::class,
         'is_main_branch' => 'boolean',
         'has_store' => 'boolean',
+        'multi_currency_enabled' => 'boolean',
     ];
 
     /**
@@ -52,6 +53,16 @@ final class FacilityBranch extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    /**
+     * @return BelongsToMany<Currency, $this>
+     */
+    public function supportedCurrencies(): BelongsToMany
+    {
+        return $this->belongsToMany(Currency::class, 'facility_branch_currencies')
+            ->withPivot(['id', 'tenant_id', 'is_default'])
+            ->withTimestamps();
     }
 
     /**

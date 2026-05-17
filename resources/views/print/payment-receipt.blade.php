@@ -8,6 +8,12 @@
         $currencyCode = $branch?->currency?->code ?? 'UGX';
         $currencySymbol = $branch?->currency?->symbol ?? $currencyCode;
         $formatMoney = static fn ($amount): string => $currencySymbol.' '.number_format((float) ($amount ?? 0), 2);
+        $tenderCurrencyCode = $payment->currency?->code;
+        $tenderCurrencySymbol = $payment->currency?->symbol ?? $tenderCurrencyCode;
+        $formatTenderMoney = static fn ($amount): string => ($tenderCurrencySymbol ?? $currencySymbol).' '.number_format((float) ($amount ?? 0), 2);
+        $hasTenderCurrency = $payment->currency_id !== null
+            && $payment->currency_id !== $branch?->currency_id
+            && $payment->tender_amount !== null;
         $isInsurance = ($payer?->billing_type?->value ?? $payer?->billing_type) === 'insurance';
         $copayAmount = $isInsurance
             ? min((float) ($billing?->gross_amount ?? 0), max(0, (float) ($billing?->charges?->filter(
@@ -89,6 +95,16 @@
                     <td>Visit payment receipt</td>
                     <td>{{ $formatMoney($payment->amount) }}</td>
                 </tr>
+                @if($hasTenderCurrency)
+                    <tr>
+                        <td>Tender received</td>
+                        <td>{{ $formatTenderMoney($payment->tender_amount) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Exchange rate used</td>
+                        <td>1 {{ $tenderCurrencyCode }} = {{ number_format((float) $payment->exchange_rate, 6) }} {{ $currencyCode }}</td>
+                    </tr>
+                @endif
                 @if($isInsurance)
                     <tr>
                         <td>Patient copay responsibility</td>

@@ -14,6 +14,7 @@ final readonly class CreateVisitPaymentDTO
         public ?string $paymentDate,
         public ?string $referenceNumber,
         public ?string $notes,
+        public ?string $currencyId = null,
     ) {}
 
     public static function fromRequest(FormRequest $request): self
@@ -24,7 +25,8 @@ final readonly class CreateVisitPaymentDTO
          *     payment_method_id: string,
          *     payment_date?: string|null,
          *     reference_number?: string|null,
-         *     notes?: string|null
+         *     notes?: string|null,
+         *     currency_id?: string|null
          * } $validated
          */
         $validated = $request->validated();
@@ -35,6 +37,7 @@ final readonly class CreateVisitPaymentDTO
             paymentDate: self::nullableString($validated['payment_date'] ?? null),
             referenceNumber: self::nullableString($validated['reference_number'] ?? null),
             notes: self::nullableString($validated['notes'] ?? null),
+            currencyId: self::nullableString($validated['currency_id'] ?? null),
         );
     }
 

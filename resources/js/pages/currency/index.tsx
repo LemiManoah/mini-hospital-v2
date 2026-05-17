@@ -24,7 +24,7 @@ import { usePermissions } from '@/lib/permissions';
 import { type BreadcrumbItem } from '@/types';
 import { type Currency, type CurrencyIndexPageProps } from '@/types/currency';
 import { Head, Link, router } from '@inertiajs/react';
-import { Lock, TrendingUp, Unlock } from 'lucide-react';
+import { Lock, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -80,21 +80,6 @@ export default function CurrencyIndex({
                     />
                 </div>
                 <div className="flex shrink-0 gap-2">
-                    {hasPermission('currency_exchange_rates.view') ? (
-                        <Button
-                            asChild
-                            variant="outline"
-                            className="border border-zinc-200 shadow-sm dark:border-zinc-800"
-                        >
-                            <Link
-                                href="/currency-exchange-rates"
-                                className="gap-2"
-                            >
-                                <TrendingUp className="h-4 w-4" />
-                                <span>Exchange Rates</span>
-                            </Link>
-                        </Button>
-                    ) : null}
                     {hasPermission('currencies.create') ? (
                         <Button
                             asChild

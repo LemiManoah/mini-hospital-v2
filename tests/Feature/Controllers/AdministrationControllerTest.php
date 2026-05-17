@@ -12,7 +12,9 @@ use App\Models\Tenant;
 use App\Models\TenantGeneralSetting;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 
 beforeEach(function (): void {
@@ -80,7 +82,7 @@ function createAdministrationContext(): array
 }
 
 it('shows the first release general settings page', function (): void {
-    [, $branch, $user, $currency] = createAdministrationContext();
+    [, $branch, $user] = createAdministrationContext();
 
     $user->givePermissionTo([
         'currencies.view',
@@ -99,13 +101,11 @@ it('shows the first release general settings page', function (): void {
             ->where('values.allow_insured_bypass_upfront_payment', true)
             ->where('values.enable_batch_tracking_when_dispensing', true)
             ->where('values.enforce_fefo', true)
-            ->where('values.allow_partial_dispense', true)
-            ->where('values.default_currency_id', null)
-            ->where('currencies.0.value', $currency->id));
+            ->where('values.allow_partial_dispense', true));
 });
 
 it('stores general settings for the current tenant', function (): void {
-    [$tenant, $branch, $user, $currency] = createAdministrationContext();
+    [$tenant, $branch, $user] = createAdministrationContext();
 
     $user->givePermissionTo([
         'currencies.view',
@@ -119,7 +119,6 @@ it('stores general settings for the current tenant', function (): void {
         'require_payment_before_pharmacy' => false,
         'require_payment_before_procedures' => true,
         'allow_insured_bypass_upfront_payment' => false,
-        'default_currency_id' => $currency->id,
         'patient_number_prefix' => 'PT',
         'receipt_number_prefix' => 'RCT',
         'enable_batch_tracking_when_dispensing' => true,
@@ -146,14 +145,113 @@ it('stores general settings for the current tenant', function (): void {
             ->value('value'))->toBe('0')
         ->and(TenantGeneralSetting::query()
             ->where('tenant_id', $tenant->id)
-            ->where('key', 'pricing.default_currency_id')
-            ->value('value'))->toBe($currency->id)
-        ->and(TenantGeneralSetting::query()
-            ->where('tenant_id', $tenant->id)
             ->where('key', 'pharmacy.enforce_fefo')
             ->value('value'))->toBe('0')
         ->and(TenantGeneralSetting::query()
             ->where('tenant_id', $tenant->id)
             ->where('key', 'pharmacy.allow_partial_dispense')
             ->value('value'))->toBe('0');
+});
+
+it('shows branch currency administration settings', function (): void {
+    [, $branch, $user, $currency] = createAdministrationContext();
+
+    $user->givePermissionTo(['currencies.view']);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->get(route('administration.currencies.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('administration/currencies')
+            ->where('branch.id', $branch->id)
+            ->where('branch.multi_currency_enabled', false)
+            ->where('defaultCurrency.id', $currency->id)
+            ->where('selectedCurrencies.0.id', $currency->id));
+});
+
+it('enables multi currency and adds a branch currency', function (): void {
+    [, $branch, $user] = createAdministrationContext();
+    $currency = Currency::query()->create([
+        'code' => 'USD-T',
+        'name' => 'US Dollar Test',
+        'symbol' => '$',
+    ]);
+
+    $user->givePermissionTo(['currencies.view', 'currencies.update']);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->patch(route('administration.currencies.multi-currency.update'), [
+            'multi_currency_enabled' => true,
+        ])
+        ->assertRedirectToRoute('administration.currencies.index');
+
+    expect($branch->refresh()->multi_currency_enabled)->toBeTrue();
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('administration.currencies.selected.store'), [
+            'currency_id' => $currency->id,
+        ])
+        ->assertRedirectToRoute('administration.currencies.index');
+
+    $this->assertDatabaseHas('facility_branch_currencies', [
+        'facility_branch_id' => $branch->id,
+        'currency_id' => $currency->id,
+        'is_default' => false,
+    ]);
+});
+
+it('stores branch-scoped exchange rates for selected currencies', function (): void {
+    [, $branch, $user] = createAdministrationContext();
+    $currency = Currency::query()->create([
+        'code' => 'KES-T',
+        'name' => 'Kenya Shilling Test',
+        'symbol' => 'KSh',
+    ]);
+
+    $branch->forceFill(['multi_currency_enabled' => true])->save();
+
+    DB::table('facility_branch_currencies')->insert([
+        [
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $branch->tenant_id,
+            'facility_branch_id' => $branch->id,
+            'currency_id' => $branch->currency_id,
+            'is_default' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+        [
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $branch->tenant_id,
+            'facility_branch_id' => $branch->id,
+            'currency_id' => $currency->id,
+            'is_default' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ]);
+
+    $user->givePermissionTo(['currency_exchange_rates.create']);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('currency-exchange-rates.store'), [
+            'from_currency_id' => $currency->id,
+            'to_currency_id' => $branch->currency_id,
+            'rate' => 29.5,
+            'effective_date' => '2026-05-17',
+            'notes' => 'Cash desk rate',
+        ])
+        ->assertRedirectToRoute('administration.currencies.index');
+
+    $this->assertDatabaseHas('currency_exchange_rates', [
+        'tenant_id' => $branch->tenant_id,
+        'facility_branch_id' => $branch->id,
+        'from_currency_id' => $currency->id,
+        'to_currency_id' => $branch->currency_id,
+        'rate' => '29.500000',
+    ]);
 });

@@ -24,7 +24,6 @@ final class UpdateGeneralSettingsRequest extends FormRequest
             'require_payment_before_pharmacy' => ['required', 'boolean'],
             'require_payment_before_procedures' => ['required', 'boolean'],
             'allow_insured_bypass_upfront_payment' => ['required', 'boolean'],
-            'default_currency_id' => ['nullable', 'string', 'exists:currencies,id'],
             'patient_number_prefix' => ['nullable', 'string', 'max:20'],
             'receipt_number_prefix' => ['nullable', 'string', 'max:20'],
             'enable_batch_tracking_when_dispensing' => ['required', 'boolean'],

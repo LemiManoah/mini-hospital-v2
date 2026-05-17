@@ -613,6 +613,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         ],
                     },
                     {
+                        title: 'Currencies',
+                        url: '/administration/currencies',
+                        permission: 'currencies.view',
+                    },
+                    {
                         title: 'Charge Master',
                         url: '/charge-masters',
                         permission: 'charge_masters.view',
@@ -681,7 +686,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             },
                             {
                                 title: 'Currencies',
-                                url: '/currencies',
+                                url: '/administration/currencies',
                                 permission: 'currencies.view',
                             },
                             {

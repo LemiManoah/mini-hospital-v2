@@ -44,8 +44,9 @@ final readonly class VisitPaymentPrintController implements HasMiddleware
         $payment->loadMissing([
             'visit:id,patient_id,facility_branch_id,visit_number',
             'visit.patient:id,patient_number,first_name,last_name,middle_name,phone_number',
-            'visit.branch:id,name,branch_code,currency_id',
+            'visit.branch:id,name,branch_code,currency_id,multi_currency_enabled',
             'visit.branch.currency:id,code,symbol',
+            'currency:id,code,name,symbol',
             'visit.payer:id,patient_visit_id,billing_type,insurance_company_id,insurance_package_id',
             'visit.payer.insuranceCompany:id,name',
             'visit.payer.insurancePackage:id,name',

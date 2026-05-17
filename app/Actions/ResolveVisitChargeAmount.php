@@ -13,6 +13,8 @@ use App\Models\ChargeMaster;
 use App\Models\InsurancePolicyItem;
 use App\Models\PatientVisit;
 use App\ValueObjects\VisitChargePricing;
+use Carbon\CarbonImmutable;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 
 final class ResolveVisitChargeAmount
@@ -148,12 +150,14 @@ final class ResolveVisitChargeAmount
         }
 
         $today = now()->toDateString();
+        $effectiveFrom = $this->dateString($chargeMaster->effective_from);
+        $effectiveTo = $this->dateString($chargeMaster->effective_to);
 
-        if ($chargeMaster->effective_from !== null && $chargeMaster->effective_from->toDateString() > $today) {
+        if ($effectiveFrom !== null && $effectiveFrom > $today) {
             return false;
         }
 
-        if ($chargeMaster->effective_to !== null && $chargeMaster->effective_to->toDateString() < $today) {
+        if ($effectiveTo !== null && $effectiveTo < $today) {
             return false;
         }
 
@@ -218,5 +222,22 @@ final class ResolveVisitChargeAmount
         }
 
         return (float) $value;
+    }
+
+    private function dateString(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return CarbonImmutable::instance($value)->toDateString();
+        }
+
+        if (is_scalar($value)) {
+            return CarbonImmutable::parse((string) $value)->toDateString();
+        }
+
+        return null;
     }
 }

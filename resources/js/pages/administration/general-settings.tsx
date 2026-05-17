@@ -1,5 +1,4 @@
 import InputError from '@/components/input-error';
-import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -20,7 +19,7 @@ type GeneralSettingsField = {
     field: string;
     label: string;
     description: string;
-    type: 'boolean' | 'text' | 'select';
+    type: 'boolean' | 'text';
 };
 
 type GeneralSettingsSection = {
@@ -32,7 +31,6 @@ type GeneralSettingsSection = {
 type GeneralSettingsPageProps = {
     sections: GeneralSettingsSection[];
     values: Record<string, boolean | string | null>;
-    currencies: Array<{ value: string; label: string }>;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -54,7 +52,6 @@ const textFieldPlaceholder = (field: string): string => {
 export default function GeneralSettings({
     sections,
     values,
-    currencies,
 }: GeneralSettingsPageProps) {
     const form = useForm({
         require_payment_before_consultation: Boolean(
@@ -72,10 +69,6 @@ export default function GeneralSettings({
         allow_insured_bypass_upfront_payment: Boolean(
             values.allow_insured_bypass_upfront_payment,
         ),
-        default_currency_id:
-            typeof values.default_currency_id === 'string'
-                ? values.default_currency_id
-                : '',
         patient_number_prefix:
             typeof values.patient_number_prefix === 'string'
                 ? values.patient_number_prefix
@@ -138,8 +131,8 @@ export default function GeneralSettings({
                         <CardDescription>
                             This first version covers the high-value rules we
                             agreed to start with: payment-before-service,
-                            default currency, numbering, pharmacy dispensing
-                            behavior, and laboratory release requirements.
+                            numbering, pharmacy dispensing behavior, and
+                            laboratory release requirements.
                         </CardDescription>
                     </CardHeader>
                 </Card>
@@ -195,51 +188,6 @@ export default function GeneralSettings({
                                                         field.field as keyof typeof form.data,
                                                         value,
                                                     )
-                                                }
-                                            />
-                                        </div>
-                                    );
-                                }
-
-                                if (field.type === 'select') {
-                                    const selectedValue =
-                                        (form.data[
-                                            field.field as keyof typeof form.data
-                                        ] as string) || '';
-
-                                    return (
-                                        <div
-                                            key={field.field}
-                                            className="grid gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
-                                        >
-                                            <Label
-                                                htmlFor={field.field}
-                                                className="text-sm font-semibold"
-                                            >
-                                                {field.label}
-                                            </Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                {field.description}
-                                            </p>
-                                            <SearchableSelect
-                                                options={currencies}
-                                                value={selectedValue}
-                                                onValueChange={(value) =>
-                                                    form.setData(
-                                                        field.field as keyof typeof form.data,
-                                                        value,
-                                                    )
-                                                }
-                                                inputId={field.field}
-                                                placeholder="Choose a default currency"
-                                                emptyMessage="No currencies found."
-                                                allowClear
-                                            />
-                                            <InputError
-                                                message={
-                                                    form.errors[
-                                                        field.field as keyof typeof form.errors
-                                                    ]
                                                 }
                                             />
                                         </div>

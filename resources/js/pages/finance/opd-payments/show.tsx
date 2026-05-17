@@ -11,6 +11,8 @@ import { OpdPaymentWorkspace } from './components/opd-payment-workspace';
 export default function FinanceOpdPaymentsShowPage({
     visit,
     paymentMethods,
+    currencyOptions,
+    multiCurrencyEnabled,
     audit_activity,
 }: FinanceOpdPaymentsShowPageProps) {
     const isInsurancePayer = visit.payer?.billing_type === 'insurance';
@@ -149,6 +151,8 @@ export default function FinanceOpdPaymentsShowPage({
                     charges={visit.charges ?? []}
                     payments={visit.billing?.payments ?? []}
                     paymentMethods={paymentMethods}
+                    currencyOptions={currencyOptions}
+                    multiCurrencyEnabled={multiCurrencyEnabled}
                     discounts={visit.billing?.discounts ?? []}
                 />
 

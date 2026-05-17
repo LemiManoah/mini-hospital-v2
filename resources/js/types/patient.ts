@@ -310,9 +310,18 @@ export interface VisitPayment {
     visit_billing_id: string;
     patient_visit_id: string;
     payment_method_id?: string | null;
+    currency_id?: string | null;
     receipt_number: string | null;
     payment_date: string | null;
     amount: number;
+    tender_amount?: number | null;
+    exchange_rate?: number | null;
+    currency?: {
+        id: string;
+        code: string;
+        name: string;
+        symbol: string | null;
+    } | null;
     payment_method: string | null;
     reference_number: string | null;
     is_refund: boolean;

@@ -19,9 +19,12 @@ use Illuminate\Support\Carbon;
  * @property-read string|null $patient_visit_id
  * @property-read string|null $receipt_number
  * @property-read string|null $payment_method
+ * @property-read string|null $currency_id
  * @property-read string|null $reference_number
  * @property-read string|null $notes
  * @property-read string $amount
+ * @property-read string|null $tender_amount
+ * @property-read string|null $exchange_rate
  * @property-read bool $is_refund
  * @property-read Carbon|null $payment_date
  * @property-read Carbon|null $deleted_at
@@ -30,6 +33,7 @@ use Illuminate\Support\Carbon;
  * @property-read VisitBilling|null $billing
  * @property-read PatientVisit|null $visit
  * @property-read FacilityBranch|null $branch
+ * @property-read Currency|null $currency
  * @property-read PaymentMethod|null $paymentMethod
  */
 final class Payment extends Model
@@ -46,6 +50,9 @@ final class Payment extends Model
         'payment_method_id' => 'string',
         'payment_date' => 'datetime',
         'amount' => 'decimal:2',
+        'currency_id' => 'string',
+        'tender_amount' => 'decimal:2',
+        'exchange_rate' => 'decimal:6',
         'is_refund' => 'boolean',
     ];
 
@@ -65,6 +72,12 @@ final class Payment extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(FacilityBranch::class, 'facility_branch_id');
+    }
+
+    /** @return BelongsTo<Currency, $this> */
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     /** @return BelongsTo<PaymentMethod, $this> */

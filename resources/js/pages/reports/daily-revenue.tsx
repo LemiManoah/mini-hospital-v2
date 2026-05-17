@@ -57,7 +57,8 @@ interface ReportData {
 
 interface Props {
     report: ReportData | null;
-    filters: { date: string };
+    filters: { date: string; currency_id?: string | null };
+    currencyOptions: { value: string; label: string }[];
 }
 
 function fmt(currency: string, amount: number): string {
@@ -69,21 +70,31 @@ function patientName(p: PaymentPatient): string {
     return [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ');
 }
 
-export default function DailyRevenueReport({ report, filters }: Props) {
+export default function DailyRevenueReport({
+    report,
+    filters,
+    currencyOptions,
+}: Props) {
     const [date, setDate] = useState(
         filters.date ?? new Date().toISOString().slice(0, 10),
     );
+    const [currencyId, setCurrencyId] = useState(filters.currency_id ?? '');
 
     function apply() {
         router.get(
             '/reports/daily-revenue',
-            { date },
+            { date, currency_id: currencyId || undefined },
             { preserveScroll: true },
         );
     }
 
     function downloadPdf() {
-        window.location.href = `/reports/daily-revenue/download?date=${date}`;
+        const params = new URLSearchParams({ date });
+        if (currencyId) {
+            params.set('currency_id', currencyId);
+        }
+
+        window.location.href = `/reports/daily-revenue/download?${params.toString()}`;
     }
 
     const currency = report?.currency ?? 'UGX';
@@ -113,6 +124,29 @@ export default function DailyRevenueReport({ report, filters }: Props) {
                             className="w-44"
                         />
                     </div>
+                    {currencyOptions.length > 1 ? (
+                        <div className="space-y-1">
+                            <Label htmlFor="currency_id">Currency</Label>
+                            <select
+                                id="currency_id"
+                                value={currencyId}
+                                onChange={(event) =>
+                                    setCurrencyId(event.target.value)
+                                }
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs"
+                            >
+                                <option value="">Branch base currency</option>
+                                {currencyOptions.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    ) : null}
                     <Button onClick={apply}>Apply</Button>
                     <Button
                         variant="outline"

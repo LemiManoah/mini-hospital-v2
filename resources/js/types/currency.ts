@@ -13,6 +13,7 @@ export interface Currency {
 export interface CurrencyExchangeRate {
     id: string;
     tenant_id: string;
+    facility_branch_id: string;
     from_currency_id: string;
     to_currency_id: string;
     rate: number;

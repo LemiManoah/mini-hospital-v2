@@ -6,6 +6,8 @@ namespace App\Actions;
 
 use App\Data\Patient\CreateVisitPaymentDTO;
 use App\Enums\BillingDocumentType;
+use App\Models\CurrencyExchangeRate;
+use App\Models\FacilityBranch;
 use App\Models\PatientVisit;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
@@ -36,7 +38,8 @@ final readonly class RecordVisitPayment
             $billing = $this->ensureVisitBilling->handle($visit);
             $billing = $this->recalculateVisitBilling->handle($billing);
 
-            $amount = round($data->amount, 2);
+            $currencyContext = $this->currencyContext($visit, $data);
+            $amount = round($currencyContext['base_amount'], 2);
 
             if ($billing->balance_amount <= 0) {
                 throw ValidationException::withMessages([
@@ -72,6 +75,9 @@ final readonly class RecordVisitPayment
                 'receipt_number' => $this->documentNumber->handle(BillingDocumentType::PatientReceipt, $tenantId, $visit->facility_branch_id),
                 'payment_date' => $data->paymentDate ?? now(),
                 'amount' => $amount,
+                'currency_id' => $currencyContext['currency_id'],
+                'tender_amount' => $currencyContext['tender_amount'],
+                'exchange_rate' => $currencyContext['exchange_rate'],
                 'payment_method_id' => $paymentMethod->id,
                 'payment_method' => $paymentMethod->code,
                 'reference_number' => $data->referenceNumber,
@@ -97,6 +103,9 @@ final readonly class RecordVisitPayment
                     'visit_id' => $visit->id,
                     'visit_billing_id' => $billing->id,
                     'amount' => $amount,
+                    'currency_id' => $currencyContext['currency_id'],
+                    'tender_amount' => $currencyContext['tender_amount'],
+                    'exchange_rate' => $currencyContext['exchange_rate'],
                     'payment_method_id' => $paymentMethod->id,
                     'payment_method' => $paymentMethod->code,
                     'reference_number' => $payment->reference_number,
@@ -106,5 +115,72 @@ final readonly class RecordVisitPayment
 
             return $payment;
         });
+    }
+
+    /**
+     * @return array{currency_id: string|null, tender_amount: float, exchange_rate: float, base_amount: float}
+     */
+    private function currencyContext(PatientVisit $visit, CreateVisitPaymentDTO $data): array
+    {
+        $visit->loadMissing('branch');
+
+        $branch = $visit->branch;
+
+        if (! $branch instanceof FacilityBranch) {
+            throw ValidationException::withMessages([
+                'currency_id' => 'The visit branch could not be resolved for payment currency conversion.',
+            ]);
+        }
+
+        $baseCurrencyId = $branch->getAttribute('currency_id');
+        $baseCurrencyId = is_string($baseCurrencyId) && $baseCurrencyId !== '' ? $baseCurrencyId : null;
+
+        $selectedCurrencyId = $data->currencyId ?: $baseCurrencyId;
+        $tenderAmount = round($data->amount, 2);
+
+        if ($selectedCurrencyId === null || $baseCurrencyId === null || $selectedCurrencyId === $baseCurrencyId) {
+            return [
+                'currency_id' => $selectedCurrencyId,
+                'tender_amount' => $tenderAmount,
+                'exchange_rate' => 1.0,
+                'base_amount' => $tenderAmount,
+            ];
+        }
+
+        if (! $branch->multi_currency_enabled) {
+            throw ValidationException::withMessages([
+                'currency_id' => 'Multi-currency is not enabled for this branch.',
+            ]);
+        }
+
+        if (! $branch->supportedCurrencies()->where('currencies.id', $selectedCurrencyId)->exists()) {
+            throw ValidationException::withMessages([
+                'currency_id' => 'The selected currency is not enabled for this branch.',
+            ]);
+        }
+
+        $rate = CurrencyExchangeRate::query()
+            ->where('tenant_id', $visit->tenant_id)
+            ->where('facility_branch_id', $visit->facility_branch_id)
+            ->where('from_currency_id', $selectedCurrencyId)
+            ->where('to_currency_id', $baseCurrencyId)
+            ->where('effective_date', '<=', now()->toDateString())
+            ->latest('effective_date')
+            ->value('rate');
+
+        if (! is_numeric($rate)) {
+            throw ValidationException::withMessages([
+                'currency_id' => 'No active exchange rate exists for the selected payment currency.',
+            ]);
+        }
+
+        $exchangeRate = (float) $rate;
+
+        return [
+            'currency_id' => $selectedCurrencyId,
+            'tender_amount' => $tenderAmount,
+            'exchange_rate' => $exchangeRate,
+            'base_amount' => round($tenderAmount * $exchangeRate, 2),
+        ];
     }
 }

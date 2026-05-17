@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCurrencyExchangeRateRequest;
-use App\Models\Currency;
 use App\Models\CurrencyExchangeRate;
+use App\Models\FacilityBranch;
 use App\Models\User;
+use App\Support\BranchContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
-use Inertia\Response;
 
 final readonly class CurrencyExchangeRateController implements HasMiddleware
 {
@@ -27,32 +26,9 @@ final readonly class CurrencyExchangeRateController implements HasMiddleware
         ];
     }
 
-    public function index(Request $request): Response
+    public function index(): RedirectResponse
     {
-        /** @var User|null $user */
-        $user = $request->user();
-        $tenantId = $user?->tenant_id;
-
-        abort_unless(is_string($tenantId) && $tenantId !== '', 403);
-
-        $rates = CurrencyExchangeRate::query()
-            ->where('tenant_id', $tenantId)
-            ->with([
-                'fromCurrency:id,code,name,symbol',
-                'toCurrency:id,code,name,symbol',
-            ])
-            ->latest('effective_date')
-            ->orderBy('from_currency_id')
-            ->get();
-
-        $currencies = Currency::query()
-            ->orderBy('name')
-            ->get(['id', 'code', 'name', 'symbol', 'decimal_places']);
-
-        return Inertia::render('currency/exchange-rates', [
-            'rates' => $rates,
-            'currencies' => $currencies,
-        ]);
+        return to_route('administration.currencies.index');
     }
 
     public function store(StoreCurrencyExchangeRateRequest $request): RedirectResponse
@@ -62,12 +38,16 @@ final readonly class CurrencyExchangeRateController implements HasMiddleware
         $tenantId = $user?->tenant_id;
 
         abort_unless(is_string($tenantId) && $tenantId !== '', 403);
+        $branch = BranchContext::getActiveBranch($user);
+
+        abort_unless($branch instanceof FacilityBranch, 403);
 
         $userId = Auth::id();
         $validated = $request->validated();
 
         CurrencyExchangeRate::query()->create([
             'tenant_id' => $tenantId,
+            'facility_branch_id' => $branch->id,
             'from_currency_id' => $validated['from_currency_id'],
             'to_currency_id' => $validated['to_currency_id'],
             'rate' => $validated['rate'],
@@ -77,7 +57,7 @@ final readonly class CurrencyExchangeRateController implements HasMiddleware
             'updated_by' => $userId,
         ]);
 
-        return to_route('currency-exchange-rates.index')
+        return to_route('administration.currencies.index')
             ->with('success', 'Exchange rate added successfully.');
     }
 
@@ -89,12 +69,18 @@ final readonly class CurrencyExchangeRateController implements HasMiddleware
         abort_unless($user instanceof User && $user->can('currency_exchange_rates.delete'), 403);
 
         $tenantId = $user->tenant_id;
+        $branch = BranchContext::getActiveBranch($user);
 
-        abort_unless($currencyExchangeRate->tenant_id === $tenantId, 403);
+        abort_unless(
+            $branch instanceof FacilityBranch
+                && $currencyExchangeRate->tenant_id === $tenantId
+                && $currencyExchangeRate->facility_branch_id === $branch->id,
+            403,
+        );
 
         $currencyExchangeRate->delete();
 
-        return to_route('currency-exchange-rates.index')
+        return to_route('administration.currencies.index')
             ->with('success', 'Exchange rate removed.');
     }
 }

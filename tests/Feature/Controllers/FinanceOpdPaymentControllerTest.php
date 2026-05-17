@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Actions\Reports\GenerateDailyRevenueReportAction;
 use App\Enums\GeneralStatus;
 use App\Enums\PayerType;
+use App\Models\Currency;
 use App\Models\FacilityBranch;
 use App\Models\Patient;
 use App\Models\PatientVisit;
@@ -250,6 +252,83 @@ it('records payments from the finance opd payment desk', function (): void {
             ->component('finance/opd-payments/show')
             ->has('audit_activity', 1)
             ->where('audit_activity.0.title', 'Payment recorded for patient visit.'));
+});
+
+it('records foreign currency opd payments using the branch exchange rate', function (): void {
+    [, $branch, $user, $visit, $paymentMethodId] = createFinancePaymentContext();
+    $foreignCurrency = Currency::factory()->create([
+        'code' => 'FCP',
+        'name' => 'Foreign Cash Payment',
+        'symbol' => 'F$',
+    ]);
+
+    $branch->forceFill(['multi_currency_enabled' => true])->save();
+
+    DB::table('facility_branch_currencies')->insert([
+        [
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $visit->tenant_id,
+            'facility_branch_id' => $branch->id,
+            'currency_id' => $branch->currency_id,
+            'is_default' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+        [
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $visit->tenant_id,
+            'facility_branch_id' => $branch->id,
+            'currency_id' => $foreignCurrency->id,
+            'is_default' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ]);
+
+    DB::table('currency_exchange_rates')->insert([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $visit->tenant_id,
+        'facility_branch_id' => $branch->id,
+        'from_currency_id' => $foreignCurrency->id,
+        'to_currency_id' => $branch->currency_id,
+        'rate' => 2,
+        'effective_date' => '2026-04-28',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $user->givePermissionTo(['payments.view', 'payments.create']);
+
+    $this->withSession(['active_branch_id' => $branch->id])
+        ->actingAs($user)
+        ->post(route('finance.opd-payments.store', $visit), [
+            'amount' => 60,
+            'currency_id' => $foreignCurrency->id,
+            'payment_method_id' => $paymentMethodId,
+            'payment_date' => '2026-04-28 10:30:00',
+        ])
+        ->assertRedirect(route('finance.opd-payments.show', $visit));
+
+    $this->assertDatabaseHas('payments', [
+        'patient_visit_id' => $visit->id,
+        'currency_id' => $foreignCurrency->id,
+        'amount' => '120.00',
+        'tender_amount' => '60.00',
+        'exchange_rate' => '2.000000',
+    ]);
+
+    $this->assertDatabaseHas('visit_billings', [
+        'patient_visit_id' => $visit->id,
+        'paid_amount' => '120.00',
+        'balance_amount' => '30.00',
+    ]);
+
+    $report = resolve(GenerateDailyRevenueReportAction::class)
+        ->handle(now()->setDate(2026, 4, 28), $branch->id, $foreignCurrency->id);
+
+    expect($report['currency'])->toBe('F$')
+        ->and($report['total_amount'])->toBe(60.0)
+        ->and($report['net_amount'])->toBe(60.0);
 });
 
 it('requests approves and reverses a billing discount from the finance desk', function (): void {

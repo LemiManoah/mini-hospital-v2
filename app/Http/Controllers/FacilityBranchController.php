@@ -13,7 +13,6 @@ use App\Http\Requests\UpdateFacilityBranchRequest;
 use App\Models\Clinic;
 use App\Models\Currency;
 use App\Models\FacilityBranch;
-use App\Support\GeneralSettings\TenantGeneralSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,20 +63,15 @@ final readonly class FacilityBranchController implements HasMiddleware
         ]);
     }
 
-    public function create(Request $request, TenantGeneralSettings $settings): Response
+    public function create(): Response
     {
         Gate::authorize('create', FacilityBranch::class);
-
-        $tenantId = $request->user()?->tenant_id;
-        $defaultCurrencyId = is_string($tenantId)
-            ? $settings->value($tenantId, 'default_currency_id')
-            : null;
 
         return Inertia::render('facility-branch/create', [
             'currencies' => Currency::query()
                 ->orderBy('name')
                 ->get(['id', 'code', 'name', 'symbol']),
-            'defaultCurrencyId' => is_string($defaultCurrencyId) ? $defaultCurrencyId : null,
+            'defaultCurrencyId' => null,
         ]);
     }
 

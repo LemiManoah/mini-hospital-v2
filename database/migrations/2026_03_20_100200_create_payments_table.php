@@ -19,6 +19,9 @@ return new class extends Migration
             $table->string('receipt_number', 50)->nullable()->unique();
             $table->timestamp('payment_date')->nullable();
             $table->decimal('amount', 15, 2);
+            $table->foreignUuid('currency_id')->nullable()->constrained('currencies')->nullOnDelete();
+            $table->decimal('tender_amount', 15, 2)->nullable();
+            $table->decimal('exchange_rate', 18, 6)->nullable();
             $table->string('payment_method', 50)->nullable();
             $table->string('reference_number', 100)->nullable();
             $table->boolean('is_refund')->default(false);

@@ -15,7 +15,7 @@ final class GeneralSettingsRegistry
      *         key: string,
      *         label: string,
      *         description: string,
-     *         type: 'boolean'|'text'|'select',
+     *         type: 'boolean'|'text',
      *         default: bool|string|null
      *     }>
      * }>
@@ -70,17 +70,9 @@ final class GeneralSettingsRegistry
                 ],
             ],
             [
-                'title' => 'Currency And Numbering',
-                'description' => 'Set the facility currency and the prefixes used on common operational documents.',
+                'title' => 'Numbering',
+                'description' => 'Set the prefixes used on common operational documents.',
                 'fields' => [
-                    [
-                        'field' => 'default_currency_id',
-                        'key' => 'pricing.default_currency_id',
-                        'label' => 'Default facility currency',
-                        'description' => 'Used as the preferred currency choice for pricing and billing screens.',
-                        'type' => 'select',
-                        'default' => null,
-                    ],
                     [
                         'field' => 'patient_number_prefix',
                         'key' => 'numbering.patient_number_prefix',
@@ -160,7 +152,7 @@ final class GeneralSettingsRegistry
      *     key: string,
      *     label: string,
      *     description: string,
-     *     type: 'boolean'|'text'|'select',
+     *     type: 'boolean'|'text',
      *     default: bool|string|null
      * }>
      */

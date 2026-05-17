@@ -98,6 +98,14 @@ export interface FinanceOpdPaymentsShowPageProps {
         charges?: VisitCharge[] | null;
     };
     paymentMethods: { value: string; label: string }[];
+    currencyOptions: {
+        value: string;
+        label: string;
+        code: string;
+        symbol: string | null;
+        is_base: boolean;
+    }[];
+    multiCurrencyEnabled: boolean;
     audit_activity: AuditTimelineEntry[];
 }
 

@@ -10,6 +10,7 @@ export interface FacilityBranch {
     email: string | null;
     is_main_branch: boolean;
     has_store: boolean;
+    multi_currency_enabled: boolean;
     created_at: string;
     updated_at: string;
     currency?: {

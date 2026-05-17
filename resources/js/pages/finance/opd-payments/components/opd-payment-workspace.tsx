@@ -47,6 +47,14 @@ type OpdPaymentWorkspaceProps = {
     payments: VisitPayment[];
     discounts: BillingDiscount[];
     paymentMethods: { value: string; label: string }[];
+    currencyOptions: {
+        value: string;
+        label: string;
+        code: string;
+        symbol: string | null;
+        is_base: boolean;
+    }[];
+    multiCurrencyEnabled: boolean;
 };
 
 type PaymentModalState = { label: string; prefillAmount: string } | null;
@@ -59,6 +67,8 @@ export function OpdPaymentWorkspace({
     payments,
     discounts,
     paymentMethods,
+    currencyOptions,
+    multiCurrencyEnabled,
 }: OpdPaymentWorkspaceProps) {
     const { hasPermission } = usePermissions();
     const canRequestDiscount = hasPermission('billing_discounts.create');
@@ -77,6 +87,10 @@ export function OpdPaymentWorkspace({
         payment_date: '',
         reference_number: '',
         notes: '',
+        currency_id:
+            currencyOptions.find((currency) => currency.is_base)?.value ??
+            currencyOptions[0]?.value ??
+            '',
     });
 
     const discountForm = useForm({
@@ -335,6 +349,16 @@ export function OpdPaymentWorkspace({
                                             ) : (
                                                 formatMoney(payment.amount)
                                             )}
+                                            {payment.currency &&
+                                            payment.tender_amount &&
+                                            payment.currency_id ? (
+                                                <div className="text-xs font-normal text-muted-foreground">
+                                                    {Number(
+                                                        payment.tender_amount,
+                                                    ).toLocaleString()}{' '}
+                                                    {payment.currency.code}
+                                                </div>
+                                            ) : null}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             {!payment.is_refund && (
@@ -514,6 +538,37 @@ export function OpdPaymentWorkspace({
                             />
                             <InputError message={paymentForm.errors.amount} />
                         </div>
+                        {multiCurrencyEnabled && currencyOptions.length > 1 ? (
+                            <div className="space-y-2">
+                                <Label htmlFor="pay_currency">Currency</Label>
+                                <Select
+                                    value={paymentForm.data.currency_id}
+                                    onValueChange={(value) =>
+                                        paymentForm.setData(
+                                            'currency_id',
+                                            value,
+                                        )
+                                    }
+                                >
+                                    <SelectTrigger id="pay_currency">
+                                        <SelectValue placeholder="Select currency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {currencyOptions.map((currency) => (
+                                            <SelectItem
+                                                key={currency.value}
+                                                value={currency.value}
+                                            >
+                                                {currency.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError
+                                    message={paymentForm.errors.currency_id}
+                                />
+                            </div>
+                        ) : null}
                         <div className="space-y-2">
                             <Label htmlFor="pay_method">Payment Method</Label>
                             <Select
